@@ -33,7 +33,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01-PLAN.md — Schema extensions, FieldOps TypeScript client, mock data, and Zod-validated normalizer
 - [x] 01-02-PLAN.md — Sync orchestration service and all ADMIN-gated API routes
-- [ ] 01-03-PLAN.md — FieldOps connection hub, field matching UI, sync trigger, and staged operations review pages
+- [x] 01-03-PLAN.md — FieldOps connection hub, field matching UI, sync trigger, and staged operations review pages
 
 ### Phase 2: Field Records & History
 **Goal**: Farm manager can review all field operation records (synced and manual) with complete 3-year history per parcel
