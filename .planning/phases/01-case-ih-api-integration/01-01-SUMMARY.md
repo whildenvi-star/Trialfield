@@ -136,6 +136,18 @@ None - no external service configuration required for this plan. The FieldOps cl
 - Env vars needed for real API: `FIELDOPS_CLIENT_ID`, `FIELDOPS_CLIENT_SECRET`, `FIELDOPS_SUBSCRIPTION_KEY` (optional in dev — mock auto-activates)
 - CNH linked account warning is handled at the validation layer — sync service can check this before proceeding
 
+## Self-Check: PASSED
+
+All files verified present, all commits verified in organic-cert git history:
+- FOUND: `organic-cert/prisma/schema.prisma`
+- FOUND: `organic-cert/src/lib/fieldops-client.ts`
+- FOUND: `organic-cert/src/lib/fieldops-mock.ts`
+- FOUND: `organic-cert/src/lib/fieldops-normalizer.ts`
+- FOUND: `.planning/phases/01-case-ih-api-integration/01-01-SUMMARY.md`
+- FOUND commit: `bc9737d` (Task 1)
+- FOUND commit: `c72bbc7` (Task 2)
+- FOUND commit: `aa1cb38` (Task 3)
+
 ---
 *Phase: 01-case-ih-api-integration*
 *Completed: 2026-02-24*
