@@ -31,8 +31,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Schema extensions, FieldOps TypeScript client, mock data, and Zod-validated normalizer
-- [ ] 01-02-PLAN.md — Sync orchestration service and all ADMIN-gated API routes
+- [x] 01-01-PLAN.md — Schema extensions, FieldOps TypeScript client, mock data, and Zod-validated normalizer
+- [x] 01-02-PLAN.md — Sync orchestration service and all ADMIN-gated API routes
 - [ ] 01-03-PLAN.md — FieldOps connection hub, field matching UI, sync trigger, and staged operations review pages
 
 ### Phase 2: Field Records & History
@@ -72,6 +72,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Case IH API Integration | 1/3 | In Progress|  |
+| 1. Case IH API Integration | 2/3 | In Progress|  |
 | 2. Field Records & History | 0/0 | Not started | - |
 | 3. Inspection Report Generation | 0/0 | Not started | - |

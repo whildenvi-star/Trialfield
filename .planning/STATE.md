@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 1 of 3 (Case IH API Integration)
-Plan: 1 of 3 in current phase (01-01 complete)
+Plan: 2 of 3 in current phase (01-02 complete)
 Status: In progress
-Last activity: 2026-02-24 -- Completed Plan 01-01 (Prisma schema + FieldOps client + normalizer foundation)
+Last activity: 2026-02-24 -- Completed Plan 01-02 (Sync service + all Phase 1 admin API routes)
 
-Progress: [#.........] 11%
+Progress: [##........] 22%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 9 min
-- Total execution time: 0.15 hours
+- Total plans completed: 2
+- Average duration: 7 min
+- Total execution time: 0.23 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-case-ih-api-integration | 1 | 9 min | 9 min |
+| 01-case-ih-api-integration | 2 | 14 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 9 min
-- Trend: establishing baseline
+- Last 5 plans: 9 min, 5 min
+- Trend: fast execution
 
 *Updated after each plan completion*
 
@@ -49,6 +49,10 @@ Recent decisions affecting current work:
 - [01-01]: useMock() auto-enables in non-production when credentials absent, disabled in production
 - [01-01]: validateConnection() returns linkedAccountWarning on empty field list (CNH linked account limitation)
 - [01-01]: Zod v4 safeParse throughout normalizer — CNH API schema is undocumented, defensive parsing required
+- [01-02]: Manual data always wins — approve returns 409 if manual FieldOperation/HarvestEvent exists for same date/type
+- [01-02]: Linked account early return in runFieldOpsSync — empty field list triggers no_data status + message
+- [01-02]: DELETE /connection preserves SyncedOperation rows for audit trail compliance
+- [01-02]: GET /sync-state returns { connected: false } (200) when no FieldOpsSyncState exists — UI uses this for flow control
 
 ### Pending Todos
 
@@ -62,5 +66,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 01-01-PLAN.md (Prisma schema + FieldOps client + normalizer)
+Stopped at: Completed 01-02-PLAN.md (Sync service + all Phase 1 admin API routes)
 Resume file: None
