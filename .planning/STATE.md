@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 1 of 3 (Case IH API Integration)
-Plan: 2 of 3 in current phase (01-02 complete)
+Plan: 3 of 3 in current phase (01-03 at checkpoint — awaiting human verification)
 Status: In progress
-Last activity: 2026-02-24 -- Completed Plan 01-02 (Sync service + all Phase 1 admin API routes)
+Last activity: 2026-02-24 -- Completed 01-03 Tasks 1+2 (Admin UI pages); awaiting Task 3 human-verify
 
-Progress: [##........] 22%
+Progress: [###.......] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 7 min
+- Total plans completed: 2 (01-01, 01-02); 01-03 at checkpoint
+- Average duration: 6 min
 - Total execution time: 0.23 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-case-ih-api-integration | 2 | 14 min | 7 min |
+| 01-case-ih-api-integration | 2 complete + 1 at checkpoint | 19 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 9 min, 5 min
+- Last 5 plans: 9 min, 5 min, 5 min
 - Trend: fast execution
 
 *Updated after each plan completion*
@@ -53,6 +53,9 @@ Recent decisions affecting current work:
 - [01-02]: Linked account early return in runFieldOpsSync — empty field list triggers no_data status + message
 - [01-02]: DELETE /connection preserves SyncedOperation rows for audit trail compliance
 - [01-02]: GET /sync-state returns { connected: false } (200) when no FieldOpsSyncState exists — UI uses this for flow control
+- [Phase 01-03]: Sidebar FieldOps link not role-gated at component level — route-level auth gates protect data; sidebar has no session context
+- [Phase 01-03]: cmdk Command used inline (not CommandDialog) in split-panel matching UI — always-visible search better than modal overlay for matching workflow
+- [Phase 01-03]: 409 conflict handled client-side with dedicated dialog — manual-data-wins policy surfaced clearly to admin before rejecting synced record
 
 ### Pending Todos
 
@@ -66,5 +69,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 01-02-PLAN.md (Sync service + all Phase 1 admin API routes)
+Stopped at: 01-03-PLAN.md Task 3 checkpoint:human-verify — admin UI pages complete, awaiting user verification of full Case IH integration flow
 Resume file: None
