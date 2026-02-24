@@ -28,7 +28,6 @@ Connect to Case IH FieldOps API via OAuth2, pull field operation data (tillage, 
 ### Sync Trigger & Feedback
 - Manual sync only (no scheduled background jobs in v1.0)
 - "Sync Now" button triggers data pull
-- Progress bar with details during sync: show which fields are syncing, operation counts, real-time progress
 - Initial sync pulls last 3 years of data (NOP compliance lookback)
 - Validate API connection only when sync is attempted (no startup health check)
 
@@ -50,6 +49,7 @@ Connect to Case IH FieldOps API via OAuth2, pull field operation data (tillage, 
 - Credential storage approach (env variables vs encrypted DB)
 - Mock data volume (small vs realistic scale)
 - Testing strategy (mocks in CI, integration tests approach)
+- Sync progress feedback UX: spinner + detailed result card (user confirmed this satisfies the progress feedback intent; no SSE/streaming needed)
 
 </decisions>
 
