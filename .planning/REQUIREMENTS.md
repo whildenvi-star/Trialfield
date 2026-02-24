@@ -9,11 +9,11 @@ Requirements for milestone v1.0: Data Ingestion & Reports. Each maps to roadmap 
 
 ### API Integration
 
-- [ ] **API-01**: Farm manager can connect their Case IH FieldOps account via OAuth2
+- [x] **API-01**: Farm manager can connect their Case IH FieldOps account via OAuth2
 - [ ] **API-02**: Farm manager can trigger a data sync to pull field operations from Case IH
-- [ ] **API-03**: System normalizes Case IH data into structured records (tillage, planting, application, harvest)
+- [x] **API-03**: System normalizes Case IH data into structured records (tillage, planting, application, harvest)
 - [ ] **API-04**: System displays sync status and last-sync timestamp per field
-- [ ] **API-05**: System detects and alerts if Case IH account returns no data (Linked Account limitation)
+- [x] **API-05**: System detects and alerts if Case IH account returns no data (Linked Account limitation)
 
 ### Field Records
 
@@ -75,11 +75,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| API-01 | Phase 1 | Pending |
+| API-01 | Phase 1 | Complete |
 | API-02 | Phase 1 | Pending |
-| API-03 | Phase 1 | Pending |
+| API-03 | Phase 1 | Complete |
 | API-04 | Phase 1 | Pending |
-| API-05 | Phase 1 | Pending |
+| API-05 | Phase 1 | Complete |
 | FIELD-01 | Phase 2 | Pending |
 | FIELD-02 | Phase 2 | Pending |
 | FIELD-03 | Phase 2 | Pending |
