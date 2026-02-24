@@ -28,11 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Farm manager can see the sync status and last-sync timestamp for each field after a sync completes
   4. Farm manager receives a clear alert if their Case IH account returns no data due to a Linked Account limitation
   5. System normalizes raw Case IH API responses into typed operation records (tillage, planting, application, harvest) without manual intervention
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
+- [ ] 01-01-PLAN.md — Schema extensions, FieldOps TypeScript client, mock data, and Zod-validated normalizer
+- [ ] 01-02-PLAN.md — Sync orchestration service and all ADMIN-gated API routes
+- [ ] 01-03-PLAN.md — FieldOps connection hub, field matching UI, sync trigger, and staged operations review pages
 
 ### Phase 2: Field Records & History
 **Goal**: Farm manager can review all field operation records (synced and manual) with complete 3-year history per parcel
@@ -71,6 +72,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Case IH API Integration | 0/0 | Not started | - |
+| 1. Case IH API Integration | 0/3 | Planned | - |
 | 2. Field Records & History | 0/0 | Not started | - |
 | 3. Inspection Report Generation | 0/0 | Not started | - |
