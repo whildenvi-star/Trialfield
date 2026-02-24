@@ -8,6 +8,18 @@ A USDA NOP organic certification audit system that pulls field history data from
 
 A farm manager can pull Case IH field data and hand an inspector a complete, print-ready audit report with zero manual data entry.
 
+## Current Milestone: v1.0 Data Ingestion & Reports
+
+**Goal:** Pull all field operation data from Case IH and produce print-ready USDA NOP inspection reports — the core data-in, report-out pipeline.
+
+**Target features:**
+- Case IH Field Ops API integration (OAuth2 data pull)
+- Input application records (seed, fertilizer, pest control)
+- 3-year field history and crop rotation tracking
+- Harvest records (yield, dates, equipment)
+- Tillage operation records
+- Print-ready USDA NOP inspection report generation
+
 ## Requirements
 
 ### Validated
@@ -32,16 +44,19 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 - [ ] 3-year field history and crop rotation tracking
 - [ ] Harvest records (yield data, harvest dates, equipment per field)
 - [ ] Tillage operation records from Case IH
-- [ ] Append-only audit store with tamper-evidence (signed/checksummed entries)
 - [ ] Print-ready USDA NOP inspection report generation
-- [ ] Audit viewer with filtering by user/resource/time
-- [ ] Audit log export for regulators
-- [ ] Photo evidence attachment for field documentation
-- [ ] Field record corrections/annotations by operators
-- [ ] API middleware that emits audit events on every write
-- [ ] Configurable retention/archive policy for compliance
-- [ ] Background jobs for audit log snapshots and backups
-- [ ] Mobile-friendly responsive design (prep for future mobile app)
+
+### Deferred (v2)
+
+- Append-only audit store with tamper-evidence (signed/checksummed entries)
+- Audit viewer with filtering by user/resource/time
+- Audit log export for regulators
+- Photo evidence attachment for field documentation
+- Field record corrections/annotations by operators
+- API middleware that emits audit events on every write
+- Configurable retention/archive policy for compliance
+- Background jobs for audit log snapshots and backups
+- Mobile-friendly responsive design (prep for future mobile app)
 
 ### Out of Scope
 
@@ -81,6 +96,7 @@ Operators in the field will eventually use a mobile app to add photo evidence an
 | Build on existing organic-cert Next.js app | Already has auth, RBAC, Prisma, audit logging — don't rebuild | — Pending |
 | Append-only audit with checksums | Regulatory compliance requires tamper-evident records | — Pending |
 | Case IH API integration (not file export) | Real-time data pull is more reliable than manual CSV uploads | — Pending |
+| v1.0 focused on data pipeline + reports | Get Case IH data in, inspection reports out — defer audit infrastructure to v2 | — Pending |
 
 ---
-*Last updated: 2026-02-23 after initialization*
+*Last updated: 2026-02-24 after v1.0 milestone scoping*
