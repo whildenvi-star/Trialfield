@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 3 of 3 (Inspection Report Generation)
-Plan: 1 of 3 in Phase 3 — COMPLETE (03-01 executed; schema, assembler, and PDF components done)
-Status: Phase 3 in progress — Plan 1 complete, ready for Plan 2 (PDF section components)
-Last activity: 2026-02-25 -- Completed 03-01: PDF report infrastructure (GeneratedReport model, report-assembler.ts, styles, page-wrapper, table-row)
+Plan: 2 of 3 in Phase 3 — COMPLETE (03-02 executed; all 8 PDF section components + InspectionReport Document done)
+Status: Phase 3 in progress — Plans 1 and 2 complete, ready for Plan 3 (API route + UI)
+Last activity: 2026-02-25 -- Completed 03-02: 8 NOP PDF sections (cover, TOC, overview, field list, field history, app log, harvest log, mass balance) + InspectionReport Document
 
-Progress: [##########] 33% (Phase 3: 1/3 plans complete)
+Progress: [###############] 67% (Phase 3: 2/3 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5 (01-01, 01-02, 01-03, 02-01, 03-01)
-- Average duration: 5.8 min
-- Total execution time: 0.40 hours
+- Total plans completed: 6 (01-01, 01-02, 01-03, 02-01, 03-01, 03-02)
+- Average duration: 6.7 min
+- Total execution time: 0.67 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [##########] 33% (Phase 3: 1/3 plans complete)
 |-------|-------|-------|----------|
 | 01-case-ih-api-integration | 3 complete | 19 min | 6 min |
 | 02-field-records-history | 2 complete | 8 min | 4 min |
-| 03-inspection-report-generation | 1 complete | 7 min | 7 min |
+| 03-inspection-report-generation | 2 complete | 20 min | 10 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 5 min, 4 min, 4 min, 7 min
-- Trend: fast execution
+- Last 5 plans: 5 min, 4 min, 4 min, 7 min, 13 min
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -74,6 +74,11 @@ Recent decisions affecting current work:
 - [03-01]: col()/headerCol() return explicit typed objects (not StyleSheet entries) so they compose without StyleSheet conflicts
 - [03-01]: assembleReportData uses single farm query + one CropLot query for mass balance — minimizes DB round trips
 - [03-01]: ReportPage orientation prop defaults to portrait; caller passes landscape for wide-table sections
+- [03-02]: FarmInfo extended with certStatus, certExpiry, nopId — cover page and operation overview need cert fields not in original interface
+- [03-02]: FieldWithHistory.enterprises extended with fieldOperations and fertilityEvents arrays — field history requires operations per enterprise not just summary fields
+- [03-02]: Bookmark is a type in react-pdf (Page prop), not a JSX element — TOC uses static list; PDF bookmarks added to section Pages
+- [03-02]: Application/harvest logs filter to current cropYear — 3-year detail is in field history; all-years log would be redundant
+- [03-02]: Shared pageProps spread pattern — const pageProps = { farmName, reportTitle, generatedDate } spread to all 8 sections from InspectionReport
 
 ### Pending Todos
 
@@ -82,10 +87,9 @@ None yet.
 ### Blockers/Concerns
 
 - [Phase 1]: CNH FieldOps full API response schema is behind login-gated developer portal. Build against farm-budget/fieldops/mock-data.js initially.
-- [Phase 3]: Need actual certifier inspection worksheet (CCOF, Oregon Tilth, or MOSA) before PDF layout work.
 
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 03-01: PDF report infrastructure complete; ready for 03-02 PDF section components
+Stopped at: Completed 03-02: All 8 PDF section components + InspectionReport Document; ready for 03-03 API route and UI
 Resume file: None
