@@ -1,197 +1,191 @@
 # Architecture
 
-**Analysis Date:** 2026-02-23
+**Analysis Date:** 2025-02-25
 
 ## Pattern Overview
 
-**Overall:** Monorepo with multiple independent applications using either Express.js server + vanilla JS frontend or Next.js full-stack pattern.
+**Overall:** Next.js 16 full-stack application with server-side rendering (App Router), server-side business logic, client-side UI with React 19, and Prisma ORM for data persistence.
 
 **Key Characteristics:**
-- Separate applications per domain (farm budgeting, FSA tracking, grain tickets, malt costing, organic certification)
-- Each application manages its own data store (JSON file or PostgreSQL)
-- Backend serves both API and static frontend assets
-- Real-time data enrichment via computation engines
-- Audit logging for compliance-critical applications
+- Layered architecture: UI layer (React components) → API routes → Business logic (lib/) → Database layer (Prisma)
+- Role-based access control (RBAC) enforced at both API and UI layers
+- External service integration (Case IH FieldOps API) with staging/approval workflow
+- PDF report generation as primary output using @react-pdf/renderer
+- Data-driven workflow: raw data from Case IH → staging tables → approval → production tables
 
 ## Layers
 
-**Backend Server (Express/Next.js):**
-- Purpose: HTTP API endpoint, data persistence, business logic computation
-- Location: `[app]/server.js` (Express apps) or `[app]/src/app/api/` (Next.js)
-- Contains: Route handlers, CRUD operations, calculations, file I/O
-- Depends on: Node.js, Express/Next.js, Prisma (organic-cert), dotenv
-- Used by: Frontend clients via HTTP
+**Presentation Layer (UI):**
+- Purpose: Render responsive, form-driven interfaces for farm operations data management
+- Location: `src/app/(app)/**/page.tsx` (client components), `src/components/`
+- Contains: Page components with React hooks, form dialogs, tables, cards using shadcn/ui
+- Depends on: API routes (/api/*), authentication (auth), client-side state management (useState/useEffect)
+- Used by: Web browsers; authenticated users after login
 
-**Frontend (Vanilla JS or React):**
-- Purpose: User interface, form handling, data visualization, tab-based navigation
-- Location: `[app]/public/` (Express) or `[app]/src/app/(app)/` (Next.js)
-- Contains: HTML/CSS, component modules, API client helpers, calculation displays
-- Depends on: Browser APIs, Fetch API, Leaflet.js (farm-budget for mapping)
-- Used by: End users via browser
+**API Layer (Route Handlers):**
+- Purpose: Handle HTTP requests/responses, apply RBAC, marshal requests to business logic, serialize responses
+- Location: `src/app/api/*/route.ts`
+- Contains:
+  - CRUD endpoints for domain entities (fields, enterprises, materials, equipment, storage, seeds, buyers)
+  - Sync orchestration endpoints (`/api/admin/sync`, `/api/admin/staged-ops`)
+  - Field-enterprise sub-resource routes (`/api/field-enterprises/[id]/fertility`, `/operations`, `/harvest`, `/applications`, `/seed-usage`)
+  - Authentication route (`/api/auth/[...nextauth]`)
+  - Audit logging endpoint (`/api/audit-log`)
+- Depends on: Prisma models, business logic (lib/), authentication, RBAC
+- Used by: Client-side fetch calls from React components
 
-**Data Layer (File or Database):**
-- Purpose: Persistent data storage and historical backups
-- Location: `[app]/data/data.json` (Express apps) or PostgreSQL via Prisma (organic-cert)
-- Contains: Entity records, settings, audit logs
-- Depends on: Filesystem (Express) or PostgreSQL client (Prisma)
-- Used by: All business logic layers
+**Business Logic Layer (lib/):**
+- Purpose: Orchestrate multi-step operations, manage external integrations, compute derived data
+- Location: `src/lib/*.ts`
+- Contains:
+  - **fieldops-sync.ts**: Orchestrates Case IH API sync pipeline (validate connection → fetch → normalize → stage)
+  - **fieldops-client.ts**: Case IH OAuth2 client with token caching and mock fallback
+  - **fieldops-normalizer.ts**: Validates and transforms raw Case IH responses into staging schema
+  - **report-assembler.ts**: Single Prisma query assembling all data needed for inspection reports
+  - **auth.ts**: NextAuth configuration with JWT strategy and credentials provider
+  - **rbac.ts**: Permission matrix and role-based access checks
+  - **audit-logger.ts**: Records CREATE/UPDATE/DELETE actions for compliance
+  - **lot-generator.ts**: Auto-generates lot numbers (YEAR-CROP-FIELDABBREV)
+  - **day-rule-calc.ts**: Computes harvest-to-application day gaps for NOP compliance
+  - **mass-balance.ts**: Reconciles harvested vs. sold quantities by crop lot
+  - **fieldops-mock.ts**: Test data when API credentials absent
+- Depends on: Prisma, external APIs (Case IH)
+- Used by: API routes, PDF generation layer
 
-**Computation Engine:**
-- Purpose: Calculate derived values (budgets, yields, costs, lot numbers, mass balance)
-- Location: `[app]/public/calc.js` (Express) or `[app]/src/lib/` (Next.js)
-- Contains: Pure functions for financial/agronomic calculations
-- Depends on: Domain reference data (products, implements, pricing)
-- Used by: Server enrichment and frontend display
+**PDF/Report Generation Layer:**
+- Purpose: Render inspection reports as print-ready PDFs with 8 NOP sections
+- Location: `src/lib/pdf/*.tsx`
+- Contains:
+  - **inspection-report.tsx**: Top-level Document component wrapping 8 sections
+  - `sections/cover-page.tsx`, `toc-page.tsx`, `operation-overview.tsx`, `field-list.tsx`, `field-history.tsx`, `application-log.tsx`, `harvest-log.tsx`, `mass-balance.tsx`
+  - Utility components in `pdf/components/`
+  - Styling utilities in `pdf/styles.ts` (@react-pdf/renderer API)
+- Depends on: report-assembler data, @react-pdf/renderer, @ag-media/react-pdf-table
+- Used by: API route `/api/reports/generate` (renderToBuffer) → file download
 
-**Integration Layer:**
-- Purpose: Sync data between applications (fieldops ↔ farm-budget)
-- Location: `[app]/fieldops/sync.js`, `[app]/fieldops/client.js`
-- Contains: Field matching logic, equipment mapping, boundary updates
-- Depends on: Both applications' data stores
-- Used by: farm-budget server
+**Data Layer (Prisma):**
+- Purpose: Provide type-safe ORM interface to PostgreSQL
+- Location: `prisma/schema.prisma` (schema definition), `src/lib/prisma.ts` (client singleton)
+- Contains: 25+ models organized in sections: foundation (Farm/User), land & fields, seeds & inputs, field operations, harvest→storage→sale, supporting records, Case IH integration, inspection reports
+- Depends on: PostgreSQL database
+- Used by: All API routes and business logic
 
 ## Data Flow
 
-**farm-budget: Field Budget Calculation:**
+**Manual Data Entry:**
+1. User (ADMIN/OFFICE) navigates to page (e.g., `field-enterprises/`)
+2. Client-side React form captures input, submits POST to `/api/field-enterprises`
+3. API route validates input, checks RBAC permission (enterprise:write), calls Prisma create
+4. Response includes auto-generated lotNumber and linked field metadata
+5. Audit log written by logAudit() helper
+6. UI updates with new record, shows success toast
 
-1. User creates/edits field with crop, acres, inputs, machinery
-2. Frontend calls `PUT /api/fields/:id`
-3. Server validates and saves to store (data.json)
-4. Server calls `Calc.computeFieldBudget()` with refs (products, implements, pricing, settings)
-5. Computation returns cost/revenue breakdown
-6. Frontend receives enriched field with `_computed` object
-7. Frontend displays budget table with machinery rates, input costs, revenue estimates
+**Case IH FieldOps Sync:**
+1. User clicks "Sync with Case IH" in admin panel
+2. POST `/api/admin/sync` → runFieldOpsSync(farmId)
+3. Sync orchestrator flow:
+   - Validate OAuth credentials, detect linked account warning
+   - Load existing CaseIHFieldMapping, OperationTypeMapping
+   - Fetch 3-year lookback from Case IH (applications, yield)
+   - Normalize via fieldops-normalizer (Zod validation)
+   - Write to SyncedOperation table (staging) with dedup on (farmId, fieldopsExternalId)
+   - Update FieldOpsSyncState with sync metadata
+4. Sync result returned to admin UI (status, operation count, warnings)
+5. Staged operations appear in admin review panel
+6. User approves/rejects staged rows via `/api/admin/staged-ops/[id]`
+7. Approved rows committed to FieldOperation/HarvestEvent tables
 
-**grain-tickets: Ticket Processing with AI:**
+**Report Generation:**
+1. User selects crop year, optionally filters fields in `/reports` page
+2. Clicks "Generate Report"
+3. POST `/api/reports/generate` with cropYear, fieldIds
+4. API calls reportAssembler(cropYear, fieldIds) → single complex Prisma query
+5. Assembler returns typed ReportData object
+6. InspectionReport React component renders as Document tree
+7. renderToBuffer() in API route converts to PDF bytes
+8. HTTP response streams PDF with Content-Disposition: attachment
+9. GeneratedReport row inserted with filename, fieldCount, cropYear metadata
 
-1. User uploads grain ticket file via `/api/tickets/upload`
-2. Server reads spreadsheet or PDF (multer + xlsx)
-3. Server calls Anthropic API to extract/validate fields
-4. Server creates ticket record with extracted data
-5. Client calls `Calc.computeTicket()` to enrich with crop config
-6. Enriched ticket includes weight calculations, grades, pricing
-7. Ticket list page displays computed values
-
-**organic-cert: Multi-Farm Organic Data:**
-
-1. User logs in via NextAuth (email/password with bcryptjs)
-2. Prisma middleware loads user's farm context
-3. User navigates to field-enterprises/[id] page
-4. Page fetches field data via `/api/field-enterprises/[id]/operations`
-5. Server performs RBAC check (user.role must match operation)
-6. Server returns all operations linked to fieldEnterprise
-7. User can create/edit operations, with audit log recorded
-8. Lot numbers auto-generated via `lot-generator.ts`
-9. Mass balance calculations validate fertility inputs per C5.0 rules
-
-**Data Sync (fieldops → farm-budget):**
-
-1. farm-budget server runs sync on startup or schedule
-2. `fieldops/sync.js` queries both farm-budget store and fieldops API
-3. Normalizes field names: matches "Kopp" in both systems
-4. Creates/updates farm-budget fields for matched fieldops entries
-5. Updates GeoJSON farm boundary with fieldops geometry
-6. Syncs equipment (implements) and adds pass planning data
-7. Saves enriched store back to data.json
+**State Management:**
+- Authentication: JWT token in httpOnly cookie (NextAuth), verified server-side per request via auth() helper
+- Farm context: User role/farmId embedded in JWT token, checked at API layer
+- RBAC: Permission matrix evaluated in API routes before data access
+- UI state: React hooks (useState) for form dialogs, filters, loading states — no global state library
+- Audit trail: AuditLog table records userId, action (CREATE/UPDATE/DELETE), entityType, entityId, oldData snapshot, newData snapshot, timestamp
 
 ## Key Abstractions
 
-**Store (JSON):**
-- Purpose: In-memory object persisted to file with backup rotation
-- Examples: `farm-budget/data/data.json`, `grain-tickets/data/data.json`
-- Pattern: Load on startup, in-memory mutations, write lock queue to prevent corruption
-- Schema: Flat object with collections (fields, products, implements, etc.)
+**FieldEnterprise:**
+- Purpose: Represents one crop-per-field-per-season; splits field into multiple enterprises when one field has multiple crops
+- Examples: `2024 Corn on Simpson Field`, `2024 Soybeans on Simpson Field` (same field, different crops)
+- Pattern: One Field has many FieldEnterprises; all FieldEnterprise records for a Field sum acres = Field.totalAcres
+- Unique constraint: `(fieldId, cropYear, crop)` ensures no duplicate crop-per-season per field
+- Aggregates: SeedUsage, MaterialUsage, FieldOperation, FertilityEvent, ScoutingLog, ManagementAction, HarvestEvent, CropLot
 
-**Calculation Engine:**
-- Purpose: Isolate business logic from HTTP layer
-- Examples: `farm-budget/public/calc.js`, `grain-tickets/public/calc.js`
-- Pattern: Pure functions accepting data + refs, returning computed object
-- Exported functions: `computeFieldBudget()`, `computeDashboard()`, `computeTicket()`
+**CropLot:**
+- Purpose: Tracks harvested commodity from field through storage/sales with chain-of-custody
+- Examples: `2024-SRWW-KOPP` (2024 soft red winter wheat from Kopps field)
+- Pattern: Created from HarvestEvent; linked to FieldEnterprise via harvestEventId
+- Aggregates: StorageTransfer (in/out of storage), LoadoutEvent (truck sales), SaleDelivery (final sale record)
+- Mass balance: Reconcile harvestedLbs → soldLbs across all lots by crop
 
-**CRUD Factory:**
-- Purpose: DRY route registration for simple resource endpoints
-- Example: `farm-budget/server.js` lines 191-218
-- Pattern: `crudRoutes(path, collectionName, prefix)` creates GET, POST, PUT, DELETE
-- Used for: products, implements, seeds, rent, buyers, suppliers
+**SyncedOperation (staging table):**
+- Purpose: Holds raw Case IH API responses pending human review before commitment
+- Pattern: Write-heavy during sync; read during admin review; deleted after approval/rejection
+- Dedup key: `(farmId, fieldopsExternalId)` prevents duplicate rows across re-syncs
+- Status lifecycle: PENDING → (APPROVED | REJECTED) → deleted or archived
+- Contains raw JSON payload for traceability; mappings to field/opType maintained separately
 
-**Prisma Client:**
-- Purpose: Type-safe database access with migrations
-- Example: `organic-cert/src/lib/prisma.ts`
-- Pattern: Singleton client instance, used across API routes
-- Relationships: Models linked via foreign keys (Farm → User, Field → Equipment)
-
-**Audit Logger:**
-- Purpose: Compliance tracking for organic cert changes
-- Location: `organic-cert/src/lib/audit-logger.ts`
-- Pattern: Middleware logs CREATE/UPDATE/DELETE with user, old/new data, timestamp
-- Stored in: AuditLog model per Prisma schema
-
-**Lot Number Generator:**
-- Purpose: Auto-generate organic lot identifiers per NOP standard
-- Location: `organic-cert/src/lib/lot-generator.ts`
-- Pattern: Format `[cropYear]-[crop]-[fieldName]`
-- Used by: CropLot and SeedUsage models
+**StorageLocation:**
+- Purpose: Bin/warehouse metadata for organic/conventional separation verification
+- Examples: "North Bin", "Josh Tracey off-site", "Warehouse A"
+- Attributes: capacity (bu), wall type (smooth/cone-bottom), equipment type (belted conveyor)
+- Cleanout requirement: CleanoutEvent records document equipment/location purge between crops per NOP C11.0
 
 ## Entry Points
 
-**farm-budget:**
-- Location: `farm-budget/public/index.html`
-- Triggers: Browser open on port 3001
-- Responsibilities: Tab nav shell, API client setup, dashboard + field/input managers
+**Web Application:**
+- Location: `src/app/layout.tsx` (root), `src/app/(app)/layout.tsx` (authenticated wrapper)
+- Triggers: HTTP requests to port 3004 (configured in package.json dev script)
+- Responsibilities: Bootstrap Next.js app, apply global Providers (NextAuth, Themes), render Sidebar + Header + page content for authenticated routes
 
-**fsa-acres:**
-- Location: `fsa-acres/public/index.html`
-- Triggers: Browser open on port 3003
-- Responsibilities: FSA acre tracking, crop insurance, tillage codes, CLU records
+**API Routes:**
+- Entry: All HTTP requests to `/api/*` paths handled by respective `src/app/api/*/route.ts` files
+- Triggers: Fetch calls from client components, external webhooks (if added), CLI/scheduled tasks
+- Responsibilities: Parse request, validate session/RBAC, call Prisma/business logic, return JSON
 
-**grain-tickets:**
-- Location: `grain-tickets/public/index.html`
-- Triggers: Browser open on port 3000
-- Responsibilities: Ticket file upload, OCR/parsing via Anthropic, ticket search
+**Sync Job Entry:**
+- Location: `/api/admin/sync` POST handler
+- Triggers: Manual click in admin UI or future scheduled background job
+- Responsibilities: Call runFieldOpsSync, coordinate connection validation, normalization, staging, update sync state
 
-**meristem-malt:**
-- Location: `meristem-malt/public/index.html`
-- Triggers: Browser open on port [PORT env]
-- Responsibilities: Malt cost calculation, break-even pricing
-
-**organic-cert:**
-- Location: `organic-cert/src/app/layout.tsx`
-- Triggers: `npm run dev` (Next.js dev server on port 3004) or `npm run start` (production)
-- Responsibilities: Organic audit trail, field history, operations log, certifications, NextAuth login
+**Report Generation Entry:**
+- Location: `/api/reports/generate` POST handler
+- Triggers: User submits report generation form
+- Responsibilities: Assemble report data, render PDF, store GeneratedReport metadata, return PDF download
 
 ## Error Handling
 
-**Strategy:** HTTP status codes + JSON error responses on backend; toast messages on frontend
+**Strategy:** Try-catch blocks at API route level; pass errors to client as JSON with appropriate HTTP status codes; client-side toast notifications (sonner) display user-friendly messages; critical errors logged but not exposed (e.g., "Failed to fetch field enterprises").
 
 **Patterns:**
-- 404 Not Found: Resource doesn't exist or user lacks RBAC permission
-- 400 Bad Request: Validation failed (missing fields, invalid data type)
-- Express apps: `res.status(404).json({ error: 'Not found' })`
-- Next.js apps: NextAuth redirects unauthorized users to login; RBAC middleware checks role
-- Frontend: Try/catch on api.get/post/put/del(), util.showToast(error.message, duration, 'error')
+- API routes: `try { ... } catch (error) { return NextResponse.json({ error: message }, { status: 500 }) }`
+- Client validation: Check required fields before POST; form validation via Zod schemas (implicit in API input validation)
+- External API failures: Case IH connection errors caught in fieldops-sync, return error status, prevent partial writes to staging table
+- Database constraints: Unique constraint violations (duplicate field names, crop-per-season) handled as 400 Bad Request
 
 ## Cross-Cutting Concerns
 
-**Logging:**
-- Express apps: console.log for startup diagnostics
-- Next.js: Prisma query logging in dev mode
-- Audit trail: AuditLog model in organic-cert tracks all entity changes
+**Logging:** AuditLog table records all entity mutations (CREATE, UPDATE, DELETE) with userId, timestamp, oldData/newData snapshots. Implemented via logAudit() helper called in POST/PATCH/DELETE routes.
 
-**Validation:**
-- Express apps: Basic req.body key check in CRUD routes
-- Next.js: Prisma schema constraints (unique, required fields) + API route middleware
-- Frontend: HTML5 form validation, manual range checks before POST
+**Validation:** Prisma schema enforces types, unique constraints, required fields; API routes check required fields before create/update; normalizer uses Zod for Case IH API response validation.
 
-**Authentication:**
-- Express apps: None (assumed single-user internal tools)
-- organic-cert: NextAuth with bcryptjs password hashing, role-based access control (RBAC)
-- Session: NextAuth session cookie, user context loaded from Prisma
+**Authentication:** NextAuth handles login via credentials provider (email + bcrypt), JWT strategy for session, httpOnly cookies for security. Redirects unauthenticated requests to `/login`.
 
-**Computation:**
-- Lazy: farm-budget enriches field on GET request (avoids stale cached data)
-- Pre-computed: organic-cert stores mass balance results in database
-- Real-time: grain-tickets AI extraction on file upload (blocking await)
+**Authorization (RBAC):** Permission matrix in `rbac.ts` defines per-role capabilities (farm:read, enterprise:write, etc.). Checked in API routes via hasPermission(user.role, action) before Prisma call. Role enum: ADMIN, OFFICE, CREW, AUDITOR.
+
+**Data Isolation:** Farm-scoped queries filter by farmId; Prisma relations enforce Foreign Key integrity. No cross-farm data leaks by design (each endpoint checks farmId from user.farmId).
 
 ---
 
-*Architecture analysis: 2026-02-23*
+*Architecture analysis: 2025-02-25*

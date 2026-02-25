@@ -1,294 +1,312 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-02-23
+**Analysis Date:** 2026-02-25
 
 ## Test Framework
 
-**Status:** No testing framework configured
+**Runner:**
+- No test runner currently configured (Jest, Vitest, or similar)
+- Tests only found in node_modules (e.g., Zod's internal tests)
+- **Project currently has 0 test files in `src/`**
 
-- No Jest, Vitest, or other test runners found in `package.json` files
-- No test configuration files detected (`jest.config.js`, `vitest.config.ts`, etc.)
-- No `.test.ts`, `.spec.ts`, or `*.test.tsx` files in project directories
-- **Current State:** No automated tests in the codebase
+**Assertion Library:**
+- Not detected (no Jest, Vitest, Mocha, or similar)
 
-**Recommendation:** Adding tests should follow Next.js conventions (Jest for Next.js apps)
+**Run Commands:**
+```bash
+npm run lint              # Only linting command available (ESLint)
+npm run dev              # Development server (port 3004)
+npm run build            # TypeScript build
+npm run start            # Production server
+```
+
+**Status:** Testing infrastructure not yet implemented. This is a gap for future enhancement.
 
 ## Test File Organization
 
-**Current Status:** Not applicable - no tests present
+**Current state:**
+- No test files co-located with source code
+- No `__tests__` directories
+- No `.test.ts` or `.spec.ts` files in `src/`
 
-**When Testing is Added:**
-- Page components and forms should have tests in `__tests__` directories
-- Location pattern: Co-located with component or in separate `__tests__` folder
-- Example structure (recommended):
-  ```
-  src/app/(app)/dashboard/
-  ├── page.tsx
-  └── __tests__/
-      └── page.test.tsx
+**Recommended structure (when implemented):**
+```
+src/lib/
+├── fieldops-sync.ts
+└── fieldops-sync.test.ts      # Co-located test
 
-  src/components/layout/
-  ├── sidebar.tsx
-  └── __tests__/
-      └── sidebar.test.tsx
+src/components/ui/
+├── card.tsx
+└── card.test.tsx              # Co-located test
+```
 
-  src/lib/
-  ├── utils.ts
-  └── __tests__/
-      └── utils.test.ts
-  ```
+**Naming convention (recommended):**
+- `[module].test.ts` for unit tests
+- `[module].integration.test.ts` for integration tests
+- Test names should start with test function name: `test("fieldOpsSync handles 3-year lookback")`
 
-## Testing Strategy (Current Code Structure)
+## Test Structure
 
-Based on codebase analysis, when testing is implemented, these areas are critical:
+**Recommended pattern (not yet implemented):**
 
-**Unit Test Candidates:**
-- Utility functions: `cn()` in `src/lib/utils.ts`
-- Permission checking: `hasPermission()` and `canWrite()` in `src/lib/rbac.ts`
-- Audit logging: `logAudit()` in `src/lib/audit-logger.ts`
-- Date formatting helpers: `fmtDate()` and `fmtDateFull()` in field-enterprises page
+```typescript
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { runFieldOpsSync } from "@/lib/fieldops-sync";
+import { prisma } from "@/lib/prisma";
 
-**Integration Test Candidates:**
-- API routes:
-  - `src/app/api/fields/route.ts` - GET/POST field operations
-  - `src/app/api/field-enterprises/route.ts` - Field enterprise CRUD
-  - `src/app/api/import-plan/route.ts` - Data import operations
-- Authentication flow: `src/lib/auth.ts` NextAuth configuration
-- Database interactions: Prisma client integration with API routes
+describe("fieldops-sync", () => {
+  let testFarmId: string;
 
-**Component Test Candidates:**
-- Layout components: `src/components/layout/sidebar.tsx`, `src/components/layout/header.tsx`
-- Page components: `src/app/(app)/dashboard/page.tsx`, `src/app/(app)/admin/page.tsx`
-- Forms and dialogs with state management
-- Data loading and error states
+  beforeEach(async () => {
+    // Setup: create test farm, clear staging tables
+    testFarmId = "test-farm-" + Date.now();
+  });
 
-## Mocking Strategy (Future Implementation)
+  afterEach(async () => {
+    // Cleanup: remove test data
+    await prisma.fieldOpsSyncState.deleteMany({ where: { farmId: testFarmId } });
+  });
 
-**Framework:** When implemented, likely Jest or Vitest with `@testing-library/react`
+  it("should stage applications from 3-year lookback", async () => {
+    // Arrange
+    await setupTestFieldMapping(testFarmId);
+
+    // Act
+    const result = await runFieldOpsSync(testFarmId);
+
+    // Expect
+    expect(result.status).toBe("success");
+    expect(result.operationsStaged).toBeGreaterThan(0);
+  });
+
+  it("should skip already-approved operations on re-sync", async () => {
+    // Arrange: approve an operation first
+    // Act: run sync again
+    // Expect: operationsSkipped should increment
+  });
+});
+```
+
+**Patterns to follow:**
+- `describe()` wraps related tests
+- `beforeEach()` / `afterEach()` for setup/teardown
+- Arrange-Act-Assert (AAA) structure in test bodies
+- Use descriptive test names starting with verbs: "should stage", "should skip", "should validate"
+
+## Mocking
+
+**Framework (recommended):**
+- Vitest `vi.mock()` or Jest `jest.mock()`
+- Mock patterns similar to existing patterns in codebase
+
+**Patterns for this codebase:**
+
+Mock external API:
+```typescript
+vi.mock("@/lib/fieldops-client", () => ({
+  validateConnection: vi.fn().mockResolvedValue({
+    linkedAccountWarning: false,
+    fieldCount: 3
+  }),
+  getApplications: vi.fn().mockResolvedValue([
+    { id: "app-1", fieldId: "field-1", type: "FERTILIZER" }
+  ]),
+}));
+```
+
+Mock Prisma:
+```typescript
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    fieldOpsSyncState: {
+      upsert: vi.fn(),
+      findMany: vi.fn(),
+    },
+    caseIHFieldMapping: {
+      findMany: vi.fn().mockResolvedValue([
+        { caseIHFieldId: "cih-1", organicCertFieldId: "oc-field-1" }
+      ]),
+    },
+  },
+}));
+```
+
+Mock Next.js API:
+```typescript
+vi.mock("next/server", () => ({
+  NextResponse: {
+    json: vi.fn((data, options) => ({
+      json: () => data,
+      status: options?.status
+    })),
+  },
+}));
+```
 
 **What to Mock:**
-- Prisma client calls (`src/lib/prisma.ts`)
-- NextAuth session/auth functions (`src/lib/auth.ts`)
-- Fetch API calls (for client-side data loading in pages)
-- `next/navigation` hooks (`useRouter`, `usePathname`, `useParams`)
-- Icon components from `lucide-react` (replace with mock icons)
+- External APIs (Case IH FieldOps, CNH Industrial)
+- Database calls (Prisma operations)
+- Next.js framework internals (NextResponse, NextRequest)
+- Auth/session functions
 
 **What NOT to Mock:**
-- UI component libraries (radix-ui, shadcn components) - render them
-- Utility functions (`cn`, date formatters) - test real implementations
-- Custom hooks with business logic (when implemented)
-- Tailwind CSS classes (test via class presence, not styles)
+- Pure utility functions (`cn()`, `abbreviateCrop()`)
+- Zod validation schemas (test with real schemas)
+- Type definitions and constants
+- Error handling logic (test error paths with real errors)
 
-## Example Testing Patterns
+## Fixtures and Factories
 
-**For API Routes (recommended pattern):**
+**Test data pattern (recommended):**
+
 ```typescript
-// Example test structure for src/app/api/fields/route.ts
-describe("GET /api/fields", () => {
-  it("should return all fields", async () => {
-    // Mock Prisma
-    const mockFields = [{ id: "1", name: "Field A", farmId: "farm-1" }];
-    // Call route handler
-    // Verify NextResponse with fields
-  });
+// fixtures/fieldOpsData.ts
+export const mockFieldOpsApplication = {
+  id: "app-123",
+  fieldId: "field-abc",
+  fieldName: "North 40",
+  type: "HERBICIDE",
+  date: "2025-05-15",
+  products: [
+    { name: "Roundup", rate: 1.5, unit: "qt/ac" }
+  ],
+  acres: 40,
+  season: "2025",
+};
 
-  it("should filter by farmId if provided", async () => {
-    // Test with query param: ?farmId=farm-1
-  });
+export const mockFieldMapping = {
+  caseIHFieldId: "cih-field-1",
+  organicCertFieldId: "oc-field-1",
+  farmId: "farm-1",
+};
 
-  it("should return 500 on database error", async () => {
-    // Mock Prisma to throw error
-    // Verify error response
-  });
+// Usage in tests:
+it("should normalize applications", () => {
+  const result = normalizeApplications([mockFieldOpsApplication], {}, {}, "farm-1", "sync-1");
+  expect(result.staged.length).toBe(1);
 });
 ```
 
-**For Client Components (recommended pattern):**
-```typescript
-// Example test structure for src/app/(app)/dashboard/page.tsx
-describe("DashboardPage", () => {
-  it("should render dashboard with stats", async () => {
-    // Mock useSession, fetch calls
-    // Render component
-    // Verify stats cards render
-  });
+**Location:**
+- `src/__tests__/fixtures/` for shared test data
+- Per-module fixtures in `src/lib/__fixtures__/` if module-specific
 
-  it("should update crop year when buttons clicked", async () => {
-    // Render component
-    // Click year navigation button
-    // Verify data reloaded with new year
-  });
+## Coverage
 
-  it("should show loading state while fetching", async () => {
-    // Mock slow fetch
-    // Render and check for loading text
-  });
+**Requirements:**
+- Not enforced (no coverage config present)
 
-  it("should display error when data fetch fails", async () => {
-    // Mock fetch to fail
-    // Verify error handling
-  });
-});
-```
+**Recommended targets (when testing added):**
+- Core business logic: 80%+ coverage
+- API routes: 70%+ coverage
+- Utility functions: 90%+ coverage
+- UI components: 50%+ coverage
 
-**For Utilities (recommended pattern):**
-```typescript
-// Example test structure for src/lib/utils.ts
-describe("cn()", () => {
-  it("should merge tailwind classes correctly", () => {
-    const result = cn("px-2", "px-4"); // px-4 should win
-    expect(result).toContain("px-4");
-    expect(result).not.toContain("px-2");
-  });
-
-  it("should handle conditional classes", () => {
-    const result = cn("base", false && "hidden");
-    expect(result).toContain("base");
-    expect(result).not.toContain("hidden");
-  });
-});
-
-describe("hasPermission()", () => {
-  it("should grant admin all permissions", () => {
-    expect(hasPermission("ADMIN", "farm:write")).toBe(true);
-  });
-
-  it("should deny crew write permissions", () => {
-    expect(hasPermission("CREW", "farm:write")).toBe(false);
-  });
-
-  it("should handle unknown permissions gracefully", () => {
-    expect(hasPermission("ADMIN", "nonexistent:permission")).toBe(false);
-  });
-});
-```
-
-## Error Handling in Tests
-
-**Current Code Patterns to Test:**
-- API routes return `NextResponse.json({ error: "message" }, { status: 500 })` on error
-- Client components use `console.error()` for logging and `.catch(() => {})` for silent failures
-- Form submissions use `toast()` for user feedback
-
-**Test Coverage for Error Scenarios:**
-```typescript
-// API error handling
-test("API route returns proper error structure", async () => {
-  // Verify error response contains { error: string }
-  // Verify correct status code
-});
-
-// Client error handling
-test("Component shows error state when fetch fails", async () => {
-  // Mock fetch to reject
-  // Verify error message or fallback UI
-});
-
-// Toast notifications
-test("Component calls toast on operation", async () => {
-  // Mock sonner toast
-  // Trigger action
-  // Verify toast called with correct message
-});
-```
-
-## Data Fixtures (for testing)
-
-**Current Code Uses:**
-- Mock data structures defined in tests should match interfaces from pages:
-  - `FieldEnterprise` with fields: `id`, `cropYear`, `crop`, `variety`, `plantedAcres`, `organicStatus`, `locked`, `field`
-  - `Field` with fields: `id`, `name`, `totalAcres`, `organicStatus`
-  - `SeedUsageRecord`, `MaterialUsageRecord`, `FertilityRecord`, `OperationRecord`, `HarvestRecord`
-
-**Fixture Location (recommended):**
-- Create `src/__fixtures__/` or `src/__mocks__/` directory
-- Export reusable test data factories:
-  ```typescript
-  // src/__fixtures__/enterprises.ts
-  export const mockFieldEnterprise = (overrides = {}): FieldEnterprise => ({
-    id: "ent-1",
-    cropYear: 2026,
-    crop: "Corn",
-    variety: "Golden",
-    plantedAcres: 40,
-    organicStatus: "ORGANIC",
-    locked: false,
-    field: { id: "f-1", name: "North Field", totalAcres: 80 },
-    ...overrides,
-  });
-  ```
-
-## Coverage Goals
-
-**Current Status:** No coverage metrics in place
-
-**Recommended Targets:**
-- **Utilities:** 100% coverage (small, pure functions)
-- **API routes:** 80%+ coverage (test happy path and error cases)
-- **Page components:** 60%+ coverage (test critical user flows and states)
-- **Helpers/Config:** 90%+ coverage (permission checks, formatters)
-
-**View Coverage (when Jest is configured):**
+**View Coverage (when configured):**
 ```bash
-npm test -- --coverage
+npm run test -- --coverage    # If Vitest configured
+npm run test:coverage         # If Jest configured
 ```
 
-## Test Types in Codebase (Future Implementation)
+## Test Types
 
 **Unit Tests:**
-- Focus: Individual functions in `src/lib/` (utils, auth, rbac, audit-logger)
-- Scope: Pure functions that transform data
-- Framework: Jest with simple assertions
-- Example: `cn()` function, permission checks, date formatters
+- Scope: individual functions in isolation
+- Example: test `normalizeApplications()` with mocked Zod validation
+- Approach: mock all external dependencies, test logic only
+- Files: `src/lib/[module].test.ts`
 
 **Integration Tests:**
-- Focus: API routes that interact with Prisma and business logic
-- Scope: Request → Database → Response cycle
-- Framework: Jest with mocked Prisma
-- Example: POST `/api/fields` creates field and logs audit entry
+- Scope: multiple modules working together
+- Example: full `runFieldOpsSync()` with mocked API but real database transaction
+- Approach: mock external APIs, use real Prisma client (or test database)
+- Files: `src/lib/[module].integration.test.ts`
 
-**Component/E2E Tests:**
-- Focus: Page components with user interactions
-- Scope: Data loading, form submission, state changes
-- Framework: Jest + React Testing Library or Vitest + @testing-library/react
-- Example: User fills form, submits, sees success toast
-- Current status: Would benefit from end-to-end testing for critical flows like:
-  - Field enterprise creation and audit locking
-  - Multi-tab form handling (seeds, materials, operations)
-  - Data import and year filtering
+**E2E Tests:**
+- Framework: Not used currently
+- Would test: full workflows from UI through API to database
+- Could use: Playwright, Cypress, or similar
+- Example: "User navigates to field-enterprises page, creates new enterprise, verifies in database"
 
-## Async Testing (for implementation)
+## Common Patterns
 
-**Current patterns in code:**
-- API routes use async/await with try-catch
-- Client components use `useState` and `useEffect` for async operations
-- No Promise.all usage detected (except in dashboard data loading)
+**Async Testing:**
 
-**Testing async patterns:**
 ```typescript
-// For API routes with async handlers
-test("async API route handling", async () => {
-  const response = await GET(mockRequest);
-  expect(response.status).toBe(200);
+it("should load dashboard data", async () => {
+  const result = await loadData();
+  expect(result.stats.fields).toBeGreaterThan(0);
 });
 
-// For client useEffect
-test("component loads data on mount", async () => {
-  render(<DashboardPage />);
-  await waitFor(() => {
-    expect(screen.getByText("Field Enterprises")).toBeInTheDocument();
-  });
+// With timeout for slow operations
+it("should sync fieldops data", async () => {
+  const result = await runFieldOpsSync(farmId);
+  expect(result.status).toBe("success");
+}, { timeout: 10000 }); // 10 second timeout
+```
+
+**Error Testing:**
+
+```typescript
+it("should handle API connection failure gracefully", async () => {
+  vi.mocked(validateConnection).mockRejectedValueOnce(
+    new Error("OAuth token expired")
+  );
+
+  const result = await runFieldOpsSync(farmId);
+
+  expect(result.status).toBe("error");
+  expect(result.warnings).toContain(/OAuth token expired/);
+  expect(result.syncRunId).toBeDefined();
 });
 
-// For Promise.all in dashboard
-test("dashboard loads all data concurrently", async () => {
-  // Verify Promise.all was called with 5 fetches
-  // Verify state updated once all resolved
+it("should reject invalid field enterprise data", async () => {
+  const response = await POST(
+    new Request("http://localhost/api/field-enterprises", {
+      method: "POST",
+      body: JSON.stringify({ fieldId: "f1" }), // missing required fields
+    })
+  );
+
+  expect(response.status).toBe(400);
+  const body = await response.json();
+  expect(body.error).toContain("Missing required fields");
 });
 ```
+
+**Prisma Testing:**
+
+```typescript
+it("should create enterprise with auto-generated lot number", async () => {
+  const field = await prisma.field.create({
+    data: { name: "Field A", farmId, totalAcres: 100 }
+  });
+
+  const result = await POST(
+    new Request("...", {
+      body: JSON.stringify({
+        fieldId: field.id,
+        cropYear: 2025,
+        crop: "CORN",
+        plantedAcres: 50,
+      }),
+    })
+  );
+
+  const data = await result.json();
+  expect(data.lotNumber).toMatch(/2025-CORN-FIELDA/);
+});
+```
+
+## Recommended Testing Stack (When Implemented)
+
+**Runner:** Vitest (faster than Jest, better Next.js support)
+**Config:** `vitest.config.ts` at root
+**Assertion Library:** Vitest built-in expect
+**Mocking:** Vitest `vi.mock()` + `@testing-library/react` for components
+**Test DB:** Separate PostgreSQL instance or in-memory for isolated tests
+**CI/CD:** Run tests on PR before merge
 
 ---
 
-*Testing analysis: 2026-02-23*
-
-**Note:** Automated testing infrastructure is not currently in place. This document serves as a guide for implementing tests aligned with existing code patterns and Next.js best practices.
+*Testing analysis: 2026-02-25*

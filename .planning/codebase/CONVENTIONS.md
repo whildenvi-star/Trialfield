@@ -1,173 +1,195 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-02-23
+**Analysis Date:** 2026-02-25
 
 ## Naming Patterns
 
 **Files:**
-- Page components: `page.tsx` in route directories (`src/app/(app)/dashboard/page.tsx`)
-- API routes: `route.ts` in API directories (`src/app/api/fields/route.ts`)
-- Components: PascalCase with `.tsx` extension (`src/components/layout/sidebar.tsx`, `Sidebar.tsx`)
-- Utility/library files: camelCase with `.ts` extension (`src/lib/utils.ts`, `src/lib/auth.ts`)
-- Hooks: placed in `src/hooks/` directory (currently empty but convention established)
-- Types/Interfaces: defined inline in files or in `src/types/` directory (`src/types/next-auth.d.ts`)
+- React components: PascalCase (e.g., `dashboard/page.tsx`, `FieldEnterpriseForm.tsx`)
+- Utility/service files: kebab-case (e.g., `fieldops-sync.ts`, `audit-logger.ts`)
+- API routes: kebab-case directories with `route.ts` (e.g., `src/app/api/field-enterprises/route.ts`)
+- Types/interfaces: PascalCase in `src/types/` directory
 
 **Functions:**
-- Components: PascalCase (`DashboardPage`, `Sidebar`, `StatCard`)
-- Utility functions: camelCase (`cn`, `hasPermission`, `canWrite`, `loadData`, `fmtDate`)
-- Async functions named with clear intent (`loadData`, `authorize`, `logAudit`)
-- Helper functions: camelCase, often prefixed with verb (`fmtDate`, `fmtDateFull`)
+- camelCase for all functions, including React components (exported as named functions)
+- Async functions use `async` keyword consistently
+- Helper functions prefixed with verb (e.g., `loadData()`, `validateConnection()`, `normalizeApplications()`)
+- Private/internal functions sometimes include underscore prefix for clarity (e.g., `_normalizeField()`)
 
 **Variables:**
-- State variables: camelCase (`enterprises`, `cropYear`, `loading`, `statusColor`)
-- Constants (objects): camelCase (`statusOptions`, `navItems`, `actionColor`)
-- Configuration objects: camelCase with clear naming (`opTypeConfig`, `fertTypeConfig`, `statusColor`)
-- Destructured imports commonly use PascalCase for components
+- camelCase for all variable declarations
+- Constants in camelCase (NOT UPPER_CASE) except Prisma enums
+- State hooks: `[value, setValue]` pattern (e.g., `const [loading, setLoading] = useState(true)`)
+- Loop counters: `i`, `e` for `enterprises`, etc. in short contexts
 
 **Types:**
-- Interfaces: PascalCase, often suffixed with context (`FieldEnterprise`, `SeedUsageRecord`, `MaterialUsageRecord`)
-- Type definitions: PascalCase
-- Enum-like objects use SCREAMING_SNAKE_CASE for values (`ORGANIC`, `TRANSITIONAL`, `CONVENTIONAL`, `CROP_YEAR`)
+- PascalCase for interface/type names (e.g., `FieldEnterprise`, `SyncResult`, `AuditLogInput`)
+- Suffix interfaces with descriptive names (e.g., `SyncedOperationInput`, `FieldMappingLookup`)
+- Prisma-generated types imported directly from `@prisma/client`
 
 ## Code Style
 
 **Formatting:**
-- No explicit Prettier or linting config found in project root, relying on Next.js defaults
-- 2-space indentation (inferred from code)
-- Semicolons required at end of statements
-- Double quotes preferred (inferred from code)
-- Single-line imports grouped by source
+- No explicit Prettier config file (uses Next.js defaults)
+- 2-space indentation (inferred from codebase)
+- Line length not strictly limited but generally under 100 characters
+- Single quotes not enforced (uses double quotes in imports/strings)
 
 **Linting:**
-- ESLint configured via `eslint.config.mjs` in `organic-cert/`
-- Config extends `eslint-config-next/core-web-vitals` and `eslint-config-next/typescript`
+- ESLint 9 with `eslint-config-next` (core-web-vitals + typescript)
+- Config: `src/root/eslint.config.mjs` (flat config format)
+- Run: `npm run lint` (executes `eslint`)
 - Global ignores: `.next/`, `out/`, `build/`, `next-env.d.ts`
-- Disables specific TypeScript rules with inline comments: `// eslint-disable-next-line @typescript-eslint/no-explicit-any`
-- Pattern: Using `as any` casts for NextAuth session/token type issues (see `src/lib/auth.ts` lines 44-45)
+- Generated Prisma files have `/* eslint-disable */` at top
+
+**Rules enforced:**
+- `@typescript-eslint/no-explicit-any` — any types must be intentionally disabled with comment
+- React hooks rules (from eslint-config-next)
+- Next.js specific warnings (images, scripts, links)
+- No unused variables or imports
 
 ## Import Organization
 
-**Order (observed pattern):**
-1. React and Next.js imports (`import { useEffect, useState } from "react"`, `import Link from "next/link"`)
-2. Component imports (`import { Card, CardContent } from "@/components/ui/card"`)
-3. Icons and third-party UI (`import { Sprout, Plus } from "lucide-react"`, `import { toast } from "sonner"`)
-4. Utilities and internal helpers (`import { cn } from "@/lib/utils"`)
-5. Types and interfaces (defined inline in most files)
+**Order:**
+1. External packages (`next/*`, `react/*`, `@prisma/client`)
+2. Internal absolute imports using `@/` alias (e.g., `@/lib/prisma`, `@/components/ui/card`)
+3. Relative imports (used sparingly, typically not in this codebase)
 
 **Path Aliases:**
-- `@/*` resolves to `./src/*` (configured in `tsconfig.json`)
-- Consistently used across all imports: `@/lib/auth`, `@/components/ui/card`, `@/lib/utils`
+- `@/*` maps to `./src/*` (configured in `tsconfig.json`)
+- Used throughout: `@/lib/prisma`, `@/components/ui/card`, `@/app/api`
+
+**Import patterns:**
+- Named imports preferred: `import { prisma } from "@/lib/prisma"`
+- Namespace imports for large modules: `import * as React from "react"`
+- Type imports: `import type { FieldEnterprise } from "@/types"`
 
 ## Error Handling
 
 **Patterns:**
-- Try-catch blocks for async operations, especially in API routes (see `src/app/api/fields/route.ts` lines 6-23)
-- Error messages sent as JSON responses: `NextResponse.json({ error: "message" }, { status: 500 })`
-- Conditional error handling: `error instanceof Error ? error.message : "default message"`
-- Client-side: `.catch(() => {})` pattern (see `src/app/(app)/admin/page.tsx` line 25) - silently catches errors
-- Console error logging for debugging: `console.error("Failed to load dashboard data", err)` (see `src/app/(app)/dashboard/page.tsx` line 93)
-- Toast notifications for user feedback: `toast` from "sonner" library used in client components
+- `try-catch` blocks in async functions, server routes, and Prisma operations
+- Error detection: `err instanceof Error ? err.message : String(err)` (defensive pattern)
+- Prisma `.findUnique()` returns `null` if not found (not an error)
+- `.catch()` chaining for text parsing: `.text().catch(() => "")`
+- Errors logged to console in client components: `console.error("Failed to load dashboard data", err)`
+- API routes return `NextResponse.json({ error: message }, { status: 500 })`
+- No custom error classes (uses built-in Error)
 
-**Server vs Client:**
-- Server components (API routes): throw errors and return proper HTTP status codes
-- Client components: catch errors silently or log to console; use toast for user-facing feedback
+**Validation:**
+- Zod schemas for external API responses (e.g., `FieldOpsApplicationSchema`, `FieldOpsYieldSchema`)
+- Zod `safeParse()` for defensive parsing (warnings instead of crashes)
+- Manual validation in API routes: check required fields then return 400 status
+- Type guards: `if (!credentials?.email || !credentials?.password) return null`
 
 ## Logging
 
-**Framework:** No dedicated logging library used; relies on `console.error()` for errors
+**Framework:** Native `console` object
 
 **Patterns:**
-- Error logging: `console.error("context message", error)`
-- Audit logging: dedicated `logAudit()` function in `src/lib/audit-logger.ts`
-- Audit logs capture: action type, entity type, entity ID, user info, old/new data
-- Example: `src/app/api/fields/route.ts` logs CREATE operations with full entity data
+- `console.error()` in catch blocks: `console.error("Failed to load dashboard data", err)`
+- No structured logging library (logs go to stdout)
+- Audit logging via `logAudit()` function in `@/lib/audit-logger.ts`
+- Audit logs write to `prisma.auditLog` table with userId, action, entityType, oldData, newData
 
 ## Comments
 
 **When to Comment:**
-- Section headers using ASCII box patterns: `// ─── Types ──────────────────────────────────────────────`
-- Linting rule suppressions: `// eslint-disable-next-line @typescript-eslint/no-explicit-any`
-- Function purposes documented in API route comments: `// GET /api/fields — list all fields`
+- JSDoc blocks for exported functions with complex signatures
+- Inline comments for non-obvious logic (e.g., "Re-sync safe: PENDING rows are updated; APPROVED/REJECTED rows are skipped")
+- Section headers using `// ─── Section Name ───` pattern for large files (see `fieldops-sync.ts`)
+- Defensive parsing strategy explained in module docstrings
 
 **JSDoc/TSDoc:**
-- Not observed in codebase; types are preferred via TypeScript interfaces and inline type annotations
-- Parameter types defined inline in function signatures rather than JSDoc blocks
+```typescript
+/**
+ * Run a full Case IH FieldOps sync for the given farm.
+ *
+ * Farm-scoped: only writes SyncedOperation rows for this farmId.
+ * Re-sync safe: PENDING rows are updated; APPROVED/REJECTED rows are skipped.
+ */
+export async function runFieldOpsSync(farmId: string): Promise<SyncResult> {
+```
+
+- Parameters, return types, and important context documented
+- Inline JSDoc used for interfaces (see `fieldops-normalizer.ts`)
 
 ## Function Design
 
-**Size:** Large files observed (1429 lines in `src/app/(app)/field-enterprises/[id]/page.tsx`), but functions remain focused within components
-- Page components tend to be large due to form handling and UI rendering
-- Utility functions kept small and single-purpose (`cn()` is 5 lines)
+**Size:**
+- Aim for functions under 50 lines (most utility functions 10-30 lines)
+- Longer orchestration functions (like `runFieldOpsSync`) structured with clear step comments
+- Component functions can be longer (60+ lines) if well-organized
 
 **Parameters:**
-- Destructured parameters preferred for objects (see `AppLayout` in `src/app/(app)/layout.tsx`)
-- Inline type annotations for parameters using TypeScript
-- Props typed with explicit interfaces: `{ children: React.ReactNode }`, `{ icon: React.ComponentType<...>; label: string; ... }`
+- Use object parameter destructuring for functions with 3+ params
+- Example: `function cn(...inputs: ClassValue[])` for simple functions
+- Example: API routes destructure `{ searchParams } = new URL(request.url)`
 
 **Return Values:**
-- Components return JSX elements or React.ReactNode
-- API handlers return NextResponse objects with proper status codes
-- Utility functions return simple types (strings, booleans, objects)
-- Functions explicitly typed with return types: `async function loadData(): Promise<void>`
+- Explicit return types in function signatures
+- Async functions return `Promise<T>` (e.g., `Promise<SyncResult>`)
+- API handlers return `NextResponse.json()` or typed objects
+- React components return JSX elements (TSX files)
 
 ## Module Design
 
 **Exports:**
-- Default exports for page components: `export default function DashboardPage()`
-- Named exports for utilities, components, and functions: `export function cn(...)`, `export function hasPermission(...)`
-- Single export per utility module (thin modules)
+- Named exports preferred: `export function logAudit()`, `export interface SyncResult`
+- Default exports only for Next.js page components and layouts
+- Barrel files: `src/components/ui/` has unified exports in each component file
 
 **Barrel Files:**
-- Not used; imports reference specific component paths directly
-- Example: `import { Card, CardContent } from "@/components/ui/card"` (not from a barrel index.ts)
+- Not used at package level (each component re-exports from `index.tsx` or combined export)
+- Example in `src/components/ui/card.tsx`: 8 named exports from one file
+- Clients import: `import { Card, CardContent, CardHeader } from "@/components/ui/card"`
+
+**Module conventions:**
+- Orchestration services (like `fieldops-sync.ts`) export main function + types
+- Normalizers export validation schemas + transformation functions
+- Library modules export pure utilities (e.g., `utils.ts` exports `cn()` helper)
+
+## Async Patterns
+
+**Promise handling:**
+- `async/await` preferred over `.then()` chains
+- `Promise.all()` for parallel requests: `const [entRes, fieldRes, ...] = await Promise.all([...])`
+- Prisma transactions: `await prisma.$transaction(async (tx) => { ... })`
+
+## Zod Validation
+
+**Schema definition pattern:**
+```typescript
+const FieldOpsProductSchema = z.object({
+  name: z.string(),
+  rate: z.number(),
+  unit: z.string(),
+});
+```
+
+**Parse/safeParse:**
+- Defensive parsing with `safeParse()` for external data
+- Results checked for `.success` flag before accessing `.data`
+- Warnings collected for partial failures (see `fieldops-normalizer.ts`)
 
 ## Type Safety
 
-**TypeScript:**
-- Strict mode enabled (`"strict": true` in `tsconfig.json`)
-- Type annotations on component props and function parameters
-- Inline interfaces preferred for local data structures
-- Generic types used sparingly but present (e.g., `Record<string, string>` for color maps)
+**TypeScript settings:**
+- `strict: true` in `tsconfig.json`
+- `noEmit: true` (type-check only, no build output)
+- `moduleResolution: "bundler"` for Next.js
+- `jsx: "react-jsx"` for React 19
 
-**Example patterns:**
-```typescript
-// Interface for data structures
-interface FieldEnterprise {
-  id: string;
-  cropYear: number;
-  crop: string;
-  // ...
-}
+**Type patterns:**
+- Generics used sparingly (mostly in React components like `React.ComponentProps`)
+- `Record<string, T>` for maps/lookups (e.g., `const fieldMappings: FieldMappingLookup = {}`)
+- Optional properties with `?`: `cropYear?: number`
+- Union types for status values: `status: "PENDING" | "APPROVED" | "REJECTED"`
+- Type guards before unsafe casts: `const u = user as any` with preceding guard
 
-// Props typing
-export default function StatCard({
-  icon: Icon,
-  label,
-  value,
-  href,
-}: {
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-  label: string;
-  value: string | number;
-  href: string;
-}) { }
-
-// Color/config map typing
-const statusColor: Record<string, string> = { /* ... */ }
-```
-
-## Client vs Server Components
-
-**Client Components:**
-- Marked with `"use client"` directive at top of file
-- Page components with state, event handlers, hooks
-- Examples: `src/app/(app)/dashboard/page.tsx`, `src/components/layout/sidebar.tsx`
-
-**Server Components:**
-- API routes in `src/app/api/` directory
-- Auth wrapper in `src/app/(app)/layout.tsx` (fetches session server-side)
-- Direct database access via Prisma in server context
+**Any usage:**
+- Intentional `any` casts documented with `// eslint-disable-next-line @typescript-eslint/no-explicit-any`
+- Typically for NextAuth token/session augmentation where types can't be extended normally
 
 ---
 
-*Convention analysis: 2026-02-23*
+*Convention analysis: 2026-02-25*

@@ -1,290 +1,241 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-02-23
+**Analysis Date:** 2025-02-25
 
 ## Directory Layout
 
 ```
-my-project-one/
-├── farm-budget/           # Farm Enterprise Financial Management
-│   ├── server.js          # Express server + in-memory store
-│   ├── import.js          # Data import script
-│   ├── package.json       # Dependencies: express, xlsx, node-cron, dotenv
-│   ├── public/            # Frontend + calc engine
-│   │   ├── index.html     # Entry point HTML
-│   │   ├── style.css      # UI styles
-│   │   ├── app.js         # App shell, tab navigation
-│   │   ├── calc.js        # Calc engine: field budget, dashboard
-│   │   ├── field-editor.js    # Field CRUD UI
-│   │   ├── dashboard.js       # Summary view
-│   │   ├── enterprise.js      # Enterprise UI
-│   │   ├── inputs-manager.js  # Product/input CRUD
-│   │   ├── sales.js           # Sales tracking
-│   │   ├── hedging.js         # Price hedging
-│   │   ├── pdf-report.js      # PDF export
-│   │   ├── farm-map.js        # Leaflet.js map integration
-│   │   ├── seed-manager.js    # Seed variety CRUD
-│   │   ├── rent-manager.js    # Rent tracking
-│   │   └── icons/             # SVG icons
-│   ├── fieldops/          # Integration with fieldops system
-│   │   ├── client.js      # HTTP client to fieldops API
-│   │   ├── sync.js        # Sync logic: match fields, equipment, boundaries
-│   │   └── mock-data.js   # Test fixtures
-│   ├── data/              # Persistent storage
-│   │   └── data.json      # JSON store (created at runtime)
-│   └── node_modules/      # Dependencies (not tracked)
-│
-├── fsa-acres/             # FSA Acre Reporting & Crop Insurance Tracker
-│   ├── server.js          # Express server + in-memory store
-│   ├── import.js          # Data import script
-│   ├── package.json       # Dependencies: express, xlsx
-│   ├── public/            # Frontend + calc
-│   │   ├── index.html     # Entry point HTML
-│   │   ├── calc.js        # Calc engine: CLU, farm, pricing calcs
-│   │   ├── app.js         # Tab navigation
-│   │   └── [ui modules]   # CRUD managers for CLU, farms, pricing
-│   ├── data/              # Persistent storage
-│   │   └── data.json      # JSON store
-│   └── node_modules/
-│
-├── grain-tickets/         # Grain Ticket Entry System
-│   ├── server.js          # Express + multer for file upload
-│   ├── import.js          # Data import script
-│   ├── package.json       # Dependencies: express, multer, xlsx, @anthropic-ai/sdk
-│   ├── public/            # Frontend + calc
-│   │   ├── index.html     # Entry point HTML
-│   │   ├── calc.js        # Calc engine: ticket enrichment
-│   │   ├── app.js         # Upload UI, ticket list
-│   │   └── [ui modules]   # Ticket search, display
-│   ├── data/              # Persistent storage
-│   │   └── data.json      # JSON store
-│   └── node_modules/
-│
-├── meristem-malt/         # Meristem Malt Cost Calculator
-│   ├── server.js          # Express server
-│   ├── package.json       # Dependencies: express
-│   ├── public/            # Frontend + calc
-│   │   ├── index.html     # Entry point HTML
-│   │   ├── calc.js        # Cost calculation engine
-│   │   ├── app.js         # Input form UI
-│   │   └── style.css      # Styles
-│   ├── data/              # Persistent storage (if used)
-│   │   └── data.json
-│   └── node_modules/
-│
-├── organic-cert/          # Organic Certification Tracker (Next.js full-stack)
-│   ├── package.json       # Dependencies: next, react, prisma, next-auth
-│   ├── tsconfig.json      # TypeScript config
-│   ├── next.config.js     # Next.js config
-│   ├── tailwind.config.js # Tailwind CSS config
-│   ├── prisma/
-│   │   └── schema.prisma  # Database schema: 30+ models
-│   ├── src/
-│   │   ├── app/           # Next.js App Router pages
-│   │   │   ├── layout.tsx           # Root layout (metadata, providers)
-│   │   │   ├── login/page.tsx       # NextAuth login form
-│   │   │   ├── (app)/layout.tsx     # Protected app layout (navbar, sidebar)
-│   │   │   ├── (app)/dashboard/page.tsx        # Dashboard summary
-│   │   │   ├── (app)/farm/page.tsx             # Farm settings
-│   │   │   ├── (app)/fields/page.tsx           # Field list
-│   │   │   ├── (app)/field-enterprises/page.tsx   # Crop lot list
-│   │   │   ├── (app)/field-enterprises/[id]/page.tsx # Crop lot detail + operations/fertility/harvest
-│   │   │   ├── (app)/reference/                 # Reference data pages
-│   │   │   │   ├── seeds/page.tsx               # Seed lot management
-│   │   │   │   ├── materials/page.tsx           # Material/input library
-│   │   │   │   ├── equipment/page.tsx           # Equipment inventory
-│   │   │   │   ├── storage/page.tsx             # Storage location list
-│   │   │   │   └── buyers/page.tsx              # Buyer contacts
-│   │   │   ├── (app)/reports/page.tsx           # Cert report generation
-│   │   │   ├── (app)/import-plan/page.tsx       # Import from farm-budget
-│   │   │   ├── (app)/admin/page.tsx             # Admin user mgmt
-│   │   │   └── api/                             # API routes
-│   │   │       ├── auth/[...nextauth]/route.ts  # NextAuth callback
-│   │   │       ├── farm/route.ts                # Farm CRUD
-│   │   │       ├── field-enterprises/route.ts   # Crop lot CRUD
-│   │   │       ├── field-enterprises/[id]/operations/route.ts   # Operation CRUD
-│   │   │       ├── field-enterprises/[id]/fertility/route.ts    # Fertility event CRUD
-│   │   │       ├── field-enterprises/[id]/harvest/route.ts      # Harvest event CRUD
-│   │   │       ├── materials/route.ts           # Material library CRUD
-│   │   │       ├── storage/route.ts             # Storage location CRUD
-│   │   │       ├── audit-log/route.ts           # Audit trail query
-│   │   │       └── [more endpoints]
-│   │   ├── components/
-│   │   │   ├── layout/
-│   │   │   │   ├── providers.tsx        # NextAuth + theme provider setup
-│   │   │   │   ├── navbar.tsx           # Top navigation
-│   │   │   │   └── sidebar.tsx          # Left sidebar
-│   │   │   ├── forms/
-│   │   │   │   ├── field-form.tsx       # Edit field details
-│   │   │   │   ├── operation-form.tsx   # Create field operation
-│   │   │   │   ├── fertility-form.tsx   # Create fertility event
-│   │   │   │   ├── harvest-form.tsx     # Create harvest event
-│   │   │   │   └── [more forms]
-│   │   │   ├── tables/
-│   │   │   │   ├── operations-table.tsx    # List operations
-│   │   │   │   ├── fertility-table.tsx     # List fertility events
-│   │   │   │   ├── harvest-table.tsx       # List harvest events
-│   │   │   │   └── [more tables]
-│   │   │   └── ui/
-│   │   │       ├── button.tsx           # Shadcn button component
-│   │   │       ├── input.tsx            # Shadcn input component
-│   │   │       ├── dialog.tsx           # Shadcn dialog (modal)
-│   │   │       ├── select.tsx           # Shadcn select dropdown
-│   │   │       ├── table.tsx            # Shadcn table
-│   │   │       └── [more UI primitives]
-│   │   ├── lib/
-│   │   │   ├── prisma.ts           # Prisma client singleton
-│   │   │   ├── auth.ts             # NextAuth config, getSession helper
-│   │   │   ├── rbac.ts             # Role-based access control
-│   │   │   ├── audit-logger.ts     # Log CREATE/UPDATE/DELETE events
-│   │   │   ├── lot-generator.ts    # Auto-generate lot numbers
-│   │   │   ├── mass-balance.ts     # C5.0 fertility calculations
-│   │   │   ├── day-rule-calc.ts    # C6.0 application timing rules
-│   │   │   ├── utils.ts            # Shared helpers (formatDate, etc)
-│   │   │   └── pdf/
-│   │   │       └── cert-report.ts  # PDF generation for certifications
-│   │   ├── hooks/
-│   │   │   └── useAuth.ts          # NextAuth useSession wrapper
-│   │   ├── types/
-│   │   │   ├── index.ts            # Custom TypeScript types
-│   │   │   └── prisma.ts           # Prisma-generated types
-│   │   ├── generated/
-│   │   │   └── prisma/             # Auto-generated Prisma client types
-│   │   └── globals.css             # Tailwind directives + custom styles
-│   ├── public/
-│   │   └── [static assets]         # Logos, favicons
-│   ├── .env.example                # Template for env vars
-│   ├── .env                        # DATABASE_URL, NEXTAUTH_SECRET, etc (not tracked)
-│   └── node_modules/
-│
-├── Glomalin/                       # Supporting folder (documentation/examples)
-├── .planning/                      # GSD planning docs
-│   └── codebase/
-│       ├── ARCHITECTURE.md         # This file
-│       ├── STRUCTURE.md            # This file
-│       └── [other docs]
-├── .git/                           # Version control
-└── [spreadsheets, data files]      # Business documents
+organic-cert/
+├── prisma/                       # Database schema & migrations
+│   └── schema.prisma             # Prisma ORM model definitions (25+ models)
+├── public/                       # Static assets (favicons, images)
+├── src/
+│   ├── app/                      # Next.js App Router
+│   │   ├── (app)/                # Protected routes group (requires auth)
+│   │   │   ├── admin/            # Admin features (fieldops sync, review)
+│   │   │   ├── dashboard/        # Dashboard landing page
+│   │   │   ├── farm/             # Farm settings & metadata
+│   │   │   ├── field-enterprises/# Split-field management UI
+│   │   │   ├── fields/           # Field records & history
+│   │   │   ├── import-plan/      # Import workflow from farm-budget
+│   │   │   ├── reference/        # Master data (materials, seeds, equipment, storage, buyers)
+│   │   │   ├── reports/          # Report generation UI
+│   │   │   └── layout.tsx        # Auth wrapper, sidebar + header
+│   │   ├── api/                  # Next.js API routes (REST endpoints)
+│   │   │   ├── admin/            # Admin-only endpoints (sync, staging review)
+│   │   │   ├── audit-log/        # Audit trail queries
+│   │   │   ├── auth/             # NextAuth handlers
+│   │   │   ├── buyers/           # Buyer CRUD
+│   │   │   ├── equipment/        # Equipment CRUD
+│   │   │   ├── farm/             # Farm info CRUD
+│   │   │   ├── field-enterprises/# Enterprise CRUD + sub-resources (fertility, operations, harvest, applications, seed-usage)
+│   │   │   ├── fields/           # Field CRUD
+│   │   │   ├── import-plan/      # Import workflow endpoints
+│   │   │   ├── materials/        # Material CRUD
+│   │   │   ├── reports/          # Report generation & history
+│   │   │   ├── seeds/            # Seed lot CRUD
+│   │   │   └── storage/          # Storage location CRUD
+│   │   ├── login/                # Login page (unauthenticated)
+│   │   └── layout.tsx            # Root layout (metadata, fonts, global styles)
+│   ├── components/               # Reusable React components
+│   │   ├── forms/                # Form components (dialogs, inputs)
+│   │   ├── layout/               # Sidebar, header, providers (NextAuth, theme)
+│   │   ├── tables/               # Data tables for list views
+│   │   └── ui/                   # Shadcn/ui components (card, button, dialog, select, etc.)
+│   ├── generated/                # AUTO-GENERATED
+│   │   └── prisma/               # Prisma client generated types
+│   ├── hooks/                    # Custom React hooks
+│   ├── lib/                      # Business logic, utilities
+│   │   ├── pdf/                  # PDF report generation
+│   │   │   ├── sections/         # 8 NOP inspection report sections
+│   │   │   ├── components/       # Reusable PDF components (header, footer, table)
+│   │   │   ├── inspection-report.tsx  # Root Document component
+│   │   │   └── styles.ts         # @react-pdf/renderer styling
+│   │   ├── audit-logger.ts       # AuditLog insert helper
+│   │   ├── auth.ts               # NextAuth configuration
+│   │   ├── day-rule-calc.ts      # NOP harvest-to-application gap calculator
+│   │   ├── fieldops-client.ts    # Case IH API OAuth2 client
+│   │   ├── fieldops-mock.ts      # Test data for fieldops-client fallback
+│   │   ├── fieldops-normalizer.ts# Zod validation + transform for Case IH responses
+│   │   ├── fieldops-sync.ts      # Sync orchestration (3-year lookback, staging, state)
+│   │   ├── lot-generator.ts      # CropLot number generation (YEAR-CROP-FIELDABBREV)
+│   │   ├── mass-balance.ts       # Harvest → sold reconciliation
+│   │   ├── prisma.ts             # Prisma client singleton
+│   │   ├── rbac.ts               # Role-based access control permission matrix
+│   │   ├── report-assembler.ts   # Single Prisma query for all report data
+│   │   └── utils.ts              # Miscellaneous utilities
+│   ├── types/                    # TypeScript type definitions
+│   │   └── next-auth.d.ts        # NextAuth session type augmentation
+│   └── globals.css               # Tailwind base styles
+├── uploads/                      # Runtime directory for generated PDFs
+│   └── reports/                  # PDF files written here by report API route
+├── package.json                  # Dependencies, scripts
+├── tsconfig.json                 # TypeScript compiler config (@ alias for src/)
+├── tailwind.config.ts            # Tailwind CSS configuration
+├── next.config.js                # Next.js build config
+└── .env.local                    # Environment variables (NOT committed)
 ```
 
 ## Directory Purposes
 
-**farm-budget/:**
-- Purpose: Field-by-field budget forecasting for crop enterprises
-- Contains: Express server, tab-based SPA, calculation engine
-- Key files: `server.js` (API), `public/calc.js` (budget math), `public/app.js` (shell)
+**`prisma/`:**
+- Purpose: Database schema, migrations, and Prisma client generation
+- Contains: `schema.prisma` (single file defining all models, enums, relations)
+- Key files: `schema.prisma` defines 25+ models in sections (foundation, land & fields, seeds & inputs, field operations, harvest→storage→sale, supporting, Case IH integration, reports)
 
-**fsa-acres/:**
-- Purpose: FSA acre reporting, crop insurance tracking
-- Contains: Express server, CRUD managers for CLU records, farms, pricing
-- Key files: `server.js` (API), `public/calc.js` (FSA calculations)
+**`src/app/(app)/`:**
+- Purpose: Authenticated user-facing pages and layouts
+- Contains: Page components (.tsx files), route groups using Next.js parentheses notation
+- Key directories:
+  - `admin/` — FieldOps sync/review UI (requires ADMIN role)
+  - `field-enterprises/` — Crop-per-field management with create/edit dialogs
+  - `fields/` — Field list with activity metrics, drill-down to history
+  - `reference/` — Master data editors (materials, seeds, equipment, storage, buyers)
+  - `reports/` — Report generation selector (crop year, field filter, download history)
 
-**grain-tickets/:**
-- Purpose: Grain ticket entry from uploaded files, AI-assisted extraction
-- Contains: Express + multer, Anthropic SDK integration, ticket storage
-- Key files: `server.js` (multer + API), `public/app.js` (upload UI)
+**`src/app/api/`:**
+- Purpose: REST API endpoints
+- Contains: Route handlers (route.ts files) for GET/POST/PATCH/DELETE operations
+- Naming: Path matches resource (e.g., `/api/field-enterprises/[id]/fertility` → `field-enterprises/[id]/fertility/route.ts`)
+- All routes check authentication via auth() helper and RBAC via hasPermission()
 
-**meristem-malt/:**
-- Purpose: Malt cost calculator, break-even pricing
-- Contains: Express server, simple calculation UI
-- Key files: `server.js` (API), `public/calc.js` (costing logic)
+**`src/components/`:**
+- Purpose: Reusable React UI building blocks
+- Contains:
+  - `ui/` — Shadcn/ui imported components (Card, Button, Dialog, Select, Badge, Input, etc.)
+  - `layout/` — App-level components (Sidebar with navigation, Header with user menu, Providers wrapper)
+  - `forms/` — Form input groups, validation dialogs
+  - `tables/` — Paginated data tables with sort/filter
 
-**organic-cert/:**
-- Purpose: Organic certification audit trail, compliance documentation
-- Contains: Next.js full-stack, Prisma PostgreSQL, NextAuth authentication, role-based access
-- Key files: `prisma/schema.prisma` (data model), `src/app/api/` (API routes), `src/components/` (React components)
+**`src/lib/`:**
+- Purpose: Non-component business logic
+- Contains:
+  - Core integrations: `fieldops-client.ts` (Case IH OAuth2), `fieldops-sync.ts` (orchestration), `fieldops-normalizer.ts` (Zod validation)
+  - Data assembly: `report-assembler.ts` (single Prisma query), `lot-generator.ts` (auto-generated lot numbers)
+  - PDF generation: `pdf/*.tsx` (React Document components using @react-pdf/renderer)
+  - Security: `auth.ts` (NextAuth), `rbac.ts` (permission matrix), `audit-logger.ts` (log writes)
+  - Utilities: `day-rule-calc.ts`, `mass-balance.ts`, `utils.ts`, `prisma.ts` (client singleton)
+
+**`src/lib/pdf/`:**
+- Purpose: PDF inspection report assembly and rendering
+- Contains:
+  - `inspection-report.tsx` — Top-level Document component wrapping all sections
+  - `sections/` — 8 components for NOP report structure (cover page, TOC, operation overview, field list, field history, application log, harvest log, mass balance)
+  - `components/` — Reusable PDF building blocks (header, footer, table layouts)
+  - `styles.ts` — @react-pdf/renderer StyleSheet definitions
+
+**`src/types/`:**
+- Purpose: TypeScript type extensions and definitions
+- Contains: `next-auth.d.ts` augments NextAuth session type with role, farmId, farmName fields
+
+**`uploads/reports/`:**
+- Purpose: Runtime storage for generated PDF files
+- Created by: `/api/reports/generate` route
+- Committed: No (generated at runtime; not in git)
 
 ## Key File Locations
 
 **Entry Points:**
-- `farm-budget/public/index.html`: HTML shell with nav tabs
-- `fsa-acres/public/index.html`: HTML shell for FSA tracking
-- `grain-tickets/public/index.html`: Upload form + ticket list
-- `organic-cert/src/app/layout.tsx`: Next.js root layout (NextAuth providers)
+- `src/app/layout.tsx` — Root Next.js layout; loads fonts, global CSS, wraps with Providers
+- `src/app/(app)/layout.tsx` — Protected app layout; checks auth, renders Sidebar + Header + children
+- `src/app/(app)/dashboard/page.tsx` — Default landing page after login
+- `src/app/login/page.tsx` — Login form (unauthenticated)
 
 **Configuration:**
-- `farm-budget/.env`: PORT, FIELDOPS_API_URL (if enabled)
-- `organic-cert/.env`: DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL
-- `organic-cert/prisma/schema.prisma`: Complete data model
+- `prisma/schema.prisma` — Database schema (all models and relations)
+- `tsconfig.json` — TypeScript paths (@ alias for src/)
+- `tailwind.config.ts` — Tailwind CSS custom config
+- `next.config.js` — Next.js build settings
+- `package.json` — Dependencies, scripts (dev runs on port 3004)
 
 **Core Logic:**
-- `farm-budget/server.js`: 382 lines, Express API with CRUD factory pattern
-- `farm-budget/public/calc.js`: Budget, dashboard, enterprise calculations
-- `organic-cert/src/lib/audit-logger.ts`: Compliance audit logging
-- `organic-cert/src/lib/rbac.ts`: Role-based access control middleware
+- `src/lib/fieldops-sync.ts` — Case IH sync orchestration (validate → fetch → normalize → stage)
+- `src/lib/fieldops-client.ts` — Case IH API OAuth2 client with token caching
+- `src/lib/report-assembler.ts` — Complex Prisma query assembling report data
+- `src/lib/auth.ts` — NextAuth configuration (credentials provider, JWT, callbacks)
+- `src/lib/rbac.ts` — Role-based access control permission matrix
 
 **Testing:**
-- None currently (no test framework detected)
+- Not detected — No test files found (*.test.ts, *.spec.ts)
+
+**Authentication:**
+- `src/app/api/auth/[...nextauth]/route.ts` — NextAuth handlers (signin, signout, callback)
+- `src/lib/auth.ts` — NextAuth provider config and JWT callbacks
+- `src/app/login/page.tsx` — Login UI with email/password form
 
 ## Naming Conventions
 
 **Files:**
-- Express app backends: `server.js` (main) + `import.js` (data loader)
-- Calculation engines: `calc.js` always in `public/` folder
-- Frontend modules: `[feature]-manager.js` (e.g., `seed-manager.js`, `inputs-manager.js`)
-- Next.js pages: `[feature]/page.tsx` in App Router structure
-- Next.js API: `src/app/api/[resource]/route.ts` and `src/app/api/[resource]/[id]/route.ts`
+- Page components: PascalCase, `page.tsx` in route directory (e.g., `fields/page.tsx` for /fields)
+- API routes: `route.ts` in api path (e.g., `field-enterprises/[id]/fertility/route.tsx`)
+- Component files: PascalCase.tsx (e.g., `FieldList.tsx`)
+- Utility/lib files: kebab-case.ts (e.g., `fieldops-sync.ts`, `day-rule-calc.ts`)
+- Database models: PascalCase (e.g., `FieldEnterprise`, `CropLot`)
+- Database enums: PascalCase (e.g., `OrganicStatus`, `FieldOpType`)
 
 **Directories:**
-- `public/`: Static assets + frontend JS modules (Express apps)
-- `src/app/`: Next.js App Router pages (not src/pages/)
-- `src/components/`: React components (forms, tables, UI primitives)
-- `src/lib/`: Shared utilities, middleware, helpers
-- `data/`: Runtime data storage (JSON files)
-- `fieldops/`: Integration module (farm-budget only)
+- kebab-case for route groups and API paths (e.g., `field-enterprises/`, `fieldops/`)
+- kebab-case for feature groupings (e.g., `reference/`, `import-plan/`)
+- Parentheses for route groups not in URL (e.g., `(app)/` for auth wrapper)
+
+**Variables & Functions:**
+- camelCase for variables, functions, hooks (e.g., `runFieldOpsSync`, `syncResult`, `useEffect`)
+- UPPER_SNAKE_CASE for constants (e.g., `CURRENT_YEAR`, `CROP_YEARS`)
+- PascalCase for React components (e.g., `FieldList`, `InspectionReport`)
 
 ## Where to Add New Code
 
-**New Feature in Express App:**
-- Backend API: Add route in `server.js` (or extract to separate file)
-- Frontend: Add `[feature].js` module in `public/`, create form in HTML or JS
-- Calc logic: Add function to `public/calc.js`
-- Tests: None currently (would be in `test/` folder if added)
+**New Feature (e.g., "Soil Test Results"):**
+- **Data model:** Add to `prisma/schema.prisma` (new model + relations)
+- **API endpoint:** `src/app/api/soil-tests/route.ts` (GET, POST) and `[id]/route.ts` (PATCH, DELETE)
+- **UI page:** `src/app/(app)/soil-tests/page.tsx` (list, create/edit dialogs)
+- **Component:** `src/components/forms/SoilTestForm.tsx` or similar if reusable
+- **Utilities:** `src/lib/soil-test-handler.ts` if complex business logic needed
+- **Audit:** Call `logAudit()` in POST/PATCH/DELETE API routes
+- **RBAC:** Add permissions to `rbac.ts` (e.g., "soiltest:read", "soiltest:write")
 
-**New Feature in Next.js (organic-cert):**
-- Page/UI: Add `src/app/(app)/[feature]/page.tsx`
-- API endpoint: Add `src/app/api/[resource]/route.ts`
-- Database model: Update `prisma/schema.prisma`, run `npx prisma migrate dev`
-- Component: Add to `src/components/[category]/[feature].tsx`
-- Shared logic: Add to `src/lib/[feature].ts`
+**New PDF Report Section:**
+- **Component:** Create `src/lib/pdf/sections/MySection.tsx` (RSC returning `<Page>...</Page>`)
+- **Data types:** Add interface to `src/lib/report-assembler.ts` (e.g., `MySectionData`)
+- **Assembly:** Update `reportAssembler()` Prisma query to fetch new section data
+- **Root component:** Import and add `<MySection data={data} />` to InspectionReport.tsx
+- **PDF styling:** Use `src/lib/pdf/styles.ts` StyleSheet for consistent formatting
 
-**New Component in organic-cert:**
-- Shadcn UI: Copy base component from `src/components/ui/`, customize in feature component
-- Form: Create in `src/components/forms/[feature]-form.tsx`, use Form components + Prisma types
-- Table: Create in `src/components/tables/[feature]-table.tsx`, use shadcn Table + Tailwind
+**New Master Data Type (like Materials, Seeds):**
+- **Model:** Add to `prisma/schema.prisma` with farmId foreign key
+- **API:** Create `src/app/api/my-data/route.ts` (GET, POST) and `[id]/route.ts` (PATCH, DELETE)
+- **UI:** Add to `src/app/(app)/reference/my-data/page.tsx`
+- **Table component:** Optional `src/components/tables/MyDataTable.tsx`
 
-**Utilities:**
-- Shared helpers (dates, formatting): `src/lib/utils.ts`
-- Auth helpers: `src/lib/auth.ts`
-- Type definitions: `src/types/index.ts`
+**Utilities / Helpers:**
+- Shared helpers: `src/lib/utils.ts` or new file like `src/lib/my-helper.ts`
+- Data transformation: `src/lib/my-transformer.ts` (following fieldops-normalizer pattern)
+- Calculation logic: `src/lib/my-calculator.ts` (following day-rule-calc.ts pattern)
 
 ## Special Directories
 
-**node_modules/:**
-- Purpose: Installed dependencies per package.json
-- Generated: Yes (via npm install)
-- Committed: No (ignored in .gitignore)
+**`src/generated/`:**
+- Purpose: Auto-generated Prisma client types
+- Generated: Yes (by `prisma generate` during install/migrations)
+- Committed: No (in .gitignore)
+- Usage: Import types from @prisma/client instead (e.g., `import { FieldEnterprise } from "@prisma/client"`)
 
-**data/:**
-- Purpose: JSON data persistence for Express apps
-- Generated: Yes (created at runtime if missing)
-- Committed: Optionally (can contain large data files)
+**`uploads/`:**
+- Purpose: Runtime directory for generated PDF reports
+- Generated: Yes (by `/api/reports/generate` route)
+- Committed: No (in .gitignore)
+- Cleanup: Manual or via cron job; not auto-cleaned
 
-**.next/:**
-- Purpose: Next.js build cache (organic-cert)
-- Generated: Yes (via npm run dev or build)
-- Committed: No (ignored in .gitignore)
+**`public/`:**
+- Purpose: Static assets served by Next.js
+- Contains: Favicon, logo, icons
+- Access: `/logo.png` references `public/logo.png`
 
-**src/generated/:**
-- Purpose: Auto-generated Prisma types (organic-cert)
-- Generated: Yes (via prisma generate)
-- Committed: No (should be auto-generated, but often included)
-
-**prisma/**
-- Purpose: Database schema and migrations (organic-cert)
-- Generated: migrations/ folder auto-generated by `prisma migrate`
-- Committed: schema.prisma YES, migrations/ YES
+**`.env.local`:**
+- Purpose: Environment variables (secrets, database URL, API keys)
+- Committed: No (in .gitignore)
+- Required vars: `DATABASE_URL`, `NEXTAUTH_SECRET`, Case IH credentials (if using real API)
 
 ---
 
-*Structure analysis: 2026-02-23*
+*Structure analysis: 2025-02-25*
