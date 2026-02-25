@@ -86,7 +86,7 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-None yet.
+1. Work on grain ticket system enhancements (general) — TBD scope
 
 ### Blockers/Concerns
 
