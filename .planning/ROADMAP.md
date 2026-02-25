@@ -45,11 +45,12 @@ Plans:
   3. Farm manager can view harvest records with yield, date, field, auto-generated lot number, and equipment used
   4. Farm manager can view tillage operation records per field with dates and operation types
   5. Farm manager can manually enter field records (for pre-API historical data or non-synced operations) using the same forms and data model as synced records
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
+- [ ] 02-01-PLAN.md — Schema migration (DataSource enum), history API route, field index API upgrade, CropLot auto-creation, staged-ops dataSource update
+- [ ] 02-02-PLAN.md — Field index page upgrade with activity stats and 3-year history timeline page with season grouping, operation cards, and filter bar
+- [ ] 02-03-PLAN.md — Manual entry Sheet forms (tillage, application, harvest) with smart defaults, batch entry, equipment selector, and end-to-end verification
 
 ### Phase 3: Inspection Report Generation
 **Goal**: Farm manager can generate and download a complete, print-ready USDA NOP inspection report as PDF with zero manual data assembly
@@ -73,5 +74,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
-| 2. Field Records & History | 0/0 | Not started | - |
+| 2. Field Records & History | 0/3 | In progress | - |
 | 3. Inspection Report Generation | 0/0 | Not started | - |
