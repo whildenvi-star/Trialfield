@@ -9,28 +9,29 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 1 of 3 (Case IH API Integration)
-Plan: 3 of 3 in current phase (01-03 complete — all tasks verified)
-Status: Phase 1 complete
-Last activity: 2026-02-24 -- Completed 01-03 Task 3 human-verify (farm manager approved); Phase 1 fully complete
+Phase: 2 of 3 (Field Records & History)
+Plan: 1 of 4 in current phase (02-01 complete — all tasks verified, TypeScript clean)
+Status: Phase 2 in progress
+Last activity: 2026-02-24 -- Completed 02-01: DataSource schema, history API, field index upgrade, CropLot auto-creation
 
-Progress: [####......] 33%
+Progress: [#####.....] 44%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3 (01-01, 01-02, 01-03)
-- Average duration: 6 min
-- Total execution time: 0.23 hours
+- Total plans completed: 4 (01-01, 01-02, 01-03, 02-01)
+- Average duration: 5.5 min
+- Total execution time: 0.30 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-case-ih-api-integration | 3 complete | 19 min | 6 min |
+| 02-field-records-history | 1 complete | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 9 min, 5 min, 5 min
+- Last 5 plans: 9 min, 5 min, 5 min, 4 min
 - Trend: fast execution
 
 *Updated after each plan completion*
@@ -56,6 +57,10 @@ Recent decisions affecting current work:
 - [Phase 01-03]: Sidebar FieldOps link not role-gated at component level — route-level auth gates protect data; sidebar has no session context
 - [Phase 01-03]: cmdk Command used inline (not CommandDialog) in split-panel matching UI — always-visible search better than modal overlay for matching workflow
 - [Phase 01-03]: 409 conflict handled client-side with dedicated dialog — manual-data-wins policy surfaced clearly to admin before rejecting synced record
+- [02-01]: db push used instead of migrate dev — no migration history existed; db push syncs schema without requiring baseline migration
+- [02-01]: CropLot lot suffix strategy — first harvest uses base lot number, subsequent harvests get -N suffix by counting existing CropLots
+- [02-01]: Explicit dataSource: MANUAL on manual harvest creates — documents intent even though MANUAL is the Prisma default
+- [02-01]: Tenant isolation via farmId in where clause in history endpoint — matches auth pattern from staged-ops
 
 ### Pending Todos
 
@@ -69,5 +74,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Phase 1 complete — ready to begin Phase 2 (Field Records & History)
+Stopped at: Completed 02-01-PLAN.md — Phase 2 Plan 1 complete; ready for 02-02 (field history UI)
 Resume file: None
