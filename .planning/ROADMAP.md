@@ -15,6 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Case IH API Integration** - Connect to Case IH FieldOps, pull field operations, normalize into structured records (completed 2026-02-24)
 - [x] **Phase 2: Field Records & History** - View, browse, and manually enter field operation records with lot number generation (completed 2026-02-25)
 - [x] **Phase 3: Inspection Report Generation** - Produce print-ready USDA NOP inspection reports as PDF (completed 2026-02-25)
+- [ ] **Phase 4: Synced Harvest CropLot Wiring** - Gap closure: Add CropLot creation to staged-ops approve flow for synced harvests
 
 ## Phase Details
 
@@ -68,13 +69,25 @@ Plans:
 - [x] 03-02-PLAN.md — All 8 PDF report sections (cover, TOC, overview, field list, field history, application log, harvest log, mass balance) and top-level InspectionReport Document
 - [x] 03-03-PLAN.md — API routes (generate, list, download), Reports page UI with crop year selector and report history, end-to-end verification
 
+### Phase 4: Synced Harvest CropLot Wiring
+**Goal**: Synced harvest records (approved from Case IH FieldOps data) get auto-generated CropLot records with lot numbers, completing the data pipeline for reports
+**Depends on**: Phase 1, Phase 2
+**Requirements**: FIELD-06, RPT-03, RPT-04
+**Gap Closure**: Closes gaps from v1.0 audit — staged-ops approve flow missing CropLot creation for SYNCED HarvestEvents
+**Success Criteria** (what must be TRUE):
+  1. When a staged yield/harvest operation is approved, a CropLot is created with an auto-generated lot number (same format as manual harvests)
+  2. SYNCED HarvestEvents appear in the PDF Harvest Log with lot numbers (not "—")
+  3. SYNCED HarvestEvents appear in the PDF Mass Balance summary with correct harvested quantities
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
 | 2. Field Records & History | 3/3 | Complete   | 2026-02-25 |
 | 3. Inspection Report Generation | 3/3 | Complete   | 2026-02-25 |
+| 4. Synced Harvest CropLot Wiring | 0/? | Planned   | — |
