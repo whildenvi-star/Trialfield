@@ -31,6 +31,28 @@ Requirements for milestone v1.0: Data Ingestion & Reports. Each maps to roadmap 
 - [x] **RPT-03**: Report includes input application log and harvest log with lot numbers
 - [x] **RPT-04**: Report includes mass balance summary (harvested vs. sold per crop/lot)
 
+## v1.1 Requirements
+
+Requirements for milestone v1.1: Split-Field Enterprises. A single physical field can carry multiple crop enterprises in the same season, and the system must track them individually while presenting a coherent whole-field view.
+
+**Real-world context:** A 200-acre field (e.g. Simpson Farm) might have 165ac organic seed corn, 30ac soybeans, and 15ac fallow in the same year. Or a farmer may double-crop two short-season crops back-to-back on the same land. Each enterprise has its own inputs, harvest, and market — but rent, overhead, and audit history belong to the field as a whole.
+
+### Schema & Data Model
+
+- [ ] **SPLIT-01**: Multiple enterprises per field per season — remove or relax `@@unique([fieldId, cropYear, crop])` constraint to allow same-crop double-cropping and multi-crop split fields
+- [ ] **SPLIT-02**: Fallow/idle enterprise type — an enterprise with no crop that carries overhead costs (rent, taxes, conservation compliance) and appears in field history
+- [ ] **SPLIT-03**: Acre reconciliation — enterprise `plantedAcres` for a given field+year should reconcile against `Field.totalAcres` (warn on over-allocation, allow under for fallow/unplanted)
+
+### Field History & UI
+
+- [ ] **SPLIT-04**: Consolidated field view — field history page shows whole-field summary (total acres, all enterprises for a season) before drilling into individual enterprise detail
+- [ ] **SPLIT-05**: Multi-enterprise season cards — when a field has multiple enterprises in one crop year, display each with its own timeline, inputs, and harvest data without cluttering the consolidated view
+- [ ] **SPLIT-06**: Intuitive navigation — "just the information needed" — default to the consolidated view, drill into enterprise detail on demand, never force the user to see complexity they don't need
+
+### Reports
+
+- [ ] **SPLIT-07**: PDF reports reflect split-field reality — field list shows enterprises per field, field history shows per-enterprise detail, mass balance accounts for multiple enterprises on one field
+
 ## v2 Requirements
 
 Deferred to future milestone. Tracked but not in current roadmap.
