@@ -48,8 +48,8 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Schema migration (DataSource enum), history API route, field index API upgrade, CropLot auto-creation, staged-ops dataSource update
-- [ ] 02-02-PLAN.md — Field index page upgrade with activity stats and 3-year history timeline page with season grouping, operation cards, and filter bar
+- [x] 02-01-PLAN.md — Schema migration (DataSource enum), history API route, field index API upgrade, CropLot auto-creation, staged-ops dataSource update
+- [x] 02-02-PLAN.md — Field index page upgrade with activity stats and 3-year history timeline page with season grouping, operation cards, and filter bar
 - [ ] 02-03-PLAN.md — Manual entry Sheet forms (tillage, application, harvest) with smart defaults, batch entry, equipment selector, and end-to-end verification
 
 ### Phase 3: Inspection Report Generation
@@ -74,5 +74,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
-| 2. Field Records & History | 1/3 | In Progress|  |
+| 2. Field Records & History | 2/3 | In Progress|  |
 | 3. Inspection Report Generation | 0/0 | Not started | - |
