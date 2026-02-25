@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** A farm manager can pull Case IH field data and hand an inspector a complete, print-ready audit report with zero manual data entry.
-**Current focus:** Phase 2: Field Records & History
+**Current focus:** Phase 3: Inspection Report Generation
 
 ## Current Position
 
-Phase: 2 of 3 (Field Records & History)
-Plan: 3 of 3 in Phase 2 — COMPLETE (02-03 human-verify checkpoint approved; all plans done)
-Status: Phase 2 complete — ready to start Phase 3
-Last activity: 2026-02-24 -- Completed 02-03: human-verify checkpoint approved, Phase 2 Field Records & History fully complete
+Phase: 3 of 3 (Inspection Report Generation)
+Plan: 1 of 3 in Phase 3 — COMPLETE (03-01 executed; schema, assembler, and PDF components done)
+Status: Phase 3 in progress — Plan 1 complete, ready for Plan 2 (PDF section components)
+Last activity: 2026-02-25 -- Completed 03-01: PDF report infrastructure (GeneratedReport model, report-assembler.ts, styles, page-wrapper, table-row)
 
-Progress: [##########] 100% (Phase 2 complete; Phase 3 not yet started)
+Progress: [##########] 33% (Phase 3: 1/3 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4 (01-01, 01-02, 01-03, 02-01)
-- Average duration: 5.5 min
-- Total execution time: 0.30 hours
+- Total plans completed: 5 (01-01, 01-02, 01-03, 02-01, 03-01)
+- Average duration: 5.8 min
+- Total execution time: 0.40 hours
 
 **By Phase:**
 
@@ -29,9 +29,10 @@ Progress: [##########] 100% (Phase 2 complete; Phase 3 not yet started)
 |-------|-------|-------|----------|
 | 01-case-ih-api-integration | 3 complete | 19 min | 6 min |
 | 02-field-records-history | 2 complete | 8 min | 4 min |
+| 03-inspection-report-generation | 1 complete | 7 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 9 min, 5 min, 5 min, 4 min, 4 min
+- Last 5 plans: 5 min, 5 min, 4 min, 4 min, 7 min
 - Trend: fast execution
 
 *Updated after each plan completion*
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [02-03]: Inline cmdk Command (not CommandDialog) for product/equipment search inside Sheet — always-visible inline search better than modal-within-sheet
 - [02-03]: Empty season cards link to /field-enterprises for crop year creation — no "Add records" until enterprise exists
 - [02-03]: dataSource: MANUAL explicit on FieldOperation.create — documents intent even though MANUAL is Prisma default
+- [03-01]: col()/headerCol() return explicit typed objects (not StyleSheet entries) so they compose without StyleSheet conflicts
+- [03-01]: assembleReportData uses single farm query + one CropLot query for mass balance — minimizes DB round trips
+- [03-01]: ReportPage orientation prop defaults to portrait; caller passes landscape for wide-table sections
 
 ### Pending Todos
 
@@ -82,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-24
-Stopped at: Phase 2 complete — human-verify checkpoint for 02-03 approved; ready to begin Phase 3 planning
+Last session: 2026-02-25
+Stopped at: Completed 03-01: PDF report infrastructure complete; ready for 03-02 PDF section components
 Resume file: None

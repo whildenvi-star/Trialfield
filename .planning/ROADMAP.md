@@ -64,7 +64,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Schema (GeneratedReport), Next.js config, report data assembler, shared PDF components (styles, page wrapper, table row)
+- [x] 03-01-PLAN.md — Schema (GeneratedReport), Next.js config, report data assembler, shared PDF components (styles, page wrapper, table row)
 - [ ] 03-02-PLAN.md — All 8 PDF report sections (cover, TOC, overview, field list, field history, application log, harvest log, mass balance) and top-level InspectionReport Document
 - [ ] 03-03-PLAN.md — API routes (generate, list, download), Reports page UI with crop year selector and report history, end-to-end verification
 
@@ -77,4 +77,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
 | 2. Field Records & History | 3/3 | Complete   | 2026-02-25 |
-| 3. Inspection Report Generation | 0/3 | Not started | - |
+| 3. Inspection Report Generation | 1/3 | In progress | - |
