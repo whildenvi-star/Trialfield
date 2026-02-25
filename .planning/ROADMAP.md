@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Case IH API Integration** - Connect to Case IH FieldOps, pull field operations, normalize into structured records (completed 2026-02-24)
 - [x] **Phase 2: Field Records & History** - View, browse, and manually enter field operation records with lot number generation (completed 2026-02-25)
-- [ ] **Phase 3: Inspection Report Generation** - Produce print-ready USDA NOP inspection reports as PDF
+- [x] **Phase 3: Inspection Report Generation** - Produce print-ready USDA NOP inspection reports as PDF (completed 2026-02-25)
 
 ## Phase Details
 
@@ -65,8 +65,8 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Schema (GeneratedReport), Next.js config, report data assembler, shared PDF components (styles, page wrapper, table row)
-- [ ] 03-02-PLAN.md — All 8 PDF report sections (cover, TOC, overview, field list, field history, application log, harvest log, mass balance) and top-level InspectionReport Document
-- [ ] 03-03-PLAN.md — API routes (generate, list, download), Reports page UI with crop year selector and report history, end-to-end verification
+- [x] 03-02-PLAN.md — All 8 PDF report sections (cover, TOC, overview, field list, field history, application log, harvest log, mass balance) and top-level InspectionReport Document
+- [x] 03-03-PLAN.md — API routes (generate, list, download), Reports page UI with crop year selector and report history, end-to-end verification
 
 ## Progress
 
@@ -77,4 +77,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
 | 2. Field Records & History | 3/3 | Complete   | 2026-02-25 |
-| 3. Inspection Report Generation | 2/3 | In Progress|  |
+| 3. Inspection Report Generation | 3/3 | Complete   | 2026-02-25 |

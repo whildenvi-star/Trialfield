@@ -5,35 +5,35 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** A farm manager can pull Case IH field data and hand an inspector a complete, print-ready audit report with zero manual data entry.
-**Current focus:** Phase 3: Inspection Report Generation
+**Current focus:** v1.0 Milestone COMPLETE
 
 ## Current Position
 
-Phase: 3 of 3 (Inspection Report Generation)
-Plan: 2 of 3 in Phase 3 — COMPLETE (03-02 executed; all 8 PDF section components + InspectionReport Document done)
-Status: Phase 3 in progress — Plans 1 and 2 complete, ready for Plan 3 (API route + UI)
-Last activity: 2026-02-25 -- Completed 03-02: 8 NOP PDF sections (cover, TOC, overview, field list, field history, app log, harvest log, mass balance) + InspectionReport Document
+Phase: 3 of 3 (Inspection Report Generation) — COMPLETE
+Plan: 3 of 3 in Phase 3 — COMPLETE (03-03 executed; API routes + Reports UI + human-verified end-to-end PDF generation)
+Status: All 3 phases complete — v1.0 milestone delivered
+Last activity: 2026-02-25 -- Completed 03-03: POST /api/reports/generate, GET /api/reports, GET /api/reports/[id], Reports page UI, human-verified end-to-end PDF workflow
 
-Progress: [###############] 67% (Phase 3: 2/3 plans complete)
+Progress: [####################] 100% (Phase 3: 3/3 plans complete — all phases done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6 (01-01, 01-02, 01-03, 02-01, 03-01, 03-02)
-- Average duration: 6.7 min
-- Total execution time: 0.67 hours
+- Total plans completed: 9 (01-01, 01-02, 01-03, 02-01, 02-02, 02-03, 03-01, 03-02, 03-03)
+- Average duration: 7 min
+- Total execution time: 0.95 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-case-ih-api-integration | 3 complete | 19 min | 6 min |
-| 02-field-records-history | 2 complete | 8 min | 4 min |
-| 03-inspection-report-generation | 2 complete | 20 min | 10 min |
+| 02-field-records-history | 3 complete | 12 min | 4 min |
+| 03-inspection-report-generation | 3 complete | 45 min | 15 min |
 
 **Recent Trend:**
-- Last 5 plans: 5 min, 4 min, 4 min, 7 min, 13 min
-- Trend: stable
+- Last 5 plans: 4 min, 4 min, 7 min, 13 min, 25 min
+- Trend: stable (larger plans in Phase 3 reflect PDF complexity)
 
 *Updated after each plan completion*
 
@@ -79,6 +79,10 @@ Recent decisions affecting current work:
 - [03-02]: Bookmark is a type in react-pdf (Page prop), not a JSX element — TOC uses static list; PDF bookmarks added to section Pages
 - [03-02]: Application/harvest logs filter to current cropYear — 3-year detail is in field history; all-years log would be redundant
 - [03-02]: Shared pageProps spread pattern — const pageProps = { farmName, reportTitle, generatedDate } spread to all 8 sections from InspectionReport
+- [03-03]: window.location.href for PDF download — triggers browser download without needing blob URL management
+- [03-03]: Tenant isolation on download route via report.farmId !== farmId check before file read — prevents cross-farm file access
+- [03-03]: File-not-found 404 separate from record-not-found 404 — distinguishes DB miss from disk miss
+- [03-03]: Optional field filter defaults to all fields — fieldIds absent from POST body means assembleReportData uses all farm fields
 
 ### Pending Todos
 
@@ -91,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 03-02: All 8 PDF section components + InspectionReport Document; ready for 03-03 API route and UI
+Stopped at: Completed 03-03-PLAN.md — v1.0 milestone complete (all 9 plans, all 3 phases, all 14 requirements)
 Resume file: None
