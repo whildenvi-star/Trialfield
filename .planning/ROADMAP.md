@@ -13,7 +13,7 @@ This roadmap delivers the v1.0 Data Ingestion & Reports milestone: a complete pi
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Case IH API Integration** - Connect to Case IH FieldOps, pull field operations, normalize into structured records (completed 2026-02-24)
-- [ ] **Phase 2: Field Records & History** - View, browse, and manually enter field operation records with lot number generation
+- [x] **Phase 2: Field Records & History** - View, browse, and manually enter field operation records with lot number generation (completed 2026-02-25)
 - [ ] **Phase 3: Inspection Report Generation** - Produce print-ready USDA NOP inspection reports as PDF
 
 ## Phase Details
@@ -74,5 +74,5 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
-| 2. Field Records & History | 2/3 | In Progress|  |
+| 2. Field Records & History | 3/3 | Complete   | 2026-02-25 |
 | 3. Inspection Report Generation | 0/0 | Not started | - |

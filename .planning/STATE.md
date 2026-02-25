@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 ## Current Position
 
 Phase: 2 of 3 (Field Records & History)
-Plan: 2 of 4 in current phase (02-02 complete — field index upgrade + history timeline UI, TypeScript clean)
-Status: Phase 2 in progress
-Last activity: 2026-02-25 -- Completed 02-02: field index card grid with activity stats, field history timeline page with season grouping, unified operation cards, filter bar
+Plan: 3 of 4 in current phase (02-03 tasks 1-2 complete — Sheet forms + PUT handlers; awaiting human-verify checkpoint)
+Status: Phase 2 in progress — checkpoint
+Last activity: 2026-02-25 -- Completed 02-03 Tasks 1-2: manual entry Sheet forms (tillage/application/harvest), PUT handlers on all 3 routes, dataSource MANUAL explicit
 
-Progress: [######....] 57%
+Progress: [#######...] 64%
 
 ## Performance Metrics
 
@@ -66,6 +66,10 @@ Recent decisions affecting current work:
 - [02-02]: syncRunId from notes field (not SyncedOperation join) — Phase 2 scope; full provenance display deferred to Phase 3
 - [02-02]: MaterialUsage/FertilityEvent default MANUAL dataSource — neither model has dataSource column in schema
 - [02-02]: Three preset year-window buttons replace arbitrary offset stepper — simpler UX covering practical audit range
+- [02-03]: PUT handlers on collection routes (/operations, /applications, /harvest) vs [recordId] routes — consistent with form submission where enterpriseId is the URL param
+- [02-03]: Inline cmdk Command (not CommandDialog) for product/equipment search inside Sheet — always-visible inline search better than modal-within-sheet
+- [02-03]: Empty season cards link to /field-enterprises for crop year creation — no "Add records" until enterprise exists
+- [02-03]: dataSource: MANUAL explicit on FieldOperation.create — documents intent even though MANUAL is Prisma default
 
 ### Pending Todos
 
@@ -79,5 +83,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-02-25
-Stopped at: Completed 02-02-PLAN.md — Phase 2 Plan 2 complete; ready for 02-03 (manual entry form)
+Stopped at: 02-03 checkpoint:human-verify (Task 3) — Tasks 1-2 committed (Sheet forms + PUT handlers); waiting for end-to-end manual verification
 Resume file: None

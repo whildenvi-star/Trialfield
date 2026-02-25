@@ -21,7 +21,7 @@ Requirements for milestone v1.0: Data Ingestion & Reports. Each maps to roadmap 
 - [x] **FIELD-02**: Farm manager can view input application records (material, date, rate, field, approval status)
 - [x] **FIELD-03**: Farm manager can view harvest records (yield, date, field, lot number, equipment)
 - [x] **FIELD-04**: Farm manager can view tillage operation records per field
-- [ ] **FIELD-05**: Farm manager can manually enter field records for pre-API or non-synced data
+- [x] **FIELD-05**: Farm manager can manually enter field records for pre-API or non-synced data
 - [x] **FIELD-06**: System auto-generates lot numbers for harvest records (cropYear-crop-fieldName)
 
 ### Reports
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIELD-02 | Phase 2 | Complete |
 | FIELD-03 | Phase 2 | Complete |
 | FIELD-04 | Phase 2 | Complete |
-| FIELD-05 | Phase 2 | Pending |
+| FIELD-05 | Phase 2 | Complete |
 | FIELD-06 | Phase 2 | Complete |
 | RPT-01 | Phase 3 | Pending |
 | RPT-02 | Phase 3 | Pending |
