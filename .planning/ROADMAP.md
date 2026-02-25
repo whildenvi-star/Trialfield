@@ -50,7 +50,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md — Schema migration (DataSource enum), history API route, field index API upgrade, CropLot auto-creation, staged-ops dataSource update
 - [x] 02-02-PLAN.md — Field index page upgrade with activity stats and 3-year history timeline page with season grouping, operation cards, and filter bar
-- [ ] 02-03-PLAN.md — Manual entry Sheet forms (tillage, application, harvest) with smart defaults, batch entry, equipment selector, and end-to-end verification
+- [x] 02-03-PLAN.md — Manual entry Sheet forms (tillage, application, harvest) with smart defaults, batch entry, equipment selector, and end-to-end verification
 
 ### Phase 3: Inspection Report Generation
 **Goal**: Farm manager can generate and download a complete, print-ready USDA NOP inspection report as PDF with zero manual data assembly
