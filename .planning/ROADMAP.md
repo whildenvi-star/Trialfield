@@ -76,9 +76,13 @@ Plans:
 **Gap Closure**: Closes gaps from v1.0 audit — staged-ops approve flow missing CropLot creation for SYNCED HarvestEvents
 **Success Criteria** (what must be TRUE):
   1. When a staged yield/harvest operation is approved, a CropLot is created with an auto-generated lot number (same format as manual harvests)
-  2. SYNCED HarvestEvents appear in the PDF Harvest Log with lot numbers (not "—")
+  2. SYNCED HarvestEvents appear in the PDF Harvest Log with lot numbers (not "---")
   3. SYNCED HarvestEvents appear in the PDF Mass Balance summary with correct harvested quantities
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Yield converter utility and approve handler refactor with atomic CropLot creation in Prisma $transaction
+- [ ] 04-02-PLAN.md — Report assembler lot number fallback and review page CropLot-aware toast messages
 
 ## Progress
 
@@ -90,4 +94,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
 | 2. Field Records & History | 3/3 | Complete   | 2026-02-25 |
 | 3. Inspection Report Generation | 3/3 | Complete   | 2026-02-25 |
-| 4. Synced Harvest CropLot Wiring | 0/? | Planned   | — |
+| 4. Synced Harvest CropLot Wiring | 0/2 | Planning   | — |
