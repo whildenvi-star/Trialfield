@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Case IH API Integration** - Connect to Case IH FieldOps, pull field operations, normalize into structured records (completed 2026-02-24)
 - [x] **Phase 2: Field Records & History** - View, browse, and manually enter field operation records with lot number generation (completed 2026-02-25)
 - [x] **Phase 3: Inspection Report Generation** - Produce print-ready USDA NOP inspection reports as PDF (completed 2026-02-25)
-- [ ] **Phase 4: Synced Harvest CropLot Wiring** - Gap closure: Add CropLot creation to staged-ops approve flow for synced harvests
+- [ ] **Phase 4: Synced Harvest CropLot Wiring** - Gap closure: Add CropLot creation to staged-ops approve flow for synced harvests (1/2 plans complete)
 
 ## Phase Details
 
@@ -81,7 +81,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Yield converter utility and approve handler refactor with atomic CropLot creation in Prisma $transaction
+- [x] 04-01-PLAN.md — Yield converter utility and approve handler refactor with atomic CropLot creation in Prisma $transaction
 - [ ] 04-02-PLAN.md — Report assembler lot number fallback and review page CropLot-aware toast messages
 
 ## Progress
@@ -94,4 +94,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 | 1. Case IH API Integration | 3/3 | Complete   | 2026-02-24 |
 | 2. Field Records & History | 3/3 | Complete   | 2026-02-25 |
 | 3. Inspection Report Generation | 3/3 | Complete   | 2026-02-25 |
-| 4. Synced Harvest CropLot Wiring | 0/2 | Planning   | — |
+| 4. Synced Harvest CropLot Wiring | 1/2 | In Progress | — |

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-24)
 
 **Core value:** A farm manager can pull Case IH field data and hand an inspector a complete, print-ready audit report with zero manual data entry.
-**Current focus:** v1.0 Milestone COMPLETE
+**Current focus:** Phase 4 — Synced Harvest CropLot Wiring (gap closure)
 
 ## Current Position
 
-Phase: 3 of 3 (Inspection Report Generation) — COMPLETE
-Plan: 3 of 3 in Phase 3 — COMPLETE (03-03 executed; API routes + Reports UI + human-verified end-to-end PDF generation)
-Status: All 3 phases complete — v1.0 milestone delivered
-Last activity: 2026-02-25 -- Completed 03-03: POST /api/reports/generate, GET /api/reports, GET /api/reports/[id], Reports page UI, human-verified end-to-end PDF workflow
+Phase: 4 of 4 (Synced Harvest CropLot Wiring) — IN PROGRESS
+Plan: 1 of 1 in Phase 4 — COMPLETE (04-01 executed; yield-converter.ts + atomic $transaction approve handler)
+Status: Phase 4 Plan 1 complete — synced harvests now create CropLots atomically
+Last activity: 2026-02-26 -- Completed 04-01: yield-converter.ts (bu-to-lbs conversion), refactored staged-ops approve handler with prisma.$transaction for atomic HarvestEvent + CropLot creation
 
-Progress: [####################] 100% (Phase 3: 3/3 plans complete — all phases done)
+Progress: [####################] 100% (Phase 4: 1/1 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9 (01-01, 01-02, 01-03, 02-01, 02-02, 02-03, 03-01, 03-02, 03-03)
+- Total plans completed: 10 (01-01, 01-02, 01-03, 02-01, 02-02, 02-03, 03-01, 03-02, 03-03, 04-01)
 - Average duration: 7 min
-- Total execution time: 0.95 hours
+- Total execution time: ~1.05 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [####################] 100% (Phase 3: 3/3 plans complete — all phase
 | 01-case-ih-api-integration | 3 complete | 19 min | 6 min |
 | 02-field-records-history | 3 complete | 12 min | 4 min |
 | 03-inspection-report-generation | 3 complete | 45 min | 15 min |
+| 04-synced-harvest-croplot-wiring | 1 complete | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 4 min, 7 min, 13 min, 25 min
-- Trend: stable (larger plans in Phase 3 reflect PDF complexity)
+- Last 5 plans: 4 min, 7 min, 13 min, 25 min, 6 min
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -83,6 +84,10 @@ Recent decisions affecting current work:
 - [03-03]: Tenant isolation on download route via report.farmId !== farmId check before file read — prevents cross-farm file access
 - [03-03]: File-not-found 404 separate from record-not-found 404 — distinguishes DB miss from disk miss
 - [03-03]: Optional field filter defaults to all fields — fieldIds absent from POST body means assembleReportData uses all farm fields
+- [04-01]: Year-matched FieldEnterprise lookup — prefer operationDate.getFullYear() === cropYear before falling back to latest-by-desc to prevent wrong-year lot numbers
+- [04-01]: One CropLot per FieldEnterprise for synced harvests — findFirst by fieldEnterpriseId, increment quantityLbs if exists rather than creating second lot
+- [04-01]: convertYieldToLbs returns null for unknown crops/units — fail safely rather than guess test weight for undocumented Case IH schema
+- [04-01]: SyncedOperation.update(APPROVED) moved inside $transaction — ensures no approved harvest without a corresponding CropLot
 
 ### Pending Todos
 
@@ -94,6 +99,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-02-25
-Stopped at: Completed 03-03-PLAN.md — v1.0 milestone complete (all 9 plans, all 3 phases, all 14 requirements)
+Last session: 2026-02-26
+Stopped at: Completed 04-01-PLAN.md — synced harvest CropLot wiring complete (10 plans total, 4 phases)
 Resume file: None
