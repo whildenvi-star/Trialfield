@@ -9,19 +9,19 @@ See: .planning/PROJECT.md (updated 2026-02-24)
 
 ## Current Position
 
-Phase: 4 of 4 (Synced Harvest CropLot Wiring) — IN PROGRESS
-Plan: 1 of 1 in Phase 4 — COMPLETE (04-01 executed; yield-converter.ts + atomic $transaction approve handler)
-Status: Phase 4 Plan 1 complete — synced harvests now create CropLots atomically
-Last activity: 2026-02-26 -- Completed 04-01: yield-converter.ts (bu-to-lbs conversion), refactored staged-ops approve handler with prisma.$transaction for atomic HarvestEvent + CropLot creation
+Phase: 4 of 4 (Synced Harvest CropLot Wiring) — COMPLETE
+Plan: 2 of 2 in Phase 4 — COMPLETE (04-02 executed; enterpriseLotMap fallback in report assembler + CropLot-aware toast in review page)
+Status: Phase 4 complete — all synced harvest CropLot wiring done; PDF harvest log shows lot numbers; admin toast reports CropLot counts
+Last activity: 2026-02-26 -- Completed 04-02: enterpriseLotMap fallback in report-assembler.ts; useRouter + actionable no-enterprise toast + newLots/updatedLots counters in review/page.tsx
 
-Progress: [####################] 100% (Phase 4: 1/1 plans complete)
+Progress: [####################] 100% (Phase 4: 2/2 plans complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10 (01-01, 01-02, 01-03, 02-01, 02-02, 02-03, 03-01, 03-02, 03-03, 04-01)
-- Average duration: 7 min
-- Total execution time: ~1.05 hours
+- Total plans completed: 11 (01-01, 01-02, 01-03, 02-01, 02-02, 02-03, 03-01, 03-02, 03-03, 04-01, 04-02)
+- Average duration: 6 min
+- Total execution time: ~1.10 hours
 
 **By Phase:**
 
@@ -30,10 +30,10 @@ Progress: [####################] 100% (Phase 4: 1/1 plans complete)
 | 01-case-ih-api-integration | 3 complete | 19 min | 6 min |
 | 02-field-records-history | 3 complete | 12 min | 4 min |
 | 03-inspection-report-generation | 3 complete | 45 min | 15 min |
-| 04-synced-harvest-croplot-wiring | 1 complete | 6 min | 6 min |
+| 04-synced-harvest-croplot-wiring | 2 complete | 9 min | 4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 4 min, 7 min, 13 min, 25 min, 6 min
+- Last 5 plans: 7 min, 13 min, 25 min, 6 min, 3 min
 - Trend: stable
 
 *Updated after each plan completion*
@@ -88,6 +88,9 @@ Recent decisions affecting current work:
 - [04-01]: One CropLot per FieldEnterprise for synced harvests — findFirst by fieldEnterpriseId, increment quantityLbs if exists rather than creating second lot
 - [04-01]: convertYieldToLbs returns null for unknown crops/units — fail safely rather than guess test weight for undocumented Case IH schema
 - [04-01]: SyncedOperation.update(APPROVED) moved inside $transaction — ensures no approved harvest without a corresponding CropLot
+- [04-02]: enterpriseLotMap built before flatten loop — first lot per enterprise wins, handles sparse join (cropLots: [] on harvests that updated existing lot)
+- [04-02]: Bulk toast wording uses full model names "HarvestEvents" / "CropLots" for admin clarity
+- [04-02]: No-enterprise actionable error routes to /field-enterprises via useRouter.push inside sonner action.onClick
 
 ### Pending Todos
 
@@ -100,5 +103,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-26
-Stopped at: Completed 04-01-PLAN.md — synced harvest CropLot wiring complete (10 plans total, 4 phases)
+Stopped at: Completed 04-02-PLAN.md — Phase 4 complete, all synced harvest CropLot wiring done (11 plans total, 4 phases complete)
 Resume file: None

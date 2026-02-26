@@ -28,8 +28,8 @@ Requirements for milestone v1.0: Data Ingestion & Reports. Each maps to roadmap 
 
 - [x] **RPT-01**: Farm manager can generate a print-ready USDA NOP inspection report as PDF
 - [x] **RPT-02**: Report includes operation overview, field list, and 3-year field history
-- [ ] **RPT-03**: Report includes input application log and harvest log with lot numbers
-- [ ] **RPT-04**: Report includes mass balance summary (harvested vs. sold per crop/lot)
+- [x] **RPT-03**: Report includes input application log and harvest log with lot numbers
+- [x] **RPT-04**: Report includes mass balance summary (harvested vs. sold per crop/lot)
 
 ## v1.1 Requirements
 
@@ -110,8 +110,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIELD-06 | Phase 4 | Complete |
 | RPT-01 | Phase 3 | Complete |
 | RPT-02 | Phase 3 | Complete |
-| RPT-03 | Phase 4 | Pending |
-| RPT-04 | Phase 4 | Pending |
+| RPT-03 | Phase 4 | Complete |
+| RPT-04 | Phase 4 | Complete |
 
 **Coverage:**
 - v1.0 requirements: 15 total
@@ -120,4 +120,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-24*
-*Last updated: 2026-02-26 after 04-01 execution — FIELD-06 complete; RPT-03, RPT-04 remain pending Phase 4 plan 2*
+*Last updated: 2026-02-26 after 04-02 execution — RPT-03, RPT-04 complete; all v1.0 requirements complete*
