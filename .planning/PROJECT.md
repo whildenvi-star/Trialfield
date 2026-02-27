@@ -2,29 +2,32 @@
 
 ## What This Is
 
-A USDA NOP organic certification audit system that pulls field history data from Case IH Field Ops via API, structures it into inspector-ready records, and produces print-ready audit reports. It's the accountability backbone of a modular agricultural ecosystem — an append-only audit store that captures who did what, when, and from where. Built for farm managers who need to prep for organic inspections without the headache.
+A USDA NOP organic certification audit system that pulls field operation data from Case IH FieldOps via OAuth2 API, structures it into inspector-ready records with 3-year history, and produces print-ready PDF audit reports. Built for farm managers who need to prep for organic inspections without the headache — connect Case IH, sync your data, generate a report, hand it to the inspector.
 
 ## Core Value
 
 A farm manager can pull Case IH field data and hand an inspector a complete, print-ready audit report with zero manual data entry.
 
-## Current Milestone: v1.0 Data Ingestion & Reports
+## Completed Milestone: v1.0 Data Ingestion & Reports (2026-02-26)
 
 **Goal:** Pull all field operation data from Case IH and produce print-ready USDA NOP inspection reports — the core data-in, report-out pipeline.
 
+**Delivered:** Case IH API integration (OAuth2 + mock mode), field records with 3-year history and manual entry, staged ops review with approve/reject, and 8-section PDF inspection reports. 4 phases, 11 plans, 15 requirements — all complete.
+
+## Current Milestone: v1.1 Split-Field Enterprises
+
+**Goal:** A single physical field can carry multiple crop enterprises in the same season. Track each enterprise individually while presenting a coherent whole-field view. Reflect split-field reality in history views and PDF reports.
+
 **Target features:**
-- Case IH Field Ops API integration (OAuth2 data pull)
-- Input application records (seed, fertilizer, pest control)
-- 3-year field history and crop rotation tracking
-- Harvest records (yield, dates, equipment)
-- Tillage operation records
-- Print-ready USDA NOP inspection report generation
+- Multiple enterprises per field per season (split planting, double-cropping)
+- Fallow/idle enterprise type with overhead cost tracking
+- Acre reconciliation (enterprise acres vs field total)
+- Consolidated field view with drill-down to per-enterprise detail
+- PDF reports updated for split-field reality
 
 ## Requirements
 
 ### Validated
-
-<!-- Inferred from existing organic-cert codebase -->
 
 - ✓ NextAuth authentication with bcryptjs password hashing — existing
 - ✓ Role-based access control (RBAC) for multi-user access — existing
@@ -36,15 +39,22 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 - ✓ CSV import/export for organic cert data — existing
 - ✓ PDF generation via @react-pdf/renderer — existing
 - ✓ shadcn/Radix UI component library with Tailwind CSS — existing
+- ✓ Case IH FieldOps API integration with OAuth2 and mock data mode — v1.0
+- ✓ Input application records (material, date, rate, field, approval status) — v1.0
+- ✓ 3-year field history and crop rotation tracking per parcel — v1.0
+- ✓ Harvest records with yield, lot numbers, equipment, and data source — v1.0
+- ✓ Tillage operation records from Case IH — v1.0
+- ✓ Print-ready USDA NOP inspection report as 8-section PDF — v1.0
 
 ### Active
 
-- [ ] Case IH Field Ops API integration for pulling all field operation records
-- [ ] Input application records (seed, fertilizer, pest control with dates/rates)
-- [ ] 3-year field history and crop rotation tracking
-- [ ] Harvest records (yield data, harvest dates, equipment per field)
-- [ ] Tillage operation records from Case IH
-- [ ] Print-ready USDA NOP inspection report generation
+- [ ] Multiple enterprises per field per season (split planting, double-cropping)
+- [ ] Fallow/idle enterprise type with overhead cost tracking
+- [ ] Acre reconciliation (enterprise acres vs field total)
+- [ ] Consolidated field view with drill-down to per-enterprise detail
+- [ ] Multi-enterprise season cards in field history
+- [ ] Intuitive navigation — default consolidated view, drill into enterprise on demand
+- [ ] PDF reports reflect split-field reality (field list, history, mass balance)
 
 ### Deferred (v2)
 
@@ -68,13 +78,13 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 
 ## Context
 
-This system is part of a modular agricultural ecosystem with independent apps for budgeting (farm-budget), FSA tracking (fsa-acres), grain tickets (grain-tickets), malt costing (meristem-malt), and organic certification (organic-cert). Apps share patterns: Express + vanilla JS frontends for simple tools, Next.js for the more complex organic-cert app. Data flows between apps via shared JSON stores and APIs.
+Shipped v1.0 with ~83,000 LOC TypeScript/Prisma across the organic-cert Next.js app. Tech stack: Next.js 16, React 19, Prisma 6, PostgreSQL, @react-pdf/renderer, shadcn/Radix UI, Tailwind CSS, Zod v4 for API validation.
 
-The organic-cert app (Next.js 16, React 19, Prisma 6, PostgreSQL) already has authentication, RBAC, field enterprise management, audit logging, lot generation, and mass balance calculations. The Case IH Field Ops API integration exists in farm-budget as OAuth2-based sync code but isn't fully active yet.
+This system is part of a modular agricultural ecosystem with independent apps for budgeting (farm-budget), FSA tracking (fsa-acres), grain tickets (grain-tickets), malt costing (meristem-malt), and organic certification (organic-cert).
 
-Primary users are farm managers/staff preparing for USDA NOP inspections. The UX must respect farming realities: limited time, often working from a truck or office between field work, need to get in and get out. "Get shit done" is the design philosophy.
+Case IH FieldOps API integration uses OAuth2 Authorization Code flow with per-farm refresh tokens. Currently operating in mock data mode while CNH staging API audience configuration is resolved — the OAuth flow and all sync/review/approve workflows are fully functional.
 
-Operators in the field will eventually use a mobile app to add photo evidence and correct/annotate records, but v1 is web-first with responsive design to make that transition smooth.
+Primary users are farm managers/staff preparing for USDA NOP inspections. The UX respects farming realities: limited time, minimal clicks, "get shit done" design philosophy.
 
 ## Constraints
 
@@ -82,21 +92,22 @@ Operators in the field will eventually use a mobile app to add photo evidence an
 - **Data source**: Case IH Field Ops API (OAuth2, CNH Industrial endpoints)
 - **Output format**: Print-ready PDF reports for on-site inspector review
 - **UX philosophy**: Farming-first, minimal clicks, "get shit done" — no unnecessary complexity
-- **Architecture**: Append-only audit store, immutable records for regulatory compliance
-- **Ecosystem fit**: Must integrate with existing JSON-backed stores and shared API patterns
+- **Ecosystem fit**: Must integrate with existing modular farm app ecosystem
 - **Mobile readiness**: Responsive design now, native mobile deferred to v2
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Web-first, defer native mobile | Get audit system working first; responsive design bridges the gap | — Pending |
-| Print-ready PDF over digital inspector portal | Inspectors work on-site with paper; digital portal adds complexity without value for v1 | — Pending |
-| USDA NOP only for v1 | Focus on one standard well before expanding to multi-certifier | — Pending |
-| Build on existing organic-cert Next.js app | Already has auth, RBAC, Prisma, audit logging — don't rebuild | — Pending |
-| Append-only audit with checksums | Regulatory compliance requires tamper-evident records | — Pending |
-| Case IH API integration (not file export) | Real-time data pull is more reliable than manual CSV uploads | — Pending |
-| v1.0 focused on data pipeline + reports | Get Case IH data in, inspection reports out — defer audit infrastructure to v2 | — Pending |
+| Web-first, defer native mobile | Get audit system working first; responsive design bridges the gap | ✓ Good — shipped v1.0 web-only |
+| Print-ready PDF over digital inspector portal | Inspectors work on-site with paper; digital portal adds complexity without value | ✓ Good — 8-section PDF covers NOP needs |
+| USDA NOP only for v1 | Focus on one standard well before expanding to multi-certifier | ✓ Good — kept scope tight |
+| Build on existing organic-cert Next.js app | Already has auth, RBAC, Prisma, audit logging — don't rebuild | ✓ Good — leveraged existing 70K+ LOC |
+| Case IH API integration (not file export) | Real-time data pull is more reliable than manual CSV uploads | ✓ Good — OAuth2 flow works; mock mode bridges staging gap |
+| v1.0 focused on data pipeline + reports | Get Case IH data in, inspection reports out — defer audit infrastructure to v2 | ✓ Good — delivered core value in 3 days |
+| Mock data mode for staging API gap | CNH staging has no API audience registered; mock data lets development continue | ⚠️ Revisit — need production credentials or staging audience from CNH |
+| Manual data wins over synced data | 409 conflict on approve when manual record exists for same date/type | ✓ Good — protects manual corrections |
+| Append-only audit with checksums | Regulatory compliance requires tamper-evident records | — Deferred to v2 |
 
 ---
-*Last updated: 2026-02-24 after v1.0 milestone scoping*
+*Last updated: 2026-02-26 after v1.0 milestone completion*
