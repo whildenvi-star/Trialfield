@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 5 of 7 (Split-Field Schema & Acre Reconciliation) — context gathered, ready for planning
 Plan: —
-Status: Defining requirements
-Last activity: 2026-02-27 — Milestone v1.1 started
+Status: Context gathered
+Last activity: 2026-02-27 — Phase 5 context gathered
 
 ## Accumulated Context
 
@@ -32,5 +32,5 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Starting milestone v1.1
-Resume file: None
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-split-field-schema-acre-reconciliation/05-CONTEXT.md
