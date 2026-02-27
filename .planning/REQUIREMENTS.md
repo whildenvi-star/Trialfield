@@ -15,9 +15,9 @@
 
 ### Acre Reconciliation (ACRE)
 
-- [ ] **ACRE-01**: Enterprise `plantedAcres` sum is validated against the field's `totalAcres` — warn when sum exceeds total, allow when under (fallow remainder)
-- [ ] **ACRE-02**: Field index shows acre utilization (e.g., "120 of 160 ac planted") when multiple enterprises exist
-- [ ] **ACRE-03**: Fallow/idle acres are calculated as field total minus sum of planted enterprise acres
+- [x] **ACRE-01**: Enterprise `plantedAcres` sum is validated against the field's `totalAcres` — warn when sum exceeds total, allow when under (fallow remainder)
+- [x] **ACRE-02**: Field index shows acre utilization (e.g., "120 of 160 ac planted") when multiple enterprises exist
+- [x] **ACRE-03**: Fallow/idle acres are calculated as field total minus sum of planted enterprise acres
 
 ### Field Views (VIEW)
 
@@ -51,9 +51,9 @@
 | SCHEMA-02 | Phase 5 | Complete (05-01) |
 | SCHEMA-03 | Phase 5 | Complete (05-01) |
 | SCHEMA-04 | Phase 5 | Complete (05-01) |
-| ACRE-01 | Phase 5 | Pending |
-| ACRE-02 | Phase 5 | Pending |
-| ACRE-03 | Phase 5 | Pending |
+| ACRE-01 | Phase 5 | Complete (05-02) |
+| ACRE-02 | Phase 5 | Complete (05-02) |
+| ACRE-03 | Phase 5 | Complete (05-02) |
 | VIEW-01 | Phase 6 | Pending |
 | VIEW-02 | Phase 6 | Pending |
 | VIEW-03 | Phase 6 | Pending |
@@ -71,4 +71,4 @@
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-27 — SCHEMA-01 through SCHEMA-04 marked complete after 05-01 execution*
+*Last updated: 2026-02-27 — ACRE-01, ACRE-02, ACRE-03 marked complete after 05-02 execution; Phase 5 fully complete*
