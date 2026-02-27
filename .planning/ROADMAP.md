@@ -38,7 +38,7 @@
 **Plans**: 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Schema migration: add label, isFallow, fallow cost fields; partial index; forward-compatible types
+- [x] 05-01-PLAN.md — Schema migration: add label, isFallow, fallow cost fields; partial index; forward-compatible types
 - [ ] 05-02-PLAN.md — Lot generator label support + API acre reconciliation (POST/PUT/GET)
 
 ### Phase 6: Multi-Enterprise Field Views
@@ -80,6 +80,6 @@ Plans:
 | 2. Field Records & History | v1.0 | 3/3 | Complete | 2026-02-25 |
 | 3. Inspection Report Generation | v1.0 | 3/3 | Complete | 2026-02-25 |
 | 4. Synced Harvest CropLot Wiring | v1.0 | 2/2 | Complete | 2026-02-26 |
-| 5. Split-Field Schema & Acre Reconciliation | v1.1 | 0/2 | Planned | - |
+| 5. Split-Field Schema & Acre Reconciliation | v1.1 | 1/2 | In progress | - |
 | 6. Multi-Enterprise Field Views | v1.1 | 0/? | Not started | - |
 | 7. Split-Field PDF Reports | v1.1 | 0/? | Not started | - |

@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 5 of 7 (Split-Field Schema & Acre Reconciliation) — context gathered, ready for planning
-Plan: —
-Status: Context gathered
-Last activity: 2026-02-27 — Phase 5 context gathered
+Phase: 5 of 7 (Split-Field Schema & Acre Reconciliation)
+Plan: 1 of 2 complete
+Status: In progress — Plan 01 complete, Plan 02 pending
+Last activity: 2026-02-27 — Phase 5, Plan 01 complete (schema evolution)
 
 ## Accumulated Context
 
@@ -20,6 +20,12 @@ Last activity: 2026-02-27 — Phase 5 context gathered
 
 Decisions are logged in PROJECT.md Key Decisions table.
 v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
+
+**Phase 5, Plan 01 decisions (2026-02-27):**
+- Use label String? (nullable) not required — single-enterprise fields keep working with label=null, no migration needed
+- Use isFallow Boolean @default(false) not an enum — binary distinction is simpler, avoids enum migration complexity
+- Fallow enterprises store acreage in plantedAcres — acre math consistent (sum of all enterprise plantedAcres = total allocated)
+- Partial unique index FieldEnterprise_no_label_unique needed — PostgreSQL treats NULL as distinct in unique constraints
 
 ### Pending Todos
 
@@ -32,5 +38,5 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-split-field-schema-acre-reconciliation/05-CONTEXT.md
+Stopped at: Phase 5, Plan 01 complete — ready for Plan 02
+Resume file: .planning/phases/05-split-field-schema-acre-reconciliation/05-01-SUMMARY.md
