@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 6 of 7 (Multi-Enterprise Field Views)
-Plan: 2 of 2 complete
-Status: Phase 6 complete — both plans executed
-Last activity: 2026-02-28 — Phase 6, Plan 02 complete (enterprise form label/fallow fields, breadcrumb navigation)
+Phase: 7 of 7 (Split-Field PDF Reports)
+Plan: 1 of 3 complete
+Status: Phase 7 in progress — Plan 01 executed
+Last activity: 2026-02-28 — Phase 7, Plan 01 complete (assembler enterprise identity fields, Field List split-field parent+sub-row rendering)
 
 ## Accumulated Context
 
@@ -46,6 +46,12 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 - Save & Add Another preserves fieldId and cropYear while clearing other fields
 - Breadcrumb links to /fields/{id}/history not /fields/{id} for direct access to enterprise list
 
+**Phase 7, Plan 01 decisions (2026-02-28):**
+- formatFieldLabel utility placed in report-assembler.ts (not a pdf helper) — shared by Plans 02 and 03
+- splitFieldYears computed from farm.fields (raw Prisma data) before the mapped fields array — same data, cleaner ordering
+- Single-enterprise field-list path unchanged — exact backward compatibility preserved
+- Sub-row column widths mirror parent row: label(25%), acres(15%), empty(15%), crop(20%), variety(25%)
+
 ### Pending Todos
 
 1. Work on grain ticket system enhancements (general) — TBD scope
@@ -57,5 +63,5 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Phase 7 context gathered — ready for planning
-Resume file: .planning/phases/07-split-field-pdf-reports/07-CONTEXT.md
+Stopped at: Phase 7, Plan 01 complete — assembler + Field List split-field rendering done
+Resume file: .planning/phases/07-split-field-pdf-reports/07-02-PLAN.md

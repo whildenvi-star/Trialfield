@@ -69,7 +69,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 07-01-PLAN.md — Assembler enterprise identity fields + Field List parent/sub-row rendering
+- [x] 07-01-PLAN.md — Assembler enterprise identity fields + Field List parent/sub-row rendering
 - [ ] 07-02-PLAN.md — Field History multi-enterprise year sections with label headers and enterpriseId filtering
 - [ ] 07-03-PLAN.md — Harvest Log, Application Log, and Mass Balance enterprise label display
 
@@ -83,4 +83,4 @@ Plans:
 | 4. Synced Harvest CropLot Wiring | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 5. Split-Field Schema & Acre Reconciliation | v1.1 | 2/2 | Complete | 2026-02-27 |
 | 6. Multi-Enterprise Field Views | v1.1 | 2/2 | Complete | 2026-02-28 |
-| 7. Split-Field PDF Reports | v1.1 | 0/3 | Not started | - |
+| 7. Split-Field PDF Reports | v1.1 | 1/3 | In progress | - |
