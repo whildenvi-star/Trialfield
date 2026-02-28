@@ -20,7 +20,7 @@
 ### v1.1 Split-Field Enterprises
 
 - [x] **Phase 5: Split-Field Schema & Acre Reconciliation** - Multi-enterprise data model with acre validation and fallow tracking (completed 2026-02-27)
-- [ ] **Phase 6: Multi-Enterprise Field Views** - Consolidated field cards, drill-down history, and enterprise creation UI
+- [x] **Phase 6: Multi-Enterprise Field Views** - Consolidated field cards, drill-down history, and enterprise creation UI (completed 2026-02-28)
 - [ ] **Phase 7: Split-Field PDF Reports** - All report sections updated for multi-enterprise fields
 
 ## Phase Details
@@ -54,8 +54,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md — Field index cards with enterprise count badge + acre utilization; multi-enterprise season cards with enterprise rows and drill-down links
-- [ ] 06-02-PLAN.md — Enterprise creation form with label/fallow fields, acreWarning toast, label column in table, breadcrumb drill-down on detail page
+- [x] 06-01-PLAN.md — Field index cards with enterprise count badge + acre utilization; multi-enterprise season cards with enterprise rows and drill-down links
+- [x] 06-02-PLAN.md — Enterprise creation form with label/fallow fields, acreWarning toast, label column in table, breadcrumb drill-down on detail page
 
 ### Phase 7: Split-Field PDF Reports
 **Goal**: Every section of the inspection PDF accurately reflects split-field reality -- enterprises grouped under parent fields, no double-counting, no omissions
@@ -81,5 +81,5 @@ Plans:
 | 3. Inspection Report Generation | v1.0 | 3/3 | Complete | 2026-02-25 |
 | 4. Synced Harvest CropLot Wiring | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 5. Split-Field Schema & Acre Reconciliation | v1.1 | 2/2 | Complete | 2026-02-27 |
-| 6. Multi-Enterprise Field Views | v1.1 | 0/2 | Not started | - |
+| 6. Multi-Enterprise Field Views | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 7. Split-Field PDF Reports | v1.1 | 0/? | Not started | - |
