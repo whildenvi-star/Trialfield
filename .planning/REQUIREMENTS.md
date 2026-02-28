@@ -21,11 +21,11 @@
 
 ### Field Views (VIEW)
 
-- [ ] **VIEW-01**: Field index page shows consolidated field cards with enterprise count badge when > 1 enterprise exists
-- [ ] **VIEW-02**: Field detail/history page defaults to consolidated view showing all enterprises for the field
-- [ ] **VIEW-03**: User can drill down from consolidated view to a single enterprise's operations and history
-- [ ] **VIEW-04**: Season cards in field history show multiple enterprise rows when a field is split that year
-- [ ] **VIEW-05**: Enterprise creation form supports adding multiple enterprises to the same field and crop year
+- [x] **VIEW-01**: Field index page shows consolidated field cards with enterprise count badge when > 1 enterprise exists
+- [x] **VIEW-02**: Field detail/history page defaults to consolidated view showing all enterprises for the field
+- [x] **VIEW-03**: User can drill down from consolidated view to a single enterprise's operations and history
+- [x] **VIEW-04**: Season cards in field history show multiple enterprise rows when a field is split that year
+- [x] **VIEW-05**: Enterprise creation form supports adding multiple enterprises to the same field and crop year
 
 ### Reports (RPT)
 
@@ -54,11 +54,11 @@
 | ACRE-01 | Phase 5 | Complete (05-02) |
 | ACRE-02 | Phase 5 | Complete (05-02) |
 | ACRE-03 | Phase 5 | Complete (05-02) |
-| VIEW-01 | Phase 6 | Pending |
-| VIEW-02 | Phase 6 | Pending |
-| VIEW-03 | Phase 6 | Pending |
-| VIEW-04 | Phase 6 | Pending |
-| VIEW-05 | Phase 6 | Pending |
+| VIEW-01 | Phase 6 | Complete |
+| VIEW-02 | Phase 6 | Complete |
+| VIEW-03 | Phase 6 | Complete |
+| VIEW-04 | Phase 6 | Complete |
+| VIEW-05 | Phase 6 | Complete |
 | RPT-01 | Phase 7 | Pending |
 | RPT-02 | Phase 7 | Pending |
 | RPT-03 | Phase 7 | Pending |
