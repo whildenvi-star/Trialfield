@@ -66,11 +66,12 @@ Plans:
   2. Field History section in the PDF groups operations by enterprise within each field, with clear enterprise labels separating the groups
   3. Harvest Log in the PDF includes the enterprise label alongside lot number for any field with multiple enterprises
   4. Mass Balance section in the PDF aggregates inputs and outputs correctly across all enterprises per field -- totals match single-enterprise behavior when only one enterprise exists, and no inputs or harvests are double-counted or omitted when multiple enterprises exist
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 07-01: TBD
-- [ ] 07-02: TBD
+- [ ] 07-01-PLAN.md — Assembler enterprise identity fields + Field List parent/sub-row rendering
+- [ ] 07-02-PLAN.md — Field History multi-enterprise year sections with label headers and enterpriseId filtering
+- [ ] 07-03-PLAN.md — Harvest Log, Application Log, and Mass Balance enterprise label display
 
 ## Progress
 
@@ -82,4 +83,4 @@ Plans:
 | 4. Synced Harvest CropLot Wiring | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 5. Split-Field Schema & Acre Reconciliation | v1.1 | 2/2 | Complete | 2026-02-27 |
 | 6. Multi-Enterprise Field Views | v1.1 | 2/2 | Complete | 2026-02-28 |
-| 7. Split-Field PDF Reports | v1.1 | 0/? | Not started | - |
+| 7. Split-Field PDF Reports | v1.1 | 0/3 | Not started | - |
