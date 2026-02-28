@@ -21,7 +21,7 @@
 
 - [x] **Phase 5: Split-Field Schema & Acre Reconciliation** - Multi-enterprise data model with acre validation and fallow tracking (completed 2026-02-27)
 - [x] **Phase 6: Multi-Enterprise Field Views** - Consolidated field cards, drill-down history, and enterprise creation UI (completed 2026-02-28)
-- [ ] **Phase 7: Split-Field PDF Reports** - All report sections updated for multi-enterprise fields
+- [x] **Phase 7: Split-Field PDF Reports** - All report sections updated for multi-enterprise fields (completed 2026-02-28)
 
 ## Phase Details
 
@@ -83,4 +83,4 @@ Plans:
 | 4. Synced Harvest CropLot Wiring | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 5. Split-Field Schema & Acre Reconciliation | v1.1 | 2/2 | Complete | 2026-02-27 |
 | 6. Multi-Enterprise Field Views | v1.1 | 2/2 | Complete | 2026-02-28 |
-| 7. Split-Field PDF Reports | v1.1 | 1/3 | In progress | - |
+| 7. Split-Field PDF Reports | 3/3 | Complete   | 2026-02-28 | - |

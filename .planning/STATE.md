@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 7 of 7 (Split-Field PDF Reports)
-Plan: 1 of 3 complete
-Status: Phase 7 in progress — Plan 01 executed
-Last activity: 2026-02-28 — Phase 7, Plan 01 complete (assembler enterprise identity fields, Field List split-field parent+sub-row rendering)
+Plan: 2 of 3 complete
+Status: Phase 7 in progress — Plan 02 executed
+Last activity: 2026-02-28 — Phase 7, Plan 02 complete (Field History multi-enterprise rendering, enterpriseId filtering, enterprise label sub-headers)
 
 ## Accumulated Context
 
@@ -52,6 +52,11 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 - Single-enterprise field-list path unchanged — exact backward compatibility preserved
 - Sub-row column widths mirror parent row: label(25%), acres(15%), empty(15%), crop(20%), variety(25%)
 
+**Phase 7, Plan 02 decisions (2026-02-28):**
+- buildEnterpriseRows parameter renamed from fieldName to enterpriseId — private helper, no shim needed
+- Split-year year label shows field name + totalAcres + enterprise count; crop names appear on enterprise label headers below
+- enterprise.label ?? enterprise.crop fallback in enterprise label header for fields with label=null
+
 ### Pending Todos
 
 1. Work on grain ticket system enhancements (general) — TBD scope
@@ -63,5 +68,5 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Phase 7, Plan 01 complete — assembler + Field List split-field rendering done
-Resume file: .planning/phases/07-split-field-pdf-reports/07-02-PLAN.md
+Stopped at: Phase 7, Plan 02 complete — Field History multi-enterprise rendering done
+Resume file: .planning/phases/07-split-field-pdf-reports/07-03-PLAN.md
