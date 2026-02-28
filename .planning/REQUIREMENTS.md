@@ -31,8 +31,8 @@
 
 - [x] **RPT-01**: Field List section in PDF shows each enterprise as a sub-row under its parent field (indented or grouped)
 - [x] **RPT-02**: Field History section in PDF groups operations by enterprise within each field, clearly labeled
-- [ ] **RPT-03**: Harvest Log in PDF includes enterprise label alongside lot number for split fields
-- [ ] **RPT-04**: Mass Balance in PDF aggregates correctly across multiple enterprises per field — no double-counting, no omissions
+- [x] **RPT-03**: Harvest Log in PDF includes enterprise label alongside lot number for split fields
+- [x] **RPT-04**: Mass Balance in PDF aggregates correctly across multiple enterprises per field — no double-counting, no omissions
 
 ## Out of Scope
 
@@ -61,8 +61,8 @@
 | VIEW-05 | Phase 6 | Complete |
 | RPT-01 | Phase 7 | Complete (07-01) |
 | RPT-02 | Phase 7 | Complete |
-| RPT-03 | Phase 7 | Pending |
-| RPT-04 | Phase 7 | Pending |
+| RPT-03 | Phase 7 | Complete |
+| RPT-04 | Phase 7 | Complete |
 
 **Coverage:**
 - v1.1 requirements: 16 total

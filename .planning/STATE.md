@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 7 of 7 (Split-Field PDF Reports)
-Plan: 2 of 3 complete
-Status: Phase 7 in progress — Plan 02 executed
-Last activity: 2026-02-28 — Phase 7, Plan 02 complete (Field History multi-enterprise rendering, enterpriseId filtering, enterprise label sub-headers)
+Plan: 3 of 3 complete
+Status: Phase 7 COMPLETE — all 3 plans executed
+Last activity: 2026-02-28 — Phase 7, Plan 03 complete (Harvest Log, Application Log, Mass Balance enterprise label display)
 
 ## Accumulated Context
 
@@ -57,6 +57,11 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 - Split-year year label shows field name + totalAcres + enterprise count; crop names appear on enterprise label headers below
 - enterprise.label ?? enterprise.crop fallback in enterprise label header for fields with label=null
 
+**Phase 7, Plan 03 decisions (2026-02-28):**
+- Mass balance lot rows use inline conditional (not formatFieldLabel) — lot rows show lot number + enterprise context, not field name + enterprise context
+- Column widths adjusted in harvest-log (Field 18->24%, Lot 18->16%, Acres 10->8%, Equipment 10->8%) to fit "Field (Label)" without overflow
+- Column widths adjusted in application-log (Field 15->20%, Notes 8->3%) — Notes column was always placeholder "—", 3% sufficient
+
 ### Pending Todos
 
 1. Work on grain ticket system enhancements (general) — TBD scope
@@ -68,5 +73,5 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Phase 7, Plan 02 complete — Field History multi-enterprise rendering done
-Resume file: .planning/phases/07-split-field-pdf-reports/07-03-PLAN.md
+Stopped at: Phase 7, Plan 03 complete — all PDF sections updated for split-field enterprise labels (v1.1 COMPLETE)
+Resume file: n/a — Milestone v1.1 complete
