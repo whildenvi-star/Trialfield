@@ -111,3 +111,12 @@ None - no external service configuration required.
 ---
 *Phase: 07-split-field-pdf-reports*
 *Completed: 2026-02-28*
+
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/07-split-field-pdf-reports/07-01-SUMMARY.md`
+- FOUND: `organic-cert/src/lib/report-assembler.ts` (enterpriseId, enterpriseLabel, isSplitField, formatFieldLabel, splitFieldYears all verified)
+- FOUND: `organic-cert/src/lib/pdf/styles.ts` (splitFieldStyles with subRow, subRowText, parentRow, enterpriseLabelHeader exported)
+- FOUND: `organic-cert/src/lib/pdf/sections/field-list.tsx` (isSplit branch, parent+sub-row rendering, single-enterprise path unchanged)
+- TypeScript: zero errors (`npx tsc --noEmit` clean)
+- Final commit: `c8eb38a`
