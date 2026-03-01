@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 
 ## Current Position
 
-Phase: 7 of 7 (Split-Field PDF Reports)
-Plan: 3 of 3 complete
-Status: Phase 7 COMPLETE — all 3 plans executed
-Last activity: 2026-02-28 — Phase 7, Plan 03 complete (Harvest Log, Application Log, Mass Balance enterprise label display)
+Phase: 8 of 8 (Fallow Enterprise Edit Fix)
+Plan: 1 of 1 complete
+Status: Phase 8 COMPLETE — all 1 plan executed
+Last activity: 2026-03-01 — Phase 8, Plan 01 complete (Fallow enterprise edit pre-fill and cost serialization fix)
 
 ## Accumulated Context
 
@@ -62,6 +62,10 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 - Column widths adjusted in harvest-log (Field 18->24%, Lot 18->16%, Acres 10->8%, Equipment 10->8%) to fit "Field (Label)" without overflow
 - Column widths adjusted in application-log (Field 15->20%, Notes 8->3%) — Notes column was always placeholder "—", 3% sufficient
 
+**Phase 8, Plan 01 decisions (2026-03-01):**
+- Null fallowCostAmount defaults to "0.00" in openEdit() form (never blank) — uses != null ternary to avoid coercing zero to empty string
+- Cleared cost amount saves as 0 (not null) in handleSave() — always keep a numeric value per locked user decision
+
 ### Pending Todos
 
 1. Work on grain ticket system enhancements (general) — TBD scope
@@ -72,6 +76,6 @@ v1.0 decisions archived to milestones/v1.0-ROADMAP.md.
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Phase 7, Plan 03 complete — all PDF sections updated for split-field enterprise labels (v1.1 COMPLETE)
-Resume file: n/a — Milestone v1.1 complete
+Last session: 2026-03-01
+Stopped at: Phase 8, Plan 01 complete — fallow enterprise edit pre-fill and cost serialization fix (INT-01 closed)
+Resume file: n/a — Phase 8 complete
