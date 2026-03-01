@@ -1,12 +1,12 @@
-# Organic Audit System
+# Farm Operations Platform
 
 ## What This Is
 
-A USDA NOP organic certification audit system that pulls field operation data from Case IH FieldOps via OAuth2 API, structures it into inspector-ready records with 3-year history, and produces print-ready PDF audit reports. Supports split-field enterprises — multiple crops per physical field per season with fallow tracking, consolidated views, and enterprise-aware PDF reports. Built for farm managers who need to prep for organic inspections without the headache.
+A modular agricultural operations platform for Hughes Farm. Currently includes: (1) an organic certification audit system that pulls Case IH FieldOps data and produces print-ready USDA NOP inspection reports with split-field enterprise support, and (2) a grain ticket traceability system that tracks every load from combine to settlement and catches discrepancies between farm records and buyer payments. Built for farm managers and office staff who need reliable, no-nonsense operational tools.
 
 ## Core Value
 
-A farm manager can pull Case IH field data and hand an inspector a complete, print-ready audit report with zero manual data entry.
+Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on — with zero tolerance for lost data or undetected discrepancies.
 
 ## Completed Milestone: v1.0 Data Ingestion & Reports (2026-02-26)
 
@@ -48,9 +48,21 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 - ✓ Intuitive navigation — default consolidated view, drill into enterprise on demand — v1.1
 - ✓ PDF reports reflect split-field reality (field list, history, mass balance) — v1.1
 
+## Current Milestone: v2.0 Grain Traceability
+
+**Goal:** Replace the paper-to-spreadsheet grain ticket workflow with a digital traceability system that tracks every load from combine to settlement, reconciles against buyer payments, and flags discrepancies immediately.
+
+**Target features:**
+- Database migration (Express + Prisma + PostgreSQL, preserving existing UI/PWA)
+- Digital load entry replacing 31-sheet Excel spreadsheet
+- Full chain-of-custody: field → buggy weight → truck → delivery → settlement
+- Settlement import (CSV/Excel) and manual entry for paper-only buyers
+- Automated reconciliation with discrepancy detection across 4+ destinations
+- Farm registry integration for field lookups
+
 ### Active
 
-(No active requirements — next milestone not yet defined)
+(Requirements to be defined during milestone setup)
 
 ### Deferred (v2)
 
@@ -77,15 +89,17 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 
 ## Context
 
-Shipped v1.1 with ~85,000 LOC TypeScript/Prisma across the organic-cert Next.js app. Tech stack: Next.js 16, React 19, Prisma 6, PostgreSQL, @react-pdf/renderer, shadcn/Radix UI, Tailwind CSS, Zod v4 for API validation.
+Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget, fsa-acres, grain-tickets, meristem-malt, farm-registry. All apps share PostgreSQL and the farm-registry for field data.
 
-This system is part of a modular agricultural ecosystem with independent apps for budgeting (farm-budget), FSA tracking (fsa-acres), grain tickets (grain-tickets), malt costing (meristem-malt), and organic certification (organic-cert).
+**Organic-cert** (v1.0 + v1.1 shipped): Case IH FieldOps API integration (OAuth2, mock mode active), split-field enterprises, print-ready USDA NOP PDF reports.
 
-Case IH FieldOps API integration uses OAuth2 Authorization Code flow with per-farm refresh tokens. Currently operating in mock data mode while CNH staging API audience configuration is resolved — the OAuth flow and all sync/review/approve workflows are fully functional.
+**Grain-tickets** (current focus): Working Express app on port 3000 with ticket entry, Claude Vision scanning, farm summary, PWA support, CSV export. Currently uses flat JSON data store (~160KB). 4 dependencies (express, multer, xlsx, @anthropic-ai/sdk). Calculation engine (calc.js) validated against original spreadsheet. Needs database migration and settlement reconciliation.
 
-Primary users are farm managers/staff preparing for USDA NOP inspections. The UX respects farming realities: limited time, minimal clicks, "get shit done" design philosophy.
+**Grain workflow today:** Combine → grain buggy (has scale) → radio net weight + field + crop to semi driver → semi driver writes Hughes Blue Ticket → delivers to co-op → co-op prints grain ticket → both forms to office → manual Excel entry → reconcile against settlement sheets (arrive ~1 week later, from 4+ buyers, mixed paper/CSV/PDF formats). 100-500 loads per season.
 
-**Known tech debt (from v1.1 audit):**
+Primary users are farm office staff (daily ticket entry) and farm manager (settlement reconciliation, reporting).
+
+**Known tech debt (from v1.1 audit — organic-cert):**
 - Sync Acres button has a pre-existing runtime crash (data.unmatched undefined)
 - Partial unique index not captured in schema.prisma (environment rebuild risk)
 - take:3 enterprise query limit could undercount at 4+ enterprises per field
@@ -118,6 +132,9 @@ Primary users are farm managers/staff preparing for USDA NOP inspections. The UX
 | Acre over-allocation: warning only, save allowed | Farmers need flexibility; blocking saves would frustrate real workflows | ✓ Good — yellow toast, never blocks |
 | formatFieldLabel utility in report-assembler | Shared across harvest log, application log, and mass balance — single source | ✓ Good — DRY, consumed by 3 PDF sections |
 | Fallow edit: store 0 not null for cleared cost | Always keep a numeric value, avoid null/undefined ambiguity in forms | ✓ Good — no data loss |
+| Keep Express for grain-tickets (not migrate to Next.js) | Working app with solid UI, PWA, Claude Vision — rewrite adds no user value | — Pending |
+| Add PostgreSQL via Prisma to grain-tickets | Settlement reconciliation is relational; flat JSON can't handle cross-entity queries | — Pending |
+| Farm registry integration for grain-ticket fields | Consistent field names across ecosystem; already partially integrated | — Pending |
 
 ---
-*Last updated: 2026-03-01 after v1.1 milestone completion*
+*Last updated: 2026-03-01 after v2.0 milestone start*

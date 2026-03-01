@@ -4,15 +4,15 @@
 
 See: .planning/PROJECT.md (updated 2026-03-01)
 
-**Core value:** A farm manager can pull Case IH field data and hand an inspector a complete, print-ready audit report with zero manual data entry.
-**Current focus:** Planning next milestone
+**Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
+**Current focus:** v2.0 Grain Traceability — defining requirements
 
 ## Current Position
 
-Phase: All phases complete
-Plan: n/a
-Status: v1.1 milestone SHIPPED — planning next milestone
-Last activity: 2026-03-01 — v1.1 Split-Field Enterprises milestone completed and archived
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-01 — Milestone v2.0 started
 
 ## Accumulated Context
 
@@ -24,14 +24,14 @@ v1.1 decisions archived to milestones/v1.1-ROADMAP.md.
 
 ### Pending Todos
 
-1. Work on grain ticket system enhancements (general) — TBD scope
+(None — grain ticket enhancements now captured as v2.0 milestone)
 
 ### Blockers/Concerns
 
-- CNH FieldOps staging API has no audience registered — mock data mode active. Need production credentials or staging audience from CNH support.
+- CNH FieldOps staging API has no audience registered — mock data mode active. Need production credentials or staging audience from CNH support. (organic-cert, not blocking v2.0)
 
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: v1.1 milestone completed and archived
-Resume file: n/a — between milestones
+Stopped at: v2.0 milestone definition in progress
+Resume file: n/a — defining requirements
