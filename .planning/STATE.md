@@ -44,6 +44,10 @@ Recent decisions affecting v2.0:
 - Reconcile on net weight in pounds (not derived bushels — each buyer computes bushels differently)
 - Write-lock cutover required during migration — 2-5 minute window, verify row counts
 
+### Roadmap Evolution
+
+- Phase 14 added: Add chat agent for system information and recall
+
 ### Pending Todos
 
 None.
