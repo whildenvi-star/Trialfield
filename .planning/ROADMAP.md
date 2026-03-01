@@ -22,6 +22,7 @@
 - [x] **Phase 5: Split-Field Schema & Acre Reconciliation** - Multi-enterprise data model with acre validation and fallow tracking (completed 2026-02-27)
 - [x] **Phase 6: Multi-Enterprise Field Views** - Consolidated field cards, drill-down history, and enterprise creation UI (completed 2026-02-28)
 - [x] **Phase 7: Split-Field PDF Reports** - All report sections updated for multi-enterprise fields (completed 2026-02-28)
+- [ ] **Phase 8: Fallow Enterprise Edit Fix** - Fix fallow edit pre-fill to prevent silent cost data loss (gap closure: INT-01)
 
 ## Phase Details
 
@@ -73,6 +74,19 @@ Plans:
 - [ ] 07-02-PLAN.md — Field History multi-enterprise year sections with label headers and enterpriseId filtering
 - [ ] 07-03-PLAN.md — Harvest Log, Application Log, and Mass Balance enterprise label display
 
+### Phase 8: Fallow Enterprise Edit Fix
+**Goal**: Fallow enterprise edits preserve existing cost data — no silent data loss on the edit path
+**Depends on**: Phase 6
+**Requirements**: SCHEMA-03, VIEW-05
+**Gap Closure**: Closes INT-01 from v1.1 milestone audit
+**Success Criteria** (what must be TRUE):
+  1. The `FieldEnterprise` TypeScript interface includes `fallowCostAmount` and `fallowCostCategory` fields
+  2. Opening an existing fallow enterprise for editing pre-fills `fallowCostAmount` and `fallowCostCategory` from the stored record
+  3. Saving a fallow enterprise edit preserves cost data that was not changed by the user
+
+Plans:
+- [ ] 08-01-PLAN.md — Fix FieldEnterprise interface and openEdit() fallow cost pre-fill
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -83,4 +97,5 @@ Plans:
 | 4. Synced Harvest CropLot Wiring | v1.0 | 2/2 | Complete | 2026-02-26 |
 | 5. Split-Field Schema & Acre Reconciliation | v1.1 | 2/2 | Complete | 2026-02-27 |
 | 6. Multi-Enterprise Field Views | v1.1 | 2/2 | Complete | 2026-02-28 |
-| 7. Split-Field PDF Reports | 3/3 | Complete   | 2026-02-28 | - |
+| 7. Split-Field PDF Reports | v1.1 | 3/3 | Complete | 2026-02-28 |
+| 8. Fallow Enterprise Edit Fix | v1.1 | 0/1 | Pending | - |

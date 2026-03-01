@@ -49,7 +49,7 @@
 |-------------|-------|--------|
 | SCHEMA-01 | Phase 5 | Complete (05-01) |
 | SCHEMA-02 | Phase 5 | Complete (05-01) |
-| SCHEMA-03 | Phase 5 | Complete (05-01) |
+| SCHEMA-03 | Phase 5, Phase 8 | Complete (05-01); INT-01 fix in Phase 8 |
 | SCHEMA-04 | Phase 5 | Complete (05-01) |
 | ACRE-01 | Phase 5 | Complete (05-02) |
 | ACRE-02 | Phase 5 | Complete (05-02) |
@@ -58,7 +58,7 @@
 | VIEW-02 | Phase 6 | Complete |
 | VIEW-03 | Phase 6 | Complete |
 | VIEW-04 | Phase 6 | Complete |
-| VIEW-05 | Phase 6 | Complete |
+| VIEW-05 | Phase 6, Phase 8 | Complete; INT-01 fix in Phase 8 |
 | RPT-01 | Phase 7 | Complete (07-01) |
 | RPT-02 | Phase 7 | Complete |
 | RPT-03 | Phase 7 | Complete |
