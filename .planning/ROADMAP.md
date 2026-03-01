@@ -84,8 +84,10 @@ Plans:
   2. Opening an existing fallow enterprise for editing pre-fills `fallowCostAmount` and `fallowCostCategory` from the stored record
   3. Saving a fallow enterprise edit preserves cost data that was not changed by the user
 
+**Plans:** 1 plan
+
 Plans:
-- [ ] 08-01-PLAN.md — Fix FieldEnterprise interface and openEdit() fallow cost pre-fill
+- [ ] 08-01-PLAN.md — Fix FieldEnterprise interface, openEdit() fallow cost pre-fill, and handleSave() serialization
 
 ## Progress
 
