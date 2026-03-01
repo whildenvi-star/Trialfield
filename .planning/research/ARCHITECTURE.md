@@ -1,8 +1,8 @@
 # Architecture Research
 
-**Domain:** Organic certification audit system — Case IH Field Ops integration + USDA NOP audit reporting
-**Researched:** 2026-02-23
-**Confidence:** MEDIUM — Case IH API surface confirmed from existing codebase + developer portal; NOP recordkeeping confirmed from 7 CFR 205.103; append-only patterns confirmed from PostgreSQL RLS documentation. Full FieldOps API schema (endpoint response format) is behind a login wall at develop.cnh.com; mock-data.js in this codebase is the best available shape reference.
+**Domain:** Grain traceability — adding Prisma + PostgreSQL to existing Express app with chain-of-custody schema
+**Researched:** 2026-03-01
+**Confidence:** HIGH — Based on direct examination of grain-tickets/server.js (628 LOC), grain-tickets/public/ (all JS files), grain-tickets/data/data.json (527 tickets, 63 farms, 37 crop configs), organic-cert/prisma/schema.prisma (reference pattern), and official Prisma documentation on Express integration.
 
 ---
 
@@ -11,553 +11,722 @@
 ### System Overview
 
 ```
-┌────────────────────────────────────────────────────────────────────┐
-│                     Next.js App (organic-cert)                      │
-│                                                                     │
-│  ┌──────────────┐  ┌────────────────┐  ┌──────────────────────┐   │
-│  │  UI Layer    │  │   API Routes   │  │  Background Sync     │   │
-│  │  (React/RSC) │  │  /api/**       │  │  /api/admin/sync     │   │
-│  └──────┬───────┘  └───────┬────────┘  └──────────┬───────────┘   │
-│         │                  │                       │               │
-├─────────┼──────────────────┼───────────────────────┼───────────────┤
-│         │            Service Layer                 │               │
-│  ┌──────▼───────┐  ┌───────▼────────┐  ┌──────────▼───────────┐   │
-│  │  Report      │  │  Audit Store   │  │  Case IH Sync        │   │
-│  │  Generator   │  │  Service       │  │  Service             │   │
-│  └──────┬───────┘  └───────┬────────┘  └──────────┬───────────┘   │
-│         │                  │                       │               │
-├─────────┼──────────────────┼───────────────────────┼───────────────┤
-│                       Data Layer (Prisma + PostgreSQL)              │
-│  ┌──────▼───────┐  ┌───────▼────────┐  ┌──────────▼───────────┐   │
-│  │  @react-pdf  │  │  AuditLog      │  │  FieldOpsSync        │   │
-│  │  PDF stream  │  │  (append-only) │  │  FieldOperation      │   │
-│  └──────────────┘  └────────────────┘  │  HarvestEvent        │   │
-│                                        │  MaterialUsage       │   │
-│                                        └──────────────────────┘   │
-└────────────────────────────────────────────────────────────────────┘
-                                    ▲
-                                    │ OAuth2 client_credentials
-                          ┌─────────┴──────────┐
-                          │  Case IH FieldOps  │
-                          │  ag.api.cnhind.com │
-                          │  /v1/fields         │
-                          │  /v1/applications   │
-                          │  /v1/yield          │
-                          │  /v1/equipment      │
-                          │  /v1/telemetry      │
-                          └────────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                    grain-tickets (Express, port 3000)             │
+│                                                                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │                   public/ (Static Assets)                  │  │
+│  │  index.html   app.js    tickets.js   farms.js              │  │
+│  │  scan.js      lookup.js style.css    calc.js               │  │
+│  │  sw.js        manifest.json   (PWA — cache-first shell)    │  │
+│  └────────────────────────────────────────────────────────────┘  │
+│                              │ HTTP                              │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │                    server.js (Express)                      │  │
+│  │                                                            │  │
+│  │  Existing routes:          New routes:                     │  │
+│  │  GET/POST /api/tickets     POST /api/settlements           │  │
+│  │  PUT/DELETE /api/tickets   GET  /api/settlements           │  │
+│  │  GET /api/farms            POST /api/settlements/:id/match │  │
+│  │  PUT/POST /api/farms       GET  /api/reconciliation        │  │
+│  │  GET/POST /api/crops       POST /api/load-imports          │  │
+│  │  GET /api/stats            GET  /api/buyers                │  │
+│  │  POST /api/scan                                            │  │
+│  └─────────────────────────┬──────────────────────────────────┘  │
+│                             │                                     │
+│  ┌──────────────────────────▼──────────────────────────────────┐  │
+│  │                    db.js (Prisma Client)                    │  │
+│  │    module.exports = new PrismaClient()  ← single export     │  │
+│  └──────────────────────────┬──────────────────────────────────┘  │
+│                             │                                     │
+│  ┌──────────────────────────▼──────────────────────────────────┐  │
+│  │              prisma/schema.prisma                           │  │
+│  │   Ticket  Buyer  Settlement  SettlementLine  LoadDelivery   │  │
+│  │   CropConfig  FarmEntry                                     │  │
+│  └──────────────────────────┬──────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────── ┘
+                               │ DATABASE_URL (shared PostgreSQL)
+              ┌────────────────▼───────────────────┐
+              │         PostgreSQL                  │
+              │  grain_tickets schema               │
+              │  (same server as organic-cert)      │
+              └─────────────────────────────────────┘
+                               │
+              ┌────────────────▼───────────────────┐
+              │    farm-registry (port 3005)        │
+              │    GET /api/fields                  │
+              │    (field name lookups, aliases)    │
+              └─────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Communicates With |
-|-----------|----------------|-------------------|
-| Case IH Sync Service | OAuth2 token management, API polling, field name matching, data normalization | Case IH API (outbound), Prisma write (inbound to DB), AuditStore (emits SYNC_IMPORT events) |
-| Audit Store Service | Single write path for all audit-relevant records; enforces append-only; computes entry checksum | Prisma (AuditLog model), all other services that produce write events |
-| Report Generator | Assembles inspector-ready NOP report from normalized records; streams PDF | Prisma (read-only queries), @react-pdf/renderer, Next.js API route handler |
-| Field History Tracker | 3-year crop rotation view, per-field substance history | FieldHistory + FieldEnterprise + MaterialUsage + FertilityEvent models |
-| Audit Viewer UI | Filterable log viewer for internal review and regulator export | /api/audit-log route, CSV export endpoint |
+| Component | Responsibility | Current State |
+|-----------|---------------|---------------|
+| `public/sw.js` | PWA shell caching (v2), network-first for non-API routes | Existing — bump CACHE_NAME on any public/ change |
+| `public/calc.js` | Dual-mode calculation engine (browser + Node, UMD) | Existing — no changes needed |
+| `public/tickets.js` | Ticket entry form + paginated table | Existing — add settlement tab in Phase 5 |
+| `public/farms.js` | Farm summary with registry acre overlay | Existing — add reconciliation view in Phase 5 |
+| `server.js` | Express routes, Multer, Claude Vision scan | Modified — Prisma replaces saveData() in Phase 2 |
+| `db.js` (new) | Single PrismaClient export shared across server.js and migrate-json.js | New file, created in Phase 1 |
+| `prisma/schema.prisma` (new) | Schema for tickets, settlements, buyers, chain-of-custody | New file, created in Phase 1 |
+| `migrate-json.js` (new) | One-shot JSON-to-Postgres migration script | New file, run once in Phase 2 |
 
 ---
 
 ## Recommended Project Structure
 
-The existing `organic-cert/src/` structure already works. Add the following:
-
 ```
-organic-cert/src/
-├── lib/
-│   ├── audit-logger.ts          # EXISTING — extend with checksum chaining
-│   ├── fieldops-client.ts       # NEW — TypeScript port of farm-budget/fieldops/client.js
-│   ├── fieldops-sync.ts         # NEW — TypeScript port of farm-budget/fieldops/sync.js, writes to Prisma
-│   ├── fieldops-normalizer.ts   # NEW — maps FieldOps shape → Prisma models (FieldOperation, HarvestEvent, etc.)
-│   └── report-generator.ts      # NEW — assembles NOP audit report data, calls @react-pdf/renderer
-├── app/
-│   └── api/
-│       ├── admin/
-│       │   └── sync/
-│       │       └── route.ts     # NEW — POST /api/admin/sync triggers Case IH sync (ADMIN only)
-│       ├── audit-log/
-│       │   └── route.ts         # EXISTING — extend with export (CSV) endpoint
-│       └── reports/
-│           └── nop/
-│               └── route.ts     # NEW — GET /api/reports/nop?year=2025 returns PDF stream
-├── components/
-│   └── reports/
-│       └── NopAuditReport.tsx   # NEW — @react-pdf/renderer document component
-└── prisma/
-    └── schema.prisma            # EXTEND — add FieldOpsSync, tamper-evident AuditLog columns
+grain-tickets/
+├── prisma/
+│   ├── schema.prisma          # data model — tickets, settlements, buyers, loads
+│   ├── migrations/            # generated by prisma migrate dev
+│   └── seed.js                # crop config seed data (replaces cropConfig in JSON)
+├── db.js                      # exports single PrismaClient instance
+├── migrate-json.js            # one-shot migration: data.json → PostgreSQL
+├── server.js                  # Express app — modified in-place
+├── public/
+│   ├── calc.js                # unchanged — shared with browser
+│   ├── sw.js                  # unchanged — bump CACHE_NAME when JS changes
+│   ├── tickets.js             # add settlement tab
+│   ├── farms.js               # add reconciliation view
+│   └── ...                    # other existing files unchanged
+├── data/
+│   └── data.json              # kept as read-only archive after migration
+├── package.json               # add @prisma/client, prisma as devDep
+└── .env                       # DATABASE_URL (same postgres as organic-cert)
 ```
 
 ### Structure Rationale
 
-- **lib/fieldops-client.ts + fieldops-sync.ts:** Isolated from HTTP layer; testable pure TypeScript. Port of existing farm-budget JS logic — no reinvention, just typed translation.
-- **lib/fieldops-normalizer.ts:** The impedance mismatch between FieldOps flat JSON and Prisma relational models is significant enough to warrant its own module. Keeps sync.ts readable.
-- **lib/report-generator.ts:** Report assembly (database queries + data shaping) is separate from PDF rendering (component tree). This lets you unit-test the data assembly without rendering PDFs.
-- **components/reports/NopAuditReport.tsx:** @react-pdf/renderer component. Server-rendered via Next.js API route, not client-rendered. This avoids font/worker issues in browser and keeps sensitive farm data server-side.
+- **prisma/ at root:** Matches Prisma convention; `prisma init` places it here by default. Consistent with how organic-cert organizes its Prisma directory.
+- **db.js separate from server.js:** Allows routes and the migration script to import the client without circular dependencies or re-initialization. Consistent with how organic-cert handles `src/lib/prisma.ts`.
+- **data/ kept read-only:** Migration is one-shot. The JSON files stay as a backup and audit trail, never written to again. This is safe rollback territory.
+- **No separate routes/ directory yet:** At 628 LOC, server.js is already a maintainable single-file Express app. New Prisma routes fit in the same file — splitting to separate route files is premature complexity for this phase.
+- **No TypeScript:** The rest of grain-tickets is plain JavaScript. Introducing TS conflates two independent changes, doubles the blast radius, and forces a toolchain change (ts-node, tsconfig.json) on an app that has zero build tooling. Stay in JS; Prisma generates its own types in `node_modules`.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Append-Only Audit Store with Entry Checksum
+### Pattern 1: Direct Client Usage (No Middleware Wrapper)
 
-**What:** Every write to the AuditLog table includes a SHA-256 hash computed over the entry's content fields plus the hash of the most recent preceding entry (hash chaining). The hash is stored in a `entryHash` column. A PostgreSQL row-level security (RLS) policy blocks all UPDATE and DELETE on the AuditLog table from the application role. The application role only has INSERT + SELECT.
+**What:** Import the `db.js` singleton directly in route handlers. No ORM abstraction layer, no repository classes.
 
-**When to use:** All compliance-critical event recording — manual field edits, Case IH sync imports, report generation events.
+**When to use:** Single-app Express server with straightforward CRUD. Abstraction layers add indirection without benefit when there is one consumer.
 
-**Trade-offs:**
-- Hash chain gives tamper evidence detectable at the application layer without external infrastructure (no Merkle tree, no HSM required at this scale)
-- Chaining means reordering is detectable but concurrent inserts (rare for farm-scale volume) can create brief ordering ambiguity — acceptable here
-- RLS blocks application-level deletes; admin SQL access still bypasses this (document in PITFALLS)
+**Trade-offs:** Routes know about Prisma directly — acceptable for a single-module app; would be a concern if this were a shared library.
 
 **Example:**
-```typescript
-// lib/audit-logger.ts — extend existing logAudit()
-import { createHash } from 'crypto';
+```javascript
+// db.js
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+module.exports = prisma;
 
-async function computeEntryHash(
-  data: Omit<AuditLogInput, 'entryHash'>,
-  previousHash: string | null
-): Promise<string> {
-  const payload = JSON.stringify({
-    userId: data.userId ?? null,
-    action: data.action,
-    entityType: data.entityType,
-    entityId: data.entityId,
-    newData: data.newData ?? null,
-    previousHash: previousHash ?? '0000000000000000',
-  });
-  return createHash('sha256').update(payload).digest('hex');
-}
+// server.js
+const prisma = require('./db');
 
-export async function logAudit(input: AuditLogInput) {
-  // Get previous hash in a transaction to maintain chain integrity
-  return prisma.$transaction(async (tx) => {
-    const prev = await tx.auditLog.findFirst({
-      orderBy: { timestamp: 'desc' },
-      select: { entryHash: true },
-    });
-    const entryHash = await computeEntryHash(input, prev?.entryHash ?? null);
-    return tx.auditLog.create({
-      data: { ...input, entryHash },
-    });
+app.get('/api/tickets', async (req, res) => {
+  const tickets = await prisma.ticket.findMany({
+    orderBy: { date: 'desc' }
   });
-}
+  res.json(tickets.map(enrichTicket));
+});
 ```
 
-### Pattern 2: Case IH Sync Service as a Triggered Background Job
+**Note:** For Express (not Next.js), there is no hot-module reload issue. A plain `new PrismaClient()` in a long-running process creates exactly one connection pool and holds it for the process lifetime. The `globalThis` singleton guard that Next.js requires (`organic-cert/src/lib/prisma.ts`) is not needed here.
 
-**What:** The Case IH sync runs as a Next.js API route (`POST /api/admin/sync`) that is ADMIN-only and can be triggered manually from the UI or via an external cron scheduler (e.g., a system cron `curl`-ing the endpoint with an API key). The sync is NOT run in-process on startup (avoids serverless cold-start issues and race conditions).
+---
 
-**When to use:** This deployment is self-hosted Node.js (not Vercel serverless), so a persistent process works. However, keeping the sync as an HTTP-triggered route rather than an in-process `setInterval` makes it observable, auditable, and restartable without redeploying.
+### Pattern 2: Dual-Store Transition (JSON + PostgreSQL in Parallel)
 
-**Trade-offs:**
-- Simpler than adding BullMQ/Redis to the stack
-- Manual trigger satisfies the farm manager use case ("sync before inspection")
-- Scheduled trigger can be added via system cron or a simple `node-cron` wrapper around the HTTP call without changing architecture
-- Token caching (already implemented in farm-budget client) handles token reuse across sync calls
+**What:** During migration, the app can read from PostgreSQL while the old JSON file remains untouched as a backup. A migration script populates PostgreSQL from JSON before the cutover.
+
+**When to use:** Any time you want a safe, reversible migration path with zero data loss risk.
+
+**Trade-offs:** Short window of dual-store complexity, isolated to the migration script. Once migration is verified, JSON writes are removed from server.js in a single PR.
+
+**Migration sequence:**
+```
+Phase 1 — Schema + client (no data changes):
+  1. Add prisma dep, create db.js, create schema.prisma, run migrate dev
+  2. Server still reads/writes JSON only
+  3. Verify Prisma connects and schema is created
+
+Phase 2 — Migration script:
+  1. Run migrate-json.js: reads data.json, inserts to PostgreSQL
+  2. Verify row counts match (527 tickets, 63 farms, 37 crop configs)
+  3. Spot-check 5-10 records manually
+
+Phase 3 — Cutover (single PR):
+  1. Replace all JSON read/write in server.js with Prisma queries
+  2. Remove saveData(), withLock(), loadData(), in-memory store
+  3. Keep data.json as read-only archive (do not delete)
+
+Phase 4 — New features:
+  1. Add settlement tables, reconciliation routes on top of stable Prisma base
+```
+
+---
+
+### Pattern 3: Settlement Reconciliation via Status Enum
+
+**What:** Each `SettlementLine` (one buyer's payment for one crop lot) has a `matchStatus` field tracking whether it's been linked to farm tickets.
+
+**When to use:** Any domain requiring "records exist on both sides and we need to verify they agree."
+
+**Trade-offs:** Status-driven workflows can accumulate stale states if not carefully transitioned. Keep the state machine small: UNMATCHED → MATCHED → DISCREPANCY. Add WAIVED to let the farm manager dismiss known acceptable variances (grade adjustments, moisture differences).
 
 **Example:**
-```typescript
-// app/api/admin/sync/route.ts
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { runFieldOpsSync } from '@/lib/fieldops-sync';
+```javascript
+// Reconciliation query: find all unmatched settlement lines
+const unmatched = await prisma.settlementLine.findMany({
+  where: { matchStatus: 'UNMATCHED' },
+  include: { settlement: { include: { buyer: true } } }
+});
 
-export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (session?.user?.role !== 'ADMIN') {
-    return Response.json({ error: 'Forbidden' }, { status: 403 });
+// Match: link a settlement line to specific tickets
+await prisma.settlementLine.update({
+  where: { id: lineId },
+  data: {
+    matchStatus: buDiff < 0.01 ? 'MATCHED' : 'DISCREPANCY',
+    matchedBU: farmBU,
+    discrepancyBU: buDiff,
+    matchedAt: new Date()
   }
-  const result = await runFieldOpsSync();
-  return Response.json(result);
-}
-```
-
-### Pattern 3: Normalizer-First Import — No Direct FieldOps Writes to Primary Tables
-
-**What:** Raw Case IH API data is never written directly to Prisma domain models (FieldOperation, HarvestEvent, etc.). It always passes through `fieldops-normalizer.ts` which maps FieldOps JSON to the Prisma shape, applies field-name matching against the existing Field table, and produces a normalized record. The normalizer returns a `SyncCandidate[]` array; the sync service then decides create-or-skip based on external ID dedup.
-
-**When to use:** Every Case IH API record ingestion. Critically, if Case IH changes their API shape (they have already added live telemetry in 2025), only the normalizer needs updating, not the sync or the database.
-
-**Trade-offs:**
-- Adds one module but isolates change — the sync logic and database writes are stable even if the upstream API evolves
-- The normalizer is also the right place to handle NOP-specific transformations (e.g., mapping FieldOps `FERTILIZER` type to a check against the Material NOP status table)
-
-**Example:**
-```typescript
-// lib/fieldops-normalizer.ts
-export interface NormalizedOperation {
-  fieldName: string;             // for matching to Field.name
-  externalId: string;            // FieldOps record ID, for dedup
-  type: FieldOpType;             // mapped from FieldOps operationType
-  operationDate: Date;
-  equipmentName?: string;
-  acresWorked?: number;
-  sourceSystem: 'fieldops';
-  rawPayload: unknown;           // stored on the record for traceability
-}
-
-export function normalizeOperation(
-  foRecord: FieldOpsTelemetry
-): NormalizedOperation {
-  return {
-    fieldName: foRecord.fieldName,
-    externalId: `fo-${foRecord.equipmentId}-${foRecord.date}-${foRecord.fieldId}`,
-    type: mapOpType(foRecord.operationType),  // HARVEST|TILLAGE|PLANTING→FieldOpType
-    operationDate: new Date(foRecord.date),
-    acresWorked: foRecord.areaWorked?.value,
-    sourceSystem: 'fieldops',
-    rawPayload: foRecord,
-  };
-}
-```
-
-### Pattern 4: Report Generation as Server-Side PDF Stream
-
-**What:** The NOP audit report is assembled server-side in the Next.js API route handler, rendered to a PDF buffer using `@react-pdf/renderer`'s `renderToBuffer()`, and returned as a binary response with `Content-Type: application/pdf`. The UI simply links to the endpoint; no client-side PDF rendering.
-
-**When to use:** Always for this use case. Sensitive farm data (input applications, yields) should not leave the server in JSON form for client-side rendering.
-
-**Trade-offs:**
-- Rendering large reports (3+ years, 20+ fields) can be slow server-side — acceptable for this use case (farm managers don't generate reports on a hot loop)
-- @react-pdf/renderer has a known Node.js compatibility issue with canvas in some environments; use `renderToBuffer()` not `renderToStream()` for Next.js App Router route handlers
-
-**Example:**
-```typescript
-// app/api/reports/nop/route.ts
-import { renderToBuffer } from '@react-pdf/renderer';
-import { NopAuditReport } from '@/components/reports/NopAuditReport';
-import { assembleReportData } from '@/lib/report-generator';
-
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()));
-  const data = await assembleReportData(year);
-  const buffer = await renderToBuffer(<NopAuditReport data={data} />);
-  return new Response(buffer, {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="nop-audit-${year}.pdf"`,
-    },
-  });
-}
+});
 ```
 
 ---
 
 ## Data Flow
 
-### Case IH API → Normalized Records → Audit Store
+### Chain-of-Custody Request Flow (New)
 
 ```
-Case IH API (ag.api.cnhind.com)
-  │
-  │  OAuth2 client_credentials → Bearer token (cached 3600s)
-  │  GET /v1/fields, /v1/applications, /v1/yield, /v1/equipment, /v1/telemetry
-  │
-  ▼
-fieldops-client.ts
-  │  Raw JSON: { id, fieldName, date, type, products[], area, ... }
-  │
-  ▼
-fieldops-normalizer.ts
-  │  Field name → Field.id lookup (fuzzy match: normalize whitespace, lowercase)
-  │  FieldOps types → Prisma enums (FieldOpType, etc.)
-  │  External ID construction for dedup
-  │  Missing field → flagged in sync result, not auto-created in organic-cert
-  │    (organic-cert Fields are master; FieldOps enriches, never creates)
-  │
-  ▼
-fieldops-sync.ts
-  │  Dedup check: externalId already in FieldOperation.fieldopsExternalId? → skip
-  │  Create: prisma.fieldOperation.create() / prisma.harvestEvent.create() / etc.
-  │  Emit: logAudit({ action: 'CREATE', entityType: 'FieldOperation', source: 'fieldops-sync' })
-  │
-  ▼
-PostgreSQL (Prisma)
-  │  FieldOperation, HarvestEvent, MaterialUsage, FieldHistory rows created
-  │  AuditLog row appended with entryHash (SHA-256 chain)
-  │
-  ▼
-FieldOpsSync metadata record updated
-  │  lastSync, lastStatus, fieldsMatched, operationsImported, errors[]
+[Ticket Entry Form]
+      ↓ POST /api/tickets
+[server.js route]
+      ↓ prisma.ticket.create()
+[PostgreSQL — tickets table]
+      ↓ (background: settlement matching)
+[prisma.settlementLine.findMany where crop+ticketNo matches]
+      ↓
+[Auto-reconcile: compare farm BU vs settlement BU]
+      ↓
+[MATCHED or DISCREPANCY status written back]
+      ↓
+[GET /api/reconciliation → UI shows flagged discrepancies]
 ```
 
-### User Edit → Audit Store
+### Settlement Import Flow (New)
 
 ```
-Farm manager edits HarvestEvent in UI
-  │
-  ▼
-PUT /api/field-enterprises/[id]/harvest/[recordId]
-  │  RBAC check (ADMIN or OFFICE role)
-  │  Read current record (oldData snapshot)
-  │
-  ▼
-prisma.harvestEvent.update()
-  │
-  ▼
-logAudit({ action: 'UPDATE', entityType: 'HarvestEvent', oldData, newData })
-  │  Transaction: get previousHash → compute SHA-256 → insert AuditLog row
+[CSV/Excel upload or manual entry]
+      ↓ POST /api/settlements
+[Parse CSV/XLSX in server.js]
+      ↓
+[prisma.settlement.create() + prisma.settlementLine.createMany()]
+      ↓
+[Reconciliation engine: match settlement lines against tickets]
+      ↓ primary key: ticketNo match; fallback: (buyer, crop, date range, BU total)
+[Write matchStatus per line]
+      ↓
+[GET /api/reconciliation returns unresolved discrepancies]
 ```
 
-### Audit Store → PDF Report
+### PWA Cache Flow (Unchanged)
 
 ```
-Farm manager clicks "Generate NOP Report 2025"
-  │
-  ▼
-GET /api/reports/nop?year=2025  (ADMIN or OFFICE role)
-  │
-  ▼
-report-generator.ts assembleReportData(2025)
-  │  Queries (all in one farm context via session):
-  │    Farm (name, operator, cert numbers, NOP ID)
-  │    Fields (all, with organicStatus, fsaTract, acres)
-  │    FieldHistory (3 years back: crop, substances, yieldPerAcre)
-  │    FieldEnterprise (2025 crop year, with seedUsages, materialUsages,
-  │                     fieldOperations, fertilityEvents, harvestEvents)
-  │    CropLot + StorageTransfer + LoadoutEvent + SaleDelivery (mass balance)
-  │    Equipment + CleanoutEvent (shared equipment docs)
-  │    NarrativeSection (C3.0 soil/water/biodiversity narratives)
-  │
-  ▼
-NopAuditReport React component (@react-pdf/renderer)
-  │  Sections mirror NOP OSP structure:
-  │    Cover page (farm, operator, cert number, inspection year)
-  │    Field inventory (all fields, acres, organic status, transition date)
-  │    3-year field history per field
-  │    Input application records (seed, fertility, pest control per field)
-  │    Harvest records (yield, moisture, equipment, operator)
-  │    Storage & mass balance (bin cleanouts, transfers, loadouts)
-  │    Equipment list (shared equipment, cleanout documentation)
-  │    Audit trail summary (AuditLog entries for the report period)
-  │
-  ▼
-renderToBuffer() → PDF binary
-  │
-  ▼
-Response (application/pdf, Content-Disposition: attachment)
+[Browser requests /]
+      ↓ sw.js: network-first
+[If network available] → fetch from Express → cache response
+[If offline] → serve from Cache API (shell only, no /api/ caching)
 ```
 
-### AuditLog Integrity Verification
-
+The service worker (`sw.js` line 38) skips all `/api/` routes:
+```javascript
+if (e.request.method !== 'GET' || e.request.url.includes('/api/')) return;
 ```
-Inspector or auditor requests log export
-  │
-  ▼
-GET /api/audit-log?export=csv&from=2025-01-01&to=2025-12-31
-  │
-  ▼
-Verification pass: iterate rows in timestamp order,
-  recompute SHA-256 of each entry + previousHash,
-  compare to stored entryHash → flag any mismatch as tampered
-  │
-  ▼
-CSV download with entryHash column for external verification
-```
+Adding database-backed API routes requires zero changes to the service worker. The PWA shell cache (HTML, CSS, JS files) is unaffected by the database migration. CACHE_NAME is currently `grain-tickets-v2`; bump to `grain-tickets-v3` when any `public/` files change.
 
 ---
 
-## Suggested Build Order
+## Schema Design: Chain-of-Custody
 
-Build order follows dependency direction: each phase produces artifacts consumed by the next.
-
-```
-Phase 1: Case IH Sync Service
-  ├── fieldops-client.ts (TypeScript port, token caching)
-  ├── fieldops-normalizer.ts (FieldOps → Prisma shape mapping)
-  ├── fieldops-sync.ts (dedup logic, Prisma writes)
-  ├── Prisma schema additions (fieldopsExternalId on FieldOperation/HarvestEvent,
-  │   FieldOpsSync metadata model)
-  └── POST /api/admin/sync route (ADMIN-gated trigger)
-
-  Produces: Normalized field operation records in PostgreSQL
-
-Phase 2: Append-Only Audit Store Enhancement
-  ├── Extend AuditLog Prisma model (add entryHash column, previousHash column)
-  ├── Extend audit-logger.ts (SHA-256 chain, transaction-safe)
-  ├── PostgreSQL RLS policy (INSERT-only for app role on audit_log table)
-  ├── Extend /api/audit-log route (filtering by source, entityType, date range)
-  └── Audit viewer UI (table with filters, CSV export)
-
-  Depends on: Phase 1 (sync service emits audit events on import)
-  Produces: Tamper-evident, filterable audit log
-
-Phase 3: Field History Tracking UI
-  ├── 3-year field history view (FieldHistory model — already exists, needs UI)
-  ├── Per-field substance history aggregation (MaterialUsage + FertilityEvent)
-  ├── Crop rotation visualization (CropRotation model — already exists)
-  └── FieldOps sync status indicator per field (last sync date, source badge)
-
-  Depends on: Phase 1 (sync populates FieldOperation records)
-  Produces: Inspector-ready field history view in the web app
-
-Phase 4: NOP Audit Report Generator
-  ├── report-generator.ts (assembleReportData — all Prisma queries)
-  ├── NopAuditReport.tsx (@react-pdf/renderer document structure)
-  ├── GET /api/reports/nop route (ADMIN/OFFICE-gated, PDF stream)
-  └── Report preview UI (link to download, year selector)
-
-  Depends on: Phase 2 (audit trail section in report), Phase 3 (field history data)
-  Produces: Print-ready NOP inspection report PDF
-```
-
-**Why this order:**
-- The sync service must run first because it populates the records that everything else displays and reports on. An empty database produces nothing useful in later phases.
-- Audit store enhancement is second because it must be in place before Phase 3 and 4 generate significant write activity — retrofitting hash chaining on a populated log requires a migration script.
-- Field history UI is third: it validates that the sync data looks correct before you commit it to a PDF report. Inspecting the UI is faster feedback than generating PDFs.
-- Report generation is last because it is purely read-only aggregation of what the first three phases produce. It has no upstream dependencies that aren't satisfied by phases 1-3.
-
----
-
-## Append-Only Audit Store: Fitting Into Existing Prisma/PostgreSQL Setup
-
-### What Already Exists
-
-The `AuditLog` model in `schema.prisma` (line 760) is a plain insert-only table with no DELETE route in any API handler. This is correct behavior by convention but not enforced at the database layer. No tamper-evidence mechanism exists yet (no `entryHash` column).
-
-### What to Add to the Schema
+### Core Schema (Prisma DSL)
 
 ```prisma
-model AuditLog {
-  id           String      @id @default(cuid())
-  userId       String?
-  userName     String?
-  action       AuditAction
-  entityType   String
-  entityId     String
-  oldData      Json?
-  newData      Json?
-  ipAddress    String?
-  source       String?     // "ui", "fieldops-sync", "import" — NEW
-  entryHash    String?     // SHA-256 of content + previousHash — NEW
-  previousHash String?     // hash of immediately preceding row — NEW
-  timestamp    DateTime    @default(now())
+// prisma/schema.prisma (grain-tickets)
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-  @@index([entityType, entityId])
-  @@index([timestamp])
-  @@index([source])         // NEW — filter sync vs manual entries
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── TICKET (migrated from JSON) ────────────────────────────
+
+model Ticket {
+  id         String   @id @default(cuid())
+  // Preserve legacy IDs from JSON (t_000001 format) for migration verification
+  legacyId   String?  @unique
+  date       DateTime @db.Date
+  farm       String   // denormalized field name — matches farm-registry
+  netWeight  Float    // lbs, as-delivered
+  moisture   Float    @default(0)
+  fm         Float    @default(0)   // foreign matter %
+  crop       String   // matches CropConfig.name
+  ticketNo   String?  // buyer scale ticket number — NOT unique (see data quality note)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  loadDelivery  LoadDelivery?
+
+  @@index([date])
+  @@index([farm, crop])
+  @@index([ticketNo])       // non-unique index — enables fast lookup without uniqueness constraint
+  @@index([crop, date])     // reconciliation hot path
+}
+
+// ─── CROP CONFIG (migrated from JSON cropConfig) ────────────
+
+model CropConfig {
+  name           String @id    // "Rye", "Non-GMO Yellow Corn"
+  discount       Float  @default(0)
+  testWeight     Float  @default(56)
+  moistureShrink Float  @default(0)
+}
+
+// ─── FARM ENTRY (migrated from JSON farms[]) ────────────────
+// Local farm metadata — separate from farm-registry
+// farm-registry is authoritative for reportingAcres
+
+model FarmEntry {
+  id             String   @id @default(cuid())
+  legacyId       String?  @unique
+  farm           String   // display name
+  crop           String
+  acres          Float    @default(0)
+  unit           String   @default("BU")
+  type           String   @default("Conventional")
+  guarantee      Float    @default(0)
+  coverage       Float    @default(0)
+  claimThreshold Float    @default(0)
+  discount       Float    @default(0)
+  testWeight     Float    @default(56)
+  driver         String?
+  truck          Float    @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ─── CHAIN OF CUSTODY: LOAD → DELIVERY ──────────────────────
+
+// Represents one truck load's delivery metadata
+// Extended from a Ticket — not every ticket has this yet
+model LoadDelivery {
+  id              String    @id @default(cuid())
+  ticketId        String    @unique
+  ticket          Ticket    @relation(fields: [ticketId], references: [id])
+  destination     String?   // "Rock Valley Coop", "Organic Valley", "DeLong"
+  truckId         String?   // truck number (from notes field: "Trk# 41")
+  driverName      String?   // "WR", "Bob", "Julianne" (from notes: "HBT# 5652 WR")
+  hbtBinNo        String?   // grain bin number (from notes: "HBT# 5652") — 507/527 tickets have this
+  deliveryDate    DateTime? @db.Date
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  settlementLines SettlementLine[]
+
+  @@index([destination, deliveryDate])
+}
+
+// ─── BUYERS ──────────────────────────────────────────────────
+
+model Buyer {
+  id          String   @id @default(cuid())
+  name        String   @unique  // "Rock Valley Coop", "Organic Valley"
+  contactName String?
+  phone       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  settlements Settlement[]
+}
+
+// ─── SETTLEMENTS ─────────────────────────────────────────────
+
+// One settlement = one check/payment document from a buyer
+// A buyer may send one document covering multiple crop types / date ranges
+model Settlement {
+  id             String    @id @default(cuid())
+  buyerId        String
+  buyer          Buyer     @relation(fields: [buyerId], references: [id])
+  settlementDate DateTime  @db.Date
+  checkNumber    String?
+  totalAmount    Float?    // gross payment on check
+  sourceFormat   String    @default("MANUAL")  // "CSV", "XLSX", "MANUAL"
+  sourceFileName String?
+  notes          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  lines SettlementLine[]
+
+  @@index([buyerId, settlementDate])
+}
+
+// One line in a settlement = one load or crop batch paid on this settlement
+model SettlementLine {
+  id               String         @id @default(cuid())
+  settlementId     String
+  settlement       Settlement     @relation(fields: [settlementId], references: [id])
+  loadDeliveryId   String?
+  loadDelivery     LoadDelivery?  @relation(fields: [loadDeliveryId], references: [id])
+  crop             String
+  ticketNo         String?        // buyer's ticket # on this line (primary match key)
+  settlementBU     Float          // bushels buyer paid for
+  settlementLbs    Float?         // weight buyer recorded
+  pricePerBU       Float?
+  moisture         Float?         // buyer-measured moisture
+  dockage          Float?         // total dockage applied
+  lineAmount       Float?         // dollar amount for this line
+  matchStatus      MatchStatus    @default(UNMATCHED)
+  matchedBU        Float?         // farm's net BU for matched tickets
+  discrepancyBU    Float?         // settlementBU - matchedBU (negative = short-paid)
+  matchedAt        DateTime?
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([settlementId])
+  @@index([crop, matchStatus])   // reconciliation dashboard query
+  @@index([ticketNo])            // fast lookup by ticket number
+}
+
+enum MatchStatus {
+  UNMATCHED
+  MATCHED
+  DISCREPANCY
+  WAIVED          // discrepancy acknowledged/accepted by farm manager
 }
 ```
 
-### PostgreSQL RLS Policy
+### Schema Design Decisions
 
-Applied via a Prisma migration raw SQL step:
-
-```sql
--- Enable RLS on audit_log
-ALTER TABLE "AuditLog" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "AuditLog" FORCE ROW LEVEL SECURITY;
-
--- Application role may only INSERT and SELECT (never UPDATE or DELETE)
-CREATE POLICY audit_log_insert ON "AuditLog"
-  FOR INSERT TO app_user WITH CHECK (true);
-
-CREATE POLICY audit_log_select ON "AuditLog"
-  FOR SELECT TO app_user USING (true);
-
--- No UPDATE policy = UPDATE blocked
--- No DELETE policy = DELETE blocked
-```
-
-**Important:** The PostgreSQL role used by the Prisma connection (`DATABASE_URL`) must be `app_user` (not superuser) for this policy to apply. The `FORCE ROW LEVEL SECURITY` clause applies the policy even to table owners.
-
-### Handling Hash Chaining Under Concurrent Load
-
-At farm-scale (one or two concurrent users), the simple transaction approach (get last hash → compute new hash → insert) works without contention. If concurrent writes become an issue, use a PostgreSQL advisory lock keyed on a constant (e.g., `pg_advisory_xact_lock(hashtext('audit_log_chain'))`).
+| Decision | Rationale |
+|----------|-----------|
+| `Ticket.farm` as String (not FK to FarmEntry) | Tickets are indexed by denormalized name matching farm-registry aliases. A FK would require resolving aliases on insert. Keep consistent with current behavior. |
+| `Ticket.ticketNo` as non-unique index (not `@unique`) | Data quality finding: there are 14 duplicate ticket numbers in the existing 527-record dataset, plus 2 empty ticket numbers. Duplicate entries happen in practice (driver error, re-weighing, same lot at different buyers). A unique constraint would reject valid records. Enforce uniqueness in UI with a warning, not a hard DB constraint. |
+| `legacyId` on Ticket and FarmEntry | Preserves JSON IDs (`t_000001` format) during one-shot migration. Allows row-by-row comparison for verification. Remove after migration is verified and signed off. |
+| `LoadDelivery` as optional extension of Ticket | Not every ticket currently has destination data. `LoadDelivery` is populated as data is backfilled or entered going forward. One-to-one via `@unique ticketId`. |
+| `LoadDelivery.hbtBinNo` | 507 of 527 existing tickets have `HBT# XXXX` in their notes field. This is chain-of-custody data (which storage bin received the load) currently buried in free text. Extracting it to a structured field enables grain inventory reconciliation. |
+| `SettlementLine.ticketNo` | Buyer settlement sheets reference the scale ticket number, not our internal ID. This is the primary join key for auto-matching. |
+| `MatchStatus.WAIVED` | Farm manager needs to dismiss known acceptable discrepancies (grade differences, moisture adjustments, freight deductions). Without WAIVED, everything stays in the discrepancy queue indefinitely. |
+| `Settlement.sourceFormat` | Distinguishes manually-entered from imported records for data quality auditing. Buyers use mixed formats: some CSV, some XLSX, some paper-only. |
+| `CropConfig` as Prisma model | Moves crop configuration out of the JSON blob into a proper table. Enables referential queries (e.g., join tickets to config for server-side bulk calculations). |
 
 ---
 
 ## Integration Points
 
-### External Services
-
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Case IH FieldOps API (ag.api.cnhind.com) | OAuth2 `client_credentials` flow; Bearer token cached 3600s; polling via triggered sync | Staging: `mkt.fieldops.caseih.com`. Production: `fieldops.caseih.com`. Token endpoint: `https://identity.cnhind.com/oauth2/aus78lla80kTGmPFf1t7/v1/token`. Requires `Ocp-Apim-Subscription-Key` header in addition to Bearer token. Rate limit: 120 req/s, 120 concurrent users. |
-| FieldOps Data Availability Warning | Agronomic data accessed through Linked Accounts in the FieldOps portal is NOT accessible via the FieldOps API | CNH developer docs state this explicitly. Data from partner integrations may not come through the API. Verify with a real account before relying on applications/yield data being present. |
-
 ### Internal Boundaries
 
 | Boundary | Communication | Notes |
 |----------|---------------|-------|
-| fieldops-sync.ts ↔ audit-logger.ts | Direct function call: `logAudit()` after each Prisma write | Sync emits one audit event per created record; use `source: 'fieldops-sync'` to distinguish from manual writes |
-| fieldops-sync.ts ↔ fieldops-normalizer.ts | Returns `NormalizedRecord[]` array; sync iterates and deduplicates | Normalizer is stateless pure function — no Prisma access |
-| report-generator.ts ↔ Prisma | Read-only queries; no writes | Report generation must not mutate any records; wrap in a read-only transaction if multi-query consistency is needed |
-| NopAuditReport.tsx ↔ report-generator.ts | Data object passed as props; report component is pure render | Keep all async data fetching in report-generator.ts, not inside the React PDF component tree |
-| /api/admin/sync ↔ fieldops-sync.ts | HTTP POST triggers sync; sync result JSON returned | ADMIN role only; log the sync trigger itself as an AuditLog event (`entityType: 'FieldOpsSync'`) |
+| grain-tickets ↔ farm-registry | HTTP GET `localhost:3005/api/fields` via browser-side FarmRegistry.js | Already exists. Client-side autocomplete. No server-side change needed for DB migration. |
+| grain-tickets ↔ PostgreSQL (new) | Prisma Client via `DATABASE_URL` | Same PostgreSQL server as organic-cert. Use a separate database (e.g., `grain`) or table prefix (`grain_`) to avoid name collisions. organic-cert uses its own schema. |
+| grain-tickets ↔ organic-cert | None currently | Do NOT share `schema.prisma`. Each app manages its own migrations independently. Shared database server is fine; shared schema file is not. |
+
+### External Services
+
+| Service | Integration Pattern | Notes |
+|---------|---------------------|-------|
+| PostgreSQL | Prisma Client (connection pool) | `DATABASE_URL` in `.env`. Same server as organic-cert. Use `grain` database or `grain_` table prefix convention. |
+| Claude Vision API | Existing Multer + Anthropic SDK | No change needed. `/api/scan` route stays as-is. |
+| farm-registry (port 3005) | Client-side fetch (existing `FarmRegistry.js`) | No change needed. Loaded via `<script src="http://localhost:3005/client/farm-registry-client.js">` in index.html. |
+
+---
+
+## Data Quality Notes for Migration
+
+These findings come from direct analysis of `data/data.json` (527 tickets, 63 farms, 37 crop configs).
+
+### Duplicate Ticket Numbers (14 affected)
+
+The following ticket numbers appear exactly twice in the dataset. A unique constraint on `Ticket.ticketNo` would reject 14 records:
+
+```
+'0548931', 'M038432', '67963', 'A072494', '531-040638', 'M038474',
+'0548953', '0548957', 'M038503', 'A072184', '0549059', '0549283',
+'341', 'GRO1'
+```
+
+**Resolution:** Use a non-unique `@@index([ticketNo])` instead of `@unique`. The entry form warns on duplicate but does not block save (current behavior — matches real-world need).
+
+### Empty Ticket Numbers (2 records)
+
+Two tickets have `"ticketNo": ""`. These become `null` during migration (empty string → null). The migration script must normalize: `(t.ticketNo || '').trim() || null`.
+
+### Notes Field: Structured Data in Free Text
+
+96% of tickets (507/527) contain `HBT# XXXX` in the notes field — this is the storage bin number at the grain elevator. It is currently unparsed free text but represents structured chain-of-custody data.
+
+The migration script can extract this during migration using a regex:
+```javascript
+const hbtMatch = (t.notes || '').match(/HBT#\s*(\S+)/i);
+const hbtBinNo = hbtMatch ? hbtMatch[1] : null;
+```
+
+This populates `LoadDelivery.hbtBinNo` for all historical loads in one pass, enabling bin-level grain inventory queries going forward.
+
+---
+
+## Migration Path: JSON to PostgreSQL
+
+### Pre-Migration Checklist
+
+- Confirm `DATABASE_URL` points to correct PostgreSQL server
+- Confirm database user has `CREATE TABLE` privilege
+- Back up data.json to a dated copy (`data.json.2026-03-01.backup`)
+- Note: 527 tickets, 63 farms, 37 crop configs expected after migration
+- Note: 14 duplicate ticket numbers — handled by non-unique index
+- Note: 2 empty ticket numbers — normalized to null in migration script
+
+### Migration Script Pattern (migrate-json.js)
+
+```javascript
+// migrate-json.js — run once, then archive
+const prisma = require('./db');
+const fs = require('fs');
+const data = JSON.parse(fs.readFileSync('./data/data.json', 'utf8'));
+
+async function migrate() {
+  console.log(`Migrating ${data.tickets.length} tickets...`);
+
+  // 1. Seed crop config
+  for (const [name, cfg] of Object.entries(data.cropConfig)) {
+    await prisma.cropConfig.upsert({
+      where: { name: name.trim() },
+      update: cfg,
+      create: { name: name.trim(), ...cfg }
+    });
+  }
+  console.log(`Crop configs: ${Object.keys(data.cropConfig).length} seeded`);
+
+  // 2. Migrate farm entries
+  for (const farm of data.farms) {
+    await prisma.farmEntry.upsert({
+      where: { legacyId: farm.id },
+      update: { ...farm, legacyId: farm.id },
+      create: { ...farm, legacyId: farm.id }
+    });
+  }
+  console.log(`Farms: ${data.farms.length} migrated`);
+
+  // 3. Migrate tickets (batched for performance)
+  const BATCH = 100;
+  for (let i = 0; i < data.tickets.length; i += BATCH) {
+    const batch = data.tickets.slice(i, i + BATCH);
+    await prisma.ticket.createMany({
+      data: batch.map(t => ({
+        legacyId: t.id,
+        date: new Date(t.date + 'T00:00:00'),
+        farm: (t.farm || '').trim(),
+        netWeight: t.netWeight || 0,
+        moisture: t.moisture || 0,
+        fm: t.fm || 0,
+        crop: (t.crop || '').trim(),
+        ticketNo: (t.ticketNo || '').trim() || null,   // normalize empty to null
+        notes: (t.notes || '').trim() || null,
+      })),
+      skipDuplicates: true,
+    });
+    console.log(`  Batch ${Math.floor(i/BATCH)+1}: up to record ${i+BATCH}`);
+  }
+
+  // 4. Create LoadDelivery records with HBT bin numbers parsed from notes
+  const tickets = await prisma.ticket.findMany();
+  let hbtExtracted = 0;
+  for (const ticket of tickets) {
+    const hbtMatch = (ticket.notes || '').match(/HBT#\s*(\S+)/i);
+    const truckMatch = (ticket.notes || '').match(/Trk#\s*(\S+)/i);
+    const driverMatch = (ticket.notes || '').match(/HBT#\s*\S+\s+(\w+)/i);
+    if (hbtMatch || truckMatch) {
+      await prisma.loadDelivery.create({
+        data: {
+          ticketId: ticket.id,
+          hbtBinNo: hbtMatch ? hbtMatch[1] : null,
+          truckId: truckMatch ? truckMatch[1] : null,
+          driverName: driverMatch ? driverMatch[1] : null,
+        }
+      });
+      hbtExtracted++;
+    }
+  }
+  console.log(`LoadDelivery: ${hbtExtracted} records created from notes`);
+
+  // 5. Verify
+  const dbCount = await prisma.ticket.count();
+  console.log(`\nMigration complete.`);
+  console.log(`  JSON tickets: ${data.tickets.length}`);
+  console.log(`  DB tickets:   ${dbCount}`);
+  if (dbCount !== data.tickets.length) {
+    console.warn('  WARNING: Count mismatch — check for duplicate legacyId values');
+  }
+}
+
+migrate().catch(console.error).finally(() => prisma.$disconnect());
+```
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Writing FieldOps Records Directly to Prisma Without Normalizer
+### Anti-Pattern 1: Re-creating the In-Memory Store in PostgreSQL
 
-**What people do:** Call `prisma.fieldOperation.create()` directly inside `fieldops-sync.ts` using raw FieldOps JSON fields.
+**What people do:** After migrating to PostgreSQL, keep the in-memory `store` object and sync it with the database on every read/write.
 
-**Why it's wrong:** FieldOps schema has already changed (live telemetry added in 2025 per CNH news). Direct writes couple your database writes to the API shape. A field rename in the FieldOps API breaks sync silently.
+**Why it's wrong:** Doubles the complexity, creates cache invalidation bugs, and defeats the purpose of a database. The in-memory store (`let store = {}`, `farmSummaryCache`, `ticketById`, `ticketByNo`) was a workaround for flat JSON limitations.
 
-**Do this instead:** All FieldOps writes go through `fieldops-normalizer.ts`. The normalizer owns the impedance mapping. The sync service works with normalized types.
+**Do this instead:** Remove `let store = {}`, `loadData()`, `saveData()`, `withLock()`, and all in-memory index Maps. PostgreSQL with proper `@@index` directives serves the same purpose reliably. The write-lock queue is replaced by PostgreSQL's transaction isolation. The memoized `farmSummaryCache` is replaced by a single Prisma aggregation query.
 
-### Anti-Pattern 2: Mutating AuditLog Rows (Corrections via UPDATE)
+---
 
-**What people do:** When a field operation is corrected, update the AuditLog row that recorded the original to reflect the correction.
+### Anti-Pattern 2: Migrating to TypeScript in the Same Phase
 
-**Why it's wrong:** Destroys the audit trail. Inspectors and regulators need to see that a correction was made and what the original record said.
+**What people do:** "We're doing a big refactor anyway, let's add TypeScript too."
 
-**Do this instead:** Always append a new AuditLog entry with `action: 'UPDATE'`, `oldData` containing the original, and `newData` containing the corrected value. The RLS policy blocks UPDATE at the database layer regardless.
+**Why it's wrong:** It conflates two independent changes, doubles the blast radius, and forces a complete toolchain change (ts-node, tsconfig.json, build step) on an app with zero build tooling. Prisma already generates its own types in `node_modules/@prisma/client`.
 
-### Anti-Pattern 3: Rendering the NOP PDF in the Browser
+**Do this instead:** Stay in plain JavaScript. TypeScript migration is a separate milestone if ever needed.
 
-**What people do:** Fetch report data as JSON from an API, pass to `@react-pdf/renderer` in a client component, render in-browser.
+---
 
-**Why it's wrong:** Farm data (yields, input applications, organic cert numbers) leaves the server as JSON. Browser rendering also has issues with web workers and fonts in Next.js App Router.
+### Anti-Pattern 3: Sharing schema.prisma Between Apps
 
-**Do this instead:** `renderToBuffer()` on the server in an API route handler. Return binary PDF. The browser just downloads the file.
+**What people do:** Put all models (organic-cert + grain-tickets) in a single `schema.prisma` for "convenience."
 
-### Anti-Pattern 4: Auto-Creating organic-cert Fields From FieldOps Data
+**Why it's wrong:** Migrations from one app break the other. Prisma generates a single client that includes all models from both apps. Schema changes require cross-module coordination.
 
-**What people do:** If a FieldOps field name does not match any existing `Field` in organic-cert, create a new Field automatically.
+**Do this instead:** Each app maintains its own `prisma/schema.prisma`. They share a PostgreSQL server but use separate databases or a naming convention (`grain_*`) to avoid collisions. The `DATABASE_URL` in grain-tickets `.env` points to the same server but a different database name (e.g., `postgres://user:pass@localhost:5432/grain`).
 
-**Why it's wrong:** Organic-cert Field records carry NOP-critical metadata (organicStatus, transitionDate, FSA numbers, buffer zones, adjacent land use). None of that is available from FieldOps. Auto-creating produces incomplete records that could show up in inspection reports with null NOP fields.
+---
 
-**Do this instead:** Log unmatched FieldOps fields in the sync result (`unmatchedFields: string[]`). Surface them in the sync status UI. Farm manager manually creates the Field record with all required NOP fields, then re-runs sync.
+### Anti-Pattern 4: Unique Constraint on Ticket Number
+
+**What people do:** Add `ticketNo String @unique` assuming ticket numbers are globally unique.
+
+**Why it's wrong:** 14 of 527 existing records (~2.7%) have duplicate ticket numbers in the real dataset. Drivers make errors, loads are re-weighed, and some small buyers reuse number sequences. A unique constraint causes the migration to fail and blocks entry of re-weighed loads.
+
+**Do this instead:** Use `@@index([ticketNo])` for fast lookup, not `@unique`. The entry form shows a warning toast on duplicate detection (current behavior preserved) but does not block save.
+
+---
+
+### Anti-Pattern 5: Changing the Service Worker Cache Without Bumping the Version
+
+**What people do:** Add new JavaScript files (e.g., `settlements.js`) to `public/` without updating `CACHE_NAME` in `sw.js`.
+
+**Why it's wrong:** Existing installed PWAs continue serving the old cached shell. New files are never downloaded. Users see broken UI until manually clearing caches.
+
+**Do this instead:** Every time files in `public/` change, bump `CACHE_NAME` in `sw.js` (`grain-tickets-v2` → `grain-tickets-v3`). Add any new JS files to the `PRECACHE` array. The activate handler already evicts old caches when the version changes (`sw.js` lines 24-34).
 
 ---
 
 ## Scaling Considerations
 
-This is a single-farm, single-tenant system at launch. Scale is not a concern. The architectural choices are sized appropriately:
+This is an internal farm management tool with 1-3 concurrent users and ~500 loads per season. Scale is not a concern. Architectural decisions are about reliability, not load.
 
-| Scale | Architecture Adjustments |
-|-------|--------------------------|
-| 1-5 users (current) | Single Prisma connection, hash chain with simple transaction, sync triggered manually |
-| 5-50 users (multi-farm SaaS if scope expands) | Add `farmId` scope to AuditLog RLS; consider pg-boss for durable sync job queue; separate report generation to a worker |
-| 50+ users | Not in scope for v1 |
+| Scale | Architecture Notes |
+|-------|-------------------|
+| Current (1-3 users, ~500 records/season) | Single Express process, single Prisma client, no connection pool tuning needed |
+| Multi-season accumulation (5,000+ tickets) | `@@index([crop, date])` already in schema. Prisma `findMany` with `take`/`skip` for pagination — already implemented in tickets.js frontend (PAGE_SIZE = 50). |
+| Multi-farm operation onboarding | Add `farmId` FK to Ticket and FarmEntry models. Farm-scoped queries via `where: { farmId }`. |
 
-**First bottleneck if scope expands:** Report generation — PDF rendering blocks the Node.js event loop for large reports. Move to a background job with polling or WebSocket notification before adding more farms.
+---
+
+## Suggested Build Order (Considering Data Dependencies)
+
+Phase ordering reflects hard dependencies: each phase depends on the previous phase being stable. The existing app must keep functioning throughout.
+
+```
+Phase 1: Database Foundation
+  ├── Add @prisma/client and prisma as devDependency
+  ├── Create db.js (singleton PrismaClient)
+  ├── Create prisma/schema.prisma (Ticket, CropConfig, FarmEntry only)
+  ├── Run prisma migrate dev --name init
+  └── Verify Prisma connects — no server.js changes yet, app still uses JSON
+  KEEPS APP FUNCTIONAL: Yes — zero changes to server.js
+  UNBLOCKS: All subsequent phases
+
+Phase 2: JSON-to-PostgreSQL Migration + Cutover
+  ├── Write migrate-json.js (with HBT bin number extraction)
+  ├── Handle duplicate ticketNo (non-unique index, not constraint)
+  ├── Run migration, verify row counts (expect 527 tickets, 63 farms, 37 crops)
+  ├── Spot-check 10 records: compare JSON vs DB values
+  ├── Switch server.js ticket/farm/crop routes to Prisma queries
+  └── Remove saveData(), withLock(), loadData(), in-memory store
+  KEEPS APP FUNCTIONAL: Yes — same API contract, different data layer
+  DEPENDENCY: Phase 1 complete
+  UNBLOCKS: Phases 3 and 4
+
+Phase 3: Settlement Schema + Import
+  ├── Add Buyer, Settlement, SettlementLine, LoadDelivery to schema.prisma
+  ├── Run prisma migrate dev --name settlements
+  ├── Build POST /api/buyers (create/list buyers)
+  ├── Build POST /api/settlements (manual entry)
+  ├── Build CSV/XLSX import endpoint (POST /api/settlements/import)
+  └── Build GET /api/settlements with buyer filter
+  KEEPS APP FUNCTIONAL: Yes — new routes only, no existing routes touched
+  DEPENDENCY: Phase 2 complete (tickets must be in DB for ticket-number matching)
+
+Phase 4: Reconciliation Engine
+  ├── Build matching logic: settlement lines → tickets by ticketNo (primary) or (crop+BU) (fallback)
+  ├── Build GET /api/reconciliation (unmatched + discrepancy summary)
+  ├── Build POST /api/settlements/:id/match (manual override)
+  └── Build POST /api/settlements/:lineId/waive (dismiss discrepancy)
+  KEEPS APP FUNCTIONAL: Yes — new routes only
+  DEPENDENCY: Phase 3 complete (settlement lines must exist to reconcile)
+
+Phase 5: UI — Settlement Tab + Discrepancy View
+  ├── Add settlements.js to public/ (settlement entry + import tab)
+  ├── Add discrepancy view to farms.js (or new reconcile.js tab)
+  ├── Bump sw.js CACHE_NAME (grain-tickets-v2 → grain-tickets-v3)
+  ├── Add new JS files to PRECACHE array in sw.js
+  └── Test PWA install/update flow
+  KEEPS APP FUNCTIONAL: Yes — additive changes, existing tabs unchanged
+  DEPENDENCY: Phase 4 API routes complete (avoids UI rework if API shape changes)
+```
+
+**Why this order:**
+
+1. Phase 1 before Phase 2 — need Prisma schema before migration.
+2. Phase 2 (migration) before Phase 3 (settlements) — critical. Settlement lines link to tickets by `ticketNo`. Those tickets must be in PostgreSQL before settlement import works.
+3. Phase 3 before Phase 4 — reconciliation engine needs settlement lines to exist.
+4. Phase 5 last — UI is the least risky layer. Stabilize API shape before building UI to avoid rework.
+5. Each phase leaves the existing ticket entry and farm summary tabs fully functional — the app never goes dark.
 
 ---
 
 ## Sources
 
-- CNH Developer Portal — FieldOps API: [https://develop.cnh.com/api-guides/fieldops-api](https://develop.cnh.com/api-guides/fieldops-api) (MEDIUM confidence — login required for full spec; surface confirmed)
-- CNH Developer Portal — FieldOps Portals: [https://develop.cnh.com/get-started/fieldops-portals](https://develop.cnh.com/get-started/fieldops-portals) (HIGH confidence — staging/production URLs, availability warning confirmed)
-- CNH Developer Portal — FieldOps API FAQs: [https://develop.cnh.com/troubleshooting/faq/field-ops-api](https://develop.cnh.com/troubleshooting/faq/field-ops-api) (HIGH confidence — rate limits: 120 req/s, token TTL: 3600s production confirmed)
-- Existing codebase: `farm-budget/fieldops/client.js` — OAuth2 token flow, scopes, endpoint paths (HIGH confidence — actual working implementation)
-- Existing codebase: `farm-budget/fieldops/sync.js` — Field matching logic, dedup, sync metadata pattern (HIGH confidence)
-- Existing codebase: `farm-budget/fieldops/mock-data.js` — FieldOps API response shapes (HIGH confidence — mirrors real API responses)
-- 7 CFR 205.103 — Recordkeeping by certified operations: [https://www.law.cornell.edu/cfr/text/7/205.103](https://www.law.cornell.edu/cfr/text/7/205.103) (HIGH confidence — primary regulation; 5-year record retention, audit trail requirement confirmed)
-- USDA AMS Organic Records: [https://www.ams.usda.gov/services/organic-certification/organic-records](https://www.ams.usda.gov/services/organic-certification/organic-records) (HIGH confidence — official forms and documentation templates)
-- PostgreSQL Row Level Security documentation: [https://www.postgresql.org/docs/current/ddl-rowsecurity.html](https://www.postgresql.org/docs/current/ddl-rowsecurity.html) (HIGH confidence — RLS policy syntax confirmed)
-- Tamper-evident audit log hash chain pattern: [https://www.designgurus.io/answers/detail/how-do-you-design-tamperevident-audit-logs-merkle-trees-hashing](https://www.designgurus.io/answers/detail/how-do-you-design-tamperevident-audit-logs-merkle-trees-hashing) (MEDIUM confidence — WebSearch, pattern is well-established industry practice)
-- Prisma Row Level Security extensions: [https://github.com/prisma/prisma-client-extensions/tree/main/row-level-security](https://github.com/prisma/prisma-client-extensions/tree/main/row-level-security) (MEDIUM confidence — official Prisma GitHub)
-- @react-pdf/renderer server-side rendering in Next.js: [https://github.com/diegomura/react-pdf/discussions/2402](https://github.com/diegomura/react-pdf/discussions/2402) (MEDIUM confidence — community discussion, renderToBuffer pattern confirmed)
+- Prisma: instantiating PrismaClient — https://www.prisma.io/docs/orm/prisma-client/setup-and-configuration/instantiate-prisma-client (HIGH confidence — official docs)
+- Prisma: add to existing project (PostgreSQL) — https://www.prisma.io/docs/getting-started/prisma-orm/add-to-existing-project/postgresql (HIGH confidence — official docs)
+- `grain-tickets/server.js` — direct examination of existing Express architecture (628 LOC)
+- `grain-tickets/public/sw.js` — service worker strategy confirmed (CACHE_NAME = `grain-tickets-v2`, network-first, skips /api/)
+- `grain-tickets/data/data.json` — direct analysis: 527 tickets, 63 farms, 37 crops; 14 duplicate ticketNos; 2 empty ticketNos; 507/527 records have HBT# bin pattern in notes
+- `grain-tickets/public/tickets.js` — confirmed PAGE_SIZE=50 pagination, FarmRegistry autocomplete integration
+- `grain-tickets/public/index.html` — confirmed farm-registry client loaded via `<script src="http://localhost:3005/...">` with onerror fallback
+- `organic-cert/prisma/schema.prisma` — Prisma 6 reference pattern for this codebase (datasource, generator, enum usage)
+- `organic-cert/src/lib/prisma.ts` — Next.js singleton pattern (globalThis guard) documented as contrast; not applicable to Express
 
 ---
 
-*Architecture research for: Case IH Field Ops API integration + USDA NOP audit reporting on organic-cert Next.js app*
-*Researched: 2026-02-23*
+*Architecture research for: grain traceability — Express + Prisma + PostgreSQL migration with chain-of-custody schema*
+*Researched: 2026-03-01*

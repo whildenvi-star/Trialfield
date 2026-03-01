@@ -1,258 +1,353 @@
 # Stack Research
 
-**Domain:** Organic certification audit system — Case IH Field Ops integration + USDA NOP audit reporting
-**Researched:** 2026-02-23
-**Confidence:** MEDIUM-HIGH (Case IH API verified against existing working code; PDF approach verified against npm registry; audit store patterns verified against PostgreSQL official docs and 2025 community resources)
+**Domain:** Grain traceability — database migration, settlement import, reconciliation engine, buyer management in an existing Express app
+**Researched:** 2026-03-01
+**Confidence:** HIGH for core stack (verified against ecosystem used elsewhere in this repo and official docs); MEDIUM for settlement import format handling (buyer CSV/Excel formats unknown until samples collected)
 
 ---
 
 ## Context: What Already Exists (Do Not Re-add)
 
-The organic-cert app already has the following. This research covers only the **new additions** needed for this milestone.
+The grain-tickets app already has the following. This research covers **only what is new for v2.0**.
 
 | Already Present | Do Not Touch |
 |-----------------|--------------|
-| `@react-pdf/renderer` 4.3.2 | PDF infrastructure exists |
-| Prisma 6 + PostgreSQL | Database layer exists |
-| `audit-logger.ts` + `AuditLog` model | Basic audit log exists (needs hardening) |
-| `next-auth` 5.0.0-beta.30 | Auth exists |
-| `node-cron` 3.0.0 (in farm-budget) | Cron pattern exists but not in organic-cert |
-| `date-fns` 4.1.0 | Date utilities exist |
+| `express` 4.18 | HTTP server and all existing routes |
+| `multer` 2.0.2 | File upload middleware (reuse for settlement import) |
+| `xlsx` 0.18.5 | Excel read/write (already present — reuse, don't add ExcelJS) |
+| `@anthropic-ai/sdk` 0.75.0 | Claude Vision ticket scanning |
+| `calc.js` | Calculation engine — validated against original spreadsheet, do not rewrite |
+| `public/` PWA | Service worker, manifest, offline support — preserve entirely |
+| Farm Registry integration | `lookup.js` already calls farm-registry on port 3005 |
+
+The organic-cert app (same repo) uses Prisma 6.19.2 + PostgreSQL. This is the established pattern to replicate in grain-tickets. Schema design and migration commands are proven — no new patterns needed.
+
+**Prisma version note:** Prisma 7 was released November 2025 (current stable is 7.4.2 as of 2026-03-01). However, this project pins to **Prisma 6.19.2** deliberately, matching organic-cert. Prisma 7 introduces required driver adapters (`@prisma/adapter-pg`), ESM-first output, and `prisma.config.ts` changes that are breaking changes from Prisma 6. Adding those complexities to a plain-JavaScript CommonJS Express app is not worth it when organic-cert runs on Prisma 6 fine. Migrate both apps together to Prisma 7 in a future milestone when organic-cert upgrades.
 
 ---
 
 ## Recommended Stack — New Additions Only
 
-### Case IH Field Ops API Integration
-
-The farm-budget app already has a working implementation in `/farm-budget/fieldops/client.js` and `/farm-budget/fieldops/sync.js`. Port this to TypeScript for organic-cert. No new libraries needed for the HTTP layer — Node 22's native `fetch` handles it.
-
-**Verified endpoints from existing working code:**
-
-| Endpoint | Purpose | Auth |
-|----------|---------|------|
-| `https://identity.cnhind.com/oauth2/aus78lla80kTGmPFf1t7/v1/token` | Token acquisition | Basic Auth (client_id:client_secret) |
-| `https://ag.api.cnhind.com/v1/fields` | Field list | Bearer + Ocp-Apim-Subscription-Key |
-| `https://ag.api.cnhind.com/v1/fields/{id}/boundary` | Field boundary GeoJSON | Bearer + Ocp-Apim-Subscription-Key |
-| `https://ag.api.cnhind.com/v1/applications` | Input applications (seed/fertilizer/pesticide) | Bearer + Ocp-Apim-Subscription-Key |
-| `https://ag.api.cnhind.com/v1/yield` | Harvest yield data | Bearer + Ocp-Apim-Subscription-Key |
-| `https://ag.api.cnhind.com/v1/equipment` | Machine fleet | Bearer + Ocp-Apim-Subscription-Key |
-| `https://ag.api.cnhind.com/v1/telemetry` | Machine telemetry (hours, fuel, operations) | Bearer + Ocp-Apim-Subscription-Key |
-
-**OAuth2 flow:** `client_credentials` grant. Scopes: `fields equipment yield applications telemetry`. Tokens are short-lived; cache with 60-second buffer before expiry.
-
-**Required env vars:**
-```
-FIELDOPS_CLIENT_ID=
-FIELDOPS_CLIENT_SECRET=
-FIELDOPS_SUBSCRIPTION_KEY=
-FIELDOPS_TOKEN_URL=https://identity.cnhind.com/oauth2/aus78lla80kTGmPFf1t7/v1/token
-FIELDOPS_API_BASE=https://ag.api.cnhind.com
-FIELDOPS_USE_MOCK=false
-```
-
-**Confidence:** HIGH — token URL and endpoint paths verified against existing working farm-budget/fieldops/client.js code. Authorization URL pattern also confirmed via CNH Developer Portal web search (`identity.cnhind.com/authorize?client_id=...&scope=offline_access&connection=PROD-ADFS-CONN`).
-
-**Note on authorization_code vs client_credentials:** The CNH Developer Portal describes an authorization_code flow (user logs into FieldOps and consents). The existing farm-budget code uses client_credentials. For server-to-server sync (what this system needs), client_credentials is appropriate. For a user-facing "Connect your FieldOps account" flow, authorization_code would be used instead. This milestone should use client_credentials with credentials managed by the farm operator — matching the existing pattern. Confidence: MEDIUM (not confirmed against paid CNH developer account; test with FIELDOPS_USE_MOCK=true first).
-
----
-
 ### Core Technologies
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| Native `fetch` (Node 22) | Built-in | CNH FieldOps API HTTP calls | Already available in Node 22, no new dependency. The farm-budget implementation proves this works. |
-| Node.js `crypto` module | Built-in | SHA-256 hash chain for audit tamper-evidence | Zero dependency; Web Crypto API available in both Node 22 and browser. No need for third-party hashing library. |
-| `pg-boss` | 12.13.0 | Scheduled Field Ops sync + audit snapshot jobs | Runs on top of existing PostgreSQL — no Redis required. `client_credentials` token refresh and periodic sync fit its cron-based scheduling model. Unlike node-cron (which is already in farm-budget but runs in-process), pg-boss provides job persistence, deduplication, and retry across restarts. |
+| `prisma` | 6.19.2 | ORM + schema + migrations for grain-tickets PostgreSQL | Exact version used in organic-cert (verified in organic-cert/package.json). Consistent tooling across the monorepo. `npx prisma migrate dev` + `npx prisma generate` is the established workflow. Pin to 6.x to avoid Prisma 7 breaking changes until organic-cert upgrades. |
+| `@prisma/client` | 6.19.2 | Generated database client | Paired with prisma dev dependency. CommonJS `require('@prisma/client')` works in the existing CJS server.js — no TypeScript migration required. Prisma 6 generates a CJS client by default via the `prisma-client-js` generator. |
+| `pg` | 8.x | PostgreSQL driver | Required peer dependency for Prisma 6 with PostgreSQL. The shared PostgreSQL instance already running for organic-cert. Install alongside prisma — Prisma 6 uses `pg` internally without needing an explicit adapter (unlike Prisma 7). |
+| `dotenv` | 17.3.1 | Load DATABASE_URL and other env vars at runtime | Already used in organic-cert. Grain-tickets currently has no .env handling. Required in `prisma.config.ts` and at server startup for `DATABASE_URL`. Install as **runtime** dependency, not devDependency — server.js needs it in production. |
 
 ### Supporting Libraries
 
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
-| `@ag-media/react-pdf-table` | 2.0.3 | Table layout inside @react-pdf/renderer PDFs | Use for the NOP inspection report's input records table, crop rotation table, and mass balance table. @react-pdf/renderer has no built-in Table component; this fills that gap cleanly. |
-| `zod` | Already in ecosystem (verify if present) | Runtime validation of CNH API response payloads | Use to validate that CNH API responses match expected shape before persisting to Postgres. CNH API shape is not formally versioned; defensive parsing prevents silent data corruption. |
-
-**Check first:** Run `grep -r '"zod"' /Users/glomalinguild/Desktop/my-project-one/organic-cert/package.json` — if zod is already installed, no action needed. If not, add it.
+| `csv-parse` | 6.1.0 | Parse buyer settlement CSV files | Already used in organic-cert (package.json confirms csv-parse ^6.1.0). Streaming API handles large settlement files cleanly. Callback/promise API integrates with existing Express route patterns. Match organic-cert version for monorepo consistency. |
+| `zod` | 4.3.6 | Schema validation for settlement imports and API inputs | Already in organic-cert. Use when parsing settlement CSV/Excel rows to validate required fields (ticket number, bushels, price) before database insert. Prevents silent bad data from buyer format inconsistencies. `const { z } = require('zod')` works in CommonJS. |
+| `date-fns` | 4.1.0 | Date parsing and formatting for settlement records | Already in organic-cert. Settlement sheets use mixed date formats (MM/DD/YYYY from elevators, ISO from some buyers). `parse()` with explicit format strings handles this reliably. Match organic-cert version. |
 
 ### Development Tools
 
 | Tool | Purpose | Notes |
 |------|---------|-------|
-| TypeScript strict mode | Type-checking the FieldOps client and audit store | The existing `tsconfig.json` should already enforce strict mode; verify it's set. |
-| `FIELDOPS_USE_MOCK=true` env flag | Local development without live CNH credentials | The farm-budget pattern of falling back to mock data is the right model to replicate in organic-cert. Implement mock-data.ts alongside the real client. |
+| `prisma migrate dev` | Schema-driven migrations | Standard Prisma 6 workflow. Each schema change creates a versioned SQL migration in `prisma/migrations/`. Already used in organic-cert — same workflow here. |
+| Prisma Studio | Visual database browser during development | Ships with prisma CLI — no install needed. `npx prisma studio` to inspect ticket and settlement data during schema iteration. |
+| `prisma/seed.js` | One-time data migration from data.json | Plain JavaScript, no `tsx` needed for a simple seed script. Run with `node prisma/seed.js` during initial deploy. Configured in package.json under `"prisma": { "seed": ... }`. |
 
 ---
 
-## Append-Only Tamper-Evident Audit Store
+## Database Migration Strategy (JSON to PostgreSQL)
 
-### Current State Assessment
+### One-Time Seed Script
 
-The existing `AuditLog` Prisma model and `audit-logger.ts` implement basic event logging (CREATE/UPDATE/DELETE with JSON snapshots). What it **lacks** for regulatory-grade tamper-evidence:
+The existing `data.json` (current live data: tickets, farms, cropConfig) must be migrated into PostgreSQL on first deploy. Pattern from organic-cert is a `prisma/seed.js`:
 
-1. No `prevHash` column — entries are independent, not chained
-2. No hash of entry content — a database admin can silently edit rows
-3. No PostgreSQL-level write protection — the app role can UPDATE/DELETE audit rows via Prisma
-4. No `GRANT`/`REVOKE` enforcement separating the audit writer from an audit destroyer
+```javascript
+// prisma/seed.js — CommonJS, no TypeScript needed
+'use strict';
+const { PrismaClient } = require('@prisma/client');
+const fs = require('fs');
+const path = require('path');
 
-### Recommended Implementation: SHA-256 Hash Chain in PostgreSQL
+const prisma = new PrismaClient();
+const data = JSON.parse(
+  fs.readFileSync(path.join(__dirname, '../data/data.json'), 'utf8')
+);
 
-**Do not add a new table.** Extend the existing `AuditLog` table with two columns:
+async function main() {
+  // Upsert pattern: idempotent, safe to re-run
+  for (const ticket of data.tickets) {
+    await prisma.ticket.upsert({
+      where: { legacyId: ticket.id },
+      update: {},
+      create: {
+        legacyId: ticket.id,
+        date: new Date(ticket.date + 'T00:00:00'),
+        farmName: ticket.farm,
+        netWeight: ticket.netWeight,
+        moisture: ticket.moisture,
+        crop: ticket.crop,
+        ticketNo: ticket.ticketNo || null,
+        notes: ticket.notes || '',
+        fm: ticket.fm,
+      }
+    });
+  }
+  console.log(`Migrated ${data.tickets.length} tickets`);
+}
 
-```sql
--- Migration to add tamper-evidence columns
-ALTER TABLE "AuditLog" ADD COLUMN "contentHash" TEXT;
-ALTER TABLE "AuditLog" ADD COLUMN "prevHash"    TEXT;
-
--- Deny UPDATE and DELETE on AuditLog to the application database role
--- (Run as superuser/owner, not the app role)
-REVOKE UPDATE, DELETE ON "AuditLog" FROM your_app_db_role;
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect());
 ```
 
-**Hash chain logic (application layer, in audit-logger.ts):**
-
-```typescript
-import { createHash } from 'crypto';
-
-function hashEntry(entry: {
-  id: string;
-  userId: string | null;
-  action: string;
-  entityType: string;
-  entityId: string;
-  newData: unknown;
-  timestamp: Date;
-  prevHash: string | null;
-}): string {
-  // Canonical JSON: sorted keys, deterministic output
-  const canonical = JSON.stringify({
-    id: entry.id,
-    userId: entry.userId,
-    action: entry.action,
-    entityType: entry.entityType,
-    entityId: entry.entityId,
-    newData: entry.newData,
-    timestamp: entry.timestamp.toISOString(),
-    prevHash: entry.prevHash,
-  }, Object.keys({
-    id: 1, userId: 1, action: 1, entityType: 1,
-    entityId: 1, newData: 1, timestamp: 1, prevHash: 1,
-  }).sort());
-
-  return createHash('sha256').update(canonical).digest('hex');
+Configure in package.json:
+```json
+{
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  }
 }
 ```
 
-**Why this approach:**
+### Preserving Existing Server Routes During Migration
 
-- Uses Node's built-in `crypto` module — zero new dependencies
-- Each row's `contentHash` = SHA-256 of the row's own fields + `prevHash` of the prior row
-- Any modification to a historical row breaks all subsequent hashes — detectable on audit export
-- `REVOKE UPDATE, DELETE` at the PostgreSQL role level prevents application-layer tampering (the app can still INSERT via Prisma)
-- NOP inspectors don't need to understand cryptography; the hash chain is verified at export time and surfaced as "Audit integrity: VERIFIED" on the PDF report
+The migration is additive. The approach is:
 
-**Confidence:** HIGH — SHA-256 hash chain pattern confirmed via DEV Community December 2025 post and PostgreSQL wiki. REVOKE approach confirmed via PostgreSQL 18 official documentation on row security policies. Node `crypto` module is stable and built-in.
+1. Install Prisma, generate client, create schema, run first migration
+2. Add a `db.js` module exporting the singleton Prisma client
+3. Rewrite API routes one by one to use `prisma.*` instead of `store.*`
+4. Keep `loadData()` and `saveData()` running in parallel until all routes are migrated
+5. Remove JSON file store after all routes verified against PostgreSQL
 
-**What NOT to use:**
+In Node.js CommonJS, module caching makes a singleton automatically:
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| pgaudit extension | Requires PostgreSQL superuser installation, logs at the session level (not row level), cannot be queried by the application, and adds ops complexity. Overkill for a single-app audit trail. | Application-layer hash chain with REVOKE |
-| Trillian / Certificate Transparency logs | Google's distributed ledger system. Massive operational overhead. Appropriate for public certificate issuance, not a farm audit trail with dozens of users. | SHA-256 hash chain in PostgreSQL |
-| BullMQ | Requires Redis as a separate infrastructure dependency. The system already runs PostgreSQL; pg-boss uses the same database. | pg-boss 12.x |
-| Separate `AuditLogTamperEvident` table | Tempting to keep concerns separate, but adds schema complexity and a join on every audit query. Extend the existing table with new columns instead. | ALTER TABLE AuditLog ADD COLUMN |
+```javascript
+// db.js — CommonJS module, cached on first require
+'use strict';
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+module.exports = prisma;
+```
+
+```javascript
+// server.js — use the singleton
+const prisma = require('./db');
+```
+
+No `globalThis` pattern needed — unlike Next.js hot reload, Express restarts are full process restarts and module cache is naturally fresh each time.
+
+**Confidence:** HIGH — pattern directly matches Prisma seeding docs and organic-cert's established workflow.
 
 ---
 
-## PDF Report Generation
+## Prisma 6 Setup Pattern for Express CommonJS
 
-### Current State Assessment
+### schema.prisma
 
-`@react-pdf/renderer` 4.3.2 is already installed and in use. The NOP inspection report is a data-dense document: field history tables, input records, crop rotation records, mass balance calculations, and a cover page. The library handles this well.
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
 
-### Required Addition: `@ag-media/react-pdf-table`
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+```
 
-Version: `2.0.3` (current as of 2026-02-23, verified via npm)
+Note: Use `prisma-client-js` (not `prisma-client`). The new `prisma-client` generator is Prisma 7's default and requires ESM + explicit output path + driver adapters. For Prisma 6 in a CJS Express app, `prisma-client-js` generates the client into `node_modules/@prisma/client` — the familiar pattern.
 
-Why: `@react-pdf/renderer` has no built-in table primitive. `@ag-media/react-pdf-table` provides `<Table>`, `<TR>`, `<TH>`, `<TD>` components designed specifically for react-pdf. It handles cell borders, column widths, and page-break-safe row wrapping — all required for inspector-ready tabular data.
+### prisma.config.ts (or .js)
 
-**NOP Report Structure (what the PDF must contain):**
+Prisma 6 introduced `prisma.config.ts` to replace inline datasource config. Match the organic-cert pattern exactly:
 
-Based on 7 CFR Part 205 (specifically 205.202 and 205.203) and NOP certification requirements:
+```javascript
+// prisma.config.js — CommonJS equivalent for a plain-JS app
+// (organic-cert uses TypeScript, grain-tickets can use plain JS)
+require('dotenv').config();
+const { defineConfig } = require('prisma/config');
 
-1. **Cover Page** — Farm name, operator, certifier, inspection date, certification year
-2. **Field Summary Table** — Field name, acres, crop, lot number, certification status per field
-3. **3-Year Land History** — Each field: crop per year, any prohibited substance applications (36-month lookback per 205.202)
-4. **Input Records Table** — Date, field, product name, EPA/OMRI status, application rate, purpose (per 205.203)
-5. **Crop Rotation Plan** — Current year vs prior 3 years per field (205.205)
-6. **Harvest Records** — Date, field, yield, equipment used, lot number
-7. **Mass Balance Summary** — Inputs vs outputs per crop lot (C5.0 compliance — already calculated)
-8. **Audit Log Section** — Last 12 months of system audit events, hash chain verification status
-9. **Page footers** — Page X of Y, farm name, "Generated: [date]", "USDA NOP Certification Report"
+module.exports = defineConfig({
+  schema: 'prisma/schema.prisma',
+  migrations: {
+    path: 'prisma/migrations',
+    seed: 'node prisma/seed.js',
+  },
+  datasource: {
+    url: process.env.DATABASE_URL,
+  },
+});
+```
 
-**Fixed headers/footers:** Use `@react-pdf/renderer`'s `fixed` prop on `<View>` to repeat header and footer on every page.
-
-**Confidence:** MEDIUM-HIGH — report structure derived from 7 CFR Part 205 regulatory text and NOP 2601 certification process guidance. Specific form field requirements vary by certifying agency; the structure above covers the regulatory minimum.
+Alternatively, keep the `env("DATABASE_URL")` in schema.prisma and skip `prisma.config.js` entirely — Prisma 6 still supports the schema-embedded `env()` pattern if dotenv loads before prisma runs. The organic-cert approach with `prisma.config.ts` is cleaner.
 
 ---
 
-## Background Sync Jobs
+## Settlement Import
 
-### Recommended: `pg-boss` 12.13.0
+### Format Reality
 
-**Why pg-boss over node-cron:**
+4+ buyers use different formats. Known patterns from this domain:
 
-node-cron (already in farm-budget) runs in-process — if the server restarts during a sync, the job is lost silently. pg-boss stores jobs in PostgreSQL with guaranteed delivery and retry. For a sync that imports regulatory data (field operations, applications, harvest records), silent failures are unacceptable.
+| Buyer Type | Typical Format | Key Columns |
+|------------|----------------|-------------|
+| Large co-op (ADM, Cargill) | CSV download from portal | Contract #, Ticket #, Date, Net Bushels, Price/BU, Gross Amount |
+| Local elevator | Excel (.xlsx) emailed | Often one sheet per crop, inconsistent headers |
+| Paper-only buyer | No digital format | Manual entry required — forms UI needed, not import |
+| Specialty buyer (organic) | CSV or PDF | PDF requires manual entry; CSV is parseable |
 
-**Install in organic-cert only:**
-```bash
-npm install pg-boss
-```
+### Import Architecture
 
-**Cron job: FieldOps daily sync**
-```typescript
-// src/jobs/fieldops-sync-job.ts
-import PgBoss from 'pg-boss';
+Use the **already-installed `multer`** for file upload + **`csv-parse` for CSV** + **existing `xlsx`** for Excel. No new upload or parsing libraries needed.
 
-const boss = new PgBoss(process.env.DATABASE_URL!);
-
-await boss.start();
-
-// Sync FieldOps data every day at 2 AM
-await boss.schedule('fieldops-sync', '0 2 * * *', {});
-
-boss.work('fieldops-sync', async () => {
-  // call the FieldOps client and upsert into Prisma models
+```javascript
+// POST /api/settlements/import — reuses existing multer instance
+app.post('/api/settlements/import', upload.single('file'), async (req, res) => {
+  const file = req.file;
+  if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+    // csv-parse streaming API
+    const { parse } = require('csv-parse');
+    const rows = await new Promise((resolve, reject) => {
+      const results = [];
+      const parser = parse({ columns: true, skip_empty_lines: true, trim: true });
+      parser.on('readable', function() {
+        let record;
+        while ((record = parser.read()) !== null) results.push(record);
+      });
+      parser.on('error', reject);
+      parser.on('end', () => resolve(results));
+      parser.write(file.buffer.toString('utf8'));
+      parser.end();
+    });
+    // map rows using buyer importConfig column names
+  } else if (file.originalname.match(/\.xlsx?$/)) {
+    // existing xlsx — no ExcelJS needed
+    const XLSX = require('xlsx');
+    const wb = XLSX.read(file.buffer, { type: 'buffer' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    // rows is an array of objects with header keys from row 1
+  }
 });
 ```
 
-**Cron job: Audit log snapshot (weekly)**
-```typescript
-await boss.schedule('audit-snapshot', '0 3 * * 0', {});
-boss.work('audit-snapshot', async () => {
-  // Export and verify hash chain integrity, archive to backup table
-});
+**Why not ExcelJS:** The `xlsx` package (SheetJS CE 0.18.5) is already a dependency. ExcelJS adds ~2.9MB for no capability gain over existing `xlsx.utils.sheet_to_json()` for read-only settlement data extraction.
+
+**Why not a specialized import library:** Libraries like `csv-to-json` or `node-xlsx` add abstraction that makes buyer-specific column mapping harder to customize. Direct `csv-parse` + `xlsx` gives explicit control over each buyer's format quirks.
+
+**Why not PapaParse:** PapaParse is excellent for browser-side CSV parsing. `csv-parse` is the Node.js streaming choice, already in the organic-cert monorepo, and better suited for server-side parsing pipelines.
+
+---
+
+## Reconciliation Engine
+
+### No New Library Needed
+
+The reconciliation engine is **pure business logic** — compare farm ticket totals (from PostgreSQL) against settlement line items (from buyer import). No specialized reconciliation library is required.
+
+The existing `calc.js` already computes `netBU` per ticket. The reconciliation logic is:
+
+```
+for each settlement line:
+  farm_netBU = sum(ticket.netBU) where ticket.farmName = settlement.farmName
+                                  and ticket.crop = settlement.crop
+                                  and ticket.date between settlement.periodStart and settlement.periodEnd
+  discrepancy = abs(farm_netBU - settlement.netBU)
+  flag if discrepancy > tolerance (e.g., 0.5 BU)
 ```
 
-**Confidence:** MEDIUM — pg-boss 12.x cron API confirmed via npm and LogSnag blog (TypeScript deep-dive, 2025). Job deduplication and retry verified against pg-boss GitHub README.
+This is a PostgreSQL aggregation query via Prisma. No reconciliation framework needed — it's a `groupBy` with a JavaScript comparison.
+
+**Recommended pattern:** Prisma `groupBy` for farm totals, then JavaScript comparison against imported settlement rows. Store results in a `ReconciliationRun` table with per-line discrepancy records.
+
+---
+
+## Buyer Management
+
+### No New Library Needed
+
+Buyer management (name, contact, expected format, column mappings) is a standard CRUD resource in PostgreSQL via Prisma. Store **column mapping configuration per buyer** as JSON so the import parser knows which column header means "Ticket Number" for each buyer.
+
+Recommend a `importConfig` JSON column on the `Buyer` model:
+
+```json
+{
+  "format": "csv",
+  "ticketNoColumn": "Ticket #",
+  "netBuColumn": "Net Bushels",
+  "priceColumn": "Price/BU",
+  "dateColumn": "Settlement Date",
+  "dateFormat": "MM/DD/YYYY"
+}
+```
+
+When a new buyer is added, office staff configures their column names once. The import engine uses that config from that point forward — no hardcoded per-buyer parsers.
+
+**Validation:** Use `zod` (already in organic-cert ecosystem) to validate parsed settlement rows against a schema derived from the buyer's importConfig. Surface row-level errors with line numbers back to the UI.
+
+---
+
+## PWA Preservation During Migration
+
+The existing service worker in `public/sw.js` uses network-first strategy and deliberately skips `/api/` routes:
+
+```javascript
+// existing sw.js — already correct
+if (e.request.method !== 'GET' || e.request.url.includes('/api/')) return;
+```
+
+This means API routes are never cached by the service worker. The database migration (JSON to PostgreSQL) is transparent to the PWA — API response format stays the same, the service worker never touches API calls, and no service worker changes are needed.
+
+The only required action is bumping the `CACHE_NAME` version in `sw.js` when new static assets are deployed:
+
+```javascript
+// Before: 'grain-tickets-v2'
+// After adding new settlement UI files:
+var CACHE_NAME = 'grain-tickets-v3';
+```
+
+This forces users' browsers to evict the old cache and fetch updated JS/CSS files. The `PRECACHE` list must include any new static files added for the settlement UI.
+
+**What NOT to do:** Do not add IndexedDB or offline sync for settlement imports. Settlement reconciliation requires real-time database state — offline writes would create data conflicts. The existing offline support for viewing cached pages is sufficient.
 
 ---
 
 ## Installation
 
 ```bash
-# In organic-cert directory
+# In grain-tickets/ directory
 
-# New dependencies
-npm install pg-boss @ag-media/react-pdf-table
+# Core — database layer (runtime deps)
+npm install prisma @prisma/client pg dotenv
 
-# No new dev dependencies needed — TypeScript, ESLint, tsx already present
+# Supporting — already in organic-cert, add to grain-tickets
+npm install csv-parse date-fns zod
+
+# No dev dependencies needed
+# (prisma CLI ships in the runtime package for Prisma 6)
+```
+
+**After installing:**
+```bash
+# Initialize Prisma schema
+npx prisma init --datasource-provider postgresql
+
+# First migration (after designing schema)
+npx prisma migrate dev --name init
+
+# Generate client
+npx prisma generate
+
+# Migrate existing data.json into PostgreSQL
+node prisma/seed.js
 ```
 
 **Do not install:**
-- `axios` — native fetch in Node 22 handles the CNH API calls
-- `bull` / `bullmq` — requires Redis; pg-boss uses existing PostgreSQL
-- `pgaudit` — PostgreSQL extension requiring superuser; not needed for app-layer hash chain
-- `jose` / `jsonwebtoken` — CNH uses standard OAuth2 Bearer tokens, no JWT verification needed in the client
+- `exceljs` — `xlsx` is already present for Excel reads
+- `typeorm` or `sequelize` — organic-cert uses Prisma; two ORM systems in one monorepo is unacceptable
+- `bull` / `pg-boss` — no background jobs needed in v2.0; reconciliation runs synchronously on-demand
+- `express-validator` — `zod` handles validation; don't add a second validation layer
+- TypeScript toolchain — the existing server.js is CommonJS JavaScript; Prisma 6 supports `require('@prisma/client')` cleanly; TypeScript migration is a later concern
 
 ---
 
@@ -260,22 +355,13 @@ npm install pg-boss @ag-media/react-pdf-table
 
 | Recommended | Alternative | When to Use Alternative |
 |-------------|-------------|-------------------------|
-| pg-boss 12.x | node-cron 4.x | Use node-cron only if you don't care about job persistence across restarts and the task is non-critical. For regulatory data sync, use pg-boss. |
-| pg-boss 12.x | BullMQ | Use BullMQ if you already have Redis deployed and need high-throughput job queuing (thousands of jobs/second). For 1-2 daily cron jobs, Redis overhead is not justified. |
-| Native crypto SHA-256 | bcrypt for audit hashing | bcrypt is for password hashing (intentionally slow). SHA-256 is correct for tamper-detection hash chains (fast, deterministic, chainable). |
-| @ag-media/react-pdf-table | Manual View+Text tables in react-pdf | Manual layout works for 2-3 column simple tables but breaks on dynamic row counts and complex borders. Use @ag-media/react-pdf-table for any table that needs column headers and multi-row data. |
-| Extend existing AuditLog table | New TamperEvidentLog table | A second table is cleaner in theory but doubles the schema surface and requires joining for the audit viewer. Extend the existing table — the app is already built around it. |
-
----
-
-## Version Compatibility
-
-| Package | Compatible With | Notes |
-|---------|-----------------|-------|
-| pg-boss@12.13.0 | PostgreSQL 14+ | Uses SKIP LOCKED and advisory locks. Verify PostgreSQL version is 14+. |
-| pg-boss@12.13.0 | Node 22 | ESM and CJS both supported. Use `import PgBoss from 'pg-boss'` in TypeScript. |
-| @ag-media/react-pdf-table@2.0.3 | @react-pdf/renderer@4.x | Peer dependency is `@react-pdf/renderer >= 3.0.0`. Compatible with 4.3.2. |
-| pg-boss@12.13.0 | Prisma 6 | pg-boss manages its own PostgreSQL connection (separate from Prisma client). No conflict; they use separate connection pools. |
+| Prisma 6.19.2 (match organic-cert) | Prisma 7.4.2 | Use Prisma 7 when organic-cert is also migrated. Prisma 7 requires driver adapters, ESM output, and prisma.config.ts changes — breaking changes for a plain-JS CJS app. The gain (3x faster queries, 90% smaller bundle) is not worth the migration risk for v2.0. |
+| Prisma 6.19.2 | Drizzle ORM, TypeORM | Use Drizzle if starting from scratch with TypeScript-first. Prisma is the established choice here — same schema language, same migration CLI, same `npx prisma studio` workflow across both apps. |
+| `csv-parse` 6.1.0 | PapaParse 5.5.3 | Use PapaParse for browser-side CSV parsing. csv-parse is the server-side Node.js choice and is already in the monorepo via organic-cert. |
+| Existing `xlsx` for Excel reads | ExcelJS 4.4.x | Use ExcelJS if you need to write styled Excel output or read cell formulas and images. For settlement import (read-only plain data rows), existing xlsx is sufficient and already installed. |
+| `zod` 4.3.6 | Joi, Yup | Use Joi if the team already knows it. Zod is already the choice in organic-cert, matches ecosystem, and `const { z } = require('zod')` works in CommonJS. |
+| Sync reconciliation (on-request) | pg-boss background jobs | Use pg-boss if reconciliation takes over 10 seconds or must run unattended on a schedule. At 100-500 loads/season with 4 buyers, reconciliation completes in under 1 second. |
+| Plain JS CommonJS (no migration) | Migrate to TypeScript | Migrate TypeScript in a future milestone when the codebase grows or Prisma 7 upgrade is coordinated across the monorepo. For v2.0, preserving existing server.js structure avoids high-risk rewrite. |
 
 ---
 
@@ -283,50 +369,67 @@ npm install pg-boss @ag-media/react-pdf-table
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `axios` for CNH API calls | No benefit over native fetch in Node 22; adds a dependency for no gain | Native `fetch` (already available) |
-| `bullmq` | Requires Redis infrastructure; this project already has PostgreSQL | `pg-boss` |
-| `pgaudit` PostgreSQL extension | Requires superuser/DBA installation, logs at session level not row level, not queryable by app, operational overhead | Application-layer SHA-256 hash chain + REVOKE in PostgreSQL |
-| `jsonwebtoken` / `jose` | CNH tokens are opaque Bearer tokens, not JWTs that need client-side verification | Not needed; just pass Bearer token in Authorization header |
-| A second `TamperEvidentLog` Prisma model | Splits the audit record across two tables; requires migration and schema changes that ripple into the audit viewer, export, and PDF | Extend existing `AuditLog` with `contentHash` and `prevHash` columns |
-| `pdfmake` or `puppeteer` for PDF | App already uses @react-pdf/renderer; adding a second PDF library creates inconsistency and bundle bloat | Continue with @react-pdf/renderer + @ag-media/react-pdf-table |
-| `authorization_code` OAuth2 flow for CNH sync | Requires user interaction to grant consent each session; unsuitable for server-side nightly sync | `client_credentials` flow (already implemented in farm-budget) |
+| `exceljs` | xlsx is already installed; second Excel library creates duplicate code paths and unnecessary 2.9MB dep | Continue using existing `xlsx` 0.18.5 |
+| `sequelize` or `typeorm` | Inconsistent with organic-cert (Prisma 6); two migration workflows in same git repo is operational overhead | Prisma 6.19.2 |
+| `pg-boss` in v2.0 | No async jobs needed at this scale; adds Redis-equivalent operational complexity | Sync reconciliation; add pg-boss in v3.0 if scheduled nightly reconciliation is requested |
+| Express version upgrade | Express 4.18 routes work; Express 5 changes error handler middleware signature — upgrade risk with zero user benefit for v2.0 | Stay on Express 4.18 |
+| `multer` replacement or addition | Already installed and working for Claude Vision scan uploads; extend existing instance with settlement upload route | Extend existing multer instance |
+| Full TypeScript migration | Weeks of refactoring risk to a working app; no type safety benefit justifies it for v2.0 | Incremental TypeScript (new files only) in a later milestone |
+| Prisma 7 for grain-tickets only | Creates a split where organic-cert uses Prisma 6 and grain-tickets uses Prisma 7 — different generators, different client APIs, split upgrade testing burden | Pin both to 6.x, upgrade together in one coordinated milestone |
 
 ---
 
 ## Stack Patterns by Variant
 
-**If CNH credentials are not yet available:**
-- Set `FIELDOPS_USE_MOCK=true` in `.env`
-- Implement `fieldops/mock-data.ts` in organic-cert matching the farm-budget pattern
-- Build all sync and display code against mock data; swap to live when credentials arrive
+**If a buyer sends PDF settlements only (no CSV/Excel):**
+- Do not add a PDF parsing library (pdf-parse, pdfplumber are brittle against format changes)
+- Build a manual settlement entry form in the UI (same pattern as existing ticket entry form)
+- PDF parsing is a v3.0 concern if volume justifies it
 
-**If pg-boss adds too much complexity for v1:**
-- Use the existing `node-cron` pattern from farm-budget as a simpler alternative
-- Acceptable trade-off: sync jobs don't survive server restarts, acceptable if the app runs continuously
-- Migrate to pg-boss when reliability requirements increase
+**If settlement files exceed 10,000 rows:**
+- Switch from `xlsx.utils.sheet_to_json()` (loads full file into memory) to ExcelJS streaming reader
+- Switch from csv-parse callback API to csv-parse stream API with `async iterator` pattern
+- At 100-500 loads/season, this will not be needed for this farm
 
-**If the NOP report PDF becomes very large (50+ pages):**
-- Use `@react-pdf/renderer`'s `PDFDocument` streaming API rather than buffering the full PDF in memory
-- Stream to `res` in the Next.js API route handler instead of `await pdf.toString()`
+**If reconciliation needs to run on a schedule (e.g., auto-check daily):**
+- Add `pg-boss` against the shared PostgreSQL (already documented in project MEMORY.md as planned for organic-cert)
+- Single pg-boss instance can serve both apps via shared database
+
+**If grain-tickets eventually migrates to Next.js (future milestone):**
+- Prisma schema, migrations, and seed script are fully portable — no schema rework needed
+- Server.js routes convert to Next.js API routes; business logic in service layer stays unchanged
+
+---
+
+## Version Compatibility
+
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| `prisma@6.19.2` | Node 18+ | Grain-tickets runs on macOS with Node 22 (same as organic-cert). Fully compatible. |
+| `prisma@6.19.2` | PostgreSQL 14+ | Shared PostgreSQL instance already running and verified for organic-cert. |
+| `@prisma/client@6.19.2` | CommonJS `require()` | Confirmed: `const { PrismaClient } = require('@prisma/client')` works in CJS with `prisma-client-js` generator. Prisma 6 generates CJS client into `node_modules/@prisma/client` by default. |
+| `csv-parse@6.1.0` | Node 22 | Uses native Node.js streams. No compatibility issues. |
+| `xlsx@0.18.5` (existing) | `multer` memory storage | `xlsx.read(req.file.buffer, { type: 'buffer' })` is the documented pattern. Proven in existing import.js already. |
+| `zod@4.3.6` | CommonJS `require()` | Zod 4.x ships both ESM and CJS. `const { z } = require('zod')` works. |
+| `dotenv@17.3.1` | Node 22, CommonJS | `require('dotenv').config()` at server.js startup loads `.env` before Prisma client initialization. |
 
 ---
 
 ## Sources
 
-- `/Users/glomalinguild/Desktop/my-project-one/farm-budget/fieldops/client.js` — Token URL, API base URL, scope, subscription key header, and mock fallback pattern. HIGH confidence (working production code in this repo).
-- `/Users/glomalinguild/Desktop/my-project-one/farm-budget/fieldops/sync.js` — API endpoint paths (`/v1/fields`, `/v1/applications`, `/v1/yield`, `/v1/equipment`, `/v1/telemetry`). HIGH confidence.
-- `https://develop.cnh.com/api-guides/fieldops-api` — API endpoint categories confirmed (Tokens, Vehicle Telemetry, Equipment, Farm Setup, Operations By Vehicle, Files, Webhooks). MEDIUM confidence (public portal, no auth required to view overview).
-- `https://develop.cnh.com/get-started` — OAuth2 authorization_code flow pattern; Auth0 callback URL; company email domain requirement. MEDIUM confidence.
-- WebSearch: CNH FieldOps OAuth2 authorization URL pattern with `offline_access` scope and `identity.cnhind.com` identity provider. MEDIUM confidence (search result synthesis, not direct doc access).
-- npm registry: `@ag-media/react-pdf-table@2.0.3` — current version, peer dep on react-pdf >=3.0.0. HIGH confidence.
-- npm registry: `pg-boss@12.13.0` — current version. HIGH confidence.
-- npm registry: `@react-pdf/renderer@4.3.2` — confirmed existing version. HIGH confidence.
-- `https://dev.to/veritaschain/building-a-tamper-evident-audit-log-with-sha-256-hash-chains-zero-dependencies-h0b` — SHA-256 hash chain pattern with canonical JSON and Web Crypto API. MEDIUM confidence (community post, 2025).
-- PostgreSQL official docs (row security policies, REVOKE): `https://www.postgresql.org/docs/current/ddl-rowsecurity.html` — REVOKE UPDATE/DELETE pattern. HIGH confidence.
-- 7 CFR Part 205 (NOP regulations): `https://www.ecfr.gov/current/title-7/subtitle-B/chapter-I/subchapter-M/part-205` — Field history, input records, crop rotation, 36-month lookback requirements. HIGH confidence (official federal regulation).
-- `https://logsnag.com/blog/deep-dive-into-background-jobs-with-pg-boss-and-typescript` — pg-boss TypeScript cron scheduling pattern. MEDIUM confidence (third-party blog, 2025).
+- `/Users/glomalinguild/Desktop/my-project-one/organic-cert/package.json` — Confirmed Prisma 6.19.2, @prisma/client 6.19.2, csv-parse 6.1.0, zod 4.3.6, date-fns 4.1.0, dotenv 17.3.1 versions in active use. HIGH confidence.
+- `/Users/glomalinguild/Desktop/my-project-one/grain-tickets/package.json` — Confirmed existing dependencies: express 4.18, multer 2.0.2, xlsx 0.18.5, @anthropic-ai/sdk 0.75.0. HIGH confidence.
+- `/Users/glomalinguild/Desktop/my-project-one/grain-tickets/server.js` — Confirmed CommonJS `require()` module system, in-memory store structure, and existing multer instance. HIGH confidence.
+- `/Users/glomalinguild/Desktop/my-project-one/grain-tickets/public/sw.js` — Confirmed service worker skips `/api/` routes, uses network-first strategy, CACHE_NAME = 'grain-tickets-v2'. HIGH confidence.
+- `/Users/glomalinguild/Desktop/my-project-one/organic-cert/prisma.config.ts` — Confirmed `defineConfig` + `dotenv/config` + `datasource.url` pattern used in production. HIGH confidence.
+- `https://www.prisma.io/blog/announcing-prisma-orm-7-0-0` — Prisma 7 stable release November 2025. Breaking changes: driver adapters required, ESM-first, new generator. HIGH confidence (official Prisma blog).
+- WebSearch confirmed: Prisma 7.4.2 is current stable as of 2026-03-01; Prisma 6.19.2 is latest in 6.x line. MEDIUM confidence (search results, not npm directly checked).
+- `https://www.prisma.io/blog/prisma-orm-6-6-0-esm-support-d1-migrations-and-prisma-mcp-server` — Confirmed `prisma-client-js` still works in Prisma 6 for CJS; new `prisma-client` generator is optional in 6.x, default in 7. HIGH confidence (official blog).
+- WebSearch: csv-parse 6.1.0 confirmed streaming API and Node.js support. MEDIUM confidence.
+- WebSearch: PapaParse 5.5.3 — browser-first, supports Node.js but csv-parse is the established server-side choice. MEDIUM confidence.
+- WebSearch: ExcelJS 4.4.x — 2.9M weekly downloads. Recommended for write/style use cases; not needed for read-only settlement parsing when xlsx is already present. MEDIUM confidence.
 
 ---
 
-*Stack research for: Organic audit system — Case IH Field Ops integration + USDA NOP audit reporting*
-*Researched: 2026-02-23*
+*Stack research for: Grain tickets v2.0 — database migration, settlement import, reconciliation engine, buyer management*
+*Researched: 2026-03-01*

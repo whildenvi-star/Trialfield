@@ -1,241 +1,251 @@
 # Pitfalls Research
 
-**Domain:** Organic certification audit system with Case IH Field Ops API integration and USDA NOP compliance
-**Researched:** 2026-02-23
-**Confidence:** MEDIUM — CNH FieldOps API internals are partially behind login-gated documentation; NOP compliance gaps verified from USDA official sources and certifier audit findings; audit store patterns verified from PostgreSQL community and Prisma ecosystem.
+**Domain:** Grain traceability and settlement reconciliation — adding relational data, chain-of-custody tracking, and multi-buyer settlement matching to an existing Express + JSON flat-file grain ticket app
+**Researched:** 2026-03-01
+**Confidence:** HIGH for migration and weight-discrepancy pitfalls (grounded in the actual codebase and established ag industry patterns); MEDIUM for settlement format parsing (grain-industry specific docs are sparse online, patterns extrapolated from payment reconciliation literature and known ag software behavior)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: OAuth2 Token Refresh Race Condition in Background Sync Jobs
+### Pitfall 1: Cutover Day Data Loss — JSON and PostgreSQL Diverge During the Transition Window
 
 **What goes wrong:**
-Background sync jobs poll Case IH FieldOps for new field operation records. When multiple concurrent requests detect an expired access token simultaneously, each fires a token refresh. CNH FieldOps uses rotating refresh tokens — the second refresh invalidates the token the first refresh issued. The sync job then crashes with a 401, writes no records, and the farm's field history has a silent gap.
+The plan is: migrate data.json to PostgreSQL, update server.js to read/write PostgreSQL, deploy. But between "migration script runs" and "deploy completes," new tickets are entered against the JSON file. Those tickets never make it into PostgreSQL. The migration script ran on yesterday's snapshot; today's loads are gone. With 100-500 loads per season and daily entry during harvest, a 2-hour deploy window can lose a dozen tickets.
 
 **Why it happens:**
-Developers treat token refresh as a simple "check-then-refresh" operation without locking. Works fine in dev with a single process. Breaks under concurrency — even two overlapping cron ticks on the same job can trigger it. The CNH staging environment has a 6-hour token lifespan vs. 1-hour in production, so the race never surfaces during testing.
+Migrations get treated as one-time ETL scripts run once before deployment. The app keeps running during the migration script execution (it's Express on a single machine — staff are using it). Nobody accounts for the write gap between "script complete" and "new code live." In a flat-file system there is no transaction or replication mechanism to close this gap automatically.
 
 **How to avoid:**
-- Implement a distributed lock (Redis `SET NX PX 30000`) around the refresh operation before any sync job run.
-- Store access token, refresh token, and `expires_at` in the database, not in memory or env vars.
-- Refresh proactively 5 minutes before expiry rather than reactively on 401.
-- Add a 401-retry handler: on failure, invalidate cached token, re-acquire lock, refresh once, retry the request.
-- Use the `expires_in` value returned by CNH's token endpoint — do not hardcode 3600 seconds.
+- The migration script must read the current data.json at deploy time, not a snapshot taken hours earlier.
+- Use a cutover window: (1) put the app in read-only mode (disable POST/PUT/DELETE) for a 2-minute window, (2) run the migration script against the live file, (3) swap to the PostgreSQL-backed server, (4) re-enable writes. The read-only period should be announced and should be under 5 minutes.
+- Alternatively: run a dry migration first, validate counts match, then do the real migration with a write lock in place.
+- After cutover, keep the original data.json as a read-only archive for 30 days. If a discrepancy is found, you can diff against it.
+- Count tickets before and after: `SELECT COUNT(*) FROM tickets` must match `store.tickets.length` from data.json.
 
 **Warning signs:**
-- Sync job logs show intermittent 401 errors that self-resolve on the next run.
-- Field operation records have date gaps that align with sync schedule intervals.
-- Token refresh happens more than once per expiry window in the logs.
+- Migration script was run more than 1 hour before the new server.js went live.
+- Staff entered tickets between when the migration ran and when the new code deployed.
+- Post-cutover ticket count in PostgreSQL is less than pre-cutover count in data.json.
 
-**Phase to address:** Case IH Field Ops API integration phase — implement the locking pattern before any background sync jobs are deployed.
+**Phase to address:** Database migration phase — the cutover procedure must be defined and documented as part of the migration plan, not left as an afterthought. Treat it like a financial close.
 
 ---
 
-### Pitfall 2: CNH FieldOps "Linked Account" Data Exclusion
+### Pitfall 2: String IDs (`t_000001`, `f_001`) Break When Referencing from New Relational Tables
 
 **What goes wrong:**
-CNH FieldOps API explicitly excludes agronomic data from "Linked Accounts" — accounts connected through dealer or fleet arrangements rather than direct machine ownership. A farm manager with equipment registered under a dealership's FieldOps account gets a successful OAuth flow, a 200 response from the API, but zero field operation records returned. No error. No indication of why. The integration appears to work but the data store stays empty.
+The existing tickets use string IDs (`t_000001`, `t_` + timestamp + random). The new settlement, delivery, and chain-of-custody tables need foreign keys back to tickets. Prisma's default is integer or UUID primary keys. If you migrate the ticket IDs as-is into a `String` primary key in PostgreSQL, you lose the ability to use integer sequences, and new tickets created post-migration get a different ID format than migrated tickets. Joins that assume a consistent ID shape break. Worse: if you reassign IDs (convert to integers), every reference in the UI, scan results, and CSV exports becomes invalid.
 
 **Why it happens:**
-Developers assume a successful auth token means all data is accessible. The CNH Developer Portal documents this limitation — "Agronomic data from a Linked Account in the FieldOps portal is not made available through the FieldOps API" — but it is easy to miss since it is buried in portal documentation, not surfaced as an API error. Many Case IH operators in fleet or dealer programs are Linked Accounts.
+The existing ID format (`t_` + `Date.now().toString(36)` + random) was fine for JSON lookups but was never designed as a stable relational foreign key. Developers adding the new schema generate fresh UUIDs for migrated records without preserving the original IDs, then discover the front-end has hardcoded references to the old format.
 
 **How to avoid:**
-- During OAuth onboarding, immediately call a known data endpoint (e.g., fields list) and verify a non-empty response before marking the connection as active.
-- Display an explicit "No field data available — your account may be a Linked Account" message when the API returns empty results post-auth.
-- Document this limitation in the farmer-facing setup flow with a link to CNH support.
-- Treat zero-record responses after successful auth as a warning state, not a success state.
+- Keep the existing string IDs as the primary key in PostgreSQL. Prisma handles `String @id` without issue.
+- The Prisma schema for tickets should have `id String @id` — not `@default(cuid())` or `@default(uuid())`. Migrated records keep their `t_000001` etc. IDs; new records get the same `t_` + timestamp + random format the server already generates.
+- Add a `cuid()` or UUID as a separate `externalId` field only if needed for future API purposes — do not replace the existing ID.
+- Verify: after migration, run `SELECT id FROM tickets ORDER BY id` and confirm existing IDs are present verbatim.
 
 **Warning signs:**
-- OAuth flow completes successfully but the field list API returns an empty array.
-- Farmer confirms their equipment is connected in the FieldOps portal but the app shows no data.
-- No 4xx errors but the sync job writes nothing.
+- The Prisma schema uses `@default(cuid())` or `@default(uuid())` on the tickets table.
+- A migration script reassigns numeric IDs to migrated tickets.
+- Front-end ticket-detail URLs break after migration (e.g., `/tickets/t_000001` returns 404).
 
-**Phase to address:** Case IH Field Ops API integration phase — validate during discovery/connection step before proceeding to sync.
+**Phase to address:** Database migration phase — the schema design decision about primary key format must be made explicitly before writing the Prisma schema, not discovered during testing.
 
 ---
 
-### Pitfall 3: CNH Subscription Key / Environment Mismatch Causing Silent Auth Failures
+### Pitfall 3: Weight Discrepancy Treated as an Error Instead of an Expected Business Condition
 
 **What goes wrong:**
-CNH FieldOps API requires both an OAuth access token and a per-application Subscription Key sent as a header. Using the staging Subscription Key against the production endpoint (or vice versa) returns a 401 "Unauthorized" that looks identical to a bad access token. Developers chase the wrong problem — rotating credentials, re-triggering OAuth — when the issue is the environment key mismatch.
+The reconciliation system flags every difference between the farm's recorded net weight and the elevator's scale ticket weight as a "discrepancy requiring resolution." Office staff spend hours chasing down weight differences that are normal and expected. On the other hand, the threshold is set too loose and real discrepancies (short weights, missing loads) get buried in noise.
+
+The grain buggy (farm) scale and the certified elevator scale will ALWAYS differ. Grain buggy scales are typically accurate to ±0.5–1.0% on a 5-point calibration system. USDA elevator scale acceptance tolerance is 0.05% of scale capacity. A 55,000 lb load with a 0.5% buggy scale error = ±275 lbs. At 500 loads per season, this is a constant source of false alarms if treated naively.
 
 **Why it happens:**
-CNH runs separate staging and production environments with separate Subscription Keys per application. During development the staging key is hardcoded. When deploying to production, the OAuth credentials get updated but the Subscription Key env var is missed.
+Developers model weight reconciliation as "farm weight equals elevator weight" because that is conceptually correct. The practical reality — that two calibrated but different instrument types will produce different readings — is not reflected in the matching logic. There is no tolerance band, no per-crop tolerance (soybeans and rye have different moisture change rates in transit), and no distinction between "within normal variance" and "something is wrong."
 
 **How to avoid:**
-- Treat the Subscription Key as a required secret alongside OAuth credentials in environment configuration — never hardcode it.
-- Use a startup health check that calls a cheap read endpoint and logs the specific error (401 vs. 429 vs. 400) with context.
-- Include the Subscription Key environment in the CNH Portal FAQ checklist for team onboarding.
+- Define explicit tolerance thresholds per crop type (moisture-sensitive crops like corn and rye warrant wider tolerance than dry beans).
+- A practical starting threshold: flag loads where elevator weight differs from farm weight by more than 1.0% OR more than 500 lbs — whichever is greater. This should be configurable, not hardcoded.
+- Three-tier status: MATCHED (within tolerance), REVIEW (outside tolerance but no other anomaly), DISPUTED (outside tolerance AND another anomaly — missing load, wrong crop, etc.).
+- Show the weight delta and percentage in the reconciliation view, not just a red/green flag.
+- Log the raw farm weight and elevator weight independently; never overwrite the farm record with the elevator figure.
 
 **Warning signs:**
-- 401 errors persist after successful token refresh.
-- Errors appear immediately after a deployment but not before.
-- The error message is "Unauthorized" with no additional detail from CNH.
+- The reconciliation logic uses `farmWeight === elevatorWeight` or a fixed ±100 lb tolerance.
+- All discrepancy rows look the same regardless of whether the delta is 50 lbs or 2,000 lbs.
+- Staff report spending more than 15 minutes per day resolving "discrepancies" that turn out to be normal scale variation.
 
-**Phase to address:** Case IH Field Ops API integration phase — define environment configuration schema including Subscription Key before writing any sync code.
+**Phase to address:** Settlement reconciliation engine phase — tolerance logic must be designed before any matching code is written. Get the farm manager's input on what constitutes a real discrepancy vs. normal variation for each crop they deliver.
 
 ---
 
-### Pitfall 4: NOP Traceback Audit Gap — Seed-to-Field Linkage Missing
+### Pitfall 4: Moisture Shrink Calculation Differences Between Buyers Make Weight Reconciliation Impossible by Net Bushels
 
 **What goes wrong:**
-The audit report contains harvest records and input application records, but an inspector cannot trace a specific seed purchase invoice to the specific field where it was planted. Mass balance and traceback audits require inspectors to link seed invoices → planting records → field → harvest records → sale documents. If the seed tag and purchase invoice cannot be tied to a field, the traceback exercise fails and the operation receives a noncompliance notice.
+Hughes Farm records net weight in pounds (the farm scale reading). Buyer A settles by "shrink method" — they reduce gross bushels by a shrink factor based on moisture above standard. Buyer B settles by "moisture discount" — they pay on gross bushels but apply a per-bushel price deduction. Buyer C settles by net weight after adjusting for moisture and FM. When you try to reconcile "what we shipped" against "what they paid for," the bushel figures are computed differently and will never match exactly — even with identical grain and identical weights.
 
 **Why it happens:**
-Developers model fields and inputs separately and treat the seed purchase as a financial record rather than a field-linkage record. The join between "seed lot purchased" and "field where that lot was planted" is missing from the data model. Case IH Field Ops data includes planting operations with GPS boundaries but not always explicit seed lot references — the system must capture this linkage at data entry time.
+Settlement reconciliation is modeled as "our bushels vs. their bushels." But bushels are a derived unit — the path from raw net weight to "bushels paid for" involves buyer-specific formulas for moisture shrink, FM dockage, and test weight deductions. Without normalizing to a common unit (pounds), the comparison is apples to oranges.
 
 **How to avoid:**
-- The data model for input application records must include: `inputLotId`, `fieldId`, `applicationDate`, `rate`, `method` — and the lot record must link to an invoice/source document.
-- The NOP inspection report must render a traceback chain: Sale → Harvest → Field Operation (planting) → Seed Lot → Invoice.
-- Make seed lot assignment a required step in the field operation sync workflow, not an optional annotation.
-- During report generation, validate that every harvest record has a traceable planting record with a seed source.
+- Primary reconciliation must be on **net weight in pounds**, not derived bushels. This is the only figure both parties measure independently with a physical scale.
+- Store the buyer's settlement figures (their bushels, their price, their deductions) alongside the raw pounds figure. Do not try to back-calculate their pounds from their bushels.
+- Track which shrink method each buyer uses as a buyer-level configuration field.
+- The discrepancy display should show: Farm weight (lbs) | Elevator weight (lbs) | Delta (lbs) | Buyer bushels | Buyer payment method.
+- Do not run the existing `Calc.computeTicket()` against the buyer's figures — it applies Hughes Farm's formula, not the buyer's formula.
 
 **Warning signs:**
-- Harvest records exist but have no associated planting operation records.
-- Input records lack a `lotId` or `sourceDocumentId` field.
-- The audit report can show what was harvested but cannot show what was planted or purchased.
+- Reconciliation compares `farmBushels` to `elevatorBushels` as the primary matching criterion.
+- The system uses `Calc.computeTicket()` to validate buyer settlement figures.
+- Different buyers' settlement sheets produce different "correct" bushel figures for loads that are clearly the same delivery.
 
-**Phase to address:** NOP audit report generation phase — the data model must enforce these linkages before report generation is built.
+**Phase to address:** Settlement data model phase — buyer configuration (shrink method, discount schedule) must be captured before building any reconciliation math. This is a design-first decision.
 
 ---
 
-### Pitfall 5: Audit Store Integrity Failure — Application-Level Immutability Without Database Enforcement
+### Pitfall 5: Settlement Import Assumes a Consistent Format That Never Exists
 
 **What goes wrong:**
-Immutability is enforced only in the application layer (no UPDATE/DELETE routes exist). A developer with direct database access, a misconfigured migration, or a Prisma middleware bug can silently modify or delete audit records. During a USDA NOP inspection, tampered audit logs are a regulatory violation, not just a software bug — the entire certification can be revoked.
+You build a CSV importer for buyer settlement sheets. It works perfectly for Buyer A's format. Buyer B sends an Excel file with merged cells and a summary row at the top. Buyer C sends a PDF scanned from paper. Buyer D sends an email with a table pasted as plain text. Next season, Buyer A changes their CSV column order. The import breaks silently — no error, just wrong data or skipped rows.
 
 **Why it happens:**
-Developers trust the application layer because it worked in every test. No one grants UPDATE/DELETE on the audit table because no one writes those routes. But database-level permissions are never set, leaving the back door open to direct DB access, seed scripts run in production, and future migrations that touch the table by accident.
+Settlement data in grain agriculture has no standard format. Each elevator, co-op, and broker uses their own software (TKC Grain, AgVantage, Vertical Software, Oakland Corp, AGRIS) which produces its own export format. None of these systems are designed to interoperate with each other. Developers build for the first buyer they test with and discover the diversity problem at the second buyer.
 
 **How to avoid:**
-- Create a dedicated PostgreSQL role for the application with INSERT-only permissions on the audit log tables — no UPDATE, no DELETE.
-- Use a database-level row security policy or a trigger that prevents updates/deletes on the audit table and raises an explicit error.
-- Store a SHA-256 hash of each audit entry that includes the previous entry's hash (hash chain). Verify chain integrity on export — a gap or mismatch means tampering.
-- Keep audit log tables separate from operational tables — different schema, ideally different role access.
-- Run a nightly integrity check job that re-validates the hash chain and alerts on any break.
+- Design the import system around per-buyer format profiles: a buyer-level configuration object specifies column mappings, date formats, header row location, and whether to skip summary rows.
+- Build the manual entry path first and make it the primary path for all buyers. Import is a convenience, not a requirement.
+- For PDF/paper buyers, the settlement entry form is the right solution — manual entry with validation, not OCR parsing.
+- When importing, always show a preview of parsed data before committing. Let staff correct misreads before records are created.
+- Store the raw import file alongside the parsed records. If parsing logic changes, the raw file can be re-parsed.
+- Add a "buyer format version" field — when Buyer A changes their format next season, you can create v2 of their profile without breaking v1 imports from prior seasons.
 
 **Warning signs:**
-- The application role has UPDATE/DELETE permissions on audit tables (check with `\dp` in psql).
-- Audit entries have no checksum or integrity field.
-- No integrity verification runs before exporting audit logs for regulators.
+- The importer uses hard-coded column indices (`row[2]` for weight) rather than named column mappings.
+- No preview step before import commits records.
+- The system has a single generic CSV importer used for all buyers.
+- PDFs are handled by the same path as structured data files.
 
-**Phase to address:** Append-only audit store implementation phase — database role restrictions and hash chaining must be in place before any audit data is written.
+**Phase to address:** Settlement import phase — per-buyer format profiles must be the design foundation before any import code is written. Start with the manual entry path for all buyers; add import as an enhancement.
 
 ---
 
-### Pitfall 6: Dual-Write Inconsistency — Audit Events Skipped When Prisma Transactions Timeout
+### Pitfall 6: Ticket Number Matching Fails on Formatting Differences (Prefix, Leading Zeros, Case)
 
 **What goes wrong:**
-Audit log entries are written in application-level code after the main database write. If the Prisma `$transaction` times out (default 5000ms), the main record commits but the audit event write never happens. The field operation record exists; the audit trail of who created it and when does not. An NOP inspector examining the audit log sees an unexplained record with no provenance — this looks like record tampering.
+Hughes Farm records ticket `H066666`. The elevator's settlement sheet shows `66666` (no prefix), `H-066666` (hyphen added), or `h066666` (lowercase). The reconciliation engine does exact string matching and finds zero matches for the entire settlement sheet. Staff must manually link every load, defeating the purpose of automated reconciliation.
+
+This is guaranteed to happen. The existing data already shows Hughes Blue Ticket numbers in the `ticketNo` field. Elevator systems often strip the first letter (which may identify the farm or scale location) from their settlement exports.
 
 **Why it happens:**
-Prisma middleware does not know it is inside a `$transaction` call. Developers add audit log writes to the middleware assuming they are atomic with the main write. Under load or with slow queries, transaction timeouts discard the middleware-side audit write while committing the entity write.
+Ticket number formatting is a farm-side convention (the "H" prefix may stand for Hughes). The elevator's software records the number from their own scale system, which may use a different representation. Exact string matching is the first instinct and it fails at the first real buyer's data.
 
 **How to avoid:**
-- Write audit events inside the same Prisma `$transaction` as the entity write — not in middleware that fires after the fact.
-- Alternatively, use a PostgreSQL trigger on the entity tables to write audit records within the same database transaction, guaranteeing atomicity.
-- Never use a separate HTTP call or background job to emit an audit event for a synchronous write — if the sync write commits, the audit event must commit with it.
-- Test with a forced transaction timeout in a staging environment to verify audit entries are not created without their corresponding entity records.
+- Normalize ticket numbers during matching: strip non-numeric characters, strip leading zeros, compare numeric core only.
+- Matching function: `normalize(ticketNo) = ticketNo.replace(/\D/g, '').replace(/^0+/, '')`. Match on this normalized form, fall back to fuzzy matching on Levenshtein distance for near-matches (distance <= 2).
+- Flag near-matches (normalized differs by 1-2 characters) for human confirmation rather than auto-accepting or rejecting.
+- Store the buyer's raw ticket number alongside the matched farm ticket number. Never overwrite the farm's original ticket number.
+- Build a manual link UI: when auto-matching fails, show side-by-side load lists and let staff drag-link a farm load to a settlement line.
 
 **Warning signs:**
-- Entity records exist without a corresponding audit log entry.
-- Audit log insert latency is measured separately from entity write latency.
-- Audit writes happen in `afterWrite` hooks or post-transaction callbacks.
+- The matching engine uses `farmTicketNo === settlementTicketNo` without normalization.
+- There is no near-match / fuzzy match fallback.
+- After running reconciliation on the first real settlement sheet, the match rate is below 80%.
 
-**Phase to address:** Append-only audit store implementation phase — establish the transaction pattern before any write operations are built.
+**Phase to address:** Settlement reconciliation engine phase — ticket number normalization must be in place before any matching logic is built. Test against the actual data.json ticket numbers and a sample settlement sheet.
 
 ---
 
-### Pitfall 7: NOP Record Retention Scope Mismatch — 5-Year Rule vs. 3-Year History Display
+### Pitfall 7: calc.js Calculation Engine Duplicated Instead of Shared After PostgreSQL Migration
 
 **What goes wrong:**
-The system displays "3-year field history" for the organic transition eligibility check (NOP requires documenting substance applications for 3 years prior to certification). But NOP regulations also require all records to be retained for 5 years beyond their creation date. A system that archives or deletes records older than 3 years will destroy records that are still within their legally required retention window.
+The existing `calc.js` is a shared UMD module that runs in both browser (`window.Calc`) and Node.js (`module.exports`). After adding Prisma and TypeScript (or even just restructuring the server), the module loading pattern breaks. A developer writes a TypeScript version of the calc functions. Now there are two implementations. They drift. The server computes different netBU than the client. Settlement reconciliation reports different totals than the ticket entry screen.
 
 **Why it happens:**
-Developers conflate "3-year history needed for initial certification" with "records can be deleted after 3 years." The 3-year window is for field eligibility determination; the 5-year window is the minimum retention floor for all records.
+The dual-environment UMD pattern (`typeof module !== 'undefined' && module.exports ? module.exports : (window.Calc = {})`) is a maintenance time-bomb when the project structure changes. It works perfectly until someone adds TypeScript, moves to ES modules, or restructures the public directory — at which point it's easier to rewrite than to fix, and the rewrite introduces subtle formula differences.
 
 **How to avoid:**
-- Set the configurable retention policy minimum to 5 years — make it impossible to configure a shorter window through the UI.
-- Distinguish in the data model between "historical records imported for transition verification" and "active records created in the system" — both have a 5-year floor.
-- Archive to cold storage rather than delete — the append-only store should never have a purge operation.
-- Document the 5-year floor in the retention policy configuration screen with an explicit regulatory citation.
+- Do not rewrite `calc.js` during the database migration phase. Keep it as-is and require it from server.js exactly as today.
+- When TypeScript is introduced, create a thin TypeScript wrapper that delegates to `calc.js` via `require('../public/calc.js')` rather than reimplementing the formulas.
+- Add a regression test suite for `computeTicket()` before touching anything: the import.js file already validates against the Data2 sheet — extract those test cases into a formal test file that runs on every build.
+- Any future refactor of calc.js must pass all regression tests before merging.
 
 **Warning signs:**
-- The retention policy allows values below 5 years.
-- Archive jobs delete rather than move to cold storage.
-- 3-year history and 5-year retention are treated as the same concept in the codebase.
+- Two files compute grossBU or netBU: one in server.js and one elsewhere.
+- The TypeScript build has a `types/calc.ts` that contains arithmetic formulas (not just types).
+- The farm summary screen and the settlement screen show different total bushels for the same set of tickets.
 
-**Phase to address:** Configurable retention/archive policy phase — enforce the 5-year floor before the retention UI is built.
+**Phase to address:** Database migration phase — before any other changes, lock in the calc.js regression tests. This is the canonical computation; protect it.
 
 ---
 
-### Pitfall 8: Farmer UX Abandonment — Blocking Data Entry Before Field Sync Completes
+### Pitfall 8: Delivery Destination Stored as Free Text, Making Cross-Buyer Queries Impossible
 
 **What goes wrong:**
-The system requires Case IH field data to be synced before allowing the farm manager to add annotations, corrections, or photo evidence. The first sync takes minutes to hours depending on history volume. Farm managers open the app, see a loading spinner or empty fields, and revert to paper records. By inspection time, the system has accurate machine data but no manual records — the two sources never reconcile.
+The current `notes` field contains free text like `HBT# 5652 WR Trk# 41`. Destination, truck, and hauler are embedded in the notes string. When settlement reconciliation is added, staff enter the buyer name as a free-text field on each delivery. `"Co-op"`, `"COOP"`, `"co op"`, and `"Local Co-op"` all appear for the same buyer. Querying "all deliveries to the co-op" returns 60% of actual deliveries. Settlement sheets cannot be linked to a buyer entity.
 
 **Why it happens:**
-Developers design the data flow as: sync first, then annotate. This is correct from a data integrity standpoint but wrong from a farmer workflow standpoint. Farmers work in short windows between field operations and will not wait for a background job to complete before doing their paperwork.
+The existing system was built for ticket entry, not for cross-ticket analysis. Free text worked for the original purpose. When reconciliation requires "group all loads by buyer and match against each buyer's settlement sheet," the absence of a normalized buyer entity becomes a blocker. Developers add a `buyer` text field to tickets and staff enter it inconsistently from day one.
 
 **How to avoid:**
-- Allow manual record creation and annotation immediately, before any sync completes. The manual record is valid independently.
-- Show sync status non-blockingly — a progress indicator in the corner, not a blocking loading state.
-- When the sync completes, match incoming Case IH records to existing manual records by field, date, and operation type — merge rather than overwrite.
-- Design the onboarding flow so the farmer can enter at least one complete record on day one without needing the sync to finish.
+- Create a `Buyer` entity table with a canonical name and aliases. The delivery record references `buyerId` (foreign key), not a free text buyer name.
+- The ticket entry form must use a lookup/autocomplete for buyer selection, not a text field.
+- Existing tickets in data.json that have destination information in `notes` should be migrated with `buyerId = null` (unknown) and manually assigned during the first reconciliation cycle.
+- Never store destination as free text on the ticket record. If a new buyer appears, create the buyer record first.
 
 **Warning signs:**
-- The "add record" button is disabled or hidden until fields are synced.
-- The first-run experience shows an empty state with no call to action other than "connecting to Case IH."
-- Manual records and synced records are stored in separate tables with no merge logic.
+- The delivery or ticket table has a `buyer String` column rather than a `buyerId` foreign key.
+- Staff are allowed to type a buyer name rather than selecting from a list.
+- SQL queries for "loads by buyer" require ILIKE or text normalization.
 
-**Phase to address:** Case IH Field Ops API integration phase and farmer-facing UI phase — the decoupled manual/sync architecture must be established before either feature is built.
+**Phase to address:** Schema design phase — the Buyer entity and its foreign key relationship to deliveries must be in the schema from the start. This cannot be retrofitted after settlement data accumulates.
 
 ---
 
-### Pitfall 9: Print-Ready PDF Report Missing Inspector-Required Fields
+### Pitfall 9: The Existing PWA / Offline Mode Writes to the Old JSON Endpoint After Migration
 
 **What goes wrong:**
-The generated PDF looks complete and professional but is missing fields that NOP inspectors specifically require for the traceback exercise: the certifier's lot code format (e.g., `cropYear-crop-fieldName`), the mass balance calculation inputs and outputs per field, the 3-year substance application history table, and the Organic System Plan reference number. An inspector cannot complete their audit worksheet from the report and the operation is flagged for an incomplete file.
+The app has PWA support (service worker). Staff using the app in the field with spotty connectivity have requests cached and replayed. After the PostgreSQL migration, the service worker caches the old API responses and replays POST requests to `/api/tickets` against the old endpoint. If the server now reads from PostgreSQL but the service worker replays a stale request, the ticket either creates a duplicate or goes to a dead endpoint. Worse: staff in the field don't realize the submission failed and drive away.
 
 **Why it happens:**
-PDF generation is treated as a formatting problem rather than a regulatory compliance problem. Developers design the report to look like a farm summary, not like an inspector's working document. The specific fields required by certifying agents are documented in NOP guidance and certifier-specific inspection worksheets, but developers do not read those documents — they model the report on what seems useful.
+Service worker cache invalidation is notoriously easy to get wrong. The migration changes the backend data store but not the API surface (the routes stay the same). Staff have cached service worker registrations that predate the migration. Any offline tickets queued before the migration are replayed post-migration — and may fail if the request body format has changed.
 
 **How to avoid:**
-- Before writing any PDF generation code, obtain and read the inspection worksheet template from at least one major certifier (CCOF, Oregon Tilth, MOSA, OCIA).
-- Map every field on the inspector's worksheet to a corresponding data field in the system. If a field cannot be populated, it is a data model gap, not a UI gap.
-- The report must include: field map with boundaries, 3-year substance application history per field, mass balance table (inputs vs. outputs vs. inventory), seed source and lot linkage, harvest records with yield and storage location, and the lot code used for traceability.
-- Have a certified organic farmer or an experienced inspector review a draft report before building the final layout.
+- Before migration, bump the service worker cache version in the public JS to force all clients to re-register. Verify this clears old cached requests.
+- After migration, implement a `/api/version` endpoint. The service worker should check the version on reconnect and refuse to replay cached requests from a prior API version.
+- Audit the PWA's offline queue: are there any pending POST requests in IndexedDB or workbox queues before the migration cutover? Flush them against the old JSON-backed server first.
+- Document the service worker cache-bust procedure as a required step in the migration runbook.
 
 **Warning signs:**
-- PDF generation is started before the data model is complete.
-- The report design is driven by what data is easy to display rather than what an inspector requires.
-- No inspector worksheet has been consulted.
+- The service worker cache version was not incremented before migration.
+- Post-migration, some tickets appear in the UI as submitted but are not in PostgreSQL.
+- Staff report "I submitted it but it disappeared" after coming back online.
 
-**Phase to address:** NOP audit report generation phase — inspector worksheet review must happen at phase start, before any layout work.
+**Phase to address:** Database migration phase — service worker cache invalidation must be part of the migration checklist, executed before deployment.
 
 ---
 
-### Pitfall 10: Case IH Data Latency Misrepresented as Real-Time
+### Pitfall 10: Settlement "Paid" Status Is Set Without Verifying Individual Load Match
 
 **What goes wrong:**
-The UI shows "Synced from Case IH" without indicating when the sync occurred. A farm manager reviews field records the morning before an inspection and assumes the data is current. The last sync was 48 hours ago. A tillage operation run the previous afternoon is missing from the records. The inspector's traceback cannot account for that operation.
+A settlement sheet arrives for 47 loads. The system imports it, matches 44 by ticket number, and 3 are unmatched. A developer marks the settlement as "reconciled" or "paid" at the settlement level — because the totals are close. The 3 unmatched loads are never individually resolved. One of them is a 60,000 lb load that was never paid — it was on the settlement sheet under a different ticket number format. The farm loses revenue on a single load worth $800-1,200. Multiplied across 4 buyers and 3 seasons, the exposure is significant.
 
 **Why it happens:**
-"Connected to Case IH" is treated as a binary state (connected/not connected) rather than a temporal state (last synced at X). CNH FieldOps telemetry data is not real-time — machine data is uploaded in batches and availability can lag by hours. Developers do not surface this latency because they assume sync jobs run frequently enough.
+Reconciliation UI designs tend toward "summary first" — show a total match/mismatch and let the user approve the whole thing. The assumption is that close-enough totals mean individual loads are correct. In grain settlement this assumption is wrong: buyers can have the total dollars right but be paying for a different set of loads than what was delivered.
 
 **How to avoid:**
-- Display the timestamp of the last successful sync prominently on every page that shows synced data: "Case IH data as of [date/time]."
-- Add a staleness warning if the last sync is older than 24 hours.
-- Before generating an inspection report, show a "Sync now before generating" prompt with the last sync timestamp.
-- Never label synced data as "current" — label it with the sync timestamp.
+- Settlement status must track at the individual load level, not the settlement level. A settlement with 3 unmatched loads is NOT reconciled, even if dollar totals match.
+- The UI must require resolution of every unmatched line before allowing the settlement to be marked complete.
+- "Unmatched from farm" (load we recorded, not on settlement) and "Unmatched from buyer" (on settlement, not in our records) must be surfaced separately — they indicate different problems.
+- Provide an explicit "mark as confirmed missing" action for loads that the farm verifies were never delivered, and an "add missing ticket" action for loads found on the buyer sheet that weren't entered.
 
 **Warning signs:**
-- The UI shows a sync status indicator but no timestamp.
-- The report PDF does not include a "Data current as of" field.
-- No staleness alert exists for sync jobs that have not run recently.
+- The settlement has a single `status: 'reconciled' | 'pending'` field with no per-load reconciliation status.
+- The UI shows "44 of 47 matched" but has a "Mark as Complete" button that ignores the 3 unmatched.
+- Dollar total match is used as a proxy for load-level reconciliation.
 
-**Phase to address:** Case IH Field Ops API integration phase — timestamp display must be part of the initial sync UI, not added as a later enhancement.
+**Phase to address:** Settlement reconciliation UI phase — the per-load reconciliation status must be in the data model from the start. The UI must enforce resolution of all unmatched loads.
 
 ---
 
@@ -243,12 +253,12 @@ The UI shows "Synced from Case IH" without indicating when the sync occurred. A 
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Store CNH OAuth tokens in env vars instead of database | Simpler initial setup | Token refresh writes fail silently; concurrent sync jobs share stale token state | Never — tokens must be database-persisted from day one |
-| Write audit events in afterCreate hooks instead of same transaction | Easier to implement with Prisma middleware | Audit events silently skipped on transaction timeout; entity records with no audit provenance | Never for regulatory compliance context |
-| Use wall-clock timestamp as primary audit ordering key | Simple, obvious | Clock skew causes misordered events; inspectors see records out of sequence | Never — always use a database sequence for ordering |
-| Skip hash chaining on audit records until "later" | Faster initial build | Tamper-evidence is impossible to retrofit without invalidating existing records | Never — must be in from first write |
-| Display 3-year field history as the retention window | Matches organic transition language | Violates 5-year NOP retention floor; records deleted that are still legally required | Never |
-| Block farmer data entry until Case IH sync completes | Simpler data model | Farmers abandon the app on first run; paper records never migrate to digital | Never — decouple sync and manual entry from day one |
+| Keep buyer name as free text on tickets instead of a foreign key to a Buyer table | Faster first pass, no schema design needed | Cannot reliably group loads by buyer; settlement matching requires fuzzy text search | Never — buyer entity must exist before settlement data accumulates |
+| Use the same `/api/tickets` POST endpoint for both raw ticket entry and delivery-linked tickets | No API changes needed | Delivery and ticket concepts conflate; adding chain-of-custody requires retrofitting a field that should have been structural | Never — the distinction between a raw load ticket and a delivery record is architectural |
+| Skip the cutover write-lock during JSON-to-PostgreSQL migration | Faster deployment | Up to several hours of tickets created post-migration-script and pre-deploy are silently lost | Never — the write-lock window is 2-5 minutes and the risk is data loss |
+| Hard-code the weight discrepancy tolerance to ±100 lbs | Simpler, ships faster | Every buyer/crop combo has different normal variance; 100 lbs is too tight for some loads and too loose for others | Never — tolerance must be configurable from day one |
+| Let settlement import overwrite the farm's recorded weight with the elevator's weight | Simpler reconciliation logic (one weight to compare) | Farm's original measurement is lost; audits cannot show what the farm measured independently | Never — farm weight is the farm's record; elevator weight is the buyer's record; both must survive |
+| Use exact string match on ticket numbers for settlement reconciliation | Simple to implement | First real buyer's data will not match due to prefix/format differences; match rate will be unacceptably low | Never — normalization and fuzzy matching must be in the initial implementation |
 
 ---
 
@@ -256,13 +266,12 @@ The UI shows "Synced from Case IH" without indicating when the sync occurred. A 
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| CNH FieldOps OAuth2 | Treating staging (6h token) and production (1h token) as equivalent | Use `expires_in` from the token response; test proactive refresh under production token lifetime |
-| CNH FieldOps OAuth2 | Refreshing token without a distributed lock | Implement Redis or DB-level advisory lock; only one refresh per connection at a time |
-| CNH FieldOps API | Assuming successful auth = all data accessible | Verify non-empty field list response immediately post-auth; detect Linked Account exclusion explicitly |
-| CNH FieldOps API | Ignoring Subscription Key environment mismatch | Treat Subscription Key as required env var alongside OAuth secrets; health-check on startup |
-| CNH FieldOps API | Treating empty data response as success | Empty array response post-auth is a warning state; surface it to the farmer with a specific message |
-| Prisma + audit log | Using middleware for audit writes inside transactions | Use PostgreSQL triggers or write audit records inside the same `$transaction` call |
-| @react-pdf/renderer | Building PDF layout before data model is complete | Map all NOP-required inspector fields to data model fields first; layout is secondary |
+| Farm registry (`/api/fields` at port 3005) | Using farm name string to look up field data, which fails on name variation ("Airport" vs "Airport Farm") | Use farm registry's `FarmRegistry.autocomplete()` for field selection; store `fieldRegistryId` as the canonical identifier on delivery records |
+| Buyer settlement CSV import | Assuming column positions are stable across seasons and buyers | Per-buyer format profile with named column mappings and a version field; preview before commit |
+| PDF settlement sheets | Trying to parse PDF as structured data | PDF settlements require manual entry or Claude Vision scanning; do not build a PDF parser expecting reliable extraction |
+| Existing PWA service worker | Not invalidating the service worker cache before migration cutover | Bump the service worker version string before migration; verify all offline queues are flushed |
+| Existing `calc.js` UMD module | Rewriting in TypeScript instead of wrapping | Wrap via `require()` in the TypeScript layer; add regression tests before touching the module |
+| PostgreSQL via Prisma connection pool | Running Prisma from a single long-lived Express process without a pool limit | Set `connection_limit` in the Prisma datasource URL; default pool size is `num_cpus * 2 + 1` which is fine for this scale |
 
 ---
 
@@ -270,10 +279,10 @@ The UI shows "Synced from Case IH" without indicating when the sync occurred. A 
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Loading full 3-year field history into memory for report generation | Report generation times out on large farms; server OOM on multiple concurrent requests | Stream records in pages; aggregate at query time with SQL; generate PDF in a background job | Farms with 10+ fields × 3 years × daily operations (~10k+ records) |
-| Validating the full audit hash chain on every export request | Export endpoint times out; UI hangs waiting for integrity check | Cache the last-validated chain position; only verify new entries incrementally | Audit tables with >10,000 entries |
-| Running Case IH sync as a blocking API route handler | Request times out before sync completes; Next.js serverless function limit (10-30s) hit | Move sync to a background job (BullMQ or pg-boss); return a job ID immediately | Any farm with more than 30 days of field history on first sync |
-| Generating the NOP PDF report synchronously in the API route | PDF generation blocks the response for 5-30 seconds on large reports | Queue PDF generation as a background job; poll for completion or use a download link | Reports covering more than one full season |
+| Loading all 527+ tickets into memory for settlement matching (replicating the current in-memory store pattern) | Matching slows as ticket count grows; eventually OOM on a low-memory machine | Use database queries with indexes for settlement matching — do not replicate the in-memory store pattern in the PostgreSQL version | The current JSON store is ~160KB and 527 tickets — fine in memory. At 3,000 tickets (6 seasons) this pattern stays fine but settlement matching across a full season of unmatched loads should use SQL |
+| Recomputing farm summaries on every GET /api/farms (replicating farmSummaryCache) | Farm summary endpoint slows when ticket count grows | Keep the memoized cache pattern from the existing server, but invalidate on any ticket or farm write — same as today | The current cache is correct; the risk is losing it during migration and defaulting to unbounded recomputation |
+| Parsing a 47-row settlement sheet PDF with Claude Vision per-row | Each row is a separate API call; 47 rows = 47 API calls at $0.01 each | Parse the entire sheet in one Claude Vision call; structure the prompt to return all rows as a JSON array | Any settlement sheet with more than 5 rows |
+| Full table scan for ticket number match during reconciliation | Reconciliation queries take seconds on 3,000+ tickets | Add a B-tree index on `ticketNo` in the Prisma migration; the existing code already uses an in-memory `ticketByNo` Map — replace with an indexed DB query | Becomes noticeable above ~2,000 tickets; acceptable to defer until after migration |
 
 ---
 
@@ -281,11 +290,9 @@ The UI shows "Synced from Case IH" without indicating when the sync occurred. A 
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Storing CNH OAuth refresh token in a client-accessible location (localStorage, cookie without httpOnly) | Attacker steals token, gains read access to farm's entire machine telemetry history | Store refresh token server-side only; access token in httpOnly cookie or server session |
-| Application database role has UPDATE/DELETE on audit log tables | Developer or attacker can silently modify compliance records; certification revoked | Create an INSERT-only role for the app on audit tables; enforce at the PostgreSQL role level |
-| No integrity verification before exporting audit logs | Tampered records exported to regulator without detection | Run hash chain verification before every export; refuse export if chain breaks |
-| Sharing a single CNH API Subscription Key across staging and production | Production key exposed in staging logs; rate limit exhausted by dev traffic | Separate keys per environment; rotate on any team member departure |
-| Exposing raw Case IH machine telemetry IDs in the URL or client response | Enables enumeration of other farms' data if authorization checks are incomplete | Use internal UUIDs; never expose CNH's internal IDs in the client-facing API |
+| Storing raw settlement sheets (PDF, Excel) in the public directory | Financial documents accessible to anyone who knows the URL | Store uploaded settlement files in a server-side directory outside the Express `static` root; serve via authenticated endpoint only |
+| No authentication on PostgreSQL-backed write routes | Same risk as today's JSON routes — anyone on the LAN can POST tickets | The existing app has no auth (acceptable for farm LAN); if the app is ever exposed beyond the farm LAN, add auth before deploying. This is a known and accepted risk for now. |
+| Logging raw settlement data (including prices and quantities) at DEBUG level | Settlement financial data in plain-text log files readable by anyone with server access | Use structured logging with a settlement-specific log level; never log full settlement row contents at DEBUG |
 
 ---
 
@@ -293,24 +300,26 @@ The UI shows "Synced from Case IH" without indicating when the sync occurred. A 
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Blocking all actions until Case IH sync completes | Farmer closes app on first run; adopts paper records instead | Show sync progress non-blocking; enable manual record entry immediately |
-| Showing "Synced" without a timestamp | Farm manager trusts stale data before inspection; missing operations go unnoticed | Always show "Case IH data as of [datetime]"; add a staleness warning after 24h |
-| Complex multi-step forms for adding field corrections | Farmers in the field between jobs will not complete 5+ step workflows; corrections don't get logged | Maximum 3 fields per correction form; pre-populate from the record being corrected |
-| Inspector report requires downloading, printing, remembering to bring | Farmer forgets to generate report before inspection day | Send a reminder email 48h before the inspection date (pulled from Organic System Plan); one-click re-generate |
-| Audit log viewer shows raw technical fields (UUIDs, JSON payloads) | Farm manager cannot interpret the audit trail; distrust of the system | Render audit events as human-readable sentences: "Jane added a tillage record for North Field on Jan 15" |
+| Settlement reconciliation UI requires navigating away from the ticket list to resolve each discrepancy | Staff context-switch repeatedly; miss discrepancies; give up and go back to Excel | Show unresolved discrepancies inline, in the same view as the settlement summary; resolution should be a single click or a short form in a modal |
+| Requiring staff to re-enter field/farm data when linking a ticket to a delivery for the farm registry | Double-entry friction; staff skip the linkage step | Pre-populate the delivery form from the ticket's existing `farm` field using the registry autocomplete; staff confirm or correct, not re-enter from scratch |
+| Displaying weight discrepancy as a raw pound delta without context | "This load is 312 lbs off" means nothing without knowing the total | Show delta as both pounds and percentage: "312 lbs (0.57%) — within normal scale variance" vs. "2,100 lbs (3.8%) — REVIEW REQUIRED" |
+| Marking a settlement as "complete" before all loads are matched | Office closes the books; a missed load is never collected | "Complete" button is disabled until zero unmatched lines remain; unresolved lines must be explicitly marked as "confirmed no-load" or "confirmed discrepancy accepted" |
+| Settlement import that processes silently without a preview | Wrong column mapping imports garbage data; discovery happens after data is committed | Always show an import preview with the first 5 rows rendered as structured data before committing; staff must explicitly approve |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Case IH sync:** Works in staging with long token lifetime — verify proactive refresh fires correctly under the 1-hour production token lifespan before go-live.
-- [ ] **Linked Account detection:** OAuth flow completes — verify field data is actually returned post-auth; empty response after auth is a silent failure mode.
-- [ ] **Audit store immutability:** No UPDATE/DELETE routes exist in the application — verify PostgreSQL role does not have these permissions at the database level.
-- [ ] **Hash chain integrity:** Each audit entry has a checksum field — verify the chain validation logic actually detects a tampered record before shipping the export feature.
-- [ ] **NOP report completeness:** The PDF renders all field operations — verify the inspector traceback can run: Sale → Harvest → Field Operation → Seed Lot → Invoice. If any link is missing, the report fails the inspection.
-- [ ] **Mass balance:** Input and output totals render in the report — verify the calculation matches the existing C5.0 mass balance rules in the codebase and that all Case IH-sourced records are included in the inputs.
-- [ ] **5-year retention:** The archive/retention policy UI exists — verify the minimum setting is 5 years and the archive job moves records rather than deleting them.
-- [ ] **Sync timestamp display:** The sync status shows "Connected" — verify a sync timestamp is displayed everywhere synced data appears, and that it updates after each successful sync run.
+- [ ] **Database migration:** Ticket count in PostgreSQL matches `store.tickets.length` in data.json — verify the count, not just that the migration script ran without errors.
+- [ ] **ID preservation:** Existing ticket IDs (`t_000001` through current) are present verbatim in PostgreSQL — verify by spot-checking 5 known ticket IDs from data.json against the database.
+- [ ] **calc.js regression:** The PostgreSQL-backed server returns the same `grossBU` and `netBU` values for existing tickets as the JSON-backed server — verify by running both servers against the same data and comparing output for 10 tickets.
+- [ ] **Service worker:** After migration, staff using the app in Chrome confirm no offline-queued submissions are stuck in the service worker — check the DevTools Application > Service Workers panel on a device that was offline during migration.
+- [ ] **Weight tolerance:** The reconciliation engine correctly categorizes a 200 lb delta as MATCHED and a 2,000 lb delta as REVIEW for a 55,000 lb corn load — verify both cases in the test suite.
+- [ ] **Ticket number normalization:** A load recorded as `H066666` matches a settlement line with `66666` — verify the normalization function strips the prefix correctly for all known ticket number formats in the existing data.
+- [ ] **Per-load status:** A settlement with 3 unmatched lines cannot be marked complete — verify the "Mark Complete" button is disabled and shows the count of unmatched lines.
+- [ ] **Buyer entity:** The ticket entry form does not allow typing a buyer name; it requires selecting from the buyer list — verify by attempting to submit a ticket with a free-text destination.
+- [ ] **Settlement raw file:** The raw settlement CSV or Excel file is stored server-side and not accessible via a direct URL without authentication — verify by navigating to the file path directly in a browser.
+- [ ] **Farm weight preserved:** After matching a ticket to a settlement line, the original farm-recorded net weight is unchanged in the database — verify `farmNetWeight` and `elevatorNetWeight` are stored as separate columns.
 
 ---
 
@@ -318,11 +327,12 @@ The UI shows "Synced from Case IH" without indicating when the sync occurred. A 
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Token refresh race condition causes sync gaps | MEDIUM | Re-trigger a full historical sync for the gap period; compare against FieldOps portal UI to verify completeness; add the locking mechanism before re-enabling background sync |
-| Linked Account discovered post-integration | HIGH | Document the limitation in the farmer setup flow; provide a manual CSV import fallback using Case IH's FieldOps portal export; contact CNH developer support for potential workarounds |
-| Audit hash chain break discovered | HIGH | Do not export until resolved; determine the break point from chain validation logs; treat all records after the break as unverified; engage the certifying agent proactively rather than waiting for inspection |
-| NOP report missing inspector-required fields post-build | HIGH | Audit against an actual certifier inspection worksheet; add missing fields to the data model first (may require a migration and re-sync); rebuild report template — cannot patch layout alone if data is absent |
-| Dual-write gap — entity records without audit events | MEDIUM | Query for entity records with no corresponding audit entry; reconstruct the audit event from the entity record's `createdAt`/`updatedAt` metadata and flag as "reconstructed, not original"; switch to trigger-based audit writes going forward |
+| Ticket data loss during JSON-to-PostgreSQL cutover | HIGH | Diff data.json backup against PostgreSQL ticket count; identify missing IDs; re-enter missing tickets from the physical blue tickets in the office file; document which loads were recovered manually |
+| Calc.js formula drift discovered post-migration | HIGH | Roll back to the previous server version while the formula is corrected; run regression test suite against both implementations; re-compute all affected settlement records after fix |
+| Settlement import with wrong column mapping commits bad data | MEDIUM | Identify the settlement ID and delete all lines from that import; re-run with corrected column mapping; add format version to prevent recurrence |
+| Weight tolerance set too tight, generating 200+ false discrepancies | LOW | Update the tolerance threshold in buyer configuration; re-run reconciliation for affected settlements; mark previously-flagged normal-variance loads as MATCHED |
+| Service worker replays stale requests after migration | MEDIUM | Identify duplicate or ghost tickets created by replayed service worker requests; delete duplicates by comparing against physical blue tickets; force service worker update on all devices; verify no more queued requests |
+| Buyer entity missing — settlement matching returns 0 results | LOW | Create the buyer entity; bulk-link existing unmatched settlement lines to the correct buyer via a one-time admin operation; prevent recurrence by enforcing the buyer FK on new deliveries |
 
 ---
 
@@ -330,35 +340,32 @@ The UI shows "Synced from Case IH" without indicating when the sync occurred. A 
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| OAuth2 token refresh race condition | Case IH Field Ops API integration | Confirm distributed lock in sync job code; verify no race in concurrent-job load test |
-| Linked Account data exclusion | Case IH Field Ops API integration | Validate non-empty data response in OAuth onboarding flow |
-| Subscription Key / environment mismatch | Case IH Field Ops API integration | Startup health check logs specific error codes on misconfiguration |
-| Seed-to-field traceback linkage gap | NOP audit report generation | Inspector worksheet mapped to data model; report renders full traceback chain |
-| Audit store application-only immutability | Append-only audit store implementation | PostgreSQL role has INSERT-only on audit tables; confirmed with `\dp` |
-| Dual-write audit event skipped on transaction timeout | Append-only audit store implementation | Forced timeout test shows entity record and audit entry either both commit or both roll back |
-| 5-year retention vs. 3-year history confusion | Configurable retention/archive policy | Retention policy UI minimum is 5 years; archive job moves, does not delete |
-| Farmer abandonment on first-run sync block | Case IH Field Ops API integration + farmer UI | Manual record entry available before any sync completes; tested on first-run flow |
-| PDF report missing inspector-required fields | NOP audit report generation | Inspector worksheet review complete before layout work starts |
-| Sync data latency misrepresented as current | Case IH Field Ops API integration | Sync timestamp visible on every page showing synced data; staleness alert fires after 24h |
+| JSON-to-PostgreSQL cutover data loss | Database migration phase | Ticket count matches before and after; write-lock procedure documented and executed |
+| String ID breaks in relational tables | Database migration phase (schema design) | Prisma schema uses `id String @id` on tickets; existing IDs present verbatim post-migration |
+| Weight discrepancy as error vs. expected variance | Settlement reconciliation engine phase | Three-tier status (MATCHED/REVIEW/DISPUTED) implemented; configurable tolerance per buyer |
+| Moisture shrink method differences by buyer | Settlement data model phase | Buyer configuration captures shrink method; reconciliation compares pounds, not derived bushels |
+| Settlement import format diversity | Settlement import phase | Per-buyer format profiles exist; preview step required before commit; manual entry path available for all buyers |
+| Ticket number normalization failure | Settlement reconciliation engine phase | Normalization function tested against all ticket formats in existing data.json; near-match fuzzy fallback implemented |
+| calc.js drift after migration | Database migration phase | Regression test suite added before any migration work; TypeScript layer wraps, not reimplements |
+| Buyer as free text instead of foreign key | Schema design phase | `buyerId` foreign key on delivery records; ticket entry form enforces selection |
+| PWA service worker cache after migration | Database migration phase | Service worker version bumped; offline queue flushed before cutover |
+| Settlement-level "complete" bypasses per-load matching | Settlement reconciliation UI phase | "Complete" action disabled with unmatched lines outstanding; per-load status enforced in data model |
 
 ---
 
 ## Sources
 
-- [CNH Developer Portal — FieldOps API](https://develop.cnh.com/api-guides/fieldops-api) — Confirmed: separate staging/production environments with different token lifespans (3600s production, 21600s staging); rate limit 120 req/s; 429 on breach. MEDIUM confidence (full docs login-gated).
-- [CNH Developer Portal — FieldOps API FAQs](https://develop.cnh.com/troubleshooting/faq/field-ops-api) — Confirmed: Linked Account data exclusion, 401 Subscription Key errors, file-processing API limitation. MEDIUM confidence.
-- [CNH Developer Portal — FieldOps Portals](https://develop.cnh.com/get-started/fieldops-portals) — Confirmed: "Agronomic data from a Linked Account in the FieldOps portal is not made available through the FieldOps API." HIGH confidence (official documentation).
-- [USDA AMS — NOP Recordkeeping for Organic Certification](https://www.ams.usda.gov/sites/default/files/media/NOP-DocumentationFormsIntro.pdf) — Confirmed: 5-year retention requirement, audit trail requirements. HIGH confidence (official USDA).
-- [USDA AMS — NOP 2601 The Organic Certification Process](https://www.ams.usda.gov/sites/default/files/media/2601.pdf) — Confirmed: 3-year field history, traceback exercise requirements. HIGH confidence (official USDA).
-- [USDA AMS — NOP OTCO Audit Report](https://www.ams.usda.gov/sites/default/files/media/NOP%20OTCO.pdf) — Confirmed: 18 of 25 mass balance/traceability exercises had multiple deficiencies; inspectors did not always identify linking elements between documents. HIGH confidence (official USDA audit findings).
-- [USDA AMS — NOP TDA Audit](https://www.ams.usda.gov/sites/default/files/media/NOP%20TDA.pdf) — Confirmed: Inspectors do not always verify compliance; traceability audit exercises deficient. HIGH confidence (official USDA).
-- [MOSA — Mass Balance and Traceback Inspection Audits Explained](https://mosaorganic.org/education-resources/organic-cultivator-newsletter/mass-balance-and-traceback-inspection-audits-explained) — Traceback chain requirements (seed → planting → harvest → sale). MEDIUM confidence.
-- [Oregon Tilth — Mastering Organic Recordkeeping](https://tilth.org/mastering-organic-recordkeeping/) — Record linking elements, post-harvest tracking gaps. MEDIUM confidence.
-- [OATS — Record Keeping Systems for Organic Certification](https://www.organicagronomy.org/resource-library/fact-sheet-record-keeping) — Inspector quote on seed tag/field linkage gap; post-harvest tracking weakness. MEDIUM confidence.
-- [Nango — Handling Concurrent OAuth Token Refreshes](https://nango.dev/blog/concurrency-with-oauth-token-refreshes) — Redis distributed lock pattern for token refresh; proactive refresh strategy. MEDIUM confidence (verified implementation pattern).
-- [designgurus.io — Immutable Append-Only Audit Trail Enforcement](https://www.designgurus.io/answers/detail/how-do-you-enforce-immutability-and-appendonly-audit-trails) — Database-level enforcement; hash chaining; dual-write risks. MEDIUM confidence.
-- [Prisma — Audit Trail Issue #1902](https://github.com/prisma/prisma/issues/1902) — Middleware + $transaction incompatibility; timeout-related audit write failures. MEDIUM confidence.
+- USDA AMS — [Testing a Bulk-Weighing Scale for Accuracy](https://www.ams.usda.gov/resources/testing-bulk-weighing-scale-accuracy) — Confirmed: elevator scale acceptance tolerance 0.05% of capacity; maintenance tolerance 0.1%. HIGH confidence (official USDA).
+- USDA AMS — [Operation of a Bulk Weighing Scale](https://www.ams.usda.gov/resources/operation-bulk-weighing-scale) — Confirmed: accumulated error tolerance standards. HIGH confidence (official USDA).
+- J&M Manufacturing — [Grain Cart Scale System](https://jm-inc.com/grain-cart-scales.html) — Confirmed: grain cart scales accurate to ±0.5% (5-point) to ±1.0% (3-point). MEDIUM confidence (manufacturer spec).
+- Penn State Extension — [Understanding Grain Discount Schedules](https://extension.psu.edu/understanding-grain-discount-schedules) — Confirmed: shrink method vs. moisture discount method; identical grain delivered to different buyers yields different payment; $50+ difference on same load. HIGH confidence (extension publication).
+- Iowa State Extension — [Keep Monitors, Sensors and Scales Accurate During Harvest](https://crops.extension.iastate.edu/cropnews/2022/09/keep-monitors-sensors-and-scales-accurate-during-harvest) — Confirmed: growers verify grain cart scales against truck net weights from elevator tickets; good practice throughout season. HIGH confidence (extension publication).
+- Tailscale Engineering Blog — [An Unlikely Database Migration](https://tailscale.com/blog/an-unlikely-database-migration) — Confirmed: phased dual-run approach for JSON-to-database migration; write latency drops dramatically post-migration; migration being "unnoticeable" is the goal. MEDIUM confidence (engineering post-mortem).
+- Vertical Software — [Grain Farm Software](https://www.verticalsoftware.net/grain-farm-software/) — Confirmed: common problems include missing loads discovered during settlement reconciliation; manual ticket entry leads to errors. MEDIUM confidence (vendor documentation).
+- Iowa State Extension — [Crop Marketing Terms — Shrink](https://www.extension.iastate.edu/agdm/crops/html/a2-05.html) — Confirmed: "invisible shrink" varies significantly from one grain buyer to another. HIGH confidence (extension publication).
+- Agrimatics — [Grain Cart Scale System](https://agrimatics.com/grain-cart-scales) — Confirmed: grain cart scale manufacturer spec ±0.5-1.0%. MEDIUM confidence (manufacturer).
+- Existing codebase analysis — `server.js`, `calc.js`, `import.js`, `data/data.json` — Confirmed: 527 tickets, string IDs `t_000001`, free-text notes containing truck/bin data, PWA support, 4-dependency package.json, no authentication. HIGH confidence (direct code review).
 
 ---
-*Pitfalls research for: Organic certification audit system — Case IH Field Ops API integration and USDA NOP compliance*
-*Researched: 2026-02-23*
+*Pitfalls research for: Grain traceability and settlement reconciliation — adding to existing Express + JSON grain ticket app*
+*Researched: 2026-03-01*
