@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A USDA NOP organic certification audit system that pulls field operation data from Case IH FieldOps via OAuth2 API, structures it into inspector-ready records with 3-year history, and produces print-ready PDF audit reports. Built for farm managers who need to prep for organic inspections without the headache — connect Case IH, sync your data, generate a report, hand it to the inspector.
+A USDA NOP organic certification audit system that pulls field operation data from Case IH FieldOps via OAuth2 API, structures it into inspector-ready records with 3-year history, and produces print-ready PDF audit reports. Supports split-field enterprises — multiple crops per physical field per season with fallow tracking, consolidated views, and enterprise-aware PDF reports. Built for farm managers who need to prep for organic inspections without the headache.
 
 ## Core Value
 
@@ -14,16 +14,11 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 
 **Delivered:** Case IH API integration (OAuth2 + mock mode), field records with 3-year history and manual entry, staged ops review with approve/reject, and 8-section PDF inspection reports. 4 phases, 11 plans, 15 requirements — all complete.
 
-## Current Milestone: v1.1 Split-Field Enterprises
+## Completed Milestone: v1.1 Split-Field Enterprises (2026-03-01)
 
 **Goal:** A single physical field can carry multiple crop enterprises in the same season. Track each enterprise individually while presenting a coherent whole-field view. Reflect split-field reality in history views and PDF reports.
 
-**Target features:**
-- Multiple enterprises per field per season (split planting, double-cropping)
-- Fallow/idle enterprise type with overhead cost tracking
-- Acre reconciliation (enterprise acres vs field total)
-- Consolidated field view with drill-down to per-enterprise detail
-- PDF reports updated for split-field reality
+**Delivered:** Split-field schema with label/fallow/cost fields, acre reconciliation API with over-allocation warnings, consolidated field views with drill-down, enterprise creation with "Save & Add Another", and all PDF report sections updated for multi-enterprise fields. 4 phases, 8 plans, 16 requirements — all complete.
 
 ## Requirements
 
@@ -45,16 +40,17 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 - ✓ Harvest records with yield, lot numbers, equipment, and data source — v1.0
 - ✓ Tillage operation records from Case IH — v1.0
 - ✓ Print-ready USDA NOP inspection report as 8-section PDF — v1.0
+- ✓ Multiple enterprises per field per season (split planting, double-cropping) — v1.1
+- ✓ Fallow/idle enterprise type with overhead cost tracking — v1.1
+- ✓ Acre reconciliation (enterprise acres vs field total) — v1.1
+- ✓ Consolidated field view with drill-down to per-enterprise detail — v1.1
+- ✓ Multi-enterprise season cards in field history — v1.1
+- ✓ Intuitive navigation — default consolidated view, drill into enterprise on demand — v1.1
+- ✓ PDF reports reflect split-field reality (field list, history, mass balance) — v1.1
 
 ### Active
 
-- [ ] Multiple enterprises per field per season (split planting, double-cropping)
-- [ ] Fallow/idle enterprise type with overhead cost tracking
-- [ ] Acre reconciliation (enterprise acres vs field total)
-- [ ] Consolidated field view with drill-down to per-enterprise detail
-- [ ] Multi-enterprise season cards in field history
-- [ ] Intuitive navigation — default consolidated view, drill into enterprise on demand
-- [ ] PDF reports reflect split-field reality (field list, history, mass balance)
+(No active requirements — next milestone not yet defined)
 
 ### Deferred (v2)
 
@@ -75,16 +71,25 @@ A farm manager can pull Case IH field data and hand an inspector a complete, pri
 - Inspector portal/login — inspectors receive print reports, not digital access
 - Multi-certifier support (EU, state programs) — USDA NOP only for v1
 - Automated compliance scoring — inspector makes the call, we provide the records
+- GIS/map-based split definition — label-based is sufficient for NOP audit
+- Enterprise-level organic status — NOP certifies at field level
+- Automated split detection from Case IH data — Case IH doesn't report sub-field splits
 
 ## Context
 
-Shipped v1.0 with ~83,000 LOC TypeScript/Prisma across the organic-cert Next.js app. Tech stack: Next.js 16, React 19, Prisma 6, PostgreSQL, @react-pdf/renderer, shadcn/Radix UI, Tailwind CSS, Zod v4 for API validation.
+Shipped v1.1 with ~85,000 LOC TypeScript/Prisma across the organic-cert Next.js app. Tech stack: Next.js 16, React 19, Prisma 6, PostgreSQL, @react-pdf/renderer, shadcn/Radix UI, Tailwind CSS, Zod v4 for API validation.
 
 This system is part of a modular agricultural ecosystem with independent apps for budgeting (farm-budget), FSA tracking (fsa-acres), grain tickets (grain-tickets), malt costing (meristem-malt), and organic certification (organic-cert).
 
 Case IH FieldOps API integration uses OAuth2 Authorization Code flow with per-farm refresh tokens. Currently operating in mock data mode while CNH staging API audience configuration is resolved — the OAuth flow and all sync/review/approve workflows are fully functional.
 
 Primary users are farm managers/staff preparing for USDA NOP inspections. The UX respects farming realities: limited time, minimal clicks, "get shit done" design philosophy.
+
+**Known tech debt (from v1.1 audit):**
+- Sync Acres button has a pre-existing runtime crash (data.unmatched undefined)
+- Partial unique index not captured in schema.prisma (environment rebuild risk)
+- take:3 enterprise query limit could undercount at 4+ enterprises per field
+- API routes lack auth() calls (deferred per design)
 
 ## Constraints
 
@@ -108,6 +113,11 @@ Primary users are farm managers/staff preparing for USDA NOP inspections. The UX
 | Mock data mode for staging API gap | CNH staging has no API audience registered; mock data lets development continue | ⚠️ Revisit — need production credentials or staging audience from CNH |
 | Manual data wins over synced data | 409 conflict on approve when manual record exists for same date/type | ✓ Good — protects manual corrections |
 | Append-only audit with checksums | Regulatory compliance requires tamper-evident records | — Deferred to v2 |
+| Nullable label (not required) for enterprise splits | Single-enterprise fields keep working with label=null, no migration needed | ✓ Good — backward compatible |
+| isFallow as Boolean (not enum) | Binary distinction is simpler; avoids enum migration complexity | ✓ Good — clean schema |
+| Acre over-allocation: warning only, save allowed | Farmers need flexibility; blocking saves would frustrate real workflows | ✓ Good — yellow toast, never blocks |
+| formatFieldLabel utility in report-assembler | Shared across harvest log, application log, and mass balance — single source | ✓ Good — DRY, consumed by 3 PDF sections |
+| Fallow edit: store 0 not null for cleared cost | Always keep a numeric value, avoid null/undefined ambiguity in forms | ✓ Good — no data loss |
 
 ---
-*Last updated: 2026-02-26 after v1.0 milestone completion*
+*Last updated: 2026-03-01 after v1.1 milestone completion*
