@@ -72,30 +72,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DB-01 | — | Pending |
-| DB-02 | — | Pending |
-| DB-03 | — | Pending |
-| DB-04 | — | Pending |
-| BUY-01 | — | Pending |
-| BUY-02 | — | Pending |
-| BUY-03 | — | Pending |
-| TKT-01 | — | Pending |
-| TKT-02 | — | Pending |
-| SET-01 | — | Pending |
-| SET-02 | — | Pending |
-| SET-03 | — | Pending |
-| SET-04 | — | Pending |
-| REC-01 | — | Pending |
-| REC-02 | — | Pending |
-| REC-03 | — | Pending |
-| REC-04 | — | Pending |
-| REC-05 | — | Pending |
+| DB-01 | Phase 9 (schema) + Phase 10 (cutover) | Pending |
+| DB-02 | Phase 10 | Pending |
+| DB-03 | Phase 10 | Pending |
+| DB-04 | Phase 10 | Pending |
+| BUY-01 | Phase 11 | Pending |
+| BUY-02 | Phase 11 | Pending |
+| BUY-03 | Phase 11 | Pending |
+| TKT-01 | Phase 11 | Pending |
+| TKT-02 | Phase 11 | Pending |
+| SET-01 | Phase 12 | Pending |
+| SET-02 | Phase 12 | Pending |
+| SET-03 | Phase 12 | Pending |
+| SET-04 | Phase 12 | Pending |
+| REC-01 | Phase 13 | Pending |
+| REC-02 | Phase 13 | Pending |
+| REC-03 | Phase 13 | Pending |
+| REC-04 | Phase 13 | Pending |
+| REC-05 | Phase 13 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 ⚠️
+- Mapped to phases: 18
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after initial definition*
+*Last updated: 2026-03-01 — traceability updated after roadmap creation*
