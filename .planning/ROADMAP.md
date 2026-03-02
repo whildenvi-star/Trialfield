@@ -122,11 +122,11 @@ Plans:
   3. The settlement summary screen shows farm total pounds vs. buyer settled pounds per crop and buyer for a selected season — variances are highlighted
   4. User can flag any matched ticket as "Disputed" and add a free-text note — status persists on page reload
   5. Tickets with reconciliation status (Unreconciled, Matched, Disputed, Manual-Override) display that status on the ticket list and ticket detail screens
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: Reconciliation matching engine (ticket number normalization, exact-match, MatchStatus writes)
-- [ ] 13-02: Unmatched load dashboard, settlement summary view, disputed ticket flag and notes UI
+- [ ] 13-01-PLAN.md — Matching engine: normalizeTicketNo, runMatch, auto-match in commit, rematch/dispute/manual-link/summary/unmatched API routes, ticket _reconciliation enrichment (REC-01, REC-02, REC-03, REC-04, REC-05)
+- [ ] 13-02-PLAN.md — Reconciliation UI: ticket list/detail badge column, settlement summary table, unmatched two-panel view, manual link, inline dispute, rematch button, SW cache bump (REC-02, REC-03, REC-04, REC-05)
 
 ---
 
