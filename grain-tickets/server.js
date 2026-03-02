@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
@@ -82,8 +83,91 @@ async function buildCropConfigObject(cropYear) {
   return config;
 }
 
+// --- Helper: normalize ticket numbers for reconciliation matching ---
+// Strips leading H/h prefix and leading zeros. Returns null for blank/zero-only inputs.
+// Examples: "H066666" → "66666", "066666" → "66666", "h066666" → "66666", null → null, "0" → null
+function normalizeTicketNo(ticketNo) {
+  if (ticketNo == null) return null;
+  const s = String(ticketNo).trim();
+  if (!s) return null;
+  // Strip leading H/h prefix
+  const stripped = s.replace(/^[Hh]/, '');
+  // Strip leading zeros
+  const normalized = stripped.replace(/^0+/, '');
+  // If result is empty (was all zeros), return null
+  if (!normalized) return null;
+  return normalized;
+}
+
+// --- Reconciliation matching engine ---
+// Matches settlement lines to farm tickets by normalized ticket number.
+// Scoped to buyerId + cropYear — never global.
+// Skips lines with matchStatus 'manual' or 'disputed' to preserve user flags.
+async function runMatch(settlementId) {
+  const settlement = await prisma.settlement.findUnique({
+    where: { id: settlementId },
+    include: { lines: true }
+  });
+  if (!settlement) return { matched: 0, unmatched: 0 };
+
+  // Load farm tickets scoped to same buyer + cropYear
+  const farmTickets = await prisma.ticket.findMany({
+    where: { buyerId: settlement.buyerId, cropYear: settlement.cropYear }
+  });
+
+  // Build normalized ticket number → ticket.id lookup map
+  const ticketMap = {};
+  farmTickets.forEach(t => {
+    const norm = normalizeTicketNo(t.ticketNo);
+    if (norm) ticketMap[norm] = t.id;
+  });
+
+  let matched = 0;
+  let unmatched = 0;
+
+  // Process each settlement line
+  for (const line of settlement.lines) {
+    // Skip lines with user-set flags
+    if (line.matchStatus === 'manual' || line.matchStatus === 'disputed') continue;
+
+    const norm = normalizeTicketNo(line.ticketNo);
+    const farmTicketId = norm ? ticketMap[norm] : undefined;
+
+    if (farmTicketId !== undefined) {
+      await prisma.settlementLine.update({
+        where: { id: line.id },
+        data: { ticketId: farmTicketId, matchStatus: 'matched' }
+      });
+      matched++;
+    } else {
+      await prisma.settlementLine.update({
+        where: { id: line.id },
+        data: { ticketId: null, matchStatus: 'unmatched' }
+      });
+      unmatched++;
+    }
+  }
+
+  return { matched, unmatched };
+}
+
 // --- Helper: convert Prisma Ticket row to JSON shape expected by client/calc.js ---
+// Accepts optional settlementLines array (from Prisma include) to derive _reconciliation status.
 function dbTicketToJson(dbTicket) {
+  // Derive _reconciliation status from settlement lines if available
+  let reconciliation = { status: 'unreconciled', lineCount: 0 };
+  if (dbTicket.settlementLines && dbTicket.settlementLines.length > 0) {
+    const lines = dbTicket.settlementLines;
+    const lineCount = lines.length;
+    // Priority order: disputed > manual > matched > unreconciled
+    const statuses = lines.map(l => l.matchStatus);
+    let status = 'unreconciled';
+    if (statuses.includes('matched')) status = 'matched';
+    if (statuses.includes('manual')) status = 'manual';
+    if (statuses.includes('disputed')) status = 'disputed';
+    reconciliation = { status, lineCount };
+  }
+
   return {
     id: dbTicket.id,
     date: dbTicket.date instanceof Date ? dbTicket.date.toISOString().split('T')[0] : dbTicket.date,
@@ -99,7 +183,8 @@ function dbTicketToJson(dbTicket) {
     buyerId: dbTicket.buyerId || null,
     grainBinId: dbTicket.grainBinId || null,
     destination: dbTicket.destination || null,
-    cropYear: dbTicket.cropYear
+    cropYear: dbTicket.cropYear,
+    _reconciliation: reconciliation
   };
 }
 
@@ -200,7 +285,11 @@ app.get('/api/tickets', async (req, res) => {
       const cy = parseInt(req.query.cropYear, 10);
       if (!isNaN(cy)) where.cropYear = cy;
     }
-    const tickets = await prisma.ticket.findMany({ where, orderBy: { date: 'desc' } });
+    const tickets = await prisma.ticket.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      include: { settlementLines: { select: { matchStatus: true } } }
+    });
     const cropConfig = await buildCropConfigObject();
     const enriched = tickets.map(t => enrichTicket(dbTicketToJson(t), cropConfig));
     res.json(enriched);
@@ -229,7 +318,10 @@ app.get('/api/tickets/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(404).json({ error: 'Ticket not found' });
-    const ticket = await prisma.ticket.findUnique({ where: { id } });
+    const ticket = await prisma.ticket.findUnique({
+      where: { id },
+      include: { settlementLines: { select: { matchStatus: true } } }
+    });
     if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
     const cropConfig = await buildCropConfigObject(ticket.cropYear);
     res.json(enrichTicket(dbTicketToJson(ticket), cropConfig));
@@ -939,8 +1031,13 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
     const farms = await prisma.farm.findMany({ select: { name: true } });
     const farmNames = [...new Set(farms.map(f => f.name))].sort();
 
-    const base64Image = req.file.buffer.toString('base64');
+    const base64Data = req.file.buffer.toString('base64');
     const mediaType = req.file.mimetype;
+    const isPdf = mediaType === 'application/pdf';
+
+    const fileBlock = isPdf
+      ? { type: 'document', source: { type: 'base64', media_type: mediaType, data: base64Data } }
+      : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } };
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-5-20250929',
@@ -949,14 +1046,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
         {
           role: 'user',
           content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: mediaType,
-                data: base64Image
-              }
-            },
+            fileBlock,
             {
               type: 'text',
               text: buildScanPrompt(cropNames, farmNames)
@@ -1142,6 +1232,9 @@ app.post('/api/settlements/:id/commit', async (req, res) => {
     // Bulk insert — single query for all lines
     const result = await prisma.settlementLine.createMany({ data: lines });
 
+    // Auto-match: run reconciliation immediately after bulk insert
+    const matchResult = await runMatch(settlementId);
+
     // Save/update BuyerColumnMap for reuse on next import from same buyer
     const buyerId = settlement.buyerId;
     const mapUpserts = Object.entries(mapping)
@@ -1155,7 +1248,7 @@ app.post('/api/settlements/:id/commit', async (req, res) => {
       );
     await Promise.all(mapUpserts);
 
-    res.json({ ok: true, linesCreated: result.count });
+    res.json({ ok: true, linesCreated: result.count, matched: matchResult.matched, unmatched: matchResult.unmatched });
   } catch (e) {
     console.error('POST /api/settlements/:id/commit error:', e);
     res.status(500).json({ error: e.message || 'Commit failed' });
@@ -1371,6 +1464,216 @@ app.delete('/api/settlements/:settlementId/lines/:lineId', async (req, res) => {
   } catch (e) {
     if (e.code === 'P2025') return res.status(404).json({ error: 'Line not found' });
     console.error('DELETE /api/settlements/:settlementId/lines/:lineId error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- Reconciliation Routes ---
+
+// POST /api/settlements/:id/rematch — re-run matching, preserving manual/disputed flags
+app.post('/api/settlements/:id/rematch', async (req, res) => {
+  try {
+    const settlementId = parseInt(req.params.id, 10);
+    if (isNaN(settlementId)) return res.status(404).json({ error: 'Settlement not found' });
+    const settlement = await prisma.settlement.findUnique({ where: { id: settlementId } });
+    if (!settlement) return res.status(404).json({ error: 'Settlement not found' });
+    const matchResult = await runMatch(settlementId);
+    res.json(matchResult);
+  } catch (e) {
+    console.error('POST /api/settlements/:id/rematch error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reconciliation/summary?buyerId=X&cropYear=Y — per-crop farm lbs vs buyer lbs with variance
+app.get('/api/reconciliation/summary', async (req, res) => {
+  try {
+    const buyerId = parseInt(req.query.buyerId, 10);
+    const cropYear = parseInt(req.query.cropYear, 10);
+    if (isNaN(buyerId) || isNaN(cropYear)) {
+      return res.status(400).json({ error: 'buyerId and cropYear are required' });
+    }
+
+    // Farm tickets for this buyer+cropYear, grouped by crop
+    const farmTickets = await prisma.ticket.findMany({
+      where: { buyerId, cropYear }
+    });
+
+    const farmByCrop = {};
+    farmTickets.forEach(t => {
+      const crop = t.crop || 'Unknown';
+      if (!farmByCrop[crop]) farmByCrop[crop] = { farmLbs: 0, farmCount: 0 };
+      farmByCrop[crop].farmLbs += t.netWeight;
+      farmByCrop[crop].farmCount += 1;
+    });
+
+    // Settlement lines (matched/manual/disputed) for this buyer+cropYear, joined to ticket for crop
+    const settlements = await prisma.settlement.findMany({
+      where: { buyerId, cropYear },
+      include: {
+        lines: {
+          where: { matchStatus: { in: ['matched', 'manual', 'disputed'] } },
+          include: { ticket: { select: { crop: true } } }
+        }
+      }
+    });
+
+    const buyerByCrop = {};
+    settlements.forEach(s => {
+      s.lines.forEach(l => {
+        const crop = (l.ticket && l.ticket.crop) ? l.ticket.crop : 'Unknown';
+        if (!buyerByCrop[crop]) buyerByCrop[crop] = { buyerLbs: 0, buyerBushels: 0 };
+        if (l.netWeight) buyerByCrop[crop].buyerLbs += l.netWeight;
+        if (l.netBushels) buyerByCrop[crop].buyerBushels += l.netBushels;
+      });
+    });
+
+    // Build combined crop set
+    const crops = new Set([...Object.keys(farmByCrop), ...Object.keys(buyerByCrop)]);
+    const rows = Array.from(crops).map(crop => {
+      const farm = farmByCrop[crop] || { farmLbs: 0, farmCount: 0 };
+      const buyer = buyerByCrop[crop] || { buyerLbs: 0, buyerBushels: 0 };
+      const varianceLbs = farm.farmLbs - buyer.buyerLbs;
+      const variancePct = farm.farmLbs > 0
+        ? Math.round((varianceLbs / farm.farmLbs) * 10000) / 100
+        : 0;
+      return {
+        crop,
+        farmLbs: farm.farmLbs,
+        farmCount: farm.farmCount,
+        buyerLbs: buyer.buyerLbs,
+        buyerBushels: Math.round(buyer.buyerBushels * 100) / 100,
+        varianceLbs,
+        variancePct
+      };
+    }).sort((a, b) => a.crop.localeCompare(b.crop));
+
+    res.json(rows);
+  } catch (e) {
+    console.error('GET /api/reconciliation/summary error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reconciliation/unmatched?buyerId=X&cropYear=Y — farm-only tickets and settlement-only lines
+app.get('/api/reconciliation/unmatched', async (req, res) => {
+  try {
+    const buyerId = parseInt(req.query.buyerId, 10);
+    const cropYear = parseInt(req.query.cropYear, 10);
+    if (isNaN(buyerId) || isNaN(cropYear)) {
+      return res.status(400).json({ error: 'buyerId and cropYear are required' });
+    }
+
+    // Farm-only: tickets with no matched/manual settlement line for this buyer+cropYear
+    const farmTickets = await prisma.ticket.findMany({
+      where: { buyerId, cropYear },
+      include: { settlementLines: { select: { matchStatus: true } } }
+    });
+
+    // Check if any settlements exist for this buyer+cropYear (for hint generation)
+    const settlementCount = await prisma.settlement.count({ where: { buyerId, cropYear } });
+
+    const farmOnly = farmTickets
+      .filter(t => !t.settlementLines.some(l => l.matchStatus === 'matched' || l.matchStatus === 'manual'))
+      .map(t => ({
+        id: t.id,
+        ticketNo: t.ticketNo || '',
+        date: t.date instanceof Date ? t.date.toISOString().split('T')[0] : t.date,
+        crop: t.crop,
+        netWeight: t.netWeight,
+        hint: settlementCount === 0
+          ? `No settlement for this buyer`
+          : 'Ticket# not in settlement'
+      }));
+
+    // Settlement-only: lines with matchStatus 'unmatched' across this buyer's settlements
+    const settlements = await prisma.settlement.findMany({
+      where: { buyerId, cropYear },
+      include: {
+        lines: {
+          where: { matchStatus: 'unmatched' }
+        }
+      }
+    });
+
+    const settlementOnly = [];
+    settlements.forEach(s => {
+      s.lines.forEach(l => {
+        settlementOnly.push({
+          id: l.id,
+          settlementId: l.settlementId,
+          ticketNo: l.ticketNo || '',
+          date: l.date instanceof Date ? l.date.toISOString().split('T')[0] : l.date,
+          netWeight: l.netWeight,
+          netBushels: l.netBushels
+        });
+      });
+    });
+
+    res.json({ farmOnly, settlementOnly });
+  } catch (e) {
+    console.error('GET /api/reconciliation/unmatched error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/reconciliation/manual-link — manually link a ticket to a settlement line
+app.post('/api/reconciliation/manual-link', async (req, res) => {
+  try {
+    const { ticketId, settlementLineId } = req.body;
+    if (!ticketId || !settlementLineId) {
+      return res.status(400).json({ error: 'ticketId and settlementLineId are required' });
+    }
+    const tid = parseInt(ticketId, 10);
+    const lid = parseInt(settlementLineId, 10);
+    if (isNaN(tid) || isNaN(lid)) {
+      return res.status(400).json({ error: 'ticketId and settlementLineId must be integers' });
+    }
+
+    // Verify ticket exists
+    const ticket = await prisma.ticket.findUnique({ where: { id: tid } });
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    // Verify settlement line exists
+    const line = await prisma.settlementLine.findUnique({ where: { id: lid } });
+    if (!line) return res.status(404).json({ error: 'Settlement line not found' });
+
+    const updated = await prisma.settlementLine.update({
+      where: { id: lid },
+      data: { ticketId: tid, matchStatus: 'manual' }
+    });
+    res.json(updated);
+  } catch (e) {
+    console.error('POST /api/reconciliation/manual-link error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/settlement-lines/:lineId/dispute — flag a settlement line as disputed
+app.patch('/api/settlement-lines/:lineId/dispute', async (req, res) => {
+  try {
+    const lineId = parseInt(req.params.lineId, 10);
+    if (isNaN(lineId)) return res.status(404).json({ error: 'Settlement line not found' });
+
+    const line = await prisma.settlementLine.findUnique({ where: { id: lineId } });
+    if (!line) return res.status(404).json({ error: 'Settlement line not found' });
+
+    // Only allow disputing matched, manual, or already-disputed lines
+    const allowedStatuses = ['matched', 'manual', 'disputed'];
+    if (!allowedStatuses.includes(line.matchStatus)) {
+      return res.status(400).json({
+        error: `Cannot dispute a line with matchStatus '${line.matchStatus}'. Line must be matched, manual, or disputed.`
+      });
+    }
+
+    const notes = (req.body.notes || '').trim() || null;
+    const updated = await prisma.settlementLine.update({
+      where: { id: lineId },
+      data: { matchStatus: 'disputed', notes }
+    });
+    res.json(updated);
+  } catch (e) {
+    console.error('PATCH /api/settlement-lines/:lineId/dispute error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
