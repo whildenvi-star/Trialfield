@@ -231,12 +231,31 @@
     api.get('/api/tickets').then(function (data) {
       allTickets = data;
       listLoaded = true;
+
+      // Populate crop year filter from available ticket data
+      var yearSelect = document.getElementById('filter-crop-year');
+      var currentYear = yearSelect.value; // Preserve current selection
+      // Clear existing year options (keep the "All Years" default)
+      while (yearSelect.options.length > 1) yearSelect.remove(1);
+      var years = [];
+      allTickets.forEach(function (t) {
+        if (t.cropYear && years.indexOf(t.cropYear) === -1) years.push(t.cropYear);
+      });
+      years.sort(function (a, b) { return b - a; }); // Descending
+      years.forEach(function (y) {
+        var opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      });
+      if (currentYear) yearSelect.value = currentYear;
+
       applyFilters();
     });
   }
 
   // Filters
-  ['filter-search', 'filter-farm', 'filter-crop', 'filter-date-from', 'filter-date-to'].forEach(function (id) {
+  ['filter-search', 'filter-farm', 'filter-crop', 'filter-destination', 'filter-crop-year', 'filter-date-from', 'filter-date-to'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', applyFilters);
     document.getElementById(id).addEventListener('change', applyFilters);
   });
@@ -245,6 +264,8 @@
     var search = document.getElementById('filter-search').value.toLowerCase();
     var farm = document.getElementById('filter-farm').value;
     var crop = document.getElementById('filter-crop').value;
+    var destFilter = document.getElementById('filter-destination').value; // '' or 'buyer:5' or 'bin:2'
+    var cropYearFilter = document.getElementById('filter-crop-year').value; // '' or '2025'
     var dateFrom = document.getElementById('filter-date-from').value;
     var dateTo = document.getElementById('filter-date-to').value;
 
@@ -253,6 +274,14 @@
       if (crop && t.crop !== crop) return false;
       if (dateFrom && t.date < dateFrom) return false;
       if (dateTo && t.date > dateTo) return false;
+      if (destFilter) {
+        var parts = destFilter.split(':');
+        var dtype = parts[0];
+        var did = parseInt(parts[1], 10);
+        if (dtype === 'buyer' && t.buyerId !== did) return false;
+        if (dtype === 'bin' && t.grainBinId !== did) return false;
+      }
+      if (cropYearFilter && t.cropYear !== parseInt(cropYearFilter, 10)) return false;
       if (search) {
         var haystack = [t.date, t.farm, t.netWeight, t.moisture, t.crop, t.ticketNo, t.notes, t.fm].join(' ').toLowerCase();
         if (haystack.indexOf(search) === -1) return false;
@@ -458,10 +487,18 @@
     var params = [];
     var farm = document.getElementById('filter-farm').value;
     var crop = document.getElementById('filter-crop').value;
+    var destFilter = document.getElementById('filter-destination').value;
+    var cropYearFilter = document.getElementById('filter-crop-year').value;
     var dateFrom = document.getElementById('filter-date-from').value;
     var dateTo = document.getElementById('filter-date-to').value;
     if (farm) params.push('farm=' + encodeURIComponent(farm));
     if (crop) params.push('crop=' + encodeURIComponent(crop));
+    if (destFilter) {
+      var parts = destFilter.split(':');
+      if (parts[0] === 'buyer') params.push('buyerId=' + parts[1]);
+      if (parts[0] === 'bin') params.push('grainBinId=' + parts[1]);
+    }
+    if (cropYearFilter) params.push('cropYear=' + cropYearFilter);
     if (dateFrom) params.push('dateFrom=' + dateFrom);
     if (dateTo) params.push('dateTo=' + dateTo);
     var url = '/api/export/tickets' + (params.length ? '?' + params.join('&') : '');
