@@ -58,7 +58,11 @@ Phase 9 decisions (09-01):
 
 ### Pending Todos
 
-None.
+4 pending todos:
+- **Work on grain ticket system enhancements** (general)
+- **Fix field registry acres and ownership save bug** (farm-registry)
+- **Add field editor category totals and red negative profit** (farm-budget)
+- **Sync crop plan from macro rollup into FSA acres report** (fsa-acres) ← NEW
 
 ### Blockers/Concerns
 
