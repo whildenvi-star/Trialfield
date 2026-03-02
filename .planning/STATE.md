@@ -5,23 +5,24 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v2.0 Grain Traceability — Phase 12 Plan 01 complete (settlement import UI shipped), Phase 12 Plan 02 (manual entry) next
+**Current focus:** v2.0 Grain Traceability — Phase 12 complete (both plans shipped), Phase 13 (Reconciliation) next
 
 ## Current Position
 
 Phase: 12-settlement-import-manual-entry
-Plan: 1 of 2 complete
-Status: Phase 12 Plan 01 complete — settlement file import with column mapping UI shipped
-Last activity: 2026-03-02 — Phase 12 Plan 01: Prisma migration (filePath), parse/commit/list/delete routes, settlements.js UI, Settlements tab
+Plan: 2 of 2 complete
+Status: Phase 12 complete — settlement import UI + manual entry form + detail view + line CRUD shipped
+Last activity: 2026-03-02 — Phase 12 Plan 02: manual settlement header + line CRUD routes, manual entry form, settlement detail view, SW v5
 
-**v2.0 Grain Traceability:** Phases 9-11 complete, Phase 12 Plan 01 complete (1/2), Phase 12 Plan 02 (manual entry) next, Phase 13 planned
+**v2.0 Grain Traceability:** Phases 9-12 complete, Phase 13 (Reconciliation) next
+**v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 25 (v1.0: 11, v1.1: 8, v2.0: 6)
-- v2.0 plans completed: 6
+- Total plans completed: 26 (v1.0: 11, v1.1: 8, v2.0: 7)
+- v2.0 plans completed: 7
 - v3.0 plans completed: 0
 
 **By Milestone:**
@@ -38,6 +39,7 @@ Last activity: 2026-03-02 — Phase 12 Plan 01: Prisma migration (filePath), par
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 12-settlement-import-manual-entry | 01 | 270s | 2 | 6 |
+| 12-settlement-import-manual-entry | 02 | 327s | 2 | 5 |
 
 ## Accumulated Context
 
@@ -88,6 +90,9 @@ v3.0 architectural decisions:
 - [Phase 11-02]: Crop year filter populated client-side from allTickets after load — no dedicated /api/crop-years endpoint needed
 - [Phase 12-01]: filePath String? added to Settlement via migration — clean parse-to-commit handoff that survives server restart without overloading Settlement.notes
 - [Phase 12-01]: Two-step import (parse/commit) with multer diskStorage — file persists between requests for column mapping review before DB write
+- [Phase 12-02]: null sourceFile + null filePath distinguishes manual settlements from file imports in the same Settlement table
+- [Phase 12-02]: manualSettlementId module-level state persists active session for rapid multi-line entry without re-selecting buyer
+- [Phase 12-02]: formatDate() uses UTC getters for timezone-safe YYYY-MM-DD display from ISO date strings
 
 ### Roadmap Evolution
 
@@ -105,8 +110,7 @@ v3.0 architectural decisions:
 ### Blockers/Concerns
 
 v2.0:
-- Phase 12 Plan 01 COMPLETE: Settlement import with column mapping UI shipped. Actual settlement file samples not yet collected but UI handles any column names generically.
-- Phase 12 Plan 02 (Manual entry): Implement manual settlement line entry for paper-only buyers.
+- Phase 12 COMPLETE: Settlement import (Plan 01) + manual entry + detail view (Plan 02) shipped. Actual settlement file samples not yet collected but UI handles any column names generically.
 - Phase 13 (Reconciliation): Weight discrepancy thresholds and per-buyer shrink methods need farm manager input before Phase 13 design.
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert. Not blocking v2.0.
 
@@ -119,6 +123,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 12 Plan 01 complete — settlement import UI, parse/commit/list/delete routes, Prisma migration
-Resume file: .planning/phases/12-settlement-import-manual-entry/12-01-SUMMARY.md
-Next action: Phase 12 Plan 02 — manual settlement line entry for paper-only buyers
+Stopped at: Phase 12 Plan 02 complete — manual entry form, settlement detail view, line-level CRUD routes, SW v5
+Resume file: .planning/phases/12-settlement-import-manual-entry/12-02-SUMMARY.md
+Next action: Phase 13 — Settlement Reconciliation (weight discrepancy, per-buyer shrink methods, threshold config)
