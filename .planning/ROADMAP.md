@@ -131,7 +131,7 @@ Plans:
 | 7. Split-Field PDF Reports | v1.1 | 3/3 | Complete | 2026-02-28 |
 | 8. Fallow Enterprise Edit Fix | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 9. Database Foundation | v2.0 | 1/1 | Complete | 2026-03-02 |
-| 10. Migration & Cutover | 2/2 | Complete   | 2026-03-02 | - |
+| 10. Migration & Cutover | 2/2 | Complete    | 2026-03-02 | - |
 | 11. Buyer Registry & Ticket Extensions | v2.0 | 0/TBD | Not started | - |
 | 12. Settlement Import & Manual Entry | v2.0 | 0/TBD | Not started | - |
 | 13. Reconciliation Engine & Discrepancy UI | v2.0 | 0/TBD | Not started | - |
