@@ -122,11 +122,12 @@ Plans:
   3. The settlement summary screen shows farm total pounds vs. buyer settled pounds per crop and buyer for a selected season — variances are highlighted
   4. User can flag any matched ticket as "Disputed" and add a free-text note — status persists on page reload
   5. Tickets with reconciliation status (Unreconciled, Matched, Disputed, Manual-Override) display that status on the ticket list and ticket detail screens
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] 13-01-PLAN.md — Matching engine: normalizeTicketNo, runMatch, auto-match in commit, rematch/dispute/manual-link/summary/unmatched API routes, ticket _reconciliation enrichment (REC-01, REC-02, REC-03, REC-04, REC-05)
-- [ ] 13-02-PLAN.md — Reconciliation UI: ticket list/detail badge column, settlement summary table, unmatched two-panel view, manual link, inline dispute, rematch button, SW cache bump (REC-02, REC-03, REC-04, REC-05)
+- [x] 13-01-PLAN.md — Matching engine: normalizeTicketNo, runMatch, auto-match in commit, rematch/dispute/manual-link/summary/unmatched API routes, ticket _reconciliation enrichment (REC-01, REC-02, REC-03, REC-04, REC-05)
+- [x] 13-02-PLAN.md — Reconciliation UI: ticket list/detail badge column, settlement summary table, unmatched two-panel view, manual link, inline dispute, rematch button, SW cache bump (REC-02, REC-03, REC-04, REC-05)
+- [ ] 13-03-PLAN.md — Gap closure: fix hint text field path, settlements list buyer/year filtering, and ticketCount field name mismatch (REC-03, REC-04)
 
 ---
 
@@ -211,7 +212,7 @@ Plans:
 | 10. Migration & Cutover | v2.0 | 2/2 | Complete | 2026-03-02 |
 | 11. Buyer Registry & Ticket Extensions | 2/2 | Complete   | 2026-03-02 | - |
 | 12. Settlement Import & Manual Entry | 2/2 | Complete    | 2026-03-02 | - |
-| 13. Reconciliation Engine & Discrepancy UI | 1/2 | In Progress|  | - |
+| 13. Reconciliation Engine & Discrepancy UI | 2/3 | In Progress|  | - |
 | 14. Chat Agent (system info & recall) | — | 0/TBD | Not started | - |
 | 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/TBD | Not started | - |
 | 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
