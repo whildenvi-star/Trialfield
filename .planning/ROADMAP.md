@@ -213,7 +213,7 @@ Plans:
 | 11. Buyer Registry & Ticket Extensions | 2/2 | Complete   | 2026-03-02 | - |
 | 12. Settlement Import & Manual Entry | 2/2 | Complete    | 2026-03-02 | - |
 | 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete    | 2026-03-02 | - |
-| 14. Chat Agent (system info & recall) | — | 0/TBD | Not started | - |
+| 14. Chat Agent (system info & recall) | v2.x | 0/3 | Planned | - |
 | 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/TBD | Not started | - |
 | 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 0/TBD | Not started | - |
@@ -223,9 +223,12 @@ Plans:
 
 ### Phase 14: Add chat agent for system information and recall
 
-**Goal:** [To be planned]
+**Goal:** A conversational AI agent ("Glomalin") lives in grain-tickets as a floating chat popup — the farm manager can query, analyze, and annotate grain data through natural language, with streaming responses, inline charts, CSV export, learnable notes, and a full kill switch
 **Depends on:** Phase 13
-**Plans:** 3/3 plans complete
+**Requirements:** CHT-01, CHT-02, AGT-01, AGT-02, AGT-03, AGT-04
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 14 to break down)
+- [ ] 14-01-PLAN.md — Agent backend: Prisma models (AgentConversation, AgentNote, AgentDailyUsage), agentic tool-use loop with SSE streaming, grain data tools, kill-switch middleware, notes CRUD routes
+- [ ] 14-02-PLAN.md — Chat widget UI: floating tractor button, resizable popup, SSE streaming reader, markdown renderer, inline Chart.js charts, CSV export, deep links, ASCII tractor loading animation
+- [ ] 14-03-PLAN.md — Notes admin section in admin.html + end-to-end human verification of complete Glomalin agent
