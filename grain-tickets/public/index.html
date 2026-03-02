@@ -19,6 +19,7 @@
       <button class="tab-btn" data-tab="list">Ticket Log</button>
       <button class="tab-btn" data-tab="farms">Farm Summary</button>
       <button class="tab-btn" data-tab="lookup">Lookup</button>
+      <button class="tab-btn" data-tab="settlements">Settlements</button>
     </nav>
   </header>
 
@@ -203,6 +204,62 @@
       </div>
       <div id="lookup-results"></div>
     </section>
+
+    <!-- SETTLEMENTS TAB -->
+    <section id="tab-settlements" class="tab-content">
+      <h2>Settlements</h2>
+
+      <nav class="settlement-sub-nav">
+        <button class="active" data-view="import">Import</button>
+        <button data-view="history">History</button>
+      </nav>
+
+      <!-- Import view (default) -->
+      <div id="settlement-import" class="settlement-view">
+        <div class="import-form form-grid">
+          <div class="form-group">
+            <label for="settlement-buyer">Buyer</label>
+            <select id="settlement-buyer">
+              <option value="">Select buyer...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="settlement-crop-year">Crop Year</label>
+            <input type="number" id="settlement-crop-year" min="2020" max="2099" step="1" placeholder="e.g. 2025">
+          </div>
+          <div class="form-group">
+            <label for="settlement-file">Settlement File</label>
+            <input type="file" id="settlement-file" accept=".csv,.xlsx,.xls">
+          </div>
+          <div class="form-group" style="justify-content:flex-end;padding-top:1.4rem;">
+            <button id="settlement-upload-btn" class="btn-primary">Upload &amp; Preview</button>
+          </div>
+        </div>
+
+        <div id="settlement-status" class="settlement-status" style="display:none;"></div>
+
+        <!-- Preview table (shown after upload) -->
+        <div id="preview-table-container" style="display:none;margin-bottom:1.5rem;">
+          <h3 style="font-size:0.95rem;color:var(--text-light);margin-bottom:0.5rem;">File Preview (first 5 rows)</h3>
+        </div>
+
+        <!-- Column mapping panel (shown after upload) -->
+        <div id="column-mapping-panel" style="display:none;margin-bottom:1.5rem;">
+          <h3 style="font-size:0.95rem;color:var(--primary);margin-bottom:0.75rem;">Map Columns</h3>
+          <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:1rem;">
+            Match each field below to the corresponding column in your file. Fields marked * are required.
+          </p>
+          <div id="column-mapping-container" class="column-mapping"></div>
+        </div>
+
+        <button id="settlement-commit-btn" class="btn-primary commit-btn" style="display:none;">Commit Import</button>
+      </div>
+
+      <!-- History view -->
+      <div id="settlement-history" class="settlement-view" style="display:none;">
+        <div id="settlement-list-container"></div>
+      </div>
+    </section>
   </main>
 
   <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available, using local farm list')"></script>
@@ -212,6 +269,7 @@
   <script src="farms.js"></script>
   <script src="lookup.js"></script>
   <script src="scan.js"></script>
+  <script src="settlements.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
