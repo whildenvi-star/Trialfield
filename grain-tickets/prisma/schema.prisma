@@ -23,7 +23,9 @@ model Ticket {
   destination String?  // Free-text destination — replaced by buyerId FK in Phase 11
   notes       String?  // Original notes text preserved after field extraction
   buyerId     Int?     // FK to Buyer — null until Phase 11 wires buyer selection
-  buyer       Buyer?   @relation(fields: [buyerId], references: [id])
+  buyer       Buyer?   @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  grainBinId  Int?     // FK to GrainBin — null unless destination is a bin
+  grainBin    GrainBin? @relation(fields: [grainBinId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -33,6 +35,7 @@ model Ticket {
   @@index([farm, cropYear]) // Farm summary queries
   @@index([crop, cropYear]) // Crop summary queries
   @@index([buyerId])        // Buyer filter queries (Phase 11)
+  @@index([grainBinId])     // Grain bin filter queries (Phase 11)
 }
 
 model Farm {
@@ -85,6 +88,17 @@ model Buyer {
   tickets     Ticket[]
   settlements Settlement[]
   columnMaps  BuyerColumnMap[]
+}
+
+model GrainBin {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique  // "Bin #1", "Bin #2", etc.
+  capacity  Float    @default(0)  // Bushel capacity (e.g., 3700)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets   Ticket[]
 }
 
 model BuyerColumnMap {

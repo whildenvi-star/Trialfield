@@ -64,7 +64,11 @@ function dbTicketToJson(dbTicket) {
     ticketNo: dbTicket.ticketNo || '',
     notes: dbTicket.notes || '',
     hbtBinNo: dbTicket.hbtBinNo || null,
-    truckId: dbTicket.truckId || null
+    truckId: dbTicket.truckId || null,
+    buyerId: dbTicket.buyerId || null,
+    grainBinId: dbTicket.grainBinId || null,
+    destination: dbTicket.destination || null,
+    cropYear: dbTicket.cropYear
   };
 }
 
@@ -151,6 +155,7 @@ function csvEscape(val) {
 // Tickets
 app.get('/api/tickets', async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store'); // Prevent stale filter results when switching destination/buyer filters
     const tickets = await prisma.ticket.findMany({ orderBy: { date: 'desc' } });
     const cropConfig = await buildCropConfigObject();
     const enriched = tickets.map(t => enrichTicket(dbTicketToJson(t), cropConfig));
@@ -652,6 +657,197 @@ app.get('/api/stats', async (req, res) => {
     });
   } catch (e) {
     console.error('GET /api/stats error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- Grain Bins CRUD ---
+app.get('/api/grain-bins', async (req, res) => {
+  try {
+    const bins = await prisma.grainBin.findMany({ orderBy: { name: 'asc' } });
+    res.json(bins);
+  } catch (e) {
+    console.error('GET /api/grain-bins error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/grain-bins', async (req, res) => {
+  try {
+    const name = (req.body.name || '').trim();
+    if (!name) return res.status(400).json({ error: 'Bin name is required' });
+    const bin = await prisma.grainBin.create({
+      data: {
+        name,
+        capacity: parseFloat(req.body.capacity) || 0,
+        notes: (req.body.notes || '').trim() || null
+      }
+    });
+    res.status(201).json(bin);
+  } catch (e) {
+    if (e.code === 'P2002') return res.status(409).json({ error: 'A bin with that name already exists' });
+    console.error('POST /api/grain-bins error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/grain-bins/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(404).json({ error: 'Grain bin not found' });
+    const updateData = {};
+    if (req.body.name !== undefined) updateData.name = (req.body.name || '').trim();
+    if (req.body.capacity !== undefined) updateData.capacity = parseFloat(req.body.capacity) || 0;
+    if (req.body.notes !== undefined) updateData.notes = (req.body.notes || '').trim() || null;
+    const bin = await prisma.grainBin.update({ where: { id }, data: updateData });
+    res.json(bin);
+  } catch (e) {
+    if (e.code === 'P2025') return res.status(404).json({ error: 'Grain bin not found' });
+    if (e.code === 'P2002') return res.status(409).json({ error: 'A bin with that name already exists' });
+    console.error('PUT /api/grain-bins/:id error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/grain-bins/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(404).json({ error: 'Grain bin not found' });
+    const ticketCount = await prisma.ticket.count({ where: { grainBinId: id } });
+    if (ticketCount > 0) {
+      return res.status(409).json({
+        error: `Cannot delete — ${ticketCount} ticket${ticketCount === 1 ? '' : 's'} reference this bin. Reassign them first.`
+      });
+    }
+    await prisma.grainBin.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === 'P2025') return res.status(404).json({ error: 'Grain bin not found' });
+    console.error('DELETE /api/grain-bins/:id error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- Buyer proxy from farm-budget ---
+app.get('/api/buyers', async (req, res) => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    let buyers;
+    try {
+      const response = await fetch('http://localhost:3001/api/buyers', { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!response.ok) {
+        console.error('GET /api/buyers: farm-budget returned status', response.status);
+        return res.json({ _source: 'unavailable', buyers: [] });
+      }
+      buyers = await response.json();
+    } catch (fetchErr) {
+      clearTimeout(timeout);
+      console.error('GET /api/buyers: farm-budget unreachable:', fetchErr.message);
+      return res.json({ _source: 'unavailable', buyers: [] });
+    }
+    res.json(buyers);
+  } catch (e) {
+    console.error('GET /api/buyers error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- Merged destinations endpoint ---
+app.get('/api/destinations', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    const [binsResult, buyersResult] = await Promise.allSettled([
+      prisma.grainBin.findMany({ orderBy: { name: 'asc' } }),
+      (async () => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        try {
+          const response = await fetch('http://localhost:3001/api/buyers', { signal: controller.signal });
+          clearTimeout(timeout);
+          if (!response.ok) return [];
+          return await response.json();
+        } catch (e) {
+          clearTimeout(timeout);
+          console.error('GET /api/destinations: farm-budget fetch failed:', e.message);
+          return [];
+        }
+      })()
+    ]);
+
+    const bins = binsResult.status === 'fulfilled' ? binsResult.value : [];
+    const buyers = buyersResult.status === 'fulfilled' ? buyersResult.value : [];
+
+    const binItems = bins.map(b => ({
+      id: b.id,
+      type: 'bin',
+      name: b.name,
+      capacity: b.capacity
+    }));
+
+    const buyerItems = Array.isArray(buyers) ? buyers.map(b => ({
+      id: b.id,
+      type: 'buyer',
+      name: b.name,
+      shortCode: b.shortCode || null,
+      buyerType: b.type || null
+    })) : [];
+
+    // Bins grouped first, each group sorted alphabetically
+    const merged = [
+      ...binItems.sort((a, b) => a.name.localeCompare(b.name)),
+      ...buyerItems.sort((a, b) => a.name.localeCompare(b.name))
+    ];
+
+    res.json(merged);
+  } catch (e) {
+    console.error('GET /api/destinations error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- BuyerColumnMap routes ---
+app.get('/api/buyers/:id/column-maps', async (req, res) => {
+  try {
+    const buyerId = parseInt(req.params.id, 10);
+    if (isNaN(buyerId)) return res.json([]);
+    const maps = await prisma.buyerColumnMap.findMany({ where: { buyerId } });
+    res.json(maps);
+  } catch (e) {
+    console.error('GET /api/buyers/:id/column-maps error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.put('/api/buyers/:id/column-maps', async (req, res) => {
+  try {
+    const buyerId = parseInt(req.params.id, 10);
+    if (isNaN(buyerId)) return res.status(400).json({ error: 'Invalid buyer ID' });
+    const { fieldName, csvColumn } = req.body;
+    if (!fieldName) return res.status(400).json({ error: 'fieldName is required' });
+    if (!csvColumn) return res.status(400).json({ error: 'csvColumn is required' });
+    const map = await prisma.buyerColumnMap.upsert({
+      where: { buyerId_fieldName: { buyerId, fieldName } },
+      update: { csvColumn },
+      create: { buyerId, fieldName, csvColumn }
+    });
+    res.json(map);
+  } catch (e) {
+    console.error('PUT /api/buyers/:id/column-maps error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/api/buyers/:id/column-maps/:mapId', async (req, res) => {
+  try {
+    const mapId = parseInt(req.params.mapId, 10);
+    if (isNaN(mapId)) return res.status(404).json({ error: 'Column map not found' });
+    await prisma.buyerColumnMap.delete({ where: { id: mapId } });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === 'P2025') return res.status(404).json({ error: 'Column map not found' });
+    console.error('DELETE /api/buyers/:id/column-maps/:mapId error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
