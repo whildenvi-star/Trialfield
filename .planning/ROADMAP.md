@@ -64,11 +64,11 @@ Plans:
   3. calc.js produces byte-identical totals on a spot-checked set of 10 tickets before and after migration
   4. The PWA and service worker function normally after the CACHE_NAME bump — offline queue replays correctly
   5. data.json is renamed to data.json.archive and no longer written to
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 10-01: Migration script (migrate-json.js) with write-lock cutover runbook
-- [ ] 10-02: server.js route rewrite from JSON store to Prisma queries
+- [ ] 10-01: Migration script (migrate-json.js) — data insertion, HBT/truck extraction, calc.js parity verification, archive
+- [ ] 10-02: server.js route rewrite — all routes to Prisma, dead JSON code removed, SW cache bump
 
 ### Phase 11: Buyer Registry & Ticket Extensions
 **Goal**: Buyers are first-class entities in the database — every ticket delivery references a buyer by FK, and tickets carry a cropYear for season scoping
@@ -131,7 +131,7 @@ Plans:
 | 7. Split-Field PDF Reports | v1.1 | 3/3 | Complete | 2026-02-28 |
 | 8. Fallow Enterprise Edit Fix | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 9. Database Foundation | v2.0 | 1/1 | Complete | 2026-03-02 |
-| 10. Migration & Cutover | v2.0 | 0/TBD | Not started | - |
+| 10. Migration & Cutover | v2.0 | 0/2 | Planned | - |
 | 11. Buyer Registry & Ticket Extensions | v2.0 | 0/TBD | Not started | - |
 | 12. Settlement Import & Manual Entry | v2.0 | 0/TBD | Not started | - |
 | 13. Reconciliation Engine & Discrepancy UI | v2.0 | 0/TBD | Not started | - |
