@@ -10,12 +10,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 14-add-chat-agent-for-system-information-and-recall
-Plan: 1 of 3 complete
-Status: Phase 14 Plan 01 complete — Glomalin agent backend shipped: 3 Prisma models, 4 lib/agent/ modules, all /api/agent/* routes with kill-switch
-Last activity: 2026-03-02 — Phase 14 Plan 01: AgentConversation/AgentNote/AgentDailyUsage Prisma models, SSE agentic loop, 9 grain data tools, kill-switch middleware
+Plan: 2 of 3 complete
+Status: Phase 14 Plan 02 complete — Glomalin chat widget shipped: 763-line IIFE, glomalin.css, local Chart.js, index.html wired
+Last activity: 2026-03-02 — Phase 14 Plan 02: glomalin.js floating widget (SSE streaming, ASCII tractor, markdown, charts, CSV, deep links), glomalin.css (dark/light themes), chart.min.js local, index.html updated
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
-**Phase 14 (Chat Agent):** Plan 01 complete — backend API live, Plan 02 (chat widget UI) is next
+**Phase 14 (Chat Agent):** Plans 01-02 complete — full Glomalin system live (backend API + frontend widget), Plan 03 is next
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
@@ -44,6 +44,7 @@ Last activity: 2026-03-02 — Phase 14 Plan 01: AgentConversation/AgentNote/Agen
 | Phase 13 P02 | 420 | 2 tasks | 5 files |
 | 13-reconciliation-engine-discrepancy-ui | 03 | 5min | 2 | 2 |
 | Phase 14-add-chat-agent-for-system-information-and-recall P01 | 285 | 2 tasks | 7 files |
+| Phase 14-add-chat-agent-for-system-information-and-recall P02 | 410 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -110,6 +111,10 @@ v3.0 architectural decisions:
 - [Phase 14-add-chat-agent-for-system-information-and-recall]: Agent tools exclude all settlement/financial data — enforced at tool definition and system prompt level
 - [Phase 14-add-chat-agent-for-system-information-and-recall]: flag_ticket uses [FLAGGED] notes prefix not matchStatus — keeps settlement reconciliation clean
 - [Phase 14-add-chat-agent-for-system-information-and-recall]: CHAT_AGENT_ENABLED kill-switch: single env var disables all /api/agent/* routes via middleware
+- [Phase 14-02]: Hand-rolled markdown renderer in glomalin.js — no library, bounded feature set sufficient for grain data responses
+- [Phase 14-02]: Chart.js 4.x downloaded locally to chart.min.js — no CDN dependency for offline farm office use
+- [Phase 14-02]: defer loading order for chart.min.js + glomalin.js — DOM position guarantees Chart.js available when widget renders chart blocks
+- [Phase 14-02]: window._glomalinNav global for deep link navigation — avoids tight coupling to app module internals
 
 ### Roadmap Evolution
 
@@ -140,6 +145,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 14 Plan 01 complete — Glomalin chat agent backend shipped
-Resume file: .planning/phases/14-add-chat-agent-for-system-information-and-recall/14-01-SUMMARY.md
-Next action: Phase 14 Plan 02 — Glomalin chat widget frontend
+Stopped at: Phase 14 Plan 02 complete — Glomalin chat widget frontend shipped
+Resume file: .planning/phases/14-add-chat-agent-for-system-information-and-recall/14-02-SUMMARY.md
+Next action: Phase 14 Plan 03 — if planned (AgentNote admin UI), otherwise v3.0 Phase 15

@@ -89,7 +89,7 @@ Requirements for the Glomalin chat agent. Maps to Phase 14.
 ### Chat Interface
 
 - [x] **CHT-01**: Floating chat popup with tractor icon, resizable window, kill switch, conversation persistence across popup open/close
-- [ ] **CHT-02**: Rich streaming responses with formatted tables, inline charts, deep links to tickets, ASCII tractor loading animation, CSV export
+- [x] **CHT-02**: Rich streaming responses with formatted tables, inline charts, deep links to tickets, ASCII tractor loading animation, CSV export
 
 ### Agent Backend
 
@@ -149,7 +149,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REC-04 | Phase 13 | Complete |
 | REC-05 | Phase 13 | Complete |
 | CHT-01 | Phase 14 | Complete |
-| CHT-02 | Phase 14 | Pending |
+| CHT-02 | Phase 14 | Complete |
 | AGT-01 | Phase 14 | Complete |
 | AGT-02 | Phase 14 | Complete |
 | AGT-03 | Phase 14 | Complete |
