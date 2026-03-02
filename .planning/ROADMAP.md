@@ -106,11 +106,11 @@ Plans:
   3. User can manually enter individual settlement line items through a form — no file required
   4. Per-buyer column mapping is saved after the first import and pre-filled on subsequent imports for the same buyer
   5. Uploaded settlement files are stored server-side outside the public/ directory
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 12-01: CSV/Excel settlement import endpoint with column mapping UI and preview
-- [ ] 12-02: Manual settlement entry form and per-buyer importConfig persistence
+- [ ] 12-01-PLAN.md — Settlement file upload, parse/preview, column mapping UI, commit, and settlement list (SET-01, SET-02, SET-04)
+- [ ] 12-02-PLAN.md — Manual settlement entry form, settlement detail view with line CRUD, SW cache bump (SET-03, SET-04)
 
 ### Phase 13: Reconciliation Engine & Discrepancy UI
 **Goal**: The system automatically matches farm tickets to settlement lines, surfaces every unmatched load, and lets the farm manager flag and annotate discrepancies
