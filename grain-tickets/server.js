@@ -45,6 +45,17 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
+
+// Serve index.html with GLOMALIN_ENABLED injected — MUST be before express.static
+app.get('/', (req, res) => {
+  const enabled = process.env.CHAT_AGENT_ENABLED === 'true';
+  let html = fs.readFileSync(path.join(__dirname, 'public', 'index.html'), 'utf8');
+  // Inject GLOMALIN_ENABLED flag before closing </head>
+  const script = `<script>window.GLOMALIN_ENABLED=${enabled};</script>`;
+  html = html.replace('</head>', script + '\n</head>');
+  res.type('html').send(html);
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 // perf: Cache-Control on GET API responses — allows browser to skip refetch for short TTL
@@ -53,6 +64,120 @@ app.use('/api', (req, res, next) => {
     res.set('Cache-Control', 'public, max-age=10'); // 10s for list data
   }
   next();
+});
+
+// --- Agent kill-switch middleware ---
+app.use('/api/agent', (req, res, next) => {
+  if (process.env.CHAT_AGENT_ENABLED !== 'true') {
+    return res.status(503).json({ error: 'Chat agent is disabled' });
+  }
+  next();
+});
+
+// --- Agent route imports ---
+const { handleChat } = require('./lib/agent/chat');
+const { checkAndIncrementCap } = require('./lib/agent/daily-cap');
+
+// POST /api/agent/chat — SSE streaming chat endpoint
+app.post('/api/agent/chat', handleChat);
+
+// GET /api/agent/status — returns agent enabled status + daily usage
+app.get('/api/agent/status', async (req, res) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const usage = await prisma.agentDailyUsage.findUnique({ where: { date: today } });
+    const dailyCap = parseInt(process.env.CHAT_DAILY_CAP || '50', 10);
+    const count = usage ? usage.count : 0;
+    res.json({
+      enabled: true, // if we got here, kill-switch middleware passed
+      dailyCap,
+      messagesUsed: count,
+      remaining: Math.max(0, dailyCap - count),
+      nearLimit: count >= dailyCap * 0.8
+    });
+  } catch (err) {
+    console.error('Agent status error:', err);
+    res.status(500).json({ error: 'Failed to check agent status' });
+  }
+});
+
+// --- Agent Notes CRUD ---
+// GET /api/agent/notes — list notes (optionally filter by category, active)
+app.get('/api/agent/notes', async (req, res) => {
+  try {
+    const where = {};
+    if (req.query.category) where.category = req.query.category;
+    if (req.query.active !== undefined) where.active = req.query.active === 'true';
+    else where.active = true; // default to active only
+    const notes = await prisma.agentNote.findMany({ where, orderBy: { createdAt: 'desc' } });
+    res.json(notes);
+  } catch (err) {
+    console.error('Agent notes list error:', err);
+    res.status(500).json({ error: 'Failed to list notes' });
+  }
+});
+
+// POST /api/agent/notes — create a note (from admin page)
+app.post('/api/agent/notes', async (req, res) => {
+  try {
+    const { content, category } = req.body;
+    if (!content || !content.trim()) return res.status(400).json({ error: 'Content is required' });
+    const note = await prisma.agentNote.create({
+      data: {
+        content: content.trim(),
+        category: category || 'general',
+        source: 'admin'
+      }
+    });
+    res.status(201).json(note);
+  } catch (err) {
+    console.error('Agent note create error:', err);
+    res.status(500).json({ error: 'Failed to create note' });
+  }
+});
+
+// PUT /api/agent/notes/:id — update a note
+app.put('/api/agent/notes/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const { content, category, active } = req.body;
+    const data = {};
+    if (content !== undefined) data.content = content.trim();
+    if (category !== undefined) data.category = category;
+    if (active !== undefined) data.active = active;
+    const note = await prisma.agentNote.update({ where: { id }, data });
+    res.json(note);
+  } catch (err) {
+    console.error('Agent note update error:', err);
+    res.status(500).json({ error: 'Failed to update note' });
+  }
+});
+
+// DELETE /api/agent/notes/:id — delete a note permanently
+app.delete('/api/agent/notes/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await prisma.agentNote.delete({ where: { id } });
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error('Agent note delete error:', err);
+    res.status(500).json({ error: 'Failed to delete note' });
+  }
+});
+
+// GET /api/agent/conversations — list recent conversations (for audit)
+app.get('/api/agent/conversations', async (req, res) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit || '50', 10), 200);
+    const conversations = await prisma.agentConversation.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit
+    });
+    res.json(conversations);
+  } catch (err) {
+    console.error('Agent conversations error:', err);
+    res.status(500).json({ error: 'Failed to list conversations' });
+  }
 });
 
 // --- Helper: extract crop year from YYYY-MM-DD date string ---
