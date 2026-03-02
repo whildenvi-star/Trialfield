@@ -199,6 +199,72 @@
       </thead>
       <tbody id="colmap-tbody"></tbody>
     </table>
+
+    <!-- GLOMALIN NOTES SECTION -->
+    <h2>Glomalin Notes</h2>
+    <p style="margin-bottom:1rem;color:var(--text-light);font-size:0.9rem">Manage facts that Glomalin remembers across conversations.</p>
+
+    <!-- Filter bar -->
+    <div style="display:flex;gap:0.75rem;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">
+      <div class="field">
+        <label for="notes-filter-category" style="font-size:0.75rem;color:var(--text-light);font-weight:600;display:block;margin-bottom:0.2rem">Category</label>
+        <select id="notes-filter-category" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem">
+          <option value="">All</option>
+          <option value="farm">Farm</option>
+          <option value="crop">Crop</option>
+          <option value="buyer">Buyer</option>
+          <option value="general">General</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="notes-filter-active" style="font-size:0.75rem;color:var(--text-light);font-weight:600;display:block;margin-bottom:0.2rem">Status</label>
+        <select id="notes-filter-active" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem">
+          <option value="true">Show Active</option>
+          <option value="">Show All</option>
+          <option value="false">Show Inactive</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="notes-add-btn">Add Note</button>
+    </div>
+
+    <!-- Add/Edit form (hidden by default) -->
+    <div id="notes-form" style="display:none;background:var(--card);padding:1rem;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:1rem">
+      <input type="hidden" id="notes-edit-id" value="">
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end">
+        <div class="field" style="flex:1;min-width:280px">
+          <label style="font-size:0.75rem;color:var(--text-light);font-weight:600;margin-bottom:0.2rem;display:block">Content <span style="color:var(--danger)">*</span></label>
+          <textarea id="notes-form-content" rows="3" placeholder="Enter a fact for Glomalin to remember..." style="width:100%;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;font-family:inherit;resize:vertical"></textarea>
+        </div>
+        <div class="field">
+          <label style="font-size:0.75rem;color:var(--text-light);font-weight:600;margin-bottom:0.2rem;display:block">Category</label>
+          <select id="notes-form-category" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem">
+            <option value="general">General</option>
+            <option value="farm">Farm</option>
+            <option value="crop">Crop</option>
+            <option value="buyer">Buyer</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn btn-primary" id="notes-form-save">Save</button>
+          <button class="btn" id="notes-form-cancel" style="background:#e0e0e0;color:var(--text)">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes table -->
+    <table id="notes-table">
+      <thead>
+        <tr>
+          <th style="width:40%">Content</th>
+          <th>Category</th>
+          <th>Source</th>
+          <th>Active</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="notes-tbody"></tbody>
+    </table>
   </main>
 
   <div id="toast" class="toast hidden"></div>
@@ -702,11 +768,219 @@
       });
     });
 
+    // ============================
+    // GLOMALIN NOTES
+    // ============================
+    var notes = [];
+    var notesFilterCategory = '';
+    var notesFilterActive = 'true';
+
+    function loadNotes() {
+      var params = [];
+      if (notesFilterCategory) params.push('category=' + encodeURIComponent(notesFilterCategory));
+      if (notesFilterActive !== '') params.push('active=' + encodeURIComponent(notesFilterActive));
+      var url = '/api/agent/notes' + (params.length ? '?' + params.join('&') : '');
+      fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+        notes = Array.isArray(data) ? data : [];
+        renderNotes();
+      }).catch(function () {
+        notes = [];
+        renderNotes();
+      });
+    }
+
+    function renderNotes() {
+      var tbody = document.getElementById('notes-tbody');
+      if (!notes.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="color:var(--text-light);font-style:italic;padding:1rem 0.5rem">No notes yet. Glomalin will learn facts during conversations, or you can add them here.</td></tr>';
+        return;
+      }
+      var html = '';
+      notes.forEach(function (n) {
+        var sourceColor = n.source === 'agent' ? '#1565c0' : '#2e7d32';
+        var sourceBg = n.source === 'agent' ? '#e3f2fd' : '#e8f5e9';
+        var activeColor = n.active ? '#2e7d32' : '#999';
+        var dateStr = n.createdAt ? new Date(n.createdAt).toLocaleDateString() : '';
+        html += '<tr data-id="' + n.id + '">';
+        html += '<td class="editable notes-content-cell" data-field="content" style="max-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escHtml(n.content || '') + '">' + escHtml(n.content || '') + '</td>';
+        html += '<td>' + escHtml((n.category || 'general')) + '</td>';
+        html += '<td><span style="background:' + sourceBg + ';color:' + sourceColor + ';padding:0.1rem 0.4rem;border-radius:3px;font-size:0.75rem;font-weight:600">' + escHtml(n.source || 'admin') + '</span></td>';
+        html += '<td><label class="notes-toggle" title="Toggle active"><input type="checkbox" class="notes-active-chk" data-id="' + n.id + '"' + (n.active ? ' checked' : '') + ' style="width:1rem;height:1rem;cursor:pointer"><span style="color:' + activeColor + ';font-size:0.75rem;margin-left:0.25rem">' + (n.active ? 'Active' : 'Inactive') + '</span></label></td>';
+        html += '<td style="white-space:nowrap;color:var(--text-light);font-size:0.8rem">' + dateStr + '</td>';
+        html += '<td style="white-space:nowrap">';
+        html += '<button class="btn-danger notes-edit" data-id="' + n.id + '" style="color:var(--primary);margin-right:0.25rem">Edit</button>';
+        html += '<button class="btn-danger notes-del" data-id="' + n.id + '">Delete</button>';
+        html += '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function createNote(content, category) {
+      fetch('/api/agent/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content, category: category, source: 'admin' })
+      }).then(function (r) { return r.json(); }).then(function (r) {
+        if (r.error) { alert(r.error); return; }
+        showToast('Note added');
+        hideNotesForm();
+        loadNotes();
+      });
+    }
+
+    function updateNote(id, data) {
+      fetch('/api/agent/notes/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).then(function (r) { return r.json(); }).then(function (r) {
+        if (r.error) { alert(r.error); return; }
+        showToast('Note updated');
+        hideNotesForm();
+        loadNotes();
+      });
+    }
+
+    function deleteNote(id) {
+      if (!confirm('Delete this note?')) return;
+      fetch('/api/agent/notes/' + id, { method: 'DELETE' })
+        .then(function (r) { return r.json(); })
+        .then(function () {
+          showToast('Note deleted');
+          loadNotes();
+        });
+    }
+
+    function toggleNoteActive(id, active) {
+      fetch('/api/agent/notes/' + id, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: active })
+      }).then(function (r) { return r.json(); }).then(function () {
+        loadNotes();
+      });
+    }
+
+    function showNotesForm(note) {
+      var form = document.getElementById('notes-form');
+      var idInput = document.getElementById('notes-edit-id');
+      var contentInput = document.getElementById('notes-form-content');
+      var categorySelect = document.getElementById('notes-form-category');
+      if (note) {
+        idInput.value = note.id;
+        contentInput.value = note.content || '';
+        categorySelect.value = note.category || 'general';
+      } else {
+        idInput.value = '';
+        contentInput.value = '';
+        categorySelect.value = 'general';
+      }
+      form.style.display = 'block';
+      contentInput.focus();
+    }
+
+    function hideNotesForm() {
+      document.getElementById('notes-form').style.display = 'none';
+    }
+
+    // Add Note button
+    document.getElementById('notes-add-btn').addEventListener('click', function () {
+      showNotesForm(null);
+    });
+
+    // Cancel form
+    document.getElementById('notes-form-cancel').addEventListener('click', function () {
+      hideNotesForm();
+    });
+
+    // Save form
+    document.getElementById('notes-form-save').addEventListener('click', function () {
+      var id = document.getElementById('notes-edit-id').value;
+      var content = document.getElementById('notes-form-content').value.trim();
+      var category = document.getElementById('notes-form-category').value;
+      if (!content) { alert('Enter note content'); return; }
+      if (id) {
+        updateNote(parseInt(id, 10), { content: content, category: category });
+      } else {
+        createNote(content, category);
+      }
+    });
+
+    // Category filter
+    document.getElementById('notes-filter-category').addEventListener('change', function () {
+      notesFilterCategory = this.value;
+      loadNotes();
+    });
+
+    // Active filter
+    document.getElementById('notes-filter-active').addEventListener('change', function () {
+      notesFilterActive = this.value;
+      loadNotes();
+    });
+
+    // Table click handlers (edit, delete, active toggle)
+    document.getElementById('notes-tbody').addEventListener('click', function (e) {
+      var editBtn = e.target.closest('.notes-edit');
+      if (editBtn) {
+        var id = parseInt(editBtn.getAttribute('data-id'), 10);
+        var note = notes.find(function (n) { return n.id === id; });
+        if (note) showNotesForm(note);
+        return;
+      }
+      var delBtn = e.target.closest('.notes-del');
+      if (delBtn) {
+        var id = parseInt(delBtn.getAttribute('data-id'), 10);
+        deleteNote(id);
+        return;
+      }
+      var chk = e.target.closest('.notes-active-chk');
+      if (chk) {
+        var id = parseInt(chk.getAttribute('data-id'), 10);
+        toggleNoteActive(id, chk.checked);
+      }
+    });
+
+    // Double-click content cell to inline edit
+    document.getElementById('notes-tbody').addEventListener('dblclick', function (e) {
+      var td = e.target.closest('td.notes-content-cell');
+      if (!td || td.classList.contains('editing')) return;
+      var tr = td.closest('tr');
+      var id = parseInt(tr.getAttribute('data-id'), 10);
+      var note = notes.find(function (n) { return n.id === id; });
+      if (!note) return;
+      var oldVal = note.content || '';
+
+      td.classList.add('editing');
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.value = oldVal;
+      input.style.whiteSpace = 'normal';
+      td.textContent = '';
+      td.appendChild(input);
+      input.focus();
+      input.select();
+
+      function save() {
+        var newVal = input.value.trim();
+        td.classList.remove('editing');
+        if (newVal === oldVal || !newVal) { renderNotes(); return; }
+        updateNote(id, { content: newVal });
+      }
+
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') input.blur();
+        if (ev.key === 'Escape') { td.classList.remove('editing'); renderNotes(); }
+      });
+    });
+
     // --- Init ---
     loadCrops();
     loadFarms();
     loadBins();
     loadBuyers();
+    loadNotes();
   })();
   </script>
 </body>
