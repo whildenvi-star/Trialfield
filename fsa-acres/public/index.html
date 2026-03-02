@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FSA Acre Reporting</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#0a0e09">
+  <script>
+    (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+  </script>
+</head>
+<body>
+  <script>
+    if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+  </script>
+
+<header>
+  <div class="header-top">
+    <h1>fsa-acres <span>Rock County, WI</span></h1>
+    <button id="theme-toggle" class="theme-toggle">[day]</button>
+  </div>
+  <nav class="nav-primary" id="main-nav">
+    <button class="tab-btn active" data-tab="season">Season</button>
+    <button class="tab-btn" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="fsa-entry">FSA Data</button>
+    <button class="tab-btn" data-tab="pricing">Pricing</button>
+    <button class="tab-btn" data-tab="insurance">Insurance</button>
+    <button class="tab-btn" data-tab="reports">Reports</button>
+    <button class="tab-btn" data-tab="gcs">GCS</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===== SEASON TAB ===== -->
+  <section class="tab-content active" id="tab-season">
+    <div id="season-summary" class="summary-bar"></div>
+    <div id="season-connectivity" style="margin:0.75rem 0"></div>
+
+    <div class="dashboard-panels">
+      <div class="panel" id="season-early">
+        <h3>1. Early Season <span style="font-weight:400;font-size:0.72rem;color:var(--text-light)">Jan &ndash; Mar</span>
+          <button id="btn-crop-plan" class="btn-sm btn-crop-plan" style="float:right;margin-top:-2px">View Crop Plan</button>
+        </h3>
+        <div id="season-early-body" class="season-panel-body">
+          <div class="season-panel-stats"><span style="color:var(--text-light)">Loading...</span></div>
+          <div class="season-panel-chart"><canvas id="chart-early-delivery" width="120" height="120"></canvas></div>
+        </div>
+        <div id="crop-plan-editor" class="crop-plan-editor hidden"></div>
+      </div>
+      <div class="panel" id="season-planting">
+        <h3>2. Planting <span style="font-weight:400;font-size:0.72rem;color:var(--text-light)">Apr &ndash; Jun</span></h3>
+        <div id="season-planting-body" class="season-panel-body">
+          <div class="season-panel-stats"><span style="color:var(--text-light)">Loading...</span></div>
+          <div class="season-panel-chart"><canvas id="chart-planting-coverage" width="120" height="120"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-panels">
+      <div class="panel" id="season-midseason">
+        <h3>3. Mid-Season Reporting <span style="font-weight:400;font-size:0.72rem;color:var(--text-light)">May &ndash; Jul</span></h3>
+        <div id="season-midseason-body" class="season-panel-body">
+          <div class="season-panel-stats"><span style="color:var(--text-light)">Loading...</span></div>
+          <div class="season-panel-chart"><canvas id="chart-midseason-reporting" width="120" height="120"></canvas></div>
+        </div>
+      </div>
+      <div class="panel" id="season-harvest">
+        <h3>4. Harvest <span style="font-weight:400;font-size:0.72rem;color:var(--text-light)">Sep &ndash; Nov</span></h3>
+        <div id="season-harvest-body" class="season-panel-body season-panel-body--vertical">
+          <div class="season-panel-stats"><span style="color:var(--text-light)">Loading...</span></div>
+          <div class="season-panel-chart season-panel-chart--full"><canvas id="chart-harvest-crops" style="width:100%;height:220px"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dashboard-panels">
+      <div class="panel panel-full" id="season-postharvest">
+        <h3>5. Post-Harvest <span style="font-weight:400;font-size:0.72rem;color:var(--text-light)">Nov &ndash; Jan</span></h3>
+        <div id="season-postharvest-body"><span style="color:var(--text-light)">Loading...</span></div>
+      </div>
+    </div>
+
+    <div class="dashboard-panels">
+      <div class="panel panel-full" id="season-crosswalk">
+        <h3 style="cursor:pointer" id="season-crosswalk-toggle">Field Name Crosswalk <span style="font-size:0.7rem;color:var(--text-light);font-weight:400">&#9654; click to expand</span></h3>
+        <div id="season-crosswalk-body" class="hidden"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== DASHBOARD TAB ===== -->
+  <section class="tab-content" id="tab-dashboard">
+    <div id="dash-summary" class="summary-bar"></div>
+
+    <div class="dashboard-panels">
+      <div class="panel">
+        <h3>Acres by Farm</h3>
+        <div class="table-wrap"><table id="dash-farm-table"><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h3>Acres by Crop</h3>
+        <div class="table-wrap"><table id="dash-crop-table"><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="dashboard-panels">
+      <div class="panel">
+        <h3>Drilldown by Farm</h3>
+        <div style="margin-bottom:0.5rem">
+          <select id="dash-farm-select"><option value="">Select a farm...</option></select>
+        </div>
+        <div class="table-wrap"><table id="dash-farm-drill"><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h3>Drilldown by Field</h3>
+        <div style="margin-bottom:0.5rem">
+          <select id="dash-field-select"><option value="">Select a field...</option></select>
+        </div>
+        <div class="table-wrap"><table id="dash-field-drill"><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="dashboard-panels">
+      <div class="panel">
+        <h3>Tillage Summary <select id="dash-tillage-year" style="font-size:0.8rem;margin-left:0.5rem"><option value="2025">2025</option><option value="2024">2024</option></select></h3>
+        <div class="table-wrap"><table id="dash-tillage-table"><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h3>Cover Crop Summary <select id="dash-cc-year" style="font-size:0.8rem;margin-left:0.5rem"><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select></h3>
+        <div class="table-wrap"><table id="dash-cc-table"><tbody></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="dashboard-panels">
+      <div class="panel">
+        <h3>Reporting Progress by Farm</h3>
+        <div class="table-wrap"><table id="dash-progress-table"><tbody></tbody></table></div>
+      </div>
+      <div class="panel">
+        <h3>Attention Needed</h3>
+        <div id="dash-warnings"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:1rem">
+      <button class="btn-primary" onclick="window.print()">Print Report</button>
+    </div>
+  </section>
+
+  <!-- ===== FSA DATA ENTRY TAB ===== -->
+  <section class="tab-content" id="tab-fsa-entry">
+    <div class="filters" id="fsa-filters">
+      <input type="text" id="fsa-search" placeholder="Search fields, crops, farms...">
+      <select id="fsa-farm-filter"><option value="">All Farms</option></select>
+      <select id="fsa-crop-filter"><option value="">All Crops</option></select>
+      <select id="fsa-field-filter"><option value="">All Fields</option></select>
+      <select id="fsa-reported-filter">
+        <option value="">All Status</option>
+        <option value="true">Reported</option>
+        <option value="false">Unreported</option>
+      </select>
+      <select id="fsa-class-filter">
+        <option value="">All Classes</option>
+        <option value="Tillable">Tillable</option>
+        <option value="Hay/Forage">Hay/Forage</option>
+        <option value="CRP">CRP</option>
+        <option value="Grass/GLS">Grass/GLS</option>
+        <option value="Idle">Idle</option>
+        <option value="NC">NC</option>
+      </select>
+    </div>
+
+    <div style="display:flex;gap:0.75rem;margin-bottom:1rem;align-items:center;flex-wrap:wrap">
+      <button class="btn-primary" id="fsa-add-btn">+ Add Record</button>
+      <button class="btn-orange" id="fsa-mark-reported-btn">Mark Selected Reported</button>
+      <button class="btn-sm" id="fsa-mark-unreported-btn">Mark Selected Unreported</button>
+      <button class="btn-primary" id="fsa-sync-macro-btn">Sync from Macro</button>
+      <span class="table-info" id="fsa-info" style="margin:0"></span>
+    </div>
+
+    <div class="table-wrap">
+      <table id="fsa-table">
+        <thead>
+          <tr>
+            <th style="cursor:default"><input type="checkbox" id="fsa-select-all" class="row-checkbox"></th>
+            <th data-sort="reported">Status</th>
+            <th data-sort="farmNumber">Farm#</th>
+            <th data-sort="tractNumber">Tract</th>
+            <th data-sort="clu">CLU</th>
+            <th data-sort="fieldName">Field</th>
+            <th data-sort="landClass">Class</th>
+            <th data-sort="crop">Crop</th>
+            <th data-sort="fsaAcres" class="number">Acres</th>
+            <th>Flags</th>
+            <th data-sort="grainPlantDate">Plant Date</th>
+            <th data-sort="use">Use</th>
+            <th data-sort="tillage2025">Till '25</th>
+            <th>CC '25</th>
+            <th>Unit#</th>
+            <th>APH</th>
+            <th style="cursor:default"></th>
+          </tr>
+        </thead>
+        <tbody id="fsa-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="fsa-pagination"></div>
+  </section>
+
+  <!-- ===== PRICING TAB ===== -->
+  <section class="tab-content" id="tab-pricing">
+    <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+      <h2 style="margin:0">Crop Insurance Pricing</h2>
+      <button class="btn-primary" id="pricing-add-btn">+ Add Crop</button>
+      <button class="btn-orange" id="pricing-scrape-btn">Fetch USDA Prices</button>
+      <span id="pricing-info" style="font-size:0.85rem;color:var(--text-light)"></span>
+    </div>
+    <p style="font-size:0.85rem;color:var(--text-light);margin-bottom:0.75rem">Double-click prices to edit. Toggle manual override to prevent scraper from changing them.</p>
+    <div class="table-wrap">
+      <table id="pricing-table">
+        <thead>
+          <tr>
+            <th>Crop</th>
+            <th class="number">Spring Price</th>
+            <th class="number">Fall Price</th>
+            <th class="number">Highest</th>
+            <th>Override</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="pricing-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== INSURANCE TAB ===== -->
+  <section class="tab-content" id="tab-insurance">
+    <div id="ins-alert" class="alert-banner hidden"></div>
+
+    <div id="ins-summary" class="summary-bar"></div>
+
+    <div class="filters" id="ins-filters">
+      <input type="text" id="ins-search" placeholder="Search farm, crop, line...">
+      <select id="ins-status-filter">
+        <option value="">All Status</option>
+        <option value="potential">Potential Claim</option>
+        <option value="filed">Filed</option>
+        <option value="paid">Paid</option>
+        <option value="none">No Claim</option>
+      </select>
+      <button class="btn-primary" id="ins-add-btn">+ Add Policy</button>
+      <select id="ins-add-from-farm" style="font-size:0.85rem"><option value="">Add from Farm...</option></select>
+      <button class="btn-orange" id="ins-sync-grain-btn">Sync Grain Tickets</button>
+    </div>
+
+    <!-- Grain ticket sync preview panel -->
+    <div id="ins-grain-sync" class="panel hidden" style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <h3 style="margin:0">Grain Ticket Yield Sync</h3>
+        <div style="display:flex;gap:0.5rem">
+          <button class="btn-primary" id="ins-grain-apply-all" disabled>Apply All Matches</button>
+          <button class="btn-sm" id="ins-grain-close">Close</button>
+        </div>
+      </div>
+      <div id="ins-grain-sync-body">Loading grain ticket data...</div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="ins-table">
+        <thead>
+          <tr>
+            <th data-sort="farmName">Farm</th>
+            <th data-sort="lineNumber">Line</th>
+            <th data-sort="crop">Crop</th>
+            <th class="number" data-sort="coverageLevel">Cov%</th>
+            <th data-sort="unitType">Unit</th>
+            <th class="number" data-sort="plantedAcres">Planted Ac</th>
+            <th class="number">FSA Ac</th>
+            <th class="number" data-sort="guarantee">APH</th>
+            <th class="number">Eff. Guar.</th>
+            <th class="number" data-sort="actual">Actual</th>
+            <th class="number">Shortfall</th>
+            <th class="number">$ Guarantee</th>
+            <th class="number">Spr Price</th>
+            <th class="number">Fall Price</th>
+            <th class="number">Highest</th>
+            <th class="number">Indemnity</th>
+            <th>Status</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="ins-tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="ins-perf-summary" class="panel" style="margin-top:1rem"></div>
+  </section>
+
+  <!-- ===== REPORTS TAB ===== -->
+  <section class="tab-content" id="tab-reports">
+    <div style="display:flex;gap:1rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+      <h2 style="margin:0">Reports</h2>
+      <select id="rpt-type" style="font-size:0.9rem">
+        <option value="fsa">FSA Acreage Report</option>
+        <option value="insurance">Crop Insurance Summary</option>
+        <option value="checklist">Reporting Checklist</option>
+      </select>
+      <select id="rpt-farm-select" style="font-size:0.9rem"><option value="">All Farms</option></select>
+      <button class="btn-primary" id="rpt-generate-btn">Generate</button>
+      <button class="btn-orange" id="rpt-csv-btn">Export CSV</button>
+      <button class="btn-sm" id="rpt-print-btn" onclick="window.print()">Print</button>
+    </div>
+    <div id="rpt-output" class="panel" style="min-height:200px"></div>
+  </section>
+
+  <!-- ===== GCS TAB ===== -->
+  <section class="tab-content" id="tab-gcs">
+    <div id="gcs-summary" class="summary-bar"></div>
+
+    <div class="filters">
+      <select id="gcs-practice-filter">
+        <option value="">All Practices</option>
+        <option value="340">340 - Cover Crop</option>
+        <option value="345">345 - Reduced Tillage</option>
+        <option value="329">329 - No-Till</option>
+      </select>
+      <button class="btn-primary" id="gcs-add-btn">+ Add Enrollment</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="gcs-table">
+        <thead>
+          <tr>
+            <th data-sort="farmNumber">Farm#</th>
+            <th data-sort="tractNumber">Tract</th>
+            <th data-sort="fieldId">Field ID</th>
+            <th data-sort="commodity">Commodity</th>
+            <th class="number" data-sort="cc340Acres">340 CC Ac</th>
+            <th class="number" data-sort="rt345Acres">345 RT Ac</th>
+            <th class="number" data-sort="nt329Acres">329 NT Ac</th>
+            <th class="number" data-sort="defaultYield">Default Yield</th>
+            <th>Irrigation</th>
+            <th>Tillage</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="gcs-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<!-- ===== SLIDE-IN EDITOR ===== -->
+<div class="overlay" id="editor-overlay">
+  <div class="editor-panel">
+    <div class="editor-header">
+      <h2 id="editor-title">Edit CLU Record</h2>
+      <button class="btn-close" id="editor-close">&times;</button>
+    </div>
+    <div class="editor-body" id="editor-body">
+      <details class="editor-section" open>
+        <summary>Basic Info</summary>
+        <div class="editor-section-body">
+          <div class="form-grid">
+            <div class="form-group"><label>Farm Number</label><input id="ed-farmNumber"></div>
+            <div class="form-group"><label>Farm Name</label><input id="ed-farmName"></div>
+            <div class="form-group"><label>Tract Number</label><input id="ed-tractNumber"></div>
+            <div class="form-group"><label>CLU</label><input id="ed-clu"></div>
+            <div class="form-group"><label>Field Name</label>
+              <div class="ac-wrapper" id="ac-fieldName-wrapper">
+                <input id="ed-fieldName" autocomplete="off" placeholder="Type to search...">
+                <div class="ac-dropdown" id="ac-fieldName-dropdown"></div>
+              </div>
+            </div>
+            <div class="form-group"><label>Crop</label><input id="ed-crop"></div>
+            <div class="form-group"><label>FSA Acres</label><input id="ed-fsaAcres" type="number" step="0.01"></div>
+            <div class="form-group"><label>Land Class</label>
+              <select id="ed-landClass"><option value="">--</option><option value="Tillable">Tillable</option><option value="Hay/Forage">Hay/Forage</option><option value="CRP">CRP</option><option value="Grass/GLS">Grass/GLS</option><option value="Idle">Idle</option><option value="NC">NC</option></select>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="editor-section" open>
+        <summary>Crop Details</summary>
+        <div class="editor-section-body">
+          <div class="form-grid">
+            <div class="form-group"><label>Use</label>
+              <select id="ed-use"><option value="">--</option><option value="forage">Forage</option><option value="grain">Grain</option><option value="grain-seed">Grain Seed</option></select>
+            </div>
+            <div class="form-group"><label>Plant Date</label><input id="ed-grainPlantDate" type="text" placeholder="YYYY-MM-DD"></div>
+            <div class="form-group"><label>Irrigated</label>
+              <select id="ed-irrigated"><option value="false">No</option><option value="true">Yes</option></select>
+            </div>
+            <div class="form-group"><label>Organic</label>
+              <select id="ed-organic"><option value="false">No</option><option value="true">Yes</option></select>
+            </div>
+            <div class="form-group"><label>Double Crop</label>
+              <select id="ed-doubleCrop"><option value="false">No</option><option value="true">Yes</option></select>
+            </div>
+            <div class="form-group"><label>Cover Crop</label>
+              <select id="ed-coverCrop"><option value="false">No</option><option value="true">Yes</option></select>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="editor-section">
+        <summary>Insurance</summary>
+        <div class="editor-section-body">
+          <div class="form-grid">
+            <div class="form-group"><label>Policy Number</label><input id="ed-policyNumber"></div>
+            <div class="form-group"><label>Line Number</label><input id="ed-lineNumber"></div>
+            <div class="form-group"><label>Unit Number</label><input id="ed-unitNumber"></div>
+            <div class="form-group"><label>APH</label><input id="ed-aph" type="number" step="0.01"></div>
+          </div>
+        </div>
+      </details>
+    </div>
+    <div class="editor-footer">
+      <button class="btn-sm" id="editor-cancel">Cancel</button>
+      <button class="btn-primary" id="editor-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INSURANCE EDITOR ===== -->
+<div class="overlay" id="ins-editor-overlay">
+  <div class="editor-panel">
+    <div class="editor-header">
+      <h2 id="ins-editor-title">Edit Policy</h2>
+      <button class="btn-close" id="ins-editor-close">&times;</button>
+    </div>
+    <div class="editor-body" id="ins-editor-body">
+      <details class="editor-section" open>
+        <summary>Policy Info</summary>
+        <div class="editor-section-body">
+          <div class="form-grid">
+            <div class="form-group"><label>Farm#</label>
+              <select id="ied-farmNumber"><option value="">--</option></select>
+            </div>
+            <div class="form-group"><label>Farm Name</label><input id="ied-farmName"></div>
+            <div class="form-group"><label>Policy Number</label><input id="ied-policyNumber"></div>
+            <div class="form-group"><label>Line Number</label><input id="ied-lineNumber"></div>
+            <div class="form-group"><label>Crop</label>
+              <select id="ied-crop"><option value="">--</option></select>
+            </div>
+            <div class="form-group"><label>Policy Year</label><input id="ied-policyYear" type="number" value="2026"></div>
+            <div class="form-group"><label>Unit Type</label>
+              <select id="ied-unitType">
+                <option value="">--</option>
+                <option value="optional">Optional</option>
+                <option value="basic">Basic</option>
+                <option value="enterprise">Enterprise</option>
+                <option value="whole farm">Whole Farm</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Agent Name</label><input id="ied-agentName"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="editor-section" open>
+        <summary>Coverage</summary>
+        <div class="editor-section-body">
+          <div class="form-grid">
+            <div class="form-group"><label>Coverage Level (%)</label><input id="ied-coverageLevel" type="number" step="1" min="50" max="90"></div>
+            <div class="form-group"><label>Planted Acres</label><input id="ied-plantedAcres" type="number" step="0.01"></div>
+            <div class="form-group"><label>FSA Acres (override)</label><input id="ied-fsaAcresManual" type="number" step="0.01" placeholder="auto from CLU"></div>
+            <div class="form-group"><label>APH (bu/ac)</label><input id="ied-guarantee" type="number" step="0.01"></div>
+            <div class="form-group"><label>Eff. Guarantee</label><input id="ied-effectiveGuarantee" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+            <div class="form-group" style="grid-column:1/-1"><span id="ied-aph-helper" style="font-size:0.8rem;color:var(--text-light)"></span></div>
+            <div class="form-group"><label>Premium $/Ac</label><input id="ied-premiumPerAcre" type="number" step="0.01"></div>
+            <div class="form-group"><label>Total Premium</label><input id="ied-totalPremium" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+          </div>
+        </div>
+      </details>
+
+      <details class="editor-section" open>
+        <summary>Performance</summary>
+        <div class="editor-section-body">
+          <div class="form-grid">
+            <div class="form-group"><label>Actual Yield (bu/ac)</label><input id="ied-actual" type="number" step="0.01"></div>
+            <div class="form-group"><label>Shortfall</label><input id="ied-shortfall" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+            <div class="form-group"><label>Indemnity</label><input id="ied-indemnity" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+            <div class="form-group"><label>FSA Acres (computed)</label><input id="ied-fsaAcresComputed" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label>Grain Ticket Yield</label>
+              <span id="ied-grain-helper" style="font-size:0.82rem;min-height:1.2em"></span>
+              <select id="ied-grain-select" class="hidden" style="font-size:0.85rem;margin-top:0.25rem">
+                <option value="">Browse grain ticket farms...</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="editor-section">
+        <summary>Claim Tracking</summary>
+        <div class="editor-section-body">
+          <div id="ied-status-stepper" class="status-stepper"></div>
+          <div class="form-grid">
+            <div class="form-group"><label>Claim Status</label>
+              <select id="ied-claimStatus">
+                <option value="none">No Claim</option>
+                <option value="potential">Potential</option>
+                <option value="filed">Filed</option>
+                <option value="paid">Paid</option>
+                <option value="denied">Denied</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Loss Type</label>
+              <select id="ied-lossType">
+                <option value="">--</option>
+                <option value="yield">Yield Loss</option>
+                <option value="prevented_planting">Prevented Planting</option>
+                <option value="quality">Quality Loss</option>
+                <option value="revenue">Revenue Loss</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Claim Number</label><input id="ied-claimNumber"></div>
+            <div class="form-group"><label>Adjuster Name</label><input id="ied-adjusterName"></div>
+            <div class="form-group"><label>Adjuster Phone</label><input id="ied-adjusterPhone" type="tel"></div>
+            <div class="form-group"><label>Claim Filed Date</label><input id="ied-claimFiledDate" type="text" placeholder="YYYY-MM-DD"></div>
+            <div class="form-group"><label>Claim Paid Date</label><input id="ied-claimPaidDate" type="text" placeholder="YYYY-MM-DD"></div>
+            <div class="form-group"><label>Claim Paid Amount</label><input id="ied-claimPaidAmount" type="number" step="0.01"></div>
+          </div>
+          <div style="border-top:1px solid var(--border);padding-top:0.75rem;margin-top:0.5rem">
+            <div class="form-grid">
+              <div class="form-group"><label>Prevented Planting</label>
+                <select id="ied-preventedPlanting"><option value="false">No</option><option value="true">Yes</option></select>
+              </div>
+              <div class="form-group"><label>PP Acres</label><input id="ied-preventedPlantingAcres" type="number" step="0.01"></div>
+            </div>
+          </div>
+          <div class="form-grid" style="margin-top:0.75rem">
+            <div class="form-group" style="grid-column:1/-1"><label>Notes</label><textarea id="ied-notes" rows="3" style="width:100%"></textarea></div>
+          </div>
+        </div>
+      </details>
+    </div>
+    <div class="editor-footer">
+      <button class="btn-sm" id="ins-editor-cancel">Cancel</button>
+      <button class="btn-primary" id="ins-editor-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SYNC PREVIEW MODAL ===== -->
+<div class="overlay" id="sync-overlay">
+  <div class="sync-modal">
+    <div class="sync-header">
+      <h2>Sync Crops from Macro Roll Up</h2>
+      <button class="btn-close" id="sync-close">&times;</button>
+    </div>
+    <p id="sync-subtitle" style="padding:0 1.5rem;color:var(--text-light);font-size:0.85rem"></p>
+    <div class="sync-body" id="sync-body"></div>
+    <div class="sync-footer">
+      <button class="btn-sm" id="sync-cancel">Cancel</button>
+      <button class="btn-primary" id="sync-apply">Apply Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="calc.js"></script>
+<script src="app.js"></script>
+<script src="season.js"></script>
+<script src="dashboard.js"></script>
+<script src="fsa-entry.js"></script>
+<script src="pricing.js"></script>
+<script src="insurance.js"></script>
+<script src="reports.js"></script>
+<script src="gcs.js"></script>
+<!-- Theme toggle -->
+<script>
+(function () {
+  var btn = document.getElementById('theme-toggle');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  function update() {
+    var isLight = document.body.classList.contains('light');
+    btn.textContent = isLight ? '[night]' : '[day]';
+    if (meta) meta.content = isLight ? '#ffffff' : '#0a0e09';
+  }
+  update();
+  btn.addEventListener('click', function () {
+    document.body.classList.toggle('light');
+    var isLight = document.body.classList.contains('light');
+    localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
+    update();
+    window.dispatchEvent(new Event('theme-change'));
+  });
+})();
+</script>
+</body>
+</html>
