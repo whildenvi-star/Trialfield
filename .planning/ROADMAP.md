@@ -93,8 +93,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 11-01-PLAN.md — Buyer CRUD API routes + admin UI section + BuyerColumnMap API
-- [ ] 11-02-PLAN.md — Ticket entry buyer dropdown, cropYear field, ticket list buyer filter, SW cache bump
+- [ ] 11-01-PLAN.md — GrainBin model + CRUD, buyer proxy from farm-budget, destinations endpoint, BuyerColumnMap API, admin UI (bins, buyers read-only, column mapping)
+- [ ] 11-02-PLAN.md — Ticket entry destination dropdown (buyers + bins), cropYear auto-derivation, destination/year filters, farm summary buyer breakdown, SW cache bump
 
 ### Phase 12: Settlement Import & Manual Entry
 **Goal**: Settlement data from every buyer path enters the system — CSV/Excel files for digital buyers, a manual entry form for paper-only buyers
