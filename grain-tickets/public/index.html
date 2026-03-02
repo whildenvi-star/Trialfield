@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grain Ticket Entry</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2d5a27">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+</head>
+<body>
+  <header>
+    <h1>Grain Ticket Entry</h1>
+    <nav>
+      <button class="tab-btn active" data-tab="entry">New Ticket</button>
+      <button class="tab-btn" data-tab="list">Ticket Log</button>
+      <button class="tab-btn" data-tab="farms">Farm Summary</button>
+      <button class="tab-btn" data-tab="lookup">Lookup</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- NEW TICKET TAB -->
+    <section id="tab-entry" class="tab-content active">
+      <h2>New Scale Ticket</h2>
+      <div class="scan-section">
+        <button type="button" id="scan-btn" class="btn-primary btn-scan">Scan Ticket (Camera)</button>
+        <input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none">
+        <div id="scan-status" class="scan-status hidden"></div>
+      </div>
+      <form id="ticket-form">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="entry-date">Date</label>
+            <input type="date" id="entry-date" name="date" required>
+          </div>
+          <div class="form-group">
+            <label for="entry-farm">Farm</label>
+            <input type="text" id="entry-farm" name="farm" list="farm-list" required placeholder="Type to search...">
+            <datalist id="farm-list"></datalist>
+          </div>
+          <div class="form-group">
+            <label for="entry-netWeight">Net Weight (lbs)</label>
+            <input type="number" id="entry-netWeight" name="netWeight" required min="0" max="200000" step="1" inputmode="decimal" placeholder="e.g. 55480">
+          </div>
+          <div class="form-group">
+            <label for="entry-moisture">Moisture %</label>
+            <input type="number" id="entry-moisture" name="moisture" step="0.1" min="0" max="50" inputmode="decimal" placeholder="e.g. 12.9">
+          </div>
+          <div class="form-group">
+            <label for="entry-crop">Crop</label>
+            <select id="entry-crop" name="crop" required>
+              <option value="">Select crop...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="entry-ticketNo">Ticket Number</label>
+            <input type="text" id="entry-ticketNo" name="ticketNo" required placeholder="e.g. H066666">
+          </div>
+          <div class="form-group">
+            <label for="entry-destination">Destination</label>
+            <select id="entry-destination" name="destination" required>
+              <option value="">Select destination...</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="entry-notes">Notes</label>
+            <input type="text" id="entry-notes" name="notes" placeholder="e.g. HBT# 5652 WR Trk# 41">
+          </div>
+          <div class="form-group">
+            <label for="entry-fm">FM (Foreign Matter)</label>
+            <input type="number" id="entry-fm" name="fm" step="0.01" min="0" max="100" inputmode="decimal" value="0" placeholder="e.g. 0.1">
+          </div>
+        </div>
+
+        <!-- Live Preview -->
+        <div id="live-preview" class="preview-panel">
+          <h3>Calculated Values</h3>
+          <div class="preview-grid">
+            <div><span class="label">Test Weight:</span> <span id="prev-testWeight">--</span></div>
+            <div><span class="label">Moisture Shrink Baseline:</span> <span id="prev-moistureShrink">--</span></div>
+            <div><span class="label">Discount:</span> <span id="prev-discount">--</span></div>
+            <div><span class="label">FM Discount Factor:</span> <span id="prev-fmDiscount">--</span></div>
+            <div class="highlight"><span class="label">Gross BU:</span> <span id="prev-grossBU">--</span></div>
+            <div class="highlight"><span class="label">Net BU If Sold:</span> <span id="prev-netBU">--</span></div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary">Submit Ticket</button>
+      </form>
+      <div id="entry-toast" class="toast hidden"></div>
+    </section>
+
+    <!-- TICKET LOG TAB -->
+    <section id="tab-list" class="tab-content">
+      <h2>Ticket Log</h2>
+      <div class="filters">
+        <input type="text" id="filter-search" placeholder="Search all fields...">
+        <select id="filter-farm"><option value="">All Farms</option></select>
+        <select id="filter-crop"><option value="">All Crops</option></select>
+        <input type="date" id="filter-date-from" title="From date">
+        <input type="date" id="filter-date-to" title="To date">
+      </div>
+      <div class="date-presets">
+        <button class="btn-sm preset-btn" data-preset="week">This Week</button>
+        <button class="btn-sm preset-btn" data-preset="month">This Month</button>
+        <button class="btn-sm preset-btn" data-preset="30">Last 30 Days</button>
+        <button class="btn-sm preset-btn" data-preset="all">All</button>
+      </div>
+      <div class="table-info">
+        <span id="ticket-count">0 tickets</span>
+        <span id="ticket-total-bu">Total Net BU: 0</span>
+        <button id="export-tickets-btn" class="btn-sm" title="Export current filtered view as CSV">Export CSV</button>
+      </div>
+      <div id="filter-stats" class="filter-stats">
+        <span>Avg Moisture: <strong id="stat-avg-moisture">--</strong>%</span>
+        <span>Avg FM: <strong id="stat-avg-fm">--</strong></span>
+        <span>Avg Net BU/Ticket: <strong id="stat-avg-bu">--</strong></span>
+      </div>
+      <div id="batch-bar" class="batch-bar hidden">
+        <span id="batch-count">0 selected</span>
+        <button id="batch-delete-btn" class="btn-danger">Delete Selected</button>
+      </div>
+      <div class="table-wrap">
+        <table id="ticket-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all-tickets" title="Select all"></th>
+              <th data-sort="date">Date</th>
+              <th data-sort="farm">Farm</th>
+              <th data-sort="netWeight">Net Wt</th>
+              <th data-sort="moisture">Moist%</th>
+              <th data-sort="crop">Crop</th>
+              <th data-sort="ticketNo">Ticket No.</th>
+              <th>Notes</th>
+              <th data-sort="destination">Dest</th>
+              <th data-sort="fm">FM</th>
+              <th data-sort="_computed.grossBU">Gross BU</th>
+              <th data-sort="_computed.netBU">Net BU</th>
+              <th data-sort="_computed.discount">Disc</th>
+              <th data-sort="_computed.testWeight">Test Wt</th>
+              <th data-sort="_computed.moistureShrink">Moist Shrink</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ticket-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="page-prev" class="btn-sm" disabled>Prev</button>
+        <span id="page-info">Page 1</span>
+        <button id="page-next" class="btn-sm">Next</button>
+      </div>
+    </section>
+
+    <!-- FARM SUMMARY TAB -->
+    <section id="tab-farms" class="tab-content">
+      <h2>Farm Summary</h2>
+      <div class="filters">
+        <input type="text" id="farm-filter-search" placeholder="Search farms...">
+        <select id="farm-filter-type">
+          <option value="">All Types</option>
+          <option value="Conventional">Conventional</option>
+          <option value="Organic">Organic</option>
+        </select>
+        <button id="export-farms-btn" class="btn-sm" title="Export farm summary as CSV">Export CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table id="farm-table">
+          <thead>
+            <tr>
+              <th data-sort="acres">Acres</th>
+              <th data-sort="crop">Crop</th>
+              <th data-sort="farm">Farm</th>
+              <th data-sort="totalBU">Total BU</th>
+              <th data-sort="unit">Unit</th>
+              <th data-sort="yieldPerAcre">Yield/AC</th>
+              <th data-sort="type">Type</th>
+              <th data-sort="guarantee">Guarantee</th>
+              <th data-sort="coverage">Coverage</th>
+              <th data-sort="claimThreshold">Claim Thr.</th>
+              <th data-sort="discount">Discount</th>
+              <th data-sort="testWeight">Test Wt</th>
+            </tr>
+          </thead>
+          <tbody id="farm-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- LOOKUP TAB -->
+    <section id="tab-lookup" class="tab-content">
+      <h2>Ticket Lookup</h2>
+      <div class="lookup-form">
+        <input type="text" id="lookup-input" placeholder="Enter ticket number..." autofocus>
+        <button id="lookup-btn" class="btn-primary">Search</button>
+      </div>
+      <div id="lookup-results"></div>
+    </section>
+  </main>
+
+  <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available, using local farm list')"></script>
+  <script src="calc.js"></script>
+  <script src="app.js"></script>
+  <script src="tickets.js"></script>
+  <script src="farms.js"></script>
+  <script src="lookup.js"></script>
+  <script src="scan.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>

@@ -30,10 +30,16 @@ app.use('/api', (req, res, next) => {
 });
 
 // --- Helper: extract crop year from YYYY-MM-DD date string ---
+// Harvest-season logic: Jun-Dec = that year, Jan-May = prior year (late delivery from prior harvest)
 function getCropYear(dateStr) {
   if (!dateStr) return new Date().getFullYear();
-  const year = parseInt((dateStr + '').slice(0, 4), 10);
-  return isNaN(year) ? new Date().getFullYear() : year;
+  const parts = (dateStr + '').split('-');
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  if (isNaN(year)) return new Date().getFullYear();
+  // Jan-May = late delivery from prior harvest season
+  if (month >= 1 && month <= 5) return year - 1;
+  return year;
 }
 
 // --- Helper: build cropConfig object shape from DB ---
@@ -156,7 +162,20 @@ function csvEscape(val) {
 app.get('/api/tickets', async (req, res) => {
   try {
     res.set('Cache-Control', 'no-store'); // Prevent stale filter results when switching destination/buyer filters
-    const tickets = await prisma.ticket.findMany({ orderBy: { date: 'desc' } });
+    const where = {};
+    if (req.query.buyerId) {
+      const bid = parseInt(req.query.buyerId, 10);
+      if (!isNaN(bid)) where.buyerId = bid;
+    }
+    if (req.query.grainBinId) {
+      const gid = parseInt(req.query.grainBinId, 10);
+      if (!isNaN(gid)) where.grainBinId = gid;
+    }
+    if (req.query.cropYear) {
+      const cy = parseInt(req.query.cropYear, 10);
+      if (!isNaN(cy)) where.cropYear = cy;
+    }
+    const tickets = await prisma.ticket.findMany({ where, orderBy: { date: 'desc' } });
     const cropConfig = await buildCropConfigObject();
     const enriched = tickets.map(t => enrichTicket(dbTicketToJson(t), cropConfig));
     res.json(enriched);
@@ -200,6 +219,10 @@ app.post('/api/tickets', async (req, res) => {
     const { date, farm, netWeight, moisture, crop, ticketNo, notes, fm } = req.body;
     const cleanTicketNo = (ticketNo || '').trim();
 
+    // Parse destination FK fields — new tickets use buyerId/grainBinId, not free-text destination
+    const buyerId = req.body.buyerId ? parseInt(req.body.buyerId, 10) || null : null;
+    const grainBinId = req.body.grainBinId ? parseInt(req.body.grainBinId, 10) || null : null;
+
     // Duplicate ticket check
     if (cleanTicketNo) {
       const existing = await prisma.ticket.findFirst({ where: { ticketNo: cleanTicketNo } });
@@ -230,7 +253,10 @@ app.post('/api/tickets', async (req, res) => {
         fm: parseFloat(fm) || 0,
         crop: (crop || '').trim(),
         ticketNo: cleanTicketNo || null,
-        notes: (notes || '').trim() || null
+        notes: (notes || '').trim() || null,
+        buyerId: buyerId,
+        grainBinId: grainBinId,
+        destination: null  // New tickets use FK (buyerId/grainBinId), not free-text
       }
     });
     res.status(201).json(enrichTicket(dbTicketToJson(ticket), cropConfig));
@@ -267,6 +293,14 @@ app.put('/api/tickets/:id', async (req, res) => {
         }
       }
     });
+
+    // Handle destination FK fields separately
+    if (req.body.buyerId !== undefined) {
+      updateData.buyerId = req.body.buyerId ? parseInt(req.body.buyerId, 10) || null : null;
+    }
+    if (req.body.grainBinId !== undefined) {
+      updateData.grainBinId = req.body.grainBinId ? parseInt(req.body.grainBinId, 10) || null : null;
+    }
 
     const ticket = await prisma.ticket.update({ where: { id }, data: updateData });
     const cropConfig = await buildCropConfigObject(ticket.cropYear);
@@ -321,6 +355,18 @@ app.get('/api/export/tickets', async (req, res) => {
       where.date = {};
       if (req.query.dateFrom) where.date.gte = new Date(req.query.dateFrom + 'T00:00:00.000Z');
       if (req.query.dateTo) where.date.lte = new Date(req.query.dateTo + 'T23:59:59.999Z');
+    }
+    if (req.query.buyerId) {
+      const bid = parseInt(req.query.buyerId, 10);
+      if (!isNaN(bid)) where.buyerId = bid;
+    }
+    if (req.query.grainBinId) {
+      const gid = parseInt(req.query.grainBinId, 10);
+      if (!isNaN(gid)) where.grainBinId = gid;
+    }
+    if (req.query.cropYear) {
+      const cy = parseInt(req.query.cropYear, 10);
+      if (!isNaN(cy)) where.cropYear = cy;
     }
 
     const tickets = await prisma.ticket.findMany({ where });
