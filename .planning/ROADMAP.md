@@ -32,7 +32,7 @@
 
 **Milestone Goal:** Replace the paper-to-spreadsheet grain ticket workflow with a digital traceability system that tracks every load from combine to settlement, reconciles against buyer payments, and flags discrepancies immediately.
 
-- [ ] **Phase 9: Database Foundation** — Add Prisma + PostgreSQL to grain-tickets without touching existing routes
+- [x] **Phase 9: Database Foundation** — Prisma 6.19.2 + PostgreSQL grain_tickets database with complete 7-model schema (completed 2026-03-02)
 - [ ] **Phase 10: Migration & Cutover** — Move all data from JSON to PostgreSQL and switch server.js to Prisma
 - [ ] **Phase 11: Buyer Registry & Ticket Extensions** — Buyer entity, destination FK on tickets, cropYear field
 - [ ] **Phase 12: Settlement Import & Manual Entry** — CSV/Excel import with per-buyer column mapping and manual entry path
@@ -49,10 +49,10 @@
   2. Prisma Studio can open and browse the grain-tickets database
   3. All existing ticket entry and farm summary UI continues working unchanged (JSON store still active)
   4. `db.js` singleton exports a connected PrismaClient instance importable by other modules
-**Plans**: TBD
+**Plans**: 1
 
 Plans:
-- [ ] 09-01: Prisma setup, schema definition, and connection verification
+- [x] 09-01: Prisma setup, schema definition, and connection verification (completed 2026-03-02)
 
 ### Phase 10: Migration & Cutover
 **Goal**: Every existing ticket, farm, and crop config record lives in PostgreSQL — server.js reads and writes Prisma exclusively, JSON is archived read-only
@@ -130,8 +130,17 @@ Plans:
 | 6. Multi-Enterprise Field Views | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 7. Split-Field PDF Reports | v1.1 | 3/3 | Complete | 2026-02-28 |
 | 8. Fallow Enterprise Edit Fix | v1.1 | 1/1 | Complete | 2026-03-01 |
-| 9. Database Foundation | v2.0 | 0/TBD | Not started | - |
+| 9. Database Foundation | v2.0 | 1/1 | Complete | 2026-03-02 |
 | 10. Migration & Cutover | v2.0 | 0/TBD | Not started | - |
 | 11. Buyer Registry & Ticket Extensions | v2.0 | 0/TBD | Not started | - |
 | 12. Settlement Import & Manual Entry | v2.0 | 0/TBD | Not started | - |
 | 13. Reconciliation Engine & Discrepancy UI | v2.0 | 0/TBD | Not started | - |
+
+### Phase 14: Add chat agent for system information and recall
+
+**Goal:** [To be planned]
+**Depends on:** Phase 13
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 14 to break down)
