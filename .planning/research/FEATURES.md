@@ -1,55 +1,108 @@
 # Feature Research
 
-**Domain:** Grain traceability, settlement reconciliation, buyer management
+**Domain:** NOP organic crop certification — compilation engine, cross-app data aggregation, inspection packet generation
 **Researched:** 2026-03-01
-**Confidence:** MEDIUM-HIGH — grain elevator software patterns are well-documented; farm-side reconciliation workflows confirmed by farmer forums and commercial software feature lists. The Hughes Farm workflow is described directly in PROJECT.md. Specific field-to-settlement chain-of-custody at farm scale is less documented in academic literature but well-understood from commercial tools and farmer accounts.
+**Confidence:** HIGH — existing codebase and PROJECT.md fully characterize the domain; NOP regulatory requirements confirmed via Oregon Tilth recordkeeping guide, USDA NOP eCFR 7 CFR Part 205, and USDA organic certification documentation. Competitor landscape verified via web search (MEDIUM confidence for competitor specifics).
 
 ---
 
-## Context: What Already Exists
+## Context: What This Milestone Is Not
 
-The grain-tickets app ships with a solid foundation. This milestone adds traceability and settlement reconciliation ON TOP of existing features. These are already built and must not be re-scoped:
+v3.0 is NOT adding new NOP record types or building a better data-entry experience. The data-entry problem was solved in v1.0 and v1.1. v3.0 is rewiring the data flow: organic-cert stops being a standalone data-entry app and becomes a **compilation engine** that reads from the rest of the ecosystem.
 
-- Ticket CRUD (date, farm, netWeight, moisture, crop, ticketNo, notes, FM)
-- Farm summary with yield/acre calculations (totalBU, yieldPerAcre, guarantee, coverage, claimThreshold)
-- Claude Vision ticket scanning (photo → structured data)
-- CSV export for tickets and farms
-- Grain calculation engine (moisture shrink, test weight, FM discounts)
-- Farm registry integration
-- Excel batch import
-- PWA with offline support
-- Duplicate ticket number detection
+**The double-entry problem today:**
+Farm plan built in farm-budget (crops on fields, inputs assigned, enterprises set to organic) → same data re-keyed manually into organic-cert → inspector reviews organic-cert PDF. Two entry points for the same facts. Any change in farm-budget requires a corresponding manual update in organic-cert, or they drift.
 
-The current ticket data model: `ticketNo`, `farm`, `crop`, `netWeight`, `moisture`, `FM`, `date`, `notes`. The `notes` field currently carries destination info in free text (e.g., "HBT# 5652 WR Trk# 41") — structured destination tracking is the primary gap.
+**What v3.0 eliminates:**
+Manual re-entry of field/enterprise plans, inputs, seed varieties, yields, and acreage from farm-budget into organic-cert. These are pulled live from the ecosystem APIs. Organic-cert adds only what the ecosystem does not provide: NOP compliance decisions, buffer zone documentation, narrative sections, and the act of compiling into a final inspection PDF.
 
 ---
 
-## The Grain Workflow Being Digitized
+## What Already Exists in organic-cert (Do Not Re-scope)
 
-Hughes Farm's current workflow, from PROJECT.md:
+From the v1.0 and v1.1 audit trail in PROJECT.md and the existing source code:
 
-```
-Combine harvest
-  → Grain buggy (has scale) → radio net weight + field + crop to semi driver
-  → Semi driver writes Hughes Blue Ticket (farm's own record)
-  → Semi delivers to co-op/buyer
-  → Co-op prints elevator scale ticket
-  → Both documents to office
-  → Manual Excel entry (was 31 sheets, one per crop/variety)
-  → Settlement statements arrive ~1 week later
-    (4+ buyers, mixed paper/CSV/PDF)
-  → Manual reconciliation vs farm records
-```
+- 8-section NOP inspection PDF (cover, field list, field history, application log, harvest log, mass balance, seed sources, equipment)
+- Case IH FieldOps API integration (OAuth2, staged-ops review, approve/reject workflow)
+- Split-field enterprise support (multiple enterprises per field per season)
+- Field CRUD with 3-year history tracking
+- Input application records with NOP status tagging (APPROVED/RESTRICTED/PROHIBITED/EXEMPT)
+- Harvest records with yield, lot numbers, equipment, data source
+- Mass balance computation (harvested lbs = sold lbs + storage ± transfers)
+- OCIA C2.0 module (36-month field histories, acreage summary, cert requests)
+- Registry sync: `POST /api/fields/sync-registry` pulls from farm-registry
+- CropCertRequest table (crops being certified, projected yields)
+- Attached seed lots, material CRUD, buyer CRUD, storage location CRUD
+- Full Prisma schema: Farm, Field, FieldEnterprise, FieldHistory, FieldOperation, FertilityEvent, HarvestEvent, CropLot, SeedLot, SeedUsage, etc.
 
-Scale of operation: 100–500 loads per season. Primary users: farm office staff (daily ticket entry) and farm manager (settlement reconciliation, reporting).
+The schema is comprehensive. The gap is that most of the data in these tables currently requires manual entry — the connection to farm-budget and grain-tickets is missing.
 
-**Where discrepancies arise (based on farmer forum evidence and commercial software documentation):**
-1. Missing loads — load delivered but never appears on buyer settlement
-2. Weight differences — farm buggy scale vs. elevator scale (0.25–0.5% handling loss is normal; beyond 1% warrants investigation)
-3. Moisture disagreements — elevator measures at intake, farm measures at harvest; cold weather or uneven bins cause variance
-4. Contract misapplication — load applied to wrong contract or not applied at all (most common real-world error per farmer accounts)
-5. Pricing errors — settled at wrong price, wrong basis level, or wrong contract date
-6. Share farm confusion — when landlord/tenant loads are commingled and then split at settlement
+---
+
+## What the Ecosystem Provides (Sources for Auto-Pull)
+
+### farm-budget (port 3001, JSON-backed, Express)
+
+Available via `/api/*` endpoints — confirmed from `import.js` data model and `c2-assembler.ts` which already reads `BUDGET_API`:
+
+- `/api/fields` — field name, acres, systemCode (ORG/CON), crop, crop type, enterprise category
+- `/api/seeds` — crop, brand, variety, pricePerUnit, supplierId
+- `/api/products` — input products with unit, p205, k20, OMRI status (inferred from organic enterprise context)
+- `/api/enterprises` — enterprise definitions with organic/conventional category
+- Fields include: `inputs` array (productName, quantity, season), `seed` (variety, population), `machinery` (implements, passes), `yieldPerAcre`, `cropInsurancePerAcre`
+
+The key: farm-budget's fields tagged with `category: 'organic'` or systemCode `ORG` are the fields to pull for the inspection packet. This is the crop plan as Randy actually built it.
+
+### grain-tickets (port 3000, Express + Prisma + PostgreSQL)
+
+After v2.0 completion (phases 11-13), the grain-tickets API will expose:
+- Actual harvest weights per field/crop/season (grain tickets linked to fields)
+- Delivery records per buyer
+- Settlement data (what was sold, to whom, when)
+
+This provides ground-truth harvest data that makes the organic-cert harvest log accurate without manual entry.
+
+### farm-registry (port 3005, Express + JSON)
+
+Already partially integrated via `POST /api/fields/sync-registry`. Provides:
+- Authoritative field names and aliases (56 fields, 5,155 ac)
+- `reportingAcres` — the canonical acre number used consistently across all apps
+- `organicAcres`, ownership, landlord info
+- Organic/transitional/conventional breakdown per field (cert matrix)
+
+---
+
+## What NOP Inspectors Actually Review
+
+Based on verified NOP requirements (7 CFR 205, Oregon Tilth recordkeeping guide, USDA crop documentation forms):
+
+**Five mandatory record categories for annual inspection:**
+
+1. **Seeds, Seedlings & Planting Stock** — Purchase receipts/invoices, organic certificates from suppliers, documentation of treatments, Commercial Availability Search records for any non-organic seed (must be untreated and non-GMO), planting population.
+
+2. **Field Activities** — Planting dates, tillage operations, cultivation, mowing, weed/pest monitoring, crop rotation with field maps.
+
+3. **Input Materials** — Every application: crop/field/date/rate/method/reason. Purchase receipts for all inputs. Manure: source, quantity, C:N ratio, days-to-harvest interval (NOP 205.203). Custom applicator cleanout documentation.
+
+4. **Harvest, Handling & Storage** — Harvest dates, quantities by crop and field, post-harvest cleaning procedures, storage location and inventory, clean transport affidavits for shared equipment.
+
+5. **Sales & Transactions** — Crop type, quantity, sale date, buyer. Buyers must have organic certification number (verifiable on USDA Organic Integrity Database).
+
+**Two critical audit checks:**
+
+- **Mass Balance**: Total organic crops harvested = total sold + storage inventory ± transfers. Discrepancies must be explainable. This is the single most-scrutinized calculation in any NOP inspection.
+- **Yield Plausibility**: Harvest amounts must be consistent with planting records. Implausible yields (too high relative to planted acres) flag potential contamination/fraud.
+
+**Additional NOP requirements that map directly to existing organic-cert schema:**
+
+- Buffer zones (≥25 ft from adjacent conventional land) — `BufferZone` model exists
+- Adjacent land use documentation — `AdjacentLandUse` model exists
+- Equipment cleanout log (date, method, inspector, PASS/FAIL) when shared with conventional — `CleanoutEvent` model exists
+- 3-year field history showing all crops and substances — `FieldHistory` model exists
+- Crop rotation documentation — `CropRotation` model exists
+- Pest management hierarchy documentation (cultural → mechanical → biological → material) — `ManagementAction` model with `hierarchicalStep` exists
+
+The schema is already complete for NOP compliance. The gap is **data population**.
 
 ---
 
@@ -57,131 +110,131 @@ Scale of operation: 100–500 loads per season. Primary users: farm office staff
 
 ### Table Stakes (Users Expect These)
 
-Features the farm office staff assumes exist. Missing these means the milestone is not complete.
+Features an inspector or farm manager expects to exist. Missing these means the inspection packet is incomplete or the double-entry problem is not solved.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Destination field on tickets | Every load goes to a specific buyer; free-text notes is fragile and unsearchable | LOW | Add `destinationId` as a first-class FK field referencing a Buyer record. Replaces the current pattern of burying "WR Trk# 41" in notes. |
-| Buyer/destination registry | Co-op, elevator, maltster, broker need structured records, not free text | LOW | Simple CRUD: name, type (co-op, elevator, broker, maltster), shortCode, contact, notes. 4–10 records at Hughes Farm. |
-| cropYear field on tickets | Settlements are per-season; matching 2024 corn against 2025 corn is wrong | LOW | Add `cropYear` (integer) to tickets. Already implicit in data (date field exists) but needs to be explicit for grouping and matching. |
-| Settlement import (CSV/Excel) | Buyers send statements digitally; re-keying 100–500 loads by hand defeats the system | HIGH | Column mapping UI required — every buyer uses different column headers. Must handle missing/extra columns, partial matches, preview before commit. |
-| Manual settlement entry | Paper-only buyers and PDF-only statements exist; import alone is insufficient | MEDIUM | Form-based entry for individual settlement lines. Required for any buyer who does not provide a digital file. |
-| Ticket-to-settlement matching | Core of reconciliation: link each farm ticket to the corresponding buyer settlement line | HIGH | Primary match key: ticket number (exact). Secondary: date + weight fuzzy match for tickets without a number on the settlement. Match within same buyer and cropYear. |
-| Discrepancy detection | Flag loads that appear only on one side — the missing load problem | MEDIUM | Three states: matched, farm-only (not on settlement), settlement-only (not in farm records). Auto-flag on import. A JasBo user found one missing load that "paid for the software itself." |
-| Reconciliation status per ticket | Farm office needs to know: paid, unpaid, disputed — at a glance | LOW | Enum on ticket: `unreconciled`, `matched`, `disputed`, `manual-override`. Color coding in list view. |
-| Settlement summary view | Total bushels, total net $, average price per crop/buyer/season | MEDIUM | Aggregate across matched records. Compare farm-calculated bushels vs buyer-settled bushels side by side. This is the "did we get paid correctly?" view. |
+| Pull organic enterprises from farm-budget | Core promise of v3.0: no re-entry of the crop plan | MEDIUM | Call `GET /api/fields?category=organic` from farm-budget. Map to organic-cert FieldEnterprise records. Match by registry field name/alias. Create or update, do not overwrite manual records. |
+| Pull input plans from farm-budget | Inputs are assigned in farm-budget per field; re-entering them in organic-cert is the primary pain point today | MEDIUM | Each farm-budget field has an `inputs` array (productName, quantity, season). Map product names to organic-cert Material records. Create MaterialUsage drafts tagged as "budget-import" for review before commit. |
+| Pull seed varieties from farm-budget | Seed sourcing documentation is required by NOP; seeds are already in farm-budget | LOW | Farm-budget `/api/seeds` provides crop, brand, variety, supplierId. Map to organic-cert SeedLot records. Flag any variety not marked organic for commercial availability search. |
+| Pull harvest weights from grain-tickets | Actual harvest pounds are the foundation of mass balance; grain-tickets has the certified scale weights | MEDIUM | After grain-tickets v2.0: call grain-tickets API by field + crop + cropYear. Populate HarvestEvent records. Tag dataSource as SYNCED. Real weight from scale tickets, not estimated yield. |
+| Pull field identities from farm-registry | Authoritative field names, aliases, acres, organic status — already partially built | LOW | Already implemented in `POST /api/fields/sync-registry`. Fix the runtime crash (data.unmatched undefined, known tech debt). Run on demand before each compilation. |
+| Yearly rotation snapshot | farm-budget is rebuilt each season; organic-cert needs to accumulate 3-year history from single-season data | MEDIUM | At end-of-season (or on demand): read current-year enterprises and lock them into FieldHistory records. This is how year-over-year crop rotation evidence is preserved when farm-budget is wiped and rebuilt for next year. |
+| Pre-flight compilation status dashboard | Before generating the PDF, show: which fields are ready, which are missing data, what gaps exist | MEDIUM | "Compilation readiness" view: field list with green/yellow/red status. Green = all required sections populated. Yellow = partial (e.g., no buffer zone documentation). Red = blocking gaps (e.g., no field history). |
+| Compiled inspection PDF from live data | The current PDF draws from organic-cert's own database. After v3.0 the database is populated from the ecosystem. The PDF itself does not change — but its data source does. | LOW | No PDF code change needed. The report assembler already reads from Prisma. Once the ecosystem data populates the Prisma tables, the PDF reflects it automatically. |
+| Data source transparency in UI | Inspector asks "where did this input record come from?" Farm manager must be able to answer | LOW | DataSource enum (MANUAL / SYNCED) already on FieldOperation. Extend to MaterialUsage and HarvestEvent. Show "from farm-budget" or "from grain-tickets" badges in the UI. Mark rows pulled from the ecosystem so they are never confused with manually-entered records. |
+| Manual override capability | Some data exists only in organic-cert (buffer zones, pest scouting narratives). Must coexist with pulled data | LOW | Already by design: the leech pattern means organic-cert reads from ecosystem but never writes back. Manual records are preserved. Pulled records fill gaps. Manual records always win on conflict (existing policy). |
 
-### Differentiators (Competitive Advantage)
+### Differentiators (What Makes This Better Than the Status Quo)
 
-Features that make this system more useful than a spreadsheet or generic farm tool.
+Features that make this materially better than a standalone data-entry app and justify the compilation engine investment.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Unmatched load alert dashboard | One screen showing all farm-only tickets and all settlement-only lines — the "what's missing?" view | MEDIUM | The highest-value single view. Commercial tools generate a printout for manual comparison; this shows it automatically. |
-| Weight discrepancy tolerance flag | Normal variance is 0.25–0.5%; flag loads where buyer weight differs from farm weight beyond a configurable threshold | MEDIUM | Per-crop configurable tolerance (default 1%). Auto-flag on match. Show variance in lbs and %. Distinguishes normal handling loss from actual discrepancies. |
-| Buyer column map persistence | After mapping a buyer's CSV columns once, remember the mapping — don't ask again next season | MEDIUM | Store column map per buyer. Detect column headers on re-import, apply saved map automatically. Major time saver after first import cycle. |
-| Settlement total vs farm total | After import: "Farm says 12,400 bu @ $5.10 = $63,240. Buyer settled 12,380 bu @ $5.10 = $63,138. Difference: -$102." | LOW | Pure arithmetic once matching is done. High value for farm manager's end-of-settlement verification. |
-| Disputed ticket workflow | When a discrepancy can't be auto-resolved, mark as disputed, add notes, track resolution | LOW | Add `disputedNote` and `resolvedAt` fields. Simple status progression: unreconciled → disputed → resolved. No complex workflow needed. |
-| Multi-buyer season summary | All 4+ buyers on one screen: crop, bushels settled, avg price, total payment per buyer | LOW | Aggregate query once data model exists. Farm manager's primary end-of-season view. |
+| Zero re-entry for the crop plan | Farm manager enters crop plan once in farm-budget; organic-cert inspection packet is ready without additional input | HIGH (overall arch) | This is the milestone's entire thesis. Individual pulls (fields, inputs, seeds, harvest) each add a piece. Full zero-re-entry requires all pulls working together. |
+| Rotation snapshot mechanism | farm-budget is single-season and rebuilt yearly; this is the only way to accumulate NOP-required 3-year field history automatically | MEDIUM | Snapshot triggered at season close: read all FieldEnterprise records for cropYear, write to FieldHistory. Guard: do not overwrite existing FieldHistory records (they may have more detail). Mark snapshot records as "auto-generated from YYYY plan". |
+| Compilation readiness gate | Inspector shows up in March; farm manager knows 2 weeks earlier which fields need attention | MEDIUM | Per-field checklist driven by required NOP record types. Not compliance scoring (inspector does that) — just presence/absence of required record categories. |
+| Linked inspection audit trail | Every record in the packet shows its source (manually entered, from farm-budget, from grain-tickets, synced from Case IH) | LOW | Extends existing DataSource tracking. Provides traceability that answers the inspector's "how do you know this?" question. |
+| Mass balance from real scale weights | Current: harvest records entered manually, often estimated. v3.0: grain-tickets provides actual certified scale weights. Mass balance becomes accurate. | MEDIUM | Depends on grain-tickets v2.0 field-linkage being complete. High value: a tight mass balance (within 2% tolerance) significantly reduces inspection scrutiny. |
+| Input plan vs. actual application diff | After pulling the crop plan from farm-budget, show where actual Case IH-synced applications diverged from the plan | HIGH | "Planned: 2 gal/ac CX-1 on Kopps. Actual: 1.8 gal/ac on June 14." This is the kind of documentation that turns a routine inspection into a smooth one. Builds on existing SyncedOperation / staged-ops infrastructure. |
 
-### Anti-Features (Commonly Requested, Often Problematic)
+### Anti-Features (Avoid These)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Full elevator-side software | "Track storage, contracts, shrink tables like GrainTrac" | That is the elevator's job. Hughes Farm is the seller. Building elevator features doubles scope with zero user value to a farm-side system. | Track only what the farm needs: what was delivered, what was settled, what the discrepancy is. |
-| Real-time futures price integration | "Pull current CME prices" | Prices are set by contracts already signed. Futures integration requires a paid market data API, creates a trading tool UX, and adds unreliable external dependency. | Store the price from the settlement statement as received. Let the farmer compare to their contracts manually. |
-| Full contract management (forward, basis, HTA) | Farm has forward contracts; wants to track delivery against them | Contract management is a separate domain with complex pricing models (Hedge to Arrive, Basis Fixed, etc.). Scope creep risk is extreme. | Store contract number as a notes field on settlement. Full contract management is a future milestone. |
-| Automated PDF settlement parsing | "Import PDFs from buyers who don't send CSV" | PDF parsing is brittle, format varies wildly, OCR adds infrastructure complexity. Small number of paper-only buyers don't justify the investment. | Manual entry form for paper/PDF buyers. Fast form with autocomplete fields. Claude Vision already exists for ticket scanning — extending it to settlement PDFs is possible but not validated as needed yet. |
-| Automatic moisture correction reconciliation | "Auto-adjust farm weight to match elevator's moisture reading" | Farm doesn't control the elevator's moisture test. Auto-adjusting farm records to match buyer records destroys the traceability evidence and masks real discrepancies. | Show the variance. Let the farmer decide if it is within normal tolerance or worth disputing. Never auto-modify farm records to match buyer records. |
-| Push notifications / email alerts for discrepancies | "Alert me when a new discrepancy is found" | This is an internal office tool used during a defined reconciliation workflow, not a real-time monitoring system. Notifications add infrastructure (email/SMS service) with marginal value. | Dashboard with a "X items need attention" badge. Sufficient for the use case. |
+| Writing back to farm-budget from organic-cert | "If organic-cert rejects an input, update farm-budget to reflect that" | Violates the leech pattern. Organic-cert is a read-only consumer of farm-budget data. Bidirectional sync is a two-way data integrity nightmare. farm-budget is the source of planning truth; it should not be modified by organic-cert's compliance layer. | The NOP compliance flag (APPROVED/RESTRICTED/PROHIBITED) lives in organic-cert's Material table. A "prohibited material in plan" alert in organic-cert is sufficient. |
+| Auto-compliance scoring | "Tell me if I pass or fail before the inspector comes" | The inspector makes the compliance determination. An automated pass/fail score creates liability and false confidence. NOP violations are contextual and require human judgment. | Show data completeness (what's missing) and flag prohibited materials. Never emit a compliance verdict. |
+| Real-time sync to farm-budget on every page load | "Keep organic-cert always in sync with farm-budget" | farm-budget is JSON-backed and not designed for high-frequency polling. Real-time sync creates tight coupling between apps, dependency on farm-budget uptime for organic-cert functionality, and stale-data confusion when farm-budget is offline. | On-demand pull triggered by the farm manager: "Refresh from farm-budget" button on the compilation dashboard. Pre-inspection workflow does not need millisecond latency. |
+| Replacing manual data entry entirely | "Make organic-cert fully automatic — no manual input at all" | NOP requires farm-specific documentation that no API provides: buffer zone measurements, adjacent land owner contacts, pest scouting observations, narrative descriptions of practices. These are the farm manager's knowledge, not data. | Eliminate re-entry of ecosystem data (inputs, fields, seeds, harvests). Preserve manual entry for NOP-specific documentation that only the farm manager can provide. |
+| Inspector portal / digital inspection workflow | "Let the inspector log in and review records digitally" | Inspectors work on-site with printed packets. A digital portal requires inspector identity management, access control for external parties, mobile-optimized UI, and offline capability. None of this adds value for an operation that hands the inspector a 30-page PDF. | Print-ready PDF packet. This is established in PROJECT.md as the correct UX decision (v1.0 rationale). |
+| Multi-certifier support (EU, state programs) | "We might get EU certified someday" | Different certifiers have different form requirements, field history lengths, and material approval lists. Supporting multiple simultaneously doubles the compliance layer complexity. | USDA NOP only for v3.0. The architecture does not preclude future multi-certifier support — the certPrograms JSON field on CropCertRequest already accommodates it. |
+| Automated PDF parsing of organic certificates | "Auto-import OMRI listing PDFs to populate the material database" | OMRI listing PDFs are inconsistently formatted. The value is low — the farm uses a small, stable set of ~20 approved materials. Parsing infrastructure adds complexity for a one-time setup task. | Manual material setup for the ~20 materials in the farm-budget product list. The farm-budget pull auto-creates Material stubs; NOP status is annotated once by the farm manager. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Buyer registry
-    └──required by──> Destination field on tickets
-    └──required by──> Settlement import (column map stored per buyer)
-    └──required by──> Ticket-to-settlement matching (match within same buyer)
-    └──required by──> Multi-buyer season summary
+farm-registry sync (already built, needs crash fix)
+    └──required by──> Pull organic enterprises from farm-budget (need field ID matching)
+    └──required by──> Pull harvest weights from grain-tickets (need field ID matching)
+    └──required by──> Compilation readiness dashboard (need canonical field list)
 
-cropYear on tickets
-    └──required by──> Ticket-to-settlement matching (avoid cross-season matches)
-    └──required by──> Settlement summary view (per-season totals)
-    └──required by──> Unmatched load alert dashboard (scoped to season)
+Pull organic enterprises from farm-budget
+    └──required by──> Pull input plans from farm-budget (enterprise must exist to attach inputs)
+    └──required by──> Pull seed varieties from farm-budget (need enterprise context)
+    └──required by──> Rotation snapshot mechanism (must have enterprise records to snapshot)
+    └──required by──> Compilation readiness dashboard (fields/enterprises are the unit of review)
+    └──requires──>    farm-registry sync (field name matching)
+    └──requires──>    farm-budget /api/fields endpoint (already exists)
 
-Database migration (Prisma + PostgreSQL)
-    └──required by──> ALL new features — relational joins across tickets, buyers,
-                       settlements are not possible in flat JSON
+Pull input plans from farm-budget
+    └──required by──> Pre-flight compilation status (input coverage per field)
+    └──requires──>    Pull organic enterprises from farm-budget
+    └──requires──>    Material records in organic-cert (create stubs on first pull)
 
-Settlement import (CSV/Excel)
-    └──required by──> Ticket-to-settlement matching
-    └──required by──> Discrepancy detection
-    └──requires──>    Buyer registry (import is always for a specific buyer)
-    └──requires──>    Buyer column map (or UI to create one on first import)
+Pull seed varieties from farm-budget
+    └──required by──> Seed sources section in PDF (no manual re-entry)
+    └──requires──>    Pull organic enterprises from farm-budget
 
-Manual settlement entry
-    └──required by──> Ticket-to-settlement matching (paper buyers must enter this way)
-    └──requires──>    Buyer registry
+Rotation snapshot mechanism
+    └──required by──> 3-year field history in PDF (accurate after 2nd and 3rd season)
+    └──requires──>    Pull organic enterprises from farm-budget (current year data must exist)
+    └──required by──> OCIA C2.0 module (already uses FieldHistory)
 
-Ticket-to-settlement matching
-    └──required by──> Discrepancy detection
-    └──required by──> Reconciliation status per ticket
-    └──required by──> Settlement total vs farm total
-    └──required by──> Unmatched load alert dashboard
+Pull harvest weights from grain-tickets
+    └──required by──> Mass balance from real scale weights
+    └──requires──>    grain-tickets v2.0 field-linkage complete (phases 11-13)
+    └──requires──>    farm-registry sync (field name matching across apps)
 
-Reconciliation status per ticket
-    └──required by──> Disputed ticket workflow
-    └──required by──> Unmatched load alert dashboard (filter on status)
+Compilation readiness dashboard
+    └──required by──> Compilation workflow gate (don't generate PDF with gaps)
+    └──requires──>    Pull organic enterprises from farm-budget (fields list)
+    └──requires──>    farm-registry sync
 
-Buyer column map persistence
-    └──enhances──>    Settlement import (re-import without re-mapping)
-    └──requires──>    Buyer registry (map stored per buyer)
+Input plan vs. actual application diff
+    └──requires──>    Pull input plans from farm-budget
+    └──requires──>    Case IH FieldOps staged-ops (already built in v1.0)
+    └──enhances──>    Compilation readiness dashboard
+
+Data source transparency in UI
+    └──enhances──>    All pulled data features (shows origin of each record)
+    └──requires──>    DataSource enum extension to MaterialUsage and HarvestEvent
 ```
 
 ### Dependency Notes
 
-- **Buyer registry must be first.** Every other new entity references a buyer. Build buyer CRUD before destination field, import, or matching.
-- **cropYear must be added to tickets before matching is built.** Without it, matching is ambiguous across seasons.
-- **Database migration is the prerequisite gate.** Flat JSON cannot serve cross-entity queries. All new features are blocked until Prisma + PostgreSQL is in place.
-- **Manual settlement entry is not optional.** At least one buyer at Hughes Farm sends paper-only statements. Without a manual entry path, that buyer is unreconciled forever.
-- **Exact ticket number match is sufficient for MVP.** Most co-op and elevator settlement CSVs include the scale ticket number. Fuzzy match (date + weight) is a v2.x enhancement, needed only if evidence from real import cycles shows unmatched tickets that have no number on the buyer's statement.
+- **farm-registry sync must be fixed first.** The existing `POST /api/fields/sync-registry` has a known runtime crash (`data.unmatched undefined`). This is the field-matching foundation. Fix it before building any new ecosystem pulls.
+- **farm-budget pull comes before grain-tickets pull.** The farm-budget pull establishes the FieldEnterprise records that grain-tickets harvest data attaches to. Attempting grain-tickets integration without enterprises in place creates orphaned harvest records.
+- **Rotation snapshot is time-sensitive.** It must run before farm-budget is wiped and rebuilt for the next season. This means the snapshot workflow needs a clear trigger and documentation of when to run it (end of harvest, before December).
+- **grain-tickets v2.0 field-linkage is a prerequisite for harvest pull.** The grain-tickets app currently lacks field IDs on ticket records (they're freetext farm names). Phase 11-13 of v2.0 must add structured field linkage before the organic-cert harvest pull is feasible.
+- **Data source transparency is not a gate** — it can be added incrementally as each pull is implemented, one entity type at a time.
 
 ---
 
 ## MVP Definition
 
-### Launch With (v2.0 — this milestone)
+### v3.0 Core (This Milestone)
 
-What must exist for the milestone to deliver its core value: "tracks every load from combine to settlement, reconciles against buyer payments, and flags discrepancies immediately."
+What delivers the stated goal: "pulls from farm-budget, farm-registry, grain-tickets — compiles NOP inspection packet with zero double-entry."
 
-- [ ] Database migration (Express + Prisma + PostgreSQL, preserve existing UI and PWA) — prerequisite for everything
-- [ ] Buyer/destination registry — 4–10 records, simple CRUD, shortCode for UI display
-- [ ] Destination field on tickets — structured FK to buyer registry, replaces free-text destination in notes
-- [ ] cropYear field on tickets — integer, enables season scoping
-- [ ] Settlement import (CSV with column mapping UI) — primary digital buyer path; preview before commit
-- [ ] Manual settlement entry — form-based for paper/PDF buyers; all fields that appear on settlement statements
-- [ ] Ticket-to-settlement matching by ticket number — exact match first, same buyer and cropYear
-- [ ] Reconciliation status per ticket — unreconciled / matched / disputed / manual-override
-- [ ] Unmatched load alert dashboard — farm-only tickets and settlement-only lines, filterable by buyer and cropYear
-- [ ] Settlement summary view — farm total vs buyer settled total per crop/buyer/season
+- [ ] Fix farm-registry sync crash — prerequisite for all field matching
+- [ ] Pull organic enterprises from farm-budget — crops, fields, acres come in automatically
+- [ ] Pull input plans from farm-budget — MaterialUsage records created from budget inputs, tagged "budget-import", staged for review
+- [ ] Pull seed varieties from farm-budget — SeedLot stubs created, farm manager annotates NOP status once
+- [ ] Rotation snapshot mechanism — end-of-season one-button snapshot writes current enterprises to FieldHistory
+- [ ] Compilation readiness dashboard — per-field status: what's complete, what's missing, what's blocking
+- [ ] Data source badges in UI — show where each record came from (farm-budget / grain-tickets / Case IH / manual)
 
-### Add After Validation (v2.x)
+### After grain-tickets v2.0 Field Linkage
 
-After the first full season of use reveals real usage patterns:
+- [ ] Pull harvest weights from grain-tickets — real certified scale weights replace estimated yields in HarvestEvent records
+- [ ] Mass balance from real scale weights — tight mass balance with verified numbers
 
-- [ ] Weight discrepancy tolerance flagging — add once real variance data from first import cycle is available
-- [ ] Buyer column map persistence — add after first import cycle shows re-mapping burden
-- [ ] Disputed ticket workflow (notes + resolvedAt) — add when farm manager reports needing to track resolution
-- [ ] Multi-buyer season summary — add once all buyers are loaded and a full season has been reconciled
+### After First Full Inspection Cycle
 
-### Future Consideration (v3+)
-
-- [ ] Crop insurance yield report with reconciled totals — requires understanding FSA/insurance workflow; existing guarantee/coverage/claimThreshold fields in farm-summary provide the foundation
-- [ ] Fuzzy settlement matching (date + weight) — only if exact ticket number matching leaves significant unmatched loads
-- [ ] Contract tracking (forward, basis, HTA) — separate milestone, significant domain complexity
-- [ ] Settlement PDF parsing via Claude Vision — only if paper buyer volume justifies engineering cost vs manual entry
+- [ ] Input plan vs. actual application diff — "planned vs. actual" view; valuable but requires a full season of Case IH sync data to be meaningful
+- [ ] Compilation readiness refinement — tune the completeness checks based on what the inspector actually asked for
 
 ---
 
@@ -189,95 +242,97 @@ After the first full season of use reveals real usage patterns:
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Database migration | HIGH (prerequisite) | MEDIUM | P1 |
-| Buyer registry | HIGH | LOW | P1 |
-| Destination field on tickets | HIGH | LOW | P1 |
-| cropYear on tickets | HIGH | LOW | P1 |
-| Settlement import CSV with column mapping | HIGH | HIGH | P1 |
-| Manual settlement entry | HIGH | MEDIUM | P1 |
-| Ticket-to-settlement matching | HIGH | HIGH | P1 |
-| Reconciliation status per ticket | HIGH | LOW | P1 |
-| Unmatched load alert dashboard | HIGH | MEDIUM | P1 |
-| Settlement summary view | HIGH | LOW | P1 |
-| Weight discrepancy tolerance flag | MEDIUM | MEDIUM | P2 |
-| Buyer column map persistence | MEDIUM | MEDIUM | P2 |
-| Disputed ticket workflow | MEDIUM | LOW | P2 |
-| Multi-buyer season summary | MEDIUM | LOW | P2 |
-| Crop insurance yield report | MEDIUM | MEDIUM | P3 |
-| Fuzzy match (date + weight) | LOW-MEDIUM | MEDIUM | P3 |
-| Contract management | LOW (this scope) | HIGH | defer |
+| Fix farm-registry sync crash | HIGH (blocks field matching) | LOW (bug fix, known location) | P1 |
+| Pull organic enterprises from farm-budget | HIGH (core of double-entry elimination) | MEDIUM | P1 |
+| Pull input plans from farm-budget | HIGH (biggest manual re-entry pain) | MEDIUM | P1 |
+| Pull seed varieties from farm-budget | MEDIUM (smaller but still re-entry) | LOW | P1 |
+| Rotation snapshot mechanism | HIGH (NOP 3-year history requirement) | MEDIUM | P1 |
+| Compilation readiness dashboard | HIGH (confidence before inspection) | MEDIUM | P1 |
+| Data source badges in UI | MEDIUM (transparency for inspector Q&A) | LOW | P1 |
+| Pull harvest weights from grain-tickets | HIGH (mass balance accuracy) | MEDIUM (blocked on grain-tickets v2.0) | P2 |
+| Input plan vs. actual diff | MEDIUM (nice for inspection prep) | HIGH (requires full Case IH season) | P2 |
+| Multi-certifier support | LOW (future need, not current) | HIGH | P3 |
+| Inspector digital portal | LOW (paper PDF is sufficient) | HIGH | defer |
 
 **Priority key:**
-- P1: Must have for milestone launch
-- P2: Add in v2.x patch after first-season validation
-- P3: Future milestone consideration
+- P1: Must ship in v3.0
+- P2: Add when prerequisite system is ready
+- P3: Future milestone
+- defer: Out of scope per PROJECT.md
 
 ---
 
-## Settlement Statement Reality
+## Compilation Readiness: What Constitutes "Complete" Per Field
 
-Based on PROJECT.md workflow description, farmer forum accounts, and commercial grain software documentation:
+Based on NOP inspection requirements, a field enterprise is considered inspection-ready when:
 
-**What a buyer settlement statement typically contains:**
+| Record Type | Required? | Source After v3.0 |
+|-------------|-----------|-------------------|
+| Field identity (name, acres, organic status) | Required | farm-registry sync |
+| Current-year enterprise (crop, planted acres) | Required | farm-budget pull |
+| 3-year field history (crop, substances, year) | Required | Rotation snapshots + manual |
+| At least one seed usage record | Required | farm-budget pull |
+| Input applications (if any inputs used) | Required if inputs used | farm-budget pull → review |
+| Harvest record (date, weight, lot number) | Required | grain-tickets pull or manual |
+| Buffer zone documentation (≥25 ft) | Required for organic fields | Manual entry only |
+| Adjacent land use documentation | Required | Manual entry only |
+| Equipment cleanout record (if shared equipment) | Required if shared | Manual entry only |
 
-| Field | Notes |
-|-------|-------|
-| Ticket/scale number | Primary match key — always present on elevator-printed tickets |
-| Date received | May differ from farm delivery date by 1–2 days |
-| Gross weight, tare weight, net weight | Elevator's measurement — may differ from farm buggy weight by 0.25–0.5% |
-| Moisture % | Measured at elevator intake — may differ from farm's field reading |
-| Test weight (lbs/bu) | Used for grade and price adjustment |
-| Net bushels (after shrink) | Key figure — this is what gets paid |
-| Price per bushel | From contract or spot price |
-| Deductions | Drying charge, FM dock, handling, freight, storage |
-| Net payment | Gross - deductions |
-| Contract number | Which pricing contract this load applies to |
-
-**Format variation is the real challenge:**
-- Large co-ops: CSV or Excel download — importable with column mapping
-- Maltsters (Meristem Malt in this ecosystem): likely custom format
-- Specialty buyers: often PDF or paper — manual entry required
-- Grain elevators: may provide portal download or email PDF
-
-**Column header variation examples (same data, different headers):**
-- Net weight: "Net Wt", "NET WEIGHT", "Net Pounds", "NET LBS"
-- Ticket number: "Ticket", "Scale Ticket", "Ticket No", "TICKET #", "Ticket Number"
-- Net bushels: "Net Bu", "NET BUSHELS", "Bushels", "NET BU"
-
-This is why column mapping persistence per buyer is valuable after the first import cycle.
+Buffer zones, adjacent land use, and equipment cleanout are the last remaining manual-entry requirements that no API in the ecosystem can fill. These are field-specific physical observations that only the farm manager can document.
 
 ---
 
-## Competitor Feature Analysis
+## Rotation Snapshot: Design Notes
 
-This is a farm-side system (seller/producer perspective), not an elevator system (buyer/receiver perspective). Most commercial grain software is elevator-facing. The relevant comparison is against farm management tools with settlement tracking.
+The rotation snapshot is a critical and non-obvious feature. Rationale from PROJECT.md:
 
-| Feature | JasBo Technologies | GrainFlow | Spreadsheet (current) | Our Approach |
-|---------|-------------------|-----------|-----------------------|--------------|
-| Settlement import | Not described | Not described | Manual entry | CSV import with column mapping UI |
-| Discrepancy detection | User finds missing loads manually | Printout to compare vs statement | Manual line-by-line | Automated: flag farm-only and settlement-only on import |
-| Buyer management | Not described | Not described | Named tabs per crop | First-class buyer registry |
-| Multi-buyer | Not described | Not described | 31 separate sheets | Unified view across all buyers |
-| Manual entry | Required for paper | Required for paper | Default method | Form for paper/PDF buyers |
-| Weight tolerance | Not described | Manual comparison | Manual check | Configurable threshold flag |
+> Farm-budget is single-season (rebuilt yearly); organic-cert must accumulate rotation history via annual snapshots.
 
-Key insight: Commercial farm-side tools generate a comparison printout that the farmer reconciles manually. The gap is automation — matching and flagging automatically so the farmer reviews only exceptions, not every line.
+**What triggers a snapshot:**
+- Farm manager clicks "Lock [year] rotation" on the compilation dashboard
+- Can also trigger automatically at a configurable date (e.g., December 1)
+- Must be repeatable without data loss (idempotent)
+
+**What a snapshot writes:**
+For each FieldEnterprise in the given cropYear:
+- Writes a FieldHistory record: `{fieldId, year: cropYear, crop, organicStatus, yieldPerAcre, yieldUnit, coverCrop (if present), substances (summary of inputs applied)}`
+- Guard: if FieldHistory already exists for this `[fieldId, year]`, do not overwrite (it may have been manually augmented)
+- Logs snapshot action to AuditLog
+
+**Why this works:**
+After 3 seasons of snapshots, every field has 3 years of FieldHistory records. The C2.0 assembler and PDF report assembler already read FieldHistory for the 3-year rotation table — they require no changes.
+
+**Risk:** If the snapshot is not run before farm-budget is rebuilt, the history for that year is lost. The compilation dashboard should warn: "farm-budget data for [year] detected. No rotation snapshot exists. Lock rotation before updating farm-budget."
+
+---
+
+## Ecosystem API Gap Analysis
+
+Known gaps that must be resolved in each source app before the pull can work:
+
+| Gap | Source App | Resolution |
+|-----|-----------|------------|
+| `farm-budget /api/fields` does not expose organic/conventional category in a queryable way | farm-budget | Filter on `systemCode` containing "ORG" or enterprise `category === 'organic'`. Both exist in the data.json fields. API endpoint `/api/fields?category=organic` or filter client-side after `/api/fields?all=true`. |
+| `grain-tickets` ticket records have no structured field ID linkage | grain-tickets | Blocked until grain-tickets v2.0 phases 11-13 add field FK. Do not attempt this pull in v3.0 if those phases are incomplete. |
+| `farm-registry sync` crashes on `data.unmatched undefined` | organic-cert | Known tech debt from v1.1 audit. Fix before v3.0 work starts. One-line null check. |
+| `farm-budget /api/products` does not expose OMRI listing or NOP approval status | farm-budget | NOP status is owned by organic-cert. On pull, create Material stubs with `nopStatus: null` (pending annotation). Farm manager sets status once. After that, the annotation persists across seasons because Material is reused. |
+| `farm-budget /api/seeds` does not expose `isOrganic` or `certNumber` | farm-budget | Same pattern as materials: create SeedLot stubs with `isOrganic: null` pending annotation. Farm manager flags organic/non-organic once. Provenance flag is a one-time annotation, not re-entered each season. |
 
 ---
 
 ## Sources
 
-- [Grain Farm Software | Vertical Software](https://www.verticalsoftware.net/grain-farm-software/) — settlement tracking, contract balance, ticket-to-settlement matching patterns (MEDIUM confidence — vendor marketing)
-- [Ag software: JasBo Technologies | Farm Progress](https://www.farmprogress.com/technology/ag-software-grain-management-with-jasbo-technologies-) — missing load discovery, settlement reconciliation workflow; finding one missing load "paid for the software itself" (MEDIUM confidence — trade press)
-- [Grain settlement checks thread | NewAgTalk forum](https://talk.newagtalk.com/forums/thread-view.asp?tid=542304&DisplayType=nested&setCookie=1) — real farmer accounts: missing loads, contract misapplication, payment errors, manual defensive tracking (HIGH confidence for user behavior patterns — direct user reports)
-- [Settlements in Grain | Agvance Help Center](https://helpcenter.agvance.net/home/settlements-in-grain) — settlement data model, destination types, contract types, deduction types (MEDIUM confidence — vendor docs)
-- [GMS Grain Management — Ticket Entry Fields](https://www.gmsgrain.com/2022/04/03/on-line-ticket-entry/) — complete ticket field list: gross/tare/net weight, moisture, FM, test weight, commodity, farm/field, truck ID, contract number (HIGH confidence — vendor documentation of actual system fields)
-- [Understanding Grain Discount Schedules | Penn State Extension](https://extension.psu.edu/understanding-grain-discount-schedules) — moisture shrink mechanics, FM discounts, test weight (HIGH confidence — university extension)
-- [Dynamics 365 for Grain Management | Stoneridge Software](https://stoneridgesoftware.com/dynamics-365-for-grain-management-solutions/) — automated ticket integration, contract matching patterns (MEDIUM confidence — vendor)
-- [Grain Settlement FAQs | The Andersons](https://www.andersonsgrain.com/tools/settlement/) — buyer-side settlement fields and process (MEDIUM confidence — actual grain buyer)
-- [Top 7 Grain Management Software 2025 | SafetyCulture](https://safetyculture.com/apps/grain-management-software) — ecosystem overview (LOW-MEDIUM confidence — aggregator)
+- **Oregon Tilth — The Trail of Records: Mastering Recordkeeping for Crop Organic Operations** — five record categories, mass balance audit, yield plausibility check; HIGH confidence (accredited certifier documentation)
+- **USDA NOP eCFR 7 CFR 205.103** — recordkeeping requirements for certified operations, 5-year retention, audit trail; HIGH confidence (federal regulation)
+- **USDA 7 CFR 205.201** — organic system plan requirements; HIGH confidence (federal regulation)
+- **USDA NOP Strengthening Organic Enforcement rule (effective March 2024)** — codified mock audit requirement, enhanced traceability; HIGH confidence (Federal Register)
+- **OCIA C2.0 Crop Production Overview** — 36-month field histories, acreage summary, crops requested for certification; HIGH confidence (certifier documentation, already implemented in organic-cert C2 module)
+- **USDA AMS buffer zone guidance (NOP)** — ≥25 ft buffer requirement, inspector review of buffer documentation; HIGH confidence (USDA guidance document)
+- **PROJECT.md / DOMAIN-CONTEXT.md** — ecosystem architecture, farm-budget data model, grain workflow, rotation snapshot decision rationale; HIGH confidence (primary source)
+- **organic-cert source code** — existing schema, assemblers, API routes; HIGH confidence (ground truth)
+- **farm-budget import.js / public/seed-manager.js** — farm-budget data structure and available API fields; HIGH confidence (ground truth)
 
 ---
 
-*Feature research for: grain traceability and settlement reconciliation (grain-tickets v2.0 milestone)*
+*Feature research for: organic-cert v3.0 compilation engine (NOP inspection packet from ecosystem data)*
 *Researched: 2026-03-01*
