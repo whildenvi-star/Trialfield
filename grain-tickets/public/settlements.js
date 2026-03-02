@@ -11,6 +11,10 @@
   var parsedHeaders = [];
   var settlementsInitialized = false;
 
+  // Reconciliation selection state for manual linking
+  var selectedFarmTicketId = null;
+  var selectedSettlementLineId = null;
+
   // The 8 SettlementLine fields available for column mapping and manual entry
   var SETTLEMENT_FIELDS = [
     { key: 'ticketNo',   label: 'Ticket Number',   required: true,  type: 'text',   step: null,     placeholder: 'e.g. H066666' },
@@ -61,6 +65,7 @@
         // Load data for specific views
         if (target === 'history') loadSettlements();
         if (target === 'manual') renderManualEntryView();
+        if (target === 'reconciliation') loadReconciliation();
       });
     });
 
@@ -321,7 +326,12 @@
         }
         // Success
         clearStatus();
-        showToast('Import complete — ' + res.data.linesCreated + ' lines created.');
+        var matchMsg = '';
+        if (res.data.matched !== undefined && res.data.unmatched !== undefined) {
+          matchMsg = ', ' + res.data.matched + ' matched, ' + res.data.unmatched + ' unmatched';
+        }
+        showSettlementToast('Import complete: ' + res.data.linesCreated + ' lines' + matchMsg);
+        showToast('Import complete — ' + res.data.linesCreated + ' lines created' + matchMsg + '.');
         resetImportForm();
         // Switch to history view
         var historyBtn = document.querySelector('.settlement-sub-nav .settlement-nav-btn[data-view="history"]');
@@ -823,14 +833,42 @@
     var sourceLabel = settlement.sourceFile ? escHtml(settlement.sourceFile) : '<em>Manual Entry</em>';
     var importedDate = settlement.importedAt ? new Date(settlement.importedAt).toLocaleDateString() : '--';
     headerCard.innerHTML =
-      '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;">' +
+      '<div style="display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-end;">' +
       '<div><span class="label" style="font-size:0.8rem;color:var(--text-light)">Buyer</span><br><strong>' + escHtml(buyerName) + '</strong></div>' +
       '<div><span class="label" style="font-size:0.8rem;color:var(--text-light)">Crop Year</span><br><strong>' + escHtml(String(settlement.cropYear)) + '</strong></div>' +
       '<div><span class="label" style="font-size:0.8rem;color:var(--text-light)">Source</span><br>' + sourceLabel + '</div>' +
       '<div><span class="label" style="font-size:0.8rem;color:var(--text-light)">Date</span><br>' + escHtml(importedDate) + '</div>' +
       '<div><span class="label" style="font-size:0.8rem;color:var(--text-light)">Lines</span><br><strong>' + lines.length + '</strong></div>' +
+      '<div style="margin-left:auto;"><button id="rematch-btn" class="btn-sm">Re-match Tickets</button></div>' +
       '</div>';
     container.appendChild(headerCard);
+
+    // Wire Re-match button
+    var rematchBtn = headerCard.querySelector('#rematch-btn');
+    if (rematchBtn) {
+      rematchBtn.addEventListener('click', function () {
+        rematchBtn.disabled = true;
+        rematchBtn.textContent = 'Re-matching...';
+        fetch('/api/settlements/' + settlement.id + '/rematch', { method: 'POST' })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (res) {
+            rematchBtn.disabled = false;
+            rematchBtn.textContent = 'Re-match Tickets';
+            if (!res.ok) {
+              showSettlementToast('Re-match failed: ' + (res.data.error || 'Unknown error'));
+              return;
+            }
+            var d = res.data;
+            showSettlementToast('Re-matched: ' + (d.matched || 0) + ' matched, ' + (d.unmatched || 0) + ' unmatched');
+            showToast('Re-matched: ' + (d.matched || 0) + ' matched, ' + (d.unmatched || 0) + ' unmatched');
+          })
+          .catch(function (err) {
+            rematchBtn.disabled = false;
+            rematchBtn.textContent = 'Re-match Tickets';
+            showSettlementToast('Re-match error: ' + err.message);
+          });
+      });
+    }
 
     // Lines table container
     var linesContainer = document.createElement('div');
@@ -1194,6 +1232,520 @@
     if (!div) return;
     div.textContent = '';
     div.style.display = 'none';
+  }
+
+  // ============================================================
+  // RECONCILIATION VIEW
+  // ============================================================
+
+  // --- Settlement toast (distinct from entry toast, appears bottom-right) ---
+  function showSettlementToast(msg, duration) {
+    duration = duration || 4000;
+    var toast = document.getElementById('settlement-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'settlement-toast';
+      toast.className = 'settlement-toast';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(function () {
+      toast.classList.remove('visible');
+    }, duration);
+  }
+
+  // --- Load the reconciliation view ---
+  function loadReconciliation() {
+    var container = document.getElementById('settlement-reconciliation');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Filter bar
+    var filterCard = document.createElement('div');
+    filterCard.className = 'import-form';
+    filterCard.style.marginBottom = '1.5rem';
+
+    var filterGrid = document.createElement('div');
+    filterGrid.className = 'form-grid';
+    filterGrid.style.marginBottom = '0';
+
+    // Buyer dropdown
+    var buyerGroup = document.createElement('div');
+    buyerGroup.className = 'form-group';
+    var buyerLabel = document.createElement('label');
+    buyerLabel.textContent = 'Buyer';
+    buyerLabel.setAttribute('for', 'recon-buyer');
+    var buyerSel = document.createElement('select');
+    buyerSel.id = 'recon-buyer';
+    buyerSel.innerHTML = buildBuyerOptions(null);
+    buyerGroup.appendChild(buyerLabel);
+    buyerGroup.appendChild(buyerSel);
+    filterGrid.appendChild(buyerGroup);
+
+    // Crop year dropdown (populated from known crop years)
+    var yearGroup = document.createElement('div');
+    yearGroup.className = 'form-group';
+    var yearLabel = document.createElement('label');
+    yearLabel.textContent = 'Crop Year';
+    yearLabel.setAttribute('for', 'recon-crop-year');
+    var yearSel = document.createElement('select');
+    yearSel.id = 'recon-crop-year';
+    var currentCropYear = getCropYear();
+    // Build a reasonable range of crop years
+    var yearOptions = '<option value="">Select year...</option>';
+    for (var y = currentCropYear; y >= currentCropYear - 5; y--) {
+      yearOptions += '<option value="' + y + '"' + (y === currentCropYear ? ' selected' : '') + '>' + y + '</option>';
+    }
+    yearSel.innerHTML = yearOptions;
+    yearGroup.appendChild(yearLabel);
+    yearGroup.appendChild(yearSel);
+    filterGrid.appendChild(yearGroup);
+
+    // Load button
+    var loadGroup = document.createElement('div');
+    loadGroup.className = 'form-group';
+    loadGroup.style.justifyContent = 'flex-end';
+    loadGroup.style.paddingTop = '1.4rem';
+    var loadBtn = document.createElement('button');
+    loadBtn.className = 'btn-primary';
+    loadBtn.textContent = 'Load';
+    loadBtn.id = 'recon-load-btn';
+    loadGroup.appendChild(loadBtn);
+    filterGrid.appendChild(loadGroup);
+
+    filterCard.appendChild(filterGrid);
+    container.appendChild(filterCard);
+
+    // Results area
+    var resultsArea = document.createElement('div');
+    resultsArea.id = 'recon-results';
+    container.appendChild(resultsArea);
+
+    loadBtn.addEventListener('click', function () {
+      var buyerId = buyerSel.value;
+      var cropYear = yearSel.value;
+      if (!buyerId) { showSettlementToast('Please select a buyer.'); return; }
+      if (!cropYear) { showSettlementToast('Please select a crop year.'); return; }
+      renderReconciliation(resultsArea, parseInt(buyerId, 10), parseInt(cropYear, 10));
+    });
+  }
+
+  // --- Render reconciliation results for a buyer + cropYear ---
+  function renderReconciliation(container, buyerId, cropYear) {
+    container.innerHTML = '<p style="color:var(--text-light)">Loading reconciliation data...</p>';
+
+    // Reset selection state
+    selectedFarmTicketId = null;
+    selectedSettlementLineId = null;
+
+    Promise.all([
+      fetch('/api/reconciliation/summary?buyerId=' + buyerId + '&cropYear=' + cropYear).then(function (r) { return r.json(); }),
+      fetch('/api/reconciliation/unmatched?buyerId=' + buyerId + '&cropYear=' + cropYear).then(function (r) { return r.json(); })
+    ]).then(function (results) {
+      var summary = results[0];
+      var unmatched = results[1];
+      container.innerHTML = '';
+
+      renderReconSummary(container, summary, buyerId, cropYear);
+      renderUnmatchedPanels(container, unmatched, buyerId, cropYear);
+    }).catch(function (err) {
+      container.innerHTML = '<p style="color:var(--danger)">Error loading reconciliation data: ' + err.message + '</p>';
+    });
+  }
+
+  // --- Render the settlement summary table (per-crop farm vs buyer lbs) ---
+  function renderReconSummary(container, summaryRows, buyerId, cropYear) {
+    var section = document.createElement('div');
+    section.style.marginBottom = '2rem';
+
+    var heading = document.createElement('h3');
+    heading.style.cssText = 'font-size:0.9rem;color:var(--primary);margin-bottom:0.75rem;font-weight:400;';
+    heading.textContent = 'Settlement Summary — ' + cropYear;
+    section.appendChild(heading);
+
+    if (!summaryRows || summaryRows.length === 0) {
+      var emptyMsg = document.createElement('p');
+      emptyMsg.style.color = 'var(--text-light)';
+      emptyMsg.style.fontStyle = 'italic';
+      emptyMsg.textContent = 'No settlement data for this buyer and crop year.';
+      section.appendChild(emptyMsg);
+      container.appendChild(section);
+      return;
+    }
+
+    var tableWrap = document.createElement('div');
+    tableWrap.className = 'table-wrap';
+
+    var tbl = document.createElement('table');
+    tbl.className = 'recon-summary-table';
+    tbl.innerHTML = '<thead><tr>' +
+      '<th>Crop</th>' +
+      '<th class="number">Farm Lbs</th>' +
+      '<th class="number">Buyer Lbs</th>' +
+      '<th class="number">Variance (lbs / %)</th>' +
+      '<th class="number">Tickets</th>' +
+      '</tr></thead>';
+
+    var tbody = document.createElement('tbody');
+    summaryRows.forEach(function (row) {
+      var tr = document.createElement('tr');
+      var variancePct = row.variancePct || 0;
+      var varianceClass = Math.abs(variancePct) <= 1 ? 'variance-ok' : 'variance-warn';
+      var varianceLbs = row.varianceLbs || 0;
+      var varianceSign = varianceLbs >= 0 ? '+' : '';
+      var varianceDisplay = varianceSign + Math.round(varianceLbs).toLocaleString() + ' lbs (' + varianceSign + variancePct.toFixed(2) + '%)';
+      tr.innerHTML =
+        '<td>' + escHtml(row.crop || '--') + '</td>' +
+        '<td class="number">' + Math.round(row.farmLbs || 0).toLocaleString() + '</td>' +
+        '<td class="number">' + Math.round(row.buyerLbs || 0).toLocaleString() + '</td>' +
+        '<td class="number ' + varianceClass + '">' + varianceDisplay + '</td>' +
+        '<td class="number">' + (row.ticketCount || 0) + '</td>';
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    tableWrap.appendChild(tbl);
+    section.appendChild(tableWrap);
+    container.appendChild(section);
+  }
+
+  // --- Render the two-panel unmatched loads view with manual link capability ---
+  function renderUnmatchedPanels(container, unmatched, buyerId, cropYear) {
+    var farmOnly = (unmatched && unmatched.farmOnly) ? unmatched.farmOnly : [];
+    var settlementOnly = (unmatched && unmatched.settlementOnly) ? unmatched.settlementOnly : [];
+
+    var section = document.createElement('div');
+    section.style.marginBottom = '2rem';
+
+    var heading = document.createElement('h3');
+    heading.style.cssText = 'font-size:0.9rem;color:var(--primary);margin-bottom:0.75rem;font-weight:400;';
+    heading.textContent = 'Unmatched Loads';
+    section.appendChild(heading);
+
+    if (farmOnly.length === 0 && settlementOnly.length === 0) {
+      var emptyMsg = document.createElement('p');
+      emptyMsg.style.color = 'var(--text-light)';
+      emptyMsg.style.fontStyle = 'italic';
+      emptyMsg.textContent = 'All loads are matched.';
+      section.appendChild(emptyMsg);
+      container.appendChild(section);
+      return;
+    }
+
+    // Link button (above panels for visibility)
+    var linkRow = document.createElement('div');
+    linkRow.style.cssText = 'margin-bottom:0.75rem;display:flex;align-items:center;gap:1rem;';
+    var linkBtn = document.createElement('button');
+    linkBtn.className = 'btn-primary';
+    linkBtn.textContent = 'Link Selected';
+    linkBtn.disabled = true;
+    linkBtn.id = 'recon-link-btn';
+    var linkHint = document.createElement('span');
+    linkHint.style.cssText = 'font-size:0.8rem;color:var(--text-light);';
+    linkHint.textContent = 'Select one farm ticket and one settlement line to link them manually.';
+    linkRow.appendChild(linkBtn);
+    linkRow.appendChild(linkHint);
+    section.appendChild(linkRow);
+
+    var panels = document.createElement('div');
+    panels.className = 'recon-panels';
+
+    // Left panel: Farm-Only Tickets
+    var leftPanel = document.createElement('div');
+    leftPanel.className = 'recon-panel';
+    var leftHeading = document.createElement('div');
+    leftHeading.style.cssText = 'font-size:0.85rem;color:var(--text-light);margin-bottom:0.5rem;border-bottom:1px solid var(--border);padding-bottom:0.35rem;';
+    leftHeading.textContent = 'Farm-Only Tickets (' + farmOnly.length + ')';
+    leftPanel.appendChild(leftHeading);
+
+    var leftList = document.createElement('div');
+    leftList.id = 'recon-farm-list';
+    if (farmOnly.length === 0) {
+      leftList.innerHTML = '<p style="color:var(--text-light);font-style:italic;font-size:0.85rem;">No unmatched farm tickets.</p>';
+    } else {
+      farmOnly.forEach(function (ticket) {
+        var item = document.createElement('div');
+        item.className = 'recon-item';
+        item.dataset.ticketId = ticket.id;
+        var lbs = ticket.netWeight ? Math.round(ticket.netWeight).toLocaleString() + ' lbs' : '--';
+        item.innerHTML =
+          '<div style="font-size:0.85rem;"><strong>' + escHtml(ticket.ticketNo || '--') + '</strong>' +
+          ' &mdash; ' + escHtml(ticket.date || '') + ' &mdash; ' + lbs + '</div>' +
+          '<div>' + escHtml(ticket.crop || '') + '</div>';
+        if (ticket._reconciliation && ticket._reconciliation.hint) {
+          var hint = document.createElement('div');
+          hint.className = 'recon-item-hint';
+          hint.textContent = ticket._reconciliation.hint;
+          item.appendChild(hint);
+        }
+        item.addEventListener('click', function () {
+          leftList.querySelectorAll('.recon-item').forEach(function (el) { el.classList.remove('selected'); });
+          item.classList.add('selected');
+          selectedFarmTicketId = ticket.id;
+          updateLinkButton(linkBtn);
+        });
+        leftList.appendChild(item);
+      });
+    }
+    leftPanel.appendChild(leftList);
+    panels.appendChild(leftPanel);
+
+    // Right panel: Settlement-Only Lines
+    var rightPanel = document.createElement('div');
+    rightPanel.className = 'recon-panel';
+    var rightHeading = document.createElement('div');
+    rightHeading.style.cssText = 'font-size:0.85rem;color:var(--text-light);margin-bottom:0.5rem;border-bottom:1px solid var(--border);padding-bottom:0.35rem;';
+    rightHeading.textContent = 'Settlement-Only Lines (' + settlementOnly.length + ')';
+    rightPanel.appendChild(rightHeading);
+
+    var rightList = document.createElement('div');
+    rightList.id = 'recon-settlement-list';
+    if (settlementOnly.length === 0) {
+      rightList.innerHTML = '<p style="color:var(--text-light);font-style:italic;font-size:0.85rem;">No unmatched settlement lines.</p>';
+    } else {
+      settlementOnly.forEach(function (line) {
+        var item = document.createElement('div');
+        item.className = 'recon-item';
+        item.dataset.lineId = line.id;
+        var lbs = line.netWeight ? Math.round(line.netWeight).toLocaleString() + ' lbs' : '--';
+        item.innerHTML =
+          '<div style="font-size:0.85rem;"><strong>' + escHtml(line.ticketNo || '--') + '</strong>' +
+          ' &mdash; ' + escHtml(line.date || '') + ' &mdash; ' + lbs + '</div>';
+        item.addEventListener('click', function () {
+          rightList.querySelectorAll('.recon-item').forEach(function (el) { el.classList.remove('selected'); });
+          item.classList.add('selected');
+          selectedSettlementLineId = line.id;
+          updateLinkButton(linkBtn);
+        });
+        rightList.appendChild(item);
+      });
+    }
+    rightPanel.appendChild(rightList);
+    panels.appendChild(rightPanel);
+
+    section.appendChild(panels);
+    container.appendChild(section);
+
+    // Wire Link button
+    linkBtn.addEventListener('click', function () {
+      if (!selectedFarmTicketId || !selectedSettlementLineId) return;
+      linkBtn.disabled = true;
+      linkBtn.textContent = 'Linking...';
+      fetch('/api/reconciliation/manual-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: selectedFarmTicketId, settlementLineId: selectedSettlementLineId })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+          linkBtn.textContent = 'Link Selected';
+          selectedFarmTicketId = null;
+          selectedSettlementLineId = null;
+          if (!res.ok) {
+            showSettlementToast('Link failed: ' + (res.data.error || 'Unknown error'));
+            linkBtn.disabled = false;
+            return;
+          }
+          showSettlementToast('Linked successfully');
+          // Reload unmatched
+          fetch('/api/reconciliation/unmatched?buyerId=' + buyerId + '&cropYear=' + cropYear)
+            .then(function (r) { return r.json(); })
+            .then(function (refreshed) {
+              var resultsArea = document.getElementById('recon-results');
+              if (resultsArea) {
+                // Remove and re-render unmatched section
+                var existingSection = resultsArea.querySelectorAll('div > div');
+                // Simple approach: re-render full results
+                var selBuyer = document.getElementById('recon-buyer');
+                var selYear = document.getElementById('recon-crop-year');
+                if (selBuyer && selYear) {
+                  renderReconciliation(resultsArea, parseInt(selBuyer.value, 10), parseInt(selYear.value, 10));
+                }
+              }
+            });
+        })
+        .catch(function (err) {
+          linkBtn.disabled = false;
+          linkBtn.textContent = 'Link Selected';
+          showSettlementToast('Link error: ' + err.message);
+        });
+    });
+
+    // Also render matched tickets with dispute capability below
+    renderMatchedWithDispute(container, buyerId, cropYear);
+  }
+
+  // --- Enable/disable the Link button based on selection state ---
+  function updateLinkButton(linkBtn) {
+    linkBtn.disabled = !(selectedFarmTicketId && selectedSettlementLineId);
+  }
+
+  // --- Render matched ticket rows with inline Dispute capability ---
+  function renderMatchedWithDispute(container, buyerId, cropYear) {
+    var section = document.createElement('div');
+    section.style.marginBottom = '2rem';
+
+    var heading = document.createElement('h3');
+    heading.style.cssText = 'font-size:0.9rem;color:var(--primary);margin-bottom:0.75rem;font-weight:400;';
+    heading.textContent = 'Matched Tickets';
+    section.appendChild(heading);
+
+    // Fetch all settlement lines for this buyer+cropYear with match status
+    fetch('/api/reconciliation/summary?buyerId=' + buyerId + '&cropYear=' + cropYear)
+      .then(function (r) { return r.json(); })
+      .then(function () {
+        // Fetch settlements list to get settlement IDs for this buyer+cropYear
+        return fetch('/api/settlements?buyerId=' + buyerId + '&cropYear=' + cropYear)
+          .then(function (r) { return r.json(); });
+      })
+      .then(function (settlements) {
+        if (!settlements || settlements.length === 0) {
+          section.innerHTML += '<p style="color:var(--text-light);font-style:italic;font-size:0.85rem;">No settlements found for this buyer and year.</p>';
+          container.appendChild(section);
+          return;
+        }
+
+        // Fetch lines for all settlements and flatten
+        var linePromises = settlements.map(function (s) {
+          return fetch('/api/settlements/' + s.id + '/lines').then(function (r) { return r.json(); });
+        });
+        return Promise.all(linePromises).then(function (lineArrays) {
+          var allLines = [];
+          lineArrays.forEach(function (arr) { allLines = allLines.concat(arr); });
+          var matched = allLines.filter(function (l) {
+            return l.matchStatus === 'matched' || l.matchStatus === 'manual' || l.matchStatus === 'disputed';
+          });
+          renderMatchedTable(section, matched);
+          container.appendChild(section);
+        });
+      })
+      .catch(function (err) {
+        section.innerHTML += '<p style="color:var(--danger);font-size:0.85rem;">Error loading matched lines: ' + err.message + '</p>';
+        container.appendChild(section);
+      });
+  }
+
+  // --- Render the matched lines table with inline dispute UI ---
+  function renderMatchedTable(section, lines) {
+    if (!lines || lines.length === 0) {
+      var empty = document.createElement('p');
+      empty.style.cssText = 'color:var(--text-light);font-style:italic;font-size:0.85rem;';
+      empty.textContent = 'No matched tickets yet.';
+      section.appendChild(empty);
+      return;
+    }
+
+    var tableWrap = document.createElement('div');
+    tableWrap.className = 'table-wrap';
+    tableWrap.id = 'matched-table-wrap';
+
+    var tbl = document.createElement('table');
+    tbl.className = 'recon-summary-table';
+    tbl.innerHTML = '<thead><tr>' +
+      '<th>Ticket No</th>' +
+      '<th class="number">Buyer Lbs</th>' +
+      '<th>Status</th>' +
+      '<th>Notes</th>' +
+      '<th></th>' +
+      '</tr></thead>';
+
+    var tbody = document.createElement('tbody');
+    lines.forEach(function (line) {
+      var tr = document.createElement('tr');
+      tr.dataset.lineId = line.id;
+      buildMatchedLineRow(tr, line);
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    tableWrap.appendChild(tbl);
+    section.appendChild(tableWrap);
+  }
+
+  // --- Build a single matched line row (normal or dispute-editing mode) ---
+  function buildMatchedLineRow(tr, line) {
+    var statusClass = 'badge-' + (line.matchStatus || 'unreconciled');
+    var statusLabel = { matched: 'Matched', manual: 'Manual', disputed: 'Disputed' }[line.matchStatus] || line.matchStatus;
+    var lbs = line.netWeight ? Math.round(line.netWeight).toLocaleString() + ' lbs' : '--';
+
+    tr.innerHTML =
+      '<td>' + escHtml(line.ticketNo || '--') + '</td>' +
+      '<td class="number">' + lbs + '</td>' +
+      '<td><span class="badge ' + statusClass + '">' + statusLabel + '</span></td>' +
+      '<td>' + escHtml(line.disputeNotes || line.notes || '') + '</td>' +
+      '<td style="white-space:nowrap;">';
+
+    // Only show Dispute button for matched/manual/disputed lines
+    if (line.matchStatus === 'matched' || line.matchStatus === 'manual' || line.matchStatus === 'disputed') {
+      var lastTd = tr.querySelector('td:last-child');
+      var disputeBtn = document.createElement('button');
+      disputeBtn.className = 'btn-sm';
+      disputeBtn.textContent = line.matchStatus === 'disputed' ? 'Edit Dispute' : 'Dispute';
+      disputeBtn.addEventListener('click', function () {
+        showInlineDisputeForm(tr, line);
+      });
+      lastTd.appendChild(disputeBtn);
+    }
+  }
+
+  // --- Show inline dispute form (replaces last two cells) ---
+  function showInlineDisputeForm(tr, line) {
+    var originalHTML = tr.innerHTML;
+    var cells = tr.querySelectorAll('td');
+    var notesTd = cells[3]; // Notes cell
+    var actionTd = cells[4]; // Action cell
+
+    notesTd.innerHTML = '<textarea id="dispute-notes-' + line.id + '" style="width:100%;min-width:200px;height:60px;font-size:0.8rem;background:var(--card);color:var(--text);border:1px solid var(--primary);padding:0.3rem;" placeholder="Reason for dispute...">' +
+      escHtml(line.disputeNotes || '') + '</textarea>';
+
+    actionTd.innerHTML = '';
+    var saveBtn = document.createElement('button');
+    saveBtn.className = 'btn-sm btn-primary';
+    saveBtn.textContent = 'Save';
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn-sm';
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.marginLeft = '0.4rem';
+    actionTd.appendChild(saveBtn);
+    actionTd.appendChild(cancelBtn);
+
+    cancelBtn.addEventListener('click', function () {
+      tr.innerHTML = originalHTML;
+      buildMatchedLineRow(tr, line);
+    });
+
+    saveBtn.addEventListener('click', function () {
+      var notesVal = document.getElementById('dispute-notes-' + line.id);
+      var notes = notesVal ? notesVal.value : '';
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      fetch('/api/settlement-lines/' + line.id + '/dispute', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: notes })
+      })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+          if (!res.ok) {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save';
+            showSettlementToast('Dispute save failed: ' + (res.data.error || 'Unknown error'));
+            return;
+          }
+          showSettlementToast('Ticket flagged as disputed');
+          // Update local line data and re-render row
+          line.matchStatus = 'disputed';
+          line.disputeNotes = notes;
+          tr.innerHTML = '';
+          buildMatchedLineRow(tr, line);
+        })
+        .catch(function (err) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save';
+          showSettlementToast('Dispute error: ' + err.message);
+        });
+    });
   }
 
   function showToast(msg) {
