@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v2.0 Grain Traceability — Phase 9: Database Foundation
+**Current focus:** v2.0 Grain Traceability — Phase 10: Migration & Cutover
 
 ## Current Position
 
@@ -14,7 +14,7 @@ Plan: 1 of 1 in current phase (COMPLETE)
 Status: Phase 9 complete — ready for Phase 10
 Last activity: 2026-03-02 — Phase 9 plan 01 executed (Prisma setup, schema, migration, lib/db.js)
 
-Progress: [████████░░░░░░░░░░░░] 8 of 13 phases complete (v1.0 + v1.1 shipped), Phase 9 in progress
+Progress: [█████████░░░░░░░░░░░] 9 of 13 phases complete (v1.0 + v1.1 shipped, Phase 9 done)
 
 ## Performance Metrics
 
