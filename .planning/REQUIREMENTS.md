@@ -34,11 +34,11 @@ Requirements for grain traceability milestone. Each maps to roadmap phases.
 
 ### Reconciliation
 
-- [ ] **REC-01**: System matches farm tickets to settlement lines by ticket number within same buyer and cropYear
-- [ ] **REC-02**: Each ticket shows reconciliation status: unreconciled, matched, disputed, or manual-override
-- [ ] **REC-03**: User can view all unmatched loads — farm-only tickets and settlement-only lines
-- [ ] **REC-04**: User can view settlement summary comparing farm totals vs buyer settled totals per crop/buyer/season
-- [ ] **REC-05**: User can flag a matched ticket as disputed and add notes
+- [x] **REC-01**: System matches farm tickets to settlement lines by ticket number within same buyer and cropYear
+- [x] **REC-02**: Each ticket shows reconciliation status: unreconciled, matched, disputed, or manual-override
+- [x] **REC-03**: User can view all unmatched loads — farm-only tickets and settlement-only lines
+- [x] **REC-04**: User can view settlement summary comparing farm totals vs buyer settled totals per crop/buyer/season
+- [x] **REC-05**: User can flag a matched ticket as disputed and add notes
 
 ## v3.0 Requirements
 
@@ -127,11 +127,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SET-02 | Phase 12 | Complete |
 | SET-03 | Phase 12 | Complete |
 | SET-04 | Phase 12 | Complete |
-| REC-01 | Phase 13 | Pending |
-| REC-02 | Phase 13 | Pending |
-| REC-03 | Phase 13 | Pending |
-| REC-04 | Phase 13 | Pending |
-| REC-05 | Phase 13 | Pending |
+| REC-01 | Phase 13 | Complete |
+| REC-02 | Phase 13 | Complete |
+| REC-03 | Phase 13 | Complete |
+| REC-04 | Phase 13 | Complete |
+| REC-05 | Phase 13 | Complete |
 | FIX-01 | Phase 15 | Pending |
 | FIX-02 | Phase 15 | Pending |
 | FIX-03 | Phase 15 | Pending |

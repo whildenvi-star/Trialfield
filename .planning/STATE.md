@@ -9,13 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 12-settlement-import-manual-entry
-Plan: 2 of 2 complete
-Status: Phase 12 complete — settlement import UI + manual entry form + detail view + line CRUD shipped
-Last activity: 2026-03-02 — Phase 12 Plan 02: manual settlement header + line CRUD routes, manual entry form, settlement detail view, SW v5
+Phase: 13-reconciliation-engine-discrepancy-ui
+Plan: 1 of 2 complete
+Status: Phase 13 Plan 01 complete — reconciliation matching engine + 5 API routes + ticket status enrichment shipped
+Last activity: 2026-03-02 — Phase 13 Plan 01: normalizeTicketNo, runMatch, auto-match on commit, reconciliation API routes, _reconciliation on tickets
 
-**v2.0 Grain Traceability:** Phases 9-12 complete, Phase 13 (Reconciliation) next
-**v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
+**v2.0 Grain Traceability:** Phases 9-12 complete, Phase 13 Plan 01 complete (Plan 02 next: discrepancy UI)
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
@@ -40,6 +39,7 @@ Last activity: 2026-03-02 — Phase 12 Plan 02: manual settlement header + line 
 |-------|------|----------|-------|-------|
 | 12-settlement-import-manual-entry | 01 | 270s | 2 | 6 |
 | 12-settlement-import-manual-entry | 02 | 327s | 2 | 5 |
+| 13-reconciliation-engine-discrepancy-ui | 01 | 3min | 1 | 1 |
 
 ## Accumulated Context
 
@@ -93,6 +93,12 @@ v3.0 architectural decisions:
 - [Phase 12-02]: null sourceFile + null filePath distinguishes manual settlements from file imports in the same Settlement table
 - [Phase 12-02]: manualSettlementId module-level state persists active session for rapid multi-line entry without re-selecting buyer
 - [Phase 12-02]: formatDate() uses UTC getters for timezone-safe YYYY-MM-DD display from ISO date strings
+- [Phase 13-01]: normalizeTicketNo returns null for all-zero inputs (H000 → null) — prevents spurious matches on blank/placeholder ticket numbers
+- [Phase 13-01]: runMatch scoped to buyerId+cropYear — never global; skips manual/disputed lines to preserve user flags
+- [Phase 13-01]: runMatch called synchronously in commit endpoint — latency acceptable for 100-500 lines per settlement
+- [Phase 13-01]: _reconciliation always present on ticket responses (status=unreconciled when no lines) — client never needs null check
+- [Phase 13-01]: varianceLbs = farmLbs - buyerLbs (positive = farm weighed more = potential underpayment)
+- [Phase 13-01]: dispute endpoint restricted to matched/manual/disputed lines — unmatched lines have nothing to dispute
 
 ### Roadmap Evolution
 
@@ -123,6 +129,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 12 Plan 02 complete — manual entry form, settlement detail view, line-level CRUD routes, SW v5
-Resume file: .planning/phases/12-settlement-import-manual-entry/12-02-SUMMARY.md
-Next action: Phase 13 — Settlement Reconciliation (weight discrepancy, per-buyer shrink methods, threshold config)
+Stopped at: Phase 13 Plan 01 complete — reconciliation matching engine, 5 API routes, _reconciliation ticket enrichment
+Resume file: .planning/phases/13-reconciliation-engine-discrepancy-ui/13-01-SUMMARY.md
+Next action: Phase 13 Plan 02 — Discrepancy UI (frontend for reconciliation routes)
