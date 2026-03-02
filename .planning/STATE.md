@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v3.0 Organic Cert Transparency — Phase 15 (Foundation Fixes & Ecosystem Client Layer) ready to plan
+**Current focus:** v2.0 Grain Traceability — Phase 11 Plan 01 complete, Plan 02 next
 
 ## Current Position
 
-Phase: 15 (not started)
-Plan: —
-Status: v3.0 roadmap created — Phase 15 is next
-Last activity: 2026-03-02 — v3.0 roadmap written (phases 15-18, 20 requirements mapped)
+Phase: 11-buyer-registry-ticket-extensions
+Plan: 1 of 2 complete
+Status: Phase 11 Plan 01 complete — Plan 02 (ticket entry form wiring) is next
+Last activity: 2026-03-02 — Phase 11 Plan 01: GrainBin model, CRUD API, buyer proxy, merged destinations, BuyerColumnMap routes, admin.html sections
 
-**v2.0 Grain Traceability:** Phases 9-10 complete, Phases 11-13 planned (not started)
+**v2.0 Grain Traceability:** Phases 9-10 complete, Phase 11 in progress (1/2 plans done), Phases 12-13 planned (not started)
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 22 (v1.0: 11, v1.1: 8, v2.0: 3)
-- v2.0 plans completed: 3
+- Total plans completed: 23 (v1.0: 11, v1.1: 8, v2.0: 4)
+- v2.0 plans completed: 4
 - v3.0 plans completed: 0
 
 **By Milestone:**
@@ -46,6 +46,13 @@ Recent decisions affecting v2.0:
 - Add Prisma 6.19.2 + PostgreSQL (match organic-cert exactly — no split ORM burden)
 - Reconcile on net weight in pounds (not derived bushels — each buyer computes bushels differently)
 - Write-lock cutover required during migration — 2-5 minute window, verify row counts
+
+Phase 11 decisions (11-01):
+- Grain bins are local to grain-tickets (not synced from farm-budget) — they represent on-farm storage, not external buyers
+- Buyer proxy returns raw farm-budget JSON array OR {_source: 'unavailable', buyers: []} — client checks _source field for status message
+- GET /api/destinations sorts bins first then buyers alphabetically — client handles display prefix labels
+- Cache-Control: no-store on /api/tickets and /api/destinations to prevent stale filter results when switching destination filters
+- shortCode patched directly in farm-budget/data/data.json since farm-budget uses file-backed store (restart picks up changes)
 
 Phase 9 decisions (09-01):
 - ticketNo uses @@index (non-unique) not @unique — 14 known duplicate ticket numbers in 527-ticket dataset
@@ -99,6 +106,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: v3.0 roadmap created — phases 15-18, 20 requirements mapped, files written
-Resume file: .planning/ROADMAP.md
-Next action: Run /gsd:plan-phase 15 to begin foundation fixes and ecosystem client layer
+Stopped at: Phase 11 Plan 01 complete — GrainBin model, CRUD API, buyer proxy, destinations, admin.html sections
+Resume file: .planning/phases/11-buyer-registry-ticket-extensions/11-01-SUMMARY.md
+Next action: Execute Phase 11 Plan 02 to wire ticket entry form with destinations and buyer/bin FK fields

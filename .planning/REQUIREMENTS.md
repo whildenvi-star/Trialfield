@@ -16,9 +16,9 @@ Requirements for grain traceability milestone. Each maps to roadmap phases.
 
 ### Buyers
 
-- [ ] **BUY-01**: User can create, edit, and delete buyer/destination records (name, type, shortCode)
+- [x] **BUY-01**: User can create, edit, and delete buyer/destination records (name, type, shortCode)
 - [ ] **BUY-02**: User can select a destination (buyer) when entering a ticket
-- [ ] **BUY-03**: User can store per-buyer import column mapping for reuse
+- [x] **BUY-03**: User can store per-buyer import column mapping for reuse
 
 ### Tickets
 
@@ -118,9 +118,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DB-02 | Phase 10 | Complete |
 | DB-03 | Phase 10 | Complete |
 | DB-04 | Phase 10 | Complete |
-| BUY-01 | Phase 11 | Pending |
+| BUY-01 | Phase 11 | Complete |
 | BUY-02 | Phase 11 | Pending |
-| BUY-03 | Phase 11 | Pending |
+| BUY-03 | Phase 11 | Complete |
 | TKT-01 | Phase 11 | Pending |
 | TKT-02 | Phase 11 | Pending |
 | SET-01 | Phase 12 | Pending |
