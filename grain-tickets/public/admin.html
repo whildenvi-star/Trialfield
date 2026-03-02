@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Grain Tickets</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #f5f5f0; --card: #fff; --primary: #2d5a27; --primary-light: #3d7a35;
+      --text: #1a1a1a; --text-light: #666; --border: #ddd;
+      --danger: #c62828; --success: #2e7d32;
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+    header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 1.4rem; }
+    header a { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; }
+    header a:hover { color: white; }
+    main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    h2 { color: var(--primary); margin: 2rem 0 1rem; border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; }
+    h2:first-of-type { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-size: 0.85rem; margin-bottom: 0.75rem; }
+    th { background: #f8f8f5; padding: 0.6rem 0.5rem; text-align: left; font-weight: 600; font-size: 0.8rem; color: var(--text-light); border-bottom: 2px solid var(--border); white-space: nowrap; }
+    td { padding: 0.45rem 0.5rem; border-bottom: 1px solid #f0f0f0; }
+    td.number { text-align: right; font-variant-numeric: tabular-nums; }
+    tr:hover { background: #f9f9f6; }
+    td.editable { cursor: text; }
+    td.editable:hover { background: #eef5ed; }
+    td.editing { padding: 0; }
+    td.editing input, td.editing select { width: 100%; border: 2px solid var(--primary); border-radius: 0; padding: 0.4rem 0.5rem; font-size: 0.85rem; }
+    .btn { border: none; padding: 0.5rem 1.25rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer; font-weight: 600; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-light); }
+    .btn-danger { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 0.8rem; padding: 0.2rem 0.5rem; }
+    .btn-danger:hover { text-decoration: underline; }
+    .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--success); color: white; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: opacity 0.3s; z-index: 100; }
+    .toast.hidden { opacity: 0; pointer-events: none; }
+    .add-form { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem; background: var(--card); padding: 1rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .add-form .field { display: flex; flex-direction: column; }
+    .add-form label { font-size: 0.75rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.2rem; }
+    .add-form input, .add-form select { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; }
+    .add-form input:focus, .add-form select:focus { outline: none; border-color: var(--primary); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Admin Settings</h1>
+    <a href="/">&larr; Back to Grain Tickets</a>
+  </header>
+
+  <main>
+    <!-- CROPS SECTION -->
+    <h2>Crops</h2>
+    <div class="add-form" id="crop-add-form">
+      <div class="field">
+        <label>Crop Name</label>
+        <input type="text" id="crop-new-name" placeholder="e.g. Winter Wheat">
+      </div>
+      <div class="field">
+        <label>Discount</label>
+        <input type="number" id="crop-new-discount" step="0.1" value="0" style="width:80px">
+      </div>
+      <div class="field">
+        <label>Test Weight</label>
+        <input type="number" id="crop-new-testWeight" step="1" value="56" style="width:80px">
+      </div>
+      <div class="field">
+        <label>Moisture Shrink</label>
+        <input type="number" id="crop-new-moistureShrink" step="1" value="13" style="width:80px">
+      </div>
+      <button class="btn btn-primary" id="crop-add-btn">Add Crop</button>
+    </div>
+    <table id="crop-table">
+      <thead>
+        <tr>
+          <th>Crop Name</th>
+          <th>Discount</th>
+          <th>Test Weight</th>
+          <th>Moisture Shrink</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="crop-tbody"></tbody>
+    </table>
+
+    <!-- FARMS SECTION -->
+    <h2>Farms</h2>
+    <div class="add-form" id="farm-add-form">
+      <div class="field">
+        <label>Farm Name</label>
+        <input type="text" id="farm-new-name" placeholder="e.g. North 40">
+      </div>
+      <div class="field">
+        <label>Crop</label>
+        <select id="farm-new-crop"></select>
+      </div>
+      <div class="field">
+        <label>Acres</label>
+        <input type="number" id="farm-new-acres" step="0.1" value="0" style="width:80px">
+      </div>
+      <div class="field">
+        <label>Unit</label>
+        <select id="farm-new-unit">
+          <option value="BU">BU</option>
+          <option value="Tons">Tons</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Type</label>
+        <select id="farm-new-type">
+          <option value="Conventional">Conventional</option>
+          <option value="Organic">Organic</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="farm-add-btn">Add Farm</button>
+    </div>
+    <table id="farm-table">
+      <thead>
+        <tr>
+          <th>Farm</th>
+          <th>Crop</th>
+          <th>Acres</th>
+          <th>Unit</th>
+          <th>Type</th>
+          <th>Guarantee</th>
+          <th>Coverage</th>
+          <th>Claim Thr.</th>
+          <th>Discount</th>
+          <th>Test Wt</th>
+          <th>Driver</th>
+          <th>Truck</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="farm-tbody"></tbody>
+    </table>
+
+    <!-- GRAIN BINS SECTION -->
+    <h2>Grain Bins</h2>
+    <div class="add-form" id="bin-add-form">
+      <div class="field">
+        <label>Name</label>
+        <input type="text" id="bin-new-name" placeholder="e.g. Bin #1">
+      </div>
+      <div class="field">
+        <label>Capacity (bu)</label>
+        <input type="number" id="bin-new-capacity" step="100" value="3700" style="width:100px">
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <input type="text" id="bin-new-notes" placeholder="Optional notes" style="width:200px">
+      </div>
+      <button class="btn btn-primary" id="bin-add-btn">Add Bin</button>
+    </div>
+    <table id="bin-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Capacity (bu)</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="bin-tbody"></tbody>
+    </table>
+
+    <!-- BUYERS SECTION -->
+    <h2>Buyers <span style="font-size:0.75rem;color:var(--text-light)">(managed in farm-budget)</span></h2>
+    <div id="buyer-status" style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.5rem"></div>
+    <table id="buyer-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Short Code</th>
+          <th>Type</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="buyer-tbody"></tbody>
+    </table>
+
+    <!-- COLUMN MAPPING SECTION -->
+    <h2>Column Mapping</h2>
+    <div style="margin-bottom:1rem;display:flex;align-items:center;gap:1rem;">
+      <div class="field">
+        <label for="colmap-buyer" style="font-size:0.75rem;color:var(--text-light);font-weight:600;display:block;margin-bottom:0.2rem">Buyer</label>
+        <select id="colmap-buyer" style="padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;min-width:200px">
+          <option value="">Select a buyer...</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" id="colmap-save-btn" style="margin-top:1.2rem" disabled>Save Mappings</button>
+    </div>
+    <table id="colmap-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>CSV Column Name</th>
+        </tr>
+      </thead>
+      <tbody id="colmap-tbody"></tbody>
+    </table>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    // --- Helpers ---
+    function api(method, url, body) {
+      var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      return fetch(url, opts).then(function (r) { return r.json(); });
+    }
+
+    function showToast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      setTimeout(function () { t.classList.add('hidden'); }, 3000);
+    }
+
+    function fmt(n, d) {
+      if (n === null || n === undefined || isNaN(n)) return '';
+      return Number(n).toFixed(d !== undefined ? d : 2);
+    }
+
+    // ============================
+    // CROPS
+    // ============================
+    var crops = {};
+
+    function loadCrops() {
+      api('GET', '/api/crops').then(function (data) {
+        crops = data;
+        renderCrops();
+        populateFarmCropDropdown();
+      });
+    }
+
+    function renderCrops() {
+      var tbody = document.getElementById('crop-tbody');
+      var names = Object.keys(crops).sort();
+      var html = '';
+      names.forEach(function (name) {
+        var c = crops[name];
+        html += '<tr data-crop="' + escHtml(name) + '">';
+        html += '<td>' + escHtml(name.trim()) + '</td>';
+        html += '<td class="editable number" data-field="discount">' + fmt(c.discount) + '</td>';
+        html += '<td class="editable number" data-field="testWeight">' + fmt(c.testWeight, 0) + '</td>';
+        html += '<td class="editable number" data-field="moistureShrink">' + fmt(c.moistureShrink, 0) + '</td>';
+        html += '<td><button class="btn-danger crop-del" data-crop="' + escHtml(name) + '">Delete</button></td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    // Add crop
+    document.getElementById('crop-add-btn').addEventListener('click', function () {
+      var name = document.getElementById('crop-new-name').value.trim();
+      if (!name) return alert('Enter a crop name');
+      api('POST', '/api/crops', {
+        name: name,
+        discount: document.getElementById('crop-new-discount').value,
+        testWeight: document.getElementById('crop-new-testWeight').value,
+        moistureShrink: document.getElementById('crop-new-moistureShrink').value
+      }).then(function (r) {
+        if (r.error) return alert(r.error);
+        document.getElementById('crop-new-name').value = '';
+        showToast('Crop "' + name + '" added');
+        loadCrops();
+      });
+    });
+
+    // Delete crop
+    document.getElementById('crop-tbody').addEventListener('click', function (e) {
+      var btn = e.target.closest('.crop-del');
+      if (!btn) return;
+      var name = btn.getAttribute('data-crop');
+      if (!confirm('Delete crop "' + name.trim() + '"? This won\'t delete existing tickets using this crop.')) return;
+      api('DELETE', '/api/crops/' + encodeURIComponent(name)).then(function () {
+        showToast('Crop "' + name.trim() + '" deleted');
+        loadCrops();
+      });
+    });
+
+    // Inline edit crop
+    document.getElementById('crop-tbody').addEventListener('dblclick', function (e) {
+      var td = e.target.closest('td.editable');
+      if (!td || td.classList.contains('editing')) return;
+      var tr = td.closest('tr');
+      var cropName = tr.getAttribute('data-crop');
+      var field = td.getAttribute('data-field');
+      var oldVal = crops[cropName][field];
+
+      td.classList.add('editing');
+      var input = document.createElement('input');
+      input.type = 'number';
+      input.step = field === 'discount' ? '0.1' : '1';
+      input.value = oldVal;
+      td.textContent = '';
+      td.appendChild(input);
+      input.focus();
+      input.select();
+
+      function save() {
+        var newVal = input.value;
+        td.classList.remove('editing');
+        if (newVal === String(oldVal)) { renderCrops(); return; }
+        var body = {};
+        body[field] = newVal;
+        api('PUT', '/api/crops/' + encodeURIComponent(cropName), body).then(function () {
+          showToast('Updated ' + cropName.trim() + ' ' + field);
+          loadCrops();
+        });
+      }
+
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') input.blur();
+        if (ev.key === 'Escape') { td.classList.remove('editing'); renderCrops(); }
+      });
+    });
+
+    // ============================
+    // FARMS
+    // ============================
+    var farms = [];
+
+    function loadFarms() {
+      api('GET', '/api/farms').then(function (data) {
+        farms = data;
+        renderFarms();
+      });
+    }
+
+    function renderFarms() {
+      var tbody = document.getElementById('farm-tbody');
+      var html = '';
+      farms.forEach(function (f) {
+        html += '<tr data-id="' + f.id + '">';
+        html += '<td class="editable" data-field="farm">' + escHtml(f.farm || '') + '</td>';
+        html += '<td class="editable" data-field="crop">' + escHtml((f.crop || '').trim()) + '</td>';
+        html += '<td class="editable number" data-field="acres">' + fmt(f.acres, 1) + '</td>';
+        html += '<td class="editable" data-field="unit">' + escHtml(f.unit || 'BU') + '</td>';
+        html += '<td class="editable" data-field="type">' + escHtml(f.type || '') + '</td>';
+        html += '<td class="editable number" data-field="guarantee">' + fmt(f.guarantee, 0) + '</td>';
+        html += '<td class="editable number" data-field="coverage">' + fmt(f.coverage, 0) + '</td>';
+        html += '<td class="editable number" data-field="claimThreshold">' + fmt(f.claimThreshold, 0) + '</td>';
+        html += '<td class="editable number" data-field="discount">' + fmt(f.discount, 2) + '</td>';
+        html += '<td class="editable number" data-field="testWeight">' + fmt(f.testWeight, 0) + '</td>';
+        html += '<td class="editable" data-field="driver">' + escHtml(f.driver || '') + '</td>';
+        html += '<td class="editable number" data-field="truck">' + fmt(f.truck, 0) + '</td>';
+        html += '<td><button class="btn-danger farm-del" data-id="' + f.id + '">Delete</button></td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    function populateFarmCropDropdown() {
+      var sel = document.getElementById('farm-new-crop');
+      sel.innerHTML = '<option value="">Select crop...</option>';
+      Object.keys(crops).sort().forEach(function (name) {
+        var opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name.trim();
+        sel.appendChild(opt);
+      });
+    }
+
+    // Add farm
+    document.getElementById('farm-add-btn').addEventListener('click', function () {
+      var name = document.getElementById('farm-new-name').value.trim();
+      if (!name) return alert('Enter a farm name');
+      api('POST', '/api/farms', {
+        farm: name,
+        crop: document.getElementById('farm-new-crop').value,
+        acres: document.getElementById('farm-new-acres').value,
+        unit: document.getElementById('farm-new-unit').value,
+        type: document.getElementById('farm-new-type').value
+      }).then(function (r) {
+        if (r.error) return alert(r.error);
+        document.getElementById('farm-new-name').value = '';
+        document.getElementById('farm-new-acres').value = '0';
+        showToast('Farm "' + name + '" added');
+        loadFarms();
+      });
+    });
+
+    // Delete farm
+    document.getElementById('farm-tbody').addEventListener('click', function (e) {
+      var btn = e.target.closest('.farm-del');
+      if (!btn) return;
+      var id = btn.getAttribute('data-id');
+      var farm = farms.find(function (f) { return f.id === id; });
+      var label = farm ? farm.farm : id;
+      if (!confirm('Delete farm "' + label + '"? Existing tickets for this farm will remain.')) return;
+      api('DELETE', '/api/farms/' + id).then(function () {
+        showToast('Farm "' + label + '" deleted');
+        loadFarms();
+      });
+    });
+
+    // Inline edit farm
+    document.getElementById('farm-tbody').addEventListener('dblclick', function (e) {
+      var td = e.target.closest('td.editable');
+      if (!td || td.classList.contains('editing')) return;
+      var tr = td.closest('tr');
+      var id = tr.getAttribute('data-id');
+      var field = td.getAttribute('data-field');
+      var farm = farms.find(function (f) { return f.id === id; });
+      if (!farm) return;
+      var oldVal = farm[field];
+
+      td.classList.add('editing');
+      var input;
+      var numFields = ['acres', 'guarantee', 'coverage', 'claimThreshold', 'discount', 'testWeight', 'truck'];
+
+      if (field === 'type') {
+        input = document.createElement('select');
+        ['Conventional', 'Organic'].forEach(function (v) {
+          var opt = document.createElement('option');
+          opt.value = v; opt.textContent = v;
+          if (v === oldVal) opt.selected = true;
+          input.appendChild(opt);
+        });
+      } else if (field === 'unit') {
+        input = document.createElement('select');
+        ['BU', 'Tons'].forEach(function (v) {
+          var opt = document.createElement('option');
+          opt.value = v; opt.textContent = v;
+          if (v === oldVal) opt.selected = true;
+          input.appendChild(opt);
+        });
+      } else {
+        input = document.createElement('input');
+        input.type = numFields.includes(field) ? 'number' : 'text';
+        if (numFields.includes(field)) input.step = (field === 'acres' || field === 'discount') ? '0.1' : '1';
+        input.value = oldVal !== undefined && oldVal !== null ? oldVal : '';
+      }
+
+      td.textContent = '';
+      td.appendChild(input);
+      input.focus();
+      if (input.select) input.select();
+
+      function save() {
+        var newVal = input.value;
+        td.classList.remove('editing');
+        if (String(newVal) === String(oldVal)) { renderFarms(); return; }
+        var body = {};
+        body[field] = numFields.includes(field) ? parseFloat(newVal) || 0 : newVal;
+        api('PUT', '/api/farms/' + id, body).then(function () {
+          showToast('Updated ' + (farm.farm || '').trim() + ' ' + field);
+          loadFarms();
+        });
+      }
+
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') input.blur();
+        if (ev.key === 'Escape') { td.classList.remove('editing'); renderFarms(); }
+      });
+    });
+
+    // --- HTML escape ---
+    function escHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    // ============================
+    // GRAIN BINS
+    // ============================
+    var bins = [];
+
+    function loadBins() {
+      api('GET', '/api/grain-bins').then(function (data) {
+        bins = data;
+        renderBins();
+      });
+    }
+
+    function renderBins() {
+      var tbody = document.getElementById('bin-tbody');
+      if (!bins.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-light);font-style:italic;padding:1rem 0.5rem">No grain bins yet — add one above</td></tr>';
+        return;
+      }
+      var html = '';
+      bins.forEach(function (b) {
+        html += '<tr data-id="' + b.id + '">';
+        html += '<td class="editable" data-field="name">' + escHtml(b.name || '') + '</td>';
+        html += '<td class="editable number" data-field="capacity">' + (b.capacity || 0) + '</td>';
+        html += '<td class="editable" data-field="notes">' + escHtml(b.notes || '') + '</td>';
+        html += '<td><button class="btn-danger bin-del" data-id="' + b.id + '">Delete</button></td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    // Add bin
+    document.getElementById('bin-add-btn').addEventListener('click', function () {
+      var name = document.getElementById('bin-new-name').value.trim();
+      if (!name) return alert('Enter a bin name');
+      api('POST', '/api/grain-bins', {
+        name: name,
+        capacity: document.getElementById('bin-new-capacity').value,
+        notes: document.getElementById('bin-new-notes').value
+      }).then(function (r) {
+        if (r.error) return alert(r.error);
+        document.getElementById('bin-new-name').value = '';
+        document.getElementById('bin-new-capacity').value = '3700';
+        document.getElementById('bin-new-notes').value = '';
+        showToast('Bin "' + name + '" added');
+        loadBins();
+      });
+    });
+
+    // Delete bin
+    document.getElementById('bin-tbody').addEventListener('click', function (e) {
+      var btn = e.target.closest('.bin-del');
+      if (!btn) return;
+      var id = parseInt(btn.getAttribute('data-id'), 10);
+      var bin = bins.find(function (b) { return b.id === id; });
+      var label = bin ? bin.name : id;
+      if (!confirm('Delete bin "' + label + '"?')) return;
+      fetch('/api/grain-bins/' + id, { method: 'DELETE' }).then(function (r) {
+        return r.json();
+      }).then(function (r) {
+        if (r.error) return alert(r.error);
+        showToast('Bin "' + label + '" deleted');
+        loadBins();
+      });
+    });
+
+    // Inline edit bin
+    document.getElementById('bin-tbody').addEventListener('dblclick', function (e) {
+      var td = e.target.closest('td.editable');
+      if (!td || td.classList.contains('editing')) return;
+      var tr = td.closest('tr');
+      var id = parseInt(tr.getAttribute('data-id'), 10);
+      var field = td.getAttribute('data-field');
+      var bin = bins.find(function (b) { return b.id === id; });
+      if (!bin) return;
+      var oldVal = bin[field];
+
+      td.classList.add('editing');
+      var input = document.createElement('input');
+      input.type = field === 'capacity' ? 'number' : 'text';
+      if (field === 'capacity') input.step = '100';
+      input.value = oldVal !== undefined && oldVal !== null ? oldVal : '';
+      td.textContent = '';
+      td.appendChild(input);
+      input.focus();
+      if (input.select) input.select();
+
+      function save() {
+        var newVal = input.value;
+        td.classList.remove('editing');
+        if (String(newVal) === String(oldVal !== undefined && oldVal !== null ? oldVal : '')) { renderBins(); return; }
+        var body = {};
+        body[field] = field === 'capacity' ? parseFloat(newVal) || 0 : newVal;
+        api('PUT', '/api/grain-bins/' + id, body).then(function (r) {
+          if (r.error) { alert(r.error); loadBins(); return; }
+          showToast('Updated bin ' + field);
+          loadBins();
+        });
+      }
+
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') input.blur();
+        if (ev.key === 'Escape') { td.classList.remove('editing'); renderBins(); }
+      });
+    });
+
+    // ============================
+    // BUYERS (read-only from farm-budget)
+    // ============================
+    var buyers = [];
+
+    function loadBuyers() {
+      api('GET', '/api/buyers').then(function (data) {
+        var statusEl = document.getElementById('buyer-status');
+        if (!data || data._source === 'unavailable' || !Array.isArray(data)) {
+          buyers = Array.isArray(data && data.buyers) ? data.buyers : [];
+          statusEl.style.color = 'orange';
+          statusEl.textContent = 'farm-budget unavailable — start it on port 3001';
+          renderBuyers();
+          populateColmapBuyerSelect();
+          return;
+        }
+        buyers = data;
+        statusEl.style.color = 'var(--text-light)';
+        statusEl.textContent = 'Loaded ' + buyers.length + ' buyer' + (buyers.length === 1 ? '' : 's') + ' from farm-budget';
+        renderBuyers();
+        populateColmapBuyerSelect();
+      });
+    }
+
+    function renderBuyers() {
+      var tbody = document.getElementById('buyer-tbody');
+      if (!buyers.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="color:var(--text-light);font-style:italic;padding:1rem 0.5rem">No buyers available</td></tr>';
+        return;
+      }
+      var html = '';
+      buyers.forEach(function (b) {
+        html += '<tr>';
+        html += '<td>' + escHtml(b.name || '') + '</td>';
+        html += '<td>' + escHtml(b.shortCode || '') + '</td>';
+        html += '<td>' + escHtml(b.type || b.buyerType || '') + '</td>';
+        html += '<td>' + escHtml(b.notes || '') + '</td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    // ============================
+    // COLUMN MAPPING
+    // ============================
+    var columnMaps = {};
+    var colmapBuyerId = null;
+
+    var SETTLEMENT_FIELDS = [
+      { key: 'ticketNo', label: 'Ticket No' },
+      { key: 'date', label: 'Date' },
+      { key: 'netWeight', label: 'Net Weight' },
+      { key: 'moisture', label: 'Moisture' },
+      { key: 'netBushels', label: 'Net Bushels' },
+      { key: 'price', label: 'Price' },
+      { key: 'deductions', label: 'Deductions' },
+      { key: 'netPayment', label: 'Net Payment' }
+    ];
+
+    function populateColmapBuyerSelect() {
+      var sel = document.getElementById('colmap-buyer');
+      sel.innerHTML = '<option value="">Select a buyer...</option>';
+      buyers.forEach(function (b) {
+        var opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = b.name + (b.shortCode ? ' (' + b.shortCode + ')' : '');
+        sel.appendChild(opt);
+      });
+    }
+
+    function loadColumnMaps(buyerId) {
+      colmapBuyerId = buyerId;
+      if (!buyerId) {
+        columnMaps = {};
+        renderColumnMaps();
+        document.getElementById('colmap-save-btn').disabled = true;
+        return;
+      }
+      api('GET', '/api/buyers/' + buyerId + '/column-maps').then(function (data) {
+        columnMaps = {};
+        if (Array.isArray(data)) {
+          data.forEach(function (m) { columnMaps[m.fieldName] = m.csvColumn; });
+        }
+        renderColumnMaps();
+        document.getElementById('colmap-save-btn').disabled = false;
+      });
+    }
+
+    function renderColumnMaps() {
+      var tbody = document.getElementById('colmap-tbody');
+      var html = '';
+      SETTLEMENT_FIELDS.forEach(function (f) {
+        html += '<tr data-field="' + escHtml(f.key) + '">';
+        html += '<td style="font-weight:600">' + escHtml(f.label) + '</td>';
+        html += '<td><input type="text" class="colmap-input" data-field="' + escHtml(f.key) + '" value="' + escHtml(columnMaps[f.key] || '') + '" placeholder="Column name from settlement file" style="width:100%;padding:0.3rem 0.5rem;border:1px solid var(--border);border-radius:4px;font-size:0.85rem;box-sizing:border-box"></td>';
+        html += '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    document.getElementById('colmap-buyer').addEventListener('change', function () {
+      loadColumnMaps(this.value || null);
+    });
+
+    document.getElementById('colmap-save-btn').addEventListener('click', function () {
+      if (!colmapBuyerId) return;
+      var inputs = document.querySelectorAll('.colmap-input');
+      var buyer = buyers.find(function (b) { return String(b.id) === String(colmapBuyerId); });
+      var buyerName = buyer ? buyer.name : colmapBuyerId;
+      var promises = [];
+      inputs.forEach(function (input) {
+        var fieldName = input.getAttribute('data-field');
+        var csvColumn = input.value.trim();
+        if (!csvColumn) return;
+        promises.push(api('PUT', '/api/buyers/' + colmapBuyerId + '/column-maps', { fieldName: fieldName, csvColumn: csvColumn }));
+      });
+      if (!promises.length) { showToast('No column mappings to save'); return; }
+      Promise.all(promises).then(function () {
+        showToast('Column mappings saved for ' + buyerName);
+        loadColumnMaps(colmapBuyerId);
+      }).catch(function (e) {
+        alert('Error saving mappings: ' + e.message);
+      });
+    });
+
+    // --- Init ---
+    loadCrops();
+    loadFarms();
+    loadBins();
+    loadBuyers();
+  })();
+  </script>
+</body>
+</html>
