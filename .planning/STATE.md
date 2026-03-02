@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v2.0 Grain Traceability — Phase 11 Plan 01 complete, Plan 02 next
+**Current focus:** v2.0 Grain Traceability — Phase 11 complete (2/2 plans done), Phase 12 next
 
 ## Current Position
 
 Phase: 11-buyer-registry-ticket-extensions
-Plan: 1 of 2 complete
-Status: Phase 11 Plan 01 complete — Plan 02 (ticket entry form wiring) is next
-Last activity: 2026-03-02 — Phase 11 Plan 01: GrainBin model, CRUD API, buyer proxy, merged destinations, BuyerColumnMap routes, admin.html sections
+Plan: 2 of 2 complete
+Status: Phase 11 complete — destination dropdown, filters, farm summary buyer breakdown shipped
+Last activity: 2026-03-02 — Phase 11 Plan 02: destination dropdown, cropYear harvest-season logic, destination/crop year filters, farm summary buyer breakdown, SW v4
 
-**v2.0 Grain Traceability:** Phases 9-10 complete, Phase 11 in progress (1/2 plans done), Phases 12-13 planned (not started)
+**v2.0 Grain Traceability:** Phases 9-11 complete, Phase 12 (Settlement Import) next, Phase 13 planned (not started)
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 23 (v1.0: 11, v1.1: 8, v2.0: 4)
-- v2.0 plans completed: 4
+- Total plans completed: 24 (v1.0: 11, v1.1: 8, v2.0: 5)
+- v2.0 plans completed: 5
 - v3.0 plans completed: 0
 
 **By Milestone:**
@@ -76,6 +76,10 @@ v3.0 architectural decisions:
 - NOP compliance rules run against resolved materials only — unresolved materials show "needs review", not a compliance verdict
 - Rotation snapshot is non-deferrable: must ship before farm-budget is rebuilt for next season (calendar-gated hard deadline)
 - Harvest compilation may ship as a documented stub if grain-tickets Phase 11+ field linkage is not complete
+- [Phase 11-02]: Destination dropdown uses composite key (buyer:5 / bin:2) so client can distinguish type + id in one select value without hidden fields
+- [Phase 11-02]: Sticky destination: save localStorage.lastDestination on submit success, restore after dropdown is populated in ref-data-loaded (survives form.reset())
+- [Phase 11-02]: Farm summary buyer breakdown uses inline Destinations column text rather than collapsible rows — fits existing table layout
+- [Phase 11-02]: Crop year filter populated client-side from allTickets after load — no dedicated /api/crop-years endpoint needed
 
 ### Roadmap Evolution
 
@@ -106,6 +110,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 11 Plan 01 complete — GrainBin model, CRUD API, buyer proxy, destinations, admin.html sections
-Resume file: .planning/phases/11-buyer-registry-ticket-extensions/11-01-SUMMARY.md
-Next action: Execute Phase 11 Plan 02 to wire ticket entry form with destinations and buyer/bin FK fields
+Stopped at: Phase 11 Plan 02 complete — destination dropdown, filters, farm summary buyer breakdown, SW v4
+Resume file: .planning/phases/11-buyer-registry-ticket-extensions/11-02-SUMMARY.md
+Next action: Phase 12 (Settlement Import) — collect actual settlement file samples from farm office before planning

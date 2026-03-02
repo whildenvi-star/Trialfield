@@ -35,7 +35,7 @@
 
 - [x] **Phase 9: Database Foundation** — Prisma 6.19.2 + PostgreSQL grain_tickets database with complete 7-model schema (completed 2026-03-02)
 - [x] **Phase 10: Migration & Cutover** — Move all data from JSON to PostgreSQL and switch server.js to Prisma (completed 2026-03-02)
-- [ ] **Phase 11: Buyer Registry & Ticket Extensions** — Buyer entity, destination FK on tickets, cropYear field
+- [x] **Phase 11: Buyer Registry & Ticket Extensions** — Buyer entity, destination FK on tickets, cropYear field (completed 2026-03-02)
 - [ ] **Phase 12: Settlement Import & Manual Entry** — CSV/Excel import with per-buyer column mapping and manual entry path
 - [ ] **Phase 13: Reconciliation Engine & Discrepancy UI** — Match tickets to settlement lines, surface unmatched loads and variances
 
@@ -209,7 +209,7 @@ Plans:
 | 8. Fallow Enterprise Edit Fix | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 9. Database Foundation | v2.0 | 1/1 | Complete | 2026-03-02 |
 | 10. Migration & Cutover | v2.0 | 2/2 | Complete | 2026-03-02 |
-| 11. Buyer Registry & Ticket Extensions | 1/2 | In Progress|  | - |
+| 11. Buyer Registry & Ticket Extensions | 2/2 | Complete   | 2026-03-02 | - |
 | 12. Settlement Import & Manual Entry | v2.0 | 0/TBD | Not started | - |
 | 13. Reconciliation Engine & Discrepancy UI | v2.0 | 0/TBD | Not started | - |
 | 14. Chat Agent (system info & recall) | — | 0/TBD | Not started | - |
@@ -224,7 +224,7 @@ Plans:
 
 **Goal:** [To be planned]
 **Depends on:** Phase 13
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 14 to break down)
