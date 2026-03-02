@@ -9,18 +9,18 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 9 of 13 (Database Foundation)
-Plan: 1 of 1 in current phase (COMPLETE)
-Status: Phase 9 complete — ready for Phase 10
-Last activity: 2026-03-02 — Phase 9 plan 01 executed (Prisma setup, schema, migration, lib/db.js)
+Phase: 10 of 13 (Migration & Cutover)
+Plan: 1 of 2 in current phase (COMPLETE)
+Status: Phase 10 plan 01 complete — JSON migrated to PostgreSQL; ready for Phase 10 plan 02 (server cutover)
+Last activity: 2026-03-02 — Phase 10 plan 01 executed (migrate-json.js, 527 tickets + 63 farms + 37 crop configs migrated)
 
-Progress: [█████████░░░░░░░░░░░] 9 of 13 phases complete (v1.0 + v1.1 shipped, Phase 9 done)
+Progress: [█████████░░░░░░░░░░░] Phase 10 in progress (v1.0 + v1.1 shipped, Phase 9 done, Phase 10 plan 01 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20 (v1.0: 11, v1.1: 8, v2.0: 1)
-- v2.0 plans completed: 1
+- Total plans completed: 21 (v1.0: 11, v1.1: 8, v2.0: 2)
+- v2.0 plans completed: 2
 
 **By Milestone:**
 
@@ -29,6 +29,7 @@ Progress: [█████████░░░░░░░░░░░] 9 of 13
 | v1.0 | 1-4 | 11 | 2026-02-26 |
 | v1.1 | 5-8 | 8 | 2026-03-01 |
 | v2.0 | 9-13 | TBD | - |
+| Phase 10-migration-cutover P01 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -51,6 +52,9 @@ Phase 9 decisions (09-01):
 - Decimal type for SettlementLine.price/deductions/netPayment — financial precision required
 - legacyId on Ticket and Farm preserves JSON string IDs for Phase 10 migration cross-referencing
 - Prisma Studio on port 5556 — avoids conflict with organic-cert's Studio on 5555
+- [Phase 10-migration-cutover]: Noon UTC anchoring (T12:00:00.000Z) for date-only strings prevents timezone shift in all negative-offset zones
+- [Phase 10-migration-cutover]: Migration script uses own PrismaClient (not singleton) — one-shot process outside server lifecycle
+- [Phase 10-migration-cutover]: Data anomalies migrate as-is (warnings only, no rejection) per prior user decision — 527 tickets preserved intact
 
 ### Roadmap Evolution
 
@@ -66,6 +70,7 @@ Phase 9 decisions (09-01):
 
 ### Blockers/Concerns
 
+- **ACTIVE BLOCKER:** grain-tickets server.js will crash on startup — data.json is now archived and server still reads from flat file. Phase 10 plan 02 (server cutover to Prisma) must be completed before grain-tickets can serve requests.
 - Phase 12 (Settlement Import): Actual settlement file samples from each Hughes Farm buyer needed before column mapping UI can be built. Collect from farm office staff before Phase 12 planning.
 - Phase 13 (Reconciliation): Weight discrepancy thresholds and per-buyer shrink methods need farm manager input before Phase 13 design.
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert. Not blocking v2.0.
@@ -73,5 +78,5 @@ Phase 9 decisions (09-01):
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 09-01-PLAN.md — Phase 9 database foundation complete
-Resume file: .planning/phases/10-migration/10-01-PLAN.md (when planned)
+Stopped at: Completed 10-01-PLAN.md — JSON to PostgreSQL migration complete; grain-tickets server needs Phase 10 plan 02 cutover before it can start
+Resume file: .planning/phases/10-migration-cutover/10-02-PLAN.md
