@@ -10,9 +10,9 @@ Requirements for grain traceability milestone. Each maps to roadmap phases.
 ### Database
 
 - [x] **DB-01**: Existing grain ticket data migrates from JSON to PostgreSQL with zero data loss
-- [ ] **DB-02**: All existing ticket CRUD operations work against PostgreSQL (not JSON)
+- [x] **DB-02**: All existing ticket CRUD operations work against PostgreSQL (not JSON)
 - [x] **DB-03**: Calculation engine (calc.js) produces identical results before and after migration
-- [ ] **DB-04**: Existing UI and PWA continue functioning during and after migration
+- [x] **DB-04**: Existing UI and PWA continue functioning during and after migration
 
 ### Buyers
 
@@ -73,9 +73,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | DB-01 | Phase 9 (schema) + Phase 10 (cutover) | Partial (Phase 9 done) |
-| DB-02 | Phase 10 | Pending |
+| DB-02 | Phase 10 | Complete |
 | DB-03 | Phase 10 | Complete |
-| DB-04 | Phase 10 | Pending |
+| DB-04 | Phase 10 | Complete |
 | BUY-01 | Phase 11 | Pending |
 | BUY-02 | Phase 11 | Pending |
 | BUY-03 | Phase 11 | Pending |

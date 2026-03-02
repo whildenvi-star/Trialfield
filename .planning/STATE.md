@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v2.0 Grain Traceability — Phase 10: Migration & Cutover
+**Current focus:** v2.0 Grain Traceability — Phase 11: Buyers & Tickets
 
 ## Current Position
 
-Phase: 10 of 13 (Migration & Cutover)
-Plan: 1 of 2 in current phase (COMPLETE)
-Status: Phase 10 plan 01 complete — JSON migrated to PostgreSQL; ready for Phase 10 plan 02 (server cutover)
-Last activity: 2026-03-02 — Phase 10 plan 01 executed (migrate-json.js, 527 tickets + 63 farms + 37 crop configs migrated)
+Phase: 11 of 13 (Buyers & Tickets)
+Plan: Phase 10 COMPLETE — ready for Phase 11
+Status: Phase 10 complete — grain-tickets fully on PostgreSQL; server.js rewritten to Prisma; blocker resolved
+Last activity: 2026-03-02 — Phase 10 plan 02 executed (server.js rewritten to Prisma, sw.js bumped to v3)
 
-Progress: [█████████░░░░░░░░░░░] Phase 10 in progress (v1.0 + v1.1 shipped, Phase 9 done, Phase 10 plan 01 done)
+Progress: [██████████░░░░░░░░░░] Phase 10 complete (v1.0 + v1.1 shipped, Phase 9 done, Phase 10 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21 (v1.0: 11, v1.1: 8, v2.0: 2)
-- v2.0 plans completed: 2
+- Total plans completed: 22 (v1.0: 11, v1.1: 8, v2.0: 3)
+- v2.0 plans completed: 3
 
 **By Milestone:**
 
@@ -30,6 +30,7 @@ Progress: [█████████░░░░░░░░░░░] Phase 1
 | v1.1 | 5-8 | 8 | 2026-03-01 |
 | v2.0 | 9-13 | TBD | - |
 | Phase 10-migration-cutover P01 | 2 | 2 tasks | 2 files |
+| Phase 10-migration-cutover P02 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -55,6 +56,8 @@ Phase 9 decisions (09-01):
 - [Phase 10-migration-cutover]: Noon UTC anchoring (T12:00:00.000Z) for date-only strings prevents timezone shift in all negative-offset zones
 - [Phase 10-migration-cutover]: Migration script uses own PrismaClient (not singleton) — one-shot process outside server lifecycle
 - [Phase 10-migration-cutover]: Data anomalies migrate as-is (warnings only, no rejection) per prior user decision — 527 tickets preserved intact
+- [Phase 10-migration-cutover]: No farm summary caching — PostgreSQL fast enough for 527 tickets, eliminates cache invalidation complexity
+- [Phase 10-migration-cutover]: dbFarmToJson maps Farm.name -> farm field for client backward compatibility without schema change
 
 ### Roadmap Evolution
 
@@ -70,7 +73,6 @@ Phase 9 decisions (09-01):
 
 ### Blockers/Concerns
 
-- **ACTIVE BLOCKER:** grain-tickets server.js will crash on startup — data.json is now archived and server still reads from flat file. Phase 10 plan 02 (server cutover to Prisma) must be completed before grain-tickets can serve requests.
 - Phase 12 (Settlement Import): Actual settlement file samples from each Hughes Farm buyer needed before column mapping UI can be built. Collect from farm office staff before Phase 12 planning.
 - Phase 13 (Reconciliation): Weight discrepancy thresholds and per-buyer shrink methods need farm manager input before Phase 13 design.
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert. Not blocking v2.0.
@@ -78,5 +80,5 @@ Phase 9 decisions (09-01):
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 10-01-PLAN.md — JSON to PostgreSQL migration complete; grain-tickets server needs Phase 10 plan 02 cutover before it can start
-Resume file: .planning/phases/10-migration-cutover/10-02-PLAN.md
+Stopped at: Completed 10-02-PLAN.md — server.js routes rewritten to Prisma; grain-tickets server fully operational on PostgreSQL; Phase 10 complete
+Resume file: .planning/phases/11-buyers-tickets/
