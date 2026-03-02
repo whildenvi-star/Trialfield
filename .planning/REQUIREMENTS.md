@@ -27,10 +27,10 @@ Requirements for grain traceability milestone. Each maps to roadmap phases.
 
 ### Settlements
 
-- [ ] **SET-01**: User can import a buyer's settlement statement from CSV or Excel file
-- [ ] **SET-02**: User can preview and map columns before committing a settlement import
+- [x] **SET-01**: User can import a buyer's settlement statement from CSV or Excel file
+- [x] **SET-02**: User can preview and map columns before committing a settlement import
 - [ ] **SET-03**: User can manually enter individual settlement line items for paper-only buyers
-- [ ] **SET-04**: Each settlement line captures: ticket number, date, net weight, moisture, net bushels, price, deductions, net payment
+- [x] **SET-04**: Each settlement line captures: ticket number, date, net weight, moisture, net bushels, price, deductions, net payment
 
 ### Reconciliation
 
@@ -123,10 +123,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BUY-03 | Phase 11 | Complete |
 | TKT-01 | Phase 11 | Complete |
 | TKT-02 | Phase 11 | Complete |
-| SET-01 | Phase 12 | Pending |
-| SET-02 | Phase 12 | Pending |
+| SET-01 | Phase 12 | Complete |
+| SET-02 | Phase 12 | Complete |
 | SET-03 | Phase 12 | Pending |
-| SET-04 | Phase 12 | Pending |
+| SET-04 | Phase 12 | Complete |
 | REC-01 | Phase 13 | Pending |
 | REC-02 | Phase 13 | Pending |
 | REC-03 | Phase 13 | Pending |

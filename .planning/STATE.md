@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v2.0 Grain Traceability — Phase 11 complete (2/2 plans done), Phase 12 next
+**Current focus:** v2.0 Grain Traceability — Phase 12 Plan 01 complete (settlement import UI shipped), Phase 12 Plan 02 (manual entry) next
 
 ## Current Position
 
-Phase: 11-buyer-registry-ticket-extensions
-Plan: 2 of 2 complete
-Status: Phase 11 complete — destination dropdown, filters, farm summary buyer breakdown shipped
-Last activity: 2026-03-02 — Phase 11 Plan 02: destination dropdown, cropYear harvest-season logic, destination/crop year filters, farm summary buyer breakdown, SW v4
+Phase: 12-settlement-import-manual-entry
+Plan: 1 of 2 complete
+Status: Phase 12 Plan 01 complete — settlement file import with column mapping UI shipped
+Last activity: 2026-03-02 — Phase 12 Plan 01: Prisma migration (filePath), parse/commit/list/delete routes, settlements.js UI, Settlements tab
 
-**v2.0 Grain Traceability:** Phases 9-11 complete, Phase 12 (Settlement Import) next, Phase 13 planned (not started)
+**v2.0 Grain Traceability:** Phases 9-11 complete, Phase 12 Plan 01 complete (1/2), Phase 12 Plan 02 (manual entry) next, Phase 13 planned
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 24 (v1.0: 11, v1.1: 8, v2.0: 5)
-- v2.0 plans completed: 5
+- Total plans completed: 25 (v1.0: 11, v1.1: 8, v2.0: 6)
+- v2.0 plans completed: 6
 - v3.0 plans completed: 0
 
 **By Milestone:**
@@ -32,6 +32,12 @@ Last activity: 2026-03-02 — Phase 11 Plan 02: destination dropdown, cropYear h
 | v1.1 | 5-8 | 8 | 2026-03-01 |
 | v2.0 | 9-13 | TBD | - |
 | v3.0 | 15-18 | TBD | - |
+
+**Phase 12 metrics:**
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 12-settlement-import-manual-entry | 01 | 270s | 2 | 6 |
 
 ## Accumulated Context
 
@@ -80,6 +86,8 @@ v3.0 architectural decisions:
 - [Phase 11-02]: Sticky destination: save localStorage.lastDestination on submit success, restore after dropdown is populated in ref-data-loaded (survives form.reset())
 - [Phase 11-02]: Farm summary buyer breakdown uses inline Destinations column text rather than collapsible rows — fits existing table layout
 - [Phase 11-02]: Crop year filter populated client-side from allTickets after load — no dedicated /api/crop-years endpoint needed
+- [Phase 12-01]: filePath String? added to Settlement via migration — clean parse-to-commit handoff that survives server restart without overloading Settlement.notes
+- [Phase 12-01]: Two-step import (parse/commit) with multer diskStorage — file persists between requests for column mapping review before DB write
 
 ### Roadmap Evolution
 
@@ -97,7 +105,8 @@ v3.0 architectural decisions:
 ### Blockers/Concerns
 
 v2.0:
-- Phase 12 (Settlement Import): Actual settlement file samples from each Hughes Farm buyer needed before column mapping UI can be built. Collect from farm office staff before Phase 12 planning.
+- Phase 12 Plan 01 COMPLETE: Settlement import with column mapping UI shipped. Actual settlement file samples not yet collected but UI handles any column names generically.
+- Phase 12 Plan 02 (Manual entry): Implement manual settlement line entry for paper-only buyers.
 - Phase 13 (Reconciliation): Weight discrepancy thresholds and per-buyer shrink methods need farm manager input before Phase 13 design.
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert. Not blocking v2.0.
 
@@ -110,6 +119,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 11 Plan 02 complete — destination dropdown, filters, farm summary buyer breakdown, SW v4
-Resume file: .planning/phases/11-buyer-registry-ticket-extensions/11-02-SUMMARY.md
-Next action: Phase 12 (Settlement Import) — collect actual settlement file samples from farm office before planning
+Stopped at: Phase 12 Plan 01 complete — settlement import UI, parse/commit/list/delete routes, Prisma migration
+Resume file: .planning/phases/12-settlement-import-manual-entry/12-01-SUMMARY.md
+Next action: Phase 12 Plan 02 — manual settlement line entry for paper-only buyers
