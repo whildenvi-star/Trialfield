@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v2.0 Grain Traceability — Phase 11: Buyers & Tickets
+**Current focus:** v3.0 Organic Cert Transparency — defining requirements
 
 ## Current Position
 
-Phase: 11 of 13 (Buyers & Tickets)
-Plan: Phase 10 COMPLETE — ready for Phase 11
-Status: Phase 10 complete — grain-tickets fully on PostgreSQL; server.js rewritten to Prisma; blocker resolved
-Last activity: 2026-03-02 — Phase 10 plan 02 executed (server.js rewritten to Prisma, sw.js bumped to v3)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v3.0 — rewiring organic-cert as compilation engine
+Last activity: 2026-03-01 — Milestone v3.0 started
 
-Progress: [██████████░░░░░░░░░░] Phase 10 complete (v1.0 + v1.1 shipped, Phase 9 done, Phase 10 done)
+**v2.0 Grain Traceability:** Phases 9-10 complete, Phase 11 planned (not started), Phases 12-13 pending
 
 ## Performance Metrics
 
@@ -79,6 +79,6 @@ Phase 9 decisions (09-01):
 
 ## Session Continuity
 
-Last session: 2026-03-02
-Stopped at: Completed 10-02-PLAN.md — server.js routes rewritten to Prisma; grain-tickets server fully operational on PostgreSQL; Phase 10 complete
-Resume file: .planning/phases/11-buyers-tickets/
+Last session: 2026-03-01
+Stopped at: Started v3.0 milestone — organic-cert transparency. Defining requirements.
+Resume file: .planning/PROJECT.md

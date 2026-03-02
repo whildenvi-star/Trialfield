@@ -48,9 +48,11 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - ✓ Intuitive navigation — default consolidated view, drill into enterprise on demand — v1.1
 - ✓ PDF reports reflect split-field reality (field list, history, mass balance) — v1.1
 
-## Current Milestone: v2.0 Grain Traceability
+## In-Progress Milestone: v2.0 Grain Traceability
 
 **Goal:** Replace the paper-to-spreadsheet grain ticket workflow with a digital traceability system that tracks every load from combine to settlement, reconciles against buyer payments, and flags discrepancies immediately.
+
+**Status:** Phases 9-10 complete (DB foundation + migration). Phases 11-13 planned but not started.
 
 **Target features:**
 - Database migration (Express + Prisma + PostgreSQL, preserving existing UI/PWA)
@@ -60,44 +62,60 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - Automated reconciliation with discrepancy detection across 4+ destinations
 - Farm registry integration for field lookups
 
+## Current Milestone: v3.0 Organic Cert Transparency
+
+**Goal:** Rewire organic-cert from a manual data-entry app into a live compilation engine that pulls field plans, inputs, seed, rotations, and harvest data from farm-budget, farm-registry, and grain-tickets — then compiles a complete NOP inspection packet with zero double-entry and total transparency.
+
+**Target features:**
+- Live data pull from farm-budget API (organic enterprise fields, inputs, seed, machinery, yields)
+- Live data pull from farm-registry API (authoritative field identities, acres, ownership)
+- Live data pull from grain-tickets API (actual harvest/delivery records per field)
+- NOP compliance layer applied to aggregated data (approved materials, buffer zones, transition status)
+- 8-section inspection PDF regenerated from live ecosystem data (replaces manual entry)
+- Yearly rotation snapshot mechanism for 3-year NOP field history
+- Pre-compiled inspection packet: hand it to the inspector, everything's in there
+
 ### Active
 
-(Requirements to be defined during milestone setup)
+(Requirements to be defined below)
 
-### Deferred (v2)
+### Deferred
 
 - Append-only audit store with tamper-evidence (signed/checksummed entries)
 - Audit viewer with filtering by user/resource/time
 - Audit log export for regulators
 - Photo evidence attachment for field documentation
-- Field record corrections/annotations by operators
-- API middleware that emits audit events on every write
-- Configurable retention/archive policy for compliance
-- Background jobs for audit log snapshots and backups
+- Multi-certifier support (EU, state programs) — USDA NOP only
+- Inspector portal/login — inspectors receive print reports, not digital access
 - Mobile-friendly responsive design (prep for future mobile app)
 
 ### Out of Scope
 
-- Native mobile app — deferred to v2, web-first with responsive design for now
+- Native mobile app — web-first, responsive design for now
 - Real-time field notifications — not needed for audit prep workflow
-- Inspector portal/login — inspectors receive print reports, not digital access
-- Multi-certifier support (EU, state programs) — USDA NOP only for v1
 - Automated compliance scoring — inspector makes the call, we provide the records
 - GIS/map-based split definition — label-based is sufficient for NOP audit
 - Enterprise-level organic status — NOP certifies at field level
 - Automated split detection from Case IH data — Case IH doesn't report sub-field splits
+- Rewriting farm-budget or grain-tickets — organic-cert reads from them, doesn't modify them
 
 ## Context
 
-Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget, fsa-acres, grain-tickets, meristem-malt, farm-registry. All apps share PostgreSQL and the farm-registry for field data.
+Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget (Express + JSON, port 3001), fsa-acres, grain-tickets (Express + Prisma + PostgreSQL, port 3000), meristem-malt, farm-registry (Express + JSON, port 3005). All apps share the farm-registry for field data.
 
-**Organic-cert** (v1.0 + v1.1 shipped): Case IH FieldOps API integration (OAuth2, mock mode active), split-field enterprises, print-ready USDA NOP PDF reports.
+**Farm-budget** (port 3001, source of truth for farm planning): Fields, crops, acres, inputs (fertilizers/chemicals), seed varieties, machinery, enterprises (organic vs. conventional categories with system codes), agronomic program templates, suppliers, buyers, CBOT pricing, budget calculations. Single-season design — rebuilt each year. JSON-backed (data/data.json). Comprehensive API: `/api/fields`, `/api/enterprises`, `/api/products`, `/api/seeds`, `/api/implements`, `/api/dashboard`, etc. Case IH FieldOps sync for applications and yield history.
 
-**Grain-tickets** (current focus): Working Express app on port 3000 with ticket entry, Claude Vision scanning, farm summary, PWA support, CSV export. Currently uses flat JSON data store (~160KB). 4 dependencies (express, multer, xlsx, @anthropic-ai/sdk). Calculation engine (calc.js) validated against original spreadsheet. Needs database migration and settlement reconciliation.
+**Organic-cert** (v1.0 + v1.1 shipped, v3.0 target): Case IH FieldOps API integration (OAuth2, mock mode active), split-field enterprises, print-ready USDA NOP PDF reports. Currently has its own manual data entry for fields, inputs, rotations, harvest — all of which duplicates data already in farm-budget. v3.0 eliminates this duplication.
+
+**Grain-tickets** (v2.0 in progress): Express app on port 3000 with Prisma + PostgreSQL (migrated from JSON). Ticket entry, Claude Vision scanning, farm summary, PWA support, CSV export. 527+ tickets. Phases 11-13 pending (buyers, settlements, reconciliation).
+
+**Farm-registry** (port 3005): Central field identity registry — 56 fields, 5,155 total acres. Source of truth for field names, aliases, reporting acres, organic acres, ownership.
 
 **Grain workflow today:** Combine → grain buggy (has scale) → radio net weight + field + crop to semi driver → semi driver writes Hughes Blue Ticket → delivers to co-op → co-op prints grain ticket → both forms to office → manual Excel entry → reconcile against settlement sheets (arrive ~1 week later, from 4+ buyers, mixed paper/CSV/PDF formats). 100-500 loads per season.
 
-Primary users are farm office staff (daily ticket entry) and farm manager (settlement reconciliation, reporting).
+**Organic cert workflow today:** Farm plan built in farm-budget (crops placed on fields, inputs assigned, enterprises set to organic). Same data then re-entered manually into organic-cert for NOP inspection packet generation. Inspector receives pre-compiled 8-section PDF packet.
+
+Primary users are farm office staff (daily ticket entry) and farm manager (farm planning, certification, settlement reconciliation).
 
 **Known tech debt (from v1.1 audit — organic-cert):**
 - Sync Acres button has a pre-existing runtime crash (data.unmatched undefined)
@@ -135,6 +153,9 @@ Primary users are farm office staff (daily ticket entry) and farm manager (settl
 | Keep Express for grain-tickets (not migrate to Next.js) | Working app with solid UI, PWA, Claude Vision — rewrite adds no user value | — Pending |
 | Add PostgreSQL via Prisma to grain-tickets | Settlement reconciliation is relational; flat JSON can't handle cross-entity queries | — Pending |
 | Farm registry integration for grain-ticket fields | Consistent field names across ecosystem; already partially integrated | — Pending |
+| Organic-cert as compilation engine, not data-entry app | Farm-budget is the source of truth for farm planning; duplicating data entry is error-prone and wasteful | — Pending |
+| Organic-cert reads from ecosystem APIs, never writes back | Leech pattern: pull data from farm-budget/farm-registry/grain-tickets but don't modify their data | — Pending |
+| Yearly rotation snapshots for NOP 3-year history | Farm-budget is single-season (rebuilt yearly); organic-cert must accumulate rotation history via annual snapshots | — Pending |
 
 ---
-*Last updated: 2026-03-01 after v2.0 milestone start*
+*Last updated: 2026-03-01 after v3.0 milestone start*
