@@ -1,0 +1,638 @@
+/* ============================================================
+   GLOMALIN — Floating Chat Widget Styles
+   Scoped under #glomalin-btn, #glomalin-popup, .glomalin-*
+   Follows grain-tickets terminal theme (dark + light mode)
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   Floating Button
+   ---------------------------------------------------------- */
+#glomalin-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--primary, #4af626);
+  color: var(--bg, #0a0e09);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(74, 246, 38, 0.35), 0 2px 6px rgba(0,0,0,0.4);
+  z-index: 9999;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  padding: 0;
+  outline: none;
+}
+
+#glomalin-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(74, 246, 38, 0.5), 0 2px 8px rgba(0,0,0,0.5);
+}
+
+#glomalin-btn:active {
+  transform: scale(0.96);
+}
+
+#glomalin-btn svg {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+/* Status dot */
+.glomalin-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00ff88;
+  border: 2px solid var(--bg, #0a0e09);
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.7);
+  animation: glomalin-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes glomalin-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+
+/* ----------------------------------------------------------
+   Popup Container
+   ---------------------------------------------------------- */
+#glomalin-popup {
+  position: fixed;
+  bottom: 90px;
+  right: 24px;
+  width: 400px;
+  height: 500px;
+  min-width: 320px;
+  min-height: 300px;
+  max-width: 90vw;
+  max-height: 85vh;
+  background: var(--card, #111611);
+  border: 1px solid var(--border, #1e2e1a);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(74,246,38,0.08);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  resize: both;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  color: var(--text, #a8b8a0);
+}
+
+/* ----------------------------------------------------------
+   Header Bar
+   ---------------------------------------------------------- */
+#glomalin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 0.85rem;
+  background: var(--bg-raised, #0f140e);
+  border-bottom: 1px solid var(--border, #1e2e1a);
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+#glomalin-header:active {
+  cursor: grabbing;
+}
+
+.glomalin-title {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--primary, #4af626);
+  letter-spacing: 0.08em;
+}
+
+.glomalin-title::before {
+  content: '> ';
+  color: var(--text-light, #5c6e54);
+}
+
+.glomalin-header-actions {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.glomalin-hdr-btn {
+  background: transparent;
+  border: 1px solid var(--border, #1e2e1a);
+  color: var(--text-light, #5c6e54);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  line-height: 1.4;
+}
+
+.glomalin-hdr-btn:hover {
+  color: var(--primary, #4af626);
+  border-color: var(--primary-dim, #2a8a18);
+}
+
+/* ----------------------------------------------------------
+   Warning Banner
+   ---------------------------------------------------------- */
+.glomalin-warning {
+  background: rgba(255, 184, 0, 0.12);
+  border-bottom: 1px solid rgba(255, 184, 0, 0.35);
+  color: var(--amber, #ffb800);
+  font-size: 0.78rem;
+  padding: 0.4rem 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------
+   Messages Area
+   ---------------------------------------------------------- */
+#glomalin-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  scroll-behavior: smooth;
+}
+
+#glomalin-messages::-webkit-scrollbar { width: 5px; }
+#glomalin-messages::-webkit-scrollbar-track { background: var(--bg, #0a0e09); }
+#glomalin-messages::-webkit-scrollbar-thumb { background: var(--border-light, #283828); border-radius: 3px; }
+#glomalin-messages::-webkit-scrollbar-thumb:hover { background: var(--primary-dim, #2a8a18); }
+
+/* ----------------------------------------------------------
+   Message Bubbles
+   ---------------------------------------------------------- */
+.glomalin-msg {
+  max-width: 85%;
+  padding: 0.55rem 0.8rem;
+  border-radius: 4px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.55;
+  font-size: 0.85rem;
+}
+
+.glomalin-msg.user {
+  align-self: flex-end;
+  background: rgba(74, 246, 38, 0.12);
+  border: 1px solid rgba(74, 246, 38, 0.25);
+  color: var(--text-bright, #d0e0c8);
+}
+
+.glomalin-msg.assistant {
+  align-self: flex-start;
+  background: var(--card-alt, #0d120c);
+  border: 1px solid var(--border, #1e2e1a);
+  color: var(--text, #a8b8a0);
+  max-width: 95%;
+}
+
+.glomalin-msg.system {
+  align-self: center;
+  background: transparent;
+  border: 1px dashed var(--border, #1e2e1a);
+  color: var(--text-light, #5c6e54);
+  font-size: 0.78rem;
+  font-style: italic;
+  max-width: 90%;
+  text-align: center;
+}
+
+/* ----------------------------------------------------------
+   ASCII Tractor Loading
+   ---------------------------------------------------------- */
+.glomalin-loading {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.7rem;
+  color: var(--primary-dim, #2a8a18);
+  white-space: pre;
+  line-height: 1.3;
+  animation: glomalin-blink-cursor 1s step-end infinite;
+  margin: 0;
+}
+
+@keyframes glomalin-blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
+
+/* ----------------------------------------------------------
+   Tool Status Line
+   ---------------------------------------------------------- */
+.glomalin-tool-status {
+  font-size: 0.75rem;
+  color: var(--text-light, #5c6e54);
+  font-style: italic;
+  margin-top: 0.3rem;
+  padding: 0.2rem 0;
+}
+
+/* ----------------------------------------------------------
+   Inline Markdown Styles
+   ---------------------------------------------------------- */
+.glomalin-msg strong { color: var(--text-bright, #d0e0c8); }
+.glomalin-msg em { color: var(--text-light, #5c6e54); }
+
+.glomalin-inline-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.8em;
+  background: rgba(74, 246, 38, 0.08);
+  border: 1px solid rgba(74, 246, 38, 0.15);
+  padding: 0.1em 0.4em;
+  border-radius: 2px;
+  color: var(--primary, #4af626);
+}
+
+.glomalin-pre {
+  background: var(--bg, #0a0e09);
+  border: 1px solid var(--border, #1e2e1a);
+  border-radius: 3px;
+  padding: 0.65rem 0.85rem;
+  overflow-x: auto;
+  margin: 0.5rem 0 0.3rem;
+  max-height: 180px;
+}
+
+.glomalin-code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.75rem;
+  color: var(--text, #a8b8a0);
+  display: block;
+  white-space: pre;
+}
+
+.glomalin-h {
+  color: var(--primary, #4af626);
+  font-weight: 400;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 0.25rem;
+  letter-spacing: 0.04em;
+}
+
+.glomalin-list {
+  margin: 0.3rem 0 0.3rem 1.2rem;
+  padding: 0;
+}
+
+.glomalin-list li {
+  margin-bottom: 0.15rem;
+}
+
+.glomalin-msg a {
+  color: var(--blue, #4a9eff);
+  text-decoration: underline;
+}
+
+.glomalin-msg a:hover { color: var(--primary, #4af626); }
+
+.glomalin-deeplink {
+  color: var(--primary, #4af626);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ----------------------------------------------------------
+   Tables in Messages
+   ---------------------------------------------------------- */
+.glomalin-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.4rem 0;
+  font-size: 0.75rem;
+  overflow-x: auto;
+  display: block;
+}
+
+.glomalin-table th {
+  background: var(--bg-raised, #0f140e);
+  color: var(--primary, #4af626);
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border, #1e2e1a);
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.glomalin-table td {
+  padding: 0.28rem 0.5rem;
+  border-bottom: 1px solid var(--border, #1e2e1a);
+  color: var(--text, #a8b8a0);
+  white-space: nowrap;
+}
+
+.glomalin-table tr:hover td {
+  background: var(--highlight, #142210);
+}
+
+/* ----------------------------------------------------------
+   Chart Blocks
+   ---------------------------------------------------------- */
+.glomalin-chart-wrap {
+  margin: 0.5rem 0;
+  max-height: 250px;
+  position: relative;
+  background: var(--bg, #0a0e09);
+  border: 1px solid var(--border, #1e2e1a);
+  border-radius: 3px;
+  padding: 0.5rem;
+}
+
+.glomalin-chart-wrap canvas {
+  max-height: 230px;
+  width: 100% !important;
+}
+
+/* ----------------------------------------------------------
+   CSV Export
+   ---------------------------------------------------------- */
+.glomalin-csv-wrap {
+  margin: 0.4rem 0;
+}
+
+.glomalin-csv-btn {
+  display: inline-block;
+  background: transparent;
+  border: 1px solid var(--primary-dim, #2a8a18);
+  color: var(--primary, #4af626);
+  padding: 0.3rem 1rem;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 0;
+  margin-bottom: 0.4rem;
+  transition: background 0.15s ease;
+}
+
+.glomalin-csv-btn:hover {
+  background: var(--primary, #4af626);
+  color: var(--bg, #0a0e09);
+}
+
+.glomalin-csv-preview {
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.glomalin-csv-more {
+  font-size: 0.72rem;
+  color: var(--text-light, #5c6e54);
+  font-style: italic;
+  margin-top: 0.2rem;
+}
+
+/* ----------------------------------------------------------
+   Input Area
+   ---------------------------------------------------------- */
+#glomalin-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+  padding: 0.65rem 0.75rem;
+  border-top: 1px solid var(--border, #1e2e1a);
+  background: var(--bg-raised, #0f140e);
+  flex-shrink: 0;
+}
+
+#glomalin-input {
+  flex: 1;
+  background: var(--card, #111611);
+  border: 1px solid var(--border, #1e2e1a);
+  color: var(--text, #a8b8a0);
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  padding: 0.45rem 0.65rem;
+  resize: none;
+  border-radius: 0;
+  min-height: 38px;
+  max-height: 100px;
+  transition: border-color 0.15s ease;
+}
+
+#glomalin-input:focus {
+  outline: none;
+  border-color: var(--primary-dim, #2a8a18);
+  box-shadow: 0 0 4px rgba(74, 246, 38, 0.15);
+}
+
+#glomalin-input::placeholder {
+  color: var(--text-light, #5c6e54);
+  opacity: 0.7;
+}
+
+#glomalin-input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.glomalin-send-btn {
+  background: transparent;
+  border: 1px solid var(--primary-dim, #2a8a18);
+  color: var(--primary, #4af626);
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 0;
+  align-self: flex-end;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+  min-height: 38px;
+}
+
+.glomalin-send-btn:hover {
+  background: var(--primary-dim, #2a8a18);
+  color: var(--bg, #0a0e09);
+}
+
+.glomalin-send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------
+   Light Theme Overrides
+   ---------------------------------------------------------- */
+body.light #glomalin-btn {
+  background: var(--primary, #1a6b10);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(26, 107, 16, 0.3), 0 2px 6px rgba(0,0,0,0.2);
+}
+
+body.light #glomalin-btn:hover {
+  box-shadow: 0 6px 20px rgba(26, 107, 16, 0.45), 0 2px 8px rgba(0,0,0,0.25);
+}
+
+body.light .glomalin-dot {
+  background: #00c853;
+  border-color: #fff;
+  box-shadow: 0 0 6px rgba(0, 200, 83, 0.5);
+}
+
+body.light #glomalin-popup {
+  background: #ffffff;
+  border-color: #e0e0e0;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+
+body.light #glomalin-header {
+  background: #f5f5f5;
+  border-bottom-color: #e0e0e0;
+}
+
+body.light .glomalin-title {
+  color: var(--primary, #1a6b10);
+}
+
+body.light .glomalin-hdr-btn {
+  border-color: #e0e0e0;
+}
+
+body.light .glomalin-hdr-btn:hover {
+  color: var(--primary, #1a6b10);
+  border-color: var(--primary-dim, #3a8a30);
+}
+
+body.light #glomalin-messages::-webkit-scrollbar-track { background: #fff; }
+body.light #glomalin-messages::-webkit-scrollbar-thumb { background: #ccc; }
+
+body.light .glomalin-msg.user {
+  background: rgba(26, 107, 16, 0.08);
+  border-color: rgba(26, 107, 16, 0.2);
+  color: #1a1a1a;
+}
+
+body.light .glomalin-msg.assistant {
+  background: #fafafa;
+  border-color: #e0e0e0;
+  color: #1a1a1a;
+}
+
+body.light .glomalin-msg.system {
+  border-color: #e0e0e0;
+  color: #666;
+}
+
+body.light .glomalin-loading {
+  color: #3a8a30;
+}
+
+body.light .glomalin-inline-code {
+  background: rgba(26, 107, 16, 0.06);
+  border-color: rgba(26, 107, 16, 0.15);
+  color: var(--primary, #1a6b10);
+}
+
+body.light .glomalin-pre {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
+body.light .glomalin-code {
+  color: #333;
+}
+
+body.light .glomalin-h {
+  color: var(--primary, #1a6b10);
+}
+
+body.light .glomalin-table th {
+  background: #f0f0f0;
+  color: var(--primary, #1a6b10);
+  border-bottom-color: #e0e0e0;
+}
+
+body.light .glomalin-table td {
+  border-bottom-color: #eee;
+  color: #333;
+}
+
+body.light .glomalin-table tr:hover td {
+  background: #f0f7ee;
+}
+
+body.light .glomalin-chart-wrap {
+  background: #fff;
+  border-color: #e0e0e0;
+}
+
+body.light .glomalin-csv-btn {
+  border-color: var(--primary-dim, #3a8a30);
+  color: var(--primary, #1a6b10);
+}
+
+body.light .glomalin-csv-btn:hover {
+  background: var(--primary, #1a6b10);
+  color: #fff;
+}
+
+body.light #glomalin-input-row {
+  background: #f5f5f5;
+  border-top-color: #e0e0e0;
+}
+
+body.light #glomalin-input {
+  background: #fff;
+  border-color: #e0e0e0;
+  color: #1a1a1a;
+}
+
+body.light #glomalin-input:focus {
+  border-color: var(--primary-dim, #3a8a30);
+  box-shadow: 0 0 4px rgba(26, 107, 16, 0.15);
+}
+
+body.light .glomalin-send-btn {
+  border-color: var(--primary-dim, #3a8a30);
+  color: var(--primary, #1a6b10);
+}
+
+body.light .glomalin-send-btn:hover {
+  background: var(--primary-dim, #3a8a30);
+  color: #fff;
+}
+
+/* ----------------------------------------------------------
+   Responsive — near-fullscreen on small screens
+   ---------------------------------------------------------- */
+@media (max-width: 600px) {
+  #glomalin-popup {
+    position: fixed;
+    inset: 8px;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    bottom: auto;
+    right: auto;
+    border-radius: 4px;
+    resize: none;
+  }
+
+  #glomalin-btn {
+    bottom: 16px;
+    right: 16px;
+    width: 50px;
+    height: 50px;
+  }
+
+  .glomalin-msg {
+    max-width: 92%;
+  }
+}
