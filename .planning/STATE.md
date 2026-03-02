@@ -40,6 +40,7 @@ Last activity: 2026-03-02 — Phase 13 Plan 01: normalizeTicketNo, runMatch, aut
 | 12-settlement-import-manual-entry | 01 | 270s | 2 | 6 |
 | 12-settlement-import-manual-entry | 02 | 327s | 2 | 5 |
 | 13-reconciliation-engine-discrepancy-ui | 01 | 3min | 1 | 1 |
+| Phase 13 P02 | 420 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,8 @@ v3.0 architectural decisions:
 - [Phase 13-01]: _reconciliation always present on ticket responses (status=unreconciled when no lines) — client never needs null check
 - [Phase 13-01]: varianceLbs = farmLbs - buyerLbs (positive = farm weighed more = potential underpayment)
 - [Phase 13-01]: dispute endpoint restricted to matched/manual/disputed lines — unmatched lines have nothing to dispute
+- [Phase 13]: showSettlementToast uses dedicated #settlement-toast element separate from entry-toast to avoid z-index conflicts
+- [Phase 13]: Inline dispute replaces cells in-place (no modal) per plan spec — textarea in notes cell, Save/Cancel in action cell
 
 ### Roadmap Evolution
 
@@ -107,11 +110,14 @@ v3.0 architectural decisions:
 
 ### Pending Todos
 
-4 pending todos:
-- **Work on grain ticket system enhancements** (general)
-- **Fix field registry acres and ownership save bug** (farm-registry)
-- **Add field editor category totals and red negative profit** (farm-budget)
-- **Sync crop plan from macro rollup into FSA acres report** (fsa-acres)
+1 pending todo:
+- **Phase 13 Plan 02 — Discrepancy UI** (grain-tickets) — reconciliation dashboard, unmatched loads view, dispute/link workflows
+
+Completed this session (2026-03-02):
+- ~~Sync crop plan from macro rollup into FSA acres report~~ → shipped: CLU land classification + crop sync from Macro Roll Up
+- ~~Fix field registry acres and ownership save bug~~ → fixed: nonTillable no longer zeroed for rented/owned, ownedTillable deducts nonTillable
+- ~~Add field editor category totals and red negative profit~~ → shipped: grid view groups by systemCode with subtotal columns, collapsed preview profit colored red/green
+- ~~Work on grain ticket system enhancements~~ → identified as Phase 13 Plan 02 (above)
 
 ### Blockers/Concerns
 
@@ -129,6 +135,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 13 Plan 01 complete — reconciliation matching engine, 5 API routes, _reconciliation ticket enrichment
+Stopped at: Pending todos cleared — registry save bug fixed, enterprise grid category subtotals added, field editor profit color fixed
 Resume file: .planning/phases/13-reconciliation-engine-discrepancy-ui/13-01-SUMMARY.md
 Next action: Phase 13 Plan 02 — Discrepancy UI (frontend for reconciliation routes)
