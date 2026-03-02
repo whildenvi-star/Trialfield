@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Ticket {
+  id          Int      @id @default(autoincrement())
+  legacyId    String?  // Preserves "t_000001" string IDs from JSON for Phase 10 migration matching
+  date        DateTime
+  cropYear    Int      // 2025, 2026 — derived from date during Phase 10 migration
+  farm        String   // Farm name (string, matched to Farm.name)
+  netWeight   Float    // Pounds — raw scale weight
+  moisture    Float    // Moisture percentage
+  fm          Float    @default(0) // Foreign matter percentage
+  crop        String   // Crop name (matched to CropConfig.cropName)
+  ticketNo    String?  // NOT unique — 14 known duplicates in existing data
+  hbtBinNo    String?  // Hughes Blue Ticket bin number — extracted from notes in Phase 10
+  truckId     String?  // Truck identifier — extracted from notes in Phase 10
+  destination String?  // Free-text destination — replaced by buyerId FK in Phase 11
+  notes       String?  // Original notes text preserved after field extraction
+  buyerId     Int?     // FK to Buyer — null until Phase 11 wires buyer selection
+  buyer       Buyer?   @relation(fields: [buyerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  settlementLines SettlementLine[] // Matched settlement lines — populated in Phase 13
+
+  @@index([ticketNo])       // Non-unique: 14 duplicate ticket numbers exist in data
+  @@index([farm, cropYear]) // Farm summary queries
+  @@index([crop, cropYear]) // Crop summary queries
+  @@index([buyerId])        // Buyer filter queries (Phase 11)
+}
+
+model Farm {
+  id             Int       @id @default(autoincrement())
+  legacyId       String?   // Preserves "f_001" string IDs from JSON
+  registryId     String?   // farm-registry field ID for future sync
+  name           String    @unique // "Airport", "Schultz", etc.
+  crop           String?   // Primary crop assignment (from farms array)
+  acres          Float     @default(0) // Field acres for this farm-crop combo
+  reportingAcres Float     @default(0) // Synced from farm-registry
+  organicAcres   Float     @default(0) // Synced from farm-registry
+  unit           String    @default("BU") // BU, CWT, etc.
+  type           String    @default("Conventional") // Conventional, Organic, etc.
+  guarantee      Float     @default(0) // Crop insurance guarantee
+  coverage       Float     @default(0) // Coverage percentage
+  claimThreshold Float     @default(0) // Claim threshold
+  discount       Float     @default(0) // Per-farm discount override
+  testWeight     Float     @default(56) // Per-farm test weight override
+  driver         String?   // Default driver for this farm
+  truck          Float     @default(0) // Default truck number
+  notes          String?
+  syncedAt       DateTime? // Last sync from farm-registry API
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model CropConfig {
+  id             Int      @id @default(autoincrement())
+  cropYear       Int      // 2025, 2026, etc. — allows per-year config changes
+  cropName       String   // "Hybrid Rye", "Organic Yellow Corn", etc.
+  testWeight     Float    @default(56) // Pounds per bushel
+  moistureShrink Float    @default(0)  // Moisture shrink threshold percentage
+  discount       Float    @default(0)  // Discount percentage
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([cropYear, cropName])
+  @@index([cropYear])
+}
+
+model Buyer {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique // "Meristem Malt", "ADM", etc.
+  shortCode   String?  // "MRM", "ADM", "COOP" — for compact display
+  type        String?  // "elevator", "maltster", "co-op"
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tickets     Ticket[]
+  settlements Settlement[]
+  columnMaps  BuyerColumnMap[]
+}
+
+model BuyerColumnMap {
+  id        Int      @id @default(autoincrement())
+  buyerId   Int
+  buyer     Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  fieldName String   // "ticketNo", "netWeight", "moisture", etc.
+  csvColumn String   // Column name or index from buyer's settlement CSV/Excel
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([buyerId, fieldName])
+}
+
+model Settlement {
+  id          Int      @id @default(autoincrement())
+  buyerId     Int
+  buyer       Buyer    @relation(fields: [buyerId], references: [id])
+  cropYear    Int
+  importedAt  DateTime @default(now())
+  sourceFile  String?  // Original uploaded filename
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lines SettlementLine[]
+
+  @@index([buyerId, cropYear])
+}
+
+model SettlementLine {
+  id           Int        @id @default(autoincrement())
+  settlementId Int
+  settlement   Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  ticketNo     String?    // Ticket number from buyer's file — may not exactly match farm ticket
+  date         DateTime?
+  netWeight    Float?     // Pounds — buyer's reported weight
+  moisture     Float?     // Buyer's reported moisture
+  netBushels   Float?     // Buyer's computed bushels (their shrink method)
+  price        Decimal?   @db.Decimal(10, 4) // $/bushel — Decimal for monetary precision
+  deductions   Decimal?   @db.Decimal(10, 2) // Total deductions in dollars
+  netPayment   Decimal?   @db.Decimal(10, 2) // Net payment in dollars
+  ticketId     Int?       // FK to Ticket — set during Phase 13 reconciliation matching
+  ticket       Ticket?    @relation(fields: [ticketId], references: [id])
+  matchStatus  String     @default("unmatched") // "unmatched" | "matched" | "disputed" | "manual"
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([settlementId])
+  @@index([ticketNo])
+  @@index([ticketId])
+}
