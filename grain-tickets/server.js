@@ -1256,10 +1256,21 @@ app.post('/api/settlements/:id/commit', async (req, res) => {
 });
 
 // GET /api/settlements — list all settlements ordered by importedAt desc
+// Supports optional ?buyerId=N and ?cropYear=N query params for filtering
 app.get('/api/settlements', async (req, res) => {
   try {
     res.set('Cache-Control', 'no-store');
+    const where = {};
+    if (req.query.buyerId) {
+      const buyerId = parseInt(req.query.buyerId, 10);
+      if (!isNaN(buyerId)) where.buyerId = buyerId;
+    }
+    if (req.query.cropYear) {
+      const cropYear = parseInt(req.query.cropYear, 10);
+      if (!isNaN(cropYear)) where.cropYear = cropYear;
+    }
     const settlements = await prisma.settlement.findMany({
+      where,
       orderBy: { importedAt: 'desc' },
       include: {
         buyer: true,
