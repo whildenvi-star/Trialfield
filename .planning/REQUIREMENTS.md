@@ -40,6 +40,48 @@ Requirements for grain traceability milestone. Each maps to roadmap phases.
 - [ ] **REC-04**: User can view settlement summary comparing farm totals vs buyer settled totals per crop/buyer/season
 - [ ] **REC-05**: User can flag a matched ticket as disputed and add notes
 
+## v3.0 Requirements
+
+Requirements for organic cert transparency milestone. Each maps to roadmap phases.
+
+### Foundation Fixes
+
+- [ ] **FIX-01**: Sync Acres button on Fields page works without runtime crash
+- [ ] **FIX-02**: Enterprise query returns all enterprises per field (no truncation at 3)
+- [ ] **FIX-03**: Partial unique index captured in schema.prisma for environment rebuild safety
+
+### Ecosystem Data Pull
+
+- [ ] **ECO-01**: User can see live organic-designated field data pulled from farm-budget
+- [ ] **ECO-02**: User can see live field identities and acres pulled from farm-registry
+- [ ] **ECO-03**: User can see live delivery records pulled from grain-tickets for organic fields
+- [ ] **ECO-04**: User can map farm-budget field names to organic-cert field records when automatic name matching fails
+- [ ] **ECO-05**: Ecosystem pull degrades gracefully when a source app is not running (shows which sources are unavailable)
+
+### Compilation Engine
+
+- [ ] **CMP-01**: User can preview compiled data before committing (see exactly what will be written from each source)
+- [ ] **CMP-02**: User can compile enterprise/field data from farm-budget into organic-cert field records
+- [ ] **CMP-03**: User can compile input application data from farm-budget into organic-cert material usage records
+- [ ] **CMP-04**: User can compile seed data from farm-budget into organic-cert seed source records
+- [ ] **CMP-05**: User can see a compilation readiness dashboard showing completeness per NOP section
+
+### Rotation History
+
+- [ ] **ROT-01**: User can take a yearly rotation snapshot capturing field-crop-acre assignments from farm-budget
+- [ ] **ROT-02**: Rotation snapshots accumulate to provide 3-year NOP field history
+- [ ] **ROT-03**: User sees a warning when no snapshot exists for the current crop year
+
+### Harvest Data
+
+- [ ] **HRV-01**: User can compile harvest/delivery records from grain-tickets into organic-cert harvest events
+- [ ] **HRV-02**: Harvest compilation normalizes crop names between grain-tickets and organic-cert
+
+### PDF Report Refresh
+
+- [ ] **PDF-01**: 8-section NOP inspection PDF renders correctly from compiled ecosystem data
+- [ ] **PDF-02**: PDF handles null/missing compiled data gracefully (no rendering artifacts)
+
 ## v2.x Requirements
 
 Deferred to post-launch validation. Tracked but not in current roadmap.
@@ -91,11 +133,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REC-04 | Phase 13 | Pending |
 | REC-05 | Phase 13 | Pending |
 
-**Coverage:**
+**v2.0 Coverage:**
 - v2.0 requirements: 18 total
 - Mapped to phases: 18
 - Unmapped: 0 ✓
 
+**v3.0 Coverage:**
+- v3.0 requirements: 20 total
+- Mapped to phases: 0 (pending roadmap creation)
+- Unmapped: 20 ⚠️
+
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 — traceability updated after roadmap creation*
+*Last updated: 2026-03-01 — v3.0 requirements added*
