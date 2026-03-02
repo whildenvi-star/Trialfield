@@ -80,11 +80,11 @@ Plans:
   3. User can filter the ticket list by buyer/destination and see only that buyer's loads
   4. Each ticket carries a cropYear field visible in the ticket detail and editable at entry time
   5. Buyer column-mapping config is stored per buyer and survives a server restart
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 11-01: Buyer CRUD API and admin UI
-- [ ] 11-02: Schema extension (Buyer, Settlement, SettlementLine models), destinationId FK on tickets, cropYear field, ticket list filter
+- [ ] 11-01-PLAN.md — Buyer CRUD API routes + admin UI section + BuyerColumnMap API
+- [ ] 11-02-PLAN.md — Ticket entry buyer dropdown, cropYear field, ticket list buyer filter, SW cache bump
 
 ### Phase 12: Settlement Import & Manual Entry
 **Goal**: Settlement data from every buyer path enters the system — CSV/Excel files for digital buyers, a manual entry form for paper-only buyers
