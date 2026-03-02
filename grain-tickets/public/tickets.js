@@ -376,6 +376,13 @@
       html += '<td class="editable number" data-field="moisture">' + util.formatNum(t.moisture, 1) + '</td>';
       html += '<td class="editable" data-field="crop">' + (t.crop || '').trim() + '</td>';
       html += '<td class="editable" data-field="ticketNo">' + (t.ticketNo || '') + '</td>';
+
+      // Reconciliation status badge
+      var reconStatus = (t._reconciliation && t._reconciliation.status) ? t._reconciliation.status : 'unreconciled';
+      var reconLabels = { unreconciled: 'Unreconciled', matched: 'Matched', disputed: 'Disputed', manual: 'Manual' };
+      var reconLabel = reconLabels[reconStatus] || 'Unreconciled';
+      html += '<td><span class="badge badge-' + reconStatus + '">' + reconLabel + '</span></td>';
+
       html += '<td class="editable" data-field="notes">' + (t.notes || '') + '</td>';
       html += '<td>' + destName + '</td>';
       html += '<td class="editable number" data-field="fm">' + util.formatNum(t.fm, 2) + '</td>';

@@ -6,14 +6,23 @@
   <title>Grain Ticket Entry</title>
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#2d5a27">
+  <meta name="theme-color" content="#0a0e09">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <script>
+    (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+  </script>
 </head>
 <body>
+  <script>
+    if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+  </script>
   <header>
-    <h1>Grain Ticket Entry</h1>
+    <div class="header-top">
+      <h1>grain-tickets</h1>
+      <button id="theme-toggle" class="theme-toggle">[day]</button>
+    </div>
     <nav>
       <button class="tab-btn active" data-tab="entry">New Ticket</button>
       <button class="tab-btn" data-tab="list">Ticket Log</button>
@@ -29,7 +38,7 @@
       <h2>New Scale Ticket</h2>
       <div class="scan-section">
         <button type="button" id="scan-btn" class="btn-primary btn-scan">Scan Ticket (Camera)</button>
-        <input type="file" id="scan-input" accept="image/*" capture="environment" style="display:none">
+        <input type="file" id="scan-input" accept="image/*,.pdf" capture="environment" style="display:none">
         <div id="scan-status" class="scan-status hidden"></div>
       </div>
       <form id="ticket-form">
@@ -138,6 +147,7 @@
               <th data-sort="moisture">Moist%</th>
               <th data-sort="crop">Crop</th>
               <th data-sort="ticketNo">Ticket No.</th>
+              <th>Status</th>
               <th>Notes</th>
               <th data-sort="destination">Dest</th>
               <th data-sort="fm">FM</th>
@@ -213,6 +223,7 @@
         <button class="settlement-nav-btn active" data-view="import">Import File</button>
         <button class="settlement-nav-btn" data-view="manual">Manual Entry</button>
         <button class="settlement-nav-btn" data-view="history">History</button>
+        <button class="settlement-nav-btn" data-view="reconciliation">Reconciliation</button>
       </div>
 
       <!-- Import view (default) -->
@@ -264,6 +275,9 @@
 
       <!-- Detail view -->
       <div id="settlement-detail" class="settlement-view hidden"></div>
+
+      <!-- Reconciliation view -->
+      <div id="settlement-reconciliation" class="settlement-view hidden"></div>
     </section>
   </main>
 
@@ -279,6 +293,26 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
+  </script>
+  <!-- Theme toggle -->
+  <script>
+  (function () {
+    var btn = document.getElementById('theme-toggle');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    function update() {
+      var isLight = document.body.classList.contains('light');
+      btn.textContent = isLight ? '[night]' : '[day]';
+      if (meta) meta.content = isLight ? '#ffffff' : '#0a0e09';
+    }
+    update();
+    btn.addEventListener('click', function () {
+      document.body.classList.toggle('light');
+      var isLight = document.body.classList.contains('light');
+      localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
+      update();
+      window.dispatchEvent(new Event('theme-change'));
+    });
+  })();
   </script>
 </body>
 </html>
