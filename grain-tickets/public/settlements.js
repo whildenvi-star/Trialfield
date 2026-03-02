@@ -1401,7 +1401,7 @@
         '<td class="number">' + Math.round(row.farmLbs || 0).toLocaleString() + '</td>' +
         '<td class="number">' + Math.round(row.buyerLbs || 0).toLocaleString() + '</td>' +
         '<td class="number ' + varianceClass + '">' + varianceDisplay + '</td>' +
-        '<td class="number">' + (row.ticketCount || 0) + '</td>';
+        '<td class="number">' + (row.farmCount || 0) + '</td>';
       tbody.appendChild(tr);
     });
     tbl.appendChild(tbody);
@@ -1473,10 +1473,10 @@
           '<div style="font-size:0.85rem;"><strong>' + escHtml(ticket.ticketNo || '--') + '</strong>' +
           ' &mdash; ' + escHtml(ticket.date || '') + ' &mdash; ' + lbs + '</div>' +
           '<div>' + escHtml(ticket.crop || '') + '</div>';
-        if (ticket._reconciliation && ticket._reconciliation.hint) {
+        if (ticket.hint) {
           var hint = document.createElement('div');
           hint.className = 'recon-item-hint';
-          hint.textContent = ticket._reconciliation.hint;
+          hint.textContent = ticket.hint;
           item.appendChild(hint);
         }
         item.addEventListener('click', function () {
