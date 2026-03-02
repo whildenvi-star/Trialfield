@@ -212,7 +212,7 @@ Plans:
 | 10. Migration & Cutover | v2.0 | 2/2 | Complete | 2026-03-02 |
 | 11. Buyer Registry & Ticket Extensions | 2/2 | Complete   | 2026-03-02 | - |
 | 12. Settlement Import & Manual Entry | 2/2 | Complete    | 2026-03-02 | - |
-| 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete   | 2026-03-02 | - |
+| 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete    | 2026-03-02 | - |
 | 14. Chat Agent (system info & recall) | — | 0/TBD | Not started | - |
 | 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/TBD | Not started | - |
 | 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
