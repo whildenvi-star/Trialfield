@@ -1221,6 +1221,160 @@ app.delete('/api/settlements/:id', async (req, res) => {
   }
 });
 
+// POST /api/settlements — create a manual settlement header (no file upload)
+app.post('/api/settlements', async (req, res) => {
+  try {
+    const buyerId = parseInt(req.body.buyerId, 10);
+    const cropYear = parseInt(req.body.cropYear, 10);
+    if (!buyerId || isNaN(buyerId)) return res.status(400).json({ error: 'buyerId is required' });
+    if (!cropYear || isNaN(cropYear)) return res.status(400).json({ error: 'cropYear is required' });
+
+    const notes = (req.body.notes || '').trim() || null;
+
+    const settlement = await prisma.settlement.create({
+      data: {
+        buyerId,
+        cropYear,
+        notes,
+        sourceFile: null,
+        filePath: null
+      }
+    });
+
+    res.status(201).json({
+      id: settlement.id,
+      buyerId: settlement.buyerId,
+      cropYear: settlement.cropYear,
+      notes: settlement.notes,
+      importedAt: settlement.importedAt
+    });
+  } catch (e) {
+    console.error('POST /api/settlements error:', e);
+    res.status(500).json({ error: e.message || 'Failed to create settlement' });
+  }
+});
+
+// POST /api/settlements/:id/lines — add a single line to a settlement
+app.post('/api/settlements/:id/lines', async (req, res) => {
+  try {
+    const settlementId = parseInt(req.params.id, 10);
+    if (isNaN(settlementId)) return res.status(404).json({ error: 'Settlement not found' });
+
+    const settlement = await prisma.settlement.findUnique({ where: { id: settlementId } });
+    if (!settlement) return res.status(404).json({ error: 'Settlement not found' });
+
+    const { ticketNo, date, netWeight, moisture, netBushels, price, deductions, netPayment, notes } = req.body;
+
+    // Parse and anchor date to noon UTC to prevent timezone shift
+    let parsedDate = null;
+    if (date) {
+      const d = new Date(date + 'T12:00:00.000Z');
+      parsedDate = isNaN(d.getTime()) ? null : d;
+    }
+
+    const data = {
+      settlementId,
+      ticketNo: (ticketNo || '').trim() || null,
+      date: parsedDate,
+      netWeight: netWeight != null && netWeight !== '' ? parseFloat(netWeight) || null : null,
+      moisture: moisture != null && moisture !== '' ? parseFloat(moisture) || null : null,
+      netBushels: netBushels != null && netBushels !== '' ? parseFloat(netBushels) || null : null,
+      price: price != null && price !== '' ? String(parseFloat(price)) : null,
+      deductions: deductions != null && deductions !== '' ? String(parseFloat(deductions)) : null,
+      netPayment: netPayment != null && netPayment !== '' ? String(parseFloat(netPayment)) : null,
+      notes: (notes || '').trim() || null
+    };
+
+    const line = await prisma.settlementLine.create({ data });
+    res.status(201).json(line);
+  } catch (e) {
+    console.error('POST /api/settlements/:id/lines error:', e);
+    res.status(500).json({ error: e.message || 'Failed to create line' });
+  }
+});
+
+// GET /api/settlements/:id/lines — list all lines for a settlement ordered by id asc
+app.get('/api/settlements/:id/lines', async (req, res) => {
+  try {
+    const settlementId = parseInt(req.params.id, 10);
+    if (isNaN(settlementId)) return res.status(404).json({ error: 'Settlement not found' });
+
+    const settlement = await prisma.settlement.findUnique({
+      where: { id: settlementId },
+      include: { buyer: true }
+    });
+    if (!settlement) return res.status(404).json({ error: 'Settlement not found' });
+
+    const lines = await prisma.settlementLine.findMany({
+      where: { settlementId },
+      orderBy: { id: 'asc' }
+    });
+
+    res.json(lines);
+  } catch (e) {
+    console.error('GET /api/settlements/:id/lines error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/settlements/:settlementId/lines/:lineId — update a settlement line (partial update)
+app.put('/api/settlements/:settlementId/lines/:lineId', async (req, res) => {
+  try {
+    const settlementId = parseInt(req.params.settlementId, 10);
+    const lineId = parseInt(req.params.lineId, 10);
+    if (isNaN(settlementId) || isNaN(lineId)) return res.status(404).json({ error: 'Line not found' });
+
+    const line = await prisma.settlementLine.findFirst({ where: { id: lineId, settlementId } });
+    if (!line) return res.status(404).json({ error: 'Line not found' });
+
+    const { ticketNo, date, netWeight, moisture, netBushels, price, deductions, netPayment, notes } = req.body;
+    const updateData = {};
+
+    if (ticketNo !== undefined) updateData.ticketNo = (ticketNo || '').trim() || null;
+    if (date !== undefined) {
+      if (date) {
+        const d = new Date(date + 'T12:00:00.000Z');
+        updateData.date = isNaN(d.getTime()) ? null : d;
+      } else {
+        updateData.date = null;
+      }
+    }
+    if (netWeight !== undefined) updateData.netWeight = netWeight !== '' ? parseFloat(netWeight) || null : null;
+    if (moisture !== undefined) updateData.moisture = moisture !== '' ? parseFloat(moisture) || null : null;
+    if (netBushels !== undefined) updateData.netBushels = netBushels !== '' ? parseFloat(netBushels) || null : null;
+    if (price !== undefined) updateData.price = price !== '' && price != null ? String(parseFloat(price)) : null;
+    if (deductions !== undefined) updateData.deductions = deductions !== '' && deductions != null ? String(parseFloat(deductions)) : null;
+    if (netPayment !== undefined) updateData.netPayment = netPayment !== '' && netPayment != null ? String(parseFloat(netPayment)) : null;
+    if (notes !== undefined) updateData.notes = (notes || '').trim() || null;
+
+    const updated = await prisma.settlementLine.update({ where: { id: lineId }, data: updateData });
+    res.json(updated);
+  } catch (e) {
+    console.error('PUT /api/settlements/:settlementId/lines/:lineId error:', e);
+    if (e.code === 'P2025') return res.status(404).json({ error: 'Line not found' });
+    res.status(500).json({ error: e.message || 'Failed to update line' });
+  }
+});
+
+// DELETE /api/settlements/:settlementId/lines/:lineId — delete a single settlement line
+app.delete('/api/settlements/:settlementId/lines/:lineId', async (req, res) => {
+  try {
+    const settlementId = parseInt(req.params.settlementId, 10);
+    const lineId = parseInt(req.params.lineId, 10);
+    if (isNaN(settlementId) || isNaN(lineId)) return res.status(404).json({ error: 'Line not found' });
+
+    const line = await prisma.settlementLine.findFirst({ where: { id: lineId, settlementId } });
+    if (!line) return res.status(404).json({ error: 'Line not found' });
+
+    await prisma.settlementLine.delete({ where: { id: lineId } });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === 'P2025') return res.status(404).json({ error: 'Line not found' });
+    console.error('DELETE /api/settlements/:settlementId/lines/:lineId error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // --- Start ---
 app.listen(PORT, '0.0.0.0', async () => {
   const ticketCount = await prisma.ticket.count();
