@@ -209,10 +209,11 @@
     <section id="tab-settlements" class="tab-content">
       <h2>Settlements</h2>
 
-      <nav class="settlement-sub-nav">
-        <button class="active" data-view="import">Import</button>
-        <button data-view="history">History</button>
-      </nav>
+      <div class="settlement-sub-nav">
+        <button class="settlement-nav-btn active" data-view="import">Import File</button>
+        <button class="settlement-nav-btn" data-view="manual">Manual Entry</button>
+        <button class="settlement-nav-btn" data-view="history">History</button>
+      </div>
 
       <!-- Import view (default) -->
       <div id="settlement-import" class="settlement-view">
@@ -255,10 +256,14 @@
         <button id="settlement-commit-btn" class="btn-primary commit-btn" style="display:none;">Commit Import</button>
       </div>
 
+      <!-- Manual entry view -->
+      <div id="settlement-manual" class="settlement-view hidden"></div>
+
       <!-- History view -->
-      <div id="settlement-history" class="settlement-view" style="display:none;">
-        <div id="settlement-list-container"></div>
-      </div>
+      <div id="settlement-history" class="settlement-view hidden"></div>
+
+      <!-- Detail view -->
+      <div id="settlement-detail" class="settlement-view hidden"></div>
     </section>
   </main>
 

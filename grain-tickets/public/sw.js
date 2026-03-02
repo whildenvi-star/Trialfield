@@ -1,4 +1,4 @@
-var CACHE_NAME = 'grain-tickets-v4';
+var CACHE_NAME = 'grain-tickets-v5';
 var PRECACHE = [
   '/',
   '/style.css',
