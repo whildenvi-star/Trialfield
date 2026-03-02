@@ -120,6 +120,7 @@ model Settlement {
   cropYear    Int
   importedAt  DateTime @default(now())
   sourceFile  String?  // Original uploaded filename
+  filePath    String?  // Server-side path to uploaded file — used for parse-to-commit handoff
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

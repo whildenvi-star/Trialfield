@@ -3,14 +3,39 @@
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const Calc = require('./public/calc.js');
 const multer = require('multer');
+const XLSX = require('xlsx');
 const Anthropic = require('@anthropic-ai/sdk');
 const prisma = require('./lib/db');
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }
+});
+
+// Settlement file upload — diskStorage saves outside public/ for parse-to-commit handoff
+const settlementStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const dir = path.join(__dirname, 'uploads', 'settlements');
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, Date.now() + '-' + Math.random().toString(36).slice(2) + ext);
+  }
+});
+const uploadSettlement = multer({
+  storage: settlementStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: function (req, file, cb) {
+    const allowed = ['.csv', '.xlsx', '.xls'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error('Only CSV and Excel files are accepted'));
+  }
 });
 
 const anthropic = new Anthropic.default();
@@ -993,6 +1018,208 @@ Rules:
 - For farm, if you recognize any of these known farms, use the exact name: ${JSON.stringify(farmNames)}
 - Return ONLY the JSON object, no other text.`;
 }
+
+// --- Settlement Routes ---
+
+// POST /api/settlements/parse — upload file, parse headers + preview, create Settlement record
+app.post('/api/settlements/parse', uploadSettlement.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const { buyerId, cropYear } = req.body;
+    if (!buyerId || !cropYear) return res.status(400).json({ error: 'buyerId and cropYear are required' });
+
+    // Read saved file back as Buffer for XLSX parsing
+    const buf = fs.readFileSync(req.file.path);
+    const wb = XLSX.read(buf, { type: 'buffer', cellDates: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+
+    // header:1 gives raw array rows — first row is column headers
+    const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defVal: '' });
+    if (allRows.length === 0) return res.status(422).json({ error: 'File appears to be empty' });
+
+    const headers = allRows[0].map(h => String(h).trim()).filter(h => h.length > 0);
+    // 5-row preview of actual data (skip header row, filter blank rows, align to header count)
+    const previewRows = allRows.slice(1)
+      .filter(r => r.some(c => c !== ''))
+      .slice(0, 5)
+      .map(r => r.slice(0, headers.length));
+
+    if (headers.length === 0) return res.status(422).json({ error: 'No column headers found in file' });
+
+    // Create Settlement header record (no lines yet), store filePath for commit step
+    const settlement = await prisma.settlement.create({
+      data: {
+        buyerId: parseInt(buyerId, 10),
+        cropYear: parseInt(cropYear, 10),
+        sourceFile: req.file.originalname,
+        filePath: req.file.path
+      }
+    });
+
+    // Load saved BuyerColumnMap for this buyer (pre-fill dropdowns on subsequent imports)
+    const savedMaps = await prisma.buyerColumnMap.findMany({
+      where: { buyerId: parseInt(buyerId, 10) }
+    });
+    const savedMapping = {};
+    savedMaps.forEach(m => { savedMapping[m.fieldName] = m.csvColumn; });
+
+    res.json({ settlementId: settlement.id, headers, previewRows, savedMapping });
+  } catch (e) {
+    console.error('POST /api/settlements/parse error:', e);
+    res.status(500).json({ error: e.message || 'Parse failed' });
+  }
+});
+
+// POST /api/settlements/:id/commit — apply column mapping, bulk insert SettlementLines, save BuyerColumnMap
+app.post('/api/settlements/:id/commit', async (req, res) => {
+  try {
+    const settlementId = parseInt(req.params.id, 10);
+    if (isNaN(settlementId)) return res.status(404).json({ error: 'Settlement not found' });
+    const { mapping } = req.body;
+    if (!mapping || typeof mapping !== 'object') {
+      return res.status(400).json({ error: 'mapping is required' });
+    }
+
+    const settlement = await prisma.settlement.findUnique({ where: { id: settlementId } });
+    if (!settlement) return res.status(404).json({ error: 'Settlement not found' });
+    if (!settlement.filePath) return res.status(400).json({ error: 'No file associated with this settlement' });
+
+    // Read saved file and parse
+    const buf = fs.readFileSync(settlement.filePath);
+    const wb = XLSX.read(buf, { type: 'buffer', cellDates: true });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const allRows = XLSX.utils.sheet_to_json(ws, { header: 1, defVal: '' });
+    const headers = allRows[0].map(h => String(h).trim());
+    const dataRows = allRows.slice(1).filter(r => r.some(c => c !== ''));
+
+    // Build SettlementLine data using column mapping
+    const lines = dataRows.map(row => {
+      const get = (fieldName) => {
+        const colName = mapping[fieldName];
+        if (!colName) return null;
+        const idx = headers.indexOf(colName);
+        return idx >= 0 ? row[idx] : null;
+      };
+
+      const rawTicketNo = get('ticketNo');
+      const rawDate = get('date');
+      let parsedDate = null;
+      if (rawDate instanceof Date) {
+        parsedDate = rawDate;
+      } else if (rawDate) {
+        // Noon UTC anchoring for date-only strings — prevents timezone shift in negative-offset zones
+        const s = String(rawDate).trim();
+        // Try YYYY-MM-DD or MM/DD/YYYY style
+        const d = new Date(s);
+        if (!isNaN(d.getTime())) {
+          // If parsed as date-only string, anchor to noon UTC
+          if (/^\d{4}-\d{2}-\d{2}$/.test(s) || /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
+            parsedDate = new Date(d.toISOString().split('T')[0] + 'T12:00:00.000Z');
+          } else {
+            parsedDate = d;
+          }
+        }
+      }
+
+      const rawPrice = get('price');
+      const rawDeductions = get('deductions');
+      const rawNetPayment = get('netPayment');
+
+      return {
+        settlementId,
+        ticketNo: rawTicketNo ? String(rawTicketNo).trim() || null : null,
+        date: parsedDate,
+        netWeight: parseFloat(get('netWeight')) || null,
+        moisture: parseFloat(get('moisture')) || null,
+        netBushels: parseFloat(get('netBushels')) || null,
+        // Decimal fields must be passed as strings to Prisma
+        price: rawPrice != null && rawPrice !== '' ? String(parseFloat(rawPrice)) : null,
+        deductions: rawDeductions != null && rawDeductions !== '' ? String(parseFloat(rawDeductions)) : null,
+        netPayment: rawNetPayment != null && rawNetPayment !== '' ? String(parseFloat(rawNetPayment)) : null
+      };
+    }).filter(l => l.ticketNo || l.netWeight); // drop completely empty rows
+
+    // Bulk insert — single query for all lines
+    const result = await prisma.settlementLine.createMany({ data: lines });
+
+    // Save/update BuyerColumnMap for reuse on next import from same buyer
+    const buyerId = settlement.buyerId;
+    const mapUpserts = Object.entries(mapping)
+      .filter(([, csvColumn]) => csvColumn) // skip empty mappings
+      .map(([fieldName, csvColumn]) =>
+        prisma.buyerColumnMap.upsert({
+          where: { buyerId_fieldName: { buyerId, fieldName } },
+          update: { csvColumn },
+          create: { buyerId, fieldName, csvColumn }
+        })
+      );
+    await Promise.all(mapUpserts);
+
+    res.json({ ok: true, linesCreated: result.count });
+  } catch (e) {
+    console.error('POST /api/settlements/:id/commit error:', e);
+    res.status(500).json({ error: e.message || 'Commit failed' });
+  }
+});
+
+// GET /api/settlements — list all settlements ordered by importedAt desc
+app.get('/api/settlements', async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store');
+    const settlements = await prisma.settlement.findMany({
+      orderBy: { importedAt: 'desc' },
+      include: {
+        buyer: true,
+        _count: { select: { lines: true } }
+      }
+    });
+    res.json(settlements);
+  } catch (e) {
+    console.error('GET /api/settlements error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/settlements/:id — single settlement with buyer and lines
+app.get('/api/settlements/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(404).json({ error: 'Settlement not found' });
+    const settlement = await prisma.settlement.findUnique({
+      where: { id },
+      include: { buyer: true, lines: true }
+    });
+    if (!settlement) return res.status(404).json({ error: 'Settlement not found' });
+    res.json(settlement);
+  } catch (e) {
+    console.error('GET /api/settlements/:id error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/settlements/:id — cascade deletes lines, removes uploaded file from disk
+app.delete('/api/settlements/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(404).json({ error: 'Settlement not found' });
+    const settlement = await prisma.settlement.findUnique({ where: { id } });
+    if (!settlement) return res.status(404).json({ error: 'Settlement not found' });
+
+    // Delete from DB (SettlementLines cascade via onDelete: Cascade)
+    await prisma.settlement.delete({ where: { id } });
+
+    // Remove uploaded file from disk if it exists
+    if (settlement.filePath) {
+      try { fs.unlinkSync(settlement.filePath); } catch (e) { /* file may already be gone */ }
+    }
+
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === 'P2025') return res.status(404).json({ error: 'Settlement not found' });
+    console.error('DELETE /api/settlements/:id error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // --- Start ---
 app.listen(PORT, '0.0.0.0', async () => {
