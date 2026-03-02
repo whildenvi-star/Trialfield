@@ -9,12 +9,13 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13-reconciliation-engine-discrepancy-ui
-Plan: 3 of 3 complete
-Status: Phase 13 complete — matching engine, discrepancy UI, and all three verification gap-closure bugs shipped
-Last activity: 2026-03-02 — Phase 13 Plan 03: buyerId/cropYear filtering on GET /api/settlements, ticket.hint field path fix, row.farmCount field name fix
+Phase: 14-add-chat-agent-for-system-information-and-recall
+Plan: 1 of 3 complete
+Status: Phase 14 Plan 01 complete — Glomalin agent backend shipped: 3 Prisma models, 4 lib/agent/ modules, all /api/agent/* routes with kill-switch
+Last activity: 2026-03-02 — Phase 14 Plan 01: AgentConversation/AgentNote/AgentDailyUsage Prisma models, SSE agentic loop, 9 grain data tools, kill-switch middleware
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
+**Phase 14 (Chat Agent):** Plan 01 complete — backend API live, Plan 02 (chat widget UI) is next
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
@@ -42,6 +43,7 @@ Last activity: 2026-03-02 — Phase 13 Plan 03: buyerId/cropYear filtering on GE
 | 13-reconciliation-engine-discrepancy-ui | 01 | 3min | 1 | 1 |
 | Phase 13 P02 | 420 | 2 tasks | 5 files |
 | 13-reconciliation-engine-discrepancy-ui | 03 | 5min | 2 | 2 |
+| Phase 14-add-chat-agent-for-system-information-and-recall P01 | 285 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -104,6 +106,10 @@ v3.0 architectural decisions:
 - [Phase 13]: showSettlementToast uses dedicated #settlement-toast element separate from entry-toast to avoid z-index conflicts
 - [Phase 13]: Inline dispute replaces cells in-place (no modal) per plan spec — textarea in notes cell, Save/Cancel in action cell
 - [Phase 13-03]: All three verification wiring bugs were mechanical field-name corrections — no design choices required; gap closure executed exactly as written
+- [Phase 14-add-chat-agent-for-system-information-and-recall]: claude-haiku-4-5-20251001 for Glomalin chat agent — cost-effective for high-frequency grain queries
+- [Phase 14-add-chat-agent-for-system-information-and-recall]: Agent tools exclude all settlement/financial data — enforced at tool definition and system prompt level
+- [Phase 14-add-chat-agent-for-system-information-and-recall]: flag_ticket uses [FLAGGED] notes prefix not matchStatus — keeps settlement reconciliation clean
+- [Phase 14-add-chat-agent-for-system-information-and-recall]: CHAT_AGENT_ENABLED kill-switch: single env var disables all /api/agent/* routes via middleware
 
 ### Roadmap Evolution
 
@@ -134,6 +140,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Phase 13 Plan 03 complete — v2.0 Grain Traceability fully shipped
-Resume file: .planning/phases/13-reconciliation-engine-discrepancy-ui/13-03-SUMMARY.md
-Next action: v3.0 Organic Cert Transparency — Phase 15 Foundation + EcoClients
+Stopped at: Phase 14 Plan 01 complete — Glomalin chat agent backend shipped
+Resume file: .planning/phases/14-add-chat-agent-for-system-information-and-recall/14-01-SUMMARY.md
+Next action: Phase 14 Plan 02 — Glomalin chat widget frontend

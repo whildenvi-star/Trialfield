@@ -88,15 +88,15 @@ Requirements for the Glomalin chat agent. Maps to Phase 14.
 
 ### Chat Interface
 
-- [ ] **CHT-01**: Floating chat popup with tractor icon, resizable window, kill switch, conversation persistence across popup open/close
+- [x] **CHT-01**: Floating chat popup with tractor icon, resizable window, kill switch, conversation persistence across popup open/close
 - [ ] **CHT-02**: Rich streaming responses with formatted tables, inline charts, deep links to tickets, ASCII tractor loading animation, CSV export
 
 ### Agent Backend
 
-- [ ] **AGT-01**: Claude-powered agentic tool-use loop querying grain data (tickets, farms, crops, buyers) via Prisma — NO access to settlement/financial data
-- [ ] **AGT-02**: Learnable notes stored in PostgreSQL with auto-detect teachable moments, admin UI for notes management
-- [ ] **AGT-03**: Write actions (add ticket notes, flag disputes) require explicit user confirmation before execution
-- [ ] **AGT-04**: Daily message cap with configurable limit, approaching-limit warning, conversation logging for audit trail
+- [x] **AGT-01**: Claude-powered agentic tool-use loop querying grain data (tickets, farms, crops, buyers) via Prisma — NO access to settlement/financial data
+- [x] **AGT-02**: Learnable notes stored in PostgreSQL with auto-detect teachable moments, admin UI for notes management
+- [x] **AGT-03**: Write actions (add ticket notes, flag disputes) require explicit user confirmation before execution
+- [x] **AGT-04**: Daily message cap with configurable limit, approaching-limit warning, conversation logging for audit trail
 
 ## v2.x Requirements
 
@@ -148,12 +148,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REC-03 | Phase 13 | Complete |
 | REC-04 | Phase 13 | Complete |
 | REC-05 | Phase 13 | Complete |
-| CHT-01 | Phase 14 | Pending |
+| CHT-01 | Phase 14 | Complete |
 | CHT-02 | Phase 14 | Pending |
-| AGT-01 | Phase 14 | Pending |
-| AGT-02 | Phase 14 | Pending |
-| AGT-03 | Phase 14 | Pending |
-| AGT-04 | Phase 14 | Pending |
+| AGT-01 | Phase 14 | Complete |
+| AGT-02 | Phase 14 | Complete |
+| AGT-03 | Phase 14 | Complete |
+| AGT-04 | Phase 14 | Complete |
 | FIX-01 | Phase 15 | Pending |
 | FIX-02 | Phase 15 | Pending |
 | FIX-03 | Phase 15 | Pending |
