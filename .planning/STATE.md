@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v2.0 Grain Traceability — Phase 12 complete (both plans shipped), Phase 13 (Reconciliation) next
+**Current focus:** v2.0 Grain Traceability COMPLETE — Phase 13 all 3 plans shipped. v3.0 Organic Cert Transparency is next.
 
 ## Current Position
 
 Phase: 13-reconciliation-engine-discrepancy-ui
-Plan: 1 of 2 complete
-Status: Phase 13 Plan 01 complete — reconciliation matching engine + 5 API routes + ticket status enrichment shipped
-Last activity: 2026-03-02 — Phase 13 Plan 01: normalizeTicketNo, runMatch, auto-match on commit, reconciliation API routes, _reconciliation on tickets
+Plan: 3 of 3 complete
+Status: Phase 13 complete — matching engine, discrepancy UI, and all three verification gap-closure bugs shipped
+Last activity: 2026-03-02 — Phase 13 Plan 03: buyerId/cropYear filtering on GET /api/settlements, ticket.hint field path fix, row.farmCount field name fix
 
-**v2.0 Grain Traceability:** Phases 9-12 complete, Phase 13 Plan 01 complete (Plan 02 next: discrepancy UI)
+**v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 26 (v1.0: 11, v1.1: 8, v2.0: 7)
-- v2.0 plans completed: 7
+- Total plans completed: 29 (v1.0: 11, v1.1: 8, v2.0: 10)
+- v2.0 plans completed: 10
 - v3.0 plans completed: 0
 
 **By Milestone:**
@@ -30,7 +30,7 @@ Last activity: 2026-03-02 — Phase 13 Plan 01: normalizeTicketNo, runMatch, aut
 |-----------|--------|-------|---------|
 | v1.0 | 1-4 | 11 | 2026-02-26 |
 | v1.1 | 5-8 | 8 | 2026-03-01 |
-| v2.0 | 9-13 | TBD | - |
+| v2.0 | 9-13 | 10 | 2026-03-02 |
 | v3.0 | 15-18 | TBD | - |
 
 **Phase 12 metrics:**
@@ -41,6 +41,7 @@ Last activity: 2026-03-02 — Phase 13 Plan 01: normalizeTicketNo, runMatch, aut
 | 12-settlement-import-manual-entry | 02 | 327s | 2 | 5 |
 | 13-reconciliation-engine-discrepancy-ui | 01 | 3min | 1 | 1 |
 | Phase 13 P02 | 420 | 2 tasks | 5 files |
+| 13-reconciliation-engine-discrepancy-ui | 03 | 5min | 2 | 2 |
 
 ## Accumulated Context
 
@@ -102,6 +103,7 @@ v3.0 architectural decisions:
 - [Phase 13-01]: dispute endpoint restricted to matched/manual/disputed lines — unmatched lines have nothing to dispute
 - [Phase 13]: showSettlementToast uses dedicated #settlement-toast element separate from entry-toast to avoid z-index conflicts
 - [Phase 13]: Inline dispute replaces cells in-place (no modal) per plan spec — textarea in notes cell, Save/Cancel in action cell
+- [Phase 13-03]: All three verification wiring bugs were mechanical field-name corrections — no design choices required; gap closure executed exactly as written
 
 ### Roadmap Evolution
 
@@ -110,8 +112,7 @@ v3.0 architectural decisions:
 
 ### Pending Todos
 
-1 pending todo:
-- **Phase 13 Plan 02 — Discrepancy UI** (grain-tickets) — reconciliation dashboard, unmatched loads view, dispute/link workflows
+None — Phase 13 complete, v2.0 shipped.
 
 Completed this session (2026-03-02):
 - ~~Sync crop plan from macro rollup into FSA acres report~~ → shipped: CLU land classification + crop sync from Macro Roll Up
@@ -121,10 +122,8 @@ Completed this session (2026-03-02):
 
 ### Blockers/Concerns
 
-v2.0:
-- Phase 12 COMPLETE: Settlement import (Plan 01) + manual entry + detail view (Plan 02) shipped. Actual settlement file samples not yet collected but UI handles any column names generically.
-- Phase 13 (Reconciliation): Weight discrepancy thresholds and per-buyer shrink methods need farm manager input before Phase 13 design.
-- CNH FieldOps staging API no audience registered — mock mode active in organic-cert. Not blocking v2.0.
+v2.0: COMPLETE (2026-03-02) — Phases 9-13 all shipped.
+- CNH FieldOps staging API no audience registered — mock mode active in organic-cert. Not blocking v3.0.
 
 v3.0:
 - Phase 17 (NOP Compliance): NOP rule specifics for manure application windows, transition day counts, and buffer zone requirements should be verified against USDA NOP 7 CFR 205 before rule implementation. Research-phase recommended during Phase 17 planning.
@@ -135,6 +134,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Pending todos cleared — registry save bug fixed, enterprise grid category subtotals added, field editor profit color fixed
-Resume file: .planning/phases/13-reconciliation-engine-discrepancy-ui/13-01-SUMMARY.md
-Next action: Phase 13 Plan 02 — Discrepancy UI (frontend for reconciliation routes)
+Stopped at: Phase 13 Plan 03 complete — v2.0 Grain Traceability fully shipped
+Resume file: .planning/phases/13-reconciliation-engine-discrepancy-ui/13-03-SUMMARY.md
+Next action: v3.0 Organic Cert Transparency — Phase 15 Foundation + EcoClients
