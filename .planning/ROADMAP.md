@@ -5,6 +5,7 @@
 - ✅ **v1.0 Data Ingestion & Reports** — Phases 1-4 (shipped 2026-02-26) — [archive](milestones/v1.0-ROADMAP.md)
 - ✅ **v1.1 Split-Field Enterprises** — Phases 5-8 (shipped 2026-03-01) — [archive](milestones/v1.1-ROADMAP.md)
 - 📋 **v2.0 Grain Traceability** — Phases 9-13 (planned)
+- 📋 **v3.0 Organic Cert Transparency** — Phases 15-18 (planned)
 
 ## Phases
 
@@ -37,6 +38,15 @@
 - [ ] **Phase 11: Buyer Registry & Ticket Extensions** — Buyer entity, destination FK on tickets, cropYear field
 - [ ] **Phase 12: Settlement Import & Manual Entry** — CSV/Excel import with per-buyer column mapping and manual entry path
 - [ ] **Phase 13: Reconciliation Engine & Discrepancy UI** — Match tickets to settlement lines, surface unmatched loads and variances
+
+### 📋 v3.0 Organic Cert Transparency (Planned)
+
+**Milestone Goal:** Rewire organic-cert from a manual data-entry app into a live compilation engine that pulls field plans, inputs, seed, rotations, and harvest data from farm-budget, farm-registry, and grain-tickets — then compiles a complete NOP inspection packet with zero double-entry and total transparency.
+
+- [ ] **Phase 15: Foundation Fixes & Ecosystem Client Layer** — Resolve 3 blocking bugs, build typed HTTP clients for all source apps with timeout and graceful degradation
+- [ ] **Phase 16: Field & Enterprise Compilation** — Preview/commit pipeline that pulls organic enterprises from farm-budget and field identities from farm-registry into organic-cert records
+- [ ] **Phase 17: Input & Seed Compilation + NOP Compliance** — Pull input applications and seed data from farm-budget; resolve unmapped materials; apply NOP compliance rules to compiled data
+- [ ] **Phase 18: Rotation Snapshot & Harvest Compilation & PDF** — Yearly snapshot mechanism for NOP 3-year history, harvest compilation from grain-tickets, PDF null safety for all compiled sections
 
 ## Phase Details
 
@@ -118,6 +128,73 @@ Plans:
 - [ ] 13-01: Reconciliation matching engine (ticket number normalization, exact-match, MatchStatus writes)
 - [ ] 13-02: Unmatched load dashboard, settlement summary view, disputed ticket flag and notes UI
 
+---
+
+### Phase 15: Foundation Fixes & Ecosystem Client Layer
+**Goal**: All three blocking bugs are resolved and a typed, fault-tolerant HTTP client layer connects organic-cert to farm-budget, farm-registry, and grain-tickets — the stable foundation every subsequent phase builds on
+**Depends on**: Phase 13 (v2.0 grain-tickets DB in place for Phase 18 harvest pull)
+**Requirements**: FIX-01, FIX-02, FIX-03, ECO-01, ECO-02, ECO-05
+**Success Criteria** (what must be TRUE):
+  1. Clicking "Sync Acres" on the Fields page completes without a runtime crash — acres update or report unchanged fields correctly
+  2. A field with 4 or more enterprises displays all of them in the field list — no silent truncation at 3
+  3. Running `npx prisma migrate dev` on a fresh database recreates the partial unique index without manual SQL
+  4. The compile page shows live connection status for farm-budget, farm-registry, and grain-tickets — each source shows "available" or "unavailable" independently
+  5. Killing farm-budget while the compile page is open shows farm-budget as unavailable without crashing organic-cert or blocking the other two sources
+**Plans**: TBD
+
+Plans:
+- [ ] 15-01: Fix FIX-01 (sync-registry crash), FIX-02 (take:3 enterprise limit), FIX-03 (partial unique index migration)
+- [ ] 15-02: Build src/lib/ecosystem/ client layer (budget-client, registry-client, tickets-client) with AbortController timeout, Promise.allSettled, EcosystemError, 5-minute TTL cache, and source availability UI
+
+### Phase 16: Field & Enterprise Compilation
+**Goal**: Users can preview and commit a full pull of organic enterprise data from farm-budget and authoritative field identities from farm-registry into organic-cert — with an explicit resolution step for any fields that don't match by name
+**Depends on**: Phase 15
+**Requirements**: ECO-03, ECO-04, CMP-01, CMP-02, CMP-05
+**Success Criteria** (what must be TRUE):
+  1. User can open the compile page for the current crop year and see a preview diff — every FieldEnterprise record that will be created or updated is listed before any database write occurs
+  2. After committing, organic-cert FieldEnterprise records reflect the organic enterprises from farm-budget with acres sourced from farm-registry
+  3. Any farm-budget field name that does not automatically match an organic-cert field or farm-registry alias is flagged on the compile page — user can manually map it and the mapping persists for future compiles
+  4. The compilation readiness dashboard shows a per-field completeness status (enterprises compiled, inputs pending, seed pending) for the current crop year
+  5. User can see grain-tickets delivery records listed for each organic field on the compile page (read-only, source data view)
+**Plans**: TBD
+
+Plans:
+- [ ] 16-01: field-mapper.ts + nop-filter.ts + compile-engine.ts (preview only, no DB writes) + GET /api/compile/[year]/preview route
+- [ ] 16-02: POST /api/compile/[year] commit route (Prisma upsert FieldEnterprise records) + compile page UI with diff display, field mapping resolution, readiness dashboard, and grain-tickets delivery view
+
+### Phase 17: Input & Seed Compilation + NOP Compliance
+**Goal**: Input application records and seed varieties from farm-budget are compiled into organic-cert — farm managers resolve any unmapped materials once, and NOP compliance rules run only against resolved materials
+**Depends on**: Phase 16
+**Requirements**: CMP-03, CMP-04
+**Success Criteria** (what must be TRUE):
+  1. After compiling inputs, MaterialUsage records appear in organic-cert for every farm-budget input application on organic enterprise fields — no manual re-entry required
+  2. After compiling seed, SeedLot stubs appear in organic-cert for every seed variety used on organic enterprise fields
+  3. The compile page shows an "unresolved materials" list — any farm-budget product not yet mapped to an NOP status; user assigns status once and it persists across seasons
+  4. NOP compliance indicators appear only on materials that have been resolved — unresolved materials show "needs review" rather than a compliance verdict
+  5. Source badges on every compiled record show whether it originated from farm-budget, grain-tickets, Case IH, or was manually entered
+**Plans**: TBD
+
+Plans:
+- [ ] 17-01: input-mapper.ts + seed pull logic + POST /api/compile/[year]/inputs and /seeds routes; Prisma upsert MaterialUsage and SeedLot records
+- [ ] 17-02: Unresolved materials UI (product-to-NOP-status mapping, persisted per product), nop-compliance.ts rule engine running against resolved materials only, data source badges on all compiled records
+
+### Phase 18: Rotation Snapshot & Harvest Compilation & PDF
+**Goal**: The NOP 3-year field history is preserved via yearly snapshots, actual scale weights from grain-tickets are compiled as harvest events, and the 8-section PDF renders correctly from all compiled ecosystem data with no rendering artifacts on missing fields
+**Depends on**: Phase 17
+**Requirements**: ROT-01, ROT-02, ROT-03, HRV-01, HRV-02, PDF-01, PDF-02
+**Success Criteria** (what must be TRUE):
+  1. User can take a rotation snapshot for the current crop year with one button click — the snapshot writes all current FieldEnterprise records to FieldHistory and is retrievable after farm-budget is rebuilt for a new season
+  2. The field history view in organic-cert shows 3 years of crop rotation data assembled from accumulated snapshots — without requiring any data to still be in farm-budget
+  3. The compile page displays a warning banner when no snapshot exists for the current crop year
+  4. After compiling harvests, HarvestEvent records appear in organic-cert matching grain-tickets delivery data for organic fields — crop names are normalized between the two systems
+  5. The 8-section NOP inspection PDF generates without errors from compiled ecosystem data — empty sections render "No records" placeholders rather than blank or crashed sections
+**Plans**: TBD
+
+Plans:
+- [ ] 18-01: snapshot-taker.ts + POST /api/rotation-snapshot/[year]/take route; snapshot status display and warning on compile page
+- [ ] 18-02: harvest-mapper.ts with crop-name normalization table + POST /api/compile/[year]/harvest route; Prisma upsert HarvestEvent records
+- [ ] 18-03: PDF null-safety validation layer — pre-render check that all report-assembler.ts sections handle null/empty compiled data; "No records" placeholders for all 8 sections
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -131,10 +208,17 @@ Plans:
 | 7. Split-Field PDF Reports | v1.1 | 3/3 | Complete | 2026-02-28 |
 | 8. Fallow Enterprise Edit Fix | v1.1 | 1/1 | Complete | 2026-03-01 |
 | 9. Database Foundation | v2.0 | 1/1 | Complete | 2026-03-02 |
-| 10. Migration & Cutover | 2/2 | Complete    | 2026-03-02 | - |
+| 10. Migration & Cutover | v2.0 | 2/2 | Complete | 2026-03-02 |
 | 11. Buyer Registry & Ticket Extensions | v2.0 | 0/TBD | Not started | - |
 | 12. Settlement Import & Manual Entry | v2.0 | 0/TBD | Not started | - |
 | 13. Reconciliation Engine & Discrepancy UI | v2.0 | 0/TBD | Not started | - |
+| 14. Chat Agent (system info & recall) | — | 0/TBD | Not started | - |
+| 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/TBD | Not started | - |
+| 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
+| 17. Input & Seed Compilation + NOP Compliance | v3.0 | 0/TBD | Not started | - |
+| 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/TBD | Not started | - |
+
+---
 
 ### Phase 14: Add chat agent for system information and recall
 

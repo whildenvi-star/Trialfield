@@ -132,6 +132,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REC-03 | Phase 13 | Pending |
 | REC-04 | Phase 13 | Pending |
 | REC-05 | Phase 13 | Pending |
+| FIX-01 | Phase 15 | Pending |
+| FIX-02 | Phase 15 | Pending |
+| FIX-03 | Phase 15 | Pending |
+| ECO-01 | Phase 15 | Pending |
+| ECO-02 | Phase 15 | Pending |
+| ECO-05 | Phase 15 | Pending |
+| ECO-03 | Phase 16 | Pending |
+| ECO-04 | Phase 16 | Pending |
+| CMP-01 | Phase 16 | Pending |
+| CMP-02 | Phase 16 | Pending |
+| CMP-05 | Phase 16 | Pending |
+| CMP-03 | Phase 17 | Pending |
+| CMP-04 | Phase 17 | Pending |
+| ROT-01 | Phase 18 | Pending |
+| ROT-02 | Phase 18 | Pending |
+| ROT-03 | Phase 18 | Pending |
+| HRV-01 | Phase 18 | Pending |
+| HRV-02 | Phase 18 | Pending |
+| PDF-01 | Phase 18 | Pending |
+| PDF-02 | Phase 18 | Pending |
 
 **v2.0 Coverage:**
 - v2.0 requirements: 18 total
@@ -140,9 +160,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 **v3.0 Coverage:**
 - v3.0 requirements: 20 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 20 ⚠️
+- Mapped to phases: 20
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 — v3.0 requirements added*
+*Last updated: 2026-03-02 — v3.0 traceability added (phases 15-18)*
