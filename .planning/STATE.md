@@ -5,29 +5,29 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 18 (Rotation + Harvest + PDF) — Plans 01-02 complete, Plan 03 (PDF) next.
+**Current focus:** Phase 18 COMPLETE — v3.0 Organic Cert Transparency (Phases 15-18) fully shipped.
 
 ## Current Position
 
-Phase: 18-rotation-snapshot-harvest-compilation-pdf — IN PROGRESS
-Plan: 2 of 3 complete
-Status: Phase 18 Plans 01-02 shipped — rotation snapshot and harvest compilation pipeline complete.
-Last activity: 2026-03-03 — Phase 18 Plan 02 executed and committed
+Phase: 18-rotation-snapshot-harvest-compilation-pdf — COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 18 all 3 plans shipped — rotation snapshot, harvest compilation, and PDF null-safety complete.
+Last activity: 2026-03-03 — Phase 18 Plan 03 executed and committed
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
 **Phase 15 (Foundation Fixes & Ecosystem Client Layer):** Plans 01-02 ALL COMPLETE — Phase 15 shipped
 **Phase 16 (Field & Enterprise Compilation):** Plans 01-02 ALL COMPLETE — Phase 16 verified and shipped
 **Phase 17 (Input & Seed Compilation + NOP):** Plans 01-02 ALL COMPLETE — Phase 17 shipped
-**Phase 18 (Rotation + Harvest + PDF):** Plans 01-02 COMPLETE, Plan 03 next
-**v3.0 Organic Cert Transparency:** Phases 15-17 COMPLETE, Phase 18 in progress (2/3 plans done)
+**Phase 18 (Rotation + Harvest + PDF):** Plans 01-02-03 ALL COMPLETE — Phase 18 shipped
+**v3.0 Organic Cert Transparency:** Phases 15-18 ALL COMPLETE — v3.0 shipped
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 36 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 7)
+- Total plans completed: 39 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 9+1chat)
 - v2.0 plans completed: 10
-- v3.0 plans completed: 7 (Phase 15 P01 + P02, Phase 16 P01 + P02, Phase 17 P01 + P02)
+- v3.0 plans completed: 9 (Phase 15 P01 + P02, Phase 16 P01 + P02, Phase 17 P01 + P02, Phase 18 P01 + P02 + P03)
 
 **By Milestone:**
 
@@ -36,7 +36,7 @@ Last activity: 2026-03-03 — Phase 18 Plan 02 executed and committed
 | v1.0 | 1-4 | 11 | 2026-02-26 |
 | v1.1 | 5-8 | 8 | 2026-03-01 |
 | v2.0 | 9-13 | 10 | 2026-03-02 |
-| v3.0 | 15-18 | TBD | - |
+| v3.0 | 15-18 | 9 | 2026-03-03 |
 
 **Phase 12 metrics:**
 
@@ -58,6 +58,7 @@ Last activity: 2026-03-03 — Phase 18 Plan 02 executed and committed
 | Phase 17-input-seed-compilation-nop-compliance P02 | 291 | 2 tasks | 4 files |
 | Phase 18-rotation-snapshot-harvest-compilation-pdf P01 | 658 | 2 tasks | 7 files |
 | Phase 18-rotation-snapshot-harvest-compilation-pdf P02 | 418 | 2 tasks | 4 files |
+| Phase 18-rotation-snapshot-harvest-compilation-pdf P03 | 139 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -152,6 +153,9 @@ v3.0 architectural decisions:
 - [Phase 18-01]: Rotation snapshot lazy-loads on Fields page expand — avoids API call overhead for users who never open the section
 - [Phase 18-02]: Harvest matching uses case-insensitive field name (field.name or farmBudgetFieldName) and normalizeCropName() — reuses Phase 17 normalizer
 - [Phase 18-02]: handleCompileAll extended with harvest fetch (best-effort) — 503 sets unavailability message but does not fail Compile All for inputs/seeds
+- [Phase 18-03]: CompileChecklist derived from already-fetched farm query data + 2 COUNT queries (fieldHistory, seedUsage) — avoids reloading large nested query just to check booleans
+- [Phase 18-03]: Cover page compile checklist renders between crop year and generated date — data completeness visible above administrative timestamp
+- [Phase 18-03]: field-list empty guard wraps entire table block (header + rows + summary) — prevents orphaned header rendering when fields array is empty
 
 ### Roadmap Evolution
 
@@ -182,6 +186,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 18-rotation-snapshot-harvest-compilation-pdf Plan 02 — harvest compilation pipeline shipped
-Resume file: Continue Phase 18 Plan 03 (PDF report generation)
-Next action: Phase 18 Plan 03 — NOP inspection PDF generation
+Stopped at: Completed 18-rotation-snapshot-harvest-compilation-pdf Plan 03 — PDF null-safety and compile checklist shipped
+Resume file: v3.0 Organic Cert Transparency complete — all 4 phases (15-18) shipped
+Next action: Phase 19 (Seed & Input Inventory Redesign, farm-budget) per roadmap

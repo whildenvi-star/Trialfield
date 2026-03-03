@@ -46,7 +46,7 @@
 - [x] **Phase 15: Foundation Fixes & Ecosystem Client Layer** — Resolve 3 blocking bugs, build typed HTTP clients for all source apps with timeout and graceful degradation (completed 2026-03-03)
 - [x] **Phase 16: Field & Enterprise Compilation** — Preview/commit pipeline that pulls organic enterprises from farm-budget and field identities from farm-registry into organic-cert records (completed 2026-03-03)
 - [x] **Phase 17: Input & Seed Compilation + NOP Compliance** — Pull input applications and seed data from farm-budget; resolve unmapped materials; apply NOP compliance rules to compiled data (completed 2026-03-03)
-- [ ] **Phase 18: Rotation Snapshot & Harvest Compilation & PDF** — Yearly snapshot mechanism for NOP 3-year history, harvest compilation from grain-tickets, PDF null safety for all compiled sections
+- [x] **Phase 18: Rotation Snapshot & Harvest Compilation & PDF** — Yearly snapshot mechanism for NOP 3-year history, harvest compilation from grain-tickets, PDF null safety for all compiled sections (completed 2026-03-03)
 
 ## Phase Details
 
@@ -217,13 +217,13 @@ Plans:
 | 15. Foundation Fixes & Ecosystem Client Layer | 2/2 | Complete    | 2026-03-03 | - |
 | 16. Field & Enterprise Compilation | 2/2 | Complete   | 2026-03-03 | - |
 | 17. Input & Seed Compilation + NOP Compliance | 2/2 | Complete    | 2026-03-03 | - |
-| 18. Rotation Snapshot & Harvest Compilation & PDF | 2/3 | In Progress|  | - |
+| 18. Rotation Snapshot & Harvest Compilation & PDF | 3/3 | Complete   | 2026-03-03 | - |
 
 ### Phase 19: Seed & Input Inventory Redesign
 
 **Goal:** [To be planned]
 **Depends on:** Phase 18
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 19 to break down)

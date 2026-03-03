@@ -79,8 +79,8 @@ Requirements for organic cert transparency milestone. Each maps to roadmap phase
 
 ### PDF Report Refresh
 
-- [ ] **PDF-01**: 8-section NOP inspection PDF renders correctly from compiled ecosystem data
-- [ ] **PDF-02**: PDF handles null/missing compiled data gracefully (no rendering artifacts)
+- [x] **PDF-01**: 8-section NOP inspection PDF renders correctly from compiled ecosystem data
+- [x] **PDF-02**: PDF handles null/missing compiled data gracefully (no rendering artifacts)
 
 ## Phase 14 Requirements
 
@@ -172,8 +172,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ROT-03 | Phase 18 | Complete |
 | HRV-01 | Phase 18 | Complete |
 | HRV-02 | Phase 18 | Complete |
-| PDF-01 | Phase 18 | Pending |
-| PDF-02 | Phase 18 | Pending |
+| PDF-01 | Phase 18 | Complete |
+| PDF-02 | Phase 18 | Complete |
 
 **v2.0 Coverage:**
 - v2.0 requirements: 18 total
