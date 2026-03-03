@@ -5,26 +5,27 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 15 (Foundation Fixes & Ecosystem Client Layer) COMPLETE — all 2 plans shipped. Phase 16 (Field & Enterprise Compilation) is next.
+**Current focus:** Phase 16 (Field & Enterprise Compilation) IN PROGRESS — Plan 01 complete. Compile engine foundation with preview API route shipped.
 
 ## Current Position
 
-Phase: 15-foundation-fixes-ecosystem-client-layer — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 15 fully complete. Three blocking v3.0 bugs fixed (FIX-01, FIX-02, FIX-03). Ecosystem client layer built and compile page verified (ECO-01, ECO-02, ECO-05).
-Last activity: 2026-03-03 — Phase 15 Plan 02: ecosystem client layer, compile page with status bar and field/acre preview, human-verify checkpoint approved
+Phase: 16-field-enterprise-compilation — IN PROGRESS
+Plan: 1 of TBD complete
+Status: Phase 16 Plan 01 complete. farmBudgetFieldName column, tickets data pull, PATCH route, compile library (types/nop-filter/field-mapper/compile-engine), and GET /api/compile/[year]/preview route all shipped. ECO-03, ECO-04, CMP-01 requirements met.
+Last activity: 2026-03-03 — Phase 16 Plan 01: compile engine foundation with preview API route
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
 **Phase 15 (Foundation Fixes & Ecosystem Client Layer):** Plans 01-02 ALL COMPLETE — Phase 15 shipped
-**v3.0 Organic Cert Transparency:** Phase 15 COMPLETE — proceed to Phase 16 (Field & Enterprise Compilation)
+**Phase 16 (Field & Enterprise Compilation):** Plan 01 COMPLETE — compile engine foundation shipped
+**v3.0 Organic Cert Transparency:** Phase 15 COMPLETE, Phase 16 IN PROGRESS
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 31 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 2)
+- Total plans completed: 32 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 3)
 - v2.0 plans completed: 10
-- v3.0 plans completed: 2 (Phase 15 P01 + P02)
+- v3.0 plans completed: 3 (Phase 15 P01 + P02, Phase 16 P01)
 
 **By Milestone:**
 
@@ -49,6 +50,7 @@ Last activity: 2026-03-03 — Phase 15 Plan 02: ecosystem client layer, compile 
 | Phase 14-add-chat-agent-for-system-information-and-recall P03 | 10 | 2 tasks | 1 files |
 | Phase 15-foundation-fixes-ecosystem-client-layer P01 | 302 | 2 tasks | 4 files |
 | Phase 15-foundation-fixes-ecosystem-client-layer P02 | ~10 | 3 tasks | 11 files |
+| Phase 16-field-enterprise-compilation P01 | 372 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -123,6 +125,11 @@ v3.0 architectural decisions:
 - [Phase 15-foundation-fixes-ecosystem-client-layer]: Partial unique index created as raw SQL in migration (Prisma schema.prisma does not support partial index syntax)
 - [Phase 15-02]: organic-cert nested git repo: commits go into organic-cert/.git not project root — all ecosystem commits use cd organic-cert && git commit
 - [Phase 15-02]: ecosystem client BUDGET_API_URL strips /api suffix — sync-macro uses base+/api but ecosystem client appends per-endpoint, avoiding double-path
+- [Phase 16-01]: Manual migration + migrate resolve --applied reused for all organic-cert schema changes — Prisma drift from modified init migration blocks migrate dev; workaround is manual SQL + resolve (established pattern)
+- [Phase 16-01]: PATCH /api/fields/[id] accepts only farmBudgetFieldName — other fields ignored for safety; dedicated endpoint for compile mapping, not a full field update
+- [Phase 16-01]: getBudgetSettings() returns null on failure — compile engine degrades gracefully to current year for suggestedYear field
+- [Phase 16-01]: Delivery matching uses ticket.farm case-insensitive vs local field name — unmatched ticket farms silently excluded (not NOP-relevant organic-cert fields)
+- [Phase 16-01]: Readiness checks ORGANIC and TRANSITIONAL fields only — CONVENTIONAL and SPLIT excluded from NOP readiness tracking
 
 ### Roadmap Evolution
 
@@ -152,6 +159,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 15-foundation-fixes-ecosystem-client-layer Plan 02 — ecosystem client layer + compile page built and verified
-Resume file: Begin Phase 16 (Field & Enterprise Compilation)
-Next action: Plan Phase 16 — field-mapper.ts, compile-engine.ts, preview/commit pipeline for organic enterprises from farm-budget + farm-registry into organic-cert
+Stopped at: Completed 16-field-enterprise-compilation Plan 01 — compile engine foundation with preview API route shipped
+Resume file: Continue Phase 16 Plan 02 (Field & Enterprise Compilation)
+Next action: Phase 16 Plan 02 — build compile page UI that calls GET /api/compile/[year]/preview and allows field mapping corrections via PATCH /api/fields/[id]

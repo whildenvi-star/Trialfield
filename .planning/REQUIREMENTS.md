@@ -54,13 +54,13 @@ Requirements for organic cert transparency milestone. Each maps to roadmap phase
 
 - [x] **ECO-01**: User can see live organic-designated field data pulled from farm-budget
 - [x] **ECO-02**: User can see live field identities and acres pulled from farm-registry
-- [ ] **ECO-03**: User can see live delivery records pulled from grain-tickets for organic fields
-- [ ] **ECO-04**: User can map farm-budget field names to organic-cert field records when automatic name matching fails
+- [x] **ECO-03**: User can see live delivery records pulled from grain-tickets for organic fields
+- [x] **ECO-04**: User can map farm-budget field names to organic-cert field records when automatic name matching fails
 - [x] **ECO-05**: Ecosystem pull degrades gracefully when a source app is not running (shows which sources are unavailable)
 
 ### Compilation Engine
 
-- [ ] **CMP-01**: User can preview compiled data before committing (see exactly what will be written from each source)
+- [x] **CMP-01**: User can preview compiled data before committing (see exactly what will be written from each source)
 - [ ] **CMP-02**: User can compile enterprise/field data from farm-budget into organic-cert field records
 - [ ] **CMP-03**: User can compile input application data from farm-budget into organic-cert material usage records
 - [ ] **CMP-04**: User can compile seed data from farm-budget into organic-cert seed source records
@@ -160,9 +160,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ECO-01 | Phase 15 | Complete |
 | ECO-02 | Phase 15 | Complete |
 | ECO-05 | Phase 15 | Complete |
-| ECO-03 | Phase 16 | Pending |
-| ECO-04 | Phase 16 | Pending |
-| CMP-01 | Phase 16 | Pending |
+| ECO-03 | Phase 16 | Complete |
+| ECO-04 | Phase 16 | Complete |
+| CMP-01 | Phase 16 | Complete |
 | CMP-02 | Phase 16 | Pending |
 | CMP-05 | Phase 16 | Pending |
 | CMP-03 | Phase 17 | Pending |
