@@ -74,8 +74,8 @@ Requirements for organic cert transparency milestone. Each maps to roadmap phase
 
 ### Harvest Data
 
-- [ ] **HRV-01**: User can compile harvest/delivery records from grain-tickets into organic-cert harvest events
-- [ ] **HRV-02**: Harvest compilation normalizes crop names between grain-tickets and organic-cert
+- [x] **HRV-01**: User can compile harvest/delivery records from grain-tickets into organic-cert harvest events
+- [x] **HRV-02**: Harvest compilation normalizes crop names between grain-tickets and organic-cert
 
 ### PDF Report Refresh
 
@@ -170,8 +170,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ROT-01 | Phase 18 | Complete |
 | ROT-02 | Phase 18 | Complete |
 | ROT-03 | Phase 18 | Complete |
-| HRV-01 | Phase 18 | Pending |
-| HRV-02 | Phase 18 | Pending |
+| HRV-01 | Phase 18 | Complete |
+| HRV-02 | Phase 18 | Complete |
 | PDF-01 | Phase 18 | Pending |
 | PDF-02 | Phase 18 | Pending |
 
