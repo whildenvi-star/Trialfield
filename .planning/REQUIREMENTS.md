@@ -46,9 +46,9 @@ Requirements for organic cert transparency milestone. Each maps to roadmap phase
 
 ### Foundation Fixes
 
-- [ ] **FIX-01**: Sync Acres button on Fields page works without runtime crash
-- [ ] **FIX-02**: Enterprise query returns all enterprises per field (no truncation at 3)
-- [ ] **FIX-03**: Partial unique index captured in schema.prisma for environment rebuild safety
+- [x] **FIX-01**: Sync Acres button on Fields page works without runtime crash
+- [x] **FIX-02**: Enterprise query returns all enterprises per field (no truncation at 3)
+- [x] **FIX-03**: Partial unique index captured in schema.prisma for environment rebuild safety
 
 ### Ecosystem Data Pull
 
@@ -154,9 +154,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AGT-02 | Phase 14 | Complete |
 | AGT-03 | Phase 14 | Complete |
 | AGT-04 | Phase 14 | Complete |
-| FIX-01 | Phase 15 | Pending |
-| FIX-02 | Phase 15 | Pending |
-| FIX-03 | Phase 15 | Pending |
+| FIX-01 | Phase 15 | Complete |
+| FIX-02 | Phase 15 | Complete |
+| FIX-03 | Phase 15 | Complete |
 | ECO-01 | Phase 15 | Pending |
 | ECO-02 | Phase 15 | Pending |
 | ECO-05 | Phase 15 | Pending |

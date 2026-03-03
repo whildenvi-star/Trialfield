@@ -9,14 +9,14 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 14-add-chat-agent-for-system-information-and-recall — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 14 fully complete. All plans shipped. Glomalin chat agent verified end-to-end by human tester.
-Last activity: 2026-03-03 — Phase 14 Plan 03: Glomalin Notes admin section complete, human-verify approved
+Phase: 15-foundation-fixes-ecosystem-client-layer — IN PROGRESS
+Plan: 1 of 2 complete
+Status: Phase 15 Plan 01 complete. Three blocking v3.0 bugs fixed (FIX-01, FIX-02, FIX-03). Plan 02 (ecosystem client layer) next.
+Last activity: 2026-03-03 — Phase 15 Plan 01: sync-registry crash fix, enterprise year filter fix, partial unique index migration
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
-**v3.0 Organic Cert Transparency:** Phases 15-18 planned (not started)
+**v3.0 Organic Cert Transparency:** Phase 15 in progress (1/2 plans complete)
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Last activity: 2026-03-03 — Phase 14 Plan 03: Glomalin Notes admin section com
 | Phase 14-add-chat-agent-for-system-information-and-recall P01 | 285 | 2 tasks | 7 files |
 | Phase 14-add-chat-agent-for-system-information-and-recall P02 | 410 | 2 tasks | 4 files |
 | Phase 14-add-chat-agent-for-system-information-and-recall P03 | 10 | 2 tasks | 1 files |
+| Phase 15-foundation-fixes-ecosystem-client-layer P01 | 302 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -116,6 +117,8 @@ v3.0 architectural decisions:
 - [Phase 14-02]: Chart.js 4.x downloaded locally to chart.min.js — no CDN dependency for offline farm office use
 - [Phase 14-02]: defer loading order for chart.min.js + glomalin.js — DOM position guarantees Chart.js available when widget renders chart blocks
 - [Phase 14-02]: window._glomalinNav global for deep link navigation — avoids tight coupling to app module internals
+- [Phase 15-foundation-fixes-ecosystem-client-layer]: Prisma baseline approach: migrate diff --from-empty generates init SQL, migrate resolve --applied marks it without touching DB
+- [Phase 15-foundation-fixes-ecosystem-client-layer]: Partial unique index created as raw SQL in migration (Prisma schema.prisma does not support partial index syntax)
 
 ### Roadmap Evolution
 
@@ -146,6 +149,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 14-add-chat-agent-for-system-information-and-recall Plan 03 — Phase 14 fully complete
-Resume file: Begin Phase 15 planning for v3.0 Organic Cert Transparency
-Next action: Plan Phase 15 (Foundation + EcoClients) — start v3.0 Organic Cert Transparency
+Stopped at: Completed 15-foundation-fixes-ecosystem-client-layer Plan 01 — three blocking v3.0 bugs fixed
+Resume file: Continue Phase 15 Plan 02 (ecosystem client layer)
+Next action: Execute Phase 15 Plan 02 — ecosystem client layer (farm-budget, farm-registry, grain-tickets HTTP clients)
