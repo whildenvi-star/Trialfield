@@ -150,6 +150,7 @@ v3.0 architectural decisions:
 
 - Phase 14 added: Add chat agent for system information and recall
 - Phases 15-18 added: v3.0 Organic Cert Transparency (2026-03-02)
+- Phase 19 added: Seed & Input Inventory Redesign (farm-budget)
 
 ### Pending Todos
 
