@@ -173,11 +173,11 @@ Plans:
   3. The compile page shows an "unresolved materials" list — any farm-budget product not yet mapped to an NOP status; user assigns status once and it persists across seasons
   4. NOP compliance indicators appear only on materials that have been resolved — unresolved materials show "needs review" rather than a compliance verdict
   5. Source badges on every compiled record show whether it originated from farm-budget, grain-tickets, Case IH, or was manually entered
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: input-mapper.ts + seed pull logic + POST /api/compile/[year]/inputs and /seeds routes; Prisma upsert MaterialUsage and SeedLot records
-- [ ] 17-02: Unresolved materials UI (product-to-NOP-status mapping, persisted per product), nop-compliance.ts rule engine running against resolved materials only, data source badges on all compiled records
+- [ ] 17-01-PLAN.md — Prisma migration (nopResolved, dataSource, SeedLot unique), budget-client extensions (getBudgetProducts, getBudgetFieldsWithInputs, getBudgetSeeds), input-mapper.ts + seed-mapper.ts, POST /api/compile/[year]/inputs and /seeds routes (preview + commit), readiness dashboard live status
+- [ ] 17-02-PLAN.md — nop-compliance.ts rule engine (checkMaterialCompliance, checkSeedCompliance), batch resolve route, compile page UI (Compile All button, inputs/seeds preview tables, NOP compliance badges, source badges, unresolved materials panel with Save All, compliance summary bar)
 
 ### Phase 18: Rotation Snapshot & Harvest Compilation & PDF
 **Goal**: The NOP 3-year field history is preserved via yearly snapshots, actual scale weights from grain-tickets are compiled as harvest events, and the 8-section PDF renders correctly from all compiled ecosystem data with no rendering artifacts on missing fields
