@@ -6,41 +6,49 @@
 <domain>
 ## Phase Boundary
 
-Fix three blocking bugs in organic-cert (sync-registry crash, enterprise truncation at 3, partial unique index not in schema) and build a typed, fault-tolerant HTTP client layer connecting organic-cert to farm-budget, farm-registry, and grain-tickets. This is the stable foundation every subsequent phase (16-18) builds on. No new compilation logic, no rotation snapshots, no harvest pulls — just the plumbing and proof it works.
+Resolve 3 blocking bugs in organic-cert (sync-registry crash, enterprise take:3 truncation, missing partial unique index) and build typed HTTP clients for farm-budget, farm-registry, and grain-tickets with timeout, graceful degradation, and a source availability UI on the compile page. This phase does NOT compile any data — it establishes the foundation that phases 16-18 build on.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Source Status Display
-- Horizontal status bar at the top of the compile page, always visible
-- Each source shows: name + colored dot (green/red) + short detail text (e.g., "connected", "unavailable — timeout")
-- Check all sources on page load; user can re-check with a single "Refresh" button
-- No auto-polling — check on load and on manual refresh only
+### Availability Display
+- Horizontal status bar at top of compile page — always visible, never collapses
+- Each source shown as colored dot + app name + port: `● farm-budget (:3001)  ● farm-registry (:3005)  ○ grain-tickets (:3000)`
+- Green dot = available, red dot = unavailable
+- Status bar stays the same size whether all green or some red — consistent layout
 
-### Degraded State Behavior
-- Sections from working sources display normally; sections from unavailable sources show a gray placeholder with "Source unavailable" message
-- Compile button is disabled until all 3 sources are green — prevents incomplete records from entering the database
-- When user clicks refresh and a previously-down source is now available, its sections auto-populate without extra action
-- Error messages in plain language ("farm-budget is not responding") with a small expandable "Details" toggle showing technical error (timeout, connection refused, etc.)
+### Degradation Behavior
+- Allow partial compiles when sources are down — missing sections show "source unavailable" with description of what data is missing
+- When a source recovers, status bar auto-detects on next check (no notification)
+- If a source goes down during a preview, keep stale preview data visible with a "stale" indicator — block commit for that section only
+- No cross-reload caching — each page load fetches fresh from sources
 
-### Data Freshness
-- Per-source "last checked" timestamp in the status bar (e.g., "last checked: 2 min ago")
-- 5-minute TTL cache on the server side — avoids hammering source apps on rapid page navigation
-- Refresh button bypasses cache and fetches live from all sources
-- Timestamp alone signals freshness — no extra "cached" badge needed
+### Connection Feedback
+- Health check on page load + single manual "Refresh" button for all 3 sources
+- No background polling — user clicks refresh to recheck
+- 3-second timeout before a source is considered down (local-network apps)
+- Refresh button shows spinner while checking; dots stay in previous state until new results arrive
+
+### Error Detail Level
+- Friendly message inline below status bar when source is down: "farm-budget (:3001) is not responding"
+- Expandable to show technical detail (ECONNREFUSED, timeout, etc.) on click
+- Error messages suggest fix action: "start it with `node server.js` in farm-budget/"
+- Compile section "source unavailable" messages name the specific data missing: "enterprise data and input records cannot be pulled"
 
 ### Compile Page Foundation
 - New top-level navigation item: "Compile" — alongside Fields, Enterprises, etc.
 - Page organized by NOP inspection sections (Fields & Acres, Enterprises, Inputs, Seeds, Rotation, Harvest)
 - Phase 15 builds: status bar + a simple table preview of fields and acres pulled from farm-budget and farm-registry (ECO-01, ECO-02 proof-of-concept)
 - Remaining NOP sections show placeholder headers ("Coming in Phase 16/17/18") — later phases fill them in
-- Field/acre preview as a basic table: field name, acres, organic status, source origin
 
 ### Claude's Discretion
-- State change notification approach when a source flips available/unavailable on re-check
-- Exact status bar styling and spacing
+- Bug fix implementation approach for FIX-01, FIX-02, FIX-03 (well-defined bugs)
+- HTTP client internal architecture (class design, error types, retry logic)
+- Health endpoint design on source apps (if needed)
+- Status bar CSS/styling details
+- Exact expandable error UI pattern (accordion, details element, etc.)
 - Loading skeleton or spinner design during source checks
 - Table column order and formatting for the field/acre preview
 
@@ -49,9 +57,11 @@ Fix three blocking bugs in organic-cert (sync-registry crash, enterprise truncat
 <specifics>
 ## Specific Ideas
 
-- Status bar pattern similar to how monitoring dashboards show service health — simple dots with expandable detail
+- Status bar format: `● farm-budget (:3001)  ● farm-registry (:3005)  ○ grain-tickets (:3000)` — dot + name + port
+- Error inline format: friendly by default, click-to-expand for tech detail
+- Fix suggestions like: "start it with `node server.js` in farm-budget/" — actionable because user is both farm manager and developer
+- Section-level messages name impact: "farm-budget is not available — enterprise data and input records cannot be pulled"
 - The compile page is NOP-inspector-oriented, not source-app-oriented — user thinks in "what does the inspector need" not "which app has it"
-- Keep the field/acre preview table simple — this is proof the pipeline works, not the final compilation UI
 
 </specifics>
 
