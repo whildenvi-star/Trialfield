@@ -144,8 +144,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 15-01-PLAN.md — Fix FIX-01 (sync-registry crash/display), FIX-02 (enterprise year filter truncation), FIX-03 (partial unique index migration)
-- [ ] 15-02-PLAN.md — Build ecosystem client layer (budget-client, registry-client, tickets-client) with AbortController 3s timeout, Promise.allSettled, compile page with status bar and field/acre preview
+- [x] 15-01-PLAN.md — Fix FIX-01 (sync-registry crash/display), FIX-02 (enterprise year filter truncation), FIX-03 (partial unique index migration) (completed 2026-03-03)
+- [x] 15-02-PLAN.md — Build ecosystem client layer (budget-client, registry-client, tickets-client) with AbortController 3s timeout, Promise.allSettled, compile page with status bar and field/acre preview (completed 2026-03-03)
 
 ### Phase 16: Field & Enterprise Compilation
 **Goal**: Users can preview and commit a full pull of organic enterprise data from farm-budget and authoritative field identities from farm-registry into organic-cert — with an explicit resolution step for any fields that don't match by name

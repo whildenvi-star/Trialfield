@@ -5,25 +5,26 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 14 (Glomalin Chat Agent) COMPLETE — all 3 plans shipped. v3.0 Organic Cert Transparency is next.
+**Current focus:** Phase 15 (Foundation Fixes & Ecosystem Client Layer) COMPLETE — all 2 plans shipped. Phase 16 (Field & Enterprise Compilation) is next.
 
 ## Current Position
 
-Phase: 15-foundation-fixes-ecosystem-client-layer — IN PROGRESS
-Plan: 1 of 2 complete
-Status: Phase 15 Plan 01 complete. Three blocking v3.0 bugs fixed (FIX-01, FIX-02, FIX-03). Plan 02 (ecosystem client layer) next.
-Last activity: 2026-03-03 — Phase 15 Plan 01: sync-registry crash fix, enterprise year filter fix, partial unique index migration
+Phase: 15-foundation-fixes-ecosystem-client-layer — COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 15 fully complete. Three blocking v3.0 bugs fixed (FIX-01, FIX-02, FIX-03). Ecosystem client layer built and compile page verified (ECO-01, ECO-02, ECO-05).
+Last activity: 2026-03-03 — Phase 15 Plan 02: ecosystem client layer, compile page with status bar and field/acre preview, human-verify checkpoint approved
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
-**v3.0 Organic Cert Transparency:** Phase 15 in progress (1/2 plans complete)
+**Phase 15 (Foundation Fixes & Ecosystem Client Layer):** Plans 01-02 ALL COMPLETE — Phase 15 shipped
+**v3.0 Organic Cert Transparency:** Phase 15 COMPLETE — proceed to Phase 16 (Field & Enterprise Compilation)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29 (v1.0: 11, v1.1: 8, v2.0: 10)
+- Total plans completed: 31 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 2)
 - v2.0 plans completed: 10
-- v3.0 plans completed: 0
+- v3.0 plans completed: 2 (Phase 15 P01 + P02)
 
 **By Milestone:**
 
@@ -47,7 +48,7 @@ Last activity: 2026-03-03 — Phase 15 Plan 01: sync-registry crash fix, enterpr
 | Phase 14-add-chat-agent-for-system-information-and-recall P02 | 410 | 2 tasks | 4 files |
 | Phase 14-add-chat-agent-for-system-information-and-recall P03 | 10 | 2 tasks | 1 files |
 | Phase 15-foundation-fixes-ecosystem-client-layer P01 | 302 | 2 tasks | 4 files |
-| Phase 15-foundation-fixes-ecosystem-client-layer P02 | 6 | 2 tasks | 10 files |
+| Phase 15-foundation-fixes-ecosystem-client-layer P02 | ~10 | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -152,6 +153,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 15-foundation-fixes-ecosystem-client-layer Plan 01 — three blocking v3.0 bugs fixed
-Resume file: Continue Phase 15 Plan 02 (ecosystem client layer)
-Next action: Execute Phase 15 Plan 02 — ecosystem client layer (farm-budget, farm-registry, grain-tickets HTTP clients)
+Stopped at: Completed 15-foundation-fixes-ecosystem-client-layer Plan 02 — ecosystem client layer + compile page built and verified
+Resume file: Begin Phase 16 (Field & Enterprise Compilation)
+Next action: Plan Phase 16 — field-mapper.ts, compile-engine.ts, preview/commit pipeline for organic enterprises from farm-budget + farm-registry into organic-cert
