@@ -217,13 +217,13 @@ Plans:
 | 15. Foundation Fixes & Ecosystem Client Layer | 2/2 | Complete    | 2026-03-03 | - |
 | 16. Field & Enterprise Compilation | 2/2 | Complete   | 2026-03-03 | - |
 | 17. Input & Seed Compilation + NOP Compliance | 2/2 | Complete    | 2026-03-03 | - |
-| 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/3 | Planned | - |
+| 18. Rotation Snapshot & Harvest Compilation & PDF | 2/3 | In Progress|  | - |
 
 ### Phase 19: Seed & Input Inventory Redesign
 
 **Goal:** [To be planned]
 **Depends on:** Phase 18
-**Plans:** 0 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] TBD (run /gsd:plan-phase 19 to break down)

@@ -56,6 +56,7 @@ Last activity: 2026-03-03 — Phase 18 Plan 02 executed and committed
 | Phase 16-field-enterprise-compilation P02 | 280 | 2 tasks | 2 files |
 | Phase 17-input-seed-compilation-nop-compliance P01 | 354 | 2 tasks | 9 files |
 | Phase 17-input-seed-compilation-nop-compliance P02 | 291 | 2 tasks | 4 files |
+| Phase 18-rotation-snapshot-harvest-compilation-pdf P01 | 658 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -146,6 +147,8 @@ v3.0 architectural decisions:
 - [Phase 17-02]: Compile All fetches inputs + seeds in parallel via Promise.all — single user action triggers both endpoints
 - [Phase 17-02]: Save All re-runs handleCompileAll after successful batch-resolve — NOP badges refresh immediately without manual re-compile
 - [Phase 17-02]: loadMaterials() fetches /api/materials without farmId filter — single-farm app, materials list serves both materialMap (OMRI) and unresolved panel
+- [Phase 18-01]: snapshot-taker.ts groups FieldEnterprise by fieldId using Map; split fields produce concatenated crop string and notes detail
+- [Phase 18-01]: Rotation snapshot lazy-loads on Fields page expand — avoids API call overhead for users who never open the section
 
 ### Roadmap Evolution
 

@@ -68,9 +68,9 @@ Requirements for organic cert transparency milestone. Each maps to roadmap phase
 
 ### Rotation History
 
-- [ ] **ROT-01**: User can take a yearly rotation snapshot capturing field-crop-acre assignments from farm-budget
-- [ ] **ROT-02**: Rotation snapshots accumulate to provide 3-year NOP field history
-- [ ] **ROT-03**: User sees a warning when no snapshot exists for the current crop year
+- [x] **ROT-01**: User can take a yearly rotation snapshot capturing field-crop-acre assignments from farm-budget
+- [x] **ROT-02**: Rotation snapshots accumulate to provide 3-year NOP field history
+- [x] **ROT-03**: User sees a warning when no snapshot exists for the current crop year
 
 ### Harvest Data
 
@@ -167,9 +167,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CMP-05 | Phase 16 | Complete |
 | CMP-03 | Phase 17 | Complete |
 | CMP-04 | Phase 17 | Complete |
-| ROT-01 | Phase 18 | Pending |
-| ROT-02 | Phase 18 | Pending |
-| ROT-03 | Phase 18 | Pending |
+| ROT-01 | Phase 18 | Complete |
+| ROT-02 | Phase 18 | Complete |
+| ROT-03 | Phase 18 | Complete |
 | HRV-01 | Phase 18 | Pending |
 | HRV-02 | Phase 18 | Pending |
 | PDF-01 | Phase 18 | Pending |
