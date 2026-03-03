@@ -131,13 +131,12 @@ v3.0 architectural decisions:
 
 ### Pending Todos
 
-None — Phase 13 complete, v2.0 shipped.
-
-Completed this session (2026-03-02):
-- ~~Sync crop plan from macro rollup into FSA acres report~~ → shipped: CLU land classification + crop sync from Macro Roll Up
-- ~~Fix field registry acres and ownership save bug~~ → fixed: nonTillable no longer zeroed for rented/owned, ownedTillable deducts nonTillable
-- ~~Add field editor category totals and red negative profit~~ → shipped: grid view groups by systemCode with subtotal columns, collapsed preview profit colored red/green
-- ~~Work on grain ticket system enhancements~~ → identified as Phase 13 Plan 02 (above)
+5 pending todos in `.planning/todos/pending/`:
+- Rework Seed & Input Inventory with forecasts, orders, and reports (farm-budget)
+- Sync crop plan from macro rollup into FSA acres report (fsa-acres)
+- Fix field registry acres and ownership save bug (farm-registry)
+- Add field editor category totals and red negative profit (farm-budget)
+- Work on grain ticket system enhancements (general)
 
 ### Blockers/Concerns
 
