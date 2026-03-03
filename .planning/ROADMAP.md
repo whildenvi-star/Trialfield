@@ -141,11 +141,11 @@ Plans:
   3. Running `npx prisma migrate dev` on a fresh database recreates the partial unique index without manual SQL
   4. The compile page shows live connection status for farm-budget, farm-registry, and grain-tickets — each source shows "available" or "unavailable" independently
   5. Killing farm-budget while the compile page is open shows farm-budget as unavailable without crashing organic-cert or blocking the other two sources
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: Fix FIX-01 (sync-registry crash), FIX-02 (take:3 enterprise limit), FIX-03 (partial unique index migration)
-- [ ] 15-02: Build src/lib/ecosystem/ client layer (budget-client, registry-client, tickets-client) with AbortController timeout, Promise.allSettled, EcosystemError, 5-minute TTL cache, and source availability UI
+- [ ] 15-01-PLAN.md — Fix FIX-01 (sync-registry crash/display), FIX-02 (enterprise year filter truncation), FIX-03 (partial unique index migration)
+- [ ] 15-02-PLAN.md — Build ecosystem client layer (budget-client, registry-client, tickets-client) with AbortController 3s timeout, Promise.allSettled, compile page with status bar and field/acre preview
 
 ### Phase 16: Field & Enterprise Compilation
 **Goal**: Users can preview and commit a full pull of organic enterprise data from farm-budget and authoritative field identities from farm-registry into organic-cert — with an explicit resolution step for any fields that don't match by name
@@ -214,7 +214,7 @@ Plans:
 | 12. Settlement Import & Manual Entry | 2/2 | Complete    | 2026-03-02 | - |
 | 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete    | 2026-03-02 | - |
 | 14. Chat Agent (system info & recall) | 3/3 | Complete    | 2026-03-03 | - |
-| 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/TBD | Not started | - |
+| 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/2 | Planned | - |
 | 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 0/TBD | Not started | - |
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/TBD | Not started | - |
