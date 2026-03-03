@@ -189,12 +189,12 @@ Plans:
   3. The compile page displays a warning banner when no snapshot exists for the current crop year
   4. After compiling harvests, HarvestEvent records appear in organic-cert matching grain-tickets delivery data for organic fields — crop names are normalized between the two systems
   5. The 8-section NOP inspection PDF generates without errors from compiled ecosystem data — empty sections render "No records" placeholders rather than blank or crashed sections
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 18-01: snapshot-taker.ts + POST /api/rotation-snapshot/[year]/take route; snapshot status display and warning on compile page
-- [ ] 18-02: harvest-mapper.ts with crop-name normalization table + POST /api/compile/[year]/harvest route; Prisma upsert HarvestEvent records
-- [ ] 18-03: PDF null-safety validation layer — pre-render check that all report-assembler.ts sections handle null/empty compiled data; "No records" placeholders for all 8 sections
+- [ ] 18-01-PLAN.md — Rotation snapshot: snapshot-taker.ts + POST /api/rotation-snapshot/[year]/take + GET status route + GET history route + compile page Take Snapshot button + warning banner + Fields page rotation history table (ROT-01, ROT-02, ROT-03)
+- [ ] 18-02-PLAN.md — Harvest compilation: harvest-mapper.ts with normalizeCropName crop matching + POST /api/compile/[year]/harvest route + compile page harvest section UI with preview/commit and unmatched review (HRV-01, HRV-02)
+- [ ] 18-03-PLAN.md — PDF null-safety + cover page compile checklist: CompileChecklist type in report-assembler, cover page checklist rendering, empty-state guards on field-list/harvest-log/operation-overview (PDF-01, PDF-02)
 
 ## Progress
 
@@ -217,7 +217,16 @@ Plans:
 | 15. Foundation Fixes & Ecosystem Client Layer | 2/2 | Complete    | 2026-03-03 | - |
 | 16. Field & Enterprise Compilation | 2/2 | Complete   | 2026-03-03 | - |
 | 17. Input & Seed Compilation + NOP Compliance | 2/2 | Complete    | 2026-03-03 | - |
-| 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/TBD | Not started | - |
+| 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/3 | Planned | - |
+
+### Phase 19: Seed & Input Inventory Redesign
+
+**Goal:** [To be planned]
+**Depends on:** Phase 18
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd:plan-phase 19 to break down)
 
 ---
 
