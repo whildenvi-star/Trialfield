@@ -157,11 +157,11 @@ Plans:
   3. Any farm-budget field name that does not automatically match an organic-cert field or farm-registry alias is flagged on the compile page — user can manually map it and the mapping persists for future compiles
   4. The compilation readiness dashboard shows a per-field completeness status (enterprises compiled, inputs pending, seed pending) for the current crop year
   5. User can see grain-tickets delivery records listed for each organic field on the compile page (read-only, source data view)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: field-mapper.ts + nop-filter.ts + compile-engine.ts (preview only, no DB writes) + GET /api/compile/[year]/preview route
-- [ ] 16-02: POST /api/compile/[year] commit route (Prisma upsert FieldEnterprise records) + compile page UI with diff display, field mapping resolution, readiness dashboard, and grain-tickets delivery view
+- [ ] 16-01-PLAN.md — Prisma migration (farmBudgetFieldName), compile lib modules (types, nop-filter, field-mapper, compile-engine), tickets-client data pull, PATCH route update, GET /api/compile/[year]/preview route
+- [ ] 16-02-PLAN.md — POST /api/compile/[year] commit route (Prisma upsert FieldEnterprise), compile page UI rebuild (year selector, readiness dashboard, preview diff table, inline field mapping, delivery view, saved mappings, commit with confirmation)
 
 ### Phase 17: Input & Seed Compilation + NOP Compliance
 **Goal**: Input application records and seed varieties from farm-budget are compiled into organic-cert — farm managers resolve any unmapped materials once, and NOP compliance rules run only against resolved materials
@@ -215,7 +215,7 @@ Plans:
 | 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete    | 2026-03-02 | - |
 | 14. Chat Agent (system info & recall) | 3/3 | Complete    | 2026-03-03 | - |
 | 15. Foundation Fixes & Ecosystem Client Layer | 2/2 | Complete    | 2026-03-03 | - |
-| 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
+| 16. Field & Enterprise Compilation | v3.0 | 0/2 | Planned | - |
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 0/TBD | Not started | - |
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/TBD | Not started | - |
 
