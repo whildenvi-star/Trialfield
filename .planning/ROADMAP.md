@@ -213,7 +213,7 @@ Plans:
 | 11. Buyer Registry & Ticket Extensions | 2/2 | Complete   | 2026-03-02 | - |
 | 12. Settlement Import & Manual Entry | 2/2 | Complete    | 2026-03-02 | - |
 | 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete    | 2026-03-02 | - |
-| 14. Chat Agent (system info & recall) | 3/3 | Complete   | 2026-03-03 | - |
+| 14. Chat Agent (system info & recall) | 3/3 | Complete    | 2026-03-03 | - |
 | 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/TBD | Not started | - |
 | 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 0/TBD | Not started | - |
