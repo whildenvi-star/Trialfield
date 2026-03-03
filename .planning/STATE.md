@@ -5,21 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 18 (Rotation + Harvest + PDF) — Phase 17 complete, Phase 18 next.
+**Current focus:** Phase 18 (Rotation + Harvest + PDF) — Plans 01-02 complete, Plan 03 (PDF) next.
 
 ## Current Position
 
-Phase: 17-input-seed-compilation-nop-compliance — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 17 fully shipped — NOP compliance engine, batch-resolve API, and compile page UI complete.
-Last activity: 2026-03-03 — Phase 17 Plan 02 executed and committed
+Phase: 18-rotation-snapshot-harvest-compilation-pdf — IN PROGRESS
+Plan: 2 of 3 complete
+Status: Phase 18 Plans 01-02 shipped — rotation snapshot and harvest compilation pipeline complete.
+Last activity: 2026-03-03 — Phase 18 Plan 02 executed and committed
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
 **Phase 15 (Foundation Fixes & Ecosystem Client Layer):** Plans 01-02 ALL COMPLETE — Phase 15 shipped
 **Phase 16 (Field & Enterprise Compilation):** Plans 01-02 ALL COMPLETE — Phase 16 verified and shipped
 **Phase 17 (Input & Seed Compilation + NOP):** Plans 01-02 ALL COMPLETE — Phase 17 shipped
-**v3.0 Organic Cert Transparency:** Phases 15-17 COMPLETE, Phase 18 next
+**Phase 18 (Rotation + Harvest + PDF):** Plans 01-02 COMPLETE, Plan 03 next
+**v3.0 Organic Cert Transparency:** Phases 15-17 COMPLETE, Phase 18 in progress (2/3 plans done)
 
 ## Performance Metrics
 
@@ -175,6 +176,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 17-input-seed-compilation-nop-compliance Plan 02 — compile page UI + NOP compliance engine shipped
-Resume file: Continue Phase 18 (Rotation + Harvest + PDF)
-Next action: Phase 18 Plan 01 — rotation snapshot + harvest compilation
+Stopped at: Completed 18-rotation-snapshot-harvest-compilation-pdf Plan 02 — harvest compilation pipeline shipped
+Resume file: Continue Phase 18 Plan 03 (PDF report generation)
+Next action: Phase 18 Plan 03 — NOP inspection PDF generation
