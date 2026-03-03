@@ -213,7 +213,7 @@ Plans:
 | 11. Buyer Registry & Ticket Extensions | 2/2 | Complete   | 2026-03-02 | - |
 | 12. Settlement Import & Manual Entry | 2/2 | Complete    | 2026-03-02 | - |
 | 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete    | 2026-03-02 | - |
-| 14. Chat Agent (system info & recall) | 2/3 | In Progress|  | - |
+| 14. Chat Agent (system info & recall) | 3/3 | Complete   | 2026-03-03 | - |
 | 15. Foundation Fixes & Ecosystem Client Layer | v3.0 | 0/TBD | Not started | - |
 | 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 0/TBD | Not started | - |
@@ -226,7 +226,7 @@ Plans:
 **Goal:** A conversational AI agent ("Glomalin") lives in grain-tickets as a floating chat popup — the farm manager can query, analyze, and annotate grain data through natural language, with streaming responses, inline charts, CSV export, learnable notes, and a full kill switch
 **Depends on:** Phase 13
 **Requirements:** CHT-01, CHT-02, AGT-01, AGT-02, AGT-03, AGT-04
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 14-01-PLAN.md — Agent backend: Prisma models (AgentConversation, AgentNote, AgentDailyUsage), agentic tool-use loop with SSE streaming, grain data tools, kill-switch middleware, notes CRUD routes
