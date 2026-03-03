@@ -61,10 +61,10 @@ Requirements for organic cert transparency milestone. Each maps to roadmap phase
 ### Compilation Engine
 
 - [x] **CMP-01**: User can preview compiled data before committing (see exactly what will be written from each source)
-- [ ] **CMP-02**: User can compile enterprise/field data from farm-budget into organic-cert field records
+- [x] **CMP-02**: User can compile enterprise/field data from farm-budget into organic-cert field records
 - [ ] **CMP-03**: User can compile input application data from farm-budget into organic-cert material usage records
 - [ ] **CMP-04**: User can compile seed data from farm-budget into organic-cert seed source records
-- [ ] **CMP-05**: User can see a compilation readiness dashboard showing completeness per NOP section
+- [x] **CMP-05**: User can see a compilation readiness dashboard showing completeness per NOP section
 
 ### Rotation History
 
@@ -163,8 +163,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ECO-03 | Phase 16 | Complete |
 | ECO-04 | Phase 16 | Complete |
 | CMP-01 | Phase 16 | Complete |
-| CMP-02 | Phase 16 | Pending |
-| CMP-05 | Phase 16 | Pending |
+| CMP-02 | Phase 16 | Complete |
+| CMP-05 | Phase 16 | Complete |
 | CMP-03 | Phase 17 | Pending |
 | CMP-04 | Phase 17 | Pending |
 | ROT-01 | Phase 18 | Pending |

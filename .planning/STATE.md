@@ -5,19 +5,19 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 16 (Field & Enterprise Compilation) IN PROGRESS — Plan 01 complete. Compile engine foundation with preview API route shipped.
+**Current focus:** Phase 16 (Field & Enterprise Compilation) IN PROGRESS — Plans 01-02 complete. Compile engine + full compile page UI with commit route shipped.
 
 ## Current Position
 
 Phase: 16-field-enterprise-compilation — IN PROGRESS
-Plan: 1 of TBD complete
-Status: Phase 16 Plan 01 complete. farmBudgetFieldName column, tickets data pull, PATCH route, compile library (types/nop-filter/field-mapper/compile-engine), and GET /api/compile/[year]/preview route all shipped. ECO-03, ECO-04, CMP-01 requirements met.
-Last activity: 2026-03-03 — Phase 16 Plan 01: compile engine foundation with preview API route
+Plan: 2 of TBD complete
+Status: Phase 16 Plan 02 complete. POST /api/compile/[year] commit route + full compile page (year selector, readiness dashboard, enterprise diff table, inline mapping dropdowns, delivery view, saved mappings, commit button) all shipped. CMP-02, CMP-05, ECO-03, ECO-04 requirements met.
+Last activity: 2026-03-03 — Phase 16 Plan 02: compile page UI rebuild + commit route
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
 **Phase 15 (Foundation Fixes & Ecosystem Client Layer):** Plans 01-02 ALL COMPLETE — Phase 15 shipped
-**Phase 16 (Field & Enterprise Compilation):** Plan 01 COMPLETE — compile engine foundation shipped
+**Phase 16 (Field & Enterprise Compilation):** Plans 01-02 COMPLETE — compile engine + UI shipped
 **v3.0 Organic Cert Transparency:** Phase 15 COMPLETE, Phase 16 IN PROGRESS
 
 ## Performance Metrics
@@ -51,6 +51,7 @@ Last activity: 2026-03-03 — Phase 16 Plan 01: compile engine foundation with p
 | Phase 15-foundation-fixes-ecosystem-client-layer P01 | 302 | 2 tasks | 4 files |
 | Phase 15-foundation-fixes-ecosystem-client-layer P02 | ~10 | 3 tasks | 11 files |
 | Phase 16-field-enterprise-compilation P01 | 372 | 2 tasks | 10 files |
+| Phase 16-field-enterprise-compilation P02 | 280 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,9 @@ v3.0 architectural decisions:
 - [Phase 16-01]: getBudgetSettings() returns null on failure — compile engine degrades gracefully to current year for suggestedYear field
 - [Phase 16-01]: Delivery matching uses ticket.farm case-insensitive vs local field name — unmatched ticket farms silently excluded (not NOP-relevant organic-cert fields)
 - [Phase 16-01]: Readiness checks ORGANIC and TRANSITIONAL fields only — CONVENTIONAL and SPLIT excluded from NOP readiness tracking
+- [Phase 16-02]: Prisma upsert label:null workaround — generated FieldEnterpriseFieldIdCropYearCropLabelCompoundUniqueInput requires label:string; cast prisma.fieldEnterprise as any to supply label:null; partial index handles DB uniqueness
+- [Phase 16-02]: Partial commits via fieldIds array — POST accepts explicit fieldIds rather than "commit all matched" boolean; enables future per-field granular selection without API change
+- [Phase 16-02]: Commit button disabled when summary.new + summary.update === 0 — prevents redundant no-op commits
 
 ### Roadmap Evolution
 
@@ -159,6 +163,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 16-field-enterprise-compilation Plan 01 — compile engine foundation with preview API route shipped
-Resume file: Continue Phase 16 Plan 02 (Field & Enterprise Compilation)
-Next action: Phase 16 Plan 02 — build compile page UI that calls GET /api/compile/[year]/preview and allows field mapping corrections via PATCH /api/fields/[id]
+Stopped at: Completed 16-field-enterprise-compilation Plan 02 — compile page UI rebuild + commit route shipped
+Resume file: Continue Phase 16 Plan 03 (if exists) or Phase 17 (Input & Seed NOP Compliance)
+Next action: Phase 17 — Input & Seed NOP Compliance compilation
