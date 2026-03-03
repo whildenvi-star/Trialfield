@@ -160,8 +160,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 16-01-PLAN.md — Prisma migration (farmBudgetFieldName), compile lib modules (types, nop-filter, field-mapper, compile-engine), tickets-client data pull, PATCH route update, GET /api/compile/[year]/preview route
-- [ ] 16-02-PLAN.md — POST /api/compile/[year] commit route (Prisma upsert FieldEnterprise), compile page UI rebuild (year selector, readiness dashboard, preview diff table, inline field mapping, delivery view, saved mappings, commit with confirmation)
+- [x] 16-01-PLAN.md — Prisma migration (farmBudgetFieldName), compile lib modules (types, nop-filter, field-mapper, compile-engine), tickets-client data pull, PATCH route update, GET /api/compile/[year]/preview route (completed 2026-03-03)
+- [x] 16-02-PLAN.md — POST /api/compile/[year] commit route (Prisma upsert FieldEnterprise), compile page UI rebuild (year selector, readiness dashboard, preview diff table, inline field mapping, delivery view, saved mappings, commit with confirmation) (completed 2026-03-03)
 
 ### Phase 17: Input & Seed Compilation + NOP Compliance
 **Goal**: Input application records and seed varieties from farm-budget are compiled into organic-cert — farm managers resolve any unmapped materials once, and NOP compliance rules run only against resolved materials

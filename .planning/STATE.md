@@ -5,27 +5,27 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 16 (Field & Enterprise Compilation) IN PROGRESS — Plans 01-02 complete. Compile engine + full compile page UI with commit route shipped.
+**Current focus:** Phase 17 (Input & Seed Compilation + NOP Compliance) — next up. Phase 16 verified and complete.
 
 ## Current Position
 
-Phase: 16-field-enterprise-compilation — IN PROGRESS
-Plan: 2 of TBD complete
-Status: Phase 16 Plan 02 complete. POST /api/compile/[year] commit route + full compile page (year selector, readiness dashboard, enterprise diff table, inline mapping dropdowns, delivery view, saved mappings, commit button) all shipped. CMP-02, CMP-05, ECO-03, ECO-04 requirements met.
-Last activity: 2026-03-03 — Phase 16 Plan 02: compile page UI rebuild + commit route
+Phase: 17-input-seed-nop-compliance — NOT STARTED
+Plan: 0 of TBD complete
+Status: Phase 16 verified and complete. Ready to plan Phase 17.
+Last activity: 2026-03-03 — Phase 16 verified and marked complete
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
 **Phase 15 (Foundation Fixes & Ecosystem Client Layer):** Plans 01-02 ALL COMPLETE — Phase 15 shipped
-**Phase 16 (Field & Enterprise Compilation):** Plans 01-02 COMPLETE — compile engine + UI shipped
-**v3.0 Organic Cert Transparency:** Phase 15 COMPLETE, Phase 16 IN PROGRESS
+**Phase 16 (Field & Enterprise Compilation):** Plans 01-02 ALL COMPLETE — Phase 16 verified and shipped
+**v3.0 Organic Cert Transparency:** Phases 15-16 COMPLETE, Phase 17 next
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 32 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 3)
+- Total plans completed: 34 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 5)
 - v2.0 plans completed: 10
-- v3.0 plans completed: 3 (Phase 15 P01 + P02, Phase 16 P01)
+- v3.0 plans completed: 5 (Phase 15 P01 + P02, Phase 16 P01 + P02)
 
 **By Milestone:**
 
