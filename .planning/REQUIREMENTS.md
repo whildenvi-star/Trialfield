@@ -52,11 +52,11 @@ Requirements for organic cert transparency milestone. Each maps to roadmap phase
 
 ### Ecosystem Data Pull
 
-- [ ] **ECO-01**: User can see live organic-designated field data pulled from farm-budget
-- [ ] **ECO-02**: User can see live field identities and acres pulled from farm-registry
+- [x] **ECO-01**: User can see live organic-designated field data pulled from farm-budget
+- [x] **ECO-02**: User can see live field identities and acres pulled from farm-registry
 - [ ] **ECO-03**: User can see live delivery records pulled from grain-tickets for organic fields
 - [ ] **ECO-04**: User can map farm-budget field names to organic-cert field records when automatic name matching fails
-- [ ] **ECO-05**: Ecosystem pull degrades gracefully when a source app is not running (shows which sources are unavailable)
+- [x] **ECO-05**: Ecosystem pull degrades gracefully when a source app is not running (shows which sources are unavailable)
 
 ### Compilation Engine
 
@@ -157,9 +157,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-01 | Phase 15 | Complete |
 | FIX-02 | Phase 15 | Complete |
 | FIX-03 | Phase 15 | Complete |
-| ECO-01 | Phase 15 | Pending |
-| ECO-02 | Phase 15 | Pending |
-| ECO-05 | Phase 15 | Pending |
+| ECO-01 | Phase 15 | Complete |
+| ECO-02 | Phase 15 | Complete |
+| ECO-05 | Phase 15 | Complete |
 | ECO-03 | Phase 16 | Pending |
 | ECO-04 | Phase 16 | Pending |
 | CMP-01 | Phase 16 | Pending |

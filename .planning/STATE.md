@@ -47,6 +47,7 @@ Last activity: 2026-03-03 — Phase 15 Plan 01: sync-registry crash fix, enterpr
 | Phase 14-add-chat-agent-for-system-information-and-recall P02 | 410 | 2 tasks | 4 files |
 | Phase 14-add-chat-agent-for-system-information-and-recall P03 | 10 | 2 tasks | 1 files |
 | Phase 15-foundation-fixes-ecosystem-client-layer P01 | 302 | 2 tasks | 4 files |
+| Phase 15-foundation-fixes-ecosystem-client-layer P02 | 6 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -119,6 +120,8 @@ v3.0 architectural decisions:
 - [Phase 14-02]: window._glomalinNav global for deep link navigation — avoids tight coupling to app module internals
 - [Phase 15-foundation-fixes-ecosystem-client-layer]: Prisma baseline approach: migrate diff --from-empty generates init SQL, migrate resolve --applied marks it without touching DB
 - [Phase 15-foundation-fixes-ecosystem-client-layer]: Partial unique index created as raw SQL in migration (Prisma schema.prisma does not support partial index syntax)
+- [Phase 15-02]: organic-cert nested git repo: commits go into organic-cert/.git not project root — all ecosystem commits use cd organic-cert && git commit
+- [Phase 15-02]: ecosystem client BUDGET_API_URL strips /api suffix — sync-macro uses base+/api but ecosystem client appends per-endpoint, avoiding double-path
 
 ### Roadmap Evolution
 

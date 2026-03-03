@@ -43,7 +43,7 @@
 
 **Milestone Goal:** Rewire organic-cert from a manual data-entry app into a live compilation engine that pulls field plans, inputs, seed, rotations, and harvest data from farm-budget, farm-registry, and grain-tickets — then compiles a complete NOP inspection packet with zero double-entry and total transparency.
 
-- [ ] **Phase 15: Foundation Fixes & Ecosystem Client Layer** — Resolve 3 blocking bugs, build typed HTTP clients for all source apps with timeout and graceful degradation
+- [x] **Phase 15: Foundation Fixes & Ecosystem Client Layer** — Resolve 3 blocking bugs, build typed HTTP clients for all source apps with timeout and graceful degradation (completed 2026-03-03)
 - [ ] **Phase 16: Field & Enterprise Compilation** — Preview/commit pipeline that pulls organic enterprises from farm-budget and field identities from farm-registry into organic-cert records
 - [ ] **Phase 17: Input & Seed Compilation + NOP Compliance** — Pull input applications and seed data from farm-budget; resolve unmapped materials; apply NOP compliance rules to compiled data
 - [ ] **Phase 18: Rotation Snapshot & Harvest Compilation & PDF** — Yearly snapshot mechanism for NOP 3-year history, harvest compilation from grain-tickets, PDF null safety for all compiled sections
@@ -214,7 +214,7 @@ Plans:
 | 12. Settlement Import & Manual Entry | 2/2 | Complete    | 2026-03-02 | - |
 | 13. Reconciliation Engine & Discrepancy UI | 3/3 | Complete    | 2026-03-02 | - |
 | 14. Chat Agent (system info & recall) | 3/3 | Complete    | 2026-03-03 | - |
-| 15. Foundation Fixes & Ecosystem Client Layer | 1/2 | In Progress|  | - |
+| 15. Foundation Fixes & Ecosystem Client Layer | 2/2 | Complete   | 2026-03-03 | - |
 | 16. Field & Enterprise Compilation | v3.0 | 0/TBD | Not started | - |
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 0/TBD | Not started | - |
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/TBD | Not started | - |
@@ -226,7 +226,7 @@ Plans:
 **Goal:** A conversational AI agent ("Glomalin") lives in grain-tickets as a floating chat popup — the farm manager can query, analyze, and annotate grain data through natural language, with streaming responses, inline charts, CSV export, learnable notes, and a full kill switch
 **Depends on:** Phase 13
 **Requirements:** CHT-01, CHT-02, AGT-01, AGT-02, AGT-03, AGT-04
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 14-01-PLAN.md — Agent backend: Prisma models (AgentConversation, AgentNote, AgentDailyUsage), agentic tool-use loop with SSE streaming, grain data tools, kill-switch middleware, notes CRUD routes
