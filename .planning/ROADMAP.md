@@ -221,12 +221,15 @@ Plans:
 
 ### Phase 19: Seed & Input Inventory Redesign
 
-**Goal:** [To be planned]
+**Goal:** Replace standalone Supplier/Product/Seeds CRUD in farm-budget with a procurement pipeline — Forecasts (live-computed from Macro Roll-Up), Orders (checkbox-select from forecast, grouped by supplier), Deliveries (multi-delivery per order with auto-status transition), and 5 print-optimized HTML reports — with restructured navigation and day/night theme
 **Depends on:** Phase 18
-**Plans:** 3/3 plans complete
+**Requirements:** INV-01, INV-02, INV-03, INV-04, INV-05
+**Plans:** 3 plans
 
 Plans:
-- [ ] TBD (run /gsd:plan-phase 19 to break down)
+- [ ] 19-01-PLAN.md — Server foundation (migrateData extensions, GET /api/forecast, orders/deliveries CRUD with status auto-transition), HTML nav restructure (Forecasts/Orders/Deliveries/Seeds/Reference tabs), day/night CSS
+- [ ] 19-02-PLAN.md — Forecast Hub tab (category tables, expandable field breakdown, checkboxes, % ordered status bars, Create Order flow) + Orders tab (list, detail, edit, status filter)
+- [ ] 19-03-PLAN.md — Deliveries tab (form, list, order status auto-update) + 5 print reports (Agronomist Order Sheet, Field-Level Input Plan, Forecast Summary, Order Status, Delivery Receipt Log) + end-to-end verification
 
 ---
 

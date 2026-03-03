@@ -98,6 +98,18 @@ Requirements for the Glomalin chat agent. Maps to Phase 14.
 - [x] **AGT-03**: Write actions (add ticket notes, flag disputes) require explicit user confirmation before execution
 - [x] **AGT-04**: Daily message cap with configurable limit, approaching-limit warning, conversation logging for audit trail
 
+## Phase 19 Requirements
+
+Requirements for the seed & input inventory redesign (farm-budget). Maps to Phase 19.
+
+### Procurement Pipeline
+
+- [ ] **INV-01**: Forecast Hub shows farm-wide product needs grouped by Seed/Fertilizer/Chemical, live-computed from Macro Roll-Up data, with expandable field breakdowns and visual % ordered status bars
+- [ ] **INV-02**: User can create orders from forecast selections (grouped by supplier), record multiple deliveries per order, and order status auto-transitions (ordered/partial/complete)
+- [ ] **INV-03**: Five print-optimized HTML reports accessible from Forecast tab: Agronomist Order Sheet, Field-Level Input Plan, Forecast Summary, Order Status Report, Delivery Receipt Log
+- [ ] **INV-04**: Navigation restructured to Forecasts/Orders/Deliveries/Seeds top-level tabs with existing Products/Implements/Suppliers/Labor moved to Reference tab
+- [ ] **INV-05**: Day/night mode with sun/moon toggle, CSS custom properties for light/dark palettes, persisted in localStorage
+
 ## v2.x Requirements
 
 Deferred to post-launch validation. Tracked but not in current roadmap.
@@ -174,6 +186,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HRV-02 | Phase 18 | Complete |
 | PDF-01 | Phase 18 | Complete |
 | PDF-02 | Phase 18 | Complete |
+| INV-01 | Phase 19 | Planned |
+| INV-02 | Phase 19 | Planned |
+| INV-03 | Phase 19 | Planned |
+| INV-04 | Phase 19 | Planned |
+| INV-05 | Phase 19 | Planned |
 
 **v2.0 Coverage:**
 - v2.0 requirements: 18 total
@@ -183,6 +200,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 **v3.0 Coverage:**
 - v3.0 requirements: 20 total
 - Mapped to phases: 20
+- Unmapped: 0 ✓
+
+**Phase 19 Coverage:**
+- Phase 19 requirements: 5 total
+- Mapped to plans: 5
 - Unmapped: 0 ✓
 
 ---
