@@ -5,27 +5,28 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 17 (Input & Seed Compilation + NOP Compliance) — next up. Phase 16 verified and complete.
+**Current focus:** Phase 17 (Input & Seed Compilation + NOP Compliance) — Plan 01 complete, Plan 02 (UI) next.
 
 ## Current Position
 
-Phase: 17-input-seed-nop-compliance — NOT STARTED
-Plan: 0 of TBD complete
-Status: Phase 16 verified and complete. Ready to plan Phase 17.
-Last activity: 2026-03-03 — Phase 16 verified and marked complete
+Phase: 17-input-seed-compilation-nop-compliance — IN PROGRESS
+Plan: 1 of 2 complete
+Status: Plan 01 shipped — input+seed compile backend complete. Plan 02 (UI wiring) next.
+Last activity: 2026-03-03 — Phase 17 Plan 01 executed and committed
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
 **Phase 15 (Foundation Fixes & Ecosystem Client Layer):** Plans 01-02 ALL COMPLETE — Phase 15 shipped
 **Phase 16 (Field & Enterprise Compilation):** Plans 01-02 ALL COMPLETE — Phase 16 verified and shipped
-**v3.0 Organic Cert Transparency:** Phases 15-16 COMPLETE, Phase 17 next
+**Phase 17 (Input & Seed Compilation + NOP):** Plan 01 COMPLETE — Plan 02 next
+**v3.0 Organic Cert Transparency:** Phases 15-16 COMPLETE, Phase 17 in progress
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 34 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 5)
+- Total plans completed: 35 (v1.0: 11, v1.1: 8, v2.0: 10, v3.0: 6)
 - v2.0 plans completed: 10
-- v3.0 plans completed: 5 (Phase 15 P01 + P02, Phase 16 P01 + P02)
+- v3.0 plans completed: 6 (Phase 15 P01 + P02, Phase 16 P01 + P02, Phase 17 P01)
 
 **By Milestone:**
 
@@ -52,6 +53,7 @@ Last activity: 2026-03-03 — Phase 16 verified and marked complete
 | Phase 15-foundation-fixes-ecosystem-client-layer P02 | ~10 | 3 tasks | 11 files |
 | Phase 16-field-enterprise-compilation P01 | 372 | 2 tasks | 10 files |
 | Phase 16-field-enterprise-compilation P02 | 280 | 2 tasks | 2 files |
+| Phase 17-input-seed-compilation-nop-compliance P01 | 354 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -134,6 +136,10 @@ v3.0 architectural decisions:
 - [Phase 16-02]: Prisma upsert label:null workaround — generated FieldEnterpriseFieldIdCropYearCropLabelCompoundUniqueInput requires label:string; cast prisma.fieldEnterprise as any to supply label:null; partial index handles DB uniqueness
 - [Phase 16-02]: Partial commits via fieldIds array — POST accepts explicit fieldIds rather than "commit all matched" boolean; enables future per-field granular selection without API change
 - [Phase 16-02]: Commit button disabled when summary.new + summary.update === 0 — prevents redundant no-op commits
+- [Phase 17-01]: nopResolved flag added to Material: upsert update:{} means re-compile NEVER overwrites user-assigned NOP status
+- [Phase 17-01]: seasonToDate(): Fall -> Oct 15 prior year, Spring -> Apr 1 crop year — noon UTC for timezone safety
+- [Phase 17-01]: normalizeCropName() strips ORG/IRR/CONV prefixes; seed matching tries both space and underscore variants (Blue Corn vs Blue_Corn)
+- [Phase 17-01]: Readiness dashboard replaced hardcoded pending with real SYNCED count queries using batch findMany+distinct to avoid N+1
 
 ### Roadmap Evolution
 
@@ -163,6 +169,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-03
-Stopped at: Completed 16-field-enterprise-compilation Plan 02 — compile page UI rebuild + commit route shipped
-Resume file: Continue Phase 16 Plan 03 (if exists) or Phase 17 (Input & Seed NOP Compliance)
-Next action: Phase 17 — Input & Seed NOP Compliance compilation
+Stopped at: Completed 17-input-seed-compilation-nop-compliance Plan 01 — input+seed compile backend shipped
+Resume file: Continue Phase 17 Plan 02 (compile page UI wiring for inputs+seeds)
+Next action: Phase 17 Plan 02 — wire compile page UI to POST /api/compile/[year]/inputs and /seeds endpoints
