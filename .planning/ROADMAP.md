@@ -216,7 +216,7 @@ Plans:
 | 14. Chat Agent (system info & recall) | 3/3 | Complete    | 2026-03-03 | - |
 | 15. Foundation Fixes & Ecosystem Client Layer | 2/2 | Complete    | 2026-03-03 | - |
 | 16. Field & Enterprise Compilation | 2/2 | Complete   | 2026-03-03 | - |
-| 17. Input & Seed Compilation + NOP Compliance | 2/2 | Complete   | 2026-03-03 | - |
+| 17. Input & Seed Compilation + NOP Compliance | 2/2 | Complete    | 2026-03-03 | - |
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 0/TBD | Not started | - |
 
 ---
