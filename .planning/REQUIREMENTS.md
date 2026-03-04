@@ -188,7 +188,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PDF-02 | Phase 18 | Complete |
 | INV-01 | Phase 19 Plan 01 | Complete |
 | INV-02 | Phase 19 Plan 01 | Complete |
-| INV-03 | Phase 19 | Planned |
+| INV-03 | Phase 19 Plan 03 | Complete |
 | INV-04 | Phase 19 Plan 01 | Complete |
 | INV-05 | Phase 19 Plan 01 | Complete |
 
