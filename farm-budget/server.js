@@ -788,6 +788,53 @@ app.get('/api/forecast', function (req, res) {
     });
   });
 
+  // Aggregate program-level inputs (inputs defined in agronomic templates but not on individual fields)
+  (store.programs || []).forEach(function (prog) {
+    if (!prog.inputs || prog.inputs.length === 0) return;
+    // Find fields matching this program's systemCode + crop
+    var matchingFields = (store.fields || []).filter(function (f) {
+      return f.systemCode === prog.systemCode && f.crop === prog.crop;
+    });
+    if (matchingFields.length === 0) return;
+
+    prog.inputs.forEach(function (progInput) {
+      if (!progInput.productName) return;
+      var key = progInput.productName.trim().toLowerCase();
+      var product = productIndex[key];
+      var mapKey = progInput.productName;
+
+      matchingFields.forEach(function (field) {
+        // Skip if this field already has this input (field-level takes precedence)
+        var alreadyOnField = (field.inputs || []).some(function (fi) {
+          return (fi.productName || '').trim().toLowerCase() === key;
+        });
+        if (alreadyOnField) return;
+
+        var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+        if (!productMap[mapKey]) {
+          productMap[mapKey] = {
+            productName: progInput.productName,
+            supplierId: product ? (product.supplierId || '') : '',
+            unit: product ? (product.unit || '') : '',
+            unitCost: product ? Calc.computeApplicationPrice(product) : 0,
+            category: product ? (product.category || 'Other') : 'Other',
+            totalQty: 0,
+            fields: []
+          };
+        }
+        var fieldQty = (progInput.quantity || 0) * acres;
+        productMap[mapKey].totalQty += fieldQty;
+        productMap[mapKey].fields.push({
+          fieldName: field.name,
+          acres: acres,
+          qty: fieldQty,
+          rate: progInput.quantity || 0,
+          season: progInput.season || ''
+        });
+      });
+    });
+  });
+
   // Aggregate seed varieties from fields
   var seedIndex = {};
   (store.seeds || []).forEach(function (s) {
@@ -896,6 +943,28 @@ app.get('/api/demand', function (req, res) {
       var key = inp.productName.trim().toLowerCase();
       if (!productAgg[key]) productAgg[key] = { name: inp.productName, totalQty: 0 };
       productAgg[key].totalQty += (inp.quantity || 0) * acres;
+    });
+  });
+
+  // Also aggregate program-level inputs for matching fields
+  (store.programs || []).forEach(function (prog) {
+    if (!prog.inputs || prog.inputs.length === 0) return;
+    var matchingFields = (store.fields || []).filter(function (f) {
+      return f.systemCode === prog.systemCode && f.crop === prog.crop;
+    });
+    if (matchingFields.length === 0) return;
+    prog.inputs.forEach(function (progInput) {
+      if (!progInput.productName) return;
+      var key = progInput.productName.trim().toLowerCase();
+      matchingFields.forEach(function (field) {
+        var alreadyOnField = (field.inputs || []).some(function (fi) {
+          return (fi.productName || '').trim().toLowerCase() === key;
+        });
+        if (alreadyOnField) return;
+        var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+        if (!productAgg[key]) productAgg[key] = { name: progInput.productName, totalQty: 0 };
+        productAgg[key].totalQty += (progInput.quantity || 0) * acres;
+      });
     });
   });
 

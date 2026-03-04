@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seed & Input Inventory</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0a0e09">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <script>(function(){var t=localStorage.getItem('si-theme');if(t==='light')document.documentElement.classList.add('light-pending')})()</script>
+</head>
+<body>
+  <script>if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}</script>
+
+  <header>
+    <div class="header-row">
+      <h1><span class="prompt">~/inventory $</span> <span class="title">seed &amp; input inventory</span></h1>
+      <button id="theme-toggle" class="theme-toggle">&#9788;</button>
+    </div>
+    <nav>
+      <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="products">Products</button>
+      <button class="tab-btn" data-tab="suppliers">Suppliers</button>
+      <button class="tab-btn" data-tab="forecasts">Forecasts</button>
+      <button class="tab-btn" data-tab="orders">Orders</button>
+      <button class="tab-btn" data-tab="deliveries">Deliveries</button>
+      <button class="tab-btn" data-tab="returns">Returns</button>
+      <button class="tab-btn" data-tab="reconciliation">Reconciliation</button>
+      <button class="tab-btn" data-tab="verify">Verify</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- DASHBOARD TAB -->
+    <section id="tab-dashboard" class="tab-content active">
+      <h2>Dashboard</h2>
+      <div class="settings-bar">
+        <label>Crop Year:
+          <select id="crop-year-select">
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+          </select>
+        </label>
+      </div>
+      <div class="stat-grid" id="dashboard-stats">
+        <div class="stat-card">
+          <span class="stat-label">Seed Products</span>
+          <span class="stat-value" id="stat-seeds">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Input Products</span>
+          <span class="stat-value" id="stat-inputs">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Suppliers</span>
+          <span class="stat-value" id="stat-suppliers">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Open Orders</span>
+          <span class="stat-value" id="stat-orders">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Order Value</span>
+          <span class="stat-value" id="stat-order-value">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Delivery %</span>
+          <span class="stat-value" id="stat-delivery-pct">--</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Receipts</span>
+          <span class="stat-value" id="stat-receipts">--</span>
+        </div>
+        <div class="stat-card warn">
+          <span class="stat-label">Discrepancies</span>
+          <span class="stat-value" id="stat-discrepancies">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTS TAB (read-only lookup from Farm Budget) -->
+    <section id="tab-products" class="tab-content">
+      <h2>Product Lookup</h2>
+      <div id="catalog-offline" class="offline-banner hidden">Farm Budget is offline — catalog unavailable</div>
+      <div class="toolbar">
+        <div class="filters">
+          <div class="type-toggle">
+            <button class="toggle-btn catalog-cat active" data-cat="">All</button>
+            <button class="toggle-btn catalog-cat" data-cat="Seed">Seed</button>
+            <button class="toggle-btn catalog-cat" data-cat="Fertilizer">Fertilizer</button>
+            <button class="toggle-btn catalog-cat" data-cat="Chemical">Chemical</button>
+            <button class="toggle-btn catalog-cat" data-cat="Biological">Biological</button>
+            <button class="toggle-btn catalog-cat" data-cat="Other">Other</button>
+          </div>
+          <input type="text" id="product-search" placeholder="Search products...">
+        </div>
+        <span class="source-badge">Source: Farm Budget</span>
+      </div>
+      <div class="catalog-summary" id="catalog-summary"></div>
+      <div class="table-wrap">
+        <table id="product-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Supplier</th>
+              <th>Unit</th>
+              <th class="number">Price</th>
+              <th>Organic</th>
+              <th>Cert #</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="product-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Organic Cert Edit Modal -->
+      <div id="cert-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="cert-modal-title">Edit Organic Cert</h3>
+            <button class="modal-close" id="cert-modal-close">&times;</button>
+          </div>
+          <form id="cert-form">
+            <input type="hidden" id="cf-budgetId">
+            <input type="hidden" id="cf-budgetType">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cf-organicCertNumber">Organic Cert #</label>
+                <input type="text" id="cf-organicCertNumber" placeholder="Cert number or OMRI listing ID">
+              </div>
+              <div class="form-group">
+                <label for="cf-omriListed">
+                  <input type="checkbox" id="cf-omriListed"> OMRI Listed
+                </label>
+              </div>
+              <div class="form-group full-width">
+                <label for="cf-localNotes">Notes</label>
+                <input type="text" id="cf-localNotes" placeholder="Local notes for this product">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save</button>
+              <button type="button" class="btn-sm" id="cert-cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUPPLIERS TAB -->
+    <section id="tab-suppliers" class="tab-content">
+      <h2>Suppliers</h2>
+      <div class="toolbar">
+        <div class="filters">
+          <input type="text" id="supplier-search" placeholder="Search suppliers...">
+        </div>
+        <div class="toolbar-actions">
+          <button class="btn-secondary" id="sync-suppliers-btn">Sync All to Farm Budget</button>
+          <button class="btn-primary" id="add-supplier-btn">+ Add Supplier</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="supplier-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Name</th>
+              <th>Contact</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Budget Sync</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="supplier-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Supplier Form Modal -->
+      <div id="supplier-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="supplier-modal-title">Add Supplier</h3>
+            <button class="modal-close" id="supplier-modal-close">&times;</button>
+          </div>
+          <form id="supplier-form">
+            <input type="hidden" id="sf-id">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="sf-name">Supplier Name</label>
+                <input type="text" id="sf-name" required placeholder="e.g. AgriGold Hybrids">
+              </div>
+              <div class="form-group">
+                <label for="sf-contactName">Contact Person</label>
+                <input type="text" id="sf-contactName" placeholder="Name">
+              </div>
+              <div class="form-group">
+                <label for="sf-phone">Phone</label>
+                <input type="tel" id="sf-phone" placeholder="555-123-4567">
+              </div>
+              <div class="form-group">
+                <label for="sf-email">Email</label>
+                <input type="email" id="sf-email" placeholder="contact@supplier.com">
+              </div>
+              <div class="form-group full-width">
+                <label for="sf-address">Address</label>
+                <input type="text" id="sf-address" placeholder="Street, City, State ZIP">
+              </div>
+              <div class="form-group full-width">
+                <label for="sf-notes">Notes</label>
+                <input type="text" id="sf-notes" placeholder="Account number, terms, etc.">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Supplier</button>
+              <button type="button" class="btn-sm" id="supplier-cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- FORECASTS TAB (read-only, sourced from Farm Budget macro) -->
+    <section id="tab-forecasts" class="tab-content">
+      <h2>Forecasts</h2>
+      <div class="toolbar">
+        <div class="filters">
+          <div class="type-toggle">
+            <button class="toggle-btn forecast-type active" data-cat="">All</button>
+            <button class="toggle-btn forecast-type" data-cat="SEED">Seed</button>
+            <button class="toggle-btn forecast-type" data-cat="FERTILIZER">Fertilizer</button>
+            <button class="toggle-btn forecast-type" data-cat="CHEMICAL">Chemical</button>
+            <button class="toggle-btn forecast-type" data-cat="BIOLOGICAL">Biological</button>
+            <button class="toggle-btn forecast-type" data-cat="OTHER">Other</button>
+          </div>
+          <input type="text" id="forecast-search" placeholder="Search products...">
+        </div>
+        <button class="btn-secondary" id="sync-budget-btn">Sync from Farm Budget</button>
+      </div>
+      <div class="forecast-summary" id="forecast-summary"></div>
+      <div class="table-wrap">
+        <table id="forecast-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th class="number">Total Acres</th>
+              <th class="number">Total Qty</th>
+              <th>Unit</th>
+              <th class="number">Fields</th>
+            </tr>
+          </thead>
+          <tbody id="forecast-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ORDERS TAB -->
+    <section id="tab-orders" class="tab-content">
+      <h2>Orders</h2>
+      <div class="toolbar">
+        <div class="filters">
+          <input type="text" id="order-search" placeholder="Search orders...">
+          <select id="order-payment-filter">
+            <option value="">All Statuses</option>
+            <option value="UNPAID">Unpaid</option>
+            <option value="PARTIAL">Partial</option>
+            <option value="PAID">Paid</option>
+          </select>
+        </div>
+        <button class="btn-primary" id="add-order-btn">+ Add Order</button>
+      </div>
+      <div class="table-wrap">
+        <table id="order-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th data-sort="supplier">Supplier</th>
+              <th data-sort="quantityOrdered">Qty Ordered</th>
+              <th>Unit</th>
+              <th data-sort="pricePerUnit">Price/Unit</th>
+              <th data-sort="totalCost">Total</th>
+              <th data-sort="invoiceNumber">Invoice #</th>
+              <th data-sort="paymentStatus">Status</th>
+              <th data-sort="dueDate">Due</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="order-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Order Form Modal -->
+      <div id="order-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="order-modal-title">Add Order</h3>
+            <button class="modal-close" id="order-modal-close">&times;</button>
+          </div>
+          <form id="order-form">
+            <input type="hidden" id="of-id">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="of-productId">Product</label>
+                <select id="of-productId" required>
+                  <option value="">Select product...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="of-supplierId">Supplier</label>
+                <select id="of-supplierId" required>
+                  <option value="">Select supplier...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="of-quantityOrdered">Quantity</label>
+                <input type="number" id="of-quantityOrdered" step="any" min="0" required>
+              </div>
+              <div class="form-group">
+                <label for="of-unit">Unit</label>
+                <select id="of-unit">
+                  <option value="units">Units</option>
+                  <option value="bags">Bags</option>
+                  <option value="lbs">Lbs</option>
+                  <option value="gal">Gallons</option>
+                  <option value="tons">Tons</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="of-pricePerUnit">Price / Unit ($)</label>
+                <input type="number" id="of-pricePerUnit" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label for="of-prepayDiscount">Prepay Discount (%)</label>
+                <input type="number" id="of-prepayDiscount" step="0.1" min="0" max="100" value="0">
+              </div>
+              <div class="form-group">
+                <label for="of-invoiceNumber">Invoice #</label>
+                <input type="text" id="of-invoiceNumber" placeholder="INV-2026-001">
+              </div>
+              <div class="form-group">
+                <label for="of-invoiceDate">Invoice Date</label>
+                <input type="date" id="of-invoiceDate">
+              </div>
+              <div class="form-group">
+                <label for="of-dueDate">Due Date</label>
+                <input type="date" id="of-dueDate">
+              </div>
+              <div class="form-group">
+                <label for="of-paymentStatus">Payment Status</label>
+                <select id="of-paymentStatus">
+                  <option value="UNPAID">Unpaid</option>
+                  <option value="PARTIAL">Partial</option>
+                  <option value="PAID">Paid</option>
+                </select>
+              </div>
+              <div class="form-group full-width">
+                <label for="of-notes">Notes</label>
+                <input type="text" id="of-notes" placeholder="Notes">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Order</button>
+              <button type="button" class="btn-sm" id="order-cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- DELIVERIES TAB -->
+    <section id="tab-deliveries" class="tab-content">
+      <h2>Deliveries</h2>
+      <div class="toolbar">
+        <div class="filters">
+          <input type="text" id="delivery-search" placeholder="Search deliveries...">
+        </div>
+        <button class="btn-primary" id="add-delivery-btn">+ Add Delivery</button>
+      </div>
+      <div class="table-wrap">
+        <table id="delivery-table">
+          <thead>
+            <tr>
+              <th data-sort="dateReceived">Date</th>
+              <th>Product</th>
+              <th>Supplier</th>
+              <th data-sort="quantityReceived">Qty</th>
+              <th>Unit</th>
+              <th>Lot #</th>
+              <th>Ticket #</th>
+              <th data-sort="verificationMethod">Verified</th>
+              <th>Discrepancy</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="delivery-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Delivery Form Modal -->
+      <div id="delivery-modal" class="modal hidden">
+        <div class="modal-content modal-wide">
+          <div class="modal-header">
+            <h3 id="delivery-modal-title">Record Delivery</h3>
+            <button class="modal-close" id="delivery-modal-close">&times;</button>
+          </div>
+          <form id="delivery-form">
+            <input type="hidden" id="df-id">
+            <fieldset class="delivery-shared">
+              <legend>Delivery Info</legend>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="df-supplierId">Supplier</label>
+                  <select id="df-supplierId" required>
+                    <option value="">Select supplier...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="df-dateReceived">Date Received</label>
+                  <input type="date" id="df-dateReceived" required>
+                </div>
+                <div class="form-group">
+                  <label for="df-ticketNumber">Ticket / BOL #</label>
+                  <input type="text" id="df-ticketNumber" placeholder="DT-8891">
+                </div>
+                <div class="form-group">
+                  <label for="df-receivedBy">Received By</label>
+                  <input type="text" id="df-receivedBy" placeholder="Who took delivery">
+                </div>
+                <div class="form-group">
+                  <label for="df-verifiedBy">Verified By</label>
+                  <input type="text" id="df-verifiedBy" placeholder="Who verified">
+                </div>
+                <div class="form-group">
+                  <label for="df-notes">Notes</label>
+                  <input type="text" id="df-notes" placeholder="Notes">
+                </div>
+              </div>
+            </fieldset>
+            <fieldset class="delivery-items">
+              <legend>Line Items <button type="button" class="btn-sm" id="df-add-item">+ Add Item</button></legend>
+              <div id="df-items-container"></div>
+            </fieldset>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Delivery</button>
+              <button type="button" class="btn-sm" id="delivery-cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- RETURNS TAB -->
+    <section id="tab-returns" class="tab-content">
+      <h2>Returns</h2>
+      <div class="toolbar">
+        <div class="filters">
+          <input type="text" id="return-search" placeholder="Search returns...">
+        </div>
+        <button class="btn-primary" id="add-return-btn">+ Add Return</button>
+      </div>
+      <div class="table-wrap">
+        <table id="return-table">
+          <thead>
+            <tr>
+              <th data-sort="dateReturned">Date</th>
+              <th>Product</th>
+              <th>Supplier</th>
+              <th data-sort="quantityReturned">Qty</th>
+              <th>Unit</th>
+              <th>Reason</th>
+              <th data-sort="creditAmount">Credit</th>
+              <th>Credit Received</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="return-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Return Form Modal -->
+      <div id="return-modal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3 id="return-modal-title">Record Return</h3>
+            <button class="modal-close" id="return-modal-close">&times;</button>
+          </div>
+          <form id="return-form">
+            <input type="hidden" id="rf-id">
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="rf-productId">Product</label>
+                <select id="rf-productId" required>
+                  <option value="">Select product...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rf-orderId">Linked Order</label>
+                <select id="rf-orderId">
+                  <option value="">No linked order</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rf-supplierId">Supplier</label>
+                <select id="rf-supplierId">
+                  <option value="">Select supplier...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rf-dateReturned">Date Returned</label>
+                <input type="date" id="rf-dateReturned" required>
+              </div>
+              <div class="form-group">
+                <label for="rf-quantityReturned">Quantity</label>
+                <input type="number" id="rf-quantityReturned" step="any" min="0" required>
+              </div>
+              <div class="form-group">
+                <label for="rf-unit">Unit</label>
+                <select id="rf-unit">
+                  <option value="units">Units</option>
+                  <option value="bags">Bags</option>
+                  <option value="lbs">Lbs</option>
+                  <option value="gal">Gallons</option>
+                  <option value="tons">Tons</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rf-reason">Reason</label>
+                <input type="text" id="rf-reason" placeholder="e.g. Excess - acreage reduced">
+              </div>
+              <div class="form-group">
+                <label for="rf-creditAmount">Expected Credit ($)</label>
+                <input type="number" id="rf-creditAmount" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label for="rf-processedBy">Processed By</label>
+                <input type="text" id="rf-processedBy" placeholder="Who handled">
+              </div>
+              <div class="form-group">
+                <label for="rf-creditReceived">
+                  <input type="checkbox" id="rf-creditReceived"> Credit Received
+                </label>
+              </div>
+              <div class="form-group full-width">
+                <label for="rf-notes">Notes</label>
+                <input type="text" id="rf-notes" placeholder="Notes">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Return</button>
+              <button type="button" class="btn-sm" id="return-cancel-btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECONCILIATION TAB -->
+    <section id="tab-reconciliation" class="tab-content">
+      <h2>Reconciliation</h2>
+      <div class="toolbar">
+        <div class="filters">
+          <div class="type-toggle">
+            <button class="toggle-btn recon-type active" data-type="">All</button>
+            <button class="toggle-btn recon-type" data-type="SEED">Seeds</button>
+            <button class="toggle-btn recon-type" data-type="INPUT">Inputs</button>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="recon-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Brand</th>
+              <th>Product</th>
+              <th data-sort="forecast" class="number">Forecast</th>
+              <th data-sort="totalOrdered" class="number">Ordered</th>
+              <th data-sort="totalDelivered" class="number">Delivered</th>
+              <th data-sort="totalReturned" class="number">Returned</th>
+              <th data-sort="onHand" class="number">On Hand</th>
+              <th data-sort="balance" class="number">Balance</th>
+              <th data-sort="percentDelivered" class="number">% Delivered</th>
+              <th data-sort="totalCost" class="number">Cost</th>
+            </tr>
+          </thead>
+          <tbody id="recon-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- VERIFY TAB -->
+    <section id="tab-verify" class="tab-content">
+      <h2>Verify Delivery</h2>
+      <div class="verify-wizard">
+        <div class="verify-step" id="verify-step-1">
+          <h3>Step 1: Select Supplier</h3>
+          <select id="verify-supplier" class="full-width">
+            <option value="">Choose supplier...</option>
+          </select>
+          <button class="btn-primary full-width" id="verify-next-1" disabled>Next</button>
+        </div>
+
+        <div class="verify-step hidden" id="verify-step-2">
+          <h3>Step 2: Capture Delivery Ticket</h3>
+          <button type="button" class="btn-primary btn-scan full-width" id="verify-scan-btn">Take Photo of Delivery Ticket</button>
+          <input type="file" id="verify-scan-input" accept="image/*" capture="environment" style="display:none">
+          <div id="verify-scan-status" class="scan-status hidden"></div>
+          <p class="help-text">Or skip scanning to enter manually</p>
+          <button class="btn-sm full-width" id="verify-skip-scan">Enter Manually</button>
+        </div>
+
+        <div class="verify-step hidden" id="verify-step-3">
+          <h3>Step 3: Review & Match</h3>
+          <div id="verify-scan-results" class="scan-results"></div>
+          <div id="verify-matches" class="match-list"></div>
+        </div>
+
+        <div class="verify-step hidden" id="verify-step-4">
+          <h3>Step 4: Confirm Receipt</h3>
+          <div id="verify-confirm-table"></div>
+          <div class="form-grid" style="margin-top:1rem">
+            <div class="form-group full-width">
+              <label for="vc-receivedBy">Received By</label>
+              <input type="text" id="vc-receivedBy">
+            </div>
+          </div>
+          <button class="btn-primary full-width" id="verify-submit-all">Confirm All Receipts</button>
+        </div>
+
+        <div class="verify-step hidden" id="verify-step-done">
+          <div class="verify-done">
+            <h3>Receipt Recorded</h3>
+            <p id="verify-done-msg"></p>
+            <button class="btn-primary full-width" id="verify-restart">Verify Another</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available')"></script>
+  <script src="app.js"></script>
+  <script src="products.js"></script>
+  <script src="suppliers.js"></script>
+  <script src="forecasts.js"></script>
+  <script src="orders.js"></script>
+  <script src="deliveries.js"></script>
+  <script src="returns.js"></script>
+  <script src="reconciliation.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="verify.js"></script>
+  <script>
+    // Theme toggle
+    var btn = document.getElementById('theme-toggle');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    function updateTheme() {
+      var isLight = document.body.classList.contains('light');
+      btn.innerHTML = isLight ? '&#9790;' : '&#9788;';
+      if (meta) meta.content = isLight ? '#f5f5f0' : '#0a0e09';
+    }
+    updateTheme();
+    btn.addEventListener('click', function () {
+      document.body.classList.toggle('light');
+      localStorage.setItem('si-theme', document.body.classList.contains('light') ? 'light' : 'dark');
+      updateTheme();
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  </script>
+</body>
+</html>
