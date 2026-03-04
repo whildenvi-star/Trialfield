@@ -42,3 +42,26 @@
 
 ---
 
+
+## v2.0 Grain Traceability + Chat Agent (Shipped: 2026-03-04)
+
+**Delivered:** Digital grain traceability from combine to settlement — 527 tickets migrated to PostgreSQL, buyer registry with destination tracking, settlement import (CSV/Excel + manual entry), automated reconciliation engine with discrepancy detection, and Glomalin AI chat agent for natural language grain data queries.
+
+**Phases completed:** 9-14 (6 phases, 13 plans)
+**Timeline:** 8 days (2026-02-23 → 2026-03-02)
+**Stats:** 84 files changed, 47,228 insertions, 1,497 deletions
+**Requirements:** 24/24 complete (DB-01..04, BUY-01..03, TKT-01..02, SET-01..04, REC-01..05, CHT-01..02, AGT-01..04)
+
+**Key accomplishments:**
+- Migrated 527 grain tickets from JSON flat-file to PostgreSQL with zero data loss (Prisma 6.19.2)
+- Buyer/destination registry with dropdown selection, crop year scoping, and per-buyer column mapping
+- Settlement import system — CSV/Excel with column mapping preview + manual entry for paper-only buyers
+- Reconciliation engine — automated ticket-settlement matching, dispute flagging, unmatched load detection, settlement summary comparisons
+- Glomalin AI chat agent — Claude-powered conversational interface with SSE streaming, inline Chart.js charts, CSV export, learnable notes, and kill switch
+
+**Git range:** `feat(09-01)` → `feat(14-03)`
+
+**Archive:** [milestones/v2.0-ROADMAP.md](milestones/v2.0-ROADMAP.md) | [milestones/v2.0-REQUIREMENTS.md](milestones/v2.0-REQUIREMENTS.md) | [milestones/v2.0-MILESTONE-AUDIT.md](milestones/v2.0-MILESTONE-AUDIT.md)
+
+---
+
