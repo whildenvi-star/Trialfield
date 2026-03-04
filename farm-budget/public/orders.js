@@ -5,10 +5,22 @@
 
   var allOrders = [];
   var deliveryCacheByOrder = {}; // orderId -> {loaded: bool, items: []}
+  var allSuppliers = [];
 
   // --- Tab activation ---
   window.addEventListener('tab-activate', function (e) {
-    if (e.detail.tab === 'orders') loadOrders();
+    if (e.detail.tab === 'orders') {
+      // Load suppliers for the order form
+      api.get('/api/suppliers').then(function (s) { allSuppliers = s || []; }).catch(function () {});
+      loadOrders();
+    }
+  });
+
+  // --- New Order button ---
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'ord-new-btn') {
+      openOrderForm();
+    }
   });
 
   // Reload orders when deliveries change (status might have updated)
@@ -71,13 +83,101 @@
     });
   }
 
+  // --- Open create-order form ---
+  function openOrderForm() {
+    var formEl = document.getElementById('ord-form');
+    if (!formEl) return;
+
+    var supplierOptions = '<option value="">-- Type or select supplier --</option>';
+    allSuppliers.forEach(function (s) {
+      supplierOptions += '<option value="' + util.escHtml(s.name || '') + '">' + util.escHtml(s.name || '') + '</option>';
+    });
+
+    var formHtml = '<div class="del-form-inner" style="max-width:480px;margin-top:1rem">';
+    formHtml += '<h3 style="color:var(--primary);margin-bottom:0.75rem">New Order</h3>';
+    formHtml += '<div style="display:grid;gap:0.75rem">';
+
+    formHtml += '<div>';
+    formHtml += '<label style="font-size:0.8rem;color:var(--text-light);display:block;margin-bottom:0.25rem">Supplier</label>';
+    formHtml += '<input type="text" id="ord-form-supplier" list="ord-supplier-list" placeholder="Supplier name" style="width:100%">';
+    formHtml += '<datalist id="ord-supplier-list">' + supplierOptions + '</datalist>';
+    formHtml += '</div>';
+
+    formHtml += '<div>';
+    formHtml += '<label style="font-size:0.8rem;color:var(--text-light);display:block;margin-bottom:0.25rem">PO Number (optional)</label>';
+    formHtml += '<input type="text" id="ord-form-po" placeholder="e.g. PO-2026-001" style="width:100%">';
+    formHtml += '</div>';
+
+    formHtml += '<div>';
+    formHtml += '<label style="font-size:0.8rem;color:var(--text-light);display:block;margin-bottom:0.25rem">Notes (optional)</label>';
+    formHtml += '<textarea id="ord-form-notes" rows="2" style="width:100%;resize:vertical" placeholder="Order notes..."></textarea>';
+    formHtml += '</div>';
+
+    formHtml += '<p style="font-size:0.8rem;color:var(--text-light)">Tip: To add line items from your forecast, use the Forecasts tab and click <strong>Create Order from Selected</strong>.</p>';
+
+    formHtml += '<div style="display:flex;gap:0.5rem;margin-top:0.25rem">';
+    formHtml += '<button id="ord-form-save" class="btn-sm btn-primary">Save Order</button>';
+    formHtml += '<button id="ord-form-cancel" class="btn-sm">Cancel</button>';
+    formHtml += '</div>';
+
+    formHtml += '</div></div>';
+    formEl.innerHTML = formHtml;
+    formEl.classList.remove('hidden');
+    formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    var supplierInput = document.getElementById('ord-form-supplier');
+    if (supplierInput) supplierInput.focus();
+
+    var saveBtn = document.getElementById('ord-form-save');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        var supplierVal = (document.getElementById('ord-form-supplier') || {}).value || '';
+        if (!supplierVal.trim()) {
+          util.showToast('Please enter a supplier name', 3000, 'error');
+          return;
+        }
+        saveBtn.disabled = true;
+        api.post('/api/orders', {
+          supplierName: supplierVal.trim(),
+          poNumber: ((document.getElementById('ord-form-po') || {}).value || '').trim(),
+          notes: ((document.getElementById('ord-form-notes') || {}).value || '').trim(),
+          status: 'ordered',
+          items: []
+        }).then(function () {
+          util.showToast('Order created', 2000, 'success');
+          closeOrderForm();
+          loadOrders();
+        }).catch(function (err) {
+          saveBtn.disabled = false;
+          util.showToast('Failed to create order: ' + err.message, 4000, 'error');
+        });
+      });
+    }
+
+    var cancelBtn = document.getElementById('ord-form-cancel');
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', function () {
+        closeOrderForm();
+      });
+    }
+  }
+
+  // --- Close create-order form ---
+  function closeOrderForm() {
+    var formEl = document.getElementById('ord-form');
+    if (formEl) {
+      formEl.innerHTML = '';
+      formEl.classList.add('hidden');
+    }
+  }
+
   // --- Render order list ---
   function renderOrderList(orders) {
     var listEl = document.getElementById('ord-list');
     if (!listEl) return;
 
     if (orders.length === 0) {
-      listEl.innerHTML = util.emptyState('\uD83D\uDCCB', 'No orders yet', 'Select products on the Forecasts tab and click Create Order');
+      listEl.innerHTML = util.emptyState('\uD83D\uDCCB', 'No orders yet', 'Click + New Order to create a purchase order, or use the Forecasts tab to create an order from selected items');
       return;
     }
 

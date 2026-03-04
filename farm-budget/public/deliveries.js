@@ -24,6 +24,13 @@
     }
   });
 
+  // --- New Delivery button ---
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'del-new-btn') {
+      openDeliveryForm(null);
+    }
+  });
+
   // --- Handle start-delivery from orders.js (Record Delivery button) ---
   window.addEventListener('start-delivery', function (e) {
     var orderId = e.detail && e.detail.orderId;
@@ -75,7 +82,7 @@
     }
 
     if (deliveries.length === 0) {
-      listEl.innerHTML = util.emptyState('\uD83D\uDCE6', 'No deliveries recorded', 'Record deliveries from the Orders tab');
+      listEl.innerHTML = util.emptyState('\uD83D\uDCE6', 'No deliveries recorded', 'Click + New Delivery to log a delivery receipt, or use the Record Delivery button from the Orders tab');
       return;
     }
 

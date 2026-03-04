@@ -33,12 +33,12 @@
           <div class="nav-dropdown-menu" id="enterprise-menu"></div>
         </div>
         <button class="tab-btn" data-tab="forecasts">Forecasts</button>
-        <button class="tab-btn" data-tab="orders" style="display:none">Orders</button>
-        <button class="tab-btn" data-tab="deliveries" style="display:none">Deliveries</button>
         <button class="tab-btn" data-tab="seeds">Seeds</button>
         <button class="tab-btn" data-tab="reference">Reference</button>
         <button class="tab-btn" data-tab="programs">Programs</button>
         <button class="tab-btn" data-tab="sales">Sales</button>
+        <button class="tab-btn" data-tab="orders">Orders</button>
+        <button class="tab-btn" data-tab="deliveries">Deliveries</button>
         <button class="tab-btn" data-tab="map">Map</button>
       </div>
       <div class="nav-enterprise-bar" id="nav-enterprise-bar"></div>
@@ -314,6 +314,7 @@
           <option value="complete">Complete</option>
         </select>
         <span id="ord-count" style="color:var(--text-light);font-size:0.85rem"></span>
+        <button id="ord-new-btn" class="btn-primary btn-sm" style="margin-left:auto">+ New Order</button>
       </div>
       <div id="ord-list"></div>
       <div id="ord-form" class="hidden"></div>
@@ -325,6 +326,7 @@
       <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem">
         <input type="text" id="del-search" placeholder="Search by ticket or product...">
         <span id="del-count" style="color:var(--text-light);font-size:0.85rem"></span>
+        <button id="del-new-btn" class="btn-primary btn-sm" style="margin-left:auto">+ New Delivery</button>
       </div>
       <div id="del-list"></div>
       <div id="del-form" class="hidden"></div>
