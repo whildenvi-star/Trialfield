@@ -148,4 +148,4 @@ Plans:
 | 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 21. Farm-Budget Field Editor Polish | 2/2 | Complete    | 2026-03-04 | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 23. Settlement Closure | 3/3 | Complete   | 2026-03-04 | - |
+| 23. Settlement Closure | 3/3 | Complete    | 2026-03-04 | - |
