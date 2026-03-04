@@ -5,54 +5,66 @@ area: farm-budget
 files:
   - farm-budget/public/seed-manager.js
   - farm-budget/public/inputs-manager.js
+  - farm-budget/public/enterprise.js
   - farm-budget/server.js
   - farm-budget/data/data.json
+  - farm-budget/public/style.css
+  - farm-budget/public/index.html
 ---
 
 ## Problem
 
-The Seed & Input Inventory page (localhost:3006) needs a complete rework. Currently it has standalone Supplier and Product tabs that duplicate data already managed in the Macro Roll-Up. The inventory sheet should be a lean operational extension of the Macro Roll-Up — consuming forecasted data from field edit tabs, not managing its own product/supplier data.
+The Seed & Input Inventory page (localhost:3006) needs a complete rework across UI, data model, and operational workflow:
 
-Key gaps:
-- No Forecasts page that rolls up all planned inputs from Macro Roll-Up field edit tabs
-- No Orders tracking (purchase orders against forecasted products with status workflow)
-- No Deliveries tracking (logging incoming deliveries against orders, flagging discrepancies)
-- No Returns management (damaged/wrong/excess product returns linked to deliveries)
-- No printable reports (agronomist order sheets, field-level input plans, forecast summaries, order status, delivery logs)
-- Supplier and Product tabs exist but should be eliminated — that data flows from Macro
+1. **UI doesn't match Glomalin project style** — needs redesign to be consistent with grain-tickets, organic-cert, and other Glomalin modules (day/night theme, layout patterns, typography, color system).
+
+2. **Unit/packaging system is too rigid** — no way to add custom units like tote, probox, pallet, bag, unit. No way to describe pack size (e.g., "40 unit tote" vs "50 unit tote", "50 lb bag" vs "80 lb bag"). The receiving manager needs to know exactly what packaging to expect.
+
+3. **Seeds, inputs, and suppliers are managed standalone** — should pull the available list from upstream Macro Roll-Up. When seeds are entered in the Seeds tab or inputs in the Reference tab of the Macro, they should automatically become available downstream in the inventory sheet.
+
+4. **No product demand table** — the receiving manager needs an always-up-to-date forecast showing how much of each product is expected, in what packaging, from which supplier. This is their operational dashboard for planning warehouse space and receiving dock schedules.
+
+5. **No order/delivery tracking pipeline** — missing Forecasts → Orders → Deliveries → Returns workflow with status tracking and print reports.
 
 ## Solution
 
-### Architecture
-- **Forecasts Page (Hub):** Reactive roll-up of all products from Macro Roll-Up field edit tabs. Shows product name, supplier, forecasted amount (correct unit: tons/gallons/bags/etc.), and cost. Only products with amount > 0. Groups by category (seed, fertilizer, chemical).
-- **Orders CRUD:** Create purchase orders against forecasted products. Status workflow: Ordered → Confirmed → Shipped → Delivered. Show ordered vs. forecasted variance.
-- **Deliveries CRUD:** Log deliveries against orders. Track date, quantity, condition, ticket #. Running tally: delivered vs. ordered vs. forecasted.
-- **Returns CRUD:** Track returns linked to deliveries. Status: Initiated → Picked Up → Credited. Impact available inventory.
-- **5 Report Types:** Agronomist/Supplier Order Sheet, Field-Level Input Plan, Full Forecast Summary, Orders Status Report, Delivery Receipt Log. Clean print CSS, professional layout, page-break-friendly tables.
+### UI Redesign
+- Match Glomalin project design language (consistent with grain-tickets, organic-cert)
+- Day/night mode with CSS custom properties
+- Touch-friendly for tablet use in the field/warehouse
+- Responsive layout, accessible color coding
 
-### Tabs to Eliminate
-- ❌ Supplier Tab (data flows from Macro)
-- ❌ Products Tab (data flows from Macro)
+### Unit & Pack Size System
+- Extensible unit list: tote, probox, pallet, bag, unit, bushel, ton, gallon, etc.
+- User can add new units on-the-fly
+- Pack size descriptor field: "40 unit tote", "50 lb bag", "80 lb bag"
+- Pack quantity tracking (how many packs, not just raw units)
 
-### UI Requirements
-- Day/night mode with CSS variables, persisted via localStorage
-- Touch-friendly for tablet use in the field
-- Consistent design language with Macro Roll-Up
-- Accessible color coding (not just red/green)
+### Upstream Data Pull (Macro Roll-Up → Inventory)
+- Seeds entered in Macro Seeds tab → available in inventory
+- Inputs entered in Macro Reference tab → available in inventory
+- Suppliers flow downstream automatically
+- No duplicate data entry — Macro is source of truth
 
-### Data Models
-- ForecastItem: productId, name, category, supplier, amount, unit, unitCost, totalCost, fields[]
-- Order: orderId, supplier, items[], status, orderDate, expectedDeliveryDate, notes
-- Delivery: deliveryId, orderId, items[], receivedDate, ticketNumber, notes
-- Return: returnId, deliveryId, items[], status, returnDate, creditAmount, notes
+### Product Demand Table (Receiving Manager View)
+- Real-time forecast of expected product quantities
+- Grouped by supplier, category (seed/fertilizer/chemical)
+- Shows: product name, supplier, expected qty, unit, pack size, estimated arrival
+- Printable format for warehouse/dock planning
+
+### Order & Delivery Pipeline
+- Forecasts page: reactive roll-up from Macro field edit tabs
+- Orders CRUD: purchase orders against forecasted products (Ordered → Confirmed → Shipped → Delivered)
+- Deliveries CRUD: log incoming against orders, track discrepancies
+- Returns CRUD: damaged/wrong/excess linked to deliveries
+- 5 print reports: Agronomist Order Sheet, Field-Level Input Plan, Forecast Summary, Order Status, Delivery Receipt Log
 
 ### Execution Order
-1. Map existing codebase and data flow from Macro field tabs
-2. Eliminate Supplier and Product tabs
-3. Build Forecasts page with reactive data pipeline from Macro
-4. Build Orders tracking with CRUD
-5. Build Deliveries tracking linked to Orders
-6. Build Returns management linked to Deliveries
+1. UI redesign to match Glomalin project style
+2. Build unit/pack size system with extensible list
+3. Wire upstream data pull from Macro Roll-Up (seeds, inputs, suppliers)
+4. Build Product Demand Table for receiving manager
+5. Build Forecasts page with reactive Macro data pipeline
+6. Build Orders → Deliveries → Returns CRUD pipeline
 7. Build print/report system (all 5 report types)
-8. Polish UI — day/night mode, responsive, empty states
-9. Test full flow: Macro field edit → Forecast updates → Order → Delivery → Return → Print
+8. End-to-end test: Macro field edit → Forecast → Demand Table → Order → Delivery → Print
