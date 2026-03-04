@@ -115,12 +115,12 @@ Plans:
   2. When ticket number matching fails, the system automatically searches for fuzzy candidates by date (within 2 days) and weight (within tolerance) and presents them to the user for confirmation before linking
   3. User can mark a disputed ticket with a resolution status (Buyer Error, Our Error, Write-off, Pending), add a resolution note, and record the resolution date
   4. A multi-buyer season summary page shows all buyers for a crop year with total ticket count, total weight, settlement payment total, payment status, and variance in a single view
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 23-01: Configurable per-crop weight tolerance settings and integration with reconciliation engine
-- [ ] 23-02: Fuzzy settlement matching — date + weight candidate search with user confirmation flow
-- [ ] 23-03: Dispute resolution workflow — status, notes, resolution date; and multi-buyer season summary view
+- [ ] 23-01-PLAN.md — Per-crop weight tolerance config (CropConfig schema + CRUD API + settings UI + tolerance-aware reconciliation summary)
+- [ ] 23-02-PLAN.md — Fuzzy settlement matching (date+weight candidate search endpoint + suggestion UI with confirmation flow)
+- [ ] 23-03-PLAN.md — Dispute resolution workflow (resolution status/notes/date fields + enhanced dispute UI) and multi-buyer season summary view
 
 ## Progress
 
