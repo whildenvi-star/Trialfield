@@ -1,0 +1,766 @@
+/* ============================================================
+   FARM REGISTRY — Terminal Farm Ops Theme
+   Matching macro-rollup aesthetic
+   ============================================================ */
+
+:root {
+  --bg: #0a0e09;
+  --bg-raised: #0f140e;
+  --card: #111611;
+  --card-alt: #0d120c;
+  --primary: #4af626;
+  --primary-dim: #2a8a18;
+  --primary-light: #5fff3a;
+  --text: #a8b8a0;
+  --text-light: #5c6e54;
+  --text-bright: #d0e0c8;
+  --border: #1e2e1a;
+  --border-light: #283828;
+  --highlight: #142210;
+  --danger: #ff3b30;
+  --success: #4af626;
+  --blue: #4a9eff;
+  --amber: #ffb800;
+  --orange: #ff6e40;
+  --organic: #4af626;
+  --transition-fast: 0.15s ease;
+  --shadow-hover: 0 0 16px rgba(74, 246, 38, 0.06);
+  --glow: 0 0 6px rgba(74, 246, 38, 0.3);
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+::selection {
+  background: var(--primary);
+  color: var(--bg);
+}
+
+/* Subtle scanline overlay */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0, 0, 0, 0.02) 3px,
+    rgba(0, 0, 0, 0.02) 4px
+  );
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) var(--bg);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary-dim); }
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+header {
+  background: #060906;
+  color: var(--text);
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+header h1 {
+  font-size: 1rem;
+  font-weight: 400;
+  margin-bottom: 0.15rem;
+  color: var(--primary);
+  letter-spacing: 0.05em;
+}
+
+header h1::before {
+  content: '~/farm $ ';
+  color: var(--text-light);
+}
+
+header .subtitle {
+  font-size: 0.75rem;
+  color: var(--text-light);
+}
+
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  color: var(--primary);
+  border-color: var(--primary-dim);
+}
+
+main {
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+}
+
+/* ============================================================
+   STATS BAR
+   ============================================================ */
+.stats-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0.75rem 1rem;
+  min-width: 120px;
+  flex: 1;
+}
+
+.stat-card .label {
+  font-size: 0.68rem;
+  color: var(--text-light);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+}
+
+.stat-card .value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-top: 0.15rem;
+  color: var(--text-bright);
+}
+
+.stat-card .value.organic { color: var(--organic); }
+
+/* ============================================================
+   SPLIT LAYOUT
+   ============================================================ */
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.list-panel {
+  min-width: 0;
+}
+
+.edit-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 8rem);
+  overflow-y: auto;
+}
+
+.edit-empty {
+  padding: 3rem 2rem;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.edit-form {
+  padding: 1.25rem;
+}
+
+.edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--primary-dim);
+}
+
+.edit-header h3 {
+  font-size: 0.95rem;
+  color: var(--primary);
+  font-weight: 400;
+}
+
+.save-toast {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0;
+  font-size: 0.8rem;
+  margin-bottom: 0.75rem;
+  background: transparent;
+  color: var(--success);
+  border: 1px solid var(--primary-dim);
+  font-weight: 400;
+  font-family: var(--font-sans);
+  transition: opacity 0.3s;
+}
+
+.save-toast.hidden { display: none; }
+
+.save-toast-error {
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+/* ============================================================
+   TOOLBAR
+   ============================================================ */
+.toolbar {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toolbar input[type="text"] {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  background: var(--card);
+  color: var(--text);
+  flex: 1;
+  min-width: 140px;
+}
+
+.toolbar input[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--glow);
+}
+
+.toolbar select {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  background: var(--card);
+  color: var(--text);
+}
+
+.toolbar select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--glow);
+}
+
+/* ============================================================
+   DATA TABLE
+   ============================================================ */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+  border-radius: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.data-table th {
+  background: var(--bg-raised);
+  padding: 0.5rem 0.6rem;
+  text-align: left;
+  font-size: 0.72rem;
+  color: var(--text-light);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+
+.data-table th:hover { color: var(--primary); }
+.data-table th.sort-asc::after { content: ' \25B2'; font-size: 0.55rem; color: var(--primary); }
+.data-table th.sort-desc::after { content: ' \25BC'; font-size: 0.55rem; color: var(--primary); }
+
+.data-table td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.data-table tr { cursor: pointer; }
+.data-table tr:hover { background: var(--bg-raised); }
+.data-table tr.selected { background: var(--highlight); }
+.data-table tr.totals-row { font-weight: 700; background: var(--highlight); cursor: default; }
+
+.number { text-align: right; font-variant-numeric: tabular-nums; }
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0;
+  font-size: 0.68rem;
+  font-weight: 400;
+  font-family: var(--font-sans);
+}
+
+.badge-organic { background: transparent; color: var(--organic); border: 1px solid var(--primary-dim); }
+.badge-rented { background: transparent; color: var(--blue); border: 1px solid var(--blue); }
+.badge-owned { background: transparent; color: var(--amber); border: 1px solid var(--amber); }
+.badge-mixed { background: transparent; color: var(--purple, #b388ff); border: 1px solid var(--purple, #b388ff); }
+
+/* ============================================================
+   EDIT SECTIONS
+   ============================================================ */
+.edit-section {
+  margin-bottom: 1.25rem;
+}
+
+.edit-section h4 {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text-bright);
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-hint {
+  font-weight: 400;
+  color: var(--text-light);
+  font-size: 0.72rem;
+  margin-left: 0.5rem;
+}
+
+.computed-display {
+  padding: 0.5rem 0.75rem;
+  background: var(--bg-raised);
+  border-radius: 0;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.field-group label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-light);
+  margin-bottom: 0.2rem;
+  text-transform: lowercase;
+}
+
+.field-group input, .field-group select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  background: var(--card);
+  color: var(--text);
+}
+
+.field-group input:focus, .field-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--glow);
+}
+
+textarea {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  background: var(--card);
+  color: var(--text);
+  resize: vertical;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--glow);
+}
+
+/* ============================================================
+   ACRES ROW (prominent)
+   ============================================================ */
+.acres-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.acres-primary .acres-input {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.5rem;
+  border: 1px solid var(--primary);
+  background: var(--highlight);
+  color: var(--primary);
+}
+
+.acres-hint {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--primary);
+  margin-top: 0.2rem;
+  font-weight: 400;
+}
+
+.shp-acres-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--highlight);
+  border: 1px solid var(--primary-dim);
+  border-radius: 0;
+  font-size: 0.72rem;
+  color: var(--primary);
+}
+
+.shp-acres-hint .shp-use-btn {
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+}
+
+/* ============================================================
+   ALIASES
+   ============================================================ */
+.alias-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+  min-height: 1.5rem;
+}
+
+.alias-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.5rem;
+  border-radius: 0;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+.alias-tag .remove-alias {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-light);
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+}
+
+.alias-tag .remove-alias:hover { color: var(--danger); }
+
+.alias-add {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.alias-add input {
+  flex: 1;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  background: var(--card);
+  color: var(--text);
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  background: transparent;
+  color: var(--text);
+  text-transform: lowercase;
+  transition: border-color var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.btn:hover { border-color: var(--primary-dim); color: var(--primary); }
+
+.btn-primary {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+.btn-primary:hover { background: var(--primary); color: var(--bg); }
+
+.btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+
+.btn-danger-outline { background: none; color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger-outline:hover { background: var(--danger); color: var(--bg); }
+
+.edit-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+/* ============================================================
+   ACRE BREAKDOWN TABLE
+   ============================================================ */
+.acre-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.acre-breakdown-table th {
+  font-size: 0.68rem;
+  color: var(--text-light);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  text-align: center;
+  padding: 0.3rem 0.4rem;
+  font-weight: 400;
+}
+
+.acre-breakdown-table th:first-child {
+  text-align: left;
+  width: 100px;
+}
+
+.acre-breakdown-table td {
+  padding: 0.25rem 0.3rem;
+}
+
+.acre-breakdown-table .row-label {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-weight: 400;
+  padding-right: 0.5rem;
+}
+
+.acre-breakdown-table input[type="number"] {
+  width: 100%;
+  padding: 0.3rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  background: var(--card);
+  color: var(--text);
+  text-align: right;
+}
+
+.acre-breakdown-table input[type="number"]:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: var(--glow);
+}
+
+/* ============================================================
+   ACRE BALANCE SUMMARY
+   ============================================================ */
+.acre-sum {
+  font-size: 0.72rem;
+  margin-top: 0.4rem;
+  font-weight: 400;
+  min-height: 1.1em;
+}
+
+.acre-sum-ok { color: var(--success); }
+.acre-sum-err { color: var(--danger); }
+
+/* ============================================================
+   SHAPEFILE SECTION
+   ============================================================ */
+.shp-status {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  margin-bottom: 0.4rem;
+}
+
+.shp-status.has-file {
+  color: var(--primary);
+  font-weight: 400;
+}
+
+.shp-actions {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+/* ============================================================
+   FSA REPORTING SECTION
+   ============================================================ */
+.fsa-loading, .fsa-empty {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+.fsa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.fsa-table th {
+  font-size: 0.65rem;
+  color: var(--text-light);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  padding: 0.3rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+  font-weight: 400;
+}
+
+.fsa-table th.number { text-align: right; }
+
+.fsa-table td {
+  padding: 0.25rem 0.4rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.fsa-table td.number {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.fsa-badge {
+  display: inline-block;
+  padding: 0.05rem 0.35rem;
+  border-radius: 0;
+  font-size: 0.6rem;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  text-transform: lowercase;
+  border: 1px solid;
+}
+
+.fsa-org { background: transparent; color: var(--organic); border-color: var(--primary-dim); }
+.fsa-conv { background: transparent; color: var(--text-light); border-color: var(--border); }
+.fsa-irr { background: transparent; color: var(--blue); border-color: var(--blue); }
+.fsa-dry { background: transparent; color: var(--text-light); border-color: var(--border); }
+
+.fsa-comparison {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  font-size: 0.75rem;
+}
+
+.fsa-sep {
+  color: var(--border-light);
+}
+
+.fsa-delta-ok {
+  color: var(--success);
+}
+
+.fsa-noncrop td {
+  opacity: 0.45;
+}
+
+.fsa-other-label {
+  color: var(--text-light);
+}
+
+.fsa-delta-warn {
+  color: var(--danger);
+}
+
+/* ============================================================
+   LIGHT THEME — day mode, same terminal soul
+   ============================================================ */
+body.light {
+  --bg: #ffffff;
+  --bg-raised: #f5f5f5;
+  --card: #ffffff;
+  --card-alt: #fafafa;
+  --primary: #1a6b10;
+  --primary-dim: #3a8a30;
+  --primary-light: #0e5508;
+  --text: #1a1a1a;
+  --text-light: #666666;
+  --text-bright: #000000;
+  --border: #e0e0e0;
+  --border-light: #eeeeee;
+  --highlight: #f0f7ee;
+  --danger: #c62828;
+  --success: #2e7d32;
+  --blue: #1565c0;
+  --amber: #7a5000;
+  --orange: #e65100;
+  --organic: #16a34a;
+  --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --glow: none;
+}
+
+body.light::after { display: none; }
+
+body.light ::selection {
+  background: #1565c0;
+  color: #fff;
+}
+
+body.light { scrollbar-color: #ccc #fff; }
+body.light ::-webkit-scrollbar-track { background: #fff; }
+body.light ::-webkit-scrollbar-thumb { background: #ccc; }
+body.light ::-webkit-scrollbar-thumb:hover { background: #999; }
+
+body.light header { background: #fafafa; border-bottom-color: #e0e0e0; }
+body.light .stat-card .value { color: #333; }
