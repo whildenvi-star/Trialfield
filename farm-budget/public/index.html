@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>macro-rollup</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <meta name="theme-color" content="#0a0e09">
+  <script>
+    // Apply saved theme before first paint to prevent flash
+    (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+  </script>
+</head>
+<body>
+  <script>
+    // Transfer class from html to body immediately
+    if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+  </script>
+  <header>
+    <div class="header-top">
+      <h1>macro-rollup</h1>
+      <button id="theme-toggle" class="theme-toggle">&#9788;</button>
+    </div>
+    <nav id="main-nav">
+      <div class="nav-primary">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+        <div class="nav-dropdown">
+          <button class="tab-btn nav-dropdown-trigger" id="enterprise-trigger">
+            Enterprises <span class="caret">&#9662;</span>
+          </button>
+          <div class="nav-dropdown-menu" id="enterprise-menu"></div>
+        </div>
+        <button class="tab-btn" data-tab="forecasts">Forecasts</button>
+        <button class="tab-btn" data-tab="orders">Orders</button>
+        <button class="tab-btn" data-tab="deliveries">Deliveries</button>
+        <button class="tab-btn" data-tab="seeds">Seeds</button>
+        <button class="tab-btn" data-tab="reference">Reference</button>
+        <button class="tab-btn" data-tab="programs">Programs</button>
+        <button class="tab-btn" data-tab="sales">Sales</button>
+        <button class="tab-btn" data-tab="map">Map</button>
+      </div>
+      <div class="nav-enterprise-bar" id="nav-enterprise-bar"></div>
+    </nav>
+  </header>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section id="tab-dashboard" class="tab-content active">
+      <div class="hero-banner">
+        <div class="hero-content">
+          <div class="term-line"><span class="term-prompt">user@farm:~/budget$</span> <span class="term-cmd">macro-rollup --season <span id="dash-year"></span></span></div>
+          <div class="term-line term-output">enterprise dashboard loaded &mdash; all systems nominal <span class="term-ok">[OK]</span></div>
+          <div class="term-line term-output dim">6 enterprises online &middot; ready for input<span class="term-cursor"></span></div>
+        </div>
+      </div>
+      <div class="dashboard-controls">
+        <div class="view-toggle" id="yield-mode-toggle">
+          <button class="toggle-btn active" data-yield-mode="projected">Projected</button>
+          <button class="toggle-btn" data-yield-mode="actual">Actual</button>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center">
+          <button id="btn-sync-all-registry" class="btn-sm" title="Sync acres & rent for all fields from Farm Registry">Sync All from Registry</button>
+          <button id="dash-download-pdf" class="btn-sm">Download PDF</button>
+          <details class="settings-details">
+            <summary>Settings</summary>
+            <div class="settings-bar">
+              <label><input type="checkbox" id="set-fixed-mach"> Fixed Machinery Rate: $<input type="number" id="set-mach-rate" class="inline-input" value="100" step="1" min="0">/ac</label>
+              <label>Fuel: $<input type="number" id="set-fuel-price" class="inline-input" value="5.00" step="0.01" min="0">/gal</label>
+              <label>Wage: $<input type="number" id="set-wage-rate" class="inline-input" value="25" step="0.50" min="0">/hr</label>
+              <label>Interest Carry: <input type="number" id="set-carry-months" class="inline-input" value="6" step="1" min="1" max="12"> months</label>
+            </div>
+          </details>
+          <details class="settings-details">
+            <summary>FieldOps Integration</summary>
+            <div class="settings-bar" style="flex-direction:column;align-items:flex-start;gap:0.5rem">
+              <div id="fieldops-status" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                <span class="fieldops-mode">Loading...</span>
+              </div>
+              <button id="fieldops-sync-btn" class="btn-sm btn-primary" style="margin-top:0.25rem">Sync Now</button>
+              <details style="width:100%;margin-top:0.25rem">
+                <summary style="cursor:pointer;font-size:0.8rem;color:var(--text-light)">Sync History</summary>
+                <div class="table-wrap" style="max-height:200px;overflow-y:auto;margin-top:0.25rem">
+                  <table class="compact-table">
+                    <thead><tr>
+                      <th>Time</th><th>Status</th><th>Matched</th><th>Created</th><th>Apps</th><th>Errors</th>
+                    </tr></thead>
+                    <tbody id="fieldops-history-list"></tbody>
+                  </table>
+                </div>
+              </details>
+            </div>
+          </details>
+        </div>
+      </div>
+
+      <div class="dashboard-panels">
+        <div class="panel">
+          <h3>Conventional</h3>
+          <div class="table-info"><span id="dash-conv-info"></span></div>
+          <div class="dash-crop-panel">
+            <div class="dash-crop-table-wrap">
+              <table id="dash-conv-table">
+                <thead>
+                  <tr>
+                    <th>Crop</th>
+                    <th class="number" title="Total planted acres">Acres</th>
+                    <th class="number" id="dash-conv-yield-header" title="Weighted average yield per acre">Proj Avg Yield</th>
+                    <th class="number" title="Average profit per acre after all expenses">Avg Profit/Ac</th>
+                    <th class="number" title="Cost of Production: breakeven price per unit">COP</th>
+                  </tr>
+                </thead>
+                <tbody id="dash-conv-tbody"></tbody>
+              </table>
+            </div>
+            <div class="dash-crop-chart"><canvas id="chart-conv-acres" width="160" height="160"></canvas></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Organic</h3>
+          <div class="table-info"><span id="dash-org-info"></span></div>
+          <div class="dash-crop-panel">
+            <div class="dash-crop-table-wrap">
+              <table id="dash-org-table">
+                <thead>
+                  <tr>
+                    <th>Crop</th>
+                    <th class="number" title="Total planted acres">Acres</th>
+                    <th class="number" id="dash-org-yield-header" title="Weighted average yield per acre">Proj Avg Yield</th>
+                    <th class="number" title="Average profit per acre after all expenses">Avg Profit/Ac</th>
+                    <th class="number" title="Cost of Production: breakeven price per unit">COP</th>
+                  </tr>
+                </thead>
+                <tbody id="dash-org-tbody"></tbody>
+              </table>
+            </div>
+            <div class="dash-crop-chart"><canvas id="chart-org-acres" width="160" height="160"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <h3>Cost Category Rollup</h3>
+      <div class="table-wrap">
+        <table id="dash-rollup-table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th id="rollup-h0"></th>
+              <th id="rollup-h1"></th>
+              <th id="rollup-h2"></th>
+              <th id="rollup-h3"></th>
+              <th id="rollup-h4"></th>
+              <th id="rollup-h5"></th>
+              <th>TOTAL</th>
+            </tr>
+          </thead>
+          <tbody id="dash-rollup-tbody"></tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top:1.5rem">Production by Crop Type</h3>
+      <div id="dash-production-wrap" class="table-wrap">
+        <table class="prod-type-table">
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th>Acres</th>
+              <th>Total Production</th>
+              <th>Avg Yield</th>
+            </tr>
+          </thead>
+          <tbody id="dash-production-tbody"></tbody>
+        </table>
+      </div>
+
+      <details style="margin-top:1.5rem">
+        <summary style="cursor:pointer;font-weight:600;color:var(--text-light)">Acre Reconciliation <span id="dash-recon-badge" style="font-size:0.75rem;font-weight:normal"></span></summary>
+        <div id="dash-recon-wrap" class="table-wrap" style="margin-top:0.5rem">
+          <table class="budget-table" style="font-size:0.8rem">
+            <thead>
+              <tr>
+                <th>Registry Field</th>
+                <th class="number">Registry Acres</th>
+                <th class="number">Budget Acres</th>
+                <th class="number">Delta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dash-recon-tbody"></tbody>
+          </table>
+          <div id="dash-recon-summary" style="font-size:0.75rem;color:var(--text-light);margin-top:0.5rem"></div>
+        </div>
+      </details>
+
+      <div class="dashboard-panels" style="margin-top:1.5rem">
+        <div class="panel">
+          <h3>Expenses vs Income by Enterprise</h3>
+          <div style="position:relative;height:280px"><canvas id="chart-ent-bars"></canvas></div>
+        </div>
+        <div class="panel">
+          <h3>Farm-Wide Expense Breakdown</h3>
+          <div style="display:flex;justify-content:center"><canvas id="chart-exp-doughnut" width="240" height="240"></canvas></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENTERPRISE VIEW (reused for all 6) -->
+    <section id="tab-enterprise" class="tab-content">
+      <div class="enterprise-header">
+        <h2 id="ent-title">Enterprise</h2>
+        <div class="enterprise-controls">
+          <div class="view-toggle">
+            <button class="toggle-btn active" data-view="cards">Cards</button>
+            <button class="toggle-btn" data-view="grid">Grid</button>
+            <button class="toggle-btn" data-view="modules">Modules</button>
+          </div>
+          <select id="ent-sort" class="btn-sm" style="font-size:0.82rem;padding:0.35rem 0.5rem">
+            <option value="profit">Sort: Profit/AC</option>
+            <option value="crop">Sort: Crop</option>
+            <option value="name">Sort: Field Name</option>
+          </select>
+          <button id="ent-download-pdf" class="btn-sm">Download PDF</button>
+          <button id="ent-add-field" class="btn-primary btn-sm">+ Add Field</button>
+        </div>
+      </div>
+      <!-- Enterprise summary bar -->
+      <div id="ent-summary-bar" class="ent-summary-bar"></div>
+      <!-- Card view (default) -->
+      <div id="ent-cards" class="ent-cards"></div>
+      <!-- Grid view (hidden by default) -->
+      <div id="ent-grid-view" class="hidden">
+        <div class="table-wrap enterprise-grid-wrap">
+          <table id="ent-table" class="enterprise-table">
+            <thead id="ent-thead"></thead>
+            <tbody id="ent-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Module view (hidden by default) -->
+      <div id="ent-module-view" class="hidden"></div>
+    </section>
+
+    <!-- FORECASTS -->
+    <section id="tab-forecasts" class="tab-content">
+      <h2>Forecast Hub</h2>
+      <div class="forecast-controls" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+        <button id="fc-create-order" class="btn-primary btn-sm" disabled>Create Order from Selected</button>
+        <button id="fc-print-menu" class="btn-sm">Print Reports &#9662;</button>
+        <span id="fc-summary" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <div id="fc-categories"></div>
+    </section>
+
+    <!-- ORDERS -->
+    <section id="tab-orders" class="tab-content">
+      <h2>Orders</h2>
+      <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem">
+        <select id="ord-filter-status">
+          <option value="">All Statuses</option>
+          <option value="ordered">Ordered</option>
+          <option value="partial">Partial</option>
+          <option value="complete">Complete</option>
+        </select>
+        <span id="ord-count" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <div id="ord-list"></div>
+      <div id="ord-form" class="hidden"></div>
+    </section>
+
+    <!-- DELIVERIES -->
+    <section id="tab-deliveries" class="tab-content">
+      <h2>Deliveries</h2>
+      <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem">
+        <input type="text" id="del-search" placeholder="Search by ticket or product...">
+        <span id="del-count" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <div id="del-list"></div>
+      <div id="del-form" class="hidden"></div>
+    </section>
+
+    <!-- REFERENCE DATA (former Inputs Manager) -->
+    <section id="tab-reference" class="tab-content">
+      <h2>Reference Data</h2>
+
+      <!-- Products Section -->
+      <h3>Products</h3>
+      <p class="edit-hint">Double-click any cell to edit in place.</p>
+      <div class="filters">
+        <input type="text" id="inp-search" placeholder="Search products...">
+        <button id="inp-add" class="btn-primary btn-sm">+ Add Product</button>
+      </div>
+      <div class="table-info"><span id="inp-count"></span></div>
+      <div class="table-wrap">
+        <table id="inp-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Product Name</th>
+              <th data-sort="supplierId" title="Product supplier">Supplier</th>
+              <th data-sort="unitBilledPrice" title="Price per billed unit (e.g. per ton)">Unit Price</th>
+              <th data-sort="conversionRate" title="Units per billed unit (e.g. 2000 lbs/ton)">Conv Rate</th>
+              <th data-sort="increasePercent" title="Price increase percentage applied to base price">Inc %</th>
+              <th title="Final cost per application unit after conversion and increase">App Price</th>
+              <th data-sort="unit">Unit</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="inp-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Implements Section -->
+      <h3>Implements / Machinery</h3>
+      <p class="edit-hint">Double-click any cell to edit in place.</p>
+      <div class="filters">
+        <input type="text" id="impl-search" placeholder="Search implements...">
+        <button id="impl-add" class="btn-primary btn-sm">+ Add Implement</button>
+      </div>
+      <div class="table-info"><span id="impl-count"></span></div>
+      <div class="table-wrap">
+        <table id="impl-table">
+          <thead>
+            <tr>
+              <th data-sort="name">Implement Name</th>
+              <th data-sort="costPerAcre" title="Owned cost per acre per pass (excl. fuel)">Owned $/AC</th>
+              <th data-sort="fuelGalPerAcre" title="Gallons of fuel consumed per acre per pass">Fuel Gal/AC</th>
+              <th title="Fuel cost per acre at current fuel price">Fuel $/AC</th>
+              <th title="Total owned cost per acre (cost + fuel)">Owned Total</th>
+              <th data-sort="laborHoursPerAcre" title="Labor hours per acre per pass">Labor Hrs/AC</th>
+              <th title="Custom hire rate per acre (double-click to set)">Hire $/AC</th>
+              <th title="Click to toggle between Owned and Custom Hire">Mode</th>
+              <th title="Effective cost based on current mode">Effective</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="impl-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Machinery Cost Mode -->
+      <div id="mach-mode-panel" class="mach-mode-panel">
+        <div class="mach-mode-header">
+          <h3 style="margin:0">Machinery Costing Mode</h3>
+          <div class="mach-mode-toggle">
+            <button class="toggle-btn" id="mach-mode-flat">Flat Rate</button>
+            <button class="toggle-btn" id="mach-mode-itemized">Itemized</button>
+          </div>
+        </div>
+        <div id="mach-mode-info" class="mach-mode-info"></div>
+      </div>
+
+      <!-- Implement Usage Across Enterprises (with cost) -->
+      <h3>Implement Usage &amp; Cost by Enterprise</h3>
+      <p class="edit-hint">Total acres and dollars each implement covers across enterprises. Toggle fuel costs with the button below.</p>
+      <div class="filters">
+        <button id="impl-usage-fuel-toggle" class="btn-sm">Show Fuel Costs</button>
+      </div>
+      <div class="table-info"><span id="impl-usage-info"></span></div>
+      <div class="table-wrap">
+        <table id="impl-usage-table">
+          <thead id="impl-usage-thead"></thead>
+          <tbody id="impl-usage-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Suppliers -->
+      <h3>Suppliers</h3>
+      <p class="edit-hint">Manage product, seed, and landlord suppliers. Double-click any cell to edit.</p>
+      <div class="filters">
+        <input type="text" id="sup-search" placeholder="Search suppliers...">
+        <select id="sup-filter-type">
+          <option value="">All Types</option>
+          <option value="product">Product</option>
+          <option value="seed">Seed</option>
+          <option value="landlord">Landlord</option>
+        </select>
+        <button id="sup-add" class="btn-primary btn-sm">+ Add Supplier</button>
+      </div>
+      <div class="table-info"><span id="sup-count"></span></div>
+      <div class="table-wrap">
+        <table id="sup-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Contact</th>
+              <th>Notes</th>
+              <th title="Number of items linked to this supplier">Linked</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sup-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Labor & Overhead Rates -->
+      <h3>Labor &amp; Overhead Rates</h3>
+      <p class="edit-hint">Double-click any cell to edit. Rates apply to all fields with the matching system code.</p>
+      <div class="table-info"><span id="lo-count"></span></div>
+      <div class="table-wrap">
+        <table id="lo-table">
+          <thead>
+            <tr>
+              <th>System Code</th>
+              <th title="Enterprises using this system code">Used By</th>
+              <th title="Labor cost per acre">Labor/AC</th>
+              <th title="Total overhead cost per acre (sum of subcategories)">Overhead/AC</th>
+              <th title="Crop insurance portion of overhead">Crop Ins</th>
+              <th title="Property tax portion of overhead">Property Tax</th>
+              <th title="Management fees portion of overhead">Management</th>
+              <th title="Utilities portion of overhead">Utilities</th>
+              <th title="Miscellaneous overhead costs">Misc</th>
+              <th title="Combined labor + overhead per acre">Total/AC</th>
+            </tr>
+          </thead>
+          <tbody id="lo-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SEEDS MANAGER -->
+    <section id="tab-seeds" class="tab-content">
+      <h2>Seeds Manager</h2>
+      <p class="edit-hint">Double-click any cell to edit in place.</p>
+      <div class="filters">
+        <input type="text" id="seed-search" placeholder="Search seeds...">
+        <button id="seed-add" class="btn-primary btn-sm">+ Add Seed</button>
+      </div>
+      <div class="table-info"><span id="seed-count"></span></div>
+      <div class="table-wrap">
+        <table id="seed-table">
+          <thead>
+            <tr>
+              <th data-sort="crop">Crop</th>
+              <th data-sort="supplierId" title="Seed supplier">Supplier</th>
+              <th data-sort="brand">Brand</th>
+              <th data-sort="variety">Variety</th>
+              <th data-sort="pricePerUnit" title="Price per unit (bag)">Price/Unit</th>
+              <th data-sort="seedsPerUnit" title="Number of seeds per unit (bag)">Seeds/Unit</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="seed-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PROGRAMS (Agronomic Templates) -->
+    <section id="tab-programs" class="tab-content">
+      <h2>Agronomic Programs</h2>
+      <p class="edit-hint">Programs define reusable agronomic packages (inputs, machinery, seed, yield targets). Apply a program to any field to populate its budget. Fields are NOT live-linked &mdash; you can tweak individual fields after applying.</p>
+      <div class="filters">
+        <button id="prog-add" class="btn-primary btn-sm">+ New Program</button>
+        <span id="prog-count" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <div id="prog-cards" class="prog-cards"></div>
+
+      <!-- Bulk Deploy Panel (hidden until triggered) -->
+      <div id="prog-bulk-panel" class="hidden" style="margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
+        <h3 id="prog-bulk-title" style="margin-bottom:0.5rem">Deploy Program to Fields</h3>
+        <p class="edit-hint">Select fields to receive this program's agronomic data. Existing agronomic data will be overwritten (name, acres, rent kept).</p>
+        <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.75rem">
+          <label style="font-size:0.85rem">Filter by Enterprise:</label>
+          <select id="prog-bulk-enterprise" style="font-size:0.85rem"></select>
+          <button id="prog-bulk-select-all" class="btn-sm" style="font-size:0.75rem">Select All</button>
+          <button id="prog-bulk-select-none" class="btn-sm" style="font-size:0.75rem">Select None</button>
+        </div>
+        <div id="prog-bulk-field-list" class="prog-bulk-field-list"></div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+          <button id="prog-bulk-apply" class="btn-primary btn-sm">Apply to Selected</button>
+          <button id="prog-bulk-linked" class="btn-sm" title="Push to all fields already linked to this program">Push to Linked</button>
+          <button id="prog-bulk-cancel" class="btn-sm">Cancel</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SALES -->
+    <section id="tab-sales" class="tab-content">
+      <h2>Sales / Marketing</h2>
+
+      <!-- Crop Types Manager -->
+      <h3>Crop Types</h3>
+      <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis.</p>
+      <div id="crop-types-container"></div>
+      <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
+
+      <h3>Sales Summary</h3>
+      <div class="table-info"><span id="sales-summary-info"></span></div>
+      <div class="table-wrap">
+        <table id="sales-summary-table">
+          <thead>
+            <tr>
+              <th>Crop</th>
+              <th title="Total projected production">Proj Total</th>
+              <th title="Amount sold via contracts">Amt Sold</th>
+              <th title="Percentage of projected total sold">% Sold</th>
+              <th title="Weighted average sale price">Avg Price</th>
+              <th title="Cost of Production: breakeven price per unit">COP</th>
+              <th title="Remaining unsold production">Remaining</th>
+              <th>Unit</th>
+            </tr>
+          </thead>
+          <tbody id="sales-summary-tbody"></tbody>
+        </table>
+      </div>
+
+      <h3>Contract Log</h3>
+      <div class="filters">
+        <input type="text" id="sale-search" placeholder="Search contracts...">
+        <select id="sale-filter-crop">
+          <option value="">All Crops</option>
+        </select>
+        <select id="sale-filter-status">
+          <option value="">All Status</option>
+          <option value="open">Open</option>
+          <option value="done">Done</option>
+        </select>
+        <button id="sale-add" class="btn-primary btn-sm">+ Add Contract</button>
+      </div>
+      <div class="table-info"><span id="sales-count"></span></div>
+      <div class="table-wrap">
+        <table id="sales-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Crop</th>
+              <th>Buyer</th>
+              <th title="Basis adjustment from CBOT price">Basis</th>
+              <th>Price</th>
+              <th title="Chicago Board of Trade reference price">CBOT</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Hedging Strategy Assessment -->
+      <div id="hedging-panel" class="hedging-panel">
+        <h3>Hedging Strategy Assessment</h3>
+        <div class="hedging-tabs">
+          <button class="hedging-tab-btn active" data-htab="coverage">Contract Coverage</button>
+          <button class="hedging-tab-btn" data-htab="whatif">What-If Scenarios</button>
+          <button class="hedging-tab-btn" data-htab="basis">Basis Comparison</button>
+        </div>
+
+        <div id="htab-coverage" class="htab-content active">
+          <div id="coverage-grid" class="coverage-grid"></div>
+          <div class="table-wrap">
+            <table id="coverage-detail-table">
+              <thead>
+                <tr>
+                  <th>Crop</th><th>Proj Total</th><th>Amt Sold</th>
+                  <th>% Sold</th><th>Avg Price</th><th>COP</th>
+                  <th title="Avg sale price minus COP">Margin</th>
+                  <th>Remaining</th>
+                  <th title="Price needed on remaining bushels to break even">Breakeven</th>
+                </tr>
+              </thead>
+              <tbody id="coverage-detail-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="htab-whatif" class="htab-content">
+          <div class="whatif-controls">
+            <div class="form-group">
+              <label>Crop</label>
+              <select id="whatif-crop"></select>
+            </div>
+            <div class="form-group">
+              <label>CBOT Price: $<span id="whatif-cbot-display">4.50</span></label>
+              <input type="range" id="whatif-cbot-slider" min="2.00" max="12.00" step="0.10" value="4.50">
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table id="whatif-table">
+              <thead>
+                <tr><th>CBOT</th><th>Cash Price</th><th>Unsold Revenue</th>
+                    <th>Total Revenue</th><th>Total Profit</th><th>Profit/AC</th></tr>
+              </thead>
+              <tbody id="whatif-tbody"></tbody>
+            </table>
+          </div>
+          <h4 style="margin-top:1rem">Bear / Base / Bull Comparison</h4>
+          <div class="scenario-picker">
+            <label>Bear: $<input type="number" id="whatif-bear" step="0.05" value="3.50" class="inline-input"></label>
+            <label>Base: $<input type="number" id="whatif-base" step="0.05" value="4.50" class="inline-input"></label>
+            <label>Bull: $<input type="number" id="whatif-bull" step="0.05" value="5.50" class="inline-input"></label>
+          </div>
+          <div class="table-wrap">
+            <table id="whatif-compare-table">
+              <thead>
+                <tr><th>Scenario</th><th>CBOT</th><th>Total Profit</th>
+                    <th>Profit/AC</th><th>vs Base</th></tr>
+              </thead>
+              <tbody id="whatif-compare-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="htab-basis" class="htab-content">
+          <div class="form-group" style="max-width:300px;margin-bottom:1rem">
+            <label>Crop</label>
+            <select id="basis-crop"></select>
+          </div>
+          <div class="table-wrap">
+            <table id="basis-table">
+              <thead>
+                <tr><th>Buyer</th><th>Basis</th><th>Net Price</th>
+                    <th>Load Size</th><th>RT Hours</th><th>Trucking/Bu</th>
+                    <th>Drying Rate</th><th>Shrink %</th>
+                    <th title="Net price minus trucking and handling costs">Net-of-Costs</th></tr>
+              </thead>
+              <tbody id="basis-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Buyer Discount Schedules -->
+      <h3>Buyer Discount Schedules</h3>
+      <p class="edit-hint">Set moisture discount tiers per buyer. These are used when a field has Harvest Moisture % and a Buyer assigned.</p>
+      <div id="buyer-schedule-container"></div>
+    </section>
+
+    <!-- FARM MAP -->
+    <section id="tab-map" class="tab-content">
+      <div class="map-header">
+        <h2>Farm Map</h2>
+        <div class="map-controls">
+          <label class="btn-sm map-upload-btn">
+            Upload Shapefile (.zip)
+            <input type="file" id="map-shp-upload" accept=".zip" style="display:none">
+          </label>
+          <select id="map-color-by">
+            <option value="enterprise">Color by Enterprise</option>
+            <option value="profit">Color by Profit</option>
+            <option value="crop">Color by Crop</option>
+            <option value="source">Color by Source</option>
+          </select>
+        </div>
+      </div>
+      <div id="farm-map" style="height:600px;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)"></div>
+      <div id="map-legend" class="map-legend"></div>
+      <div id="map-link-panel" class="map-link-panel hidden">
+        <h4>Link Shapefile Feature to Field</h4>
+        <p id="map-link-feature-name"></p>
+        <select id="map-link-field-select"></select>
+        <div style="margin-top:0.5rem;display:flex;gap:0.5rem">
+          <button id="map-link-save" class="btn-primary btn-sm">Link</button>
+          <button id="map-link-cancel" class="btn-sm">Cancel</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FIELD EDITOR PANEL -->
+  <div id="field-editor-overlay" class="overlay">
+    <div id="field-editor" class="editor-panel">
+      <div class="editor-header">
+        <h2 id="editor-title">Edit Field</h2>
+        <button id="editor-close" class="btn-close">&times;</button>
+      </div>
+      <div class="editor-body">
+        <!-- Split Group Banner (shown for fields in a split group) -->
+        <div id="ed-split-banner" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:#1a2a1a;border:1px solid #2d4a2d;border-radius:4px;font-size:0.8rem;">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">
+            <span style="color:var(--primary);font-weight:600">Split Field</span>
+            <span id="ed-split-registry-name" style="color:var(--text-light)"></span>
+          </div>
+          <div id="ed-split-allocation" style="color:#888;font-size:0.75rem"></div>
+        </div>
+
+        <!-- Program Template Application -->
+        <div class="prog-apply-bar" style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:flex-end;background:var(--highlight);border:1px solid var(--border);padding:0.75rem">
+          <div class="form-group" style="flex:1;margin:0">
+            <label style="font-size:0.8rem;color:var(--text-light)">Apply Program Template</label>
+            <select id="ed-apply-program" style="font-size:0.85rem">
+              <option value="">-- Select a program --</option>
+            </select>
+          </div>
+          <button id="ed-apply-program-btn" class="btn-sm btn-primary" style="padding:0.4rem 0.75rem;white-space:nowrap">Apply</button>
+          <button id="ed-save-as-program" class="btn-sm" style="padding:0.4rem 0.75rem;white-space:nowrap" title="Save this field's agronomic data as a new program template">Save as Program</button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group" style="position:relative;">
+            <label>Field Name</label>
+            <input type="text" id="ed-name" autocomplete="off">
+          </div>
+          <!-- Enterprise auto-assigned from crop + system code -->
+          <div class="form-group">
+            <label>System Code</label>
+            <select id="ed-systemCode">
+              <option value="CON">CON</option>
+              <option value="CON IRR">CON IRR</option>
+              <option value="ORG">ORG</option>
+              <option value="ORG IRR">ORG IRR</option>
+              <option value="CANNING CON">CANNING CON</option>
+              <option value="CANNING ORG">CANNING ORG</option>
+              <option value="CANNING CON IRR">CANNING CON IRR</option>
+              <option value="CANNING ORG IRR">CANNING ORG IRR</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Crop</label>
+            <select id="ed-crop">
+              <option value="">— select crop —</option>
+            </select>
+            <div id="ed-crop-reassign-hint" style="font-size:0.7rem;margin-top:0.15rem;display:none;"></div>
+          </div>
+          <div class="form-group">
+            <label>Crop Type</label>
+            <select id="ed-cropType">
+              <option value="SINGLE CROP">Single Crop</option>
+              <option value="DBL CROP">Double Crop</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Field Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(rent basis)</span> <button type="button" id="ed-sync-acres" class="btn-link" style="font-size:0.7rem;margin-left:0.5rem;color:var(--primary);cursor:pointer;border:none;background:none;text-decoration:underline;" title="Pull acres & rent from Farm Registry">Sync from Registry</button></label>
+            <input type="number" id="ed-acres" step="0.01" min="0">
+            <div id="ed-acres-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
+          </div>
+          <div class="form-group">
+            <label>Crop Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(input/seed/ops basis — leave 0 for full field)</span></label>
+            <input type="number" id="ed-plantedAcres" step="0.01" min="0">
+            <div id="ed-plantedAcres-hint" style="font-size:0.7rem;color:#888;margin-top:0.15rem;display:none;"></div>
+          </div>
+          <div class="form-group">
+            <label>Rent $/AC <span style="font-size:0.65rem;color:#888;font-weight:normal;">(from Farm Registry)</span></label>
+            <input type="number" id="ed-rentPerAcre" step="0.01" min="0" readonly style="background:var(--bg-raised);cursor:not-allowed;opacity:0.7;">
+            <div id="ed-rent-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
+          </div>
+        </div>
+
+        <!-- Collapsible preview -->
+        <div id="ed-preview" class="preview-panel">
+          <div class="preview-header" id="ed-preview-header">
+            <h3>Computed Budget</h3>
+            <span id="ed-preview-summary" class="preview-summary"></span>
+            <button type="button" id="ed-preview-toggle" class="btn-sm preview-toggle-btn">Collapse</button>
+          </div>
+          <div id="ed-preview-body" class="preview-body">
+            <div id="ed-preview-grid"></div>
+          </div>
+        </div>
+
+        <details class="editor-section">
+          <summary>Input Products</summary>
+          <div class="editor-section-body">
+            <table id="ed-inputs-table" class="compact-table">
+              <thead><tr><th>Product</th><th>Qty</th><th>Unit</th><th>Season</th><th>$/AC</th><th></th></tr></thead>
+              <tbody id="ed-inputs-tbody"></tbody>
+            </table>
+            <button id="ed-add-input" class="btn-sm" style="margin-top:0.5rem">+ Add Input</button>
+          </div>
+        </details>
+
+        <details class="editor-section">
+          <summary>Machinery</summary>
+          <div class="editor-section-body">
+            <table id="ed-mach-table" class="compact-table">
+              <thead><tr><th>Implement</th><th>Passes</th><th>$/AC</th><th>Mode</th><th></th></tr></thead>
+              <tbody id="ed-mach-tbody"></tbody>
+            </table>
+            <button id="ed-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
+          </div>
+        </details>
+
+        <details class="editor-section">
+          <summary>Seed</summary>
+          <div class="editor-section-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Variety</label>
+                <select id="ed-seed-variety">
+                  <option value="">— select seed —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Population</label>
+                <input type="number" id="ed-seed-pop" step="1" min="0">
+              </div>
+            </div>
+            <div id="ed-seed-price-preview" style="font-size:0.8rem;color:var(--text-light);margin-top:0.25rem;"></div>
+          </div>
+        </details>
+
+        <details class="editor-section">
+          <summary>Yield & Income</summary>
+          <div class="editor-section-body">
+            <div style="margin-bottom:0.5rem;">
+              <div class="view-toggle" id="ed-yield-mode-toggle" style="display:inline-flex;">
+                <button class="toggle-btn active" data-yield-mode="projected" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Projected</button>
+                <button class="toggle-btn" data-yield-mode="actual" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Actual</button>
+              </div>
+              <span id="ed-yield-source-hint" style="font-size:0.72rem;color:var(--text-light);margin-left:0.5rem;"></span>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Yield / AC</label>
+                <input type="number" id="ed-yield" step="0.1" min="0">
+              </div>
+              <div class="form-group">
+                <label>Unit</label>
+                <select id="ed-yieldUnit">
+                  <option value="Bu">Bu</option>
+                  <option value="Tons">Tons</option>
+                  <option value="Lbs">Lbs</option>
+                  <option value="Each">Each</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Harvest Moisture %</label>
+                <input type="number" id="ed-harvestMoisture" step="0.1" min="0" placeholder="e.g. 18.5">
+              </div>
+              <div class="form-group">
+                <label>Buyer (for drying calc)</label>
+                <select id="ed-buyer">
+                  <option value="">— none —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Crop Insurance $/AC</label>
+                <input type="number" id="ed-cropIns" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label>Insurance Income $/AC</label>
+                <input type="number" id="ed-insIncome" step="0.01" min="0">
+              </div>
+            </div>
+          </div>
+        </details>
+
+        <details class="editor-section">
+          <summary>AUX Payments</summary>
+          <div class="editor-section-body">
+            <table id="ed-aux-table" class="compact-table">
+              <thead><tr><th>Label</th><th>$/AC</th><th></th></tr></thead>
+              <tbody id="ed-aux-tbody"></tbody>
+            </table>
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
+              <button id="ed-add-aux" class="btn-sm">+ Add Payment</button>
+              <span id="ed-aux-total" style="font-size:0.8rem;color:var(--text-light);"></span>
+            </div>
+          </div>
+        </details>
+
+        <details class="editor-section">
+          <summary>FieldOps Data <span class="fieldops-badge" style="font-size:0.7rem;background:var(--blue);color:#fff;padding:1px 6px;border-radius:3px;margin-left:0.5rem">synced</span></summary>
+          <div class="editor-section-body">
+            <h4 style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.5rem">Application History</h4>
+            <div id="ed-fieldops-applications"></div>
+            <h4 style="font-size:0.8rem;color:var(--text-light);margin:0.75rem 0 0.5rem">Yield History</h4>
+            <div id="ed-fieldops-yield-history"></div>
+          </div>
+        </details>
+      </div>
+      <div class="editor-footer" style="display:flex;gap:0.5rem;align-items:center">
+        <button id="editor-save" class="btn-primary">Save Field</button>
+        <button id="editor-cancel" class="btn-sm">Cancel</button>
+        <span style="flex:1"></span>
+        <button id="ed-split-field" class="btn-sm" style="color:var(--primary);border-color:var(--primary)" title="Split this field into sub-fields for separate crop tracking">Split Field</button>
+        <button id="ed-merge-split" class="btn-sm" style="display:none;color:#ff9800;border-color:#ff9800" title="Merge all sub-fields of this split group back into one field">Merge Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROGRAM EDITOR OVERLAY -->
+  <div id="program-editor-overlay" class="overlay">
+    <div id="program-editor" class="editor-panel">
+      <div class="editor-header">
+        <h2 id="prog-editor-title">New Program</h2>
+        <button id="prog-editor-close" class="btn-close">&times;</button>
+      </div>
+      <div class="editor-body">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Program Name</label>
+            <input type="text" id="ped-name" placeholder="e.g. Conventional Corn 1">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Description (optional)</label>
+            <input type="text" id="ped-description" placeholder="Notes about this program...">
+          </div>
+          <div class="form-group">
+            <label>System Code</label>
+            <select id="ped-systemCode">
+              <option value="CON">CON</option>
+              <option value="CON IRR">CON IRR</option>
+              <option value="ORG">ORG</option>
+              <option value="ORG IRR">ORG IRR</option>
+              <option value="ORG TRANS">ORG TRANS</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Crop</label>
+            <input type="text" id="ped-crop" list="ed-crop-list">
+          </div>
+          <div class="form-group">
+            <label>Crop Type</label>
+            <select id="ped-cropType">
+              <option value="SINGLE CROP">Single Crop</option>
+              <option value="DBL CROP">Double Crop</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Yield Target / AC</label>
+            <input type="number" id="ped-yield" step="0.1" min="0">
+          </div>
+          <div class="form-group">
+            <label>Yield Unit</label>
+            <select id="ped-yieldUnit">
+              <option value="Bu">Bu</option>
+              <option value="Tons">Tons</option>
+              <option value="Lbs">Lbs</option>
+              <option value="Cwt">Cwt</option>
+              <option value="Each">Each</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Crop Insurance $/AC</label>
+            <input type="number" id="ped-cropIns" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Harvest Moisture %</label>
+            <input type="number" id="ped-harvestMoisture" step="0.1" min="0">
+          </div>
+          <div class="form-group">
+            <label>Buyer</label>
+            <select id="ped-buyer"></select>
+          </div>
+        </div>
+
+        <div class="preview-panel preview-sticky" style="margin:1rem 0">
+          <h3>Budget Preview (per AC, excl. rent)</h3>
+          <div class="preview-grid" id="ped-preview-grid"></div>
+        </div>
+
+        <details class="editor-section">
+          <summary>Input Products</summary>
+          <div class="editor-section-body">
+            <table class="compact-table">
+              <thead><tr><th>Product</th><th>Qty</th><th>Season</th><th>$/AC</th><th></th></tr></thead>
+              <tbody id="ped-inputs-tbody"></tbody>
+            </table>
+            <button id="ped-add-input" class="btn-sm" style="margin-top:0.5rem">+ Add Input</button>
+          </div>
+        </details>
+
+        <details class="editor-section">
+          <summary>Machinery</summary>
+          <div class="editor-section-body">
+            <table class="compact-table">
+              <thead><tr><th>Implement</th><th>Passes</th><th>$/AC</th><th>Mode</th><th></th></tr></thead>
+              <tbody id="ped-mach-tbody"></tbody>
+            </table>
+            <button id="ped-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
+          </div>
+        </details>
+
+        <details class="editor-section">
+          <summary>Seed</summary>
+          <div class="editor-section-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Variety</label>
+                <input type="text" id="ped-seed-variety" list="ed-variety-list">
+              </div>
+              <div class="form-group">
+                <label>Population</label>
+                <input type="number" id="ped-seed-pop" step="1" min="0">
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+      <div class="editor-footer">
+        <button id="prog-editor-save" class="btn-primary">Save Program</button>
+        <button id="prog-editor-cancel" class="btn-sm">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Autocomplete datalists (populated by app.js) -->
+  <datalist id="prod-search-list"></datalist>
+  <datalist id="impl-search-list"></datalist>
+
+  <!-- CDN Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/shpjs@4.0.4/dist/shp.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- App Modules -->
+  <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available')"></script>
+  <script src="calc.js"></script>
+  <script src="crop-colors.js"></script>
+  <script src="app.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="enterprise.js"></script>
+  <script src="field-editor.js"></script>
+  <script src="programs.js"></script>
+  <script src="inputs-manager.js"></script>
+  <script src="seed-manager.js"></script>
+  <script src="inventory.js"></script>
+  <script src="orders.js"></script>
+  <script src="deliveries.js"></script>
+  <script src="reports.js"></script>
+
+  <script src="sales.js"></script>
+  <script src="hedging.js"></script>
+  <script src="farm-map.js"></script>
+  <script src="pdf-report.js"></script>
+  <script src="fieldops-ui.js"></script>
+
+  <!-- Theme toggle -->
+  <script>
+  (function () {
+    var btn = document.getElementById('theme-toggle');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    function update() {
+      var isLight = document.body.classList.contains('light');
+      btn.innerHTML = isLight ? '&#9790;' : '&#9788;';
+      if (meta) meta.content = isLight ? '#ffffff' : '#0a0e09';
+    }
+    update();
+    btn.addEventListener('click', function () {
+      document.body.classList.toggle('light');
+      var isLight = document.body.classList.contains('light');
+      localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
+      update();
+      window.dispatchEvent(new Event('theme-change'));
+    });
+  })();
+  </script>
+</body>
+</html>
