@@ -564,6 +564,97 @@ function syncBestMatch(canonical, aliases, candidates, nameKey) {
   return bestScore >= 30 ? { item: best, score: bestScore } : null;
 }
 
+// ===== Enterprise-level crop comparison: Budget acres vs FSA acres by crop =====
+app.get('/api/sync-crops/enterprise-preview', async function (req, res) {
+  try {
+    var dash = await cachedFetch('http://localhost:3001/api/dashboard');
+    if (!dash) {
+      return res.status(502).json({ error: 'Farm budget unavailable — is port 3001 running?' });
+    }
+
+    // Build budget-side crop totals from enterpriseSummaries[].cropRows[]
+    var budgetMap = {};
+    var enterpriseSummaries = dash.enterpriseSummaries || [];
+    enterpriseSummaries.forEach(function (es) {
+      var cropRows = es.cropRows || [];
+      cropRows.forEach(function (cr) {
+        var key = normName(cr.crop);
+        if (!budgetMap[key]) {
+          budgetMap[key] = { displayName: cr.crop, budgetAcres: 0, enterprises: [] };
+        }
+        budgetMap[key].budgetAcres += (cr.acres || 0);
+        budgetMap[key].enterprises.push({
+          name: es.enterprise ? es.enterprise.name : '',
+          category: es.enterprise ? es.enterprise.category : '',
+          acres: cr.acres || 0
+        });
+      });
+    });
+
+    // Non-crop land class values to exclude from FSA side
+    var NON_CROP_CLASSES = ['Grass/GLS', 'CRP', 'Hay/Forage', 'Idle', 'NC'];
+    // Non-crop crop names to exclude (lowercased, trimmed)
+    var NON_CROP_NAMES = ['', 'nc', 'gls', 'crp', 'idle', 'mixed forage / hay', 'alfalfa', 'grass', 'intermediate wheatgrass'];
+
+    // Build FSA-side filtered crop totals from store.cluRecords
+    var fsaMap = {};
+    store.cluRecords.forEach(function (r) {
+      // Filter: exclude reported CLUs
+      if (r.reported === true) return;
+      // Filter: exclude non-crop land classes
+      if (NON_CROP_CLASSES.indexOf(r.landClass) !== -1) return;
+      // Filter: exclude forage use
+      if (r.use === 'forage') return;
+      // Filter: exclude non-crop crop names
+      var cropLower = (r.crop || '').toLowerCase().trim();
+      if (NON_CROP_NAMES.indexOf(cropLower) !== -1) return;
+
+      var key = normName(r.crop);
+      if (!fsaMap[key]) {
+        fsaMap[key] = { displayName: r.crop, fsaAcres: 0, cluCount: 0 };
+      }
+      fsaMap[key].fsaAcres += (r.fsaAcres || 0);
+      fsaMap[key].cluCount++;
+    });
+
+    // Collect all unique normalized keys from both sides
+    var allKeys = {};
+    Object.keys(budgetMap).forEach(function (k) { allKeys[k] = true; });
+    Object.keys(fsaMap).forEach(function (k) { allKeys[k] = true; });
+
+    // Merge into comparison rows
+    var rows = Object.keys(allKeys).map(function (key) {
+      var bSide = budgetMap[key] || { displayName: fsaMap[key] ? fsaMap[key].displayName : key, budgetAcres: 0, enterprises: [] };
+      var fSide = fsaMap[key] || { displayName: budgetMap[key] ? budgetMap[key].displayName : key, fsaAcres: 0, cluCount: 0 };
+      var displayName = bSide.displayName || fSide.displayName || key;
+      var budgetAcres = Math.round((bSide.budgetAcres || 0) * 100) / 100;
+      var fsaAcres = Math.round((fSide.fsaAcres || 0) * 100) / 100;
+      var diff = Math.round((fsaAcres - budgetAcres) * 100) / 100;
+      return {
+        crop: displayName,
+        budgetAcres: budgetAcres,
+        fsaAcres: fsaAcres,
+        diff: diff,
+        cluCount: fSide.cluCount || 0,
+        enterprises: bSide.enterprises || []
+      };
+    });
+
+    // Sort by budgetAcres descending
+    rows.sort(function (a, b) { return b.budgetAcres - a.budgetAcres; });
+
+    // Grand totals
+    var budgetGrandTotal = (dash.grandTotals && dash.grandTotals.acres != null)
+      ? Math.round(dash.grandTotals.acres * 100) / 100
+      : Math.round(rows.reduce(function (s, r) { return s + r.budgetAcres; }, 0) * 100) / 100;
+    var fsaGrandTotal = Math.round(rows.reduce(function (s, r) { return s + r.fsaAcres; }, 0) * 100) / 100;
+
+    res.json({ rows: rows, budgetGrandTotal: budgetGrandTotal, fsaGrandTotal: fsaGrandTotal });
+  } catch (err) {
+    res.status(502).json({ error: 'Farm budget unavailable — is port 3001 running?' });
+  }
+});
+
 app.get('/api/sync-crops/preview', async function (req, res) {
   try {
     var budgetResp = await fetch('http://localhost:3001/api/fields');
