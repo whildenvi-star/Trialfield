@@ -33,8 +33,8 @@
           <div class="nav-dropdown-menu" id="enterprise-menu"></div>
         </div>
         <button class="tab-btn" data-tab="forecasts">Forecasts</button>
-        <button class="tab-btn" data-tab="orders">Orders</button>
-        <button class="tab-btn" data-tab="deliveries">Deliveries</button>
+        <button class="tab-btn" data-tab="orders" style="display:none">Orders</button>
+        <button class="tab-btn" data-tab="deliveries" style="display:none">Deliveries</button>
         <button class="tab-btn" data-tab="seeds">Seeds</button>
         <button class="tab-btn" data-tab="reference">Reference</button>
         <button class="tab-btn" data-tab="programs">Programs</button>
@@ -144,14 +144,8 @@
       <div class="table-wrap">
         <table id="dash-rollup-table">
           <thead>
-            <tr>
+            <tr id="dash-rollup-thead-row">
               <th>Category</th>
-              <th id="rollup-h0"></th>
-              <th id="rollup-h1"></th>
-              <th id="rollup-h2"></th>
-              <th id="rollup-h3"></th>
-              <th id="rollup-h4"></th>
-              <th id="rollup-h5"></th>
               <th>TOTAL</th>
             </tr>
           </thead>
@@ -241,15 +235,72 @@
       <div id="ent-module-view" class="hidden"></div>
     </section>
 
-    <!-- FORECASTS -->
+    <!-- FORECASTS / DEMAND -->
     <section id="tab-forecasts" class="tab-content">
-      <h2>Forecast Hub</h2>
-      <div class="forecast-controls" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-        <button id="fc-create-order" class="btn-primary btn-sm" disabled>Create Order from Selected</button>
-        <button id="fc-print-menu" class="btn-sm">Print Reports &#9662;</button>
-        <span id="fc-summary" style="color:var(--text-light);font-size:0.85rem"></span>
+      <h2>Forecast &amp; Demand</h2>
+
+      <!-- Sub-navigation -->
+      <div class="ref-sub-nav">
+        <button class="ref-sub-btn active" data-fc-sub="forecast">Forecast Hub</button>
+        <button class="ref-sub-btn" data-fc-sub="demand">Product Demand</button>
       </div>
-      <div id="fc-categories"></div>
+
+      <!-- Forecast Hub (existing) -->
+      <div id="fc-sub-forecast" class="fc-sub-content active">
+        <h3>Procurement Forecast</h3>
+        <p class="edit-hint">Aggregated demand from field plans. Select items and create orders.</p>
+        <div class="forecast-controls" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+          <button id="fc-create-order" class="btn-primary btn-sm" disabled>Create Order from Selected</button>
+          <button id="fc-print-menu" class="btn-sm">Print Reports &#9662;</button>
+          <span id="fc-summary" style="color:var(--text-light);font-size:0.85rem"></span>
+        </div>
+        <div id="fc-categories"></div>
+      </div>
+
+      <!-- Product Demand Table for Receiving Manager -->
+      <div id="fc-sub-demand" class="fc-sub-content">
+        <h3>Product Demand Table</h3>
+        <p class="edit-hint">Receiving manager view — all expected incoming products with forecasted quantities from active farm plans.</p>
+        <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+          <input type="text" id="demand-search" placeholder="Search products...">
+          <select id="demand-filter-status">
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="ordered">Ordered</option>
+            <option value="received">Received</option>
+          </select>
+          <select id="demand-filter-type">
+            <option value="">All Types</option>
+            <option value="seed">Seeds</option>
+            <option value="input">Inputs</option>
+          </select>
+          <button id="demand-refresh" class="btn-sm">Refresh</button>
+          <button id="demand-export-csv" class="btn-sm">Export CSV</button>
+          <button id="demand-print" class="btn-sm">Print</button>
+          <span id="demand-count" style="color:var(--text-light);font-size:0.85rem"></span>
+        </div>
+        <div class="table-info"><span id="demand-info"></span></div>
+        <div class="table-wrap">
+          <table id="demand-table" class="demand-table">
+            <thead>
+              <tr>
+                <th>Product Name</th>
+                <th>Type</th>
+                <th>Supplier</th>
+                <th title="Unit/Pack type">Unit/Pack</th>
+                <th title="Pack quantity">Pack Qty</th>
+                <th title="Total units expected based on farm plans">Total Expected</th>
+                <th title="Quantity already ordered">Ordered</th>
+                <th title="Quantity delivered/received">Delivered</th>
+                <th title="Expected delivery window">Delivery Window</th>
+                <th title="Current status">Status</th>
+              </tr>
+            </thead>
+            <tbody id="demand-tbody"></tbody>
+          </table>
+        </div>
+        <div id="demand-generated" style="color:var(--text-light);font-size:0.75rem;margin-top:0.5rem"></div>
+      </div>
     </section>
 
     <!-- ORDERS -->
@@ -283,33 +334,71 @@
     <section id="tab-reference" class="tab-content">
       <h2>Reference Data</h2>
 
-      <!-- Products Section -->
+      <!-- Sub-navigation -->
+      <div class="ref-sub-nav">
+        <button class="ref-sub-btn active" data-ref-sub="products">Products</button>
+        <button class="ref-sub-btn" data-ref-sub="implements">Implements</button>
+        <button class="ref-sub-btn" data-ref-sub="suppliers">Suppliers</button>
+        <button class="ref-sub-btn" data-ref-sub="unit-packs">Unit/Packs</button>
+        <button class="ref-sub-btn" data-ref-sub="labor">Labor &amp; Overhead</button>
+      </div>
+
+      <!-- Products Sub-section -->
+      <div id="ref-sub-products" class="ref-sub-content active">
       <h3>Products</h3>
-      <p class="edit-hint">Double-click any cell to edit in place.</p>
+      <p class="edit-hint">Click product name to edit details. Double-click price or unit cells for quick edits.</p>
       <div class="filters">
         <input type="text" id="inp-search" placeholder="Search products...">
         <button id="inp-add" class="btn-primary btn-sm">+ Add Product</button>
       </div>
+
+      <!-- Price Increase Simulator -->
+      <details id="price-simulator" class="editor-section" style="margin-bottom:1rem">
+        <summary>Price Increase Simulator</summary>
+        <div style="padding:0.75rem">
+          <div class="whatif-controls">
+            <button id="sim-select-all" class="btn-sm">Select All</button>
+            <button id="sim-clear" class="btn-sm">Clear</button>
+            <span style="color:var(--text-light);margin:0 0.25rem">|</span>
+            <button class="btn-sm sim-cat-btn" data-cat="Fertilizer">Fertilizer</button>
+            <button class="btn-sm sim-cat-btn" data-cat="Chemical">Chemical</button>
+            <button class="btn-sm sim-cat-btn" data-cat="Biological">Biological</button>
+            <button class="btn-sm sim-cat-btn" data-cat="Seed">Seed</button>
+            <button class="btn-sm sim-cat-btn" data-cat="Other">Other</button>
+            <span id="sim-sel-count" style="color:var(--text-light);font-size:0.8rem;margin-left:0.5rem"></span>
+          </div>
+          <div class="whatif-controls" style="margin-top:0.5rem">
+            <div class="form-group" style="margin:0">
+              <label>Increase %</label>
+              <div style="display:flex;align-items:center;gap:0.75rem">
+                <input type="range" id="sim-slider" min="0" max="50" step="1" value="0" style="width:280px;accent-color:var(--primary)">
+                <span id="sim-pct-label" style="font-weight:600;min-width:3rem;color:var(--amber)">0%</span>
+                <input type="number" id="sim-pct-input" min="0" max="100" step="0.5" value="0" class="inline-input" style="width:65px">
+              </div>
+            </div>
+            <button id="sim-apply" class="btn-primary btn-sm" disabled>Apply Increase</button>
+            <button id="sim-reset" class="btn-sm">Reset</button>
+          </div>
+        </div>
+      </details>
+
       <div class="table-info"><span id="inp-count"></span></div>
+      <div id="products-container"></div>
+
+      <!-- Product Demand by Enterprise -->
+      <h3>Product Demand by Enterprise</h3>
+      <p class="edit-hint">Total quantity and cost for each product, broken down by enterprise. Auto-computed from field input assignments.</p>
+      <div class="table-info"><span id="prod-demand-info"></span></div>
       <div class="table-wrap">
-        <table id="inp-table">
-          <thead>
-            <tr>
-              <th data-sort="name">Product Name</th>
-              <th data-sort="supplierId" title="Product supplier">Supplier</th>
-              <th data-sort="unitBilledPrice" title="Price per billed unit (e.g. per ton)">Unit Price</th>
-              <th data-sort="conversionRate" title="Units per billed unit (e.g. 2000 lbs/ton)">Conv Rate</th>
-              <th data-sort="increasePercent" title="Price increase percentage applied to base price">Inc %</th>
-              <th title="Final cost per application unit after conversion and increase">App Price</th>
-              <th data-sort="unit">Unit</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="inp-tbody"></tbody>
+        <table id="prod-demand-table">
+          <thead id="prod-demand-thead"></thead>
+          <tbody id="prod-demand-tbody"></tbody>
         </table>
       </div>
+      </div><!-- /ref-sub-products -->
 
-      <!-- Implements Section -->
+      <!-- Implements Sub-section -->
+      <div id="ref-sub-implements" class="ref-sub-content">
       <h3>Implements / Machinery</h3>
       <p class="edit-hint">Double-click any cell to edit in place.</p>
       <div class="filters">
@@ -363,7 +452,10 @@
         </table>
       </div>
 
-      <!-- Suppliers -->
+      </div><!-- /ref-sub-implements -->
+
+      <!-- Suppliers Sub-section -->
+      <div id="ref-sub-suppliers" class="ref-sub-content">
       <h3>Suppliers</h3>
       <p class="edit-hint">Manage product, seed, and landlord suppliers. Double-click any cell to edit.</p>
       <div class="filters">
@@ -393,7 +485,35 @@
         </table>
       </div>
 
-      <!-- Labor & Overhead Rates -->
+      </div><!-- /ref-sub-suppliers -->
+
+      <!-- Unit/Pack Definitions Sub-section -->
+      <div id="ref-sub-unit-packs" class="ref-sub-content">
+      <h3>Unit &amp; Pack Definitions</h3>
+      <p class="edit-hint">Define custom unit and pack types used for product ordering and receiving. These definitions are referenced wherever products are entered or displayed.</p>
+      <div class="filters">
+        <input type="text" id="up-search" placeholder="Search units...">
+        <button id="up-add" class="btn-primary btn-sm">+ Add Unit/Pack</button>
+      </div>
+      <div class="table-info"><span id="up-count"></span></div>
+      <div class="table-wrap">
+        <table id="up-table">
+          <thead>
+            <tr>
+              <th>Unit Name</th>
+              <th title="Quantity per pack">Pack Qty</th>
+              <th title="Free-text pack size description">Pack Description</th>
+              <th title="Unit of measure for the size descriptor">UoM</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="up-tbody"></tbody>
+        </table>
+      </div>
+      </div><!-- /ref-sub-unit-packs -->
+
+      <!-- Labor Sub-section -->
+      <div id="ref-sub-labor" class="ref-sub-content">
       <h3>Labor &amp; Overhead Rates</h3>
       <p class="edit-hint">Double-click any cell to edit. Rates apply to all fields with the matching system code.</p>
       <div class="table-info"><span id="lo-count"></span></div>
@@ -416,6 +536,7 @@
           <tbody id="lo-tbody"></tbody>
         </table>
       </div>
+      </div><!-- /ref-sub-labor -->
     </section>
 
     <!-- SEEDS MANAGER -->
@@ -441,6 +562,17 @@
             </tr>
           </thead>
           <tbody id="seed-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- Seed Demand by Enterprise -->
+      <h3>Seed Demand by Enterprise</h3>
+      <p class="edit-hint">Total units and cost for each seed variety, broken down by enterprise. Auto-computed from field seed assignments.</p>
+      <div class="table-info"><span id="seed-demand-info"></span></div>
+      <div class="table-wrap">
+        <table id="seed-demand-table">
+          <thead id="seed-demand-thead"></thead>
+          <tbody id="seed-demand-tbody"></tbody>
         </table>
       </div>
     </section>
@@ -870,6 +1002,89 @@
     </div>
   </div>
 
+  <!-- PRODUCT DETAIL PANEL -->
+  <div id="product-editor-overlay" class="overlay">
+    <div class="editor-panel" style="width:480px">
+      <div class="editor-header">
+        <h2 id="prod-editor-title">Edit Product</h2>
+        <button id="prod-editor-close" class="btn-close">&times;</button>
+      </div>
+      <div class="editor-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Product Name</label>
+            <input type="text" id="pe-name">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="pe-category">
+              <option value="Fertilizer">Fertilizer</option>
+              <option value="Chemical">Chemical</option>
+              <option value="Biological">Biological</option>
+              <option value="Seed">Seed</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Supplier</label>
+            <select id="pe-supplier"><option value="">-- none --</option></select>
+          </div>
+          <div class="form-group">
+            <label>Organic Approved</label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin-top:0.2rem">
+              <input type="checkbox" id="pe-organic" style="width:16px;height:16px;accent-color:var(--primary)">
+              <span id="pe-organic-label" style="font-size:0.8rem">No</span>
+            </label>
+          </div>
+        </div>
+        <hr style="border-color:var(--border);margin:0.75rem 0">
+        <h4 style="font-size:0.8rem;color:var(--primary);margin:0 0 0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">Pricing</h4>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Purchase Price ($)</label>
+            <input type="number" id="pe-purchasePrice" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Purchase Unit</label>
+            <select id="pe-purchaseUnit"></select>
+          </div>
+          <div class="form-group">
+            <label>Application Unit</label>
+            <select id="pe-appUnit"></select>
+          </div>
+          <div class="form-group">
+            <label>Conversion Rate <span id="pe-conv-hint" style="font-size:0.65rem;color:var(--text-light)"></span></label>
+            <input type="number" id="pe-convRate" step="0.01" min="0">
+          </div>
+        </div>
+        <div style="margin:0.5rem 0;padding:0.5rem;border:1px solid var(--border);background:var(--bg-raised)">
+          <span style="font-size:0.72rem;color:var(--text-light);text-transform:uppercase;letter-spacing:0.04em">Computed App Price</span>
+          <div id="pe-appPrice" style="font-weight:600;color:var(--amber);font-size:1rem;margin-top:0.15rem">--</div>
+        </div>
+        <div id="pe-nutrient-section">
+          <hr style="border-color:var(--border);margin:0.75rem 0">
+          <h4 style="font-size:0.8rem;color:var(--primary);margin:0 0 0.5rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">Nutrients</h4>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>P2O5</label>
+              <input type="number" id="pe-p205" step="0.01" min="0">
+            </div>
+            <div class="form-group">
+              <label>K2O</label>
+              <input type="number" id="pe-k20" step="0.01" min="0">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="editor-footer">
+        <button id="pe-delete" class="btn-danger">Delete Product</button>
+        <div style="flex:1"></div>
+        <button id="pe-cancel" class="btn-sm">Cancel</button>
+        <button id="pe-save" class="btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- PROGRAM EDITOR OVERLAY -->
   <div id="program-editor-overlay" class="overlay">
     <div id="program-editor" class="editor-panel">
@@ -1013,6 +1228,7 @@
   <script src="inventory.js"></script>
   <script src="orders.js"></script>
   <script src="deliveries.js"></script>
+  <script src="demand-manager.js"></script>
   <script src="reports.js"></script>
 
   <script src="sales.js"></script>

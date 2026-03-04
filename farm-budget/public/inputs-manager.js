@@ -29,6 +29,7 @@
       allLaborOverhead = results[3];
       allSuppliers = results[4];
       renderProductTable(allProducts);
+      renderProductDemand(allFields, allProducts);
       renderImplTable(allImplements);
       renderMachMode();
       renderImplUsage(allFields, allImplements);
@@ -40,10 +41,43 @@
 
   // === PRODUCTS ===
 
+  var CATEGORY_ORDER = ['Fertilizer', 'Chemical', 'Biological', 'Seed', 'Other'];
+  // Default unit lists — augmented dynamically from unit-packs config
+  var DEFAULT_PURCHASE_UNITS = ['Ton', 'Gal', 'Lb', 'OZ', 'Bu', 'Each', 'Acre', 'Pts', 'Quart', 'Pack', 'UNIT', 'Tons'];
+  var DEFAULT_APP_UNITS = ['Lbs', 'OZ', 'Gal', 'Pts', 'Quart', 'Acre', 'Each', 'Tons', 'Pack', 'UNIT', 'lbs', 'oz', 'Bu'];
+  var UNIT_CONVERSIONS = {
+    'Ton:Lbs': 2000, 'Ton:lbs': 2000, 'Gal:OZ': 128, 'Gal:oz': 128,
+    'Gal:Pts': 8, 'Gal:Quart': 4, 'Lb:OZ': 16, 'Lb:oz': 16, 'Bu:Lbs': 56, 'Bu:lbs': 56
+  };
+
+  // Dynamic unit lists: merge defaults + unit-pack names from config
+  function getPurchaseUnits() {
+    var packs = (window.refData.unitPacks || []).map(function (up) { return up.name; });
+    var merged = DEFAULT_PURCHASE_UNITS.slice();
+    packs.forEach(function (name) {
+      if (merged.indexOf(name) === -1) merged.push(name);
+    });
+    return merged;
+  }
+  function getAppUnits() {
+    var packs = (window.refData.unitPacks || []).map(function (up) { return up.name; });
+    var merged = DEFAULT_APP_UNITS.slice();
+    packs.forEach(function (name) {
+      if (merged.indexOf(name) === -1) merged.push(name);
+    });
+    return merged;
+  }
+  var selectedProductIds = new Set();
+  var simulatorPct = 0;
+  var collapsedCategories = new Set();
+
   document.getElementById('inp-search').addEventListener('input', function () {
     var q = this.value.trim().toLowerCase();
     var filtered = allProducts.filter(function (p) {
-      return p.name.toLowerCase().includes(q) || (p.unit || '').toLowerCase().includes(q);
+      return p.name.toLowerCase().includes(q) ||
+        (p.unit || '').toLowerCase().includes(q) ||
+        (p.category || '').toLowerCase().includes(q) ||
+        getSupplierName(p.supplierId, 'product').toLowerCase().includes(q);
     });
     renderProductTable(filtered);
   });
@@ -55,6 +89,9 @@
       conversionRate: 1,
       increasePercent: 1,
       unit: 'Lbs',
+      purchaseUnit: 'Lbs',
+      organic: false,
+      category: 'Other',
       p205: 0,
       k20: 0
     }).then(function () {
@@ -134,28 +171,374 @@
   }
 
   function renderProductTable(products) {
-    var tbody = document.getElementById('inp-tbody');
-    var html = '';
+    var container = document.getElementById('products-container');
+    // Group by category
+    var grouped = {};
+    CATEGORY_ORDER.forEach(function (cat) { grouped[cat] = []; });
     products.forEach(function (p) {
-      var appPrice = Calc.computeApplicationPrice(p);
-      var supplierName = getSupplierName(p.supplierId, 'product');
-      html += '<tr>' +
-        '<td class="editable" data-id="' + p.id + '" data-field="name" data-type="products">' + util.escHtml(p.name) + '</td>' +
-        '<td class="supplier-cell" data-id="' + p.id + '" data-supplier-id="' + (p.supplierId || '') + '" data-type="products" style="cursor:pointer">' + util.escHtml(supplierName) + '</td>' +
-        '<td class="editable number" data-id="' + p.id + '" data-field="unitBilledPrice" data-type="products">' + util.formatMoney(p.unitBilledPrice) + '</td>' +
-        '<td class="editable number" data-id="' + p.id + '" data-field="conversionRate" data-type="products">' + util.formatNum(p.conversionRate, 2) + '</td>' +
-        '<td class="editable number" data-id="' + p.id + '" data-field="increasePercent" data-type="products">' + util.formatNum(p.increasePercent, 2) + '</td>' +
-        '<td class="number">' + util.formatMoney(appPrice, 4) + '</td>' +
-        '<td class="editable" data-id="' + p.id + '" data-field="unit" data-type="products">' + util.escHtml(p.unit) + '</td>' +
-        '<td><button class="btn-danger" data-del-id="' + p.id + '" data-del-type="products">Del</button></td>' +
-        '</tr>';
+      var cat = p.category || 'Other';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(p);
     });
-    tbody.innerHTML = html;
-    bindEditing(tbody, 'products');
-    bindDelete(tbody, 'products');
-    bindSupplierSelect(tbody, 'products', 'supplierId', 'product');
+
+    var html = '';
+    CATEGORY_ORDER.forEach(function (cat) {
+      var items = grouped[cat];
+      if (!items || !items.length) return;
+      var isCollapsed = collapsedCategories.has(cat);
+      html += '<div class="prod-category' + (isCollapsed ? ' collapsed' : '') + '" data-category="' + cat + '">';
+      html += '<div class="prod-category-header">';
+      html += '<span class="prod-category-name">' + util.escHtml(cat) + '</span>';
+      html += '<span class="prod-category-count">' + items.length + '</span>';
+      html += '<span class="prod-category-toggle">&#9660;</span>';
+      html += '</div>';
+      html += '<div class="prod-category-body">';
+      html += '<table class="prod-table"><thead><tr>';
+      html += '<th><input type="checkbox" class="cat-select-all" data-category="' + cat + '"></th>';
+      html += '<th>Product Name</th>';
+      html += '<th>Supplier</th>';
+      html += '<th>Purchase Price</th>';
+      html += '<th>Purch Unit</th>';
+      html += '<th title="Computed from purchase price / conversion rate">App Price</th>';
+      html += '<th>App Unit</th>';
+      html += '<th title="Organic / OMRI approved">ORG</th>';
+      html += '<th></th>';
+      html += '</tr></thead><tbody>';
+      items.forEach(function (p) {
+        var appPrice = Calc.computeApplicationPrice(p);
+        var supplierName = getSupplierName(p.supplierId, 'product');
+        var isSelected = selectedProductIds.has(p.id);
+        var priceDisplay = util.formatMoney(p.unitBilledPrice);
+        var appDisplay = util.formatMoney(appPrice, 4);
+        var previewCls = '';
+        if (isSelected && simulatorPct > 0) {
+          var simPrice = p.unitBilledPrice * (1 + simulatorPct / 100);
+          var simApp = p.conversionRate ? simPrice / p.conversionRate : 0;
+          priceDisplay = util.formatMoney(simPrice);
+          appDisplay = util.formatMoney(simApp, 4);
+          previewCls = ' sim-preview';
+        }
+        html += '<tr data-prod-id="' + p.id + '">';
+        html += '<td><input type="checkbox" class="prod-select" data-prod-id="' + p.id + '"' + (isSelected ? ' checked' : '') + '></td>';
+        html += '<td class="prod-name-cell" data-id="' + p.id + '">' + util.escHtml(p.name) + '</td>';
+        html += '<td class="supplier-cell" data-id="' + p.id + '" data-supplier-id="' + (p.supplierId || '') + '" data-type="products" style="cursor:pointer">' + util.escHtml(supplierName) + '</td>';
+        html += '<td class="editable number' + previewCls + '" data-id="' + p.id + '" data-field="unitBilledPrice" data-type="products">' + priceDisplay + '</td>';
+        html += '<td>' + util.escHtml(p.purchaseUnit || '--') + '</td>';
+        html += '<td class="number' + previewCls + '">' + appDisplay + '</td>';
+        html += '<td class="editable" data-id="' + p.id + '" data-field="unit" data-type="products">' + util.escHtml(p.unit) + '</td>';
+        html += '<td>' + (p.organic ? '<span class="prod-organic-badge">ORG</span>' : '') + '</td>';
+        html += '<td><button class="btn-danger" data-del-id="' + p.id + '" data-del-type="products" style="font-size:0.7rem;padding:0.15rem 0.4rem">Del</button></td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+    });
+
+    container.innerHTML = html;
+
+    // Bind events for each category table
+    container.querySelectorAll('.prod-table tbody').forEach(function (tbody) {
+      bindEditing(tbody, 'products');
+      bindDelete(tbody, 'products');
+      bindSupplierSelect(tbody, 'products', 'supplierId', 'product');
+    });
+
+    // Category collapse/expand
+    container.querySelectorAll('.prod-category-header').forEach(function (hdr) {
+      hdr.addEventListener('click', function (e) {
+        if (e.target.tagName === 'INPUT') return;
+        var catDiv = hdr.parentElement;
+        var cat = catDiv.getAttribute('data-category');
+        catDiv.classList.toggle('collapsed');
+        if (catDiv.classList.contains('collapsed')) collapsedCategories.add(cat);
+        else collapsedCategories.delete(cat);
+      });
+    });
+
+    // Product name click — open detail panel
+    container.querySelectorAll('.prod-name-cell').forEach(function (td) {
+      td.addEventListener('click', function () {
+        var id = td.getAttribute('data-id');
+        var product = allProducts.find(function (p) { return p.id === id; });
+        if (product) openProductPanel(product);
+      });
+    });
+
+    // Checkbox selection
+    container.querySelectorAll('.prod-select').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var id = cb.getAttribute('data-prod-id');
+        if (cb.checked) selectedProductIds.add(id);
+        else selectedProductIds.delete(id);
+        updateSimulatorUI();
+        if (simulatorPct > 0) renderProductTable(getCurrentFilteredProducts());
+      });
+    });
+
+    // Category select-all checkboxes
+    container.querySelectorAll('.cat-select-all').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var cat = cb.getAttribute('data-category');
+        var catProducts = allProducts.filter(function (p) { return (p.category || 'Other') === cat; });
+        catProducts.forEach(function (p) {
+          if (cb.checked) selectedProductIds.add(p.id);
+          else selectedProductIds.delete(p.id);
+        });
+        updateSimulatorUI();
+        renderProductTable(getCurrentFilteredProducts());
+      });
+    });
+
     document.getElementById('inp-count').textContent = products.length + ' products';
   }
+
+  function getCurrentFilteredProducts() {
+    var q = document.getElementById('inp-search').value.trim().toLowerCase();
+    if (!q) return allProducts;
+    return allProducts.filter(function (p) {
+      return p.name.toLowerCase().includes(q) ||
+        (p.unit || '').toLowerCase().includes(q) ||
+        (p.category || '').toLowerCase().includes(q) ||
+        getSupplierName(p.supplierId, 'product').toLowerCase().includes(q);
+    });
+  }
+
+  // === PRODUCT DETAIL PANEL ===
+
+  var peOverlay = document.getElementById('product-editor-overlay');
+  var peCurrentId = null;
+
+  function populateSelectOptions(selectEl, options, selectedVal) {
+    selectEl.innerHTML = '';
+    options.forEach(function (opt) {
+      var o = document.createElement('option');
+      o.value = opt; o.textContent = opt;
+      if (opt === selectedVal) o.selected = true;
+      selectEl.appendChild(o);
+    });
+  }
+
+  function openProductPanel(product) {
+    peCurrentId = product.id;
+    document.getElementById('pe-name').value = product.name || '';
+    document.getElementById('pe-category').value = product.category || 'Other';
+    document.getElementById('pe-purchasePrice').value = product.unitBilledPrice || 0;
+    document.getElementById('pe-convRate').value = product.conversionRate || 1;
+    document.getElementById('pe-p205').value = product.p205 || 0;
+    document.getElementById('pe-k20').value = product.k20 || 0;
+
+    // Organic checkbox
+    var orgCb = document.getElementById('pe-organic');
+    orgCb.checked = !!product.organic;
+    document.getElementById('pe-organic-label').textContent = orgCb.checked ? 'Yes' : 'No';
+
+    // Supplier dropdown
+    var supSelect = document.getElementById('pe-supplier');
+    supSelect.innerHTML = '<option value="">-- none --</option>';
+    (window.refData.suppliers || []).filter(function (s) { return s.type === 'product'; }).forEach(function (s) {
+      var opt = document.createElement('option');
+      opt.value = s.id; opt.textContent = s.name;
+      if (s.id === product.supplierId) opt.selected = true;
+      supSelect.appendChild(opt);
+    });
+
+    // Purchase unit dropdown
+    populateSelectOptions(document.getElementById('pe-purchaseUnit'), getPurchaseUnits(), product.purchaseUnit || product.unit);
+    // App unit dropdown
+    populateSelectOptions(document.getElementById('pe-appUnit'), getAppUnits(), product.unit || 'Lbs');
+
+    updatePanelConvHint();
+    updatePanelAppPrice();
+
+    // Show/hide nutrient section
+    var cat = product.category || 'Other';
+    var nutrientSec = document.getElementById('pe-nutrient-section');
+    nutrientSec.style.display = (cat === 'Fertilizer' || cat === 'Biological') ? '' : 'none';
+
+    // Show overlay
+    peOverlay.style.display = 'flex';
+    requestAnimationFrame(function () { peOverlay.classList.add('visible'); });
+  }
+
+  function closeProductPanel() {
+    peOverlay.classList.remove('visible');
+    setTimeout(function () { peOverlay.style.display = 'none'; }, 300);
+    peCurrentId = null;
+  }
+
+  function updatePanelConvHint() {
+    var pu = document.getElementById('pe-purchaseUnit').value;
+    var au = document.getElementById('pe-appUnit').value;
+    var key = pu + ':' + au;
+    var hint = document.getElementById('pe-conv-hint');
+    if (UNIT_CONVERSIONS[key]) {
+      hint.textContent = '(auto: ' + UNIT_CONVERSIONS[key] + ' ' + au + '/' + pu + ')';
+      document.getElementById('pe-convRate').value = UNIT_CONVERSIONS[key];
+    } else if (pu === au) {
+      hint.textContent = '(same unit)';
+      document.getElementById('pe-convRate').value = 1;
+    } else {
+      hint.textContent = '(custom)';
+    }
+  }
+
+  function updatePanelAppPrice() {
+    var price = parseFloat(document.getElementById('pe-purchasePrice').value) || 0;
+    var conv = parseFloat(document.getElementById('pe-convRate').value) || 1;
+    var appPrice = price / conv;
+    var au = document.getElementById('pe-appUnit').value;
+    document.getElementById('pe-appPrice').textContent = util.formatMoney(appPrice, 4) + ' / ' + au;
+  }
+
+  // Panel event bindings
+  document.getElementById('prod-editor-close').addEventListener('click', closeProductPanel);
+  document.getElementById('pe-cancel').addEventListener('click', closeProductPanel);
+  peOverlay.addEventListener('click', function (e) { if (e.target === peOverlay) closeProductPanel(); });
+
+  document.getElementById('pe-organic').addEventListener('change', function () {
+    document.getElementById('pe-organic-label').textContent = this.checked ? 'Yes' : 'No';
+  });
+
+  document.getElementById('pe-category').addEventListener('change', function () {
+    var cat = this.value;
+    document.getElementById('pe-nutrient-section').style.display =
+      (cat === 'Fertilizer' || cat === 'Biological') ? '' : 'none';
+  });
+
+  document.getElementById('pe-purchaseUnit').addEventListener('change', function () {
+    updatePanelConvHint(); updatePanelAppPrice();
+  });
+  document.getElementById('pe-appUnit').addEventListener('change', function () {
+    updatePanelConvHint(); updatePanelAppPrice();
+  });
+  document.getElementById('pe-purchasePrice').addEventListener('input', updatePanelAppPrice);
+  document.getElementById('pe-convRate').addEventListener('input', updatePanelAppPrice);
+
+  document.getElementById('pe-save').addEventListener('click', function () {
+    if (!peCurrentId) return;
+    var data = {
+      name: document.getElementById('pe-name').value,
+      category: document.getElementById('pe-category').value,
+      supplierId: document.getElementById('pe-supplier').value,
+      organic: document.getElementById('pe-organic').checked,
+      unitBilledPrice: parseFloat(document.getElementById('pe-purchasePrice').value) || 0,
+      purchaseUnit: document.getElementById('pe-purchaseUnit').value,
+      unit: document.getElementById('pe-appUnit').value,
+      conversionRate: parseFloat(document.getElementById('pe-convRate').value) || 1,
+      p205: parseFloat(document.getElementById('pe-p205').value) || 0,
+      k20: parseFloat(document.getElementById('pe-k20').value) || 0
+    };
+    api.put('/api/products/' + peCurrentId, data).then(function () {
+      closeProductPanel();
+      loaded = false;
+      loadAll();
+      window.reloadRefDataSelective('products');
+      util.showToast('Product saved');
+    });
+  });
+
+  document.getElementById('pe-delete').addEventListener('click', function () {
+    if (!peCurrentId) return;
+    if (!confirm('Delete this product?')) return;
+    api.del('/api/products/' + peCurrentId).then(function () {
+      closeProductPanel();
+      loaded = false;
+      loadAll();
+      util.showToast('Product deleted');
+    });
+  });
+
+  // === PRICE INCREASE SIMULATOR ===
+
+  var simSlider = document.getElementById('sim-slider');
+  var simPctInput = document.getElementById('sim-pct-input');
+  var simPctLabel = document.getElementById('sim-pct-label');
+  var simApplyBtn = document.getElementById('sim-apply');
+
+  function updateSimulatorUI() {
+    var count = selectedProductIds.size;
+    document.getElementById('sim-sel-count').textContent = count ? count + ' selected' : '';
+    simApplyBtn.disabled = !count || simulatorPct <= 0;
+  }
+
+  simSlider.addEventListener('input', function () {
+    simulatorPct = parseFloat(this.value) || 0;
+    simPctInput.value = simulatorPct;
+    simPctLabel.textContent = simulatorPct + '%';
+    updateSimulatorUI();
+    renderProductTable(getCurrentFilteredProducts());
+  });
+
+  simPctInput.addEventListener('input', function () {
+    simulatorPct = Math.max(0, Math.min(100, parseFloat(this.value) || 0));
+    simSlider.value = Math.min(50, simulatorPct);
+    simPctLabel.textContent = simulatorPct + '%';
+    updateSimulatorUI();
+    renderProductTable(getCurrentFilteredProducts());
+  });
+
+  document.getElementById('sim-select-all').addEventListener('click', function () {
+    allProducts.forEach(function (p) { selectedProductIds.add(p.id); });
+    updateSimulatorUI();
+    renderProductTable(getCurrentFilteredProducts());
+  });
+
+  document.getElementById('sim-clear').addEventListener('click', function () {
+    selectedProductIds.clear();
+    updateSimulatorUI();
+    renderProductTable(getCurrentFilteredProducts());
+  });
+
+  // Category filter buttons
+  document.querySelectorAll('.sim-cat-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var cat = btn.getAttribute('data-cat');
+      var catProducts = allProducts.filter(function (p) { return (p.category || 'Other') === cat; });
+      var allSelected = catProducts.every(function (p) { return selectedProductIds.has(p.id); });
+      catProducts.forEach(function (p) {
+        if (allSelected) selectedProductIds.delete(p.id);
+        else selectedProductIds.add(p.id);
+      });
+      btn.classList.toggle('active', !allSelected);
+      updateSimulatorUI();
+      renderProductTable(getCurrentFilteredProducts());
+    });
+  });
+
+  simApplyBtn.addEventListener('click', function () {
+    if (!selectedProductIds.size || simulatorPct <= 0) return;
+    var count = selectedProductIds.size;
+    if (!confirm('Apply +' + simulatorPct + '% price increase to ' + count + ' products?')) return;
+    var updates = [];
+    allProducts.forEach(function (p) {
+      if (!selectedProductIds.has(p.id)) return;
+      var newPrice = Math.round(p.unitBilledPrice * (1 + simulatorPct / 100) * 100) / 100;
+      updates.push(api.put('/api/products/' + p.id, { unitBilledPrice: newPrice }));
+    });
+    Promise.all(updates).then(function () {
+      util.showToast('Applied +' + simulatorPct + '% to ' + count + ' products');
+      simulatorPct = 0;
+      simSlider.value = 0;
+      simPctInput.value = 0;
+      simPctLabel.textContent = '0%';
+      selectedProductIds.clear();
+      document.querySelectorAll('.sim-cat-btn').forEach(function (b) { b.classList.remove('active'); });
+      updateSimulatorUI();
+      loaded = false;
+      loadAll();
+      window.reloadRefDataSelective('products');
+    });
+  });
+
+  document.getElementById('sim-reset').addEventListener('click', function () {
+    simulatorPct = 0;
+    simSlider.value = 0;
+    simPctInput.value = 0;
+    simPctLabel.textContent = '0%';
+    selectedProductIds.clear();
+    document.querySelectorAll('.sim-cat-btn').forEach(function (b) { b.classList.remove('active'); });
+    updateSimulatorUI();
+    renderProductTable(getCurrentFilteredProducts());
+  });
 
   // === IMPLEMENTS ===
 
@@ -448,6 +831,105 @@
       (showFuelInUsage ? ' + ' + util.formatMoney(grandTotal.fuelCost, 0) + ' fuel' : '');
   }
 
+  // === PRODUCT DEMAND BY ENTERPRISE ===
+
+  function renderProductDemand(fields, products) {
+    var enterprises = window.refData.enterprises;
+    if (!enterprises.length || !fields.length) {
+      document.getElementById('prod-demand-tbody').innerHTML = '<tr><td>No data</td></tr>';
+      return;
+    }
+
+    // Build product index by lowercase name
+    var productIndex = {};
+    products.forEach(function (p) {
+      productIndex[(p.name || '').trim().toLowerCase()] = p;
+    });
+
+    // demand[productName][entIdx] = { qty, cost }
+    var demand = {};
+    fields.forEach(function (f) {
+      var entIdx = enterprises.findIndex(function (e) { return e.id === f.enterpriseId; });
+      if (entIdx < 0) return;
+      var fieldAcres = (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
+      (f.inputs || []).forEach(function (inp) {
+        if (!inp.productName) return;
+        var key = inp.productName.trim().toLowerCase();
+        var product = productIndex[key];
+        var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
+        var fieldQty = (inp.quantity || 0) * fieldAcres;
+        var fieldCost = fieldQty * appPrice;
+
+        if (!demand[inp.productName]) demand[inp.productName] = {};
+        if (!demand[inp.productName][entIdx]) demand[inp.productName][entIdx] = { qty: 0, cost: 0 };
+        demand[inp.productName][entIdx].qty += fieldQty;
+        demand[inp.productName][entIdx].cost += fieldCost;
+      });
+    });
+
+    // Build header
+    var thead = '<tr><th>Product</th><th>Supplier</th><th>Purchase</th><th>App Price</th>';
+    enterprises.forEach(function (e) {
+      thead += '<th title="' + util.escHtml(e.name) + '">' + util.escHtml(e.shortName) + '</th>';
+    });
+    thead += '<th>FARM TOTAL</th></tr>';
+    document.getElementById('prod-demand-thead').innerHTML = thead;
+
+    // Build rows
+    var usedNames = Object.keys(demand).sort();
+    var html = '';
+    var grandTotals = {};
+    var grandTotal = { cost: 0 };
+    enterprises.forEach(function (e, idx) { grandTotals[idx] = { cost: 0 }; });
+
+    usedNames.forEach(function (name) {
+      var key = name.trim().toLowerCase();
+      var product = productIndex[key];
+      var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
+      var supplierName = product ? getSupplierName(product.supplierId, 'product') : '--';
+      var purchaseLabel = product ? util.formatMoney(product.unitBilledPrice) : '--';
+      var appLabel = product ? util.formatMoney(appPrice, 4) + '/' + util.escHtml(product.unit || 'unit') : '--';
+
+      html += '<tr><td>' + util.escHtml(name) + '</td>';
+      html += '<td>' + util.escHtml(supplierName) + '</td>';
+      html += '<td class="number">' + purchaseLabel + '</td>';
+      html += '<td class="number">' + appLabel + '</td>';
+
+      var rowTotal = { qty: 0, cost: 0 };
+
+      enterprises.forEach(function (e, idx) {
+        var d = demand[name] && demand[name][idx];
+        if (d) {
+          rowTotal.qty += d.qty;
+          rowTotal.cost += d.cost;
+          grandTotals[idx].cost += d.cost;
+
+          var unitLabel = product ? (product.unit || '') : '';
+          html += '<td class="number">' + util.formatNum(d.qty, 0) + ' ' + util.escHtml(unitLabel) +
+            '<br><small style="color:var(--text-light)">' + util.formatMoney(d.cost, 0) + '</small></td>';
+        } else {
+          html += '<td class="number" style="color:var(--text-light)">--</td>';
+        }
+      });
+
+      grandTotal.cost += rowTotal.cost;
+      var totalUnit = product ? (product.unit || '') : '';
+      html += '<td class="number bold">' + util.formatNum(rowTotal.qty, 0) + ' ' + util.escHtml(totalUnit) +
+        '<br><small style="color:var(--text-light)">' + util.formatMoney(rowTotal.cost, 0) + '</small></td></tr>';
+    });
+
+    // Grand total row
+    html += '<tr class="total-row"><td class="bold" colspan="4">TOTAL</td>';
+    enterprises.forEach(function (e, idx) {
+      html += '<td class="number bold">' + util.formatMoney(grandTotals[idx].cost, 0) + '</td>';
+    });
+    html += '<td class="number bold">' + util.formatMoney(grandTotal.cost, 0) + '</td></tr>';
+
+    document.getElementById('prod-demand-tbody').innerHTML = html;
+    document.getElementById('prod-demand-info').textContent =
+      usedNames.length + ' products in use, ' + util.formatMoney(grandTotal.cost, 0) + ' total input cost';
+  }
+
   // === LABOR & OVERHEAD (Features 1 + 3) ===
 
   function renderLaborOverhead(loRecords) {
@@ -656,4 +1138,113 @@
       if (e.key === 'Escape') { loaded = false; loadAll(); }
     });
   }
+
+  // === UNIT/PACK DEFINITIONS ===
+
+  var allUnitPacks = [];
+
+  function loadUnitPacks() {
+    api.get('/api/unit-packs').then(function (data) {
+      allUnitPacks = data;
+      renderUnitPackTable(allUnitPacks);
+    });
+  }
+
+  // Load unit packs when tab activates (along with everything else)
+  var _origLoadAll = loadAll;
+  loadAll = function () {
+    _origLoadAll();
+    loadUnitPacks();
+  };
+
+  document.getElementById('up-search').addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    var filtered = allUnitPacks.filter(function (up) {
+      return (up.name || '').toLowerCase().includes(q) ||
+             (up.packDesc || '').toLowerCase().includes(q) ||
+             (up.packUom || '').toLowerCase().includes(q);
+    });
+    renderUnitPackTable(filtered);
+  });
+
+  document.getElementById('up-add').addEventListener('click', function () {
+    api.post('/api/unit-packs', {
+      name: 'New Unit',
+      packQty: 1,
+      packDesc: '1 unit',
+      packUom: 'units'
+    }).then(function () {
+      loadUnitPacks();
+      window.reloadRefDataSelective('unit-packs');
+      util.showToast('Unit/Pack added');
+    });
+  });
+
+  function renderUnitPackTable(unitPacks) {
+    var tbody = document.getElementById('up-tbody');
+    if (!tbody) return;
+    var html = '';
+    unitPacks.forEach(function (up) {
+      html += '<tr>' +
+        '<td class="editable" data-id="' + up.id + '" data-field="name" data-type="unit-packs">' + util.escHtml(up.name) + '</td>' +
+        '<td class="editable number" data-id="' + up.id + '" data-field="packQty" data-type="unit-packs">' + util.formatNum(up.packQty, up.packQty % 1 === 0 ? 0 : 2) + '</td>' +
+        '<td class="editable" data-id="' + up.id + '" data-field="packDesc" data-type="unit-packs">' + util.escHtml(up.packDesc) + '</td>' +
+        '<td class="editable" data-id="' + up.id + '" data-field="packUom" data-type="unit-packs">' + util.escHtml(up.packUom) + '</td>' +
+        '<td><button class="btn-danger" data-del-id="' + up.id + '" data-del-type="unit-packs">Del</button></td>' +
+        '</tr>';
+    });
+    tbody.innerHTML = html;
+    bindEditing(tbody, 'unit-packs');
+    bindDelete(tbody, 'unit-packs');
+
+    var el = document.getElementById('up-count');
+    if (el) el.textContent = unitPacks.length + ' unit/pack definitions';
+  }
+
+  // Override startEdit to handle unit-packs isText fields
+  var _origStartEdit = startEdit;
+  startEdit = function (td, type) {
+    if (type === 'unit-packs') {
+      var field = td.getAttribute('data-field');
+      if (field === 'name' || field === 'packDesc' || field === 'packUom') {
+        // Force text treatment
+        if (td.classList.contains('editing')) return;
+        var id = td.getAttribute('data-id');
+        var oldVal = td.textContent.trim();
+        td.classList.add('editing');
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.value = oldVal;
+        td.textContent = '';
+        td.appendChild(input);
+        input.focus();
+        input.select();
+
+        function save() {
+          var data = {};
+          data[field] = input.value;
+          api.put('/api/unit-packs/' + id, data).then(function () {
+            loadUnitPacks();
+            window.reloadRefDataSelective('unit-packs');
+          });
+        }
+        input.addEventListener('blur', save);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') input.blur();
+          if (e.key === 'Escape') loadUnitPacks();
+        });
+        return;
+      }
+    }
+    _origStartEdit(td, type);
+  };
+
+  // === REACTIVE DATA EVENTS ===
+  // Dispatch events when products or suppliers change so other tabs can react
+  var _origLoadAllReactive = loadAll;
+  loadAll = function () {
+    _origLoadAllReactive();
+    // After loading, notify other tabs that reference data may have changed
+    window.dispatchEvent(new CustomEvent('inputs-data-changed'));
+  };
 })();

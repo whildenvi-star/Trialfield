@@ -57,6 +57,7 @@ let store = {
   programs: [],
   orders: [],
   deliveries: [],
+  unitPacks: [],
   farmGeoJSON: null
 };
 
@@ -514,6 +515,28 @@ crudRoutes('buyers', 'buyers', 'buy', null, clearPricingCache);
 // Suppliers
 crudRoutes('suppliers', 'suppliers', 'sup');
 
+// Unit/Pack Definitions — configurable unit types with pack sizing
+crudRoutes('unit-packs', 'unitPacks', 'up');
+
+// Seed default unit packs if collection is empty on first load
+(function ensureDefaultUnitPacks() {
+  if (!store.unitPacks || store.unitPacks.length === 0) {
+    store.unitPacks = [
+      { id: 'up_bag50', name: 'Bag', packQty: 50, packDesc: '50 lb bag', packUom: 'lbs' },
+      { id: 'up_bag80', name: 'Bag', packQty: 80, packDesc: '80 lb bag', packUom: 'lbs' },
+      { id: 'up_tote40', name: 'Tote', packQty: 40, packDesc: '40 unit tote', packUom: 'units' },
+      { id: 'up_probox50', name: 'ProBox', packQty: 50, packDesc: '50 lb ProBox', packUom: 'lbs' },
+      { id: 'up_probox80', name: 'ProBox', packQty: 80, packDesc: '80 lb ProBox', packUom: 'lbs' },
+      { id: 'up_pallet', name: 'Pallet', packQty: 2000, packDesc: '2000 lb pallet', packUom: 'lbs' },
+      { id: 'up_jug25', name: 'Jug', packQty: 2.5, packDesc: '2.5 gal jug', packUom: 'gallons' },
+      { id: 'up_drum55', name: 'Drum', packQty: 55, packDesc: '55 gal drum', packUom: 'gallons' },
+      { id: 'up_bin', name: 'Bin', packQty: 2000, packDesc: '2000 lb bin', packUom: 'lbs' },
+      { id: 'up_unit', name: 'Unit', packQty: 1, packDesc: '1 unit', packUom: 'units' },
+      { id: 'up_each', name: 'Each', packQty: 1, packDesc: '1 each', packUom: 'units' }
+    ];
+  }
+})();
+
 // Orders
 crudRoutes('orders', 'orders', 'ord');
 
@@ -815,7 +838,7 @@ app.get('/api/forecast', function (req, res) {
   });
 
   // Group by category
-  var categoryOrder = ['Seed', 'Fertilizer', 'Chemical', 'Other'];
+  var categoryOrder = ['Seed', 'Fertilizer', 'Chemical', 'Biological', 'Other'];
   var grouped = {};
   Object.values(productMap).forEach(function (row) {
     if (row.totalQty <= 0) return; // filter zero-qty
@@ -838,6 +861,142 @@ app.get('/api/forecast', function (req, res) {
     .map(function (cat) { return { name: cat, products: grouped[cat] }; });
 
   res.json({ categories: categories });
+});
+
+// --- Product Demand Table for Receiving Manager ---
+// Combines forecast data with order/delivery status for receiving area use
+app.get('/api/demand', function (req, res) {
+  res.set('Cache-Control', 'no-store');
+
+  var productIndex = {};
+  (store.products || []).forEach(function (p) {
+    productIndex[(p.name || '').trim().toLowerCase()] = p;
+  });
+  var seedIndex = {};
+  (store.seeds || []).forEach(function (s) {
+    seedIndex[(s.variety || '').trim().toLowerCase()] = s;
+  });
+  var supplierMap = {};
+  (store.suppliers || []).forEach(function (sup) {
+    supplierMap[sup.id] = sup.name;
+  });
+  var unitPackMap = {};
+  (store.unitPacks || []).forEach(function (up) {
+    unitPackMap[up.id] = up;
+  });
+
+  var demandRows = [];
+
+  // Aggregate products from field inputs
+  var productAgg = {};
+  (store.fields || []).forEach(function (field) {
+    var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    (field.inputs || []).forEach(function (inp) {
+      if (!inp.productName) return;
+      var key = inp.productName.trim().toLowerCase();
+      if (!productAgg[key]) productAgg[key] = { name: inp.productName, totalQty: 0 };
+      productAgg[key].totalQty += (inp.quantity || 0) * acres;
+    });
+  });
+
+  Object.values(productAgg).forEach(function (agg) {
+    var product = productIndex[agg.name.trim().toLowerCase()];
+    demandRows.push({
+      productName: agg.name,
+      type: 'input',
+      category: product ? (product.category || 'Other') : 'Other',
+      supplierId: product ? (product.supplierId || '') : '',
+      supplierName: product ? (supplierMap[product.supplierId] || '') : '',
+      unitPackId: product ? (product.unitPackId || '') : '',
+      unitPackDesc: product && product.unitPackId ? ((unitPackMap[product.unitPackId] || {}).packDesc || '') : (product ? (product.purchaseUnit || '') : ''),
+      packQty: product && product.unitPackId ? ((unitPackMap[product.unitPackId] || {}).packQty || 1) : 1,
+      totalQty: Math.round(agg.totalQty * 100) / 100,
+      totalUnitsExpected: 0, // computed below
+      deliveryWindow: '', // TODO: derive from order dates if available
+      status: 'pending'
+    });
+  });
+
+  // Aggregate seeds from field seed assignments
+  var seedAgg = {};
+  (store.fields || []).forEach(function (field) {
+    if (!field.seed || !field.seed.variety) return;
+    var key = field.seed.variety.trim().toLowerCase();
+    var s = seedIndex[key];
+    var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    var pop = field.seed.population || 0;
+    var seedsPerUnit = s ? (s.seedsPerUnit || 1) : 1;
+    var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
+    if (!seedAgg[key]) seedAgg[key] = { name: field.seed.variety, totalQty: 0 };
+    seedAgg[key].totalQty += qty;
+  });
+
+  Object.values(seedAgg).forEach(function (agg) {
+    var seed = seedIndex[agg.name.trim().toLowerCase()];
+    demandRows.push({
+      productName: agg.name + (seed ? ' (' + (seed.crop || '') + ')' : ''),
+      type: 'seed',
+      category: 'Seed',
+      supplierId: seed ? (seed.supplierId || '') : '',
+      supplierName: seed ? (supplierMap[seed.supplierId] || '') : '',
+      unitPackId: '',
+      unitPackDesc: 'units',
+      packQty: 1,
+      totalQty: agg.totalQty,
+      totalUnitsExpected: agg.totalQty,
+      deliveryWindow: '',
+      status: 'pending'
+    });
+  });
+
+  // Enrich with order/delivery status
+  var orderedMap = {};
+  var deliveredMap = {};
+  var deliveryWindowMap = {};
+  (store.orders || []).forEach(function (order) {
+    (order.items || []).forEach(function (item) {
+      orderedMap[item.productName] = (orderedMap[item.productName] || 0) + (item.orderedQty || 0);
+      if (order.deliveryDate) deliveryWindowMap[item.productName] = order.deliveryDate;
+    });
+  });
+  (store.deliveries || []).forEach(function (del) {
+    (del.items || []).forEach(function (item) {
+      deliveredMap[item.productName] = (deliveredMap[item.productName] || 0) + (item.deliveredQty || 0);
+    });
+  });
+
+  demandRows.forEach(function (row) {
+    var key = row.productName;
+    var ordered = orderedMap[key] || 0;
+    var delivered = deliveredMap[key] || 0;
+
+    // Compute totalUnitsExpected for input products (seeds already computed above)
+    if (row.type === 'input' && row.packQty > 0) {
+      row.totalUnitsExpected = Math.ceil(row.totalQty / row.packQty);
+    }
+
+    row.orderedQty = ordered;
+    row.deliveredQty = delivered;
+    row.deliveryWindow = deliveryWindowMap[key] || '';
+
+    // Determine status from order/delivery state
+    if (delivered >= row.totalQty && row.totalQty > 0) {
+      row.status = 'received';
+    } else if (ordered > 0) {
+      row.status = 'ordered';
+    } else {
+      row.status = 'pending';
+    }
+  });
+
+  // Sort: Seeds first, then by category, then by name
+  demandRows.sort(function (a, b) {
+    if (a.type !== b.type) return a.type === 'seed' ? -1 : 1;
+    if (a.category !== b.category) return a.category.localeCompare(b.category);
+    return a.productName.localeCompare(b.productName);
+  });
+
+  res.json({ rows: demandRows, generatedAt: new Date().toISOString() });
 });
 
 // --- CBOT Futures Fetch (with 15-minute cache) ---
@@ -1256,6 +1415,57 @@ function migrateData() {
       else if (chemPat.test(n)) p.category = 'Chemical';
       else if (seedPat.test(n)) p.category = 'Seed';
       else p.category = 'Other';
+      changed = true;
+    }
+  });
+  // v2 recategorization — add Biological category and reclassify "Other" products
+  var bioPat = /\bBioActive\b|\bBioRepel\b|\bBio[-\s]?Cal\b|\bUtrisha\b|\bMycoGold\b|\bN-Fix\b|\bRhizol|\bENDO\b/i;
+  var bioPat2 = /beneficial\s*nemato|chitosan|\bEco\s*Tec\b|living\s*carbon|compost\s*tea|\bRegalia|\bOroboost\b/i;
+  var chemPat2 = /\(2x2\.5\s*Gal\)|\(2x1\s*Gal\)|\(4x|\(265\s*Gal\)|\(250\s*Gal\)/i;
+  var chemNames = /\bRoundUp\b|\bClarity\b|\bCobra\b|\bLiberty\b|\bPowerMax\b|\bValor\b|\bVerdict\b|\bZidua\b|\bSharpen\b|\bStatus\b|\bOutlook\b|\bBasagran\b|\bFlexstar\b|\bAuthority\b|\bBuccaneer\b|\bDurango\b|\bEnlist\b|\bDistinct\b|\bHuskie\b/i;
+  var chemNames2 = /\bProwl\b|\bResicore\b|\bMustang\b|\bCapture\b|\bHeadline\b|\bVeltyma\b|\bMiravis\b|\bNIS\b|\bCrop\s*Oil\b|\bMeth\s*Oil\b|\bSurfactant|\bCalisto\b|\bPantego\b|\bSonic\b|\bMauler\b|\bCavallo\b|\bUltim/i;
+  var chemNames3 = /\bAccent\b|\bBatallion\b|\bCeridian\b|\bForsyte\b|\bHexus\b|\bHomeplate\b|\bInflame\b|\bInterline\b|\bLaudis\b|\bPalisade\b|\bPemex\b|\bSandea\b|\bSatellite\b|\bSteadfast\b|\bStrellius\b|\bThunder\b|\bTriCor\b|\bVeracity\b|\bVolunteer\b|\bWeedone\b|\bBackstop\b|\bRaptor\b/i;
+  var fertNames = /\bfeathermeal\b|chicken\s*(litter|crumbles)|\bChick\s*Magic\b|\bSustane\b|\bOrganical\b|\bForti[-\s]?(Cal|Phos)\b|\bchilean\s*nitrate\b|\bMicroHum\b|\bS04\b|\bGypsum\b|\bcopper\s*sulfate\b|\bZone\s*N\b/i;
+  var fertNames2 = /\bMint\s*castings\b|\bnon\s*organic\s*s04\b|\bBio[-\s]?Cal\b|\b50\/50\s*Blend\b|\b98G\b|\bBoost\b|\bBoron\b|\bCoron\b|\bMagnesium\b|\bManganese\b|\bZinc\b|\bTeraFed\b|\bZone\s*Tr/i;
+  (store.products || []).forEach(function (p) {
+    if (!p._recatV2 && p.category === 'Other') {
+      var n = p.name || '';
+      if (bioPat.test(n) || bioPat2.test(n)) p.category = 'Biological';
+      else if (chemPat2.test(n) || chemNames.test(n) || chemNames2.test(n) || chemNames3.test(n)) p.category = 'Chemical';
+      else if (fertPat.test(n) || fertNames.test(n) || fertNames2.test(n)) p.category = 'Fertilizer';
+      p._recatV2 = true;
+      changed = true;
+    }
+  });
+  // Add purchaseUnit field — infer from conversionRate + unit
+  var CONV_TO_PURCHASE = {
+    '2000': { 'Lbs': 'Ton', 'lbs': 'Ton' },
+    '128': { 'OZ': 'Gal', 'oz': 'Gal' },
+    '8': { 'Pts': 'Gal' },
+    '4': { 'Quart': 'Gal' },
+    '16': { 'OZ': 'Lb', 'oz': 'Lb' },
+    '56': { 'Lbs': 'Bu', 'lbs': 'Bu' }
+  };
+  (store.products || []).forEach(function (p) {
+    if (p.purchaseUnit === undefined) {
+      var conv = String(p.conversionRate);
+      var unitMap = CONV_TO_PURCHASE[conv];
+      if (unitMap && unitMap[p.unit]) {
+        p.purchaseUnit = unitMap[p.unit];
+      } else if (p.conversionRate === 1) {
+        p.purchaseUnit = p.unit;
+      } else if (p.unit === 'Gal' && p.conversionRate > 100) {
+        p.purchaseUnit = 'Ton';
+      } else {
+        p.purchaseUnit = p.unit;
+      }
+      changed = true;
+    }
+  });
+  // Add organic field — auto-detect OMRI in product name
+  (store.products || []).forEach(function (p) {
+    if (p.organic === undefined) {
+      p.organic = /OMRI/i.test(p.name || '');
       changed = true;
     }
   });

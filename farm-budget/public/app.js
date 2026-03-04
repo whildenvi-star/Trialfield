@@ -119,10 +119,11 @@
     laborOverhead: [],
     buyers: [],
     suppliers: [],
-    programs: []
+    programs: [],
+    unitPacks: []
   };
 
-  // Full reference data load: 11 API calls (down from 15).
+  // Full reference data load: 12 API calls.
   // crop-names, product-names, implement-names, seed-varieties are derived
   // client-side from products/implements/seeds/cropTypes — no extra HTTP needed.
   function loadRefData() {
@@ -137,7 +138,8 @@
       api.get('/api/labor-overhead'),
       api.get('/api/buyers'),
       api.get('/api/suppliers'),
-      api.get('/api/programs')
+      api.get('/api/programs'),
+      api.get('/api/unit-packs')
     ]).then(function (results) {
       window.refData.enterprises = results[0];
       window.refData.settings = results[1];
@@ -150,6 +152,7 @@
       window.refData.buyers = results[8];
       window.refData.suppliers = results[9];
       window.refData.programs = results[10];
+      window.refData.unitPacks = results[11] || [];
 
       // Derive convenience lists client-side (saves 4 HTTP round-trips)
       deriveConvenienceLists();
@@ -222,7 +225,8 @@
         'products': 'products', 'implements': 'implements',
         'seeds': 'seeds', 'crop-pricing': 'cropPricing',
         'crop-types': 'cropTypes', 'labor-overhead': 'laborOverhead',
-        'buyers': 'buyers', 'suppliers': 'suppliers', 'programs': 'programs'
+        'buyers': 'buyers', 'suppliers': 'suppliers', 'programs': 'programs',
+        'unit-packs': 'unitPacks'
       };
       keyList.forEach(function (k, i) {
         var refKey = apiToRef[k];
@@ -383,6 +387,34 @@
 
   // Reload ref data helper (full reload — backward compat)
   window.reloadRefData = loadRefData;
+
+  // --- Reference Sub-Navigation ---
+  document.querySelectorAll('.ref-sub-btn[data-ref-sub]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.ref-sub-btn[data-ref-sub]').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var sub = btn.getAttribute('data-ref-sub');
+      document.querySelectorAll('#tab-reference .ref-sub-content').forEach(function (sec) {
+        sec.classList.toggle('active', sec.id === 'ref-sub-' + sub);
+      });
+    });
+  });
+
+  // --- Forecast Sub-Navigation ---
+  document.querySelectorAll('.ref-sub-btn[data-fc-sub]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.ref-sub-btn[data-fc-sub]').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      var sub = btn.getAttribute('data-fc-sub');
+      document.querySelectorAll('#tab-forecasts .fc-sub-content').forEach(function (sec) {
+        sec.classList.toggle('active', sec.id === 'fc-sub-' + sub);
+      });
+      // Trigger demand load when switching to demand sub-tab
+      if (sub === 'demand') {
+        window.dispatchEvent(new CustomEvent('demand-activate'));
+      }
+    });
+  });
 
   // --- Initial Load ---
   var restoredFromHash = restoreTab();
