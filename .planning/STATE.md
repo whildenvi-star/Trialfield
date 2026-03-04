@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v4.0 — Phase 22: FSA Crop Sync Improvement
+**Current focus:** v4.0 — Phase 23: Settlement Closure (grain-tickets)
 
 ## Current Position
 
-Phase: 22 of 23 (FSA Crop Sync Improvement)
-Plan: 1 of 1 in current phase
-Status: Phase complete
-Last activity: 2026-03-04 — Phase 22 Plan 01 complete (enterprise-preview endpoint + UI panel, 2 tasks, 3 files)
+Phase: 23 of 23 (Settlement Closure)
+Plan: 0 of N in current phase
+Status: Phase 21 plan 01 complete; Phase 22 complete; ready for Phase 23
+Last activity: 2026-03-04 — Phase 21 Plan 01 complete (group subtotals + profit/COP coloring + print accounting parens, 2 tasks, 6 files)
 
-Progress: [███░░░░░░░] 50% (v4.0 — 2/4 phases complete)
+Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
 
 ## Performance Metrics
 
@@ -38,6 +38,10 @@ Progress: [███░░░░░░░] 50% (v4.0 — 2/4 phases complete)
 - [22-01]: cachedFetch (60s TTL, 5s timeout) used for /api/dashboard — consistent with existing cross-app fetch pattern
 - [22-01]: budgetGrandTotal prefers dash.grandTotals.acres if available, falls back to sum of row budgetAcres
 - [22-01]: NON_CROP_NAMES filter includes alfalfa and intermediate wheatgrass per FSA-03 spec
+- [21-01]: Dashboard COP coloring uses profitPerAcre sign as proxy for COP vs price (crop row object lacks pricePerUnit)
+- [21-01]: Enterprise module view profitCls switched to util.profitClass() for zero-case consistency
+- [21-01]: Field-Level Input Plan rewritten to use _computed budget data for group subtotals; forecast product table preserved below
+- [21-01]: PDF money() globally uses accounting parentheses ($X.XX) for all negative values
 
 ### Pending Todos
 
@@ -50,6 +54,6 @@ Progress: [███░░░░░░░] 50% (v4.0 — 2/4 phases complete)
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 22-01-PLAN.md (FSA enterprise-preview endpoint + UI panel, 2 tasks, 3 files)
+Stopped at: Completed 21-01-PLAN.md (group subtotals + profit/COP coloring + print accounting parens, 2 tasks, 6 files)
 Resume file: None
-Next action: /gsd:plan-phase 23
+Next action: Execute phase 23 (Settlement Closure)

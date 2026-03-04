@@ -86,7 +86,7 @@ Plans:
   2. When Profit/AC or Profit (w/ Payments) is negative, the value is displayed in red
   3. The Orders tab appears in farm-budget navigation and user can create a PO, assign a supplier, and track order status
   4. The Deliveries tab appears in farm-budget navigation and user can log a delivery receipt, link it to an order, and track items received
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 21-01-PLAN.md — Group subtotals in field editor preview + profit/COP coloring across all views + print report formatting
@@ -146,6 +146,6 @@ Plans:
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 3/3 | Complete | 2026-03-03 |
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
 | 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 21. Farm-Budget Field Editor Polish | v4.0 | 0/2 | Not started | - |
+| 21. Farm-Budget Field Editor Polish | 1/2 | In Progress|  | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 0/3 | Not started | - |
