@@ -186,11 +186,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | HRV-02 | Phase 18 | Complete |
 | PDF-01 | Phase 18 | Complete |
 | PDF-02 | Phase 18 | Complete |
-| INV-01 | Phase 19 | Planned |
-| INV-02 | Phase 19 | Planned |
+| INV-01 | Phase 19 Plan 01 | Complete |
+| INV-02 | Phase 19 Plan 01 | Complete |
 | INV-03 | Phase 19 | Planned |
-| INV-04 | Phase 19 | Planned |
-| INV-05 | Phase 19 | Planned |
+| INV-04 | Phase 19 Plan 01 | Complete |
+| INV-05 | Phase 19 Plan 01 | Complete |
 
 **v2.0 Coverage:**
 - v2.0 requirements: 18 total

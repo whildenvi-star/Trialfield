@@ -41,6 +41,8 @@ key-files:
     - farm-budget/public/index.html
     - farm-budget/public/style.css
     - farm-budget/public/inputs-manager.js
+    - farm-budget/public/calc.js
+    - farm-budget/data/data.json
 
 key-decisions:
   - "Forecast endpoint is server-side (GET /api/forecast) — avoids re-implementing Calc.computeApplicationPrice client-side"
@@ -71,7 +73,7 @@ completed: 2026-03-04
 - **Started:** 2026-03-04T03:13:08Z
 - **Completed:** 2026-03-04T03:19:12Z
 - **Tasks:** 2
-- **Files modified:** 8 (4 modified, 4 created)
+- **Files modified:** 10 (6 modified, 4 created)
 
 ## Accomplishments
 - GET /api/forecast returns 4 categories (Seed/Fertilizer/Chemical/Other) with per-product farm-wide totals, supplier resolution, ordered/delivered quantities, and per-field breakdowns
@@ -87,6 +89,7 @@ Each task was committed atomically:
 
 1. **Task 1: Server-side data migration, forecast endpoint, orders/deliveries CRUD** - `b3d8c7d` (feat)
 2. **Task 2: HTML navigation restructure, tab content sections, day/night CSS** - `0691d74` (feat)
+3. **Data migration results and calc.js planted-acres enhancement** - `7995917` (feat)
 
 **Plan metadata:** (see final commit below)
 
@@ -99,6 +102,8 @@ Each task was committed atomically:
 - `farm-budget/public/orders.js` - NEW: Orders tab IIFE shell with order list render
 - `farm-budget/public/deliveries.js` - NEW: Deliveries tab IIFE shell with delivery list render
 - `farm-budget/public/reports.js` - NEW: Reports module with printReport() utility and print CSS
+- `farm-budget/public/calc.js` - Enhanced: plantedAcres vs full-field rent distinction; springFertTotal/fallFertTotal/laborTotal/overheadTotal added
+- `farm-budget/data/data.json` - Updated: products now have category field from heuristic migration; orders/deliveries arrays initialized
 
 ## Decisions Made
 - Forecast endpoint is server-side to avoid duplicating `Calc.computeApplicationPrice()` client-side
@@ -108,7 +113,20 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] calc.js planted-acres vs full-field rent distinction**
+- **Found during:** Task 1 (execution review of calc.js dependency used by /api/forecast)
+- **Issue:** calc.js used a single `acres` variable for both rent and crop costs. For partially-planted fields, rent was incorrectly computed on plantedAcres rather than the full field (landlord obligation is on total field acres).
+- **Fix:** Added `rentAcres = field.acres` (full field) and `effectiveAcres = plantedAcres || field.acres`, split rent onto `rentAcres`, all crop costs onto `effectiveAcres`. Added `springFertTotal`, `fallFertTotal`, `laborTotal`, `overheadTotal` convenience totals. Updated interest base to use `rentPerCropAcre` for accurate carry cost allocation.
+- **Files modified:** farm-budget/public/calc.js, farm-budget/data/data.json (runtime migration auto-ran)
+- **Verification:** /api/forecast returns correct data; server starts cleanly
+- **Committed in:** `7995917`
+
+---
+
+**Total deviations:** 1 auto-fixed (Rule 1 - calculation bug for partially-planted fields)
+**Impact on plan:** Correctness fix for calc.js ensures accurate forecast unit costs. No scope creep.
 
 ## Issues Encountered
 None.
