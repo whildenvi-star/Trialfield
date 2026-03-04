@@ -73,26 +73,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | — | Pending |
-| FIX-02 | — | Pending |
-| BUD-01 | — | Pending |
-| BUD-02 | — | Pending |
-| BUD-03 | — | Pending |
-| BUD-04 | — | Pending |
-| FSA-01 | — | Pending |
-| FSA-02 | — | Pending |
-| FSA-03 | — | Pending |
-| FSA-04 | — | Pending |
-| REC-01 | — | Pending |
-| REC-02 | — | Pending |
-| REC-03 | — | Pending |
-| REC-04 | — | Pending |
+| FIX-01 | Phase 20 | Pending |
+| FIX-02 | Phase 20 | Pending |
+| BUD-01 | Phase 21 | Pending |
+| BUD-02 | Phase 21 | Pending |
+| BUD-03 | Phase 21 | Pending |
+| BUD-04 | Phase 21 | Pending |
+| FSA-01 | Phase 22 | Pending |
+| FSA-02 | Phase 22 | Pending |
+| FSA-03 | Phase 22 | Pending |
+| FSA-04 | Phase 22 | Pending |
+| REC-01 | Phase 23 | Pending |
+| REC-02 | Phase 23 | Pending |
+| REC-03 | Phase 23 | Pending |
+| REC-04 | Phase 23 | Pending |
 
 **Coverage:**
 - v4.0 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14 ⚠️
+- Mapped to phases: 14
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 after initial definition*
+*Last updated: 2026-03-04 — traceability complete after roadmap creation*

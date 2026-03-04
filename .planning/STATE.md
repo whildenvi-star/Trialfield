@@ -5,14 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v4.0 Cross-Module Polish & Settlement Closure
+**Current focus:** v4.0 — Phase 20: Farm-Registry Bug Fix
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-04 — Milestone v4.0 started
+Phase: 20 of 23 (Farm-Registry Bug Fix)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-04 — v4.0 roadmap created (4 phases, 14 requirements)
+
+Progress: [░░░░░░░░░░] 0% (v4.0 — 0/4 phases complete)
 
 ## Performance Metrics
 
@@ -28,20 +30,12 @@ Last activity: 2026-03-04 — Milestone v4.0 started
 
 ### Decisions
 
-All decisions archived to milestone ROADMAP files:
-- milestones/v1.0-ROADMAP.md
-- milestones/v1.1-ROADMAP.md
-- milestones/v2.0-ROADMAP.md
-- milestones/v3.0-ROADMAP.md
+- [v4.0]: Phase order chosen for minimal risk — bugs first (20), then farm-budget polish (21), then FSA sync (22), then grain-tickets settlement closure (23)
+- [v4.0]: All four modules are independent — phases 20-23 have no dependencies on each other
 
 ### Pending Todos
 
-5 pending todos in `.planning/todos/pending/`:
-- Sync crop plan from macro rollup into FSA acres report (fsa-acres) — SCOPED IN v4.0
-- Fix field registry acres and ownership save bug (farm-registry) — SCOPED IN v4.0
-- Add field editor category totals and red negative profit (farm-budget) — SCOPED IN v4.0
-- Work on grain ticket system enhancements (general) — SCOPED IN v4.0 (settlement closure)
-- Rework seed/input inventory (farm-budget) — MOSTLY DONE in v3.0, remaining: unhide Orders/Deliveries tabs
+5 todos scoped into v4.0 — all mapped to phases 20-23. No remaining unscoped todos.
 
 ### Blockers/Concerns
 
@@ -50,6 +44,6 @@ All decisions archived to milestone ROADMAP files:
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Defining v4.0 requirements
-Resume file: N/A
-Next action: Complete requirements definition and roadmap creation
+Stopped at: Roadmap created for v4.0 (phases 20-23)
+Resume file: None
+Next action: /gsd:plan-phase 20
