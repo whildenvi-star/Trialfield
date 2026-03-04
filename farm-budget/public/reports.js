@@ -17,15 +17,34 @@
     'thead { display: table-header-group; }',
     'tfoot { display: table-footer-group; }',
     '.total-row td { font-weight: bold; border-top: 2px solid #333; }',
+    '.subtotal-row td { font-weight: bold; border-top: 1px solid #666; background: #f5f5f5; font-size: 9.5pt; }',
+    '.group-header-row td { font-weight: bold; background: #e0e0e0; font-size: 9.5pt; text-transform: uppercase; letter-spacing: 0.04em; }',
+    '.profit-neg { color: #cc0000 !important; }',
+    '.profit-pos { color: #1a6b10 !important; }',
     '.no-print { display: none; }',
     '@page { margin: 0.75in; }',
-    '@media print { body { -webkit-print-color-adjust: exact; } }'
+    '@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .profit-neg { color: #cc0000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .profit-pos { color: #1a6b10 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }'
   ].join('\n');
 
   // --- Helper: format money for print ---
   function fmtMoney(n) {
     if (n === null || n === undefined || isNaN(n)) return '--';
     return '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // --- Helper: format money with accounting parentheses for negative values ---
+  // Negative: (123.45) in red; positive: $123.45
+  function formatPrintMoney(n) {
+    if (n === null || n === undefined || isNaN(n)) return '--';
+    var v = Number(n);
+    if (v < 0) {
+      var abs = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      return '<span class="profit-neg">($' + abs + ')</span>';
+    }
+    if (v === 0) {
+      return '$0.00';
+    }
+    return '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   // --- Helper: format number for print ---
@@ -238,57 +257,156 @@
     var farmName = getFarmName(settings);
     var title = 'Field-Level Input Plan \u2014 ' + year;
 
-    var categories = (forecast && forecast.categories) || [];
-
-    // Build a map from fieldName -> list of {product, qty, unit, season, isSeed, variety, population, bags}
-    var fieldInputMap = {};
-
-    categories.forEach(function (cat) {
-      (cat.products || []).forEach(function (p) {
-        (p.fields || []).forEach(function (f) {
-          if (!fieldInputMap[f.fieldName]) {
-            fieldInputMap[f.fieldName] = { acres: f.acres || 0, inputs: [] };
-          }
-          fieldInputMap[f.fieldName].inputs.push({
-            productName: p.productName,
-            unit: p.unit || '',
-            qty: f.qty || 0,
-            season: f.season || '',
-            isSeed: p.isSeedVariety || false,
-            ratePerAc: f.acres > 0 ? (f.qty / f.acres) : 0
-          });
-        });
-      });
+    // Sort fields alphabetically by name
+    var sortedFields = (fields || []).slice().sort(function (a, b) {
+      return (a.name || '').localeCompare(b.name || '');
     });
-
-    // Sort field names alphabetically
-    var fieldNames = Object.keys(fieldInputMap).sort();
 
     var body = '';
 
-    if (fieldNames.length === 0) {
+    if (sortedFields.length === 0) {
       body += '<p>No field-level input data found. Add inputs to fields in the Macro Roll-Up first.</p>';
     } else {
-      fieldNames.forEach(function (fieldName) {
-        var fieldData = fieldInputMap[fieldName];
-        body += '<h2>' + esc(fieldName) + ' (' + fmtNum(fieldData.acres, 1) + ' ac)</h2>';
-        body += '<table>';
-        body += '<thead><tr>';
-        body += '<th>Product</th><th>Season</th><th>Qty</th><th>Unit</th><th>Rate/Ac</th>';
-        body += '</tr></thead>';
+      sortedFields.forEach(function (field) {
+        var b = field._computed || {};
+        var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+
+        body += '<h2>' + esc(field.name) + ' (' + fmtNum(acres, 1) + ' ac) — ' + esc(field.crop || '') + '</h2>';
+
+        // Budget group subtotals table (matching field editor preview layout)
+        body += '<table style="margin-bottom:0.5em">';
+        body += '<thead><tr><th>Budget Category</th><th>Item</th><th class="num">/Ac</th><th class="num">Total</th></tr></thead>';
         body += '<tbody>';
 
-        fieldData.inputs.forEach(function (inp) {
-          body += '<tr>';
-          body += '<td>' + esc(inp.productName) + (inp.isSeed ? ' <em>[seed]</em>' : '') + '</td>';
-          body += '<td>' + esc(inp.season) + '</td>';
-          body += '<td class="num">' + fmtNum(inp.qty, 0) + '</td>';
-          body += '<td>' + esc(inp.unit) + '</td>';
-          body += '<td class="num">' + fmtNum(inp.ratePerAc, 2) + '</td>';
-          body += '</tr>';
-        });
+        // Land group
+        body += '<tr class="group-header-row"><td colspan="4">Land</td></tr>';
+        body += '<tr><td></td><td>Rent</td>';
+        body += '<td class="num">' + fmtMoney(b.rentPerCropAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.rentTotal) + '</td></tr>';
+        body += '<tr class="subtotal-row"><td></td><td>Land Subtotal</td>';
+        body += '<td class="num">' + fmtMoney(b.rentPerCropAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.rentTotal) + '</td></tr>';
+
+        // Inputs group
+        body += '<tr class="group-header-row"><td colspan="4">Inputs</td></tr>';
+        body += '<tr><td></td><td>Spring Fertilizer</td>';
+        body += '<td class="num">' + fmtMoney(b.springFertPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.springFertTotal) + '</td></tr>';
+        body += '<tr><td></td><td>Fall Fertilizer</td>';
+        body += '<td class="num">' + fmtMoney(b.fallFertPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.fallFertTotal) + '</td></tr>';
+        body += '<tr><td></td><td>Seed</td>';
+        body += '<td class="num">' + fmtMoney(b.seedCostPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.seedTotal) + '</td></tr>';
+        var inputsSubAc = (b.springFertPerAcre || 0) + (b.fallFertPerAcre || 0) + (b.seedCostPerAcre || 0);
+        var inputsSubTot = (b.springFertTotal || 0) + (b.fallFertTotal || 0) + (b.seedTotal || 0);
+        body += '<tr class="subtotal-row"><td></td><td>Inputs Subtotal</td>';
+        body += '<td class="num">' + fmtMoney(inputsSubAc) + '</td>';
+        body += '<td class="num">' + fmtMoney(inputsSubTot) + '</td></tr>';
+
+        // Operations group
+        body += '<tr class="group-header-row"><td colspan="4">Operations</td></tr>';
+        body += '<tr><td></td><td>Machinery</td>';
+        body += '<td class="num">' + fmtMoney(b.machineryPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.machineryTotal) + '</td></tr>';
+        body += '<tr><td></td><td>Labor</td>';
+        body += '<td class="num">' + fmtMoney(b.laborPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.laborTotal) + '</td></tr>';
+        body += '<tr><td></td><td>Overhead</td>';
+        body += '<td class="num">' + fmtMoney(b.overheadPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.overheadTotal) + '</td></tr>';
+        body += '<tr><td></td><td>Fuel</td>';
+        body += '<td class="num">' + fmtMoney(b.fuelPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.fuelTotal) + '</td></tr>';
+        var opsSubAc = (b.machineryPerAcre || 0) + (b.laborPerAcre || 0) + (b.overheadPerAcre || 0) + (b.fuelPerAcre || 0);
+        var opsSubTot = (b.machineryTotal || 0) + (b.laborTotal || 0) + (b.overheadTotal || 0) + (b.fuelTotal || 0);
+        body += '<tr class="subtotal-row"><td></td><td>Operations Subtotal</td>';
+        body += '<td class="num">' + fmtMoney(opsSubAc) + '</td>';
+        body += '<td class="num">' + fmtMoney(opsSubTot) + '</td></tr>';
+
+        // Other group
+        body += '<tr class="group-header-row"><td colspan="4">Other</td></tr>';
+        body += '<tr><td></td><td>Drying</td>';
+        body += '<td class="num">' + fmtMoney(b.dryingPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.dryingTotal) + '</td></tr>';
+        body += '<tr><td></td><td>Interest</td>';
+        body += '<td class="num">' + fmtMoney(b.interestPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.interestTotal) + '</td></tr>';
+        body += '<tr><td></td><td>Crop Insurance</td>';
+        body += '<td class="num">' + fmtMoney(b.cropInsurancePerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.cropInsuranceTotal) + '</td></tr>';
+        var otherSubAc = (b.dryingPerAcre || 0) + (b.interestPerAcre || 0) + (b.cropInsurancePerAcre || 0);
+        var otherSubTot = (b.dryingTotal || 0) + (b.interestTotal || 0) + (b.cropInsuranceTotal || 0);
+        body += '<tr class="subtotal-row"><td></td><td>Other Subtotal</td>';
+        body += '<td class="num">' + fmtMoney(otherSubAc) + '</td>';
+        body += '<td class="num">' + fmtMoney(otherSubTot) + '</td></tr>';
+
+        // Totals
+        body += '<tr class="total-row"><td colspan="2">Total Expense</td>';
+        body += '<td class="num">' + fmtMoney(b.expPerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.expTotal) + '</td></tr>';
+
+        body += '<tr><td colspan="2">Income</td>';
+        body += '<td class="num">' + fmtMoney(b.cropIncomePerAcre) + '</td>';
+        body += '<td class="num">' + fmtMoney(b.cropIncomeTotal) + '</td></tr>';
+
+        var profitAc = b.profitPerAcre || 0;
+        var profitTot = b.profitFarmWithoutPayments || 0;
+        var profitWithPayAc = (b.profitPerAcre || 0) + (b.auxTotalPerAcre || 0);
+        var profitWithPayTot = b.profitFarmWithPayments || 0;
+
+        body += '<tr class="total-row"><td colspan="2">Profit/AC</td>';
+        body += '<td class="num">' + formatPrintMoney(profitAc) + '</td>';
+        body += '<td class="num">' + formatPrintMoney(profitTot) + '</td></tr>';
+
+        body += '<tr class="total-row"><td colspan="2">Profit (w/ Payments)</td>';
+        body += '<td class="num">' + formatPrintMoney(profitWithPayAc) + '</td>';
+        body += '<td class="num">' + formatPrintMoney(profitWithPayTot) + '</td></tr>';
+
+        var copClass = (b.cop || 0) > 0 && (b.pricePerUnit || 0) > 0
+          ? ((b.cop > b.pricePerUnit) ? ' class="profit-neg"' : ' class="profit-pos"')
+          : '';
+        body += '<tr><td colspan="2">COP</td>';
+        body += '<td class="num"' + copClass + '>' + fmtMoney(b.cop) + '</td>';
+        body += '<td></td></tr>';
 
         body += '</tbody></table>';
+
+        // Product inputs detail table (from forecast data)
+        var categories = (forecast && forecast.categories) || [];
+        var fieldInputs = [];
+        categories.forEach(function (cat) {
+          (cat.products || []).forEach(function (p) {
+            (p.fields || []).forEach(function (fi) {
+              if (fi.fieldName === field.name && (fi.qty || 0) > 0) {
+                fieldInputs.push({
+                  productName: p.productName,
+                  unit: p.unit || '',
+                  qty: fi.qty || 0,
+                  season: fi.season || '',
+                  isSeed: p.isSeedVariety || false,
+                  ratePerAc: fi.acres > 0 ? (fi.qty / fi.acres) : 0
+                });
+              }
+            });
+          });
+        });
+
+        if (fieldInputs.length > 0) {
+          body += '<table style="margin-top:0.25em">';
+          body += '<thead><tr><th>Product</th><th>Season</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate/Ac</th></tr></thead>';
+          body += '<tbody>';
+          fieldInputs.forEach(function (inp) {
+            body += '<tr>';
+            body += '<td>' + esc(inp.productName) + (inp.isSeed ? ' <em>[seed]</em>' : '') + '</td>';
+            body += '<td>' + esc(inp.season) + '</td>';
+            body += '<td class="num">' + fmtNum(inp.qty, 0) + '</td>';
+            body += '<td>' + esc(inp.unit) + '</td>';
+            body += '<td class="num">' + fmtNum(inp.ratePerAc, 2) + '</td>';
+            body += '</tr>';
+          });
+          body += '</tbody></table>';
+        }
       });
     }
 

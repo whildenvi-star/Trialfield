@@ -1832,10 +1832,13 @@ td.editing input, td.editing select {
   .tab-content { display: block !important; opacity: 1 !important; }
   .tab-content:not(.active) { display: none !important; }
   table { border: 1px solid #333; }
-  body { background: white; color: #111; }
+  body { background: white; color: #111; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .field-card { border: 1px solid #ddd; }
   td, th { color: #111 !important; }
   .number { color: #111 !important; }
+  /* Preserve profit coloring in print */
+  .profit-neg { color: #cc0000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .profit-pos { color: #1a6b10 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
 /* ============================================================
