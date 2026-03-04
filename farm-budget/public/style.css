@@ -1423,6 +1423,26 @@ td.editing input, td.editing select {
 .prev-item .val-total { color: var(--text-light); font-weight: 500; font-size: 0.68rem; }
 .prev-item.highlight .val { color: var(--primary); font-weight: 700; text-shadow: var(--glow); }
 .prev-item.highlight .val-total { color: var(--primary); font-weight: 600; font-size: 0.75rem; }
+.prev-group-subtotal {
+  border-top: 1px solid var(--border);
+  margin-top: 0.1rem;
+  padding-top: 0.1rem;
+}
+.prev-group-subtotal .label {
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text);
+}
+.prev-group-subtotal .val {
+  font-weight: 700;
+  color: var(--text-bright);
+}
+.prev-group-subtotal .val-total {
+  font-weight: 600;
+  color: var(--text);
+}
 .prev-totals {
   border-top: 1px solid var(--primary-dim);
   padding-top: 0.2rem;
@@ -2300,6 +2320,10 @@ body.light::after { display: none; }
 /* Adjust profit text for light backgrounds */
 body.light .profit-pos { text-shadow: none; }
 body.light .profit-neg { text-shadow: none; }
+
+/* Subtotal rows in light mode */
+body.light .prev-group-subtotal .val { color: var(--text-bright); }
+body.light .prev-group-subtotal .val-total { color: var(--text); }
 
 /* Ensure print still works */
 body.light .rg-summary .number { text-shadow: none; }
