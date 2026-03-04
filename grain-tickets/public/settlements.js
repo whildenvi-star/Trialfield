@@ -66,6 +66,7 @@
         if (target === 'history') loadSettlements();
         if (target === 'manual') renderManualEntryView();
         if (target === 'reconciliation') loadReconciliation();
+        if (target === 'season-summary') loadSeasonSummary();
       });
     });
 
@@ -1318,6 +1319,174 @@
     filterCard.appendChild(filterGrid);
     container.appendChild(filterCard);
 
+    // Tolerance Settings panel (collapsible, between filter bar and results)
+    var tolerancePanel = document.createElement('div');
+    tolerancePanel.className = 'import-form';
+    tolerancePanel.style.cssText = 'margin-bottom:1.5rem;';
+    tolerancePanel.id = 'recon-tolerance-panel';
+
+    var toleranceHeader = document.createElement('div');
+    toleranceHeader.style.cssText = 'display:flex;align-items:center;justify-content:space-between;cursor:pointer;';
+    toleranceHeader.id = 'recon-tolerance-header';
+
+    var toleranceTitle = document.createElement('span');
+    toleranceTitle.style.cssText = 'font-size:0.85rem;font-weight:500;color:var(--text);';
+    toleranceTitle.textContent = 'Tolerance Settings';
+
+    var toleranceToggle = document.createElement('button');
+    toleranceToggle.style.cssText = 'background:none;border:none;color:var(--text-light);cursor:pointer;font-size:0.85rem;padding:0;';
+    toleranceToggle.id = 'recon-tolerance-toggle';
+
+    // Restore expanded state from localStorage
+    var toleranceExpanded = localStorage.getItem('recon-tolerance-expanded') === 'true';
+
+    toleranceHeader.appendChild(toleranceTitle);
+    toleranceHeader.appendChild(toleranceToggle);
+    tolerancePanel.appendChild(toleranceHeader);
+
+    var toleranceBody = document.createElement('div');
+    toleranceBody.id = 'recon-tolerance-body';
+    toleranceBody.style.cssText = 'margin-top:0.75rem;';
+    tolerancePanel.appendChild(toleranceBody);
+
+    container.appendChild(tolerancePanel);
+
+    // Helper to show/hide tolerance body and update toggle label
+    function setToleranceExpanded(expanded) {
+      toleranceExpanded = expanded;
+      localStorage.setItem('recon-tolerance-expanded', expanded ? 'true' : 'false');
+      toleranceBody.style.display = expanded ? 'block' : 'none';
+      toleranceToggle.textContent = expanded ? '- Collapse' : '+ Expand';
+    }
+
+    // Helper to load and render tolerance settings for a given crop year
+    function loadToleranceSettings(cropYear) {
+      if (!toleranceExpanded || !cropYear) return;
+      toleranceBody.innerHTML = '<p style="color:var(--text-light);font-size:0.85rem;">Loading...</p>';
+      fetch('/api/crop-config/tolerances?cropYear=' + cropYear)
+        .then(function (r) { return r.json(); })
+        .then(function (rows) {
+          toleranceBody.innerHTML = '';
+          if (!rows || rows.length === 0) {
+            var noData = document.createElement('p');
+            noData.style.cssText = 'font-size:0.85rem;color:var(--text-light);font-style:italic;';
+            noData.textContent = 'No crop configurations found for ' + cropYear + '. Add crops in the admin panel first.';
+            toleranceBody.appendChild(noData);
+            return;
+          }
+
+          // Table of crops with editable tolerance inputs
+          var tbl = document.createElement('table');
+          tbl.style.cssText = 'width:100%;border-collapse:collapse;font-size:0.85rem;';
+
+          var thead = document.createElement('thead');
+          thead.innerHTML = '<tr>' +
+            '<th style="text-align:left;padding:0.35rem 0.5rem;color:var(--text-light);font-weight:500;border-bottom:1px solid var(--border);">Crop</th>' +
+            '<th style="text-align:right;padding:0.35rem 0.5rem;color:var(--text-light);font-weight:500;border-bottom:1px solid var(--border);">Tolerance %</th>' +
+            '<th style="text-align:right;padding:0.35rem 0.5rem;color:var(--text-light);font-weight:500;border-bottom:1px solid var(--border);">Tolerance Lbs</th>' +
+            '<th style="padding:0.35rem 0.5rem;border-bottom:1px solid var(--border);"></th>' +
+            '</tr>';
+          tbl.appendChild(thead);
+
+          var tbody = document.createElement('tbody');
+          rows.forEach(function (row) {
+            var tr = document.createElement('tr');
+
+            var nameTd = document.createElement('td');
+            nameTd.style.cssText = 'padding:0.4rem 0.5rem;color:var(--text);';
+            nameTd.textContent = row.cropName;
+            tr.appendChild(nameTd);
+
+            var pctTd = document.createElement('td');
+            pctTd.style.cssText = 'padding:0.4rem 0.5rem;text-align:right;';
+            var pctInput = document.createElement('input');
+            pctInput.type = 'number';
+            pctInput.step = '0.1';
+            pctInput.min = '0';
+            pctInput.value = row.tolerancePct;
+            pctInput.style.cssText = 'width:6rem;text-align:right;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:0.2rem 0.4rem;';
+            pctTd.appendChild(pctInput);
+            tr.appendChild(pctTd);
+
+            var lbsTd = document.createElement('td');
+            lbsTd.style.cssText = 'padding:0.4rem 0.5rem;text-align:right;';
+            var lbsInput = document.createElement('input');
+            lbsInput.type = 'number';
+            lbsInput.step = '1';
+            lbsInput.min = '0';
+            lbsInput.value = row.toleranceLbs;
+            lbsInput.style.cssText = 'width:6rem;text-align:right;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:0.2rem 0.4rem;';
+            lbsTd.appendChild(lbsInput);
+            tr.appendChild(lbsTd);
+
+            // Status cell for "Saved" indicator
+            var statusTd = document.createElement('td');
+            statusTd.style.cssText = 'padding:0.4rem 0.5rem;min-width:3rem;';
+            tr.appendChild(statusTd);
+
+            // Auto-save on blur or Enter
+            function saveTolerance() {
+              var pct = parseFloat(pctInput.value);
+              var lbs = parseFloat(lbsInput.value);
+              if (isNaN(pct) || pct < 0 || isNaN(lbs) || lbs < 0) {
+                statusTd.textContent = 'Invalid';
+                statusTd.style.color = 'var(--danger)';
+                return;
+              }
+              fetch('/api/crop-config/' + row.id + '/tolerance', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tolerancePct: pct, toleranceLbs: lbs })
+              })
+                .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+                .then(function (res) {
+                  if (res.ok) {
+                    statusTd.textContent = 'Saved';
+                    statusTd.style.color = 'var(--success, #4caf50)';
+                    clearTimeout(statusTd._hideTimer);
+                    statusTd._hideTimer = setTimeout(function () {
+                      statusTd.textContent = '';
+                    }, 2000);
+                  } else {
+                    statusTd.textContent = 'Error';
+                    statusTd.style.color = 'var(--danger)';
+                  }
+                })
+                .catch(function () {
+                  statusTd.textContent = 'Error';
+                  statusTd.style.color = 'var(--danger)';
+                });
+            }
+
+            [pctInput, lbsInput].forEach(function (inp) {
+              inp.addEventListener('blur', saveTolerance);
+              inp.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { inp.blur(); }
+              });
+            });
+
+            tbody.appendChild(tr);
+          });
+          tbl.appendChild(tbody);
+          toleranceBody.appendChild(tbl);
+        })
+        .catch(function () {
+          toleranceBody.innerHTML = '<p style="color:var(--danger);font-size:0.85rem;">Failed to load tolerance settings.</p>';
+        });
+    }
+
+    // Toggle expand/collapse
+    toleranceHeader.addEventListener('click', function () {
+      setToleranceExpanded(!toleranceExpanded);
+      if (toleranceExpanded) {
+        var cy = yearSel.value;
+        if (cy) loadToleranceSettings(parseInt(cy, 10));
+      }
+    });
+
+    // Apply initial state
+    setToleranceExpanded(toleranceExpanded);
+
     // Results area
     var resultsArea = document.createElement('div');
     resultsArea.id = 'recon-results';
@@ -1328,6 +1497,8 @@
       var cropYear = yearSel.value;
       if (!buyerId) { showSettlementToast('Please select a buyer.'); return; }
       if (!cropYear) { showSettlementToast('Please select a crop year.'); return; }
+      // Refresh tolerance panel if expanded
+      if (toleranceExpanded) loadToleranceSettings(parseInt(cropYear, 10));
       renderReconciliation(resultsArea, parseInt(buyerId, 10), parseInt(cropYear, 10));
     });
   }
@@ -1392,16 +1563,55 @@
     summaryRows.forEach(function (row) {
       var tr = document.createElement('tr');
       var variancePct = row.variancePct || 0;
-      var varianceClass = Math.abs(variancePct) <= 1 ? 'variance-ok' : 'variance-warn';
+      // Use server-computed withinTolerance if present; fall back to legacy 1% threshold
+      var varianceClass;
+      if (typeof row.withinTolerance === 'boolean') {
+        varianceClass = row.withinTolerance ? 'variance-ok' : 'variance-warn';
+      } else {
+        varianceClass = Math.abs(variancePct) <= 1 ? 'variance-ok' : 'variance-warn';
+      }
       var varianceLbs = row.varianceLbs || 0;
       var varianceSign = varianceLbs >= 0 ? '+' : '';
       var varianceDisplay = varianceSign + Math.round(varianceLbs).toLocaleString() + ' lbs (' + varianceSign + variancePct.toFixed(2) + '%)';
-      tr.innerHTML =
-        '<td>' + escHtml(row.crop || '--') + '</td>' +
-        '<td class="number">' + Math.round(row.farmLbs || 0).toLocaleString() + '</td>' +
-        '<td class="number">' + Math.round(row.buyerLbs || 0).toLocaleString() + '</td>' +
-        '<td class="number ' + varianceClass + '">' + varianceDisplay + '</td>' +
-        '<td class="number">' + (row.farmCount || 0) + '</td>';
+
+      // Build tooltip for tolerance context
+      var tolPct = row.tolerancePct || 0;
+      var tolLbs = row.toleranceLbs || 0;
+      var tolDesc = '';
+      if (tolPct > 0) {
+        tolDesc = tolPct + '% tolerance';
+      } else if (tolLbs > 0) {
+        tolDesc = tolLbs.toLocaleString() + ' lbs tolerance';
+      } else {
+        tolDesc = 'No tolerance configured';
+      }
+      var withinLabel = (typeof row.withinTolerance === 'boolean')
+        ? (row.withinTolerance ? 'Within tolerance' : 'Exceeds tolerance')
+        : '';
+      var tooltip = withinLabel ? withinLabel + ': ' + tolDesc : tolDesc;
+
+      var varianceTd = document.createElement('td');
+      varianceTd.className = 'number ' + varianceClass;
+      varianceTd.textContent = varianceDisplay;
+      varianceTd.title = tooltip;
+
+      var cropTd = document.createElement('td');
+      cropTd.textContent = row.crop || '--';
+      var farmLbsTd = document.createElement('td');
+      farmLbsTd.className = 'number';
+      farmLbsTd.textContent = Math.round(row.farmLbs || 0).toLocaleString();
+      var buyerLbsTd = document.createElement('td');
+      buyerLbsTd.className = 'number';
+      buyerLbsTd.textContent = Math.round(row.buyerLbs || 0).toLocaleString();
+      var ticketsTd = document.createElement('td');
+      ticketsTd.className = 'number';
+      ticketsTd.textContent = (row.farmCount || 0);
+
+      tr.appendChild(cropTd);
+      tr.appendChild(farmLbsTd);
+      tr.appendChild(buyerLbsTd);
+      tr.appendChild(varianceTd);
+      tr.appendChild(ticketsTd);
       tbody.appendChild(tr);
     });
     tbl.appendChild(tbody);
