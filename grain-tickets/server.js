@@ -1879,6 +1879,7 @@ app.post('/api/reconciliation/manual-link', async (req, res) => {
 });
 
 // PATCH /api/settlement-lines/:lineId/dispute — flag a settlement line as disputed
+// Accepts: notes (legacy), resolutionStatus, resolutionNotes, resolutionDate
 app.patch('/api/settlement-lines/:lineId/dispute', async (req, res) => {
   try {
     const lineId = parseInt(req.params.lineId, 10);
@@ -1895,6 +1896,49 @@ app.patch('/api/settlement-lines/:lineId/dispute', async (req, res) => {
       });
     }
 
+    const VALID_RESOLUTION_STATUSES = ['Buyer Error', 'Our Error', 'Write-off', 'Pending'];
+
+    // Detect if this is a structured resolution save (new) or legacy notes-only save
+    if (req.body.resolutionStatus !== undefined) {
+      // New structured resolution flow
+      const resolutionStatus = req.body.resolutionStatus;
+      if (!VALID_RESOLUTION_STATUSES.includes(resolutionStatus)) {
+        return res.status(400).json({
+          error: `Invalid resolutionStatus '${resolutionStatus}'. Must be one of: ${VALID_RESOLUTION_STATUSES.join(', ')}`
+        });
+      }
+
+      const resolutionNotes = (req.body.resolutionNotes || '').trim() || null;
+
+      // Auto-set resolutionDate for resolved statuses; clear it for Pending
+      let resolutionDate = null;
+      if (resolutionStatus === 'Pending') {
+        resolutionDate = null; // Not yet resolved
+      } else {
+        // Resolved: use provided date or auto-set to now
+        if (req.body.resolutionDate) {
+          resolutionDate = new Date(req.body.resolutionDate);
+          if (isNaN(resolutionDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid resolutionDate format. Use ISO date string.' });
+          }
+        } else {
+          resolutionDate = new Date();
+        }
+      }
+
+      const updated = await prisma.settlementLine.update({
+        where: { id: lineId },
+        data: {
+          matchStatus: 'disputed',
+          resolutionStatus,
+          resolutionNotes,
+          resolutionDate
+        }
+      });
+      return res.json(updated);
+    }
+
+    // Legacy backward-compatible path: only notes provided
     const notes = (req.body.notes || '').trim() || null;
     const updated = await prisma.settlementLine.update({
       where: { id: lineId },
@@ -1903,6 +1947,145 @@ app.patch('/api/settlement-lines/:lineId/dispute', async (req, res) => {
     res.json(updated);
   } catch (e) {
     console.error('PATCH /api/settlement-lines/:lineId/dispute error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/reconciliation/season-summary?cropYear=N — cross-buyer season summary
+app.get('/api/reconciliation/season-summary', async (req, res) => {
+  try {
+    const cropYear = parseInt(req.query.cropYear, 10);
+    if (isNaN(cropYear)) {
+      return res.status(400).json({ error: 'cropYear query parameter is required' });
+    }
+
+    // All buyers (for name resolution)
+    const allBuyers = await prisma.buyer.findMany();
+    const buyerMap = {};
+    allBuyers.forEach(b => { buyerMap[b.id] = b; });
+
+    // Farm-side: aggregate tickets by buyerId for this crop year
+    const farmAgg = await prisma.ticket.groupBy({
+      by: ['buyerId'],
+      where: { cropYear, buyerId: { not: null } },
+      _count: { id: true },
+      _sum: { netWeight: true }
+    });
+
+    // Settlement-side: all settlements + lines for this crop year
+    const settlements = await prisma.settlement.findMany({
+      where: { cropYear },
+      include: {
+        buyer: true,
+        lines: {
+          select: {
+            id: true,
+            netWeight: true,
+            netPayment: true,
+            matchStatus: true,
+            ticketId: true
+          }
+        }
+      }
+    });
+
+    // Build per-buyer settlement aggregates
+    const settlementByBuyer = {};
+    settlements.forEach(s => {
+      if (!settlementByBuyer[s.buyerId]) {
+        settlementByBuyer[s.buyerId] = {
+          lineCount: 0,
+          matchedCount: 0,
+          unmatchedCount: 0,
+          disputedCount: 0,
+          totalPayment: 0,
+          buyerWeightMatched: 0
+        };
+      }
+      const agg = settlementByBuyer[s.buyerId];
+      s.lines.forEach(l => {
+        agg.lineCount++;
+        const status = l.matchStatus || 'unmatched';
+        if (status === 'matched' || status === 'manual') {
+          agg.matchedCount++;
+          agg.buyerWeightMatched += l.netWeight || 0;
+        } else if (status === 'disputed') {
+          agg.disputedCount++;
+        } else {
+          agg.unmatchedCount++;
+        }
+        agg.totalPayment += l.netPayment ? parseFloat(l.netPayment) : 0;
+      });
+    });
+
+    // Build per-buyer farm-side lookup
+    const farmByBuyer = {};
+    farmAgg.forEach(row => {
+      if (row.buyerId !== null) {
+        farmByBuyer[row.buyerId] = {
+          ticketCount: row._count.id,
+          totalWeightLbs: row._sum.netWeight || 0
+        };
+      }
+    });
+
+    // Union of all buyer IDs that have tickets OR settlements in this crop year
+    const buyerIds = new Set([
+      ...Object.keys(farmByBuyer).map(Number),
+      ...Object.keys(settlementByBuyer).map(Number)
+    ]);
+
+    const result = [];
+    buyerIds.forEach(buyerId => {
+      const buyer = buyerMap[buyerId];
+      if (!buyer) return; // Skip orphaned buyer IDs
+
+      const farm = farmByBuyer[buyerId] || { ticketCount: 0, totalWeightLbs: 0 };
+      const sett = settlementByBuyer[buyerId] || {
+        lineCount: 0, matchedCount: 0, unmatchedCount: 0,
+        disputedCount: 0, totalPayment: 0, buyerWeightMatched: 0
+      };
+
+      // Variance: farm weight minus buyer weight (matched lines only)
+      const varianceLbs = farm.totalWeightLbs - sett.buyerWeightMatched;
+      const variancePct = farm.totalWeightLbs > 0
+        ? Math.round((varianceLbs / farm.totalWeightLbs) * 10000) / 100
+        : 0;
+
+      // Derive paymentStatus
+      let paymentStatus;
+      if (sett.lineCount === 0) {
+        paymentStatus = 'No Settlements';
+      } else if (sett.disputedCount > 0) {
+        paymentStatus = 'Has Disputes';
+      } else if (sett.unmatchedCount > 0) {
+        paymentStatus = 'Partially Matched';
+      } else {
+        paymentStatus = 'Fully Matched';
+      }
+
+      result.push({
+        buyerId,
+        buyerName: buyer.name,
+        buyerShortCode: buyer.shortCode || null,
+        ticketCount: farm.ticketCount,
+        totalWeightLbs: Math.round(farm.totalWeightLbs),
+        settlementLineCount: sett.lineCount,
+        matchedCount: sett.matchedCount,
+        unmatchedCount: sett.unmatchedCount,
+        disputedCount: sett.disputedCount,
+        totalPayment: Math.round(sett.totalPayment * 100) / 100,
+        varianceLbs: Math.round(varianceLbs),
+        variancePct,
+        paymentStatus
+      });
+    });
+
+    // Sort by buyer name ascending
+    result.sort((a, b) => a.buyerName.localeCompare(b.buyerName));
+    res.json(result);
+  } catch (e) {
+    console.error('GET /api/reconciliation/season-summary error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
