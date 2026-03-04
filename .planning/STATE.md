@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 19-seed-input-inventory-redesign — IN PROGRESS
-Plan: 1 of 3 complete
-Status: Phase 19 Plan 01 shipped — server foundation (forecast endpoint, orders/deliveries CRUD), nav restructure (Forecasts/Orders/Deliveries/Seeds/Reference), day/night CSS, 4 placeholder JS modules.
-Last activity: 2026-03-04 — Phase 19 Plan 01 executed and committed
+Plan: 2 of 3 complete
+Status: Phase 19 Plan 02 shipped — Forecast Hub and Orders tab full UI: category tables, expandable rows, checkbox selection, Create Order flow, % status bars, order cards, inline edit, delivery aggregation.
+Last activity: 2026-03-04 — Phase 19 Plan 02 executed and committed
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
@@ -21,7 +21,7 @@ Last activity: 2026-03-04 — Phase 19 Plan 01 executed and committed
 **Phase 17 (Input & Seed Compilation + NOP):** Plans 01-02 ALL COMPLETE — Phase 17 shipped
 **Phase 18 (Rotation + Harvest + PDF):** Plans 01-02-03 ALL COMPLETE — Phase 18 shipped
 **v3.0 Organic Cert Transparency:** Phases 15-18 ALL COMPLETE — v3.0 shipped
-**Phase 19 (Seed & Input Inventory Redesign):** Plan 01 COMPLETE — server foundation, nav restructure, day/night theme
+**Phase 19 (Seed & Input Inventory Redesign):** Plans 01-02 COMPLETE — server foundation, Forecast Hub UI, Orders tab UI
 
 ## Performance Metrics
 
@@ -61,6 +61,8 @@ Last activity: 2026-03-04 — Phase 19 Plan 01 executed and committed
 | Phase 18-rotation-snapshot-harvest-compilation-pdf P02 | 418 | 2 tasks | 4 files |
 | Phase 18-rotation-snapshot-harvest-compilation-pdf P03 | 139 | 2 tasks | 5 files |
 | Phase 19-seed-input-inventory-redesign P01 | 6 | 2 tasks | 8 files |
+| Phase 19-seed-input-inventory-redesign P01 | 15 | 2 tasks | 10 files |
+| Phase 19-seed-input-inventory-redesign P02 | 173 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -162,6 +164,12 @@ v3.0 architectural decisions:
 - [Phase 19-01]: Deliveries use custom routes (not crudRoutes factory) to enable recalcOrderStatus() on every write
 - [Phase 19-01]: Old Inputs Manager content moved to Reference tab — element IDs preserved, inputs-manager.js listener updated from 'inputs' to 'reference'
 - [Phase 19-01]: Sun/moon Unicode glyphs (U+263C/U+263E) replace [day]/[night] text in theme toggle button
+- [Phase 19-seed-input-inventory-redesign]: Deliveries use custom routes (not crudRoutes factory) to enable recalcOrderStatus() auto-transition on every write
+- [Phase 19-seed-input-inventory-redesign]: Reference tab preserves all element IDs — old Inputs content moved intact, inputs-manager.js listener updated from 'inputs' to 'reference' only
+- [Phase 19-seed-input-inventory-redesign]: calc.js rent uses full field acres (landlord obligation); inputs/seed/machinery use plantedAcres when set (crop cost allocation for partial-planted fields)
+- [Phase 19-02]: Forecast reloads on every tab-activate (no loaded guard) — live procurement data must reflect latest delivery changes
+- [Phase 19-02]: Create Order navigates to Orders tab via location.hash + manual tab-activate dispatch — no tight coupling to app.js internals
+- [Phase 19-02]: Delivery cache keyed by orderId, invalidated on qty edit or forecast-changed event — prevents stale totals in expanded rows
 
 ### Roadmap Evolution
 
@@ -192,6 +200,6 @@ v3.0:
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 19-seed-input-inventory-redesign Plan 01 — server foundation, forecast endpoint, orders/deliveries CRUD, nav restructure, day/night CSS
-Resume file: Phase 19 Plan 01 complete — procurement pipeline backend and HTML shell ready for Wave 2 UI
-Next action: Phase 19 Plan 02 (Forecast Hub UI and orders form) per roadmap
+Stopped at: Completed 19-seed-input-inventory-redesign Plan 02 — Forecast Hub and Orders tab UI shipped
+Resume file: Phase 19 Plan 02 complete — Forecast Hub with category tables, Create Order flow, Orders tab with inline edit and delivery aggregation
+Next action: Phase 19 Plan 03 (Deliveries tab UI and print reports) per roadmap

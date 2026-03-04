@@ -224,7 +224,7 @@ Plans:
 **Goal:** Replace standalone Supplier/Product/Seeds CRUD in farm-budget with a procurement pipeline — Forecasts (live-computed from Macro Roll-Up), Orders (checkbox-select from forecast, grouped by supplier), Deliveries (multi-delivery per order with auto-status transition), and 5 print-optimized HTML reports — with restructured navigation and day/night theme
 **Depends on:** Phase 18
 **Requirements:** INV-01, INV-02, INV-03, INV-04, INV-05
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 19-01-PLAN.md — Server foundation (migrateData extensions, GET /api/forecast, orders/deliveries CRUD with status auto-transition), HTML nav restructure (Forecasts/Orders/Deliveries/Seeds/Reference tabs), day/night CSS
