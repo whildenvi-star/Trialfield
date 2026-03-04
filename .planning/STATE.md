@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 ## Current Position
 
 Phase: 23 of 23 (Settlement Closure)
-Plan: 0 of N in current phase
-Status: Phase 21 complete (plans 01+02); Phase 22 complete; ready for Phase 23
-Last activity: 2026-03-04 — Phase 21 Plan 02 complete (unhide Orders/Deliveries tabs, reorder navigation, add inline create-order form, 2 tasks, 3 files)
+Plan: 1 of N in current phase
+Status: Phase 23 Plan 01 complete (tolerance config); phases 20-22 complete
+Last activity: 2026-03-04 — Phase 23 Plan 01 complete (per-crop tolerance config, tolerance CRUD API, tolerance UI, 2 tasks, 4 files)
 
-Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
+Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, plan 01/N complete)
 
 ## Performance Metrics
 
@@ -25,6 +25,10 @@ Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
 | v2.0 | 9-14 | 13 | 2026-03-04 |
 | v3.0 | 15-19 | 12 | 2026-03-04 |
 | **Total** | **19** | **44** | |
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 23 | 01 | 190s (3m 10s) | 2 | 4 |
 
 ## Accumulated Context
 
@@ -45,6 +49,7 @@ Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
 - [21-02]: Orders and Deliveries tabs placed after Sales per user-specified tab order (Dashboard, Enterprises, Forecasts, Seeds, Reference, Programs, Sales, Orders, Deliveries, Map)
 - [21-02]: Inline create-order form added to Orders tab so users can create POs directly without visiting Forecasts tab
 - [21-02]: Empty state messages updated to reference new + New Order / + New Delivery toolbar buttons
+- [Phase 23]: tolerancePct takes precedence over toleranceLbs when both set; withinTolerance computed at read-time in summary endpoint (no new DB column); UI falls back to 1% threshold when server withinTolerance absent
 
 ### Pending Todos
 
@@ -57,6 +62,6 @@ Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 21-02-PLAN.md (unhide Orders/Deliveries tabs, reorder navigation, add inline create-order form, 2 tasks, 3 files)
+Stopped at: Completed 23-01-PLAN.md (per-crop tolerance config, tolerance CRUD API, tolerance settings UI, 2 tasks, 4 files)
 Resume file: None
-Next action: Execute phase 23 (Settlement Closure)
+Next action: Execute phase 23 plan 02 (fuzzy matching)

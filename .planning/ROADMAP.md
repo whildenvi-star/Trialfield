@@ -115,7 +115,7 @@ Plans:
   2. When ticket number matching fails, the system automatically searches for fuzzy candidates by date (within 2 days) and weight (within tolerance) and presents them to the user for confirmation before linking
   3. User can mark a disputed ticket with a resolution status (Buyer Error, Our Error, Write-off, Pending), add a resolution note, and record the resolution date
   4. A multi-buyer season summary page shows all buyers for a crop year with total ticket count, total weight, settlement payment total, payment status, and variance in a single view
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 23-01-PLAN.md — Per-crop weight tolerance config (CropConfig schema + CRUD API + settings UI + tolerance-aware reconciliation summary)
@@ -148,4 +148,4 @@ Plans:
 | 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 21. Farm-Budget Field Editor Polish | 2/2 | Complete    | 2026-03-04 | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 23. Settlement Closure | v4.0 | 0/3 | Not started | - |
+| 23. Settlement Closure | 1/3 | In Progress|  | - |
