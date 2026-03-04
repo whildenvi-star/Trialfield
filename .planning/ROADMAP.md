@@ -84,7 +84,11 @@
   3. A Supabase schema with profiles and module_access tables, RLS policies, and auto-profile trigger is deployable from a schema.sql file and passes a smoke test (insert user, read profile)
   4. A .env.local.example file documents all required Supabase environment variables
   5. lib/modules.js defines all 5 portal modules (macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting) with id, label, sublabel, and route
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 24-01-PLAN.md — Scaffold Next.js 14 App Router + Tailwind dark soil palette + JetBrains Mono
+- [ ] 24-02-PLAN.md — Supabase schema SQL (profiles, module_access, RLS, trigger) + seed data
+- [ ] 24-03-PLAN.md — Module registry + Supabase browser/server clients + env documentation
 
 ### Phase 25: Auth + Middleware + Route Protection
 **Goal**: Users can log in with email and password, unauthenticated requests are redirected to /login by middleware, admin routes reject non-admin users, and module routes enforce per-user access grants
