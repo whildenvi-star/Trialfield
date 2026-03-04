@@ -2227,7 +2227,7 @@ body.light .prog-stat span:last-child { color: #333; }
 .fc-header { font-weight: 600; color: var(--text-light); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .fc-expand-btn { cursor: pointer; color: var(--text-light); font-size: 0.8rem; background: none; border: none; padding: 0; }
 .fc-field-breakdown { padding: 0.25rem 2rem 0.5rem; background: var(--card-alt); border-bottom: 1px solid var(--border); font-size: 0.8rem; }
-.fc-field-row { display: grid; grid-template-columns: 2fr 0.6fr 0.8fr 0.8fr; gap: 0.5rem; padding: 0.2rem 0; color: var(--text-light); }
+.fc-field-row { display: grid; grid-template-columns: 2fr 0.6fr 0.6fr 0.8fr 0.8fr; gap: 0.5rem; padding: 0.2rem 0; color: var(--text-light); }
 
 /* Order cards */
 .ord-card { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }

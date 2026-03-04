@@ -753,11 +753,13 @@ app.get('/api/forecast', function (req, res) {
           fields: []
         };
       }
-      productMap[mapKey].totalQty += (inp.quantity || 0);
+      var fieldQty = (inp.quantity || 0) * acres;
+      productMap[mapKey].totalQty += fieldQty;
       productMap[mapKey].fields.push({
         fieldName: field.name,
         acres: acres,
-        qty: inp.quantity || 0,
+        qty: fieldQty,
+        rate: inp.quantity || 0,
         season: inp.season || ''
       });
     });

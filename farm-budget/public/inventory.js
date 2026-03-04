@@ -157,11 +157,12 @@
         // Field breakdown (hidden by default)
         if (p.fields && p.fields.length > 0) {
           html += '<div class="fc-field-breakdown" id="' + breakdownId + '" style="display:none">';
-          html += '<div class="fc-field-row" style="font-weight:600;color:var(--text-light)"><span>Field</span><span>Acres</span><span>Qty</span><span>Season</span></div>';
+          html += '<div class="fc-field-row" style="font-weight:600;color:var(--text-light)"><span>Field</span><span>Acres</span><span>Rate/Ac</span><span>Total</span><span>Season</span></div>';
           p.fields.forEach(function (f) {
             html += '<div class="fc-field-row">';
             html += '<span>' + util.escHtml(f.fieldName) + '</span>';
             html += '<span>' + util.formatNum(f.acres, 1) + '</span>';
+            html += '<span>' + (f.rate != null ? util.formatNum(f.rate, 1) : '-') + '</span>';
             html += '<span>' + util.formatNum(f.qty, 0) + ' ' + util.escHtml(p.unit || '') + '</span>';
             html += '<span>' + util.escHtml(f.season || '') + '</span>';
             html += '</div>';
