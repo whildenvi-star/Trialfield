@@ -123,27 +123,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REC-02 | Phase 23 | Complete |
 | REC-03 | Phase 23 | Complete |
 | REC-04 | Phase 23 | Complete |
-| SUP-01 | — | Pending |
-| SUP-02 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| RBAC-01 | — | Pending |
-| RBAC-02 | — | Pending |
-| RBAC-03 | — | Pending |
-| RBAC-04 | — | Pending |
-| UI-01 | — | Pending |
-| UI-02 | — | Pending |
-| UI-03 | — | Pending |
-| UI-04 | — | Pending |
-| SCF-01 | — | Pending |
-| SCF-02 | — | Pending |
-| SCF-03 | — | Pending |
+| SCF-01 | Phase 24 | Pending |
+| SCF-02 | Phase 24 | Pending |
+| SCF-03 | Phase 24 | Pending |
+| SUP-01 | Phase 24 | Pending |
+| SUP-02 | Phase 24 | Pending |
+| AUTH-01 | Phase 25 | Pending |
+| AUTH-02 | Phase 25 | Pending |
+| RBAC-01 | Phase 25 | Pending |
+| RBAC-02 | Phase 25 | Pending |
+| RBAC-03 | Phase 25 | Pending |
+| RBAC-04 | Phase 25 | Pending |
+| UI-01 | Phase 26 | Pending |
+| UI-02 | Phase 26 | Pending |
+| UI-03 | Phase 26 | Pending |
+| UI-04 | Phase 26 | Pending |
 
 **Coverage:**
 - v5.0 requirements: 15 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15 (all mapped)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 after v5.0 requirements definition*
+*Last updated: 2026-03-04 after v5.0 roadmap creation*

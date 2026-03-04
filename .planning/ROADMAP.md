@@ -6,7 +6,8 @@
 - ✅ **v1.1 Split-Field Enterprises** — Phases 5-8 (shipped 2026-03-01) — [archive](milestones/v1.1-ROADMAP.md)
 - ✅ **v2.0 Grain Traceability + Chat Agent** — Phases 9-14 (shipped 2026-03-04) — [archive](milestones/v2.0-ROADMAP.md)
 - ✅ **v3.0 Organic Cert Transparency + Procurement** — Phases 15-19 (shipped 2026-03-04) — [archive](milestones/v3.0-ROADMAP.md)
-- 🚧 **v4.0 Cross-Module Polish & Settlement Closure** — Phases 20-23 (in progress)
+- ✅ **v4.0 Cross-Module Polish & Settlement Closure** — Phases 20-23 (shipped 2026-03-04)
+- 🚧 **v5.0 Glomalin Portal — Next.js + Supabase Scaffold** — Phases 24-26 (in progress)
 
 ## Phases
 
@@ -53,74 +54,60 @@
 
 </details>
 
-### 🚧 v4.0 Cross-Module Polish & Settlement Closure (In Progress)
+<details>
+<summary>✅ v4.0 Cross-Module Polish & Settlement Closure (Phases 20-23) — SHIPPED 2026-03-04</summary>
 
-**Milestone Goal:** Fix bugs, polish the farm-budget field editor, improve FSA crop sync from macro rollup, and close the settlement reconciliation loop in grain-tickets with configurable tolerances, fuzzy matching, dispute resolution, and multi-buyer summaries.
+- [x] Phase 20: Farm-Registry Bug Fix (1/1 plan) — completed 2026-03-04
+- [x] Phase 21: Farm-Budget Field Editor Polish (2/2 plans) — completed 2026-03-04
+- [x] Phase 22: FSA Crop Sync Improvement (1/1 plan) — completed 2026-03-04
+- [x] Phase 23: Settlement Closure (3/3 plans) — completed 2026-03-04
 
-- [x] **Phase 20: Farm-Registry Bug Fix** - Fix field save so acres and ownership persist correctly (completed 2026-03-04)
-- [x] **Phase 21: Farm-Budget Field Editor Polish** - Category totals, red negative profit, Orders and Deliveries tabs live (completed 2026-03-04)
-- [x] **Phase 22: FSA Crop Sync Improvement** - Pull enterprise data from farm-budget macro rollup with side-by-side preview (completed 2026-03-04)
-- [x] **Phase 23: Settlement Closure** - Configurable tolerances, fuzzy matching, dispute workflow, multi-buyer summary (completed 2026-03-04)
+</details>
+
+### 🚧 v5.0 Glomalin Portal — Next.js + Supabase Scaffold (In Progress)
+
+**Milestone Goal:** Build a unified portal app (glomalin-portal/) using Next.js 14 App Router + Supabase that serves as the authenticated entry point to all farm modules, with role-based access control, module-level permissions, admin user management, and a React Flow node map on the landing page.
+
+- [ ] **Phase 24: Project Scaffold + Supabase Foundation** - Next.js 14 project initialized with Tailwind dark soil config, Supabase schema deployed, and both browser/server clients wired for SSR
+- [ ] **Phase 25: Auth + Middleware + Route Protection** - Login page functional, middleware redirects unauthenticated users, role checks block admin routes, module access checks block denied module routes
+- [ ] **Phase 26: Portal UI** - Public landing page with React Flow node map, dashboard with access-aware module cards, admin panel for user/access management, and module shell pages
 
 ## Phase Details
 
-### Phase 20: Farm-Registry Bug Fix
-**Goal**: Field edits in farm-registry persist correctly — reportingAcres, organicAcres, and ownership survive a page refresh
-**Depends on**: Nothing (independent module)
-**Requirements**: FIX-01, FIX-02
+### Phase 24: Project Scaffold + Supabase Foundation
+**Goal**: A working Next.js 14 App Router project exists in glomalin-portal/ with Tailwind configured for the dark soil palette, all Supabase infrastructure deployed (schema, RLS, auto-profile trigger), and both browser and server clients operational for SSR
+**Depends on**: Nothing (greenfield project in new directory)
+**Requirements**: SCF-01, SCF-02, SCF-03, SUP-01, SUP-02
 **Success Criteria** (what must be TRUE):
-  1. User edits reportingAcres, organicAcres, or ownership in the farm-registry field editor and after saving, the values are still correct after a hard page refresh
-  2. User edits growerId in farm-registry and the value persists after saving (no silent drop by the API)
-  3. No fields silently revert to previous values or go blank after a PUT to /api/fields/:id
-**Plans:** 1/1 plans complete
+  1. Running `npm run dev` in glomalin-portal/ starts a Next.js 14 App Router project on a local port with no errors
+  2. The dark soil color palette (bg #080604, surface #0e0c0b, accent #C8860A, font-mono) is applied globally via Tailwind config and visible on any page
+  3. A Supabase schema with profiles and module_access tables, RLS policies, and auto-profile trigger is deployable from a schema.sql file and passes a smoke test (insert user, read profile)
+  4. A .env.local.example file documents all required Supabase environment variables
+  5. lib/modules.js defines all 5 portal modules (macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting) with id, label, sublabel, and route
+**Plans**: TBD
 
-Plans:
-- [ ] 20-01-PLAN.md — Fix PUT whitelist (growerId), add server validation, add save error handling + loading state to client
-
-### Phase 21: Farm-Budget Field Editor Polish
-**Goal**: The farm-budget field editor shows complete cost information at a glance and the Orders/Deliveries tabs are fully operational
-**Depends on**: Nothing (independent module)
-**Requirements**: BUD-01, BUD-02, BUD-03, BUD-04
+### Phase 25: Auth + Middleware + Route Protection
+**Goal**: Users can log in with email and password, unauthenticated requests are redirected to /login by middleware, admin routes reject non-admin users, and module routes enforce per-user access grants
+**Depends on**: Phase 24
+**Requirements**: AUTH-01, AUTH-02, RBAC-01, RBAC-02, RBAC-03, RBAC-04
 **Success Criteria** (what must be TRUE):
-  1. Every budget category row in the field editor preview shows both per-acre cost and total field cost (Rent, Fertilizer, Seed, Machinery, Labor, Overhead, Fuel, Drying, Interest, Insurance)
-  2. When Profit/AC or Profit (w/ Payments) is negative, the value is displayed in red
-  3. The Orders tab appears in farm-budget navigation and user can create a PO, assign a supplier, and track order status
-  4. The Deliveries tab appears in farm-budget navigation and user can log a delivery receipt, link it to an order, and track items received
-**Plans:** 2/2 plans complete
+  1. User navigates to /login, enters valid email and password, and is redirected to /dashboard with an active session
+  2. User navigates directly to /dashboard (or any protected route) without a session and is redirected to /login
+  3. A user with role viewer or operator navigates to /admin and is redirected to /dashboard
+  4. A user without access to a module navigates to /app/org-cert (or any module route) and is redirected to /dashboard?denied=true
+  5. Admin opens the admin panel, toggles a user's module access or changes their role, and the change takes effect immediately on the next protected request
+**Plans**: TBD
 
-Plans:
-- [ ] 21-01-PLAN.md — Group subtotals in field editor preview + profit/COP coloring across all views + print report formatting
-- [ ] 21-02-PLAN.md — Unhide and activate Orders/Deliveries tabs with tab reorder and CRUD verification
-
-### Phase 22: FSA Crop Sync Improvement
-**Goal**: The FSA crop sync preview pulls live enterprise data from farm-budget and shows a meaningful side-by-side acres comparison before the user commits any changes
-**Depends on**: Nothing (independent module)
-**Requirements**: FSA-01, FSA-02, FSA-03, FSA-04
+### Phase 26: Portal UI
+**Goal**: The portal has a public landing page with the React Flow farm ecosystem node map, a dashboard with access-aware module cards, an admin panel for managing users and module access, and placeholder shell pages for all 5 modules
+**Depends on**: Phase 25
+**Requirements**: UI-01, UI-02, UI-03, UI-04
 **Success Criteria** (what must be TRUE):
-  1. Crop sync preview fetches enterprise-level crop and acres data from the farm-budget dashboard/macro rollup endpoint
-  2. Preview displays a side-by-side table comparing FSA CLU acres vs farm-budget enterprise acres for each crop
-  3. Grass CLUs and non-crop CLUs are excluded from sync proposals so only tillable, crop-assigned CLUs appear
-  4. CLUs already marked as "reported" do not appear in sync proposals
-**Plans:** 1/1 plans complete
-
-Plans:
-- [ ] 22-01-PLAN.md — Enterprise-level crop sync preview with side-by-side acres comparison and non-crop/reported filtering
-
-### Phase 23: Settlement Closure
-**Goal**: The grain-tickets settlement workflow closes the loop — users can configure tolerances, resolve fuzzy matches interactively, work disputed tickets through to resolution, and see a full season summary across all buyers
-**Depends on**: Nothing (independent from Phases 20-22; depends on existing reconciliation engine from v2.0)
-**Requirements**: REC-01, REC-02, REC-03, REC-04
-**Success Criteria** (what must be TRUE):
-  1. User can configure a per-crop weight discrepancy tolerance (as a percentage or fixed lbs) and the reconciliation engine uses that threshold to decide when to flag a match as a discrepancy
-  2. When ticket number matching fails, the system automatically searches for fuzzy candidates by date (within 2 days) and weight (within tolerance) and presents them to the user for confirmation before linking
-  3. User can mark a disputed ticket with a resolution status (Buyer Error, Our Error, Write-off, Pending), add a resolution note, and record the resolution date
-  4. A multi-buyer season summary page shows all buyers for a crop year with total ticket count, total weight, settlement payment total, payment status, and variance in a single view
-**Plans:** 3/3 plans complete
-
-Plans:
-- [ ] 23-01-PLAN.md — Per-crop weight tolerance config (CropConfig schema + CRUD API + settings UI + tolerance-aware reconciliation summary)
-- [ ] 23-02-PLAN.md — Fuzzy settlement matching (date+weight candidate search endpoint + suggestion UI with confirmation flow)
-- [ ] 23-03-PLAN.md — Dispute resolution workflow (resolution status/notes/date fields + enhanced dispute UI) and multi-buyer season summary view
+  1. Unauthenticated user visits the landing page and sees a React Flow node map of the farm ecosystem rendered with the dark soil aesthetic
+  2. Authenticated user visits /dashboard and sees module cards — cards for modules they have access to link through, cards for modules they lack access to are visually locked/grayed
+  3. Admin visits /admin and sees a user table with per-module toggle switches and a role dropdown; toggling a switch or changing a role persists the change
+  4. User with access visits /app/macro-rollup (or any module route) and sees a shell page with the module name and a "coming soon" placeholder
+**Plans**: TBD
 
 ## Progress
 
@@ -146,6 +133,9 @@ Plans:
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 3/3 | Complete | 2026-03-03 |
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
 | 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 21. Farm-Budget Field Editor Polish | 2/2 | Complete    | 2026-03-04 | - |
+| 21. Farm-Budget Field Editor Polish | v4.0 | 2/2 | Complete | 2026-03-04 |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 23. Settlement Closure | 3/3 | Complete    | 2026-03-04 | - |
+| 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
+| 24. Project Scaffold + Supabase Foundation | v5.0 | 0/TBD | Not started | - |
+| 25. Auth + Middleware + Route Protection | v5.0 | 0/TBD | Not started | - |
+| 26. Portal UI | v5.0 | 0/TBD | Not started | - |

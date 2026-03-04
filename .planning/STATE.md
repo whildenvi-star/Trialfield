@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v5.0 — Glomalin Portal (Next.js + Supabase scaffold)
+**Current focus:** v5.0 — Phase 24: Project Scaffold + Supabase Foundation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-04 — Milestone v5.0 started
+Phase: 24 of 26 (Project Scaffold + Supabase Foundation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-04 — v5.0 roadmap created (3 phases, 15 requirements mapped)
 
-Progress: [░░░░░░░░░░] 0% (v5.0 — requirements phase)
+Progress: [░░░░░░░░░░] 0% (v5.0 — ready to plan Phase 24)
 
 ## Performance Metrics
 
@@ -34,18 +34,20 @@ Progress: [░░░░░░░░░░] 0% (v5.0 — requirements phase)
 - [v5.0]: Glomalin Portal is a NEW Next.js 14 App Router project (glomalin-portal/) — not modifying existing modules
 - [v5.0]: Supabase replaces NextAuth/Prisma for auth+DB in this project — existing modules keep their stack
 - [v5.0]: QBO Integration deferred to v6.0+ — portal provides the unified shell first
+- [v5.0]: No self-registration — admin creates users; signup flow is out of scope
 
 ### Pending Todos
 
-None — fresh milestone.
+- .planning/todos/pending/2026-03-04-v4-scoping-questions-for-user.md (may be stale — v4.0 shipped)
 
 ### Blockers/Concerns
 
-- CNH FieldOps staging API no audience registered — mock mode active in organic-cert (carries over)
+- Supabase project must be created and credentials obtained before Phase 24 execution can complete
+- CNH FieldOps staging API no audience registered — mock mode active in organic-cert (carries over, not blocking v5.0)
 
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Starting v5.0 milestone
+Stopped at: v5.0 roadmap created — phases 24-26 defined
 Resume file: None
-Next action: Define requirements and create roadmap
+Next action: `/gsd:plan-phase 24`
