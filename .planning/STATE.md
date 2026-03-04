@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 
 Phase: 23 of 23 (Settlement Closure)
 Plan: 1 of N in current phase
-Status: Phase 23 Plan 01 complete (tolerance config); phases 20-22 complete
-Last activity: 2026-03-04 — Phase 23 Plan 01 complete (per-crop tolerance config, tolerance CRUD API, tolerance UI, 2 tasks, 4 files)
+Status: Phase 23 Plan 03 complete (dispute resolution workflow, season summary); plans 01+03 complete
+Last activity: 2026-03-04 — Phase 23 Plan 03 complete (dispute resolution UI, season summary view, 2 tasks, 5 files)
 
 Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, plan 01/N complete)
 
@@ -29,6 +29,7 @@ Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 23 | 01 | 190s (3m 10s) | 2 | 4 |
+| 23 | 03 | ~5 min | 2 | 5 |
 
 ## Accumulated Context
 
@@ -50,6 +51,8 @@ Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, 
 - [21-02]: Inline create-order form added to Orders tab so users can create POs directly without visiting Forecasts tab
 - [21-02]: Empty state messages updated to reference new + New Order / + New Delivery toolbar buttons
 - [Phase 23]: tolerancePct takes precedence over toleranceLbs when both set; withinTolerance computed at read-time in summary endpoint (no new DB column); UI falls back to 1% threshold when server withinTolerance absent
+- [Phase 23]: resolutionDate auto-set to now() for resolved statuses (Buyer Error, Our Error, Write-off), cleared for Pending
+- [Phase 23]: Season summary variance calculated as farm weight minus buyer matched weight only (excludes unmatched lines from variance)
 
 ### Pending Todos
 
@@ -62,6 +65,6 @@ Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, 
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 23-01-PLAN.md (per-crop tolerance config, tolerance CRUD API, tolerance settings UI, 2 tasks, 4 files)
+Stopped at: Completed 23-03-PLAN.md (dispute resolution workflow and season summary, 2 tasks, 5 files)
 Resume file: None
-Next action: Execute phase 23 plan 02 (fuzzy matching)
+Next action: Execute remaining phase 23 plans (plan 02 fuzzy matching, plan 04 multi-buyer summary if not yet done)

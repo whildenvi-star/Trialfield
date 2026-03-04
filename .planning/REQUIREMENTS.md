@@ -29,9 +29,9 @@ Requirements for v4.0 Cross-Module Polish & Settlement Closure. Each maps to roa
 ### Settlement Reconciliation
 
 - [x] **REC-01**: User can configure per-crop weight discrepancy tolerance (% or lbs) that controls when matches are flagged as discrepancies
-- [ ] **REC-02**: Multi-buyer season summary view shows all buyers with total tickets, total weight, settlement status, payment totals, and variance for the crop year
+- [x] **REC-02**: Multi-buyer season summary view shows all buyers with total tickets, total weight, settlement status, payment totals, and variance for the crop year
 - [ ] **REC-03**: When exact ticket number matching fails, system attempts fuzzy matching by date (±2 days) and weight (±tolerance%) and presents candidates for user confirmation
-- [ ] **REC-04**: User can mark disputed tickets with resolution status (Buyer Error, Our Error, Write-off, Pending), add resolution notes, and record resolution date
+- [x] **REC-04**: User can mark disputed tickets with resolution status (Buyer Error, Our Error, Write-off, Pending), add resolution notes, and record resolution date
 
 ## Future Requirements
 
@@ -84,9 +84,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FSA-03 | Phase 22 | Complete |
 | FSA-04 | Phase 22 | Complete |
 | REC-01 | Phase 23 | Complete |
-| REC-02 | Phase 23 | Pending |
+| REC-02 | Phase 23 | Complete |
 | REC-03 | Phase 23 | Pending |
-| REC-04 | Phase 23 | Pending |
+| REC-04 | Phase 23 | Complete |
 
 **Coverage:**
 - v4.0 requirements: 14 total
