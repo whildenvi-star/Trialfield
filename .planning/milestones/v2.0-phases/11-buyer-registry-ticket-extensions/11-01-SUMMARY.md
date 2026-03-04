@@ -128,3 +128,18 @@ None — no external service configuration required. farm-budget restart will pi
 ---
 *Phase: 11-buyer-registry-ticket-extensions*
 *Completed: 2026-03-02*
+
+## Self-Check: PASSED
+
+All created files verified to exist:
+- FOUND: grain-tickets/prisma/schema.prisma
+- FOUND: grain-tickets/server.js
+- FOUND: grain-tickets/public/admin.html
+- FOUND: grain-tickets/prisma/migrations/20260302073000_add_grain_bin/migration.sql
+- FOUND: farm-budget/data/data.json
+- FOUND: .planning/phases/11-buyer-registry-ticket-extensions/11-01-SUMMARY.md
+
+Commits verified:
+- FOUND: 6020ad4 (Task 1: schema + server routes)
+- FOUND: 5a3433d (Task 2: admin.html)
+- FOUND: 3c23b8a (docs: summary + state updates)
