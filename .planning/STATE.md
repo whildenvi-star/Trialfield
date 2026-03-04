@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v4.0 — Phase 20: Farm-Registry Bug Fix
+**Current focus:** v4.0 — Phase 22: FSA Crop Sync Improvement
 
 ## Current Position
 
-Phase: 20 of 23 (Farm-Registry Bug Fix)
+Phase: 22 of 23 (FSA Crop Sync Improvement)
 Plan: 1 of 1 in current phase
 Status: Phase complete
-Last activity: 2026-03-04 — Phase 20 Plan 01 complete (farm-registry field save bug fixed)
+Last activity: 2026-03-04 — Phase 22 Plan 01 complete (enterprise-preview endpoint + UI panel, 2 tasks, 3 files)
 
-Progress: [██░░░░░░░░] 25% (v4.0 — 1/4 phases complete)
+Progress: [███░░░░░░░] 50% (v4.0 — 2/4 phases complete)
 
 ## Performance Metrics
 
@@ -35,6 +35,9 @@ Progress: [██░░░░░░░░] 25% (v4.0 — 1/4 phases complete)
 - [20-01]: growerId default is grw_001 for this single-grower operation — backfilled on any PUT that passes validation
 - [20-01]: Error toast reuses existing save-toast element with save-toast-error modifier class; 4-second display vs 2-second for success
 - [20-01]: Form retains user edits on save failure — loadFields() not called in catch block
+- [22-01]: cachedFetch (60s TTL, 5s timeout) used for /api/dashboard — consistent with existing cross-app fetch pattern
+- [22-01]: budgetGrandTotal prefers dash.grandTotals.acres if available, falls back to sum of row budgetAcres
+- [22-01]: NON_CROP_NAMES filter includes alfalfa and intermediate wheatgrass per FSA-03 spec
 
 ### Pending Todos
 
@@ -47,6 +50,6 @@ Progress: [██░░░░░░░░] 25% (v4.0 — 1/4 phases complete)
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 20-01-PLAN.md (farm-registry field save bug fixed, 2 tasks, 3 files)
+Stopped at: Completed 22-01-PLAN.md (FSA enterprise-preview endpoint + UI panel, 2 tasks, 3 files)
 Resume file: None
-Next action: /gsd:plan-phase 21
+Next action: /gsd:plan-phase 23

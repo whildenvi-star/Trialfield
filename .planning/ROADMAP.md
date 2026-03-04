@@ -59,7 +59,7 @@
 
 - [x] **Phase 20: Farm-Registry Bug Fix** - Fix field save so acres and ownership persist correctly (completed 2026-03-04)
 - [ ] **Phase 21: Farm-Budget Field Editor Polish** - Category totals, red negative profit, Orders and Deliveries tabs live
-- [ ] **Phase 22: FSA Crop Sync Improvement** - Pull enterprise data from farm-budget macro rollup with side-by-side preview
+- [x] **Phase 22: FSA Crop Sync Improvement** - Pull enterprise data from farm-budget macro rollup with side-by-side preview (completed 2026-03-04)
 - [ ] **Phase 23: Settlement Closure** - Configurable tolerances, fuzzy matching, dispute workflow, multi-buyer summary
 
 ## Phase Details
@@ -101,7 +101,7 @@ Plans:
   2. Preview displays a side-by-side table comparing FSA CLU acres vs farm-budget enterprise acres for each crop
   3. Grass CLUs and non-crop CLUs are excluded from sync proposals so only tillable, crop-assigned CLUs appear
   4. CLUs already marked as "reported" do not appear in sync proposals
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 22-01-PLAN.md — Enterprise-level crop sync preview with side-by-side acres comparison and non-crop/reported filtering
@@ -147,5 +147,5 @@ Plans:
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
 | 20. Farm-Registry Bug Fix | 1/1 | Complete    | 2026-03-04 | - |
 | 21. Farm-Budget Field Editor Polish | v4.0 | 0/TBD | Not started | - |
-| 22. FSA Crop Sync Improvement | v4.0 | 0/1 | Not started | - |
+| 22. FSA Crop Sync Improvement | 1/1 | Complete   | 2026-03-04 | - |
 | 23. Settlement Closure | v4.0 | 0/TBD | Not started | - |

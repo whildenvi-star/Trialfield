@@ -21,10 +21,10 @@ Requirements for v4.0 Cross-Module Polish & Settlement Closure. Each maps to roa
 
 ### FSA Crop Sync
 
-- [ ] **FSA-01**: Crop sync preview pulls enterprise-level data from farm-budget macro rollup (dashboard endpoint) including crop, acres, and enterprise details
-- [ ] **FSA-02**: Sync preview displays side-by-side comparison of FSA CLU acres vs farm-budget enterprise acres by crop
-- [ ] **FSA-03**: Only tillable CLUs with actual crop assignments are included in sync proposals (grass/non-crop CLUs excluded)
-- [ ] **FSA-04**: CLUs already marked as "reported" are excluded from sync proposals
+- [x] **FSA-01**: Crop sync preview pulls enterprise-level data from farm-budget macro rollup (dashboard endpoint) including crop, acres, and enterprise details
+- [x] **FSA-02**: Sync preview displays side-by-side comparison of FSA CLU acres vs farm-budget enterprise acres by crop
+- [x] **FSA-03**: Only tillable CLUs with actual crop assignments are included in sync proposals (grass/non-crop CLUs excluded)
+- [x] **FSA-04**: CLUs already marked as "reported" are excluded from sync proposals
 
 ### Settlement Reconciliation
 
@@ -79,10 +79,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BUD-02 | Phase 21 | Pending |
 | BUD-03 | Phase 21 | Pending |
 | BUD-04 | Phase 21 | Pending |
-| FSA-01 | Phase 22 | Pending |
-| FSA-02 | Phase 22 | Pending |
-| FSA-03 | Phase 22 | Pending |
-| FSA-04 | Phase 22 | Pending |
+| FSA-01 | Phase 22 | Complete |
+| FSA-02 | Phase 22 | Complete |
+| FSA-03 | Phase 22 | Complete |
+| FSA-04 | Phase 22 | Complete |
 | REC-01 | Phase 23 | Pending |
 | REC-02 | Phase 23 | Pending |
 | REC-03 | Phase 23 | Pending |
