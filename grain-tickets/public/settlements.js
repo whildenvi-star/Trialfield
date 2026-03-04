@@ -1782,6 +1782,9 @@
         });
     });
 
+    // Render fuzzy match suggestions below the unmatched panels
+    renderFuzzySuggestions(container, buyerId, cropYear);
+
     // Also render matched tickets with dispute capability below
     renderMatchedWithDispute(container, buyerId, cropYear);
   }
@@ -1789,6 +1792,174 @@
   // --- Enable/disable the Link button based on selection state ---
   function updateLinkButton(linkBtn) {
     linkBtn.disabled = !(selectedFarmTicketId && selectedSettlementLineId);
+  }
+
+  // --- Render fuzzy match suggestions section ---
+  function renderFuzzySuggestions(container, buyerId, cropYear) {
+    var section = document.createElement('div');
+    section.id = 'fuzzy-suggestions-section';
+    section.style.marginBottom = '2rem';
+
+    var heading = document.createElement('h3');
+    heading.style.cssText = 'font-size:0.9rem;color:var(--primary);margin-bottom:0.75rem;font-weight:400;';
+    heading.textContent = 'Suggested Matches';
+    section.appendChild(heading);
+
+    var bodyDiv = document.createElement('div');
+    bodyDiv.id = 'fuzzy-suggestions-body';
+    bodyDiv.innerHTML = '<p style="color:var(--text-light);font-size:0.85rem;">Searching for fuzzy matches...</p>';
+    section.appendChild(bodyDiv);
+    container.appendChild(section);
+
+    fetch('/api/reconciliation/fuzzy-candidates?buyerId=' + buyerId + '&cropYear=' + cropYear)
+      .then(function (r) { return r.json(); })
+      .then(function (candidates) {
+        bodyDiv.innerHTML = '';
+
+        if (!candidates || candidates.length === 0) {
+          var empty = document.createElement('p');
+          empty.className = 'fuzzy-suggestions-empty';
+          empty.textContent = 'No fuzzy match suggestions available.';
+          bodyDiv.appendChild(empty);
+          return;
+        }
+
+        candidates.forEach(function (item) {
+          var card = document.createElement('div');
+          // Determine match quality from best candidate
+          var best = item.candidates[0];
+          var matchClass = 'wide-match';
+          if (best && best.weightVariancePct < 0.5) matchClass = 'close-match';
+          else if (best && best.weightVariancePct < 2) matchClass = 'moderate-match';
+          card.className = 'fuzzy-suggestion ' + matchClass;
+
+          // Header row: settlement line info
+          var header = document.createElement('div');
+          header.className = 'fuzzy-suggestion-header';
+
+          var leftSide = document.createElement('div');
+          leftSide.className = 'fuzzy-suggestion-side';
+          var leftLabel = document.createElement('div');
+          leftLabel.className = 'fuzzy-suggestion-label';
+          leftLabel.textContent = 'Settlement Line';
+          var leftDetail = document.createElement('div');
+          var lineWt = item.lineNetWeight ? Math.round(item.lineNetWeight).toLocaleString() + ' lbs' : '--';
+          leftDetail.textContent = escHtml(item.lineTicketNo || '--') + ' \u2014 ' + escHtml(item.lineDate || '') + ' \u2014 ' + lineWt;
+          leftSide.appendChild(leftLabel);
+          leftSide.appendChild(leftDetail);
+
+          var arrow = document.createElement('div');
+          arrow.className = 'fuzzy-suggestion-arrow';
+          arrow.textContent = '\u2194';
+
+          var rightSide = document.createElement('div');
+          rightSide.className = 'fuzzy-suggestion-side';
+          var rightLabel = document.createElement('div');
+          rightLabel.className = 'fuzzy-suggestion-label';
+          rightLabel.textContent = 'Farm Ticket Candidates';
+          rightSide.appendChild(rightLabel);
+
+          header.appendChild(leftSide);
+          header.appendChild(arrow);
+          header.appendChild(rightSide);
+          card.appendChild(header);
+
+          // Candidates as radio buttons (or single item if only one)
+          var radioName = 'fuzzy-candidate-' + item.settlementLineId;
+          var candidatesWrap = document.createElement('div');
+
+          item.candidates.forEach(function (cand, idx) {
+            var radioWrap = document.createElement('label');
+            radioWrap.className = 'fuzzy-candidate-radio';
+
+            var radio = document.createElement('input');
+            radio.type = 'radio';
+            radio.name = radioName;
+            radio.value = cand.ticketId;
+            if (idx === 0) radio.checked = true; // pre-select best match
+
+            var info = document.createElement('div');
+            var candWt = cand.netWeight ? Math.round(cand.netWeight).toLocaleString() + ' lbs' : '--';
+            var dateStr = cand.date || '';
+            var textMain = document.createElement('div');
+            textMain.textContent = escHtml(cand.ticketNo || '--') + ' \u2014 ' + escHtml(dateStr) + ' \u2014 ' + candWt + ' (' + escHtml(cand.crop) + ')';
+
+            var textVariance = document.createElement('div');
+            textVariance.className = 'fuzzy-candidate-variance';
+            var varParts = [];
+            if (cand.weightVarianceLbs !== null) varParts.push('\u00b1' + cand.weightVarianceLbs.toLocaleString() + ' lbs (' + cand.weightVariancePct.toFixed(2) + '%)');
+            if (cand.dateDiffDays !== null) varParts.push(cand.dateDiffDays + (cand.dateDiffDays === 1 ? ' day' : ' days') + ' apart');
+            textVariance.textContent = varParts.join(', ');
+
+            info.appendChild(textMain);
+            info.appendChild(textVariance);
+            radioWrap.appendChild(radio);
+            radioWrap.appendChild(info);
+            candidatesWrap.appendChild(radioWrap);
+          });
+          card.appendChild(candidatesWrap);
+
+          // Confirm Link button
+          var confirmBtn = document.createElement('button');
+          confirmBtn.className = 'btn-primary fuzzy-confirm-btn';
+          confirmBtn.textContent = 'Confirm Link';
+          confirmBtn.addEventListener('click', function () {
+            var selectedRadio = card.querySelector('input[name="' + radioName + '"]:checked');
+            if (!selectedRadio) return;
+            var ticketId = parseInt(selectedRadio.value, 10);
+            var settlementLineId = item.settlementLineId;
+
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Linking...';
+
+            fetch('/api/reconciliation/manual-link', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ticketId: ticketId, settlementLineId: settlementLineId })
+            })
+              .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+              .then(function (result) {
+                if (!result.ok) {
+                  showSettlementToast('Link failed: ' + (result.data.error || 'Unknown error'));
+                  confirmBtn.disabled = false;
+                  confirmBtn.textContent = 'Confirm Link';
+                  return;
+                }
+                showSettlementToast('Fuzzy match confirmed');
+                // Remove this card from the suggestions
+                card.remove();
+                // Check if any cards remain
+                if (bodyDiv.querySelectorAll('.fuzzy-suggestion').length === 0) {
+                  bodyDiv.innerHTML = '';
+                  var empty = document.createElement('p');
+                  empty.className = 'fuzzy-suggestions-empty';
+                  empty.textContent = 'No fuzzy match suggestions available.';
+                  bodyDiv.appendChild(empty);
+                }
+                // Refresh the full reconciliation view to update counts
+                var selBuyer = document.getElementById('recon-buyer');
+                var selYear = document.getElementById('recon-crop-year');
+                if (selBuyer && selYear) {
+                  var resultsArea = document.getElementById('recon-results');
+                  if (resultsArea) {
+                    renderReconciliation(resultsArea, parseInt(selBuyer.value, 10), parseInt(selYear.value, 10));
+                  }
+                }
+              })
+              .catch(function (err) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Confirm Link';
+                showSettlementToast('Link error: ' + err.message);
+              });
+          });
+          card.appendChild(confirmBtn);
+
+          bodyDiv.appendChild(card);
+        });
+      })
+      .catch(function () {
+        bodyDiv.innerHTML = '<p style="color:var(--danger);font-size:0.85rem;">Failed to load fuzzy match suggestions.</p>';
+      });
   }
 
   // --- Render matched ticket rows with inline Dispute capability ---
