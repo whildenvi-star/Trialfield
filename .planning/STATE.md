@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 19-seed-input-inventory-redesign — IN PROGRESS
-Plan: 2 of 3 complete
-Status: Phase 19 Plan 02 shipped — Forecast Hub and Orders tab full UI: category tables, expandable rows, checkbox selection, Create Order flow, % status bars, order cards, inline edit, delivery aggregation.
-Last activity: 2026-03-04 — Phase 19 Plan 02 executed and committed
+Plan: 2.5 of 3 complete (Plan 03 Tasks 1-2 done, stopped at Task 3 human-verify checkpoint)
+Status: Phase 19 Plan 03 Tasks 1-2 shipped — Deliveries tab (form, list, search, order status auto-update) and 5 print reports (Agronomist, Field Plan, Forecast Summary, Order Status, Delivery Log). Awaiting human verification of complete procurement pipeline end-to-end.
+Last activity: 2026-03-04 — Phase 19 Plan 03 Tasks 1-2 executed and committed
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
@@ -63,6 +63,7 @@ Last activity: 2026-03-04 — Phase 19 Plan 02 executed and committed
 | Phase 19-seed-input-inventory-redesign P01 | 6 | 2 tasks | 8 files |
 | Phase 19-seed-input-inventory-redesign P01 | 15 | 2 tasks | 10 files |
 | Phase 19-seed-input-inventory-redesign P02 | 173 | 2 tasks | 2 files |
+| Phase 19-seed-input-inventory-redesign P03 | 232 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -170,6 +171,9 @@ v3.0 architectural decisions:
 - [Phase 19-02]: Forecast reloads on every tab-activate (no loaded guard) — live procurement data must reflect latest delivery changes
 - [Phase 19-02]: Create Order navigates to Orders tab via location.hash + manual tab-activate dispatch — no tight coupling to app.js internals
 - [Phase 19-02]: Delivery cache keyed by orderId, invalidated on qty edit or forecast-changed event — prevents stale totals in expanded rows
+- [Phase 19-03]: Popup-safe report pattern: synchronous window.open() in event handler, then write HTML after Promise.all resolves — avoids popup blocker without sacrificing data freshness
+- [Phase 19-03]: pendingOrderId persists orderId across tab navigation (set before hash change, consumed on tab-activate) — handles race where Deliveries tab not active when start-delivery fires
+- [Phase 19-03]: Delivery line items pre-fill with orderedQty by default (most deliveries are full shipments) — user adjusts down for partials
 
 ### Roadmap Evolution
 
