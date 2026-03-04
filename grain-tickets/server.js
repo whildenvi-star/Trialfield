@@ -753,6 +753,27 @@ app.get('/api/crops', async (req, res) => {
   }
 });
 
+// Proxy crop types from farm-budget (the master crop/sub-crop list)
+app.get('/api/crop-types', async (req, res) => {
+  try {
+    const budgetUrl = process.env.FARM_BUDGET_URL || 'http://localhost:3001';
+    const resp = await fetch(budgetUrl + '/api/crop-types');
+    if (!resp.ok) throw new Error('farm-budget returned ' + resp.status);
+    const cropTypes = await resp.json();
+    res.json(cropTypes);
+  } catch (e) {
+    console.error('GET /api/crop-types proxy error:', e.message);
+    // Fallback: derive list from local cropConfig so dropdown still works
+    const cropConfig = await buildCropConfigObject();
+    const fallback = Object.keys(cropConfig).sort().map(name => ({
+      id: name,
+      name: name,
+      subCrops: [{ name }]
+    }));
+    res.json(fallback);
+  }
+});
+
 app.post('/api/crops', async (req, res) => {
   try {
     const { name, discount, testWeight, moistureShrink } = req.body;
@@ -821,6 +842,49 @@ app.delete('/api/crops/:name', async (req, res) => {
   } catch (e) {
     console.error('DELETE /api/crops/:name error:', e);
     if (e.code === 'P2025') return res.status(404).json({ error: 'Crop not found' });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- CropConfig Tolerance CRUD ---
+
+// GET /api/crop-config/tolerances?cropYear=N — list all CropConfig rows for a year with tolerance fields
+app.get('/api/crop-config/tolerances', async (req, res) => {
+  try {
+    const cropYear = parseInt(req.query.cropYear, 10);
+    if (isNaN(cropYear)) return res.status(400).json({ error: 'cropYear is required' });
+    const rows = await prisma.cropConfig.findMany({
+      where: { cropYear },
+      orderBy: { cropName: 'asc' },
+      select: { id: true, cropName: true, tolerancePct: true, toleranceLbs: true }
+    });
+    res.json(rows);
+  } catch (e) {
+    console.error('GET /api/crop-config/tolerances error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PUT /api/crop-config/:id/tolerance — update tolerance values for a CropConfig row
+app.put('/api/crop-config/:id/tolerance', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: 'Invalid id' });
+
+    const tolerancePct = parseFloat(req.body.tolerancePct);
+    const toleranceLbs = parseFloat(req.body.toleranceLbs);
+    if (isNaN(tolerancePct) || tolerancePct < 0) return res.status(400).json({ error: 'tolerancePct must be a non-negative number' });
+    if (isNaN(toleranceLbs) || toleranceLbs < 0) return res.status(400).json({ error: 'toleranceLbs must be a non-negative number' });
+
+    const updated = await prisma.cropConfig.update({
+      where: { id },
+      data: { tolerancePct, toleranceLbs },
+      select: { id: true, cropName: true, tolerancePct: true, toleranceLbs: true }
+    });
+    res.json(updated);
+  } catch (e) {
+    if (e.code === 'P2025') return res.status(404).json({ error: 'CropConfig not found' });
+    console.error('PUT /api/crop-config/:id/tolerance error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1664,6 +1728,16 @@ app.get('/api/reconciliation/summary', async (req, res) => {
       });
     });
 
+    // Load crop tolerance configs for this year (for withinTolerance evaluation)
+    const cropConfigs = await prisma.cropConfig.findMany({
+      where: { cropYear },
+      select: { cropName: true, tolerancePct: true, toleranceLbs: true }
+    });
+    const toleranceMap = {};
+    cropConfigs.forEach(c => {
+      toleranceMap[c.cropName] = { tolerancePct: c.tolerancePct, toleranceLbs: c.toleranceLbs };
+    });
+
     // Build combined crop set
     const crops = new Set([...Object.keys(farmByCrop), ...Object.keys(buyerByCrop)]);
     const rows = Array.from(crops).map(crop => {
@@ -1673,6 +1747,22 @@ app.get('/api/reconciliation/summary', async (req, res) => {
       const variancePct = farm.farmLbs > 0
         ? Math.round((varianceLbs / farm.farmLbs) * 10000) / 100
         : 0;
+
+      // Compute withinTolerance using configured tolerance (pct takes precedence over lbs)
+      const tol = toleranceMap[crop] || { tolerancePct: 0, toleranceLbs: 0 };
+      const tolerancePct = tol.tolerancePct || 0;
+      const toleranceLbs = tol.toleranceLbs || 0;
+      let threshold = 0;
+      if (tolerancePct > 0) {
+        threshold = farm.farmLbs * (tolerancePct / 100);
+      } else if (toleranceLbs > 0) {
+        threshold = toleranceLbs;
+      }
+      // withinTolerance: true if abs variance is within threshold, or if no variance at all
+      const withinTolerance = threshold > 0
+        ? Math.abs(varianceLbs) <= threshold
+        : varianceLbs === 0;
+
       return {
         crop,
         farmLbs: farm.farmLbs,
@@ -1680,7 +1770,10 @@ app.get('/api/reconciliation/summary', async (req, res) => {
         buyerLbs: buyer.buyerLbs,
         buyerBushels: Math.round(buyer.buyerBushels * 100) / 100,
         varianceLbs,
-        variancePct
+        variancePct,
+        withinTolerance,
+        tolerancePct,
+        toleranceLbs
       };
     }).sort((a, b) => a.crop.localeCompare(b.crop));
 

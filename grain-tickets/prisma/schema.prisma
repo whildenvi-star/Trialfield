@@ -69,6 +69,8 @@ model CropConfig {
   testWeight     Float    @default(56) // Pounds per bushel
   moistureShrink Float    @default(0)  // Moisture shrink threshold percentage
   discount       Float    @default(0)  // Discount percentage
+  tolerancePct   Float    @default(0)  // Acceptable weight variance as percentage (e.g., 1.5 = 1.5%)
+  toleranceLbs   Float    @default(0)  // Acceptable weight variance as fixed lbs (used when tolerancePct = 0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -144,10 +146,13 @@ model SettlementLine {
   netPayment   Decimal?   @db.Decimal(10, 2) // Net payment in dollars
   ticketId     Int?       // FK to Ticket — set during Phase 13 reconciliation matching
   ticket       Ticket?    @relation(fields: [ticketId], references: [id])
-  matchStatus  String     @default("unmatched") // "unmatched" | "matched" | "disputed" | "manual"
-  notes        String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  matchStatus      String     @default("unmatched") // "unmatched" | "matched" | "disputed" | "manual"
+  notes            String?
+  resolutionStatus String?    // "Buyer Error" | "Our Error" | "Write-off" | "Pending" — set when disputed
+  resolutionNotes  String?    // Free-text resolution notes (separate from general notes)
+  resolutionDate   DateTime?  // Date the dispute was resolved (null when Pending)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   @@index([settlementId])
   @@index([ticketNo])
