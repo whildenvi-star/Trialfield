@@ -101,10 +101,10 @@ Plans:
   2. Preview displays a side-by-side table comparing FSA CLU acres vs farm-budget enterprise acres for each crop
   3. Grass CLUs and non-crop CLUs are excluded from sync proposals so only tillable, crop-assigned CLUs appear
   4. CLUs already marked as "reported" do not appear in sync proposals
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 22-01: Pull enterprise data from farm-budget macro rollup and build side-by-side crop sync preview with filtering
+- [ ] 22-01-PLAN.md — Enterprise-level crop sync preview with side-by-side acres comparison and non-crop/reported filtering
 
 ### Phase 23: Settlement Closure
 **Goal**: The grain-tickets settlement workflow closes the loop — users can configure tolerances, resolve fuzzy matches interactively, work disputed tickets through to resolution, and see a full season summary across all buyers
@@ -147,5 +147,5 @@ Plans:
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
 | 20. Farm-Registry Bug Fix | 1/1 | Complete    | 2026-03-04 | - |
 | 21. Farm-Budget Field Editor Polish | v4.0 | 0/TBD | Not started | - |
-| 22. FSA Crop Sync Improvement | v4.0 | 0/TBD | Not started | - |
+| 22. FSA Crop Sync Improvement | v4.0 | 0/1 | Not started | - |
 | 23. Settlement Closure | v4.0 | 0/TBD | Not started | - |
