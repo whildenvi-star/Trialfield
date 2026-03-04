@@ -32,16 +32,25 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Ecosystem client layer with graceful degradation, preview/commit compilation pipeline for enterprises/inputs/seeds/harvests, NOP compliance engine with material resolution, rotation snapshot for 3-year field history, PDF null-safety for all 8 report sections, and farm-budget procurement pipeline (Forecasts, Orders, Deliveries) with 5 print reports and day/night theme. 5 phases, 12 plans, 25 requirements — all complete.
 
-## Current Milestone: v4.0 Cross-Module Polish & Settlement Closure
+## Completed Milestone: v4.0 Cross-Module Polish & Settlement Closure (2026-03-04)
 
 **Goal:** Fix bugs, polish the farm-budget field editor, improve FSA crop sync from macro rollup, and close the settlement reconciliation loop in grain-tickets with configurable tolerances, fuzzy matching, dispute resolution, and multi-buyer summaries.
 
+**Delivered:** Farm-registry save fix, farm-budget field editor polish (category totals, accounting parentheses, Orders/Deliveries tabs), FSA crop sync from macro rollup with side-by-side preview, and grain-tickets settlement closure (configurable tolerance, fuzzy matching, dispute resolution workflow, multi-buyer season summary). 4 phases, 7 plans, 14 requirements — all complete.
+
+## Current Milestone: v5.0 Glomalin Portal — Next.js + Supabase Scaffold
+
+**Goal:** Build a unified portal app (glomalin-portal) using Next.js 14 App Router + Supabase that serves as the authenticated entry point to all farm modules, with role-based access control, module-level permissions, admin user management, and a React Flow node map on the landing page.
+
 **Target features:**
-- Fix farm-registry field save bug (acres/ownership not persisting)
-- Farm-budget field editor: category totals + red negative profit
-- Farm-budget: unhide and activate Orders/Deliveries tabs
-- FSA acres: improve crop sync from farm-budget macro rollup
-- Grain-tickets: configurable weight tolerance, fuzzy matching, dispute workflow, multi-buyer summary
+- Supabase auth with email/password login
+- Role-based access (admin, agronomist, operator, viewer)
+- Per-module access control (granted/denied per user per module)
+- Admin panel for user management and module access toggling
+- Dashboard with module cards (locked/unlocked based on access)
+- React Flow node map on public landing page (dark soil aesthetic)
+- Module shell pages ready for future content
+- Middleware-based route protection with role and module checks
 
 ## Requirements
 
@@ -85,20 +94,25 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - ✓ Rotation snapshot for 3-year NOP field history — v3.0
 - ✓ PDF null-safety for compiled ecosystem data — v3.0
 - ✓ Procurement pipeline (Forecasts, Orders, Deliveries) with 5 print reports — v3.0
+- ✓ Farm-registry field save fix (acres/ownership/growerId persistence) — v4.0
+- ✓ Farm-budget field editor category totals and accounting parentheses — v4.0
+- ✓ Farm-budget Orders and Deliveries tabs visible and functional — v4.0
+- ✓ FSA crop sync from farm-budget macro rollup with side-by-side preview — v4.0
+- ✓ Configurable weight discrepancy tolerance per crop — v4.0
+- ✓ Multi-buyer season summary with totals, payment status, variance — v4.0
+- ✓ Fuzzy settlement matching by date + weight — v4.0
+- ✓ Disputed ticket resolution workflow with status, notes, date — v4.0
 
 ### Active
 
-- [ ] Fix farm-registry field save (acres, ownership, growerId persistence)
-- [ ] Farm-budget field editor category totals (per-acre + total for every line)
-- [ ] Farm-budget negative profit displayed in red
-- [ ] Farm-budget Orders tab visible and functional
-- [ ] Farm-budget Deliveries tab visible and functional
-- [ ] FSA crop sync pulls enterprise data from farm-budget macro rollup
-- [ ] FSA sync preview shows acres comparison by crop
-- [ ] Configurable weight discrepancy tolerance per crop
-- [ ] Multi-buyer season summary with totals, payment status, variance
-- [ ] Fuzzy settlement matching by date + weight when ticket# fails
-- [ ] Disputed ticket resolution workflow with status, notes, category
+- [ ] Supabase auth with email/password login and session management
+- [ ] Role-based access control (admin, agronomist, operator, viewer)
+- [ ] Per-module access control with admin-managed grants
+- [ ] Admin panel for user + module access management
+- [ ] Dashboard with module cards reflecting access state
+- [ ] React Flow node map on public landing page
+- [ ] Middleware route protection (auth + role + module checks)
+- [ ] Module shell pages for macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting
 
 ### Deferred
 
@@ -109,10 +123,7 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - Multi-certifier support (EU, state programs) — USDA NOP only
 - Inspector portal/login — inspectors receive print reports, not digital access
 - Mobile-friendly responsive design (prep for future mobile app)
-- ~~Configurable weight discrepancy tolerance per crop (REC-06)~~ — moved to v4.0 Active
-- ~~Multi-buyer season summary (REC-07)~~ — moved to v4.0 Active
-- ~~Fuzzy settlement matching by date + weight (REC-08)~~ — moved to v4.0 Active
-- ~~Disputed ticket workflow with resolution tracking (WRK-01)~~ — moved to v4.0 Active
+- Crop Year Accounting & QBO Integration (see .planning/v5.0-VISION.md — deferred to v6.0+)
 
 ### Out of Scope
 
@@ -133,7 +144,7 @@ Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 +
 
 **Port map:** 3000 grain-tickets, 3001 farm-budget, 3002 fsa-acres, 3003 meristem-malt, 3004 organic-cert, 3005 farm-registry
 
-**Total shipped:** 44 plans across 19 phases in 4 milestones (v1.0, v1.1, v2.0, v3.0).
+**Total shipped:** 51 plans across 23 phases in 5 milestones (v1.0, v1.1, v2.0, v3.0, v4.0).
 
 Primary users are farm office staff (daily ticket entry) and farm manager (farm planning, certification, settlement reconciliation).
 
@@ -166,4 +177,4 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | claude-haiku for Glomalin agent | Cost-effective for high-frequency grain queries | ✓ Good — responsive and affordable |
 
 ---
-*Last updated: 2026-03-04 after v4.0 milestone started*
+*Last updated: 2026-03-04 after v5.0 milestone started*
