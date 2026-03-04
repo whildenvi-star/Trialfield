@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 
 Phase: 23 of 23 (Settlement Closure)
 Plan: 0 of N in current phase
-Status: Phase 21 plan 01 complete; Phase 22 complete; ready for Phase 23
-Last activity: 2026-03-04 — Phase 21 Plan 01 complete (group subtotals + profit/COP coloring + print accounting parens, 2 tasks, 6 files)
+Status: Phase 21 complete (plans 01+02); Phase 22 complete; ready for Phase 23
+Last activity: 2026-03-04 — Phase 21 Plan 02 complete (unhide Orders/Deliveries tabs, reorder navigation, add inline create-order form, 2 tasks, 3 files)
 
 Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
 
@@ -42,6 +42,9 @@ Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
 - [21-01]: Enterprise module view profitCls switched to util.profitClass() for zero-case consistency
 - [21-01]: Field-Level Input Plan rewritten to use _computed budget data for group subtotals; forecast product table preserved below
 - [21-01]: PDF money() globally uses accounting parentheses ($X.XX) for all negative values
+- [21-02]: Orders and Deliveries tabs placed after Sales per user-specified tab order (Dashboard, Enterprises, Forecasts, Seeds, Reference, Programs, Sales, Orders, Deliveries, Map)
+- [21-02]: Inline create-order form added to Orders tab so users can create POs directly without visiting Forecasts tab
+- [21-02]: Empty state messages updated to reference new + New Order / + New Delivery toolbar buttons
 
 ### Pending Todos
 
@@ -54,6 +57,6 @@ Progress: [██████░░░░] 75% (v4.0 — 3/4 phases complete)
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 21-01-PLAN.md (group subtotals + profit/COP coloring + print accounting parens, 2 tasks, 6 files)
+Stopped at: Completed 21-02-PLAN.md (unhide Orders/Deliveries tabs, reorder navigation, add inline create-order form, 2 tasks, 3 files)
 Resume file: None
 Next action: Execute phase 23 (Settlement Closure)

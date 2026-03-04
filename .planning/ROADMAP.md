@@ -58,7 +58,7 @@
 **Milestone Goal:** Fix bugs, polish the farm-budget field editor, improve FSA crop sync from macro rollup, and close the settlement reconciliation loop in grain-tickets with configurable tolerances, fuzzy matching, dispute resolution, and multi-buyer summaries.
 
 - [x] **Phase 20: Farm-Registry Bug Fix** - Fix field save so acres and ownership persist correctly (completed 2026-03-04)
-- [ ] **Phase 21: Farm-Budget Field Editor Polish** - Category totals, red negative profit, Orders and Deliveries tabs live
+- [x] **Phase 21: Farm-Budget Field Editor Polish** - Category totals, red negative profit, Orders and Deliveries tabs live (completed 2026-03-04)
 - [x] **Phase 22: FSA Crop Sync Improvement** - Pull enterprise data from farm-budget macro rollup with side-by-side preview (completed 2026-03-04)
 - [ ] **Phase 23: Settlement Closure** - Configurable tolerances, fuzzy matching, dispute workflow, multi-buyer summary
 
@@ -86,7 +86,7 @@ Plans:
   2. When Profit/AC or Profit (w/ Payments) is negative, the value is displayed in red
   3. The Orders tab appears in farm-budget navigation and user can create a PO, assign a supplier, and track order status
   4. The Deliveries tab appears in farm-budget navigation and user can log a delivery receipt, link it to an order, and track items received
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 21-01-PLAN.md — Group subtotals in field editor preview + profit/COP coloring across all views + print report formatting
@@ -146,6 +146,6 @@ Plans:
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 3/3 | Complete | 2026-03-03 |
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
 | 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 21. Farm-Budget Field Editor Polish | 1/2 | In Progress|  | - |
+| 21. Farm-Budget Field Editor Polish | 2/2 | Complete   | 2026-03-04 | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 0/3 | Not started | - |

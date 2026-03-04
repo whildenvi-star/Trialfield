@@ -16,8 +16,8 @@ Requirements for v4.0 Cross-Module Polish & Settlement Closure. Each maps to roa
 
 - [x] **BUD-01**: Field editor preview shows both per-acre cost and total field cost for every budget category (Rent, Fertilizer, Seed, Machinery, Labor, Overhead, Fuel, Drying, Interest, Insurance)
 - [x] **BUD-02**: Negative Profit/AC and Profit (w/ Payments) values display in red in the field editor preview
-- [ ] **BUD-03**: Orders tab is visible in navigation and fully functional (PO creation, status tracking, supplier selection)
-- [ ] **BUD-04**: Deliveries tab is visible in navigation and fully functional (receipt logging, order linking, item tracking)
+- [x] **BUD-03**: Orders tab is visible in navigation and fully functional (PO creation, status tracking, supplier selection)
+- [x] **BUD-04**: Deliveries tab is visible in navigation and fully functional (receipt logging, order linking, item tracking)
 
 ### FSA Crop Sync
 
@@ -77,8 +77,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-02 | Phase 20 | Complete |
 | BUD-01 | Phase 21 | Complete |
 | BUD-02 | Phase 21 | Complete |
-| BUD-03 | Phase 21 | Pending |
-| BUD-04 | Phase 21 | Pending |
+| BUD-03 | Phase 21 | Complete |
+| BUD-04 | Phase 21 | Complete |
 | FSA-01 | Phase 22 | Complete |
 | FSA-02 | Phase 22 | Complete |
 | FSA-03 | Phase 22 | Complete |
