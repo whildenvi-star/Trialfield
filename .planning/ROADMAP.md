@@ -146,6 +146,6 @@ Plans:
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 3/3 | Complete | 2026-03-03 |
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
 | 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 21. Farm-Budget Field Editor Polish | 2/2 | Complete   | 2026-03-04 | - |
+| 21. Farm-Budget Field Editor Polish | 2/2 | Complete    | 2026-03-04 | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 0/3 | Not started | - |
