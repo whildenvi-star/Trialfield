@@ -11,8 +11,8 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 
 Phase: 23 of 23 (Settlement Closure)
 Plan: 1 of N in current phase
-Status: Phase 23 Plan 03 complete (dispute resolution workflow, season summary); plans 01+03 complete
-Last activity: 2026-03-04 — Phase 23 Plan 03 complete (dispute resolution UI, season summary view, 2 tasks, 5 files)
+Status: Phase 23 Plans 01+02+03 complete; plan 04 (multi-buyer summary) remaining
+Last activity: 2026-03-04 — Phase 23 Plan 02 complete (fuzzy settlement matching, 2 tasks, 3 files)
 
 Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, plan 01/N complete)
 
@@ -29,6 +29,7 @@ Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
 | 23 | 01 | 190s (3m 10s) | 2 | 4 |
+| 23 | 02 | ~8 min | 2 | 3 |
 | 23 | 03 | ~5 min | 2 | 5 |
 
 ## Accumulated Context
@@ -53,6 +54,8 @@ Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, 
 - [Phase 23]: tolerancePct takes precedence over toleranceLbs when both set; withinTolerance computed at read-time in summary endpoint (no new DB column); UI falls back to 1% threshold when server withinTolerance absent
 - [Phase 23]: resolutionDate auto-set to now() for resolved statuses (Buyer Error, Our Error, Write-off), cleared for Pending
 - [Phase 23]: Season summary variance calculated as farm weight minus buyer matched weight only (excludes unmatched lines from variance)
+- [Phase 23]: daysDiff uses date-only YYYY-MM-DD strings to avoid timezone off-by-one errors in fuzzy candidate matching
+- [Phase 23]: Fuzzy matching: default 2% tolerance when no CropConfig; cards color-coded close<0.5%, moderate 0.5-2%, wide>2%; best candidate pre-selected; confirmation reuses manual-link endpoint
 
 ### Pending Todos
 
@@ -65,6 +68,6 @@ Progress: [██████████] 75%+ (v4.0 — phase 23 in progress, 
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 23-03-PLAN.md (dispute resolution workflow and season summary, 2 tasks, 5 files)
+Stopped at: Completed 23-02-PLAN.md (fuzzy settlement matching, 2 tasks, 3 files)
 Resume file: None
-Next action: Execute remaining phase 23 plans (plan 02 fuzzy matching, plan 04 multi-buyer summary if not yet done)
+Next action: Execute 23-04 (multi-buyer summary dashboard)

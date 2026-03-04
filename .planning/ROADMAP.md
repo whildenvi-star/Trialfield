@@ -60,7 +60,7 @@
 - [x] **Phase 20: Farm-Registry Bug Fix** - Fix field save so acres and ownership persist correctly (completed 2026-03-04)
 - [x] **Phase 21: Farm-Budget Field Editor Polish** - Category totals, red negative profit, Orders and Deliveries tabs live (completed 2026-03-04)
 - [x] **Phase 22: FSA Crop Sync Improvement** - Pull enterprise data from farm-budget macro rollup with side-by-side preview (completed 2026-03-04)
-- [ ] **Phase 23: Settlement Closure** - Configurable tolerances, fuzzy matching, dispute workflow, multi-buyer summary
+- [x] **Phase 23: Settlement Closure** - Configurable tolerances, fuzzy matching, dispute workflow, multi-buyer summary (completed 2026-03-04)
 
 ## Phase Details
 
@@ -115,7 +115,7 @@ Plans:
   2. When ticket number matching fails, the system automatically searches for fuzzy candidates by date (within 2 days) and weight (within tolerance) and presents them to the user for confirmation before linking
   3. User can mark a disputed ticket with a resolution status (Buyer Error, Our Error, Write-off, Pending), add a resolution note, and record the resolution date
   4. A multi-buyer season summary page shows all buyers for a crop year with total ticket count, total weight, settlement payment total, payment status, and variance in a single view
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 23-01-PLAN.md — Per-crop weight tolerance config (CropConfig schema + CRUD API + settings UI + tolerance-aware reconciliation summary)
@@ -148,4 +148,4 @@ Plans:
 | 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 21. Farm-Budget Field Editor Polish | 2/2 | Complete    | 2026-03-04 | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
-| 23. Settlement Closure | 2/3 | In Progress|  | - |
+| 23. Settlement Closure | 3/3 | Complete   | 2026-03-04 | - |
