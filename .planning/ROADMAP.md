@@ -86,11 +86,11 @@ Plans:
   2. When Profit/AC or Profit (w/ Payments) is negative, the value is displayed in red
   3. The Orders tab appears in farm-budget navigation and user can create a PO, assign a supplier, and track order status
   4. The Deliveries tab appears in farm-budget navigation and user can log a delivery receipt, link it to an order, and track items received
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 21-01: Field editor category totals — per-acre and total columns for all 10 budget categories
-- [ ] 21-02: Red negative profit display and unhide/activate Orders and Deliveries tabs
+- [ ] 21-01-PLAN.md — Group subtotals in field editor preview + profit/COP coloring across all views + print report formatting
+- [ ] 21-02-PLAN.md — Unhide and activate Orders/Deliveries tabs with tab reorder and CRUD verification
 
 ### Phase 22: FSA Crop Sync Improvement
 **Goal**: The FSA crop sync preview pulls live enterprise data from farm-budget and shows a meaningful side-by-side acres comparison before the user commits any changes
@@ -145,7 +145,7 @@ Plans:
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 2/2 | Complete | 2026-03-03 |
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 3/3 | Complete | 2026-03-03 |
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
-| 20. Farm-Registry Bug Fix | 1/1 | Complete    | 2026-03-04 | - |
-| 21. Farm-Budget Field Editor Polish | v4.0 | 0/TBD | Not started | - |
-| 22. FSA Crop Sync Improvement | 1/1 | Complete    | 2026-03-04 | - |
-| 23. Settlement Closure | v4.0 | 0/TBD | Not started | - |
+| 20. Farm-Registry Bug Fix | v4.0 | 1/1 | Complete | 2026-03-04 |
+| 21. Farm-Budget Field Editor Polish | v4.0 | 0/2 | Not started | - |
+| 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
+| 23. Settlement Closure | v4.0 | 0/3 | Not started | - |
