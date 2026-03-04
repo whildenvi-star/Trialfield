@@ -431,6 +431,77 @@
     });
   });
 
+  // ===== Enterprise Acres Preview =====
+  util.$('fsa-enterprise-preview-btn').addEventListener('click', function () {
+    var btn = util.$('fsa-enterprise-preview-btn');
+    btn.disabled = true;
+    btn.textContent = 'Loading...';
+    api.get('/api/sync-crops/enterprise-preview').then(function (data) {
+      btn.disabled = false;
+      btn.textContent = 'Enterprise Acres Preview';
+      if (data.error) {
+        showToast(data.error, 'error');
+        return;
+      }
+      util.$('enterprise-preview-panel').classList.remove('hidden');
+      renderEnterprisePreview(data);
+    }).catch(function () {
+      btn.disabled = false;
+      btn.textContent = 'Enterprise Acres Preview';
+      showToast('Farm Budget unavailable — is port 3001 running?', 'error');
+    });
+  });
+
+  util.$('enterprise-preview-close').addEventListener('click', function () {
+    util.$('enterprise-preview-panel').classList.add('hidden');
+  });
+
+  function renderEnterprisePreview(data) {
+    var rows = data.rows || [];
+    var html = '<table class="sync-table"><thead><tr>' +
+      '<th>Crop</th>' +
+      '<th class="number">Budget Acres</th>' +
+      '<th class="number">FSA Acres</th>' +
+      '<th class="number">Difference</th>' +
+      '<th class="number">CLU Records</th>' +
+      '<th>Enterprises</th>' +
+      '</tr></thead><tbody>';
+
+    rows.forEach(function (row) {
+      var absDiff = Math.abs(row.diff);
+      var diffStyle = '';
+      if (absDiff > 10) {
+        diffStyle = ' style="color:var(--danger)"';
+      } else if (absDiff > 2) {
+        diffStyle = ' style="color:var(--orange,#e88c30)"';
+      }
+      var diffSign = row.diff >= 0 ? '+' : '';
+      var entNames = (row.enterprises || []).map(function (e) { return util.esc(e.name); }).join(', ');
+      html += '<tr>' +
+        '<td>' + util.esc(row.crop) + '</td>' +
+        '<td class="number">' + util.comma(row.budgetAcres) + '</td>' +
+        '<td class="number">' + util.comma(row.fsaAcres) + '</td>' +
+        '<td class="number"' + diffStyle + '>' + diffSign + util.comma(row.diff) + '</td>' +
+        '<td class="number">' + (row.cluCount || 0) + '</td>' +
+        '<td>' + entNames + '</td>' +
+        '</tr>';
+    });
+
+    // Totals row
+    html += '<tr style="border-top:2px solid var(--border);font-weight:600">' +
+      '<td>Total</td>' +
+      '<td class="number">' + util.comma(data.budgetGrandTotal) + '</td>' +
+      '<td class="number">' + util.comma(data.fsaGrandTotal) + '</td>' +
+      '<td class="number"></td>' +
+      '<td class="number"></td>' +
+      '<td></td>' +
+      '</tr>';
+
+    html += '</tbody></table>';
+    util.$('enterprise-preview-body').innerHTML = html;
+    util.$('enterprise-preview-totals').textContent = 'Showing tillable, unreported CLUs only';
+  }
+
   function scoreClass(score) {
     if (score >= 90) return 'sync-score-high';
     if (score >= 70) return 'sync-score-mid';

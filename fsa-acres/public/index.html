@@ -176,7 +176,17 @@
       <button class="btn-orange" id="fsa-mark-reported-btn">Mark Selected Reported</button>
       <button class="btn-sm" id="fsa-mark-unreported-btn">Mark Selected Unreported</button>
       <button class="btn-primary" id="fsa-sync-macro-btn">Sync from Macro</button>
+      <button class="btn-primary" id="fsa-enterprise-preview-btn">Enterprise Acres Preview</button>
       <span class="table-info" id="fsa-info" style="margin:0"></span>
+    </div>
+
+    <div id="enterprise-preview-panel" class="panel hidden" style="margin-bottom:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+        <h3 style="margin:0">Enterprise Acres Comparison <span style="font-weight:400;font-size:0.75rem;color:var(--text-light)">Budget vs FSA by Crop</span></h3>
+        <button class="btn-sm" id="enterprise-preview-close">Close</button>
+      </div>
+      <div id="enterprise-preview-body">Loading...</div>
+      <div id="enterprise-preview-totals" style="margin-top:0.5rem;font-size:0.82rem;color:var(--text-light)"></div>
     </div>
 
     <div class="table-wrap">
