@@ -145,7 +145,7 @@ Plans:
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 2/2 | Complete | 2026-03-03 |
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 3/3 | Complete | 2026-03-03 |
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
-| 20. Farm-Registry Bug Fix | 1/1 | Complete   | 2026-03-04 | - |
+| 20. Farm-Registry Bug Fix | 1/1 | Complete    | 2026-03-04 | - |
 | 21. Farm-Budget Field Editor Polish | v4.0 | 0/TBD | Not started | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 0/TBD | Not started | - |
 | 23. Settlement Closure | v4.0 | 0/TBD | Not started | - |
