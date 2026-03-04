@@ -17,7 +17,16 @@
         "CON",
         "CON IRR"
       ],
-      "category": "conventional"
+      "category": "conventional",
+      "cropTypeNames": [
+        "Wheat",
+        "Rye",
+        "Barley",
+        "Sorghum",
+        "Hay",
+        "Kernza",
+        "Corn"
+      ]
     },
     {
       "id": "ent_1272",
@@ -27,7 +36,13 @@
         "CON",
         "CON IRR"
       ],
-      "category": "conventional"
+      "category": "conventional",
+      "cropTypeNames": [
+        "Soybeans",
+        "Peas",
+        "Vetch",
+        "Sunflowers"
+      ]
     },
     {
       "id": "ent_1875",
@@ -39,7 +54,11 @@
         "CANNING CON IRR",
         "CANNING ORG IRR"
       ],
-      "category": "conventional"
+      "category": "conventional",
+      "cropTypeNames": [
+        "Sweet Corn",
+        "Food Beans"
+      ]
     },
     {
       "id": "ent_2056",
@@ -49,7 +68,10 @@
         "ORG",
         "ORG IRR"
       ],
-      "category": "organic"
+      "category": "organic",
+      "cropTypeNames": [
+        "Corn"
+      ]
     },
     {
       "id": "ent_2120",
@@ -58,7 +80,15 @@
       "systemCodes": [
         "ORG"
       ],
-      "category": "organic"
+      "category": "organic",
+      "cropTypeNames": [
+        "Wheat",
+        "Rye",
+        "Barley",
+        "Sorghum",
+        "Hay",
+        "Kernza"
+      ]
     },
     {
       "id": "ent_2185",
@@ -68,7 +98,14 @@
         "ORG",
         "ORG IRR"
       ],
-      "category": "organic"
+      "category": "organic",
+      "cropTypeNames": [
+        "Soybeans",
+        "Peas",
+        "Vetch",
+        "Sunflowers",
+        "Hemp"
+      ]
     }
   ],
   "fields": [
@@ -333,7 +370,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0568",
@@ -469,7 +509,10 @@
           "label": "STRAW",
           "perAcre": 30
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0606",
@@ -634,14 +677,17 @@
           "label": "Delong GCS CC+NT",
           "perAcre": 80
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0642",
       "enterpriseId": "ent_0491",
       "name": "Carrol",
       "systemCode": "CON",
-      "crop": "comp white corn",
+      "crop": "White corn",
       "cropType": "SINGLE CROP",
       "acres": 149.8,
       "rentPerAcre": 162.38,
@@ -897,7 +943,10 @@
           "label": "Delong GCS CC+NT",
           "perAcre": 80
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0678",
@@ -1118,7 +1167,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0709",
@@ -1254,7 +1306,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0747",
@@ -1409,7 +1464,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0785",
@@ -1564,7 +1622,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0821",
@@ -1574,7 +1635,7 @@
       "crop": "Yellow Corn",
       "cropType": "SINGLE CROP",
       "acres": 8.9,
-      "rentPerAcre": 0,
+      "rentPerAcre": 100,
       "inputs": [
         {
           "id": "inp_0801",
@@ -1713,7 +1774,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0864",
@@ -1885,7 +1949,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0904",
@@ -2046,7 +2113,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0942",
@@ -2201,7 +2271,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_0980",
@@ -2356,7 +2429,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1018",
@@ -2511,7 +2587,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1056",
@@ -2666,7 +2745,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1094",
@@ -2893,7 +2975,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1128",
@@ -3025,7 +3110,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 80,
+      "yieldPerAcre": 85,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
@@ -3040,7 +3125,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1156",
@@ -3049,7 +3137,7 @@
       "systemCode": "CON",
       "crop": "Seed grade Winter Barley",
       "cropType": "SINGLE CROP",
-      "acres": 143,
+      "acres": 75,
       "rentPerAcre": 125.87,
       "inputs": [
         {
@@ -3169,7 +3257,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1195",
@@ -3329,7 +3420,10 @@
           "label": "Delong GCS",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1232",
@@ -3569,7 +3663,10 @@
           "label": "GOVT PMT / AC",
           "perAcre": 60
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1271",
@@ -3724,7 +3821,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1305",
@@ -3862,7 +3962,10 @@
           "label": "GOVT PMT / AC",
           "perAcre": 80
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1343",
@@ -4017,7 +4120,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1384",
@@ -4178,7 +4284,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1427",
@@ -4345,7 +4454,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1462",
@@ -4489,7 +4601,10 @@
           "label": "Delong GCS CC+ NT",
           "perAcre": 80
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1502",
@@ -4654,7 +4769,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1542",
@@ -4819,7 +4937,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1581",
@@ -4979,7 +5100,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1619",
@@ -5134,7 +5258,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1652",
@@ -5272,7 +5399,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1691",
@@ -5432,7 +5562,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1730",
@@ -5592,7 +5725,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1765",
@@ -5740,7 +5876,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1801",
@@ -5893,7 +6032,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1836",
@@ -6041,14 +6183,17 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1874",
       "enterpriseId": "ent_1272",
       "name": "Bakke",
       "systemCode": "CON",
-      "crop": "RR Soybeans",
+      "crop": "",
       "cropType": "SINGLE CROP",
       "acres": 26.9,
       "rentPerAcre": 200.74,
@@ -6150,10 +6295,7 @@
           "season": "Fall"
         }
       ],
-      "seed": {
-        "variety": "DF 214",
-        "population": 135000
-      },
+      "seed": null,
       "machinery": [
         {
           "id": "mach_1869",
@@ -6196,7 +6338,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1900",
@@ -6305,7 +6450,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1937",
@@ -6454,7 +6602,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1965",
@@ -6574,7 +6725,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_1993",
@@ -6694,7 +6848,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2018",
@@ -6803,7 +6960,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2055",
@@ -6952,16 +7112,20 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
-      "id": "fld_2087",
+      "id": "fld_mmb0c4g0_aqjn",
       "enterpriseId": "ent_2056",
-      "name": "Simpsons seed",
+      "name": "Simpsons Seed Corn",
       "systemCode": "ORG",
       "crop": "ORG Seed Corn",
       "cropType": "SINGLE CROP",
-      "acres": 165,
+      "acres": 82.5,
+      "plantedAcres": 0,
       "rentPerAcre": 250,
       "inputs": [
         {
@@ -7085,18 +7249,36 @@
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 0,
       "insuranceIncomePerAcre": 0,
-      "govPaymentLabel": "HARVEST CHARGES",
-      "govPaymentsPerAcre": 75,
-      "tariffsPerAcre": 0,
+      "auxPayments": [],
       "harvestMoisture": 0,
       "buyerId": "",
-      "templateId": "",
-      "auxPayments": [
-        {
-          "label": "HARVEST CHARGES",
-          "perAcre": 75
-        }
-      ]
+      "registryFieldName": "Simpsons seed",
+      "splitGroupId": "sg_mmb0c4g0_jwwx",
+      "templateId": ""
+    },
+    {
+      "id": "fld_mmb0c4g0_bz66",
+      "enterpriseId": "ent_2185",
+      "name": "Simpsons Soybeans",
+      "systemCode": "ORG",
+      "crop": "GA ORG SEED BEANS",
+      "cropType": "SINGLE CROP",
+      "acres": 82.5,
+      "plantedAcres": 0,
+      "rentPerAcre": 250,
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 40,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "insuranceIncomePerAcre": 0,
+      "auxPayments": [],
+      "harvestMoisture": 13,
+      "buyerId": "",
+      "registryFieldName": "Simpsons seed",
+      "splitGroupId": "sg_mmb0c4g0_jwwx",
+      "templateId": ""
     },
     {
       "id": "fld_2119",
@@ -7241,7 +7423,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2132",
@@ -7322,7 +7507,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2146",
@@ -7409,7 +7597,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2158",
@@ -7490,7 +7681,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2172",
@@ -7577,7 +7771,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2184",
@@ -7658,7 +7855,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2204",
@@ -7766,7 +7966,10 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2223",
@@ -7869,7 +8072,10 @@
       "harvestMoisture": 13,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2244",
@@ -7978,7 +8184,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2263",
@@ -8021,10 +8230,7 @@
           "season": "Spring"
         }
       ],
-      "seed": {
-        "variety": "CANNING",
-        "population": 180000
-      },
+      "seed": null,
       "machinery": [
         {
           "id": "mach_2255",
@@ -8082,17 +8288,20 @@
           "label": "Delong GCS",
           "perAcre": 70
         }
-      ]
+      ],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_2281",
       "enterpriseId": "ent_2185",
-      "name": "Simpson sorg",
+      "name": "Simpsons",
       "systemCode": "ORG",
       "crop": "GA ORG SEED BEANS",
       "cropType": "SINGLE CROP",
-      "acres": 35,
-      "rentPerAcre": 0,
+      "acres": 209.4,
+      "rentPerAcre": 250.72,
       "inputs": [
         {
           "id": "inp_2268",
@@ -8180,7 +8389,10 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     },
     {
       "id": "fld_mm05o9z2_6q3z",
@@ -8238,7 +8450,10 @@
         "reportedAcres": 40
       },
       "templateId": "",
-      "auxPayments": []
+      "auxPayments": [],
+      "plantedAcres": 0,
+      "registryFieldName": null,
+      "splitGroupId": null
     }
   ],
   "products": [
@@ -8252,7 +8467,8 @@
       "applicationPrice": 0.796,
       "p205": 0,
       "k20": 0.5,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0002",
@@ -8264,7 +8480,8 @@
       "applicationPrice": 0.5125,
       "p205": 0,
       "k20": 0.5,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0003",
@@ -8276,7 +8493,8 @@
       "applicationPrice": 0.43,
       "p205": 0,
       "k20": 0.6,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0004",
@@ -8288,7 +8506,8 @@
       "applicationPrice": 0.2225,
       "p205": 0,
       "k20": 0.6,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0005",
@@ -8300,7 +8519,8 @@
       "applicationPrice": 0.39,
       "p205": 0.01,
       "k20": 0.25,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0006",
@@ -8312,7 +8532,8 @@
       "applicationPrice": 2.5,
       "p205": 0.2,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0007",
@@ -8324,7 +8545,8 @@
       "applicationPrice": 0.3975,
       "p205": 0.46,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0008",
@@ -8336,7 +8558,8 @@
       "applicationPrice": 1,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0009",
@@ -8348,7 +8571,8 @@
       "applicationPrice": 3.971474954,
       "p205": 0.34,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0010",
@@ -8360,7 +8584,8 @@
       "applicationPrice": 0.1975,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0011",
@@ -8372,7 +8597,8 @@
       "applicationPrice": 13,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0012",
@@ -8384,7 +8610,8 @@
       "applicationPrice": 0.41,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0013",
@@ -8396,7 +8623,8 @@
       "applicationPrice": 0.2075,
       "p205": 0.46,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0014",
@@ -8408,7 +8636,8 @@
       "applicationPrice": 1.04346213,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0015",
@@ -8420,7 +8649,8 @@
       "applicationPrice": 1.794000003,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0016",
@@ -8432,7 +8662,8 @@
       "applicationPrice": 0.2625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "sup_mma0uqas_i9ue",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0017",
@@ -8444,7 +8675,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0018",
@@ -8456,7 +8688,8 @@
       "applicationPrice": 0.489,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0019",
@@ -8468,7 +8701,8 @@
       "applicationPrice": 0.1125,
       "p205": 0,
       "k20": 0.08,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0020",
@@ -8480,7 +8714,8 @@
       "applicationPrice": 21.07,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0021",
@@ -8492,7 +8727,8 @@
       "applicationPrice": 3.538625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0022",
@@ -8504,7 +8740,8 @@
       "applicationPrice": 0.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0023",
@@ -8516,7 +8753,8 @@
       "applicationPrice": 2.4,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0024",
@@ -8528,7 +8766,8 @@
       "applicationPrice": 2.35,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0025",
@@ -8540,7 +8779,8 @@
       "applicationPrice": 6.3,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0026",
@@ -8552,7 +8792,8 @@
       "applicationPrice": 10.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0027",
@@ -8564,7 +8805,8 @@
       "applicationPrice": 0.00605,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0028",
@@ -8576,7 +8818,8 @@
       "applicationPrice": 0.4625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0029",
@@ -8588,7 +8831,8 @@
       "applicationPrice": 6.75,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0030",
@@ -8600,7 +8844,8 @@
       "applicationPrice": 8.6,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0031",
@@ -8612,7 +8857,8 @@
       "applicationPrice": 8.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0032",
@@ -8624,7 +8870,8 @@
       "applicationPrice": 10.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0033",
@@ -8636,7 +8883,8 @@
       "applicationPrice": 5.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0034",
@@ -8648,7 +8896,8 @@
       "applicationPrice": 12.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0035",
@@ -8660,7 +8909,8 @@
       "applicationPrice": 2.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0036",
@@ -8672,7 +8922,8 @@
       "applicationPrice": 7.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0037",
@@ -8684,7 +8935,8 @@
       "applicationPrice": 21,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0038",
@@ -8696,7 +8948,8 @@
       "applicationPrice": 2.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0039",
@@ -8708,7 +8961,8 @@
       "applicationPrice": 3.85,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0040",
@@ -8720,7 +8974,8 @@
       "applicationPrice": 5.75,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0041",
@@ -8732,7 +8987,8 @@
       "applicationPrice": 6.5625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0042",
@@ -8744,7 +9000,8 @@
       "applicationPrice": 0.53125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0043",
@@ -8756,7 +9013,8 @@
       "applicationPrice": 0.548046875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0044",
@@ -8768,7 +9026,8 @@
       "applicationPrice": 60,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0045",
@@ -8780,7 +9039,8 @@
       "applicationPrice": 0.0505,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0046",
@@ -8792,7 +9052,8 @@
       "applicationPrice": 7.83,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0047",
@@ -8804,7 +9065,8 @@
       "applicationPrice": 0.5078125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0048",
@@ -8816,7 +9078,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0049",
@@ -8828,7 +9091,8 @@
       "applicationPrice": 4.11,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0050",
@@ -8840,7 +9104,8 @@
       "applicationPrice": 0.87,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0051",
@@ -8852,7 +9117,8 @@
       "applicationPrice": 0.1796875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0052",
@@ -8864,7 +9130,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0053",
@@ -8876,7 +9143,8 @@
       "applicationPrice": 2.65625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0054",
@@ -8888,7 +9156,8 @@
       "applicationPrice": 1.5234375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0055",
@@ -8900,7 +9169,8 @@
       "applicationPrice": 1.0546875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0056",
@@ -8912,7 +9182,8 @@
       "applicationPrice": 0.45,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0057",
@@ -8924,7 +9195,8 @@
       "applicationPrice": 0.085,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0058",
@@ -8936,7 +9208,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0059",
@@ -8948,7 +9221,8 @@
       "applicationPrice": 0.1,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0060",
@@ -8960,7 +9234,8 @@
       "applicationPrice": 80,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0061",
@@ -8972,7 +9247,8 @@
       "applicationPrice": 1,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0062",
@@ -8984,7 +9260,8 @@
       "applicationPrice": 0.6875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0063",
@@ -8996,7 +9273,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0064",
@@ -9008,7 +9286,8 @@
       "applicationPrice": 0.71875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0065",
@@ -9020,7 +9299,8 @@
       "applicationPrice": 0.3515625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0066",
@@ -9032,7 +9312,8 @@
       "applicationPrice": 5.07,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0067",
@@ -9044,7 +9325,8 @@
       "applicationPrice": 1.7,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0068",
@@ -9056,7 +9338,8 @@
       "applicationPrice": 2.205,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0069",
@@ -9068,7 +9351,8 @@
       "applicationPrice": 8,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0070",
@@ -9080,7 +9364,8 @@
       "applicationPrice": 1.198125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0071",
@@ -9092,7 +9377,8 @@
       "applicationPrice": 1.6875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0072",
@@ -9104,7 +9390,8 @@
       "applicationPrice": 20,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0073",
@@ -9116,7 +9403,8 @@
       "applicationPrice": 12,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0074",
@@ -9128,7 +9416,8 @@
       "applicationPrice": 7.31,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0075",
@@ -9140,7 +9429,8 @@
       "applicationPrice": 3.41,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0076",
@@ -9152,7 +9442,8 @@
       "applicationPrice": 0.01,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0077",
@@ -9164,7 +9455,8 @@
       "applicationPrice": 27.75,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0078",
@@ -9176,7 +9468,8 @@
       "applicationPrice": 0.46875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0079",
@@ -9188,7 +9481,8 @@
       "applicationPrice": 0.361328125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0080",
@@ -9200,7 +9494,8 @@
       "applicationPrice": 40,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0081",
@@ -9212,7 +9507,8 @@
       "applicationPrice": 5.95,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0082",
@@ -9224,7 +9520,8 @@
       "applicationPrice": 6.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0083",
@@ -9236,7 +9533,8 @@
       "applicationPrice": 8.44,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0084",
@@ -9248,7 +9546,8 @@
       "applicationPrice": 0.19171875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0085",
@@ -9260,7 +9559,8 @@
       "applicationPrice": 0.19171875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0086",
@@ -9272,7 +9572,8 @@
       "applicationPrice": 1.16796875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0087",
@@ -9284,7 +9585,8 @@
       "applicationPrice": 0.6396875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0088",
@@ -9296,7 +9598,8 @@
       "applicationPrice": 8.125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0089",
@@ -9308,7 +9611,8 @@
       "applicationPrice": 0.2464,
       "p205": 0.04,
       "k20": 0.04,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0090",
@@ -9320,7 +9624,8 @@
       "applicationPrice": 4.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0091",
@@ -9332,7 +9637,8 @@
       "applicationPrice": 1.330859375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0092",
@@ -9344,7 +9650,8 @@
       "applicationPrice": 1.116666667,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0093",
@@ -9356,7 +9663,8 @@
       "applicationPrice": 80,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0094",
@@ -9368,7 +9676,8 @@
       "applicationPrice": 0.445,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0095",
@@ -9380,7 +9689,8 @@
       "applicationPrice": 8.125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0096",
@@ -9392,7 +9702,8 @@
       "applicationPrice": 6.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0097",
@@ -9404,7 +9715,8 @@
       "applicationPrice": 0.065,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0098",
@@ -9416,7 +9728,8 @@
       "applicationPrice": 0.065,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0099",
@@ -9428,7 +9741,8 @@
       "applicationPrice": 35,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0100",
@@ -9440,7 +9754,8 @@
       "applicationPrice": 9.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0101",
@@ -9452,7 +9767,8 @@
       "applicationPrice": 6.75,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0102",
@@ -9464,7 +9780,8 @@
       "applicationPrice": 120,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0103",
@@ -9476,7 +9793,8 @@
       "applicationPrice": 363.08,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0104",
@@ -9488,7 +9806,8 @@
       "applicationPrice": 1.46875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0105",
@@ -9500,7 +9819,8 @@
       "applicationPrice": 6,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0106",
@@ -9512,7 +9832,8 @@
       "applicationPrice": 0.52734375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0107",
@@ -9524,7 +9845,8 @@
       "applicationPrice": 1.015625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0108",
@@ -9536,7 +9858,8 @@
       "applicationPrice": 12,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0109",
@@ -9548,7 +9871,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0110",
@@ -9560,7 +9884,8 @@
       "applicationPrice": 10,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0111",
@@ -9572,7 +9897,8 @@
       "applicationPrice": 116.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0112",
@@ -9584,7 +9910,8 @@
       "applicationPrice": 20,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0113",
@@ -9596,7 +9923,8 @@
       "applicationPrice": 0.05357142857,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0114",
@@ -9608,7 +9936,8 @@
       "applicationPrice": 6,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0115",
@@ -9620,7 +9949,8 @@
       "applicationPrice": 5.8,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0116",
@@ -9632,7 +9962,8 @@
       "applicationPrice": 0.6640625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0117",
@@ -9644,7 +9975,8 @@
       "applicationPrice": 0.0675,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0118",
@@ -9656,7 +9988,8 @@
       "applicationPrice": 1,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0119",
@@ -9668,7 +10001,8 @@
       "applicationPrice": 2.17,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0120",
@@ -9680,7 +10014,8 @@
       "applicationPrice": 1.5625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0121",
@@ -9692,7 +10027,8 @@
       "applicationPrice": 0.3235,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0122",
@@ -9704,7 +10040,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0123",
@@ -9716,7 +10053,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0124",
@@ -9728,7 +10066,8 @@
       "applicationPrice": 2.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0125",
@@ -9740,7 +10079,8 @@
       "applicationPrice": 3.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0126",
@@ -9752,7 +10092,8 @@
       "applicationPrice": 1.034,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0127",
@@ -9764,7 +10105,8 @@
       "applicationPrice": 0.078125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0128",
@@ -9776,7 +10118,8 @@
       "applicationPrice": 2.8,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0129",
@@ -9788,7 +10131,8 @@
       "applicationPrice": 1.5625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0130",
@@ -9800,7 +10144,8 @@
       "applicationPrice": 3.8,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0131",
@@ -9812,7 +10157,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0132",
@@ -9824,7 +10170,8 @@
       "applicationPrice": 2,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0133",
@@ -9836,7 +10183,8 @@
       "applicationPrice": 10,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0134",
@@ -9848,7 +10196,8 @@
       "applicationPrice": 0.1725,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0135",
@@ -9860,7 +10209,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0136",
@@ -9872,7 +10222,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0137",
@@ -9884,7 +10235,8 @@
       "applicationPrice": 0.07,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0138",
@@ -9896,7 +10248,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0139",
@@ -9908,7 +10261,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0140",
@@ -9920,7 +10274,8 @@
       "applicationPrice": 0.9765625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0141",
@@ -9932,7 +10287,8 @@
       "applicationPrice": 3.125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0142",
@@ -9944,7 +10300,8 @@
       "applicationPrice": 0.1115,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0143",
@@ -9956,7 +10313,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0144",
@@ -9968,7 +10326,8 @@
       "applicationPrice": 0.328125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0145",
@@ -9980,7 +10339,8 @@
       "applicationPrice": 0.16734375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0146",
@@ -9992,7 +10352,8 @@
       "applicationPrice": 2.12,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0147",
@@ -10004,7 +10365,8 @@
       "applicationPrice": 11.75,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0148",
@@ -10016,7 +10378,8 @@
       "applicationPrice": 0.55,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0149",
@@ -10028,7 +10391,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0150",
@@ -10040,7 +10404,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0151",
@@ -10052,7 +10417,8 @@
       "applicationPrice": 7.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0152",
@@ -10064,7 +10430,8 @@
       "applicationPrice": 45.35,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0153",
@@ -10076,7 +10443,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0154",
@@ -10088,7 +10456,8 @@
       "applicationPrice": 3.41,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0155",
@@ -10100,7 +10469,8 @@
       "applicationPrice": 5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0156",
@@ -10112,7 +10482,8 @@
       "applicationPrice": 14.45,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0157",
@@ -10124,7 +10495,8 @@
       "applicationPrice": 3.33,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0158",
@@ -10136,7 +10508,8 @@
       "applicationPrice": 2.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0159",
@@ -10148,7 +10521,8 @@
       "applicationPrice": 8,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0160",
@@ -10160,7 +10534,8 @@
       "applicationPrice": 0.359375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0161",
@@ -10172,7 +10547,8 @@
       "applicationPrice": 15,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0162",
@@ -10184,7 +10560,8 @@
       "applicationPrice": 0.1505,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0163",
@@ -10196,7 +10573,8 @@
       "applicationPrice": 150,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0164",
@@ -10208,7 +10586,8 @@
       "applicationPrice": 4.75,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0165",
@@ -10220,7 +10599,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0166",
@@ -10232,7 +10612,8 @@
       "applicationPrice": 1,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0167",
@@ -10244,7 +10625,8 @@
       "applicationPrice": 5.2734375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0168",
@@ -10256,7 +10638,8 @@
       "applicationPrice": 0.2125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0169",
@@ -10268,7 +10651,8 @@
       "applicationPrice": 0.390625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0170",
@@ -10280,7 +10664,8 @@
       "applicationPrice": 43.35,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0171",
@@ -10292,7 +10677,8 @@
       "applicationPrice": 7.27,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0172",
@@ -10304,7 +10690,8 @@
       "applicationPrice": 5.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0173",
@@ -10316,7 +10703,8 @@
       "applicationPrice": 19.59,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0174",
@@ -10328,7 +10716,8 @@
       "applicationPrice": 0.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0175",
@@ -10340,7 +10729,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0176",
@@ -10352,7 +10742,8 @@
       "applicationPrice": 3.591160221,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0177",
@@ -10364,7 +10755,8 @@
       "applicationPrice": 2.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0178",
@@ -10376,7 +10768,8 @@
       "applicationPrice": 0.21875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0179",
@@ -10388,7 +10781,8 @@
       "applicationPrice": 4.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0180",
@@ -10400,7 +10794,8 @@
       "applicationPrice": 3.046875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0181",
@@ -10412,7 +10807,8 @@
       "applicationPrice": 2.875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0182",
@@ -10424,7 +10820,8 @@
       "applicationPrice": 4.6875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0183",
@@ -10436,7 +10833,8 @@
       "applicationPrice": 3.0625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0184",
@@ -10448,7 +10846,8 @@
       "applicationPrice": 1.4453125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0185",
@@ -10460,7 +10859,8 @@
       "applicationPrice": 0.450546875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0186",
@@ -10472,7 +10872,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Chemical"
     },
     {
       "id": "prod_0187",
@@ -10484,7 +10885,8 @@
       "applicationPrice": 0,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0188",
@@ -10496,7 +10898,8 @@
       "applicationPrice": 0.17578125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0189",
@@ -10508,7 +10911,8 @@
       "applicationPrice": 0.62,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0190",
@@ -10520,7 +10924,8 @@
       "applicationPrice": 4.1640625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0191",
@@ -10532,7 +10937,8 @@
       "applicationPrice": 4.453125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0192",
@@ -10544,7 +10950,8 @@
       "applicationPrice": 1.775,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0193",
@@ -10556,7 +10963,8 @@
       "applicationPrice": 4.8,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0194",
@@ -10568,7 +10976,8 @@
       "applicationPrice": 1.21875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0195",
@@ -10580,7 +10989,8 @@
       "applicationPrice": 2.109375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0196",
@@ -10592,7 +11002,8 @@
       "applicationPrice": 0.1,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0197",
@@ -10604,7 +11015,8 @@
       "applicationPrice": 0.69609375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0198",
@@ -10616,7 +11028,8 @@
       "applicationPrice": 49.83,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0199",
@@ -10628,7 +11041,8 @@
       "applicationPrice": 15.54,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0200",
@@ -10640,7 +11054,8 @@
       "applicationPrice": 0.49296875,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0201",
@@ -10652,7 +11067,8 @@
       "applicationPrice": 1,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0202",
@@ -10664,7 +11080,8 @@
       "applicationPrice": 13.14,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0203",
@@ -10676,7 +11093,8 @@
       "applicationPrice": 0.23859375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0204",
@@ -10688,7 +11106,8 @@
       "applicationPrice": 3,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0205",
@@ -10700,7 +11119,8 @@
       "applicationPrice": 1.953125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0206",
@@ -10712,7 +11132,8 @@
       "applicationPrice": 4.17,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Fertilizer"
     },
     {
       "id": "prod_0207",
@@ -10724,7 +11145,8 @@
       "applicationPrice": 2.90625,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0208",
@@ -10736,7 +11158,8 @@
       "applicationPrice": 4,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0209",
@@ -10748,7 +11171,8 @@
       "applicationPrice": 9.4,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Seed"
     },
     {
       "id": "prod_0210",
@@ -10760,7 +11184,8 @@
       "applicationPrice": 0.484375,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0211",
@@ -10772,7 +11197,8 @@
       "applicationPrice": 0.220078125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     },
     {
       "id": "prod_0212",
@@ -10784,7 +11210,8 @@
       "applicationPrice": 0.1278125,
       "p205": 0,
       "k20": 0,
-      "supplierId": ""
+      "supplierId": "",
+      "category": "Other"
     }
   ],
   "implements": [
@@ -12062,7 +12489,7 @@
       "variety": "P26Z86E",
       "pricePerUnit": 53.04,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "sup_mma12zm8_t4vm"
     },
     {
       "id": "seed_0348",
@@ -13517,7 +13944,22 @@
       "notes": ""
     }
   ],
-  "suppliers": [],
+  "suppliers": [
+    {
+      "id": "sup_mma0uqas_i9ue",
+      "name": "Delongs",
+      "type": "product",
+      "contact": "",
+      "notes": ""
+    },
+    {
+      "id": "sup_mma12zm8_t4vm",
+      "name": "Delongs",
+      "type": "seed",
+      "contact": "",
+      "notes": ""
+    }
+  ],
   "fieldopsSync": {
     "lastSync": "2026-02-24T05:19:12.254Z",
     "lastStatus": "success",
@@ -13913,6 +14355,285 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "createdFromFieldId": "fld_0709"
+    },
+    {
+      "id": "prog_mm9lahyn_fb4k",
+      "name": "Foodbean Program - Outlook",
+      "description": "Created from Delong-Meyer",
+      "crop": "High Oil Soybeans",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [
+        {
+          "id": "inp_1322",
+          "productName": "Application - Liquid Pre",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1323",
+          "productName": "Mauler (2x2.5 Gal)",
+          "quantity": 6,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1324",
+          "productName": "Sonic (2x7.5 Lb)",
+          "quantity": 0.31,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1325",
+          "productName": "Application - Post",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1326",
+          "productName": "Volunteer",
+          "quantity": 8,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1327",
+          "productName": "Forsyte 1.88 SL (2x2.5 Gal)",
+          "quantity": 1.25,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1328",
+          "productName": "Outlook (Bulk)",
+          "quantity": 10,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1329",
+          "productName": "Crop Oil, Insource (2x2.5 Gal)",
+          "quantity": 1.27,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1330",
+          "productName": "Premium Ams (51 Lb)",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1331",
+          "productName": "Ppst Fst/Ist (140K) Seed Treatment",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1332",
+          "productName": "Ppst 120 (140K) Inoculant",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1333",
+          "productName": "Seed Treatment Application (Unit)",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1334",
+          "productName": "PowerMax",
+          "quantity": 22,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1335",
+          "productName": "Wi Tonnage Tax",
+          "quantity": 0.1,
+          "season": "Fall"
+        },
+        {
+          "id": "inp_1336",
+          "productName": "0-0-60 Potash",
+          "quantity": 140,
+          "season": "Fall"
+        },
+        {
+          "id": "inp_1337",
+          "productName": "0-46-0 Triple Super 15C",
+          "quantity": 104.3478261,
+          "season": "Fall"
+        }
+      ],
+      "seed": {
+        "variety": "DF 262",
+        "population": 140000
+      },
+      "machinery": [
+        {
+          "id": "mach_1338",
+          "implementName": "Soil Finisher",
+          "passes": 2
+        },
+        {
+          "id": "mach_1339",
+          "implementName": "Planter",
+          "passes": 1
+        },
+        {
+          "id": "mach_1340",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_1341",
+          "implementName": "Trucking",
+          "passes": 1
+        },
+        {
+          "id": "mach_1342",
+          "implementName": "Weed Zapper",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 60,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 20,
+      "harvestMoisture": 13,
+      "buyerId": "",
+      "createdFromFieldId": "fld_1343"
+    },
+    {
+      "id": "prog_mm9lcoao_kk12",
+      "name": "RR Soybeans Program",
+      "description": "Created from Inman",
+      "crop": "RR Soybeans",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [
+        {
+          "id": "inp_1816",
+          "productName": "Application - Liquid Pre",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1817",
+          "productName": "Mauler (2x2.5 Gal)",
+          "quantity": 6,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1818",
+          "productName": "Sonic (2x7.5 Lb)",
+          "quantity": 0.31,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1819",
+          "productName": "Application - Post",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1820",
+          "productName": "PowerMax",
+          "quantity": 22,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1821",
+          "productName": "Enlist",
+          "quantity": 1.4,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1822",
+          "productName": "Crop Oil, Insource (2x2.5 Gal)",
+          "quantity": 0.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1823",
+          "productName": "Premium Ams (51 Lb)",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1824",
+          "productName": "Ppst Fst/Ist (140K) Seed Treatment",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1825",
+          "productName": "Ppst 120 (140K) Inoculant",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1826",
+          "productName": "Seed Treatment Application (Unit)",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1827",
+          "productName": "Wi Tonnage Tax",
+          "quantity": 0.1,
+          "season": "Fall"
+        },
+        {
+          "id": "inp_1828",
+          "productName": "0-0-60 Potash",
+          "quantity": 128.3333333,
+          "season": "Fall"
+        },
+        {
+          "id": "inp_1829",
+          "productName": "0-46-0 Triple Super 15C",
+          "quantity": 95.65217391,
+          "season": "Fall"
+        }
+      ],
+      "seed": {
+        "variety": "16Z25E",
+        "population": 135000
+      },
+      "machinery": [
+        {
+          "id": "mach_1830",
+          "implementName": "Soil Finisher",
+          "passes": 2
+        },
+        {
+          "id": "mach_1831",
+          "implementName": "Planter",
+          "passes": 1
+        },
+        {
+          "id": "mach_1832",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_1833",
+          "implementName": "Trucking",
+          "passes": 0.2
+        },
+        {
+          "id": "mach_1834",
+          "implementName": "Weed Zapper",
+          "passes": 2
+        },
+        {
+          "id": "mach_1835",
+          "implementName": "Hooded Redball",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 70,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 40,
+      "harvestMoisture": 0,
+      "buyerId": "",
+      "createdFromFieldId": "fld_1836"
     }
   ],
   "cropTypes": [
@@ -13925,9 +14646,9 @@
       "dryingRate": 0.3,
       "interestRate": 0.06,
       "pricingMode": "cbot",
-      "cbotPrice": 4.695,
+      "cbotPrice": 4.71,
       "cbotSymbol": "ZCZ",
-      "cbotLastFetched": "2026-03-01T01:58:10.966Z",
+      "cbotLastFetched": "2026-03-03T15:23:47.897Z",
       "subCrops": [
         {
           "name": "Yellow Corn",
@@ -14178,7 +14899,7 @@
           "pricePerUnit": 11.5,
           "basisDefault": 0,
           "unit": "Bu",
-          "dryingRate": 0.2,
+          "dryingRate": 0,
           "shadeIndex": 1
         },
         {
@@ -14579,6 +15300,53 @@
           "unit": "Bu",
           "dryingRate": 0.3,
           "shadeIndex": 0
+        }
+      ]
+    }
+  ],
+  "orders": [
+    {
+      "id": "ord_mmbgr320_3y2j",
+      "supplierId": "sup_test",
+      "supplierName": "Test",
+      "status": "complete",
+      "items": [
+        {
+          "productName": "46-0-0  Urea",
+          "unit": "Lbs",
+          "orderedQty": 4000,
+          "unitCost": 0.217
+        }
+      ]
+    },
+    {
+      "id": "ord_mmbgwggq_kjz9",
+      "supplierId": "test",
+      "items": []
+    }
+  ],
+  "deliveries": [
+    {
+      "id": "del_mmbgr3hw_kqp3",
+      "orderId": "ord_mmbgr320_3y2j",
+      "deliveredAt": "2026-03-15",
+      "items": [
+        {
+          "productName": "46-0-0  Urea",
+          "unit": "Lbs",
+          "deliveredQty": 2000
+        }
+      ]
+    },
+    {
+      "id": "del_mmbgr3xn_w32t",
+      "orderId": "ord_mmbgr320_3y2j",
+      "deliveredAt": "2026-03-16",
+      "items": [
+        {
+          "productName": "46-0-0  Urea",
+          "unit": "Lbs",
+          "deliveredQty": 2000
         }
       ]
     }

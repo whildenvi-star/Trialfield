@@ -152,7 +152,13 @@
   // settings: the global settings object
   function computeFieldBudget(field, refs, settings, options) {
     var result = {};
-    var acres = field.acres || 0;
+    // Two acre concepts: rent basis (full field) vs crop basis (planted/operating)
+    // Rent uses field.acres (total field — landlord obligation)
+    // Inputs, seed, machinery, etc. use plantedAcres when set (crop allocation)
+    var rentAcres = field.acres || 0;
+    var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    result.rentAcres = rentAcres;
+    result.effectiveAcres = acres;
     var opts = options || {};
 
     // --- CROP TYPE MULTIPLIER ---
@@ -162,9 +168,11 @@
       cropTypeMultiplier = 0.5;
     }
 
-    // --- RENT ---
+    // --- RENT (uses rentAcres — landlord obligation on total field) ---
     result.rentPerAcre = round2((field.rentPerAcre || 0) * cropTypeMultiplier);
-    result.rentTotal = round2(result.rentPerAcre * acres);
+    result.rentTotal = round2(result.rentPerAcre * rentAcres);
+    // Effective rent per crop acre (higher when paying rent on unplanted acres)
+    result.rentPerCropAcre = acres > 0 ? round2(result.rentTotal / acres) : 0;
 
     // --- FERTILIZER / CHEMICAL INPUTS ---
     var springFert = 0;
@@ -188,7 +196,9 @@
       };
     });
     result.springFertPerAcre = round2(springFert);
+    result.springFertTotal = round2(springFert * acres);
     result.fallFertPerAcre = round2(fallFert);
+    result.fallFertTotal = round2(fallFert * acres);
     result.unassignedFertPerAcre = round2(unassignedFert);
     result.totalFertPerAcre = round2(springFert + fallFert + unassignedFert);
     result.totalFertCost = round2(result.totalFertPerAcre * acres);
@@ -252,7 +262,9 @@
     } else {
       result.laborPerAcre = lo ? lo.laborPerAcre : 0;
     }
+    result.laborTotal = round2(result.laborPerAcre * acres);
     result.overheadPerAcre = lo ? lo.overheadPerAcre : 0;
+    result.overheadTotal = round2(result.overheadPerAcre * acres);
     result.laborOverheadTotal = round2((result.laborPerAcre + result.overheadPerAcre) * acres);
 
     // --- FUEL ---
@@ -309,7 +321,7 @@
     var interestRate = pricing ? pricing.interestRate : 0.06;
     var carryFraction = (settings.carryMonths || 6) / 12;
     var interestBase = (
-      (result.rentPerAcre * 0.5) +
+      (result.rentPerCropAcre * 0.5) +
       result.springFertPerAcre +
       result.seedCostPerAcre +
       ((result.laborPerAcre + result.overheadPerAcre + result.fuelPerAcre) * 0.5)
@@ -321,20 +333,20 @@
     result.cropInsurancePerAcre = field.cropInsurancePerAcre || 0;
     result.cropInsuranceTotal = round2(result.cropInsurancePerAcre * acres);
 
-    // --- TOTAL EXPENSE ---
-    result.expPerAcre = round2(
-      result.rentPerAcre +
-      result.totalFertPerAcre +
-      result.seedCostPerAcre +
-      result.machineryPerAcre +
-      result.laborPerAcre +
-      result.overheadPerAcre +
-      result.fuelPerAcre +
-      result.dryingPerAcre +
-      result.interestPerAcre +
-      result.cropInsurancePerAcre
+    // --- TOTAL EXPENSE (sum individual totals — rent may use different acre base) ---
+    result.expTotal = round2(
+      result.rentTotal +
+      result.totalFertCost +
+      result.seedTotal +
+      result.machineryTotal +
+      result.laborTotal +
+      result.overheadTotal +
+      result.fuelTotal +
+      result.dryingTotal +
+      result.interestTotal +
+      result.cropInsuranceTotal
     );
-    result.expTotal = round2(result.expPerAcre * acres);
+    result.expPerAcre = acres > 0 ? round2(result.expTotal / acres) : 0;
 
     // --- YIELD ---
     result.yieldUnit = field.yieldUnit || 'Bu';
@@ -394,10 +406,10 @@
 
     var budgets = fields.map(function (f) {
       var b = computeFieldBudget(f, refs, settings, options);
-      totals.acres += f.acres || 0;
+      totals.acres += b.effectiveAcres;
       totals.rent += b.rentTotal;
-      totals.springFert += b.springFertPerAcre * (f.acres || 0);
-      totals.fallFert += b.fallFertPerAcre * (f.acres || 0);
+      totals.springFert += b.springFertTotal;
+      totals.fallFert += b.fallFertTotal;
       totals.fert += b.totalFertCost;
       totals.seed += b.seedTotal;
       totals.machinery += b.machineryTotal;
@@ -463,7 +475,7 @@
       cropFields.forEach(function (f) {
         // Reuse precomputed budget if available; otherwise compute fresh
         var b = budgetMap[f.id] || computeFieldBudget(f, refs, settings, options);
-        var a = f.acres || 0;
+        var a = b.effectiveAcres !== undefined ? b.effectiveAcres : ((f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0);
         totalAcres += a;
         sumYieldTimesAcres += b.yieldPerAcre * a;
         sumProfitTimesAcres += b.profitPerAcre * a;
