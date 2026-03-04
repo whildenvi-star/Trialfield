@@ -72,10 +72,10 @@
   1. User edits reportingAcres, organicAcres, or ownership in the farm-registry field editor and after saving, the values are still correct after a hard page refresh
   2. User edits growerId in farm-registry and the value persists after saving (no silent drop by the API)
   3. No fields silently revert to previous values or go blank after a PUT to /api/fields/:id
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 20-01: Fix PUT /api/fields/:id to accept and persist all form-submitted fields including growerId, reportingAcres, organicAcres, and ownership
+- [ ] 20-01-PLAN.md — Fix PUT whitelist (growerId), add server validation, add save error handling + loading state to client
 
 ### Phase 21: Farm-Budget Field Editor Polish
 **Goal**: The farm-budget field editor shows complete cost information at a glance and the Orders/Deliveries tabs are fully operational
