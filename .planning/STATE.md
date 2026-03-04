@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 18 COMPLETE — v3.0 Organic Cert Transparency (Phases 15-18) fully shipped.
+**Current focus:** Phase 19 IN PROGRESS — Seed & Input Inventory Redesign (farm-budget procurement pipeline).
 
 ## Current Position
 
-Phase: 18-rotation-snapshot-harvest-compilation-pdf — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 18 all 3 plans shipped — rotation snapshot, harvest compilation, and PDF null-safety complete.
-Last activity: 2026-03-03 — Phase 18 Plan 03 executed and committed
+Phase: 19-seed-input-inventory-redesign — IN PROGRESS
+Plan: 1 of 3 complete
+Status: Phase 19 Plan 01 shipped — server foundation (forecast endpoint, orders/deliveries CRUD), nav restructure (Forecasts/Orders/Deliveries/Seeds/Reference), day/night CSS, 4 placeholder JS modules.
+Last activity: 2026-03-04 — Phase 19 Plan 01 executed and committed
 
 **v2.0 Grain Traceability:** Phases 9-13 ALL COMPLETE — v2.0 shipped
 **Phase 14 (Chat Agent):** Plans 01-02-03 ALL COMPLETE — Phase 14 shipped
@@ -21,6 +21,7 @@ Last activity: 2026-03-03 — Phase 18 Plan 03 executed and committed
 **Phase 17 (Input & Seed Compilation + NOP):** Plans 01-02 ALL COMPLETE — Phase 17 shipped
 **Phase 18 (Rotation + Harvest + PDF):** Plans 01-02-03 ALL COMPLETE — Phase 18 shipped
 **v3.0 Organic Cert Transparency:** Phases 15-18 ALL COMPLETE — v3.0 shipped
+**Phase 19 (Seed & Input Inventory Redesign):** Plan 01 COMPLETE — server foundation, nav restructure, day/night theme
 
 ## Performance Metrics
 
@@ -59,6 +60,7 @@ Last activity: 2026-03-03 — Phase 18 Plan 03 executed and committed
 | Phase 18-rotation-snapshot-harvest-compilation-pdf P01 | 658 | 2 tasks | 7 files |
 | Phase 18-rotation-snapshot-harvest-compilation-pdf P02 | 418 | 2 tasks | 4 files |
 | Phase 18-rotation-snapshot-harvest-compilation-pdf P03 | 139 | 2 tasks | 5 files |
+| Phase 19-seed-input-inventory-redesign P01 | 6 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -156,6 +158,10 @@ v3.0 architectural decisions:
 - [Phase 18-03]: CompileChecklist derived from already-fetched farm query data + 2 COUNT queries (fieldHistory, seedUsage) — avoids reloading large nested query just to check booleans
 - [Phase 18-03]: Cover page compile checklist renders between crop year and generated date — data completeness visible above administrative timestamp
 - [Phase 18-03]: field-list empty guard wraps entire table block (header + rows + summary) — prevents orphaned header rendering when fields array is empty
+- [Phase 19-01]: Forecast endpoint is server-side (GET /api/forecast) — avoids re-implementing Calc.computeApplicationPrice client-side
+- [Phase 19-01]: Deliveries use custom routes (not crudRoutes factory) to enable recalcOrderStatus() on every write
+- [Phase 19-01]: Old Inputs Manager content moved to Reference tab — element IDs preserved, inputs-manager.js listener updated from 'inputs' to 'reference'
+- [Phase 19-01]: Sun/moon Unicode glyphs (U+263C/U+263E) replace [day]/[night] text in theme toggle button
 
 ### Roadmap Evolution
 
@@ -185,7 +191,7 @@ v3.0:
 
 ## Session Continuity
 
-Last session: 2026-03-03
-Stopped at: Completed 18-rotation-snapshot-harvest-compilation-pdf Plan 03 — PDF null-safety and compile checklist shipped
-Resume file: v3.0 Organic Cert Transparency complete — all 4 phases (15-18) shipped
-Next action: Phase 19 (Seed & Input Inventory Redesign, farm-budget) per roadmap
+Last session: 2026-03-04
+Stopped at: Completed 19-seed-input-inventory-redesign Plan 01 — server foundation, forecast endpoint, orders/deliveries CRUD, nav restructure, day/night CSS
+Resume file: Phase 19 Plan 01 complete — procurement pipeline backend and HTML shell ready for Wave 2 UI
+Next action: Phase 19 Plan 02 (Forecast Hub UI and orders form) per roadmap

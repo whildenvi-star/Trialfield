@@ -104,11 +104,11 @@ Requirements for the seed & input inventory redesign (farm-budget). Maps to Phas
 
 ### Procurement Pipeline
 
-- [ ] **INV-01**: Forecast Hub shows farm-wide product needs grouped by Seed/Fertilizer/Chemical, live-computed from Macro Roll-Up data, with expandable field breakdowns and visual % ordered status bars
-- [ ] **INV-02**: User can create orders from forecast selections (grouped by supplier), record multiple deliveries per order, and order status auto-transitions (ordered/partial/complete)
+- [x] **INV-01**: Forecast Hub shows farm-wide product needs grouped by Seed/Fertilizer/Chemical, live-computed from Macro Roll-Up data, with expandable field breakdowns and visual % ordered status bars
+- [x] **INV-02**: User can create orders from forecast selections (grouped by supplier), record multiple deliveries per order, and order status auto-transitions (ordered/partial/complete)
 - [ ] **INV-03**: Five print-optimized HTML reports accessible from Forecast tab: Agronomist Order Sheet, Field-Level Input Plan, Forecast Summary, Order Status Report, Delivery Receipt Log
-- [ ] **INV-04**: Navigation restructured to Forecasts/Orders/Deliveries/Seeds top-level tabs with existing Products/Implements/Suppliers/Labor moved to Reference tab
-- [ ] **INV-05**: Day/night mode with sun/moon toggle, CSS custom properties for light/dark palettes, persisted in localStorage
+- [x] **INV-04**: Navigation restructured to Forecasts/Orders/Deliveries/Seeds top-level tabs with existing Products/Implements/Suppliers/Labor moved to Reference tab
+- [x] **INV-05**: Day/night mode with sun/moon toggle, CSS custom properties for light/dark palettes, persisted in localStorage
 
 ## v2.x Requirements
 
