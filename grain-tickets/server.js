@@ -1846,6 +1846,149 @@ app.get('/api/reconciliation/unmatched', async (req, res) => {
   }
 });
 
+// GET /api/reconciliation/fuzzy-candidates?buyerId=X&cropYear=Y — find candidate matches for unmatched settlement lines by date proximity + weight tolerance
+app.get('/api/reconciliation/fuzzy-candidates', async (req, res) => {
+  try {
+    const buyerId = parseInt(req.query.buyerId, 10);
+    const cropYear = parseInt(req.query.cropYear, 10);
+    if (isNaN(buyerId) || isNaN(cropYear)) {
+      return res.status(400).json({ error: 'buyerId and cropYear are required' });
+    }
+
+    // Helper: absolute calendar days between two date strings (YYYY-MM-DD) or Date objects
+    function daysDiff(d1, d2) {
+      if (!d1 || !d2) return null;
+      const s1 = (d1 instanceof Date) ? d1.toISOString().split('T')[0] : String(d1).split('T')[0];
+      const s2 = (d2 instanceof Date) ? d2.toISOString().split('T')[0] : String(d2).split('T')[0];
+      const t1 = new Date(s1).getTime();
+      const t2 = new Date(s2).getTime();
+      return Math.round(Math.abs(t1 - t2) / 86400000);
+    }
+
+    // Load crop tolerance configs for weight threshold computation
+    const cropConfigs = await prisma.cropConfig.findMany({
+      where: { cropYear },
+      select: { cropName: true, tolerancePct: true, toleranceLbs: true }
+    });
+    const toleranceMap = {};
+    cropConfigs.forEach(c => {
+      toleranceMap[c.cropName] = { tolerancePct: c.tolerancePct || 0, toleranceLbs: c.toleranceLbs || 0 };
+    });
+
+    // Fetch all farm tickets for this buyer+cropYear
+    const allFarmTickets = await prisma.ticket.findMany({
+      where: { buyerId, cropYear },
+      include: { settlementLines: { select: { matchStatus: true } } }
+    });
+
+    // Unmatched farm tickets: no matched/manual settlement line
+    const unmatchedFarmTickets = allFarmTickets.filter(t =>
+      !t.settlementLines.some(l => l.matchStatus === 'matched' || l.matchStatus === 'manual')
+    );
+
+    // Fetch all unmatched settlement lines for this buyer+cropYear
+    const settlements = await prisma.settlement.findMany({
+      where: { buyerId, cropYear },
+      include: {
+        lines: {
+          where: { matchStatus: 'unmatched' }
+        }
+      }
+    });
+
+    const unmatchedLines = [];
+    settlements.forEach(s => {
+      s.lines.forEach(l => {
+        unmatchedLines.push(l);
+      });
+    });
+
+    if (unmatchedLines.length === 0 || unmatchedFarmTickets.length === 0) {
+      return res.json([]);
+    }
+
+    // For each unmatched settlement line, find candidate farm tickets by date+weight proximity
+    const FUZZY_DEFAULT_PCT = 2; // default 2% fuzzy tolerance when no crop config
+    const DATE_WINDOW_DAYS = 2;
+    const MAX_CANDIDATES = 5;
+
+    const results = [];
+
+    unmatchedLines.forEach(line => {
+      const lineDate = line.date instanceof Date ? line.date.toISOString().split('T')[0] : (line.date ? String(line.date).split('T')[0] : null);
+      const lineWeight = line.netWeight;
+
+      const candidates = [];
+
+      unmatchedFarmTickets.forEach(ticket => {
+        const ticketDate = ticket.date instanceof Date ? ticket.date.toISOString().split('T')[0] : (ticket.date ? String(ticket.date).split('T')[0] : null);
+
+        // Date proximity check
+        let dateDiffDays = null;
+        if (lineDate && ticketDate) {
+          dateDiffDays = daysDiff(lineDate, ticketDate);
+          if (dateDiffDays > DATE_WINDOW_DAYS) return; // outside date window
+        }
+        // If either date is null, skip date filter and allow match by weight only
+
+        // Weight proximity check
+        if (!lineWeight || !ticket.netWeight || ticket.netWeight === 0) return;
+        const weightVarianceLbs = Math.abs(ticket.netWeight - lineWeight);
+        const weightVariancePct = (weightVarianceLbs / ticket.netWeight) * 100;
+
+        // Look up tolerance for this ticket's crop
+        const tol = toleranceMap[ticket.crop] || { tolerancePct: 0, toleranceLbs: 0 };
+        let toleranceThreshold;
+        if (tol.tolerancePct > 0) {
+          toleranceThreshold = ticket.netWeight * (tol.tolerancePct / 100);
+        } else if (tol.toleranceLbs > 0) {
+          toleranceThreshold = tol.toleranceLbs;
+        } else {
+          // Default: 2% fuzzy tolerance
+          toleranceThreshold = ticket.netWeight * (FUZZY_DEFAULT_PCT / 100);
+        }
+
+        if (weightVarianceLbs > toleranceThreshold) return; // outside weight window
+
+        candidates.push({
+          ticketId: ticket.id,
+          ticketNo: ticket.ticketNo || '',
+          date: ticketDate,
+          netWeight: ticket.netWeight,
+          crop: ticket.crop || '',
+          weightVarianceLbs: Math.round(weightVarianceLbs * 10) / 10,
+          weightVariancePct: Math.round(weightVariancePct * 100) / 100,
+          dateDiffDays: dateDiffDays !== null ? dateDiffDays : null
+        });
+      });
+
+      if (candidates.length === 0) return; // No candidates for this line
+
+      // Sort: smallest weight variance first, then smallest date diff
+      candidates.sort((a, b) => {
+        const wDiff = a.weightVarianceLbs - b.weightVarianceLbs;
+        if (wDiff !== 0) return wDiff;
+        const aDate = a.dateDiffDays !== null ? a.dateDiffDays : 999;
+        const bDate = b.dateDiffDays !== null ? b.dateDiffDays : 999;
+        return aDate - bDate;
+      });
+
+      results.push({
+        settlementLineId: line.id,
+        lineTicketNo: line.ticketNo || '',
+        lineDate: lineDate,
+        lineNetWeight: lineWeight,
+        candidates: candidates.slice(0, MAX_CANDIDATES)
+      });
+    });
+
+    res.json(results);
+  } catch (e) {
+    console.error('GET /api/reconciliation/fuzzy-candidates error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/reconciliation/manual-link — manually link a ticket to a settlement line
 app.post('/api/reconciliation/manual-link', async (req, res) => {
   try {
