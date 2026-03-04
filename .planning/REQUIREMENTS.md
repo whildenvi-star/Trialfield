@@ -9,8 +9,8 @@ Requirements for v4.0 Cross-Module Polish & Settlement Closure. Each maps to roa
 
 ### Bug Fixes
 
-- [ ] **FIX-01**: User can save field edits in farm-registry and see reportingAcres, organicAcres, and ownership persist correctly after page refresh
-- [ ] **FIX-02**: Farm-registry PUT /api/fields/:id accepts all form-submitted fields including growerId
+- [x] **FIX-01**: User can save field edits in farm-registry and see reportingAcres, organicAcres, and ownership persist correctly after page refresh
+- [x] **FIX-02**: Farm-registry PUT /api/fields/:id accepts all form-submitted fields including growerId
 
 ### Farm Budget Polish
 
@@ -73,8 +73,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 20 | Pending |
-| FIX-02 | Phase 20 | Pending |
+| FIX-01 | Phase 20 | Complete |
+| FIX-02 | Phase 20 | Complete |
 | BUD-01 | Phase 21 | Pending |
 | BUD-02 | Phase 21 | Pending |
 | BUD-03 | Phase 21 | Pending |

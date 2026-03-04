@@ -57,7 +57,7 @@
 
 **Milestone Goal:** Fix bugs, polish the farm-budget field editor, improve FSA crop sync from macro rollup, and close the settlement reconciliation loop in grain-tickets with configurable tolerances, fuzzy matching, dispute resolution, and multi-buyer summaries.
 
-- [ ] **Phase 20: Farm-Registry Bug Fix** - Fix field save so acres and ownership persist correctly
+- [x] **Phase 20: Farm-Registry Bug Fix** - Fix field save so acres and ownership persist correctly (completed 2026-03-04)
 - [ ] **Phase 21: Farm-Budget Field Editor Polish** - Category totals, red negative profit, Orders and Deliveries tabs live
 - [ ] **Phase 22: FSA Crop Sync Improvement** - Pull enterprise data from farm-budget macro rollup with side-by-side preview
 - [ ] **Phase 23: Settlement Closure** - Configurable tolerances, fuzzy matching, dispute workflow, multi-buyer summary
@@ -72,7 +72,7 @@
   1. User edits reportingAcres, organicAcres, or ownership in the farm-registry field editor and after saving, the values are still correct after a hard page refresh
   2. User edits growerId in farm-registry and the value persists after saving (no silent drop by the API)
   3. No fields silently revert to previous values or go blank after a PUT to /api/fields/:id
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] 20-01-PLAN.md — Fix PUT whitelist (growerId), add server validation, add save error handling + loading state to client
@@ -145,7 +145,7 @@ Plans:
 | 17. Input & Seed Compilation + NOP Compliance | v3.0 | 2/2 | Complete | 2026-03-03 |
 | 18. Rotation Snapshot & Harvest Compilation & PDF | v3.0 | 3/3 | Complete | 2026-03-03 |
 | 19. Seed & Input Inventory Redesign | v3.0 | 3/3 | Complete | 2026-03-04 |
-| 20. Farm-Registry Bug Fix | v4.0 | 0/TBD | Not started | - |
+| 20. Farm-Registry Bug Fix | 1/1 | Complete   | 2026-03-04 | - |
 | 21. Farm-Budget Field Editor Polish | v4.0 | 0/TBD | Not started | - |
 | 22. FSA Crop Sync Improvement | v4.0 | 0/TBD | Not started | - |
 | 23. Settlement Closure | v4.0 | 0/TBD | Not started | - |

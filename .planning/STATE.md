@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 ## Current Position
 
 Phase: 20 of 23 (Farm-Registry Bug Fix)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-04 — v4.0 roadmap created (4 phases, 14 requirements)
+Plan: 1 of 1 in current phase
+Status: Phase complete
+Last activity: 2026-03-04 — Phase 20 Plan 01 complete (farm-registry field save bug fixed)
 
-Progress: [░░░░░░░░░░] 0% (v4.0 — 0/4 phases complete)
+Progress: [██░░░░░░░░] 25% (v4.0 — 1/4 phases complete)
 
 ## Performance Metrics
 
@@ -32,6 +32,9 @@ Progress: [░░░░░░░░░░] 0% (v4.0 — 0/4 phases complete)
 
 - [v4.0]: Phase order chosen for minimal risk — bugs first (20), then farm-budget polish (21), then FSA sync (22), then grain-tickets settlement closure (23)
 - [v4.0]: All four modules are independent — phases 20-23 have no dependencies on each other
+- [20-01]: growerId default is grw_001 for this single-grower operation — backfilled on any PUT that passes validation
+- [20-01]: Error toast reuses existing save-toast element with save-toast-error modifier class; 4-second display vs 2-second for success
+- [20-01]: Form retains user edits on save failure — loadFields() not called in catch block
 
 ### Pending Todos
 
@@ -44,6 +47,6 @@ Progress: [░░░░░░░░░░] 0% (v4.0 — 0/4 phases complete)
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Roadmap created for v4.0 (phases 20-23)
+Stopped at: Completed 20-01-PLAN.md (farm-registry field save bug fixed, 2 tasks, 3 files)
 Resume file: None
-Next action: /gsd:plan-phase 20
+Next action: /gsd:plan-phase 21
