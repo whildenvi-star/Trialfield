@@ -26,19 +26,11 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** 527 tickets migrated JSON→PostgreSQL, buyer/destination registry with crop year scoping, settlement import (CSV/Excel + manual entry), automated reconciliation engine with dispute flagging and variance detection, and Glomalin AI chat agent with streaming responses, inline charts, CSV export, and learnable notes. 6 phases, 13 plans, 24 requirements — all complete.
 
-## Current Milestone: v3.0 Organic Cert Transparency + Procurement (In Progress)
+## Completed Milestone: v3.0 Organic Cert Transparency + Procurement (2026-03-04)
 
 **Goal:** Rewire organic-cert from a manual data-entry app into a live compilation engine that pulls field plans, inputs, seed, rotations, and harvest data from farm-budget, farm-registry, and grain-tickets — then compiles a complete NOP inspection packet with zero double-entry. Plus procurement pipeline redesign for farm-budget.
 
-**Status:** All 5 phases (15-19) complete. 12 plans, 25 requirements — all satisfied. Ready for archival.
-
-**Delivered:**
-- Ecosystem client layer connecting organic-cert to farm-budget, farm-registry, and grain-tickets
-- Preview/commit compilation pipeline for enterprises, inputs, seeds, and harvests
-- NOP compliance engine with material resolution and compliance badges
-- Rotation snapshot mechanism for 3-year NOP field history
-- PDF null-safety for all compiled ecosystem data
-- Procurement pipeline (Forecasts, Orders, Deliveries) with 5 print reports in farm-budget
+**Delivered:** Ecosystem client layer with graceful degradation, preview/commit compilation pipeline for enterprises/inputs/seeds/harvests, NOP compliance engine with material resolution, rotation snapshot for 3-year field history, PDF null-safety for all 8 report sections, and farm-budget procurement pipeline (Forecasts, Orders, Deliveries) with 5 print reports and day/night theme. 5 phases, 12 plans, 25 requirements — all complete.
 
 ## Requirements
 
@@ -85,7 +77,7 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 ### Active
 
-(No active requirements — v3.0 ready for archival)
+(No active requirements — all milestones archived. Run `/gsd:new-milestone` to define next.)
 
 ### Deferred
 
@@ -120,7 +112,7 @@ Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 +
 
 **Port map:** 3000 grain-tickets, 3001 farm-budget, 3002 fsa-acres, 3003 meristem-malt, 3004 organic-cert, 3005 farm-registry
 
-**Total shipped:** 42 plans across 19 phases in 4 milestones (v1.0, v1.1, v2.0, v3.0 pending archive).
+**Total shipped:** 42 plans across 19 phases in 4 milestones (v1.0, v1.1, v2.0, v3.0).
 
 Primary users are farm office staff (daily ticket entry) and farm manager (farm planning, certification, settlement reconciliation).
 
@@ -153,4 +145,4 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | claude-haiku for Glomalin agent | Cost-effective for high-frequency grain queries | ✓ Good — responsive and affordable |
 
 ---
-*Last updated: 2026-03-04 after v2.0 milestone archived*
+*Last updated: 2026-03-04 after v2.0 + v3.0 milestones archived*

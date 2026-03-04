@@ -65,3 +65,28 @@
 
 ---
 
+
+## v3.0 Organic Cert Transparency + Procurement (Shipped: 2026-03-04)
+
+**Delivered:** Organic-cert rewired from manual data-entry to a live compilation engine pulling from farm-budget, farm-registry, and grain-tickets. Farm-budget extended with procurement pipeline (Forecasts, Orders, Deliveries) and 5 print reports.
+
+**Phases completed:** 15-19 (5 phases, 12 plans)
+**Timeline:** 2 days (2026-03-03 → 2026-03-04)
+**Stats:** ~56 files changed, ~14,800 insertions, ~599 deletions
+**Requirements:** 25/25 complete (FIX-01..03, ECO-01..05, CMP-01..05, ROT-01..03, HRV-01..02, PDF-01..02, INV-01..05)
+
+**Key accomplishments:**
+- Fixed 3 blocking bugs (sync-registry crash, enterprise truncation, partial unique index)
+- Ecosystem client layer connecting organic-cert to farm-budget, farm-registry, and grain-tickets with graceful degradation
+- Preview/commit compilation pipeline for enterprises, inputs, seeds, and harvests — zero double-entry
+- NOP compliance engine with material resolution and compliance badges
+- Rotation snapshot for 3-year NOP field history (calendar-gated for season rebuild)
+- PDF null-safety for all 8 NOP inspection report sections from compiled ecosystem data
+- Farm-budget procurement pipeline — Forecast Hub, Orders, Deliveries with 5 print reports and day/night theme
+
+**Git range:** `fix(15-01)` → `feat(19-03)` (organic-cert + grain-tickets main)
+
+**Archive:** [milestones/v3.0-ROADMAP.md](milestones/v3.0-ROADMAP.md) | [milestones/v3.0-REQUIREMENTS.md](milestones/v3.0-REQUIREMENTS.md)
+
+---
+
