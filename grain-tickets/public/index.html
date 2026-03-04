@@ -62,9 +62,7 @@
           </div>
           <div class="form-group">
             <label for="entry-crop">Crop</label>
-            <select id="entry-crop" name="crop" required>
-              <option value="">Select crop...</option>
-            </select>
+            <input type="text" id="entry-crop" name="crop" required placeholder="Start typing crop..." autocomplete="off">
           </div>
           <div class="form-group">
             <label for="entry-ticketNo">Ticket Number</label>
@@ -109,8 +107,8 @@
       <h2>Ticket Log</h2>
       <div class="filters">
         <input type="text" id="filter-search" placeholder="Search all fields...">
-        <select id="filter-farm"><option value="">All Farms</option></select>
-        <select id="filter-crop"><option value="">All Crops</option></select>
+        <input type="text" id="filter-farm" placeholder="All Farms" autocomplete="off">
+        <input type="text" id="filter-crop" placeholder="All Crops" autocomplete="off">
         <select id="filter-destination"><option value="">All Destinations</option></select>
         <select id="filter-crop-year"><option value="">All Years</option></select>
         <input type="date" id="filter-date-from" title="From date">
@@ -224,6 +222,7 @@
         <button class="settlement-nav-btn" data-view="manual">Manual Entry</button>
         <button class="settlement-nav-btn" data-view="history">History</button>
         <button class="settlement-nav-btn" data-view="reconciliation">Reconciliation</button>
+        <button class="settlement-nav-btn" data-view="season-summary">Season Summary</button>
       </div>
 
       <!-- Import view (default) -->
@@ -278,6 +277,9 @@
 
       <!-- Reconciliation view -->
       <div id="settlement-reconciliation" class="settlement-view hidden"></div>
+
+      <!-- Season Summary view -->
+      <div id="settlement-season-summary" class="settlement-view hidden"></div>
     </section>
   </main>
 

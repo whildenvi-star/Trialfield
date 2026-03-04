@@ -715,6 +715,94 @@ td.number { text-align: right; font-variant-numeric: tabular-nums; }
   .commit-btn { width: 100%; }
 }
 
+.farm-link { color: var(--amber); }
+.farm-link:visited { color: var(--amber); }
+
+/* --- Farm Registry autocomplete overrides (inline styles need !important) --- */
+.fr-autocomplete-dropdown {
+  background: var(--card) !important;
+  border-color: var(--border-light) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4) !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) var(--card);
+}
+.fr-ac-item {
+  color: var(--text) !important;
+  border-bottom-color: var(--border) !important;
+  background: var(--card) !important;
+}
+.fr-ac-item:hover,
+.fr-ac-item.fr-highlighted {
+  background: var(--primary-dim) !important;
+  color: var(--text-bright) !important;
+}
+.fr-ac-item span[style*="color:#666"] {
+  color: var(--text-light) !important;
+}
+body.light .fr-autocomplete-dropdown {
+  background: #fff !important;
+  border-color: #ccc !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+body.light .fr-ac-item {
+  color: #1a1a1a !important;
+  border-bottom-color: #f0f0f0 !important;
+  background: #fff !important;
+}
+body.light .fr-ac-item:hover {
+  background: #e8f0fe !important;
+  color: #1a1a1a !important;
+}
+
+/* --- Crop Autocomplete Dropdown --- */
+.crop-ac-dropdown {
+  position: absolute;
+  z-index: 9999;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-top: none;
+  max-height: 280px;
+  overflow-y: auto;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  border-radius: 0 0 4px 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-light) var(--card);
+}
+.crop-ac-group {
+  padding: 6px 12px 3px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  border-top: 1px solid var(--border);
+  pointer-events: none;
+}
+.crop-ac-group:first-child { border-top: none; }
+.crop-ac-item {
+  padding: 7px 12px 7px 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+.crop-ac-item.highlighted {
+  background: var(--primary-dim);
+  color: var(--text-bright);
+}
+.crop-ac-detail {
+  float: right;
+  font-size: 0.7rem;
+  color: var(--text-light);
+  margin-left: 8px;
+}
+.crop-ac-empty {
+  padding: 10px 12px;
+  color: var(--text-light);
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
 /* ============================================================
    LIGHT THEME — day mode, same terminal soul
    ============================================================ */
@@ -771,10 +859,12 @@ body.light .tab-btn.active { background: #ffffff; border-color: #e0e0e0; border-
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
-.badge-unreconciled { background: rgba(92,110,84,0.2); color: var(--text-light); }
-.badge-matched      { background: rgba(74,246,38,0.15); color: var(--success); }
-.badge-disputed     { background: rgba(255,59,48,0.15); color: var(--danger); }
-.badge-manual       { background: rgba(255,149,0,0.15); color: var(--orange); }
+.badge-unreconciled    { background: rgba(92,110,84,0.2); color: var(--text-light); }
+.badge-matched         { background: rgba(74,246,38,0.15); color: var(--success); }
+.badge-disputed        { background: rgba(255,59,48,0.15); color: var(--danger); }
+.badge-manual          { background: rgba(255,149,0,0.15); color: var(--orange); }
+.badge-resolved        { background: rgba(74,246,38,0.15); color: var(--success); } /* Resolved dispute: Buyer Error, Our Error, Write-off */
+.badge-pending-dispute { background: rgba(255,184,0,0.15); color: var(--amber); }   /* Dispute pending resolution */
 
 /* --- Reconciliation panels --- */
 .recon-panels {
@@ -798,6 +888,10 @@ body.light .tab-btn.active { background: #ffffff; border-color: #e0e0e0; border-
 .recon-summary-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .recon-summary-table th { background: var(--primary); color: #fff; padding: 0.5rem; text-align: left; }
 .recon-summary-table td { padding: 0.5rem; border-bottom: 1px solid var(--border, #333); }
+
+/* --- Season summary styles --- */
+.season-summary-total td { border-top: 2px solid var(--primary); border-bottom: none; background: rgba(74,246,38,0.04); font-weight: 600; }
+.payment-status-badge { font-size: 0.8rem; font-weight: 500; white-space: nowrap; }
 
 /* --- Unmatched item cards/rows --- */
 .recon-item { padding: 0.6rem; border-bottom: 1px solid var(--border, #333); cursor: pointer; }

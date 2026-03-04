@@ -1876,13 +1876,34 @@
   function buildMatchedLineRow(tr, line) {
     var statusClass = 'badge-' + (line.matchStatus || 'unreconciled');
     var statusLabel = { matched: 'Matched', manual: 'Manual', disputed: 'Disputed' }[line.matchStatus] || line.matchStatus;
+
+    // Enhanced: show resolution status inside badge for disputed lines
+    if (line.matchStatus === 'disputed' && line.resolutionStatus) {
+      var isResolved = line.resolutionStatus !== 'Pending';
+      statusClass = isResolved ? 'badge-resolved' : 'badge-pending-dispute';
+      statusLabel = 'Disputed: ' + line.resolutionStatus;
+    }
+
     var lbs = line.netWeight ? Math.round(line.netWeight).toLocaleString() + ' lbs' : '--';
+
+    // Resolution date display for disputed + resolved lines
+    var resDateHtml = '';
+    if (line.matchStatus === 'disputed' && line.resolutionDate) {
+      var rd = new Date(line.resolutionDate);
+      resDateHtml = '<br><span style="font-size:0.75rem;color:var(--text-light);">' +
+        rd.toLocaleDateString() + '</span>';
+    }
+
+    // Notes: show resolutionNotes for disputed lines, fall back to general notes
+    var notesText = (line.matchStatus === 'disputed' && line.resolutionNotes)
+      ? line.resolutionNotes
+      : (line.disputeNotes || line.notes || '');
 
     tr.innerHTML =
       '<td>' + escHtml(line.ticketNo || '--') + '</td>' +
       '<td class="number">' + lbs + '</td>' +
-      '<td><span class="badge ' + statusClass + '">' + statusLabel + '</span></td>' +
-      '<td>' + escHtml(line.disputeNotes || line.notes || '') + '</td>' +
+      '<td><span class="badge ' + statusClass + '">' + statusLabel + '</span>' + resDateHtml + '</td>' +
+      '<td>' + escHtml(notesText) + '</td>' +
       '<td style="white-space:nowrap;">';
 
     // Only show Dispute button for matched/manual/disputed lines
@@ -1898,15 +1919,64 @@
     }
   }
 
-  // --- Show inline dispute form (replaces last two cells) ---
+  // --- Show inline dispute form with structured resolution fields ---
   function showInlineDisputeForm(tr, line) {
     var originalHTML = tr.innerHTML;
     var cells = tr.querySelectorAll('td');
     var notesTd = cells[3]; // Notes cell
     var actionTd = cells[4]; // Action cell
 
-    notesTd.innerHTML = '<textarea id="dispute-notes-' + line.id + '" style="width:100%;min-width:200px;height:60px;font-size:0.8rem;background:var(--card);color:var(--text);border:1px solid var(--primary);padding:0.3rem;" placeholder="Reason for dispute...">' +
-      escHtml(line.disputeNotes || '') + '</textarea>';
+    var currentStatus = line.resolutionStatus || 'Pending';
+    var currentNotes = line.resolutionNotes || '';
+    var currentDate = '';
+    if (line.resolutionDate) {
+      var d = new Date(line.resolutionDate);
+      currentDate = d.toISOString().split('T')[0];
+    } else if (currentStatus !== 'Pending') {
+      // Default to today for resolved statuses
+      currentDate = new Date().toISOString().split('T')[0];
+    }
+
+    var todayStr = new Date().toISOString().split('T')[0];
+
+    notesTd.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:0.3rem;min-width:280px;">' +
+        '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+          '<label style="font-size:0.75rem;color:var(--text-light);min-width:60px;">Status</label>' +
+          '<select id="dispute-status-' + line.id + '" style="flex:1;font-size:0.8rem;background:var(--card);color:var(--text);border:1px solid var(--primary);padding:0.2rem;">' +
+            '<option value="Pending"' + (currentStatus === 'Pending' ? ' selected' : '') + '>Pending</option>' +
+            '<option value="Buyer Error"' + (currentStatus === 'Buyer Error' ? ' selected' : '') + '>Buyer Error</option>' +
+            '<option value="Our Error"' + (currentStatus === 'Our Error' ? ' selected' : '') + '>Our Error</option>' +
+            '<option value="Write-off"' + (currentStatus === 'Write-off' ? ' selected' : '') + '>Write-off</option>' +
+          '</select>' +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;align-items:center;">' +
+          '<label style="font-size:0.75rem;color:var(--text-light);min-width:60px;">Resolved</label>' +
+          '<input type="date" id="dispute-date-' + line.id + '" value="' + currentDate + '"' +
+            (currentStatus === 'Pending' ? ' disabled style="opacity:0.4;"' : '') +
+            ' style="flex:1;font-size:0.8rem;background:var(--card);color:var(--text);border:1px solid var(--primary);padding:0.2rem;">' +
+        '</div>' +
+        '<div style="display:flex;gap:0.5rem;align-items:flex-start;">' +
+          '<label style="font-size:0.75rem;color:var(--text-light);min-width:60px;padding-top:0.2rem;">Notes</label>' +
+          '<textarea id="dispute-notes-' + line.id + '" style="flex:1;height:52px;font-size:0.8rem;background:var(--card);color:var(--text);border:1px solid var(--primary);padding:0.3rem;" placeholder="Resolution notes...">' +
+            escHtml(currentNotes) +
+          '</textarea>' +
+        '</div>' +
+      '</div>';
+
+    // Wire status change to enable/disable date field
+    var statusSel = notesTd.querySelector('#dispute-status-' + line.id);
+    var dateInput = notesTd.querySelector('#dispute-date-' + line.id);
+    if (statusSel && dateInput) {
+      statusSel.addEventListener('change', function () {
+        var isPending = statusSel.value === 'Pending';
+        dateInput.disabled = isPending;
+        dateInput.style.opacity = isPending ? '0.4' : '1';
+        if (!isPending && !dateInput.value) {
+          dateInput.value = todayStr;
+        }
+      });
+    }
 
     actionTd.innerHTML = '';
     var saveBtn = document.createElement('button');
@@ -1925,15 +1995,24 @@
     });
 
     saveBtn.addEventListener('click', function () {
-      var notesVal = document.getElementById('dispute-notes-' + line.id);
-      var notes = notesVal ? notesVal.value : '';
+      var statusEl = document.getElementById('dispute-status-' + line.id);
+      var dateEl = document.getElementById('dispute-date-' + line.id);
+      var notesEl = document.getElementById('dispute-notes-' + line.id);
+      var resolutionStatus = statusEl ? statusEl.value : 'Pending';
+      var resolutionDate = dateEl ? dateEl.value : '';
+      var resolutionNotes = notesEl ? notesEl.value : '';
+
       saveBtn.disabled = true;
       saveBtn.textContent = 'Saving...';
 
       fetch('/api/settlement-lines/' + line.id + '/dispute', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notes: notes })
+        body: JSON.stringify({
+          resolutionStatus: resolutionStatus,
+          resolutionNotes: resolutionNotes,
+          resolutionDate: resolutionStatus !== 'Pending' && resolutionDate ? resolutionDate : null
+        })
       })
         .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
         .then(function (res) {
@@ -1943,10 +2022,12 @@
             showSettlementToast('Dispute save failed: ' + (res.data.error || 'Unknown error'));
             return;
           }
-          showSettlementToast('Ticket flagged as disputed');
+          showSettlementToast('Dispute saved: ' + resolutionStatus);
           // Update local line data and re-render row
           line.matchStatus = 'disputed';
-          line.disputeNotes = notes;
+          line.resolutionStatus = resolutionStatus;
+          line.resolutionNotes = resolutionNotes;
+          line.resolutionDate = res.data.resolutionDate || null;
           tr.innerHTML = '';
           buildMatchedLineRow(tr, line);
         })
@@ -1956,6 +2037,186 @@
           showSettlementToast('Dispute error: ' + err.message);
         });
     });
+  }
+
+  // --- Load season summary view ---
+  function loadSeasonSummary() {
+    var container = document.getElementById('settlement-season-summary');
+    if (!container) return;
+    container.innerHTML = '';
+
+    // Year selector header
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;';
+
+    var nowYear = getCropYear();
+    var yearSel = document.createElement('select');
+    yearSel.style.cssText = 'font-size:0.85rem;background:var(--card);color:var(--text);border:1px solid var(--border);padding:0.3rem 0.5rem;border-radius:3px;';
+    for (var y = nowYear; y >= nowYear - 5; y--) {
+      var opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y + ' Crop Year';
+      if (y === nowYear) opt.selected = true;
+      yearSel.appendChild(opt);
+    }
+
+    var loadBtn = document.createElement('button');
+    loadBtn.className = 'btn-sm btn-primary';
+    loadBtn.textContent = 'Load';
+
+    header.appendChild(yearSel);
+    header.appendChild(loadBtn);
+    container.appendChild(header);
+
+    var resultsArea = document.createElement('div');
+    container.appendChild(resultsArea);
+
+    function doLoad() {
+      var cropYear = parseInt(yearSel.value, 10);
+      loadBtn.disabled = true;
+      loadBtn.textContent = 'Loading...';
+      resultsArea.innerHTML = '<p style="color:var(--text-light);font-size:0.85rem;">Loading season summary...</p>';
+
+      fetch('/api/reconciliation/season-summary?cropYear=' + cropYear)
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+        .then(function (res) {
+          loadBtn.disabled = false;
+          loadBtn.textContent = 'Load';
+          if (!res.ok) {
+            resultsArea.innerHTML = '<p style="color:var(--danger);font-size:0.85rem;">Error: ' + escHtml(res.data.error || 'Unknown error') + '</p>';
+            return;
+          }
+          renderSeasonSummaryTable(resultsArea, res.data, cropYear);
+        })
+        .catch(function (err) {
+          loadBtn.disabled = false;
+          loadBtn.textContent = 'Load';
+          resultsArea.innerHTML = '<p style="color:var(--danger);font-size:0.85rem;">Error: ' + escHtml(err.message) + '</p>';
+        });
+    }
+
+    loadBtn.addEventListener('click', doLoad);
+    // Auto-load on first render
+    doLoad();
+  }
+
+  function renderSeasonSummaryTable(container, rows, cropYear) {
+    container.innerHTML = '';
+
+    if (!rows || rows.length === 0) {
+      container.innerHTML = '<p style="color:var(--text-light);font-style:italic;font-size:0.85rem;">No data found for ' + cropYear + ' crop year.</p>';
+      return;
+    }
+
+    var heading = document.createElement('h3');
+    heading.style.cssText = 'font-size:0.9rem;color:var(--text-light);margin-bottom:0.75rem;';
+    heading.textContent = cropYear + ' Crop Year — All Buyers';
+    container.appendChild(heading);
+
+    var tblWrap = document.createElement('div');
+    tblWrap.className = 'table-wrap';
+
+    var tbl = document.createElement('table');
+    tbl.className = 'recon-summary-table';
+
+    // Header
+    tbl.innerHTML =
+      '<thead><tr>' +
+        '<th>Buyer</th>' +
+        '<th class="number">Tickets</th>' +
+        '<th class="number">Total Weight</th>' +
+        '<th class="number">Lines</th>' +
+        '<th class="number">Matched</th>' +
+        '<th class="number">Unmatched</th>' +
+        '<th class="number">Disputed</th>' +
+        '<th class="number">Total Payment</th>' +
+        '<th class="number">Variance</th>' +
+        '<th>Status</th>' +
+      '</tr></thead>';
+
+    var tbody = document.createElement('tbody');
+
+    // Grand totals accumulators
+    var totals = {
+      ticketCount: 0,
+      totalWeightLbs: 0,
+      settlementLineCount: 0,
+      matchedCount: 0,
+      unmatchedCount: 0,
+      disputedCount: 0,
+      totalPayment: 0,
+      varianceLbs: 0
+    };
+
+    rows.forEach(function (row) {
+      totals.ticketCount += row.ticketCount || 0;
+      totals.totalWeightLbs += row.totalWeightLbs || 0;
+      totals.settlementLineCount += row.settlementLineCount || 0;
+      totals.matchedCount += row.matchedCount || 0;
+      totals.unmatchedCount += row.unmatchedCount || 0;
+      totals.disputedCount += row.disputedCount || 0;
+      totals.totalPayment += row.totalPayment || 0;
+      totals.varianceLbs += row.varianceLbs || 0;
+
+      var tr = document.createElement('tr');
+
+      // Payment status badge
+      var statusColor = {
+        'Fully Matched': 'color:var(--success);',
+        'Partially Matched': 'color:var(--amber);',
+        'Has Disputes': 'color:var(--danger);',
+        'No Settlements': 'color:var(--text-light);'
+      }[row.paymentStatus] || 'color:var(--text-light);';
+
+      var varianceCls = row.varianceLbs > 0 ? 'color:var(--success);' : (row.varianceLbs < 0 ? 'color:var(--danger);' : '');
+      var varianceStr = (row.varianceLbs !== 0 ? (row.varianceLbs > 0 ? '+' : '') + row.varianceLbs.toLocaleString() : '0') + ' lbs';
+      if (row.variancePct !== 0) {
+        varianceStr += '<br><span style="font-size:0.75rem;">' +
+          (row.variancePct > 0 ? '+' : '') + row.variancePct.toFixed(2) + '%</span>';
+      }
+
+      var buyerDisplay = escHtml(row.buyerName);
+      if (row.buyerShortCode) {
+        buyerDisplay += ' <span style="font-size:0.75rem;color:var(--text-light);">(' + escHtml(row.buyerShortCode) + ')</span>';
+      }
+
+      tr.innerHTML =
+        '<td>' + buyerDisplay + '</td>' +
+        '<td class="number">' + (row.ticketCount || 0).toLocaleString() + '</td>' +
+        '<td class="number">' + (row.totalWeightLbs || 0).toLocaleString() + ' lbs</td>' +
+        '<td class="number">' + (row.settlementLineCount || 0).toLocaleString() + '</td>' +
+        '<td class="number"><span style="color:var(--success);">' + (row.matchedCount || 0) + '</span></td>' +
+        '<td class="number"><span style="color:' + (row.unmatchedCount > 0 ? 'var(--amber)' : 'inherit') + ';">' + (row.unmatchedCount || 0) + '</span></td>' +
+        '<td class="number"><span style="color:' + (row.disputedCount > 0 ? 'var(--danger)' : 'inherit') + ';">' + (row.disputedCount || 0) + '</span></td>' +
+        '<td class="number">$' + (row.totalPayment || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>' +
+        '<td class="number" style="' + varianceCls + '">' + varianceStr + '</td>' +
+        '<td><span class="payment-status-badge" style="' + statusColor + '">' + escHtml(row.paymentStatus) + '</span></td>';
+
+      tbody.appendChild(tr);
+    });
+
+    // Grand totals row
+    var totalVarianceCls = totals.varianceLbs > 0 ? 'color:var(--success);' : (totals.varianceLbs < 0 ? 'color:var(--danger);' : '');
+    var totalVarianceStr = (totals.varianceLbs !== 0 ? (totals.varianceLbs > 0 ? '+' : '') + totals.varianceLbs.toLocaleString() : '0') + ' lbs';
+
+    var totalRow = document.createElement('tr');
+    totalRow.className = 'season-summary-total';
+    totalRow.innerHTML =
+      '<td><strong>TOTAL (' + rows.length + ' buyers)</strong></td>' +
+      '<td class="number"><strong>' + totals.ticketCount.toLocaleString() + '</strong></td>' +
+      '<td class="number"><strong>' + totals.totalWeightLbs.toLocaleString() + ' lbs</strong></td>' +
+      '<td class="number"><strong>' + totals.settlementLineCount.toLocaleString() + '</strong></td>' +
+      '<td class="number"><strong>' + totals.matchedCount.toLocaleString() + '</strong></td>' +
+      '<td class="number"><strong>' + totals.unmatchedCount.toLocaleString() + '</strong></td>' +
+      '<td class="number"><strong>' + totals.disputedCount.toLocaleString() + '</strong></td>' +
+      '<td class="number"><strong>$' + totals.totalPayment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong></td>' +
+      '<td class="number" style="' + totalVarianceCls + '"><strong>' + totalVarianceStr + '</strong></td>' +
+      '<td></td>';
+    tbody.appendChild(totalRow);
+
+    tbl.appendChild(tbody);
+    tblWrap.appendChild(tbl);
+    container.appendChild(tblWrap);
   }
 
   function showToast(msg) {
