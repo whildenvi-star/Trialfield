@@ -80,7 +80,7 @@
 
 - [x] **Phase 27: FSA Data Foundation + Migration** (2 plans) - Migrate fsa-acres data.json to Supabase, register fsa-578 module, build validation and auto-populate API layer (completed 2026-03-05)
 - [x] **Phase 28: FSA Planting Workflow UI** - Card-based CLU editor with bulk actions, validation panel, PDF acreage summary export, and CSV export (completed 2026-03-05)
-- [ ] **Phase 29: Insurance Tables + Calculation Engine** - Migrate insurance policies to Supabase, TypeScript calc engine, grain-ticket yield bridge, claim alert detection
+- [ ] **Phase 29: Insurance Tables + Calculation Engine** (2 plans) - Schema migration + calc engine + policies API, APH auto-detect + yield bridge + claim alerts
 - [ ] **Phase 30: Insurance Decision Tool UI** - Policy CRUD, coverage matrix, payout simulator, insurance summary report
 - [ ] **Phase 31: Claims Tables + API** - Supabase schema, Storage bucket, route handlers for claims/documents/timeline, create-from-policy API
 - [ ] **Phase 32: Claims Lifecycle UI** - Kanban board, drag-and-drop pipeline, claim detail view, document upload, deadline alerts, timeline notes
@@ -128,11 +128,11 @@ Plans:
   2. APH yield is auto-populated on each policy from the linked CLU record without manual entry
   3. User can sync actual yield from grain-tickets for a policy and see the updated value reflected immediately
   4. When actual yield falls below the effective guarantee, the system flags a potential claim alert visible on the policy card
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 29-01: insurance_policies Supabase table + data.json migration + lib/insurance/calc.ts
-- [ ] 29-02: APH auto-detect + grain-ticket yield bridge API + claim alert detection
+- [ ] 29-01-PLAN.md — Schema migration (ALTER TABLE) + lib/insurance/calc.ts engine + insurance module registration + GET /api/insurance/policies + shell page
+- [ ] 29-02-PLAN.md — APH lookup endpoint + grain-ticket yield sync + PATCH policy with claim alert recompute
 
 ### Phase 30: Insurance Decision Tool UI
 **Goal**: Users can create and manage insurance policies, compare coverage options side-by-side, simulate payout scenarios interactively, and generate an insurance summary report
