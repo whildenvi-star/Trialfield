@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** organic-cert v3.0 — Compilation Engine
-**Domain:** NOP organic crop certification — cross-app data aggregation, yearly rotation snapshots, NOP compliance rule engine, PDF generation from aggregated ecosystem data
-**Researched:** 2026-03-01
+**Project:** Glomalin Portal — v6.0 FSA Acres, Insurance & Claims
+**Domain:** Government farm program compliance tooling — FSA-578 planting workflow, crop insurance decision tool, claims lifecycle tracker
+**Researched:** 2026-03-04
 **Confidence:** HIGH
 
 ## Executive Summary
 
-organic-cert v3.0 is not a new app build — it is a data flow rewiring of an existing 85K LOC Next.js 16 app. The core problem is double-entry: a crop plan built in farm-budget must be manually re-keyed into organic-cert before every annual NOP inspection. v3.0 eliminates this by transforming organic-cert from a standalone data-entry app into a **compilation engine** that reads from farm-budget (port 3001), farm-registry (port 3005), and grain-tickets (port 3000) via localhost HTTP calls, compiles that data into the organic-cert PostgreSQL schema, and generates the inspection PDF from local data only. The recommended approach requires zero new npm packages — every needed capability (native fetch, react/cache, Zod refine, Prisma upsert, @react-pdf/renderer) is already installed and running in the existing app.
+v6.0 is a workflow UX upgrade, not a data model redesign. The existing fsa-acres Express app (port 3002) already contains the correct data model, calculation engine, and business logic. All three target features — FSA-578 planting workflow, crop insurance decision tool, and claims tracking — are built on data that already exists in `fsa-acres/data/data.json`. The migration-first principle is the single most important architectural decision: the fsa-acres JSON data must be imported into Supabase before any portal UI is built, or operational data will split across two systems with no reconciliation path.
 
-The architecture adds two new directory trees inside the existing organic-cert app: an ecosystem client layer (`src/lib/ecosystem/`) that wraps fetch calls with structured errors and a 5-minute TTL cache, and a compile layer (`src/lib/compile/`) that runs mappers (field, input, harvest) with a preview/commit split so users see a diff before any database writes. The PDF generation pipeline is completely unchanged — `report-assembler.ts` already reads from local PostgreSQL; once compilation writes ecosystem data into those tables, the PDF reflects it automatically. The one non-negotiable architectural decision from PROJECT.md is the leech pattern: organic-cert reads from source apps but never writes back.
+The recommended approach is a linear three-module build inside the existing glomalin-portal (Next.js 14 + Supabase), delivered in strict dependency order: FSA data foundation first (CLU records are the anchor that insurance policies reference for FSA acres), insurance module second (policies must exist before claims have meaning via FK), and claims module third. Each module follows the established portal pattern — React Server Component shell with client feature islands, all data mutations through API route handlers, Express app data proxied through Next.js with timeout and graceful fallback. The payout simulator is the one exception where client-side calculation is required: the RP/YP/RP-HPE indemnity formulas must run in the browser for sub-100ms slider feedback.
 
-The primary risks are all pre-existing tech debt that must be resolved before v3.0 can be built safely. Three bugs are blocking: the sync-registry runtime crash (`data.unmatched` undefined, two-line fix), the `take: 3` enterprise query limit that silently truncates split-field data, and the partial unique index that is absent from schema.prisma. Beyond those, the rotation snapshot mechanism is not optional — if compilation replaces manual data entry without implementing snapshots, the NOP-required 3-year field history will be permanently lost after farm-budget is rebuilt each season. All four issues must be addressed in Phase 1 before any new compilation logic is written.
+Three risks dominate this build. First, the fsa-acres data migration must happen before the UI, not after — the skip-and-add-later pattern never works in practice and leaves users re-entering 2026 data that already exists. Second, claims document uploads must bypass Next.js Server Actions entirely (1MB hard limit breaks most real adjuster PDFs) using a signed URL pattern direct to Supabase Storage. Third, the insurance simulator must be scoped explicitly as a "decision support" tool, not a premium calculator — wrong SCO/ECO formulas using farm APH instead of county yields produce plausible-looking but incorrect numbers that create liability exposure.
 
 ---
 
@@ -19,161 +19,224 @@ The primary risks are all pre-existing tech debt that must be resolved before v3
 
 ### Recommended Stack
 
-The v3.0 stack requires zero new npm packages. All four capability areas (cross-app HTTP aggregation, rotation snapshot storage, NOP compliance rule engine, PDF from aggregated data) are satisfied by tools already installed in the organic-cert app.
+The glomalin-portal scaffold (Next.js 14.2.35, Supabase, Tailwind, React Flow) requires 8 new packages for v6.0 features. shadcn/ui is the foundation — install first since it provides Card, Badge, Checkbox, Select, Slider, Dialog, and Popover used across all three modules. The remaining packages are feature-specific with no overlap or conflict.
 
-Full details and code patterns in `.planning/research/STACK.md`.
+Full version compatibility notes, installation commands, and alternatives considered in `.planning/research/STACK.md`.
 
-**Core technologies — new usage of existing packages:**
-- **Native `fetch` + `react/cache`**: cross-app HTTP calls to farm-budget/farm-registry/grain-tickets via `Promise.allSettled` (not `Promise.all`); `react/cache` deduplicates within a render pass; `cache: 'no-store'` for live NOP-compliance data
-- **`zod` 4.3.6 (`zod/v4` subpath)**: NOP compliance rule assertions via `.refine()` and `.superRefine()` on compiled data types; already used throughout the app for import validation
-- **`@prisma/client` 6.19.2**: two new additive models (`RotationSnapshot` to track snapshot metadata, `EcosystemSyncState`) plus additive columns on existing models; existing `FieldHistory` model is the snapshot target
-- **`@react-pdf/renderer` 4.3.2 + `@ag-media/react-pdf-table` 2.0.3**: unchanged PDF rendering; the data source changes, not the renderer
-- **`date-fns` 4.1.0**: `differenceInDays()` for manure application window compliance checks
+**Core technologies (new installs only):**
+- `shadcn/ui` (CLI): Component library — generates owned source code, Tailwind-styled, already proven in organic-cert; install before all others
+- `recharts ^3.4.1`: Line/bar/area charts for insurance performance history — 13.8M weekly downloads, simple `"use client"` wrapper pattern for Next.js 14
+- `@nivo/heatmap ^0.99.0`: Coverage level comparison matrix — the only React-native true color-scaled matrix without D3 overhead; install standalone package only (not full Nivo meta-package)
+- `@dnd-kit/core ^6.3.1` + `@dnd-kit/sortable ^10.0.0` + `@dnd-kit/utilities ^3.2.2`: Claims Kanban drag-and-drop — only actively maintained React DnD library in 2025; react-beautiful-dnd is deprecated (GitHub archived August 2025)
+- `framer-motion ^12.x`: Card entrance animations and Kanban column transitions — scope to micro-interactions only; do NOT use AnimatePresence for route transitions (known App Router incompatibility)
+- `react-dropzone ^14.2.3`: Claims document upload zone — pairs directly with Supabase Storage `.upload()` API
+- `@react-pdf/renderer ^4.3.2`: FSA acreage summary export — already proven in organic-cert for government-form-adjacent layouts; install fresh in glomalin-portal
+- `date-fns ^4.1.0`: Deadline calculations and urgency badge logic — already in organic-cert; install fresh in glomalin-portal for monorepo consistency
 
-The only installation step is a Prisma schema migration:
-```bash
-cd organic-cert && npx prisma migrate dev --name add-rotation-snapshot-and-ecosystem-sync
-```
+**Critical version notes:** dnd-kit requires `dynamic({ ssr: false })` wrapper in Next.js App Router. Recharts and @nivo/heatmap require `"use client"` directive. @react-pdf/renderer runs server-side only in Route Handlers.
 
 ### Expected Features
 
-v3.0's thesis is zero re-entry for the crop plan. The feature set directly maps to data sources that can be auto-pulled versus records that remain organic-cert-only.
+The three modules share a clear MVP boundary. Feature tables with complexity ratings and dependency graph in `.planning/research/FEATURES.md`.
 
-Full dependency graph and NOP regulatory mapping in `.planning/research/FEATURES.md`.
+**Must have (P1 — v6.0 core):**
+- Supabase schema migration from fsa-acres data.json — foundation for everything else
+- Card-based CLU list grouped by Farm/Tract with inline crop, practice, planting date editing
+- Validation warnings panel (port existing `validateRecords()` from fsa-acres calc.js)
+- Bulk mark-as-reported with farm-level filter
+- Print-ready FSA acreage summary export (labeled "summary" — NOT an FSA-578 replica)
+- Farm-budget crop auto-population (port existing FSA sync from v4.0)
+- Insurance policy CRUD with slide-out editor
+- Coverage-level comparison matrix (RP/RP-HPE/YP across 65%–85% coverage levels)
+- Interactive payout scenario simulator with yield/price sliders
+- APH auto-detect from CLU records + grain ticket yield bridge for actual yield
+- Potential claim auto-detection when actual yield < effective guarantee
+- Claims Kanban board with 6 pipeline stages
+- Claim detail view with timeline log and deadline alerts
 
-**Must have (P1 — v3.0 core):**
-- Fix farm-registry sync crash — prerequisite for all field matching; `data.unmatched` → `data.unchanged`, one-line fix
-- Pull organic enterprises from farm-budget — crops, fields, acres, varieties come in automatically
-- Pull input plans from farm-budget — MaterialUsage records created from budget inputs, staged for review
-- Pull seed varieties from farm-budget — SeedLot stubs created; NOP status annotated once by farm manager and persists across seasons
-- Rotation snapshot mechanism — end-of-season one-button snapshot writes current enterprises to FieldHistory; the only way to accumulate NOP 3-year history when farm-budget is rebuilt annually
-- Compilation readiness dashboard — per-field status (green/yellow/red) before inspection
-- Data source badges in UI — show origin of each record (farm-budget / grain-tickets / Case IH / manual)
+**Should have (P2 — add after core validated):**
+- Year-over-year CLU comparison (requires cropYear per-record, multi-year schema)
+- Crop assignment templates for common rotation patterns
+- Historical insurance performance dashboard (multi-year premium vs. indemnity)
+- Bulk grain ticket sync across all insurance policies
+- USDA RMA projected price auto-fetch
+- Stage-specific document checklist per claim
 
-**Should have (P2 — blocked on grain-tickets v2.0 field linkage):**
-- Pull harvest weights from grain-tickets — real certified scale weights for mass balance accuracy
-- Mass balance from real scale weights — tight mass balance significantly reduces inspection scrutiny
+**Defer to v7+:**
+- SCO/ECO layer visualization (requires county-level yield data not in farm systems)
+- Consolidated deadline calendar (FSA + insurance + claims combined)
+- CNH FieldOps as-planted date auto-fill (blocked on FieldOps API access)
+- GIS/map CLU boundaries (USDA CLU spatial data restricted)
+- Direct FSA eAuth electronic submission (requires USDA partnership agreement)
+- Automated insurance premium quotes (requires AIP agreements — no public API)
 
-**Defer (P3 / out of scope):**
-- Input plan vs. actual application diff — requires a full Case IH sync season of data to be meaningful
-- Multi-certifier support (EU, state programs) — USDA NOP only for v3.0
-- Inspector digital portal — print-ready PDF is correct UX per PROJECT.md v1.0 rationale
-- Auto-compliance scoring — creates liability and false confidence; flag data completeness, never emit a compliance verdict
-
-**Organic-cert-only records — keep manual entry, never eliminate:**
-Buffer zones, adjacent land use documentation, equipment cleanout events, scouting logs, management actions, narrative sections. No API in the ecosystem provides these. They are physical observations and contextual decisions that only the farm manager can document.
+**Anti-features (never build):**
+- Pixel-perfect FSA-578 government form replica (react-pdf flexbox cannot achieve it; farm manager brings data to FSA office, FSA generates the form)
+- Live CME futures integration (confuses live futures with USDA RMA monthly average prices)
+- Auto-file insurance claims without producer review (liability exposure)
 
 ### Architecture Approach
 
-The compilation engine is added as two new directory trees inside the existing organic-cert app (`src/lib/ecosystem/` and `src/lib/compile/`). No separate service is warranted for a single-machine, single-user system. API routes are thin wrappers that call a single `compileForYear(farmId, cropYear)` function. The compile always runs in two phases: preview (returns `CompileDiff`, no DB writes) then commit (re-runs with writes using cached upstream data). The existing `report-assembler.ts` is unchanged — it reads from local PostgreSQL, and compilation writes there first.
+Three separate modules (`fsa-578`, `insurance`, `claims`) registered in `lib/modules.ts`, each independently RBAC-gated via the existing middleware. All follow the Server Component shell + client feature islands pattern established in v5.0. Express app reads proxy through Next.js API routes with 60-second TTL cache and `AbortSignal.timeout(5000)` — never from browser code. The `_computed` fields on fsa-acres insurance policies are server-derived ephemeral values that must not be copied to Supabase; recalculate via `lib/insurance/calc.ts` (TypeScript port of `computeInsurancePolicy()`).
 
-Full data flow diagrams, mapping tables, schema changes, and anti-patterns in `.planning/research/ARCHITECTURE.md`.
+Full file tree, SQL schemas, data flow diagrams, and anti-patterns in `.planning/research/ARCHITECTURE.md`.
 
 **Major components:**
-1. **`src/lib/ecosystem/`** — typed HTTP clients (budget-client, registry-client, tickets-client) with 8-second `AbortController` timeout, structured `EcosystemError` type, and a 5-minute TTL in-process cache (`eco-cache.ts`)
-2. **`src/lib/compile/`** — orchestrator (`compile-engine.ts`) + mappers: `field-mapper.ts` (name → registry alias → organic-cert Field), `input-mapper.ts` (product → Material + MaterialUsage), `harvest-mapper.ts` (grain ticket → HarvestEvent with crop-name normalization), `nop-filter.ts` (organic-only enterprise gate), `snapshot-taker.ts` (FieldEnterprise → FieldHistory point-in-time copy)
-3. **`app/api/compile/[year]/`** — preview (GET) and commit (POST) routes; `app/api/rotation-snapshot/[year]/take/` — snapshot execution route
-4. **`app/(app)/compile/page.tsx`** — replaces the existing import-plan page; shows source availability, CompileDiff, commit button, snapshot status
-5. **`prisma/schema.prisma`** — two new additive models + additive columns (`budgetFieldId` on FieldEnterprise, `budgetInputId` on MaterialUsage, `ticketId` on HarvestEvent)
+1. `lib/fsa/calc.ts` — TypeScript port of calc.js rollup/validation engine; runs server-side for dashboard summary cards
+2. `lib/insurance/calc.ts` — TypeScript port of `computeInsurancePolicy()`; runs client-side in payout simulator for sub-100ms feedback
+3. `app/api/fsa/`, `app/api/insurance/`, `app/api/claims/` — Route handlers for all mutations and Express proxy calls with TTL cache + graceful fallback
+4. `components/fsa/`, `components/insurance/`, `components/claims/` — Domain-grouped UI components; no cross-domain dependencies
+5. Supabase tables: `clu_records`, `insurance_policies`, `insurance_pricing`, `claims`, `claim_documents`, `claim_timeline`, `gcs_enrollments`
+6. Supabase Storage bucket `claim-documents` — private; all access via signed read URLs (1-hour expiry)
 
-**Build order (hard dependency sequence):**
-Phase A (ecosystem clients) → Phase B (NOP filter + field mapper + preview API, no DB writes) → Phase C (schema migration + enterprise compile with writes) → Phase D (input mapper) → Phase E (harvest mapper, depends on grain-tickets Phase 10+) → Phase F (rotation snapshot + compile UI)
+**Non-negotiable patterns:**
+- Three modules as separate RBAC-gated routes — NOT one tab-based fsa-reporting page (cannot independently grant/revoke access per sub-feature if combined)
+- Import script runs before any portal UI — `fsa-acres/data/data.json` → Supabase, verified by record count match
+- `Promise.allSettled()` for all parallel Express app fetches — never `Promise.all()`
+- `{ next: { revalidate: 0 } }` on all cross-app fetch calls — Next.js App Router caches fetch responses by default and will serve stale data otherwise
 
 ### Critical Pitfalls
 
-Full pitfall details, warning signs, recovery strategies, and the "looks done but isn't" verification checklist in `.planning/research/PITFALLS.md`.
+Full pitfall catalog with warning signs, recovery strategies, and "looks done but isn't" verification checklist in `.planning/research/PITFALLS.md`.
 
-1. **Sync-registry runtime crash must be fixed before any v3.0 work** — `fields/page.tsx` line 128 reads `data.unmatched` but the route returns `data.unchanged`. One-line fix. Every downstream compilation call silently fails without this. Fix first.
+1. **Drag-and-drop SSR hydration mismatch** — Wrap ClaimsKanban in `dynamic(() => import('./ClaimsKanban'), { ssr: false })` from the first card rendered. `'use client'` alone does NOT disable SSR in App Router. Confirmed in dnd-kit GitHub issue #285.
 
-2. **Rotation snapshot is a regulatory requirement, not an enhancement** — farm-budget is rebuilt every season. Without the snapshot mechanism shipping alongside the compilation engine, the NOP-required 3-year field history is permanently lost when farm-budget is rebuilt. Cannot be deferred to a later phase.
+2. **fsa-acres data never migrated** — Build the `fsa-acres/data/data.json` → Supabase import script as the first task in Phase 1, before any UI. Verify by record count match. The portal must not launch with an empty Supabase while real 2026 data lives in the Express app.
 
-3. **Field identity mismatch will affect 5-10 of 56 fields** — farm-budget field names (Excel import), organic-cert names (separate entry), and farm-registry aliases evolved independently. String comparison silently drops unmatched fields from the compiled PDF. Build an explicit field mapping step with a resolution UI; store confirmed `farmBudgetFieldName` on the organic-cert Field row. Never assume names will match.
+3. **Server Actions 1MB file upload limit** — Claims documents (adjuster reports, field photos, settlement letters) exceed 1MB routinely. Use signed upload URL pattern: server generates URL via admin client → client uploads direct to Supabase Storage → client posts metadata to route handler. Never route file bytes through a Server Action. Confirmed in Next.js GitHub Discussion #57973.
 
-4. **`take: 3` enterprise query limit silently truncates split-field NOP history** — the existing `GET /api/fields` endpoint paginates enterprises at 3. For a 3-year NOP window on a split field (up to 9 enterprises), this drops 6 silently. The compilation engine must use `report-assembler.ts` or a dedicated endpoint, never the field list API. Audit this in Phase 1 before any aggregation code is written.
+4. **Supabase Storage RLS rejects signed upload URLs** — The `claim-documents` bucket INSERT RLS policy runs at upload time, not URL-generation time. Test the full upload cycle (URL generation → client PUT → metadata record) in the first document upload plan before assuming presigned URLs bypass RLS. Confirmed in Supabase storage-js GitHub issue #186.
 
-5. **Cross-app HTTP calls have no timeout by default** — `fetch()` in Node.js has no default timeout. If farm-budget is not running, compilation hangs indefinitely. Every ecosystem client must use `AbortController` with an 8-second timeout and `Promise.allSettled` so one unreachable app does not block the others. Design this into Phase 1 from the first HTTP call written.
+5. **Insurance calculation scope liability** — The payout simulator is a decision support tool, not a premium calculator. SCO/ECO requires county-level yield data that is not in farm systems. Ship only RP, RP-HPE, and YP for v6.0. Apply disclaimer "Illustrative only — not a premium calculator" to every simulator output. Wrong numbers create real user liability.
 
-6. **NOP compliance false positives from unmapped materials** — farm-budget products have no NOP status. Running compliance rules against unreviewed pulled inputs produces a PDF full of UNKNOWN warnings. Build the product-to-material mapping step (with "unresolved materials" UI) before applying any NOP compliance rules; unresolved materials are a workflow step, not a compliance finding.
+6. **Next.js fetch cache stales cross-app data** — App Router caches `fetch()` by default. Add `{ next: { revalidate: 0 } }` or `cache: 'no-store'` to every cross-app fetch. Without this, CLU edits in fsa-acres Express will not appear in the portal until cache expires.
+
+7. **FSA-578 PDF scope mismatch** — Do not attempt to replicate the government form pixel-for-pixel. Build a "FSA Acreage Reporting Summary" (all required data in clean tabular format, labeled explicitly as a summary). This eliminates the react-pdf fixed-positioning problem entirely and is more useful to the farmer.
 
 ---
 
 ## Implications for Roadmap
 
-The research points to a 4-phase structure for v3.0. Phase boundaries are driven by hard data dependencies: field identity must be resolved before enterprises can be matched, enterprises must exist before inputs can be attached (FK constraint), and the snapshot mechanism must ship before farm-budget is rebuilt for a new season.
+Architecture research defines a strict 7-phase build order driven by FK dependencies. Phases 1, 3, and 5 are database+API work; Phases 2, 4, and 6 are the corresponding UI phases; Phase 7 is cross-module integration. Do not build UI before the backing data is in Supabase.
 
-### Phase 1: Foundation — Pre-flight Fixes + Ecosystem Client Layer
+### Phase 1: FSA Data Foundation + Migration
 
-**Rationale:** Three blocking bugs and one missing migration must be resolved before any compilation logic is written. Building on top of them produces silently corrupt output. These are hours of work but they gate everything downstream.
+**Rationale:** `clu_records` is the anchor table. Insurance policies reference it for FSA acres auto-computation via APH lookup. The import script must run and be verified before any UI is built — this prevents the split-data-store failure mode that is unrecoverable in practice.
 
-**Delivers:** Working ecosystem client layer (`src/lib/ecosystem/`) that reliably fetches from all three source apps with timeout, structured errors, and 5-minute TTL cache; `GET /api/fields` patched to remove `take: 3` limit for full enterprise retrieval; partial unique index captured in a Prisma migration; sync-registry crash fixed (`data.unmatched` → `data.unchanged`).
+**Delivers:** Supabase schema for `clu_records`, `insurance_pricing`, `gcs_enrollments`; one-shot import script from `fsa-acres/data/data.json`; TypeScript port of calc.js rollup/validation engine into `lib/fsa/calc.ts`; Express proxy route handlers for farm-registry and farm-budget with timeout + cache; `fsa-578` registered in `lib/modules.ts`
 
-**Addresses:** Fix farm-registry sync crash; cross-app HTTP infrastructure foundation
+**Addresses features:** Supabase schema migration (P1 prerequisite), year-scoped CLU data, auto-populate-from-farm-budget groundwork
 
-**Avoids:** Pitfalls 1 (sync crash), 4 (take:3 truncation), 5 (no HTTP timeout), 6 (missing partial unique index)
+**Avoids:** fsa-acres data split (Pitfall 9 in PITFALLS.md), Next.js fetch cache staling cross-app data, cross-app timeout hangs
 
-**Research flag:** Standard patterns — `AbortController` timeout, `Promise.allSettled`, Prisma migration with raw SQL index are all well-documented. No research-phase needed.
-
----
-
-### Phase 2: Field + Enterprise Compilation (Preview/Commit)
-
-**Rationale:** Field matching and enterprise creation are the dependency root for all subsequent phases. `MaterialUsage` has a FK to `FieldEnterprise` — inputs cannot be attached until enterprises exist. The preview/commit split is built here, not retrofitted later, because it shapes the entire user experience and API contract.
-
-**Delivers:** Working `/api/compile/[year]/preview` (GET, no writes, returns `CompileDiff`) and `/api/compile/[year]` (POST, commits FieldEnterprise records); `field-mapper.ts` with explicit unmatched-field reporting and registry alias resolution; `nop-filter.ts` for organic-only enterprise gate; a compile page replacing import-plan with source availability display and commit confirmation.
-
-**Addresses:** Pull organic enterprises from farm-budget; pull field identities from farm-registry; compilation readiness dashboard (first iteration)
-
-**Avoids:** Pitfall 3 (field identity mismatch — build the explicit mapping step, not string comparison); anti-pattern of single-call compile with no preview
-
-**Research flag:** Field name alias matching, Prisma upsert on compound unique, and preview/commit split are standard patterns. No research-phase needed.
+**Research flag:** Standard patterns — direct port of known Express code to TypeScript. No research-phase needed.
 
 ---
 
-### Phase 3: Input + Seed Compilation + NOP Compliance Layer
+### Phase 2: FSA Planting Workflow UI
 
-**Rationale:** Inputs are the highest-pain manual re-entry task — the primary driver for building v3.0. But the product-to-material mapping step must be built before NOP compliance rules run against pulled data, or the inspection report will be full of false UNKNOWN warnings and be useless. The "sources of truth" matrix must also be formalized here to protect organic-cert-only records from elimination.
+**Rationale:** UI follows verified data foundation. Replaces the "Coming Soon" placeholder with the full CLU card workflow. All data mutations have route handlers from Phase 1 to call.
 
-**Delivers:** `input-mapper.ts` and seed pull creating MaterialUsage and SeedLot records from farm-budget data; a "resolve unmapped materials" UI that lets the farm manager assign NOP status once per product (persists across seasons); `nop-compliance.ts` rule engine running against mapped materials only; data source badges on all pulled records; documented sources-of-truth matrix confirming manual entry paths for ScoutingLog, ManagementAction, CleanoutEvent, BufferZone, AdjacentLandUse remain intact.
+**Delivers:** `CluCardGrid`, `CluEditorDrawer`, `BulkActionBar`, `FsaDashboardMetrics`, budget sync preview UI, FSA acreage summary PDF export via `@react-pdf/renderer`
 
-**Addresses:** Pull input plans from farm-budget; pull seed varieties from farm-budget; NOP compliance checking (data completeness, not pass/fail verdicts)
+**Addresses features:** Card-based CLU workflow (P1), inline editing, bulk mark-as-reported, validation warnings panel, print-ready export, farm-budget crop sync
 
-**Avoids:** Pitfall 7 (NOP false positives from unmapped materials); Pitfall 8 (organic-cert-only records eliminated by over-aggressive automation)
+**Avoids:** FSA-578 government form replica scope (label output "Acreage Reporting Summary"), bulk action without confirmation dialog, tablet layout failure (test on 1024×768 before marking complete)
 
-**Research flag:** NOP rule accuracy for manure application windows, transition day counts, buffer zone distance requirements, and OMRI material classification requires verification against USDA NOP 7 CFR 205 before rule implementation. Rules are static TypeScript functions — once written they are stable — but getting them wrong produces a misleading inspection report. A targeted `/gsd:research-phase` pass on NOP rule specifics is recommended before Phase 3 plans are finalized.
+**Research flag:** Established shadcn/ui + react-pdf patterns. No research-phase needed.
 
 ---
 
-### Phase 4: Rotation Snapshot + Harvest Compilation + PDF Null Safety
+### Phase 3: Insurance Tables + Calculation Engine
 
-**Rationale:** The rotation snapshot is sequenced to Phase 4 but must ship before farm-budget is rebuilt for the next season — this is a hard calendar deadline, not just a phase ordering preference. Harvest compilation from grain-tickets is placed here because it depends on grain-tickets v2.0 Phase 10-11 (tickets in PostgreSQL with field linkage); if that work is incomplete, harvest compilation ships as a stub and activates when the dependency is ready.
+**Rationale:** Insurance policies must exist in Supabase before the simulator UI is built. The calculation accuracy scope (simulator vs. premium calculator) must be defined before any formula is written — this is a liability decision, not a coding decision.
 
-**Delivers:** `snapshot-taker.ts` writing FieldHistory rows from current-year FieldEnterprise records; `/api/rotation-snapshot/[year]/take` POST endpoint; compile page shows snapshot status with warning if prior year has no snapshot; `harvest-mapper.ts` correlating grain tickets to HarvestEvents with crop-name normalization table (built empirically from live API data); null-safety validation layer that runs before any PDF rendering call and outputs "No records" placeholders for empty sections rather than crashing.
+**Delivers:** `insurance_policies` Supabase table; migration from `fsa-acres/data/data.json` `insurancePolicies[]`; `lib/insurance/calc.ts` TypeScript port of `computeInsurancePolicy()`; route handlers for policies, pricing, USDA RMA price scrape, grain-ticket yield bridge; `insurance` registered in `lib/modules.ts`
 
-**Addresses:** Rotation snapshot mechanism; pull harvest weights from grain-tickets (or stub); mass balance from real scale weights; PDF null safety for aggregated data
+**Addresses features:** Insurance policy CRUD foundation, APH auto-detect from CLU records, potential claim detection groundwork
 
-**Avoids:** Pitfall 2 (rotation snapshot missing — NOP history permanently lost); Pitfall 9 (PDF silent truncation on null fields from grain-tickets migration)
+**Avoids:** Insurance calculation liability scope (Pitfall 5 — define simulator-not-calculator before any formula is written), `_computed` fields copied from Express (recalculate via lib/insurance/calc.ts instead)
 
-**Research flag:** Crop name normalization between farm-budget and grain-tickets vocabulary is an empirical task — it requires running both APIs and auditing the actual crop name values in both systems before harvest-mapper.ts is written. This is a one-time mapping table, not a research-phase topic. Harvest compilation also depends on grain-tickets v2.0 Phase 11+ field linkage being in place; if not complete, harvest mapper ships as a documented stub.
+**Research flag:** Verify RP formula against ISU Extension FM-1849 before implementing `lib/insurance/calc.ts`. The "higher of spring or harvest price" distinction between RP and RP-HPE is subtle and a wrong implementation produces plausible-looking incorrect numbers. One-hour verification task — not a full research phase.
+
+---
+
+### Phase 4: Insurance Decision Tool UI
+
+**Rationale:** The coverage comparison matrix and payout simulator are the highest-value differentiators in v6.0 — they are worth nothing without the Phase 3 data foundation. The coverage matrix must use CSS grid/table cells (not SVG) from the start; retrofitting the approach after SVG performance problems appear is expensive.
+
+**Delivers:** `PolicyCard`, `PolicyEditorDrawer`, `CoverageMatrix` (CSS grid — NOT SVG or chart library), `PayoutSimulator` (client-side sliders via `lib/insurance/calc.ts`), `PerformanceSummary` aggregate, `ClaimStatusStepper`, bulk grain ticket sync, RMA price fetch
+
+**Addresses features:** Coverage-level comparison matrix (P1 differentiator), payout scenario simulator (P1 differentiator), grain ticket yield bridge, premium schedule, potential claim detection alert
+
+**Avoids:** SVG heat map performance degradation (Pitfall 8 — CSS grid cells render instantly for 300+ cells), insurance scope creep (disclaimer required on all simulator outputs), installing full Nivo meta-package when only `@nivo/heatmap` is needed
+
+**Research flag:** No — CSS grid matrix is simpler than any chart library; calc formulas are known and verified in Phase 3.
+
+---
+
+### Phase 5: Claims Tables + API
+
+**Rationale:** `claims.policy_id` is a FK to `insurance_policies`. Building claims before insurance would require retrofitting real FK relationships. The document upload RLS behavior in this specific Supabase project must be tested before the upload UI is built.
+
+**Delivers:** `claims`, `claim_documents`, `claim_timeline` Supabase tables; Supabase Storage bucket `claim-documents` (private, RLS configured); all claims route handlers (CRUD, documents, timeline); `claims` registered in `lib/modules.ts`
+
+**Addresses features:** Claims lifecycle data foundation, document storage metadata, append-only audit trail
+
+**Avoids:** Server Actions 1MB limit (Pitfall 2 — signed URL pattern from the start, never file bytes through Server Actions), Supabase Storage RLS on signed URLs (Pitfall 3 — test full upload cycle before UI phase), claims documents in a public bucket (security mistake)
+
+**Research flag:** Spike the signed upload URL + RLS behavior before Phase 6. Test the full cycle (URL generation → client PUT → metadata record insert) with this project's Supabase configuration. Two-hour spike, not a full research phase.
+
+---
+
+### Phase 6: Claims Lifecycle UI
+
+**Rationale:** UI follows the data foundation. The Kanban board is the most interactive component in the entire v6.0 build — the SSR hydration fix must be the default pattern from the first card, not added as a fix after hydration errors appear in production.
+
+**Delivers:** `ClaimsKanban` (wrapped in `dynamic({ ssr: false })` from the start), `ClaimCard`, `ClaimDetail`, `DocumentUpload`, `DeadlineAlertBanner`, document list with signed read URLs, claims analytics summary cards
+
+**Addresses features:** Claims Kanban board (P1), claim detail + timeline log, deadline alerts with urgency badges, document checklist, claims portfolio summary
+
+**Avoids:** DnD SSR hydration mismatch (Pitfall 1 — `dynamic({ ssr: false })` is the default, not a retrofit), Kanban re-render on every drag event (React.memo on static card content), claims documents in a public bucket
+
+**Research flag:** No — dnd-kit multi-container Kanban is the library's primary documented use case. Standard patterns.
+
+---
+
+### Phase 7: Cross-Module Integration + Dashboard Summary Cards
+
+**Rationale:** Integration features require both source and target modules to be fully functional with real data. Building them earlier creates circular dependencies and requires mock data that obscures real integration failures.
+
+**Delivers:** 3 new portal dashboard cards (FSA reporting progress, Insurance status, Claims pipeline summary), FSA CLU → Insurance policy click-through, Insurance policy → create claim shortcut, FSA prevented planting status → claims cross-trigger prompt, shared validation warnings across modules
+
+**Addresses features:** FSA-to-insurance-to-claims integration flow, cross-module cohesion, prevented planting → claims automation
+
+**Avoids:** One-giant-fsa-reporting-module anti-pattern (three modules remain independently RBAC-gated), write-back to Express apps (Supabase is the source of truth, fsa-acres Express becomes read-only reference)
+
+**Research flag:** No — cross-module linking is internal portal navigation with Supabase FK lookups. No new technology.
 
 ---
 
 ### Phase Ordering Rationale
 
-- **Fix blocking bugs before writing new code:** The three confirmed bugs (sync crash, take:3 limit, missing partial index) each silently corrupt output in ways that are hard to detect. Any new compilation code built before these are fixed inherits the silent failure modes.
-- **Preview before commit:** The preview/commit split (Phase 2) must be the foundational API design, not a retrofit. Building the write path first and adding preview later is harder — the preview guarantee shapes every mapper's interface.
-- **Enterprises before inputs:** `MaterialUsage` has a FK to `FieldEnterprise`. This is a schema constraint that cannot be worked around. Phase 3 cannot run before Phase 2 creates enterprise records.
-- **Snapshot before season end:** The rotation snapshot mechanism ships in Phase 4. If the 2026 growing season ends before Phase 4 is complete, the farm manager must continue manual `FieldHistory` entry as they do today. There is no retroactive recovery path from a missed snapshot after farm-budget is rebuilt.
-- **Harvest compilation gated on grain-tickets v2.0:** grain-tickets currently has freetext farm names on ticket records, not structured field IDs. The harvest mapper cannot reliably link tickets to organic-cert enterprises until grain-tickets Phase 11+ adds FK linkage. Phase 4 can ship harvest compilation as a documented stub and activate it when the dependency lands — this is correct design, not a workaround.
+- **Dependency chain is a database constraint, not a preference.** `clu_records` must exist before `insurance_policies` (APH auto-compute FK lookup). `insurance_policies` must exist before `claims` (policy_id FK). This order cannot be changed.
+- **Data phases before UI phases.** Each data+API phase (1, 3, 5) must produce a verified record count before the corresponding UI phase (2, 4, 6) begins. This prevents the "portal launches empty" failure mode and ensures route handlers exist before components try to call them.
+- **Three separate modules, not one tab page.** The existing middleware `isModuleRoute()` already handles any `/app/{slug}` path. Three separate module IDs (`fsa-578`, `insurance`, `claims`) enable independent RBAC grants — a farm bookkeeper can be given claims access without insurance access.
+- **Migration before UI is a hard rule.** The fsa-acres Express app has real 2026 operational data. If the portal launches before the import script runs, users have two live data stores with no merge path.
 
 ### Research Flags
 
-**Phases needing deeper research during planning:**
-- **Phase 3 (NOP Compliance Layer):** NOP rule specifics for manure application windows, transition day counts, buffer zone requirements, and commercial availability search requirements should be verified against USDA NOP 7 CFR 205 and certifier guidance before rule implementation. Compliance rules are static TypeScript functions — but accuracy matters because a wrong rule produces a misleading inspection report.
-- **Phase 4 (Harvest Mapper):** Crop name normalization between farm-budget and grain-tickets vocabulary requires running both APIs and auditing actual values. This is an empirical task requiring live access to both running apps, not an external research topic.
+Phases likely needing deeper investigation during planning:
 
-**Phases with standard patterns (skip research-phase):**
-- **Phase 1 (Foundation):** Bug fixes, `AbortController` timeout pattern, `Promise.allSettled`, and raw SQL Prisma migrations are all standard and well-documented. No research needed.
-- **Phase 2 (Enterprise Compilation):** Preview/commit with Prisma upsert on compound unique and registry alias matching are established patterns. No research needed.
+- **Phase 3 (Insurance Calculation Engine):** Verify the RP vs. RP-HPE formula before writing `lib/insurance/calc.ts`. The distinction ("higher of spring or harvest price" for RP vs. spring price only for RP-HPE) is subtle. Wrong formulas produce liability exposure. One-hour verification task against ISU Extension FM-1849.
+- **Phase 5 (Claims Document Upload):** Spike the Supabase Storage signed upload URL + RLS behavior in this project's specific Supabase instance before the upload UI is built. The service_role vs. anon key upload path behavior differs and is project-configuration-dependent.
+
+Phases with standard patterns (skip research-phase):
+- **Phase 1:** Direct TypeScript port of known Express code. AbortController timeout, Promise.allSettled, Supabase SQL migrations are standard.
+- **Phase 2:** shadcn/ui components + @react-pdf/renderer for tabular export. Organic-cert has existing precedent for both.
+- **Phase 4:** CSS grid coverage matrix is simpler than any SVG chart library. Client-side calc with useState is standard React.
+- **Phase 6:** dnd-kit multi-container Kanban is the library's primary documented use case with extensive examples.
+- **Phase 7:** Internal navigation + Supabase FK lookups. No new technology introduced.
 
 ---
 
@@ -181,55 +244,52 @@ The research points to a 4-phase structure for v3.0. Phase boundaries are driven
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Verified against installed package.json, official Next.js 16 docs, Prisma 6 docs, Zod v4 docs, and the existing fieldops-client.ts as a reference pattern. Zero new packages — all findings are grounded in already-running code. |
-| Features | HIGH | NOP regulatory requirements verified against USDA 7 CFR 205, Oregon Tilth recordkeeping guide, and OCIA C2.0 documentation. Ecosystem API shapes verified by direct reading of farm-budget/server.js, grain-tickets/server.js, farm-registry/server.js. |
-| Architecture | HIGH | Based on direct examination of all source files: organic-cert/src/ (~85K LOC), prisma/schema.prisma, existing import-plan route, sync-registry route, fieldops-client.ts, and report-assembler.ts. Build order grounded in actual FK constraints in the schema. |
-| Pitfalls | HIGH (integration pitfalls); MEDIUM (NOP compliance pitfalls) | The three blocking bugs are confirmed with file paths and line numbers from direct code reading. NOP compliance aggregation pitfalls are extrapolated from existing code patterns and regulatory requirements — behavioral patterns, not confirmed runtime bugs. |
+| Stack | HIGH | All packages verified against npm registry and official docs. Version compatibility with Next.js 14 App Router confirmed via official docs and GitHub issues. react-beautiful-dnd deprecation confirmed (GitHub repo archived August 2025). Package versions pinned to verified latest. |
+| Features | HIGH | FSA-578 required fields verified against official USDA form PDF. RP/RP-HPE/YP formulas verified against ISU Extension A1-54. Claims lifecycle stages verified against USDA RMA documentation. Existing fsa-acres codebase (`calc.js`, `insurance.js`, `data.json`) is primary ground-truth for data model and business logic. |
+| Architecture | HIGH | Based on direct codebase inspection of glomalin-portal (all source files), fsa-acres (server.js, calc.js, insurance.js, data.json), and all integration points. Component boundaries, SQL schemas, and data flows derived from actual running code, not assumptions. Build order grounded in actual FK constraints. |
+| Pitfalls | HIGH | dnd-kit SSR hydration mismatch: confirmed in GitHub issue #285. Server Actions 1MB limit: confirmed in Next.js GitHub Discussion #57973. Storage RLS + signed URL conflict: confirmed in Supabase storage-js GitHub issue #186. Cross-app fetch timeout: confirmed by existing fsa-acres implementation pattern. RLS subquery performance: confirmed in Supabase official docs. |
 
-**Overall confidence:** HIGH
+**Overall confidence: HIGH**
 
 ### Gaps to Address
 
-- **Prior-year field history state:** Before v3.0 ships, the `FieldHistory` table must have records for 2024 and 2025 for the NOP 3-year history to be complete. If those years were not manually entered, the farm manager must provide them from archived farm-budget data or paper records before Phase 4 closes. Verify `FieldHistory` row count for 2024 and 2025 before Phase 4 planning.
+- **SCO/ECO county yield data source:** SCO and ECO indemnity calculations require county-level average yield, which is not available in any farm system. Research recommendation is to defer SCO/ECO to v7+ or require manual county data entry with explicit labeling. If SCO/ECO is required in v6.0, a manual county APH entry field must be added to insurance module schema and UI before Phase 4. Decision needed during Phase 3 planning.
 
-- **farm-budget organic enterprise filtering:** farm-budget uses both `systemCode` (e.g., "ORG") and enterprise `category` fields to indicate organic designation. The exact filter logic for reliably excluding conventional-designated fields requires a live query against the running farm-budget app. The `nop-filter.ts` should check both fields defensively and be validated against real data in Phase 2.
+- **USDA RMA price scrape endpoint stability:** The existing `fsa-acres/public/pricing.js` scrapes `public-rma.fpac.usda.gov/apps/PriceDiscovery`. This is not a documented public API. The Phase 3 plan must include a manual price override fallback (already in the `insurance_pricing.manual_override` field in the schema) so the module continues to function if the scrape endpoint changes format.
 
-- **Crop name normalization table (Phase 4):** farm-budget uses short crop codes ("SRWW", "Org Peas", "Corn"); grain-tickets uses longer labels ("Organic SRWW", "Organic Peas", "Non-GMO Yellow Corn"). The complete normalization table cannot be derived from research — it requires reading the actual crop values from both running APIs. Build the table empirically before harvest-mapper.ts is written.
+- **Prior-year CLU data availability for year-over-year comparison:** Year-over-year CLU comparison requires historical CLU records with a `cropYear` field. The Phase 1 import script migrates current 2026 data. Whether prior-year (2025) fsa-acres data exists as a backup or archived file is unknown. Verify during Phase 1 planning — if no prior-year data exists, year-over-year comparison effectively becomes a v7+ feature for this deployment.
 
-- **grain-tickets API year filtering:** grain-tickets `GET /api/tickets` currently has no `?year=` filter parameter. The harvest-mapper.ts will need to filter client-side by date range until grain-tickets v2.0 Phase 11+ adds the parameter. At current volume (527 tickets), the performance impact is acceptable; flag for review if ticket volume grows beyond ~2,000.
+- **Tablet testing hardware:** PITFALLS.md identifies iPad (1024×768) testing as required for every UI phase. Confirm whether a physical iPad is available in the farm office or whether browser DevTools viewport emulation is the testing method. This affects verification criteria for Phases 2, 4, and 6.
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- `organic-cert/package.json` — confirmed exact versions of all installed packages
-- `organic-cert/prisma/schema.prisma` — confirmed existing model structure and FK constraints
-- `organic-cert/src/lib/fieldops-client.ts` — reference pattern for structured ecosystem client with timeout and retry
-- `organic-cert/src/app/api/fields/sync-registry/route.ts` — confirmed response shape (matched/created/updated/unchanged)
-- `organic-cert/src/app/(app)/fields/page.tsx` line 128 — confirmed `data.unmatched` crash (runtime TypeError, direct code reading)
-- `organic-cert/src/app/api/fields/route.ts` line 18 — confirmed `take: 3` enterprise query limit (direct code reading)
-- `organic-cert/src/lib/report-assembler.ts` — confirmed no take/skip limits; safe for compilation data aggregation
-- `farm-budget/server.js` — confirmed API endpoints, response shapes, 500ms debounced save pattern
-- `grain-tickets/server.js` — confirmed `GET /api/tickets` exists, no `?year=` filter parameter
-- `farm-registry/server.js` — confirmed `GET /api/fields?active=true`
-- `.planning/codebase/CONCERNS.md` — partial unique index missing from schema.prisma; take:3 tech debt; sync crash documented
-- `.planning/PROJECT.md` — ecosystem architecture, leech pattern decision, yearly rotation snapshot key decision
-- `https://nextjs.org/docs/app/getting-started/fetching-data` — `cache: 'no-store'`, `react/cache` deduplication, Next.js 16 fetch semantics (fetched 2026-03-01)
-- `https://zod.dev/v4` — `.refine()` / `.superRefine()` stable APIs, `zod/v4` subpath import recommended
-- USDA NOP eCFR 7 CFR 205.103 — recordkeeping requirements, 5-year retention, audit trail
-- USDA NOP eCFR 7 CFR 205.201 — organic system plan requirements, pest management documentation
-- Oregon Tilth — The Trail of Records (recordkeeping guide) — five mandatory record categories, mass balance audit, yield plausibility check
+- `fsa-acres/server.js`, `public/calc.js`, `public/insurance.js`, `data/data.json` — ground-truth data model, existing business logic, cross-app proxy patterns, cachedFetch() implementation
+- `glomalin-portal/src/middleware.ts` — auth + RBAC + module access middleware; confirmed no code changes needed for new module slugs
+- `glomalin-portal/src/lib/modules.ts` — existing MODULES registry structure
+- `glomalin-portal/package.json` — confirmed existing dependencies (no PDF library, no dnd-kit, no recharts yet installed)
+- `glomalin-portal/src/app/(protected)/dashboard/page.tsx` — server component pattern with Supabase data fetch
+- USDA FSA-578 Manual 2025 (fsa.usda.gov) — required form fields, practice codes, status codes, confirmed FSA generates the official form
+- USDA RMA Claims Process (rma.usda.gov) — 72-hour notice of loss deadline, adjuster process, DNOL rules
+- dnd-kit GitHub issue #285 — SSR hydration mismatch and `dynamic({ ssr: false })` fix confirmed
+- Next.js GitHub Discussion #57973 — 1MB Server Actions body limit, bodySizeLimit config unreliability confirmed
+- Supabase storage-js GitHub issue #186 — signed URL + INSERT RLS conflict confirmed
+- Supabase Docs — RLS Performance Best Practices, Storage File Limits (50MB free tier)
+- https://nivo.rocks/heatmap/ — Nivo heatmap API and ResponsiveHeatMapCanvas variant confirmed
+- https://docs.dndkit.com/introduction/installation — dnd-kit official installation, multi-container Kanban pattern
 
 ### Secondary (MEDIUM confidence)
-- `https://www.prisma.io/docs/orm/prisma-client/special-fields-and-types/working-with-json-fields` — Json field type for immutable snapshot payload storage
-- USDA AMS buffer zone guidance (NOP) — 25 ft minimum buffer requirement
-- OCIA C2.0 Crop Production Overview — 36-month field histories, acreage summary format
-- `https://www.omri.org/omri-lists` — no public OMRI API confirmed; `omriListed` boolean on Material model is correct pattern
-- WebSearch: confirmed no JavaScript/TypeScript library exists for USDA NOP compliance checking; confirmed `json-rules-engine` and similar tools are designed for dynamic runtime rule configuration (not static NOP domain logic)
-- USDA NOP Strengthening Organic Enforcement rule (effective March 2024) — codified mock audit requirement, enhanced traceability requirements
+- Iowa State Extension A1-54 — RP, RP-HPE, YP guarantee and indemnity formulas (academic source, confirmed against existing fsa-acres calc.js)
+- Iowa State Extension A1-44 — SCO/ECO 86% trigger, county-level yield requirement, payment limit and indemnity formulas
+- USDA One Big Beautiful Bill Act 2025 — SCO/ECO premium subsidy increase to 80% (multiple secondary sources; not verified against Federal Register)
+- AgriSompo Claim Deadlines — 15-day EOIP deadline, DNOL rules
+- npm registry + community sources — recharts 3.4.1, framer-motion 12.x, react-dropzone 14.2.3 version confirmations
+
+### Tertiary (LOW confidence)
+- Visual Heatmap / canvas-heatmap GitHub — WebGL/Canvas threshold for dense heat maps (coverage matrix will never reach the scale where this matters; CSS grid is correct approach regardless)
 
 ---
-
-*Research completed: 2026-03-01*
+*Research completed: 2026-03-04*
 *Ready for roadmap: yes*
