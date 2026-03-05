@@ -116,7 +116,10 @@ Plans:
   2. Authenticated user visits /dashboard and sees module cards — cards for modules they have access to link through, cards for modules they lack access to are visually locked/grayed
   3. Admin visits /admin and sees a user table with per-module toggle switches and a role dropdown; toggling a switch or changing a role persists the change
   4. User with access visits /app/macro-rollup (or any module route) and sees a shell page with the module name and a "coming soon" placeholder
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 26-01-PLAN.md — Landing page with React Flow hub-and-spoke node map (animated edges, hover tooltips, dark soil aesthetic)
+- [ ] 26-02-PLAN.md — Dashboard module cards (access-aware) + dynamic module shell pages + admin panel verification
 
 ## Progress
 
@@ -147,4 +150,4 @@ Plans:
 | 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
 | 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-04 |
 | 25. Auth + Middleware + Route Protection | 4/4 | Complete    | 2026-03-05 | - |
-| 26. Portal UI | v5.0 | 0/TBD | Not started | - |
+| 26. Portal UI | v5.0 | 0/2 | Not started | - |
