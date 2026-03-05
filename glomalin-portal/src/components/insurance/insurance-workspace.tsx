@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
 import { PolicyDrawer } from './policy-drawer'
 import { CoverageMatrix } from './coverage-matrix'
+import { PayoutSimulator } from './payout-simulator'
 
 interface PolicyFormData {
   farm_name: string
@@ -361,6 +362,21 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
             </p>
           </div>
           <CoverageMatrix policy={selectedPolicy} pricing={initialPricing} />
+        </div>
+      )}
+
+      {/* Payout Simulator — shown when a policy is selected */}
+      {selectedPolicy && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-mono font-semibold text-soil-accent text-base">
+              Payout Simulator
+            </h2>
+            <p className="text-xs text-soil-muted font-mono">
+              {selectedPolicy.farm_name ?? '(no farm)'} — {selectedPolicy.crop ?? 'no crop'}
+            </p>
+          </div>
+          <PayoutSimulator policy={selectedPolicy} pricing={initialPricing} />
         </div>
       )}
 
