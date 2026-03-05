@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 ## Current Position
 
 Phase: 24 of 26 (Project Scaffold + Supabase Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-04 — v5.0 roadmap created (3 phases, 15 requirements mapped)
+Plan: 3 of 3 in current phase
+Status: Executing — all plans complete, pending verification
+Last activity: 2026-03-04 — Phase 24 plans 24-01, 24-02, 24-03 executed
 
-Progress: [░░░░░░░░░░] 0% (v5.0 — ready to plan Phase 24)
+Progress: [████████░░] 33% (v5.0 — Phase 24 complete, Phase 25 next)
 
 ## Performance Metrics
 
@@ -35,6 +35,11 @@ Progress: [░░░░░░░░░░] 0% (v5.0 — ready to plan Phase 24)
 - [v5.0]: Supabase replaces NextAuth/Prisma for auth+DB in this project — existing modules keep their stack
 - [v5.0]: QBO Integration deferred to v6.0+ — portal provides the unified shell first
 - [v5.0]: No self-registration — admin creates users; signup flow is out of scope
+- [24-01]: JetBrains Mono loaded via next/font/google with --font-mono CSS variable
+- [24-01]: Dark soil palette: 7 Tailwind tokens (bg, surface, border, accent, text, muted, green)
+- [24-02]: profiles.id is direct FK to auth.users(id) — Supabase pattern, not serial
+- [24-02]: Auto-profile trigger uses security definer to bypass RLS for new users
+- [24-03]: async cookies() pattern for Next.js 14 server Supabase client
 
 ### Pending Todos
 
@@ -42,12 +47,12 @@ Progress: [░░░░░░░░░░] 0% (v5.0 — ready to plan Phase 24)
 
 ### Blockers/Concerns
 
-- Supabase project must be created and credentials obtained before Phase 24 execution can complete
+- Supabase project must be created and credentials obtained before Phase 25 auth work
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert (carries over, not blocking v5.0)
 
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: v5.0 roadmap created — phases 24-26 defined
+Stopped at: Phase 24 execution complete — pending verification
 Resume file: None
-Next action: `/gsd:plan-phase 24`
+Next action: Phase 24 verification, then `/gsd:plan-phase 25`
