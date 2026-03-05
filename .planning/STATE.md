@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 ## Current Position
 
 Phase: 27 of 33 (FSA Data Foundation + Migration)
-Plan: 0 of TBD in Phase 27
-Status: Ready to plan
-Last activity: 2026-03-05 — v6.0 roadmap created (7 phases, 27 requirements mapped)
+Plan: 1 of 2 in Phase 27
+Status: In progress
+Last activity: 2026-03-05 — Plan 27-01 complete (schema + migration script + fsa-578 module + CLU records API)
 
-Progress: [░░░░░░░░░░] 0% (v6.0)
+Progress: [█░░░░░░░░░] 7% (v6.0) — 1/14 plans complete
 
 ## Performance Metrics
 
@@ -39,6 +39,11 @@ Progress: [░░░░░░░░░░] 0% (v6.0)
 - [v6.0]: Claims document upload uses signed URL pattern direct to Supabase Storage — never route file bytes through Server Actions (1MB limit)
 - [v6.0]: ClaimsKanban wrapped in dynamic({ ssr: false }) from first card — not a retrofit
 - [v6.0]: CSS grid for coverage matrix (not SVG/chart library) — instant render, no performance cliff
+- [27-01]: UUID PKs + legacy_id text unique for FSA tables — UUID for Supabase FK chain, legacy_id for upsert idempotency
+- [27-01]: Flat year columns (tillage_2024, tillage_2025) not normalized history table — matches calc.js field access patterns, 2 years only
+- [27-01]: ins_482 migrated with notes flag — actual=40000 with no farm/crop is suspicious, Phase 29 UI will surface for review
+- [27-01]: Option A module slug — fsa-578 added alongside fsa-reporting in modules.ts (additive, no module_access data migration risk)
+- [27-01]: Claims use delete-then-insert pattern (not upsert) — no natural legacy_id, policy_id FK is uniqueness anchor
 
 ### Pending Todos
 
@@ -55,6 +60,6 @@ Progress: [░░░░░░░░░░] 0% (v6.0)
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Phase 27 context gathered
-Resume file: .planning/phases/27-fsa-data-foundation-migration/27-CONTEXT.md
-Next action: /gsd:plan-phase 27
+Stopped at: Completed 27-01-PLAN.md (migration script + module registration + page + API route)
+Resume file: .planning/phases/27-fsa-data-foundation-migration/27-01-SUMMARY.md
+Next action: Run migration after adding Supabase credentials to glomalin-portal/.env.local, then /gsd:execute-phase 27 (plan 27-02)

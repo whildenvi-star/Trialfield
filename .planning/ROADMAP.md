@@ -224,7 +224,7 @@ Plans:
 | 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-05 |
 | 25. Auth + Middleware + Route Protection | v5.0 | 4/4 | Complete | 2026-03-05 |
 | 26. Portal UI | v5.0 | 2/2 | Complete | 2026-03-05 |
-| 27. FSA Data Foundation + Migration | v6.0 | 0/2 | Planned | - |
+| 27. FSA Data Foundation + Migration | 1/2 | In Progress|  | - |
 | 28. FSA Planting Workflow UI | v6.0 | 0/TBD | Not started | - |
 | 29. Insurance Tables + Calculation Engine | v6.0 | 0/TBD | Not started | - |
 | 30. Insurance Decision Tool UI | v6.0 | 0/TBD | Not started | - |

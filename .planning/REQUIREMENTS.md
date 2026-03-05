@@ -9,7 +9,7 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 
 ### FSA Planting Workflow
 
-- [ ] **FSA-01**: User can see existing CLU records (migrated from fsa-acres) in the portal, scoped by crop year
+- [x] **FSA-01**: User can see existing CLU records (migrated from fsa-acres) in the portal, scoped by crop year
 - [ ] **FSA-02**: User can view CLU records as cards grouped by Farm/Tract/CLU with status badges
 - [ ] **FSA-03**: User can edit crop, practice, planting date, and organic flag on a CLU card
 - [ ] **FSA-04**: User can bulk-select CLUs and mark as reported to FSA
@@ -94,7 +94,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FSA-01 | Phase 27 | Pending |
+| FSA-01 | Phase 27 | Complete |
 | FSA-02 | Phase 28 | Pending |
 | FSA-03 | Phase 28 | Pending |
 | FSA-04 | Phase 28 | Pending |
