@@ -94,39 +94,39 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FSA-01 | — | Pending |
-| FSA-02 | — | Pending |
-| FSA-03 | — | Pending |
-| FSA-04 | — | Pending |
-| FSA-05 | — | Pending |
-| FSA-06 | — | Pending |
-| FSA-07 | — | Pending |
-| FSA-08 | — | Pending |
-| INS-01 | — | Pending |
-| INS-02 | — | Pending |
-| INS-03 | — | Pending |
-| INS-04 | — | Pending |
-| INS-05 | — | Pending |
-| INS-06 | — | Pending |
-| INS-07 | — | Pending |
-| INS-08 | — | Pending |
-| CLM-01 | — | Pending |
-| CLM-02 | — | Pending |
-| CLM-03 | — | Pending |
-| CLM-04 | — | Pending |
-| CLM-05 | — | Pending |
-| CLM-06 | — | Pending |
-| CLM-07 | — | Pending |
-| INT-01 | — | Pending |
-| INT-02 | — | Pending |
-| INT-03 | — | Pending |
-| INT-04 | — | Pending |
+| FSA-01 | Phase 27 | Pending |
+| FSA-02 | Phase 28 | Pending |
+| FSA-03 | Phase 28 | Pending |
+| FSA-04 | Phase 28 | Pending |
+| FSA-05 | Phase 27 | Pending |
+| FSA-06 | Phase 27 | Pending |
+| FSA-07 | Phase 28 | Pending |
+| FSA-08 | Phase 28 | Pending |
+| INS-01 | Phase 29 | Pending |
+| INS-02 | Phase 30 | Pending |
+| INS-03 | Phase 30 | Pending |
+| INS-04 | Phase 30 | Pending |
+| INS-05 | Phase 29 | Pending |
+| INS-06 | Phase 29 | Pending |
+| INS-07 | Phase 29 | Pending |
+| INS-08 | Phase 30 | Pending |
+| CLM-01 | Phase 32 | Pending |
+| CLM-02 | Phase 32 | Pending |
+| CLM-03 | Phase 32 | Pending |
+| CLM-04 | Phase 31 | Pending |
+| CLM-05 | Phase 32 | Pending |
+| CLM-06 | Phase 32 | Pending |
+| CLM-07 | Phase 31 | Pending |
+| INT-01 | Phase 33 | Pending |
+| INT-02 | Phase 33 | Pending |
+| INT-03 | Phase 33 | Pending |
+| INT-04 | Phase 33 | Pending |
 
 **Coverage:**
-- v6.0 requirements: 28 total
-- Mapped to phases: 0
-- Unmapped: 28
+- v6.0 requirements: 27 total
+- Mapped to phases: 27
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-05*
-*Last updated: 2026-03-05 after initial definition*
+*Last updated: 2026-03-05 — traceability populated after roadmap creation*
