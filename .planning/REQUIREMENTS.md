@@ -27,9 +27,9 @@ Requirements for v5.0 Glomalin Portal — Next.js + Supabase Scaffold. Each maps
 ### Portal UI
 
 - [ ] **UI-01**: Public landing page with React Flow node map and dark soil aesthetic
-- [ ] **UI-02**: Dashboard shows module cards — locked/grayed for modules without access
-- [ ] **UI-03**: Admin page renders user table with module toggle switches and role dropdown
-- [ ] **UI-04**: Module shell pages render module name with "coming soon" placeholder
+- [x] **UI-02**: Dashboard shows module cards — locked/grayed for modules without access
+- [x] **UI-03**: Admin page renders user table with module toggle switches and role dropdown
+- [x] **UI-04**: Module shell pages render module name with "coming soon" placeholder
 
 ### Scaffold
 
@@ -135,9 +135,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RBAC-03 | Phase 25 | Complete |
 | RBAC-04 | Phase 25 | Pending |
 | UI-01 | Phase 26 | Pending |
-| UI-02 | Phase 26 | Pending |
-| UI-03 | Phase 26 | Pending |
-| UI-04 | Phase 26 | Pending |
+| UI-02 | Phase 26 | Complete |
+| UI-03 | Phase 26 | Complete |
+| UI-04 | Phase 26 | Complete |
 
 **Coverage:**
 - v5.0 requirements: 15 total

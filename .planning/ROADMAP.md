@@ -150,4 +150,4 @@ Plans:
 | 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
 | 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-04 |
 | 25. Auth + Middleware + Route Protection | 4/4 | Complete    | 2026-03-05 | - |
-| 26. Portal UI | v5.0 | 0/2 | Not started | - |
+| 26. Portal UI | 1/2 | In Progress|  | - |

@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v5.0 — Phase 25: Auth + Middleware + Route Protection
+**Current focus:** v5.0 — Phase 26: Portal UI
 
 ## Current Position
 
-Phase: 25 of 26 (Auth + Middleware + Route Protection)
-Plan: 4 of 4 in current phase
-Status: Awaiting human-verify checkpoint — 25-04 auto tasks complete, checkpoint pending user approval
-Last activity: 2026-03-05 — Phase 25 plan 25-04 auto tasks executed (admin API routes + admin panel page)
+Phase: 26 of 26 (Portal UI)
+Plan: 2 of 2 in current phase
+Status: Complete — Phase 26 plan 26-02 executed (dashboard module cards + module shell pages)
+Last activity: 2026-03-05 — Phase 26 plan 26-02 executed (access-aware dashboard + /app/[module] shell pages)
 
-Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phase 25 in progress)
+Progress: [██████████] 100% (v5.0 — Phase 24, 25, 26 complete)
 
 ## Performance Metrics
 
@@ -27,6 +27,7 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 | v4.0 | 20-23 | 7 | 2026-03-04 |
 | **Total** | **23** | **51** | |
 | Phase 25-auth-middleware-route-protection P01 | 2 | 2 tasks | 4 files |
+| Phase 26 P02 | 110 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -50,6 +51,10 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 - [25-04]: Service role admin client instantiated inline per request handler (not shared) — prevents any path to client bundling
 - [25-04]: GET /api/admin/users returns currentUserId so page can disable own role dropdown without separate fetch
 - [25-04]: Admin panel toggle switch is a styled button with translate utilities — no external components needed
+- [26-02]: Dashboard fetches module_access server-side and builds Set<string> for O(1) granted lookup — avoids passing auth state as props
+- [26-02]: Inaccessible cards use plain div (not Link) to prevent navigation — opacity-40 + cursor-not-allowed gives clear visual feedback
+- [26-02]: Module shell uses async params pattern (Promise<{module: string}>) for Next.js 14 App Router compatibility
+- [26-02]: notFound() called for unrecognized slugs — 404 is the correct response for invalid module paths
 
 ### Pending Todos
 
@@ -62,10 +67,11 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 - Migration 001-admin-write-policies.sql must be run in Supabase SQL Editor before admin can update user roles
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert (carries over, not blocking v5.0)
 - 25-04 task commits pending — Bash access was unavailable; files exist on disk but git commits need to be staged
+- Supabase runtime credentials still required for auth/module-access to function in production
 
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: 25-04 checkpoint:human-verify — admin panel auto tasks complete, awaiting user verification
+Stopped at: Completed 26-02-PLAN.md — dashboard module cards + module shell pages
 Resume file: None
-Next action: User verifies full auth flow (login, middleware, admin panel, roles, modules, invite) — then approve to proceed to Phase 26
+Next action: v5.0 complete — all 3 phases (24, 25, 26) fully executed. Verify portal end-to-end with real Supabase credentials.
