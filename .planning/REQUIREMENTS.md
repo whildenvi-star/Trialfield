@@ -15,13 +15,13 @@ Requirements for v5.0 Glomalin Portal — Next.js + Supabase Scaffold. Each maps
 ### Authentication
 
 - [ ] **AUTH-01**: User can log in with email and password via Supabase signInWithPassword
-- [ ] **AUTH-02**: Unauthenticated users are redirected to /login by middleware
+- [x] **AUTH-02**: Unauthenticated users are redirected to /login by middleware
 
 ### Authorization
 
-- [ ] **RBAC-01**: User profile has a role (admin, agronomist, operator, viewer) defaulting to viewer on signup
-- [ ] **RBAC-02**: Admin routes (/admin) redirect non-admin users to /dashboard
-- [ ] **RBAC-03**: Module routes (/app/*) check module_access and redirect denied users to /dashboard?denied=true
+- [x] **RBAC-01**: User profile has a role (admin, agronomist, operator, viewer) defaulting to viewer on signup
+- [x] **RBAC-02**: Admin routes (/admin) redirect non-admin users to /dashboard
+- [x] **RBAC-03**: Module routes (/app/*) check module_access and redirect denied users to /dashboard?denied=true
 - [ ] **RBAC-04**: Admin can toggle any user's module access and change their role from the admin panel
 
 ### Portal UI
@@ -129,10 +129,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SUP-01 | Phase 24 | Pending |
 | SUP-02 | Phase 24 | Pending |
 | AUTH-01 | Phase 25 | Pending |
-| AUTH-02 | Phase 25 | Pending |
-| RBAC-01 | Phase 25 | Pending |
-| RBAC-02 | Phase 25 | Pending |
-| RBAC-03 | Phase 25 | Pending |
+| AUTH-02 | Phase 25 | Complete |
+| RBAC-01 | Phase 25 | Complete |
+| RBAC-02 | Phase 25 | Complete |
+| RBAC-03 | Phase 25 | Complete |
 | RBAC-04 | Phase 25 | Pending |
 | UI-01 | Phase 26 | Pending |
 | UI-02 | Phase 26 | Pending |

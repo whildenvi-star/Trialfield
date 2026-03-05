@@ -146,5 +146,5 @@ Plans:
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
 | 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-04 |
-| 25. Auth + Middleware + Route Protection | v5.0 | 0/4 | Not started | - |
+| 25. Auth + Middleware + Route Protection | 2/4 | In Progress|  | - |
 | 26. Portal UI | v5.0 | 0/TBD | Not started | - |

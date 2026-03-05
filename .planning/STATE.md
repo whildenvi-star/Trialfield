@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v5.0 — Phase 24: Project Scaffold + Supabase Foundation
+**Current focus:** v5.0 — Phase 25: Auth + Middleware + Route Protection
 
 ## Current Position
 
-Phase: 24 of 26 (Project Scaffold + Supabase Foundation)
-Plan: 3 of 3 in current phase
-Status: Executing — all plans complete, pending verification
-Last activity: 2026-03-04 — Phase 24 plans 24-01, 24-02, 24-03 executed
+Phase: 25 of 26 (Auth + Middleware + Route Protection)
+Plan: 2 of 3 in current phase
+Status: Executing — plans 25-01 and 25-02 complete, 25-03 next
+Last activity: 2026-03-05 — Phase 25 plans 25-02 executed (middleware + RBAC)
 
-Progress: [████████░░] 33% (v5.0 — Phase 24 complete, Phase 25 next)
+Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phase 25 in progress)
 
 ## Performance Metrics
 
@@ -40,6 +40,9 @@ Progress: [████████░░] 33% (v5.0 — Phase 24 complete, Phas
 - [24-02]: profiles.id is direct FK to auth.users(id) — Supabase pattern, not serial
 - [24-02]: Auto-profile trigger uses security definer to bypass RLS for new users
 - [24-03]: async cookies() pattern for Next.js 14 server Supabase client
+- [25-02]: Admin route denial is silent (redirect to /dashboard with no query param) — non-admins must not know admin panel exists
+- [25-02]: Module access denial uses /dashboard?denied={moduleId} so dashboard can show a named toast
+- [25-02]: Expired session detected via sb- prefixed cookies + failed getUser() — redirects to /login?expired=true
 
 ### Pending Todos
 
@@ -47,12 +50,12 @@ Progress: [████████░░] 33% (v5.0 — Phase 24 complete, Phas
 
 ### Blockers/Concerns
 
-- Supabase project must be created and credentials obtained before Phase 25 auth work
+- Supabase project credentials required for middleware auth checks to function at runtime (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert (carries over, not blocking v5.0)
 
 ## Session Continuity
 
-Last session: 2026-03-04
-Stopped at: Phase 24 execution complete — pending verification
+Last session: 2026-03-05
+Stopped at: Completed 25-02-PLAN.md — middleware + RBAC route protection
 Resume file: None
-Next action: Phase 24 verification, then `/gsd:plan-phase 25`
+Next action: Execute Phase 25 Plan 03 (admin panel)
