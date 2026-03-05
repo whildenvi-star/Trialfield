@@ -42,4 +42,10 @@ export const MODULES: Module[] = [
     sublabel: 'Acreage Reporting',
     route: '/app/fsa-578',
   },
+  {
+    id: 'insurance',
+    label: 'Insurance',
+    sublabel: 'Crop Insurance Tools',
+    route: '/app/insurance',
+  },
 ]
