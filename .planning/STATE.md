@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 27 (FSA Data Foundation + Migration)
+**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 28 (FSA Planting Workflow UI)
 
 ## Current Position
 
-Phase: 27 of 33 (FSA Data Foundation + Migration)
-Plan: 2 of 2 in Phase 27 — COMPLETE
-Status: Phase 27 complete
-Last activity: 2026-03-05 — Plan 27-02 complete (calc engine TypeScript port + validation API + auto-populate preview API)
+Phase: 28 of 33 (FSA Planting Workflow UI)
+Plan: 1 of 2 in Phase 28 — COMPLETE (Plan 28-01 done)
+Status: Phase 28 in progress
+Last activity: 2026-03-05 — Plan 28-01 complete (card-based CLU workflow: accordions, inline editing, bulk actions)
 
-Progress: [█░░░░░░░░░] 14% (v6.0) — 2/14 plans complete
+Progress: [█░░░░░░░░░] 21% (v6.0) — 3/14 plans complete
 
 ## Performance Metrics
 
@@ -27,6 +27,7 @@ Progress: [█░░░░░░░░░] 14% (v6.0) — 2/14 plans complete
 | v4.0 | 20-23 | 7 | 2026-03-04 |
 | v5.0 | 24-26 | 9 | 2026-03-05 |
 | **Total** | **26** | **60** | |
+| Phase 28 P01 | 28 | 2 | 2026-03-05 |
 
 ## Accumulated Context
 
@@ -48,6 +49,9 @@ Progress: [█░░░░░░░░░] 14% (v6.0) — 2/14 plans complete
 - [27-02]: tillageSummary/coverCropSummary return multi-year arrays (2024+2025 combined) — Phase 28 UI renders tabs without multiple API calls
 - [27-02]: buildAutoPopulateProposals in route file not calc.ts — integration logic (depends on farm-budget API shape) not pure business logic
 - [27-02]: no-insurance warning emits per-crop — enables Phase 28 clickable filter links per crop
+- [Phase 28-01]: CluCard practice/use field is a select dropdown with Non-Irrigated/Irrigated options (not free text)
+- [Phase 28-01]: BulkActionBar assign-crop uses inline CropTypeahead within the sticky bar (not a modal)
+- [Phase 28-01]: ConfirmDialog z-[60] sits above BulkActionBar z-50 so backdrop covers the bar correctly
 
 ### Pending Todos
 
@@ -64,6 +68,6 @@ Progress: [█░░░░░░░░░] 14% (v6.0) — 2/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 27-02-PLAN.md (calc engine TypeScript port + validation API + auto-populate preview API)
-Resume file: .planning/phases/27-fsa-data-foundation-migration/27-02-SUMMARY.md
-Next action: Phase 28 (FSA UI) — run /gsd:execute-phase 28 once Supabase credentials are added and migration is run
+Stopped at: Completed 28-01-PLAN.md (card-based CLU workflow: accordions, inline editing, bulk actions)
+Resume file: .planning/phases/28-fsa-planting-workflow-ui/28-01-SUMMARY.md
+Next action: Phase 28-02 — export buttons (PDF/CSV Acreage Reporting Summary), inject into #export-buttons-placeholder in CluWorkspace
