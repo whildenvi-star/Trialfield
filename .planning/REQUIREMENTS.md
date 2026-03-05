@@ -24,8 +24,8 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 - [x] **INS-02**: User can create, edit, and delete insurance policies with slide-out editor
 - [x] **INS-03**: User can see a coverage level comparison matrix across RP, RP-HPE, and YP at 50-85%
 - [x] **INS-04**: User can simulate payout scenarios with interactive yield and price sliders
-- [x] **INS-05**: User can see APH yield auto-populated from CLU records
-- [x] **INS-06**: User can sync actual yield from grain-tickets for post-harvest comparison
+- [ ] **INS-05**: User can see APH yield auto-populated from CLU records
+- [ ] **INS-06**: User can sync actual yield from grain-tickets for post-harvest comparison
 - [x] **INS-07**: User can see potential claim alerts when actual yield < effective guarantee
 - [x] **INS-08**: User can generate an insurance summary report
 
@@ -37,7 +37,7 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 - [x] **CLM-04**: User can upload documents to a claim via Supabase Storage
 - [ ] **CLM-05**: User can see deadline alerts for approaching filing deadlines
 - [ ] **CLM-06**: User can add timestamped notes to a claim timeline
-- [x] **CLM-07**: User can create a claim pre-filled from an insurance policy
+- [ ] **CLM-07**: User can create a claim pre-filled from an insurance policy
 
 ### Cross-Module Integration
 
@@ -106,8 +106,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INS-02 | Phase 30 | Complete |
 | INS-03 | Phase 30 | Complete |
 | INS-04 | Phase 30 | Complete |
-| INS-05 | Phase 29 | Complete |
-| INS-06 | Phase 29 | Complete |
+| INS-05 | Phase 34 | Pending |
+| INS-06 | Phase 34 | Pending |
 | INS-07 | Phase 29 | Complete |
 | INS-08 | Phase 30 | Complete |
 | CLM-01 | Phase 32 | Pending |
@@ -116,7 +116,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLM-04 | Phase 31 | Complete |
 | CLM-05 | Phase 32 | Pending |
 | CLM-06 | Phase 32 | Pending |
-| CLM-07 | Phase 31 | Complete |
+| CLM-07 | Phase 34 | Pending |
 | INT-01 | Phase 33 | Pending |
 | INT-02 | Phase 33 | Pending |
 | INT-03 | Phase 33 | Pending |

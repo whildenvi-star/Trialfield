@@ -8,7 +8,7 @@
 - ✅ **v3.0 Organic Cert Transparency + Procurement** — Phases 15-19 (shipped 2026-03-04) — [archive](milestones/v3.0-ROADMAP.md)
 - ✅ **v4.0 Cross-Module Polish & Settlement Closure** — Phases 20-23 (shipped 2026-03-04)
 - ✅ **v5.0 Glomalin Portal — Next.js + Supabase Scaffold** — Phases 24-26 (shipped 2026-03-05) — [archive](milestones/v5.0-ROADMAP.md)
-- 🚧 **v6.0 FSA Acres, Insurance & Claims** — Phases 27-33 (in progress)
+- 🚧 **v6.0 FSA Acres, Insurance & Claims** — Phases 27-34 (in progress)
 
 ## Phases
 
@@ -84,6 +84,7 @@
 - [x] **Phase 30: Insurance Decision Tool UI** - Policy CRUD, coverage matrix, payout simulator, insurance summary report (completed 2026-03-05)
 - [x] **Phase 31: Claims Tables + API** - Supabase schema, Storage bucket, route handlers for claims/documents/timeline, create-from-policy API (completed 2026-03-05)
 - [ ] **Phase 32: Claims Lifecycle UI** - Kanban board, drag-and-drop pipeline, claim detail view, document upload, deadline alerts, timeline notes
+- [ ] **Phase 34: Insurance & Claims UI Wiring** - Wire APH auto-populate, Sync Yield button, File Claim button into existing UI (gap closure)
 - [ ] **Phase 33: Cross-Module Integration + Dashboard** - FSA-Insurance-Claims navigation links, prevented planting trigger, dashboard summary cards
 
 ## Phase Details
@@ -179,6 +180,20 @@ Plans:
 - [ ] 32-01: ClaimsKanban + ClaimCard (dynamic ssr:false) + dnd-kit multi-container
 - [ ] 32-02: ClaimDetail + DocumentUpload + DeadlineAlertBanner + timeline notes
 
+### Phase 34: Insurance & Claims UI Wiring
+**Goal**: Wire existing backend APIs into the UI — APH auto-populate displays on policies, Sync Yield button triggers grain-ticket comparison, File Claim button enables claim creation from insurance policies
+**Depends on**: Phase 30, Phase 31
+**Requirements**: INS-05, INS-06, CLM-07
+**Gap Closure:** Closes 3 partial requirements and 2 integration gaps from v6.0 audit
+**Success Criteria** (what must be TRUE):
+  1. When a policy is opened in the PolicyDrawer, APH yield is auto-fetched from the CLU record and displayed without manual entry (INS-05)
+  2. User can click a "Sync Yield" button on a policy row and see actual yield updated from grain-tickets (INS-06)
+  3. User can click a "File Claim" button on a policy and be taken to claim creation pre-filled with policy data (CLM-07)
+**Plans**: 1 plan
+
+Plans:
+- [ ] 34-01-PLAN.md — APH auto-populate fetch in PolicyDrawer + Sync Yield button + File Claim button
+
 ### Phase 33: Cross-Module Integration + Dashboard
 **Goal**: The three modules (FSA, Insurance, Claims) form a coherent workflow — users can navigate from CLU to policy to claim in one path, the portal dashboard shows live summary cards for all three, and the prevented planting trigger closes the FSA-to-Claims loop automatically
 **Depends on**: Phase 28, Phase 30, Phase 32 (all three module UIs complete)
@@ -229,5 +244,6 @@ Plans:
 | 29. Insurance Tables + Calculation Engine | 2/2 | Complete    | 2026-03-05 | - |
 | 30. Insurance Decision Tool UI | 2/2 | Complete    | 2026-03-05 | - |
 | 31. Claims Tables + API | 2/2 | Complete    | 2026-03-05 | - |
-| 32. Claims Lifecycle UI | v6.0 | 0/TBD | Not started | - |
-| 33. Cross-Module Integration + Dashboard | v6.0 | 0/TBD | Not started | - |
+| 32. Claims Lifecycle UI | v6.0 | 0/2 | Not started | - |
+| 34. Insurance & Claims UI Wiring | v6.0 | 0/1 | Not started | - |
+| 33. Cross-Module Integration + Dashboard | v6.0 | 0/2 | Not started | - |
