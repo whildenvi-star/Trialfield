@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 ## Current Position
 
-Phase: 31 of 33 (Claims Data Foundation) — IN PROGRESS
-Plan: 1 of 1 in Phase 31 — COMPLETE (Plan 31-01: Claims Schema + API)
-Status: Phase 31 plan 1 complete — Phase 32 (Claims Lifecycle UI) next
-Last activity: 2026-03-05 — Plan 31-01 complete (claims schema, CRUD routes, timeline, shell page)
+Phase: 31 of 33 (Claims Data Foundation) — COMPLETE
+Plan: 2 of 2 in Phase 31 — COMPLETE (Plan 31-02: Signed URL Document Upload API)
+Status: Phase 31 complete — Phase 32 (Claims Lifecycle UI) next
+Last activity: 2026-03-05 — Plan 31-02 complete (signed URL upload endpoint + document metadata CRUD)
 
-Progress: [██████░░░░] 64% (v6.0) — 9/14 plans complete
+Progress: [██████░░░░] 71% (v6.0) — 10/14 plans complete
 
 ## Performance Metrics
 
@@ -77,6 +77,10 @@ Progress: [██████░░░░] 64% (v6.0) — 9/14 plans complete
 - [Phase 31-01]: Timeline events written in application code (PATCH/POST handlers), not DB triggers — matches established project pattern
 - [Phase 31-01]: computeDeadline returns null for notice_of_loss (uses INITIAL_DEADLINE_DAYS from date_of_loss instead) and closed (no deadline)
 - [Phase 31-01]: Adjuster assignment detection fires timeline event only when adjuster_name transitions from null/empty to a value
+- [Phase 31-02]: upload-url uses createSignedUploadUrl (not createSignedUrl) — distinct Supabase Storage methods for upload vs download
+- [Phase 31-02]: Three-step signed URL upload: server generates URL → client PUT to Storage → client POST metadata — file bytes never route through Next.js (1MB limit)
+- [Phase 31-02]: doc_upload timeline event is non-fatal (same pattern as created event) — document metadata saved successfully even if timeline insert fails
+- [Phase 31-02]: Signed download URLs use 3600s expiry in GET /documents list — balances link longevity against security for Phase 32 UI
 
 ### Pending Todos
 
@@ -86,13 +90,13 @@ Progress: [██████░░░░] 64% (v6.0) — 9/14 plans complete
 
 - [Ph27]: Verify whether prior-year (2025) fsa-acres data exists for year-over-year comparison — if not, that feature stays v7+
 - [Ph29 RESOLVED]: RP vs RP-HPE formula check — not blocking Phase 29; payout simulator is Phase 30 UI feature, computeInsurancePolicy() already in lib/fsa/calc.ts. Formula check deferred to Phase 30 pre-work.
-- [Ph31]: Spike signed upload URL + RLS behavior in this Supabase project before building upload UI (service_role vs anon key upload path differs by project config)
+- [Ph31 RESOLVED]: Spike signed upload URL + RLS behavior — implemented in 31-02, upload-url endpoint uses createSignedUploadUrl, three-step flow verified in code
 - Supabase project credentials required for glomalin-portal runtime
 - CNH FieldOps staging API — mock mode active in organic-cert (not blocking v6.0)
 
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 31-01-PLAN.md (claims schema, CRUD routes, timeline auto-events, shell page)
-Resume file: .planning/phases/31-claims-tables-api/31-01-SUMMARY.md
-Next action: Phase 32 — Claims Lifecycle UI (Kanban board, claim detail view)
+Stopped at: Completed 31-02-PLAN.md (signed URL upload endpoint + document metadata CRUD)
+Resume file: .planning/phases/31-claims-tables-api/31-02-SUMMARY.md
+Next action: Phase 32 — Claims Lifecycle UI (Kanban board, claim detail view, document upload UI)

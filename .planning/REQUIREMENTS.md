@@ -34,7 +34,7 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 - [ ] **CLM-01**: User can view claims as a Kanban board with pipeline stages
 - [ ] **CLM-02**: User can advance claims between stages via drag-and-drop
 - [ ] **CLM-03**: User can view claim detail with timeline, documents, and financials
-- [ ] **CLM-04**: User can upload documents to a claim via Supabase Storage
+- [x] **CLM-04**: User can upload documents to a claim via Supabase Storage
 - [ ] **CLM-05**: User can see deadline alerts for approaching filing deadlines
 - [ ] **CLM-06**: User can add timestamped notes to a claim timeline
 - [x] **CLM-07**: User can create a claim pre-filled from an insurance policy
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLM-01 | Phase 32 | Pending |
 | CLM-02 | Phase 32 | Pending |
 | CLM-03 | Phase 32 | Pending |
-| CLM-04 | Phase 31 | Pending |
+| CLM-04 | Phase 31 | Complete |
 | CLM-05 | Phase 32 | Pending |
 | CLM-06 | Phase 32 | Pending |
 | CLM-07 | Phase 31 | Complete |
