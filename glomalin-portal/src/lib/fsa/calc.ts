@@ -51,6 +51,8 @@ export interface InsurancePolicy {
   legacy_id: string
   farm_name: string | null
   farm_number: string | null
+  line_number?: string | null
+  policy_number?: string | null
   crop: string | null
   policy_year: number
   planted_acres: number
@@ -60,6 +62,16 @@ export interface InsurancePolicy {
   coverage_level: number
   unit_type: string | null
   premium_per_acre: number | null
+  // Phase 30: plan type for RP / RP-HPE / YP comparison matrix
+  plan_type?: string | null
+  // Phase 29 columns — optional since legacy records may predate these columns
+  aph_computed?: number | null
+  aph_clu_count?: number | null
+  actual_synced_from_grain?: boolean
+  claim_alert?: string
+  // Additional optional fields
+  agent_name?: string | null
+  notes?: string | null
   prevented_planting: boolean
   prevented_planting_acres: number | null
 }

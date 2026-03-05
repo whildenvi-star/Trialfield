@@ -10,6 +10,17 @@ interface PolicyPatch {
   aph_computed?: number
   aph_clu_count?: number
   notes?: string
+  // Phase 30 editable fields
+  farm_name?: string
+  farm_number?: string
+  crop?: string
+  planted_acres?: number
+  unit_type?: string
+  premium_per_acre?: number
+  agent_name?: string
+  plan_type?: string
+  prevented_planting?: boolean
+  prevented_planting_acres?: number
 }
 
 // Trigger fields: presence of any of these requires claim_alert recompute
@@ -90,6 +101,17 @@ export async function PATCH(
   if (typeof body.aph_computed === 'number') patch.aph_computed = body.aph_computed
   if (typeof body.aph_clu_count === 'number') patch.aph_clu_count = body.aph_clu_count
   if (typeof body.notes === 'string') patch.notes = body.notes
+  // Phase 30 editable fields
+  if (typeof body.farm_name === 'string') patch.farm_name = body.farm_name
+  if (typeof body.farm_number === 'string') patch.farm_number = body.farm_number
+  if (typeof body.crop === 'string') patch.crop = body.crop
+  if (typeof body.planted_acres === 'number') patch.planted_acres = body.planted_acres
+  if (typeof body.unit_type === 'string') patch.unit_type = body.unit_type
+  if (typeof body.premium_per_acre === 'number') patch.premium_per_acre = body.premium_per_acre
+  if (typeof body.agent_name === 'string') patch.agent_name = body.agent_name
+  if (typeof body.plan_type === 'string') patch.plan_type = body.plan_type
+  if (typeof body.prevented_planting === 'boolean') patch.prevented_planting = body.prevented_planting
+  if (typeof body.prevented_planting_acres === 'number') patch.prevented_planting_acres = body.prevented_planting_acres
 
   // Reject empty or unrecognized updates
   if (Object.keys(patch).length === 0) {
@@ -151,4 +173,39 @@ export async function PATCH(
   }
 
   return NextResponse.json({ policy: updatedPolicy })
+}
+
+// DELETE /api/insurance/policies/[id]
+// Removes an insurance policy. INS-02: Policy CRUD.
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const supabase = await createClient()
+
+  // Auth check
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser()
+
+  if (userError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { id } = await params
+
+  const { error } = await supabase
+    .from('insurance_policies')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    return NextResponse.json(
+      { error: 'Failed to delete policy', details: error.message },
+      { status: 500 }
+    )
+  }
+
+  return NextResponse.json({ deleted: id })
 }
