@@ -227,7 +227,7 @@ Plans:
 | 27. FSA Data Foundation + Migration | 2/2 | Complete   | 2026-03-05 | - |
 | 28. FSA Planting Workflow UI | 2/2 | Complete    | 2026-03-05 | - |
 | 29. Insurance Tables + Calculation Engine | 2/2 | Complete    | 2026-03-05 | - |
-| 30. Insurance Decision Tool UI | v6.0 | 0/TBD | Not started | - |
+| 30. Insurance Decision Tool UI | 1/2 | In Progress|  | - |
 | 31. Claims Tables + API | v6.0 | 0/TBD | Not started | - |
 | 32. Claims Lifecycle UI | v6.0 | 0/TBD | Not started | - |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 0/TBD | Not started | - |

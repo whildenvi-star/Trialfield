@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 29 (Insurance Data Foundation)
+**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 30 (Insurance Decision Tool UI)
 
 ## Current Position
 
-Phase: 29 of 33 (Insurance Tables + Calculation Engine) — COMPLETE
-Plan: 2 of 2 in Phase 29 — COMPLETE (Plans 29-01 and 29-02 done)
-Status: Phase 29 complete — Phase 30 (Insurance Policy UI) next
-Last activity: 2026-03-05 — Plan 29-02 complete (APH lookup, yield-sync, policies/[id] PATCH endpoints)
+Phase: 30 of 33 (Insurance Decision Tool UI) — IN PROGRESS
+Plan: 1 of 2 in Phase 30 — COMPLETE (Plan 30-01: CRUD + Coverage Matrix)
+Status: Plan 30-01 complete — Plan 30-02 (PDF export) next
+Last activity: 2026-03-05 — Plan 30-01 complete (CRUD workflow, slide-out drawer, coverage matrix)
 
-Progress: [████░░░░░░] 43% (v6.0) — 6/14 plans complete
+Progress: [█████░░░░░] 50% (v6.0) — 7/14 plans complete
 
 ## Performance Metrics
 
@@ -31,6 +31,7 @@ Progress: [████░░░░░░] 43% (v6.0) — 6/14 plans complete
 | Phase 28-fsa-planting-workflow-ui P02 | 5 | 2 tasks | 4 files |
 | Phase 29 P01 | 3 | 2 tasks | 5 files |
 | Phase 29 P02 | 2 | 2 tasks | 3 files |
+| Phase 30 P01 | 4 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Progress: [████░░░░░░] 43% (v6.0) — 6/14 plans complete
 - [Phase 29-02]: yield-sync returns HTTP 200 not 502 when grain-tickets offline — offline is expected during dev; 502 implies the insurance service failed
 - [Phase 29-02]: PATCH policies/[id] fetches current row before claim_alert recompute — ensures merged values used, not just patch delta
 - [Phase 29-02]: Next.js 15+ dynamic route params typed as Promise and awaited — breaking change from Next.js 14 sync params
+- [Phase 30-01]: InsuranceWorkspace manages policy list state client-side — no full page reload on CRUD operations
+- [Phase 30-01]: RP-HPE and YP both use spring_price for fall_price in coverage matrix — simplification documented in code comment, labeled illustrative
+- [Phase 30-01]: Delete uses browser confirm() — no custom ConfirmDialog for insurance (unlike FSA module which uses ConfirmDialog component)
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ Progress: [████░░░░░░] 43% (v6.0) — 6/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 29-02-PLAN.md (APH lookup, yield-sync, policies/[id] PATCH endpoints)
-Resume file: .planning/phases/29-insurance-tables-calculation-engine/29-02-SUMMARY.md
-Next action: Phase 30 — Insurance Policy UI (30-01-PLAN.md)
+Stopped at: Completed 30-01-PLAN.md (CRUD workflow, slide-out drawer, 8x3 coverage matrix)
+Resume file: .planning/phases/30-insurance-decision-tool-ui/30-01-SUMMARY.md
+Next action: Phase 30 Plan 02 — Insurance PDF export (30-02-PLAN.md)
