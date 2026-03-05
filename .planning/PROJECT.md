@@ -44,6 +44,19 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Next.js 14 project with dark soil Tailwind palette, Supabase schema (profiles, module_access, RLS, auto-profile trigger), email/password auth with middleware route protection (auth + admin RBAC + module access), admin panel with user/role/module management, React Flow hub-and-spoke node map on public landing page, dashboard with access-aware module cards, and dynamic module shell pages. 3 phases, 9 plans, 15 requirements — all complete.
 
+## Current Milestone: v6.0 FSA Acres, Insurance & Claims
+
+**Goal:** Transform the FSA Acres module from a flat spreadsheet into an intuitive, guided workflow — then extend with an interactive crop insurance decision tool and a structured claims tracking system. All built inside glomalin-portal/ (Next.js 14 + Supabase).
+
+**Target features:**
+- Codebase audit of existing fsa-acres/ module to inform architecture
+- Card-based planting/practice assignment workflow for CLUs with bulk actions, templates, validation, and year-over-year comparison
+- FSA-578 export (print-ready form layout)
+- Interactive crop insurance coverage comparison matrix and payout scenario simulator
+- Insurance historical performance dashboard and policy tracker
+- Claims lifecycle tracker (Kanban pipeline, document management, deadline alerts, analytics)
+- Cross-module integration (FSA → Insurance → Claims), dashboard summary cards, responsive tablet layout
+
 ## Requirements
 
 ### Validated
@@ -105,7 +118,21 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 ### Active
 
-(No active requirements — next milestone not yet defined)
+- [ ] FSA planting/practice assignment workflow redesign (card-based, bulk actions, templates)
+- [ ] Inline validation for FSA-578 data (acreage mismatch, missing fields, date ranges)
+- [ ] Auto-population from Macro Roll-Up and CNH FieldOps data
+- [ ] Year-over-year comparison view for planting decisions
+- [ ] FSA-578 export (print-ready PDF)
+- [ ] Crop insurance coverage level comparison matrix with heat map
+- [ ] Payout scenario simulator (RP/RP-HPE/YP with SCO/ECO layers)
+- [ ] Insurance historical performance dashboard
+- [ ] Policy tracker with premium scheduling
+- [ ] Claims lifecycle tracker (Kanban pipeline board)
+- [ ] Claim detail view with timeline, documents, financials
+- [ ] Claims deadline & alert system
+- [ ] Claims analytics dashboard
+- [ ] Cross-module integration (FSA ↔ Insurance ↔ Claims)
+- [ ] Dashboard summary cards for FSA, Insurance, Claims
 
 ### Deferred
 
@@ -176,5 +203,9 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | Dark soil aesthetic for portal | Farm-first branding (#080604 bg, #C8860A accent, JetBrains Mono) | ✓ Good — distinctive, professional |
 | React Flow for landing page node map | Visual representation of farm ecosystem; hub-and-spoke layout shows data flow | ✓ Good — 12-node map with animated edges |
 
+| Build FSA/Insurance/Claims inside glomalin-portal | Existing fsa-acres/ is Express+JSON; portal has Next.js 14 + Supabase + auth already | — Pending |
+| All three modules in one v6.0 milestone | Large scope but cohesive — FSA, insurance, and claims are tightly interconnected | — Pending |
+| Supabase for FSA/Insurance/Claims data | Consistent with portal architecture; RLS for access control already in place | — Pending |
+
 ---
-*Last updated: 2026-03-05 after v5.0 milestone*
+*Last updated: 2026-03-04 after v6.0 milestone start*
