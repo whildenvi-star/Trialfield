@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 ## Current Position
 
-Phase: 30 of 33 (Insurance Decision Tool UI) — IN PROGRESS
-Plan: 1 of 2 in Phase 30 — COMPLETE (Plan 30-01: CRUD + Coverage Matrix)
-Status: Plan 30-01 complete — Plan 30-02 (PDF export) next
-Last activity: 2026-03-05 — Plan 30-01 complete (CRUD workflow, slide-out drawer, coverage matrix)
+Phase: 30 of 33 (Insurance Decision Tool UI) — COMPLETE
+Plan: 2 of 2 in Phase 30 — COMPLETE (Plan 30-02: Payout Simulator + PDF)
+Status: Phase 30 complete — Phase 31 (Claims Data Foundation) next
+Last activity: 2026-03-05 — Plan 30-02 complete (payout simulator, insurance PDF export)
 
-Progress: [█████░░░░░] 50% (v6.0) — 7/14 plans complete
+Progress: [█████░░░░░] 57% (v6.0) — 8/14 plans complete
 
 ## Performance Metrics
 
@@ -32,6 +32,7 @@ Progress: [█████░░░░░] 50% (v6.0) — 7/14 plans complete
 | Phase 29 P01 | 3 | 2 tasks | 5 files |
 | Phase 29 P02 | 2 | 2 tasks | 3 files |
 | Phase 30 P01 | 4 | 2 tasks | 8 files |
+| Phase 30 P02 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Progress: [█████░░░░░] 50% (v6.0) — 7/14 plans complete
 - [Phase 30-01]: InsuranceWorkspace manages policy list state client-side — no full page reload on CRUD operations
 - [Phase 30-01]: RP-HPE and YP both use spring_price for fall_price in coverage matrix — simplification documented in code comment, labeled illustrative
 - [Phase 30-01]: Delete uses browser confirm() — no custom ConfirmDialog for insurance (unlike FSA module which uses ConfirmDialog component)
+- [Phase 30-02]: PayoutSimulator adjusts both spring_price and fall_price to simPrice for uniform market scenario — models 'what if price is X' cleanly without split spring/fall ambiguity
+- [Phase 30-02]: InsurancePdfDocument renders Page 2 (coverage matrix) conditionally only when pricing.length > 0 — avoids blank/misleading page when no pricing data loaded
+- [Phase 30-02]: PDF disclaimer appears as fixed footer on every page via react-pdf fixed prop — required on all insurance outputs per INS-08
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ Progress: [█████░░░░░] 50% (v6.0) — 7/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 30-01-PLAN.md (CRUD workflow, slide-out drawer, 8x3 coverage matrix)
-Resume file: .planning/phases/30-insurance-decision-tool-ui/30-01-SUMMARY.md
-Next action: Phase 30 Plan 02 — Insurance PDF export (30-02-PLAN.md)
+Stopped at: Completed 30-02-PLAN.md (payout simulator, insurance PDF export)
+Resume file: .planning/phases/30-insurance-decision-tool-ui/30-02-SUMMARY.md
+Next action: Phase 31 — Claims Data Foundation

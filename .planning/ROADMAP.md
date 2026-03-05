@@ -81,7 +81,7 @@
 - [x] **Phase 27: FSA Data Foundation + Migration** (2 plans) - Migrate fsa-acres data.json to Supabase, register fsa-578 module, build validation and auto-populate API layer (completed 2026-03-05)
 - [x] **Phase 28: FSA Planting Workflow UI** - Card-based CLU editor with bulk actions, validation panel, PDF acreage summary export, and CSV export (completed 2026-03-05)
 - [x] **Phase 29: Insurance Tables + Calculation Engine** (2 plans) - Schema migration + calc engine + policies API, APH auto-detect + yield bridge + claim alerts (completed 2026-03-05)
-- [ ] **Phase 30: Insurance Decision Tool UI** - Policy CRUD, coverage matrix, payout simulator, insurance summary report
+- [x] **Phase 30: Insurance Decision Tool UI** - Policy CRUD, coverage matrix, payout simulator, insurance summary report (completed 2026-03-05)
 - [ ] **Phase 31: Claims Tables + API** - Supabase schema, Storage bucket, route handlers for claims/documents/timeline, create-from-policy API
 - [ ] **Phase 32: Claims Lifecycle UI** - Kanban board, drag-and-drop pipeline, claim detail view, document upload, deadline alerts, timeline notes
 - [ ] **Phase 33: Cross-Module Integration + Dashboard** - FSA-Insurance-Claims navigation links, prevented planting trigger, dashboard summary cards
@@ -227,7 +227,7 @@ Plans:
 | 27. FSA Data Foundation + Migration | 2/2 | Complete   | 2026-03-05 | - |
 | 28. FSA Planting Workflow UI | 2/2 | Complete    | 2026-03-05 | - |
 | 29. Insurance Tables + Calculation Engine | 2/2 | Complete    | 2026-03-05 | - |
-| 30. Insurance Decision Tool UI | 1/2 | In Progress|  | - |
+| 30. Insurance Decision Tool UI | 2/2 | Complete   | 2026-03-05 | - |
 | 31. Claims Tables + API | v6.0 | 0/TBD | Not started | - |
 | 32. Claims Lifecycle UI | v6.0 | 0/TBD | Not started | - |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 0/TBD | Not started | - |
