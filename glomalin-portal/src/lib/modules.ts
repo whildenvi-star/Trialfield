@@ -36,4 +36,10 @@ export const MODULES: Module[] = [
     sublabel: 'FSA Reporting',
     route: '/app/fsa-reporting',
   },
+  {
+    id: 'fsa-578',
+    label: 'FSA 578',
+    sublabel: 'Acreage Reporting',
+    route: '/app/fsa-578',
+  },
 ]
