@@ -78,7 +78,7 @@
 
 **Milestone Goal:** Transform the FSA Acres module from a flat spreadsheet into an intuitive, guided workflow — then extend with an interactive crop insurance decision tool and a structured claims tracking system. All built inside glomalin-portal/ (Next.js 14 + Supabase), following the strict FK dependency chain: CLU records anchor insurance policies, which anchor claims.
 
-- [ ] **Phase 27: FSA Data Foundation + Migration** - Migrate fsa-acres data.json to Supabase, register fsa-578 module, build validation and auto-populate API layer
+- [ ] **Phase 27: FSA Data Foundation + Migration** (2 plans) - Migrate fsa-acres data.json to Supabase, register fsa-578 module, build validation and auto-populate API layer
 - [ ] **Phase 28: FSA Planting Workflow UI** - Card-based CLU editor with bulk actions, validation panel, PDF acreage summary export, and CSV export
 - [ ] **Phase 29: Insurance Tables + Calculation Engine** - Migrate insurance policies to Supabase, TypeScript calc engine, grain-ticket yield bridge, claim alert detection
 - [ ] **Phase 30: Insurance Decision Tool UI** - Policy CRUD, coverage matrix, payout simulator, insurance summary report
@@ -97,11 +97,11 @@
   2. Validation logic runs server-side and returns structured warnings (missing crop, missing date, unreported) for the CLU dataset
   3. User can trigger auto-populate from farm-budget macro rollup and see a preview of proposed crop assignments before any changes are committed
   4. All Express proxy route handlers respond with correct data and fall back gracefully when fsa-acres app is offline
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 27-01: Supabase schema + fsa-acres data.json migration
-- [ ] 27-02: lib/fsa/calc.ts TypeScript port + validation API + farm-budget proxy
+- [ ] 27-01-PLAN.md — Supabase schema + migration script + fsa-578 module registration + CLU read API
+- [ ] 27-02-PLAN.md — TypeScript calc port + validation API + auto-populate preview proxy
 
 ### Phase 28: FSA Planting Workflow UI
 **Goal**: Users can manage all CLU records through a card-based workflow — edit assignments inline, bulk-mark as reported, view validation warnings, and export a print-ready acreage summary
@@ -224,7 +224,7 @@ Plans:
 | 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-05 |
 | 25. Auth + Middleware + Route Protection | v5.0 | 4/4 | Complete | 2026-03-05 |
 | 26. Portal UI | v5.0 | 2/2 | Complete | 2026-03-05 |
-| 27. FSA Data Foundation + Migration | v6.0 | 0/TBD | Not started | - |
+| 27. FSA Data Foundation + Migration | v6.0 | 0/2 | Planned | - |
 | 28. FSA Planting Workflow UI | v6.0 | 0/TBD | Not started | - |
 | 29. Insurance Tables + Calculation Engine | v6.0 | 0/TBD | Not started | - |
 | 30. Insurance Decision Tool UI | v6.0 | 0/TBD | Not started | - |
