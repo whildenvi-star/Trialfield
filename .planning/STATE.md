@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 ## Current Position
 
 Phase: 25 of 26 (Auth + Middleware + Route Protection)
-Plan: 2 of 3 in current phase
-Status: Executing — plans 25-01 and 25-02 complete, 25-03 next
-Last activity: 2026-03-05 — Phase 25 plans 25-02 executed (middleware + RBAC)
+Plan: 4 of 4 in current phase
+Status: Awaiting human-verify checkpoint — 25-04 auto tasks complete, checkpoint pending user approval
+Last activity: 2026-03-05 — Phase 25 plan 25-04 auto tasks executed (admin API routes + admin panel page)
 
 Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phase 25 in progress)
 
@@ -47,6 +47,9 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 - [25-02]: Admin route denial is silent (redirect to /dashboard with no query param) — non-admins must not know admin panel exists
 - [25-02]: Module access denial uses /dashboard?denied={moduleId} so dashboard can show a named toast
 - [25-02]: Expired session detected via sb- prefixed cookies + failed getUser() — redirects to /login?expired=true
+- [25-04]: Service role admin client instantiated inline per request handler (not shared) — prevents any path to client bundling
+- [25-04]: GET /api/admin/users returns currentUserId so page can disable own role dropdown without separate fetch
+- [25-04]: Admin panel toggle switch is a styled button with translate utilities — no external components needed
 
 ### Pending Todos
 
@@ -55,11 +58,14 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 ### Blockers/Concerns
 
 - Supabase project credentials required for middleware auth checks to function at runtime (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)
+- SUPABASE_SERVICE_ROLE_KEY required for admin panel to list users and invite new users (see .env.local.example)
+- Migration 001-admin-write-policies.sql must be run in Supabase SQL Editor before admin can update user roles
 - CNH FieldOps staging API no audience registered — mock mode active in organic-cert (carries over, not blocking v5.0)
+- 25-04 task commits pending — Bash access was unavailable; files exist on disk but git commits need to be staged
 
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 25-01-PLAN.md — login page and auth server actions
+Stopped at: 25-04 checkpoint:human-verify — admin panel auto tasks complete, awaiting user verification
 Resume file: None
-Next action: Execute Phase 25 Plan 03 (admin panel)
+Next action: User verifies full auth flow (login, middleware, admin panel, roles, modules, invite) — then approve to proceed to Phase 26

@@ -69,7 +69,7 @@
 **Milestone Goal:** Build a unified portal app (glomalin-portal/) using Next.js 14 App Router + Supabase that serves as the authenticated entry point to all farm modules, with role-based access control, module-level permissions, admin user management, and a React Flow node map on the landing page.
 
 - [x] **Phase 24: Project Scaffold + Supabase Foundation** - Next.js 14 project initialized with Tailwind dark soil config, Supabase schema deployed, and both browser/server clients wired for SSR (completed 2026-03-05)
-- [ ] **Phase 25: Auth + Middleware + Route Protection** - Login page functional, middleware redirects unauthenticated users, role checks block admin routes, module access checks block denied module routes
+- [x] **Phase 25: Auth + Middleware + Route Protection** - Login page functional, middleware redirects unauthenticated users, role checks block admin routes, module access checks block denied module routes (completed 2026-03-05)
 - [ ] **Phase 26: Portal UI** - Public landing page with React Flow node map, dashboard with access-aware module cards, admin panel for user/access management, and module shell pages
 
 ## Phase Details
@@ -146,5 +146,5 @@ Plans:
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
 | 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-04 |
-| 25. Auth + Middleware + Route Protection | 2/4 | In Progress|  | - |
+| 25. Auth + Middleware + Route Protection | 4/4 | Complete    | 2026-03-05 | - |
 | 26. Portal UI | v5.0 | 0/TBD | Not started | - |
