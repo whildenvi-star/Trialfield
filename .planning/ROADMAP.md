@@ -174,11 +174,11 @@ Plans:
   3. User can open a claim detail view and see the full timeline of status changes and notes, all uploaded documents, and financial totals
   4. User can add a timestamped note to a claim timeline without refreshing the page
   5. User sees a deadline alert banner when any claim has an approaching filing deadline
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 32-01: ClaimsKanban + ClaimCard (dynamic ssr:false) + dnd-kit multi-container
-- [ ] 32-02: ClaimDetail + DocumentUpload + DeadlineAlertBanner + timeline notes
+- [ ] 32-01-PLAN.md — Install dnd-kit + react-dropzone, extend calc.ts, ClaimsWorkspace + ClaimsKanban + ClaimColumn + ClaimCard + DeadlineAlertBanner + page.tsx rewrite
+- [ ] 32-02-PLAN.md — ClaimDrawer slide-over (Timeline + Documents + Financials tabs), TimelineFeed with inline notes, DocumentUpload with signed URL flow
 
 ### Phase 34: Insurance & Claims UI Wiring
 **Goal**: Wire existing backend APIs into the UI — APH auto-populate displays on policies, Sync Yield button triggers grain-ticket comparison, File Claim button enables claim creation from insurance policies
