@@ -157,11 +157,11 @@ Plans:
   1. The claims Supabase schema (claims, claim_documents, claim_timeline) and Storage bucket (claim-documents, private) exist and enforce correct RLS policies
   2. A document can be uploaded to a claim via the signed URL pattern (server generates URL, client PUT to Storage, client posts metadata) without routing file bytes through a Server Action
   3. A new claim can be created pre-filled from an insurance policy via the API (policy_id, crop, coverage level, and effective guarantee carried over)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 31-01: claims schema + Storage bucket + RLS + CRUD route handlers
-- [ ] 31-02: Signed URL upload spike + document metadata handler + create-from-policy API
+- [ ] 31-01-PLAN.md — Migration script (3 tables + enum + RLS + Storage bucket) + deadline calc helpers + claims CRUD routes + timeline route + module registration + shell page
+- [ ] 31-02-PLAN.md — Signed URL upload endpoint + document metadata CRUD + download URL generation
 
 ### Phase 32: Claims Lifecycle UI
 **Goal**: Users can manage the full claims pipeline — dragging claims between stages on a Kanban board, reviewing claim detail with timeline history and documents, and seeing deadline alerts before they miss filing windows
