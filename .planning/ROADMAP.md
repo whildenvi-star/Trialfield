@@ -143,11 +143,11 @@ Plans:
   2. User can see a coverage level comparison matrix showing RP, RP-HPE, and YP side-by-side at 50%-85% coverage levels with heat-map cell coloring
   3. User can move yield and price sliders and see payout recalculate in under 100ms with a disclaimer that results are illustrative only
   4. User can generate and download an insurance summary report as a PDF
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 30-01: PolicyCard + PolicyEditorDrawer + CoverageMatrix (CSS grid)
-- [ ] 30-02: PayoutSimulator (client-side sliders) + insurance summary PDF
+- [ ] 30-01-PLAN.md — Schema migration (plan_type column) + POST/DELETE API routes + InsuranceWorkspace + PolicyDrawer + CoverageMatrix
+- [ ] 30-02-PLAN.md — PayoutSimulator (client-side yield/price sliders) + Insurance summary PDF with SSR-guarded dynamic import
 
 ### Phase 31: Claims Tables + API
 **Goal**: Claims, documents, and timeline data live in Supabase Storage with the full signed-URL upload pattern verified and all route handlers ready for the UI phase
