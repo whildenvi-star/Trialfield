@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 28 (FSA Planting Workflow UI)
+**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 29 (Insurance Data Foundation)
 
 ## Current Position
 
-Phase: 28 of 33 (FSA Planting Workflow UI)
-Plan: 1 of 2 in Phase 28 — COMPLETE (Plan 28-01 done)
-Status: Phase 28 in progress
-Last activity: 2026-03-05 — Plan 28-01 complete (card-based CLU workflow: accordions, inline editing, bulk actions)
+Phase: 28 of 33 (FSA Planting Workflow UI) — COMPLETE
+Plan: 2 of 2 in Phase 28 — COMPLETE (Plans 28-01 and 28-02 done)
+Status: Phase 28 complete — ready for Phase 29
+Last activity: 2026-03-05 — Plan 28-02 complete (PDF/CSV Acreage Reporting Summary export)
 
-Progress: [█░░░░░░░░░] 21% (v6.0) — 3/14 plans complete
+Progress: [██░░░░░░░░] 29% (v6.0) — 4/14 plans complete
 
 ## Performance Metrics
 
@@ -28,6 +28,7 @@ Progress: [█░░░░░░░░░] 21% (v6.0) — 3/14 plans complete
 | v5.0 | 24-26 | 9 | 2026-03-05 |
 | **Total** | **26** | **60** | |
 | Phase 28 P01 | 28 | 2 | 2026-03-05 |
+| Phase 28-fsa-planting-workflow-ui P02 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -52,6 +53,9 @@ Progress: [█░░░░░░░░░] 21% (v6.0) — 3/14 plans complete
 - [Phase 28-01]: CluCard practice/use field is a select dropdown with Non-Irrigated/Irrigated options (not free text)
 - [Phase 28-01]: BulkActionBar assign-crop uses inline CropTypeahead within the sticky bar (not a modal)
 - [Phase 28-01]: ConfirmDialog z-[60] sits above BulkActionBar z-50 so backdrop covers the bar correctly
+- [Phase 28-02]: react-pdf isolation: only acreage-pdf.tsx and acreage-pdf-button.tsx import @react-pdf/renderer — enforced by architecture, SSR guard via dynamic({ ssr: false })
+- [Phase 28-02]: PDF disclaimer required: "This is a reporting summary for producer records. It is not an official FSA-578 government form." — applies to all FSA PDF outputs
+- [Phase 28-02]: dynamic() named export syntax: import(mod).then(m => ({ default: m.NamedExport })) — required for named exports with next/dynamic
 
 ### Pending Todos
 
@@ -68,6 +72,6 @@ Progress: [█░░░░░░░░░] 21% (v6.0) — 3/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 28-01-PLAN.md (card-based CLU workflow: accordions, inline editing, bulk actions)
-Resume file: .planning/phases/28-fsa-planting-workflow-ui/28-01-SUMMARY.md
-Next action: Phase 28-02 — export buttons (PDF/CSV Acreage Reporting Summary), inject into #export-buttons-placeholder in CluWorkspace
+Stopped at: Completed 28-02-PLAN.md (PDF/CSV Acreage Reporting Summary export — Phase 28 complete)
+Resume file: .planning/phases/28-fsa-planting-workflow-ui/28-02-SUMMARY.md
+Next action: Phase 29 — Insurance Data Foundation (insurance_policies, insurance_pricing tables, Supabase migration, calc engine)

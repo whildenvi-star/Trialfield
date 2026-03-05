@@ -15,8 +15,8 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 - [x] **FSA-04**: User can bulk-select CLUs and mark as reported to FSA
 - [x] **FSA-05**: User can see validation warnings (missing crop, date, unreported) with clickable links
 - [x] **FSA-06**: User can auto-populate CLU crop assignments from farm-budget macro rollup with preview
-- [ ] **FSA-07**: User can generate a print-ready FSA Acreage Reporting Summary PDF
-- [ ] **FSA-08**: User can export CLU records as CSV
+- [x] **FSA-07**: User can generate a print-ready FSA Acreage Reporting Summary PDF
+- [x] **FSA-08**: User can export CLU records as CSV
 
 ### Insurance Decision Tool
 
@@ -100,8 +100,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FSA-04 | Phase 28 | Complete |
 | FSA-05 | Phase 27 | Complete |
 | FSA-06 | Phase 27 | Complete |
-| FSA-07 | Phase 28 | Pending |
-| FSA-08 | Phase 28 | Pending |
+| FSA-07 | Phase 28 | Complete |
+| FSA-08 | Phase 28 | Complete |
 | INS-01 | Phase 29 | Pending |
 | INS-02 | Phase 30 | Pending |
 | INS-03 | Phase 30 | Pending |

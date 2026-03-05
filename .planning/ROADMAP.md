@@ -79,7 +79,7 @@
 **Milestone Goal:** Transform the FSA Acres module from a flat spreadsheet into an intuitive, guided workflow — then extend with an interactive crop insurance decision tool and a structured claims tracking system. All built inside glomalin-portal/ (Next.js 14 + Supabase), following the strict FK dependency chain: CLU records anchor insurance policies, which anchor claims.
 
 - [x] **Phase 27: FSA Data Foundation + Migration** (2 plans) - Migrate fsa-acres data.json to Supabase, register fsa-578 module, build validation and auto-populate API layer (completed 2026-03-05)
-- [ ] **Phase 28: FSA Planting Workflow UI** - Card-based CLU editor with bulk actions, validation panel, PDF acreage summary export, and CSV export
+- [x] **Phase 28: FSA Planting Workflow UI** - Card-based CLU editor with bulk actions, validation panel, PDF acreage summary export, and CSV export (completed 2026-03-05)
 - [ ] **Phase 29: Insurance Tables + Calculation Engine** - Migrate insurance policies to Supabase, TypeScript calc engine, grain-ticket yield bridge, claim alert detection
 - [ ] **Phase 30: Insurance Decision Tool UI** - Policy CRUD, coverage matrix, payout simulator, insurance summary report
 - [ ] **Phase 31: Claims Tables + API** - Supabase schema, Storage bucket, route handlers for claims/documents/timeline, create-from-policy API
@@ -225,7 +225,7 @@ Plans:
 | 25. Auth + Middleware + Route Protection | v5.0 | 4/4 | Complete | 2026-03-05 |
 | 26. Portal UI | v5.0 | 2/2 | Complete | 2026-03-05 |
 | 27. FSA Data Foundation + Migration | 2/2 | Complete   | 2026-03-05 | - |
-| 28. FSA Planting Workflow UI | 1/2 | In Progress|  | - |
+| 28. FSA Planting Workflow UI | 2/2 | Complete   | 2026-03-05 | - |
 | 29. Insurance Tables + Calculation Engine | v6.0 | 0/TBD | Not started | - |
 | 30. Insurance Decision Tool UI | v6.0 | 0/TBD | Not started | - |
 | 31. Claims Tables + API | v6.0 | 0/TBD | Not started | - |
