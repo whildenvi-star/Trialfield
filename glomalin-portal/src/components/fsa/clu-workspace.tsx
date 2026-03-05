@@ -1,9 +1,84 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import type { CluRecord, ValidationWarning } from '@/lib/fsa/calc'
 import { FarmAccordion } from './farm-accordion'
 import { BulkActionBar } from './bulk-action-bar'
+
+// CRITICAL: ssr: false required — @react-pdf/renderer crashes Next.js App Router SSR
+// with "Component is not a constructor" if imported server-side.
+const AcreagePdfButton = dynamic(
+  () =>
+    import('@/components/fsa/acreage-pdf-button').then((mod) => ({
+      default: mod.AcreagePdfButton,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <span className="text-soil-muted font-mono text-sm">Loading PDF...</span>
+    ),
+  }
+)
+
+// CSV export — full data dump of all CLU record fields including IDs, timestamps, and validation flags
+const CSV_HEADERS = [
+  'id',
+  'legacy_id',
+  'farm_number',
+  'tract_number',
+  'clu',
+  'field_name',
+  'farm_name',
+  'fsa_acres',
+  'crop',
+  'irrigated',
+  'organic',
+  'double_crop',
+  'cover_crop',
+  'grain_plant_date',
+  'use',
+  'reported',
+  'aph',
+  'tillage_2024',
+  'tillage_2025',
+  'cc_2024',
+  'cc_2025',
+  'nt_adoption_2024',
+  'nt_adoption_2025',
+  'cc_adoption_2024',
+  'cc_adoption_2025',
+  'unit_number',
+  'line_number',
+  'policy_number',
+  'crop_year',
+] as const
+
+function escapeCell(value: unknown): string {
+  if (value == null) return ''
+  const str = String(value)
+  // If the value contains commas, quotes, or newlines, wrap in double quotes and escape internal quotes
+  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+    return `"${str.replace(/"/g, '""')}"`
+  }
+  return str
+}
+
+function exportCsv(records: CluRecord[]) {
+  const headerRow = CSV_HEADERS.join(',')
+  const dataRows = records.map((r) =>
+    CSV_HEADERS.map((h) => escapeCell(r[h as keyof CluRecord])).join(',')
+  )
+  const csv = [headerRow, ...dataRows].join('\n')
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `clu-records-2026-${new Date().toISOString().slice(0, 10)}.csv`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}
 
 interface CluWorkspaceProps {
   initialRecords: CluRecord[]
@@ -207,8 +282,17 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
             {records.length.toLocaleString()} CLU records &middot; Crop year 2026
           </p>
         </div>
-        {/* Export buttons placeholder — Plan 02 will add PDF/CSV buttons here */}
-        <div id="export-buttons-placeholder" />
+        {/* Export buttons — always visible top-right of page header */}
+        <div className="flex items-center gap-2">
+          <AcreagePdfButton records={records} />
+          <button
+            type="button"
+            onClick={() => exportCsv(records)}
+            className="bg-soil-surface border border-soil-border text-soil-text px-4 py-2 rounded font-mono text-sm hover:border-soil-accent"
+          >
+            Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Error banner */}
