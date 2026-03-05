@@ -113,11 +113,11 @@ Plans:
   3. User can bulk-select multiple CLUs and mark them as reported to FSA in one action
   4. User can generate and download a print-ready FSA Acreage Reporting Summary PDF labeled explicitly as a summary (not a government form replica)
   5. User can export the full CLU dataset as a CSV file
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 28-01: CluCardGrid + CluEditorDrawer + BulkActionBar components
-- [ ] 28-02: Validation warnings panel + FSA summary PDF + CSV export
+- [ ] 28-01-PLAN.md — API routes (PATCH + bulk-update) + CluWorkspace + Farm/Tract accordions + CluCard inline editing + BulkActionBar + CropTypeahead
+- [ ] 28-02-PLAN.md — Install @react-pdf/renderer + Acreage Reporting Summary PDF + CSV export wired into page header
 
 ### Phase 29: Insurance Tables + Calculation Engine
 **Goal**: Insurance policies live in Supabase with APH auto-detected from CLU records, actual yields bridged from grain-tickets, and potential claim conditions automatically flagged
