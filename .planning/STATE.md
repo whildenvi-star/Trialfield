@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 30 (Insurance Decision Tool UI)
+**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 31 (Claims Data Foundation)
 
 ## Current Position
 
-Phase: 30 of 33 (Insurance Decision Tool UI) — COMPLETE
-Plan: 2 of 2 in Phase 30 — COMPLETE (Plan 30-02: Payout Simulator + PDF)
-Status: Phase 30 complete — Phase 31 (Claims Data Foundation) next
-Last activity: 2026-03-05 — Plan 30-02 complete (payout simulator, insurance PDF export)
+Phase: 31 of 33 (Claims Data Foundation) — IN PROGRESS
+Plan: 1 of 1 in Phase 31 — COMPLETE (Plan 31-01: Claims Schema + API)
+Status: Phase 31 plan 1 complete — Phase 32 (Claims Lifecycle UI) next
+Last activity: 2026-03-05 — Plan 31-01 complete (claims schema, CRUD routes, timeline, shell page)
 
-Progress: [█████░░░░░] 57% (v6.0) — 8/14 plans complete
+Progress: [██████░░░░] 64% (v6.0) — 9/14 plans complete
 
 ## Performance Metrics
 
@@ -33,6 +33,7 @@ Progress: [█████░░░░░] 57% (v6.0) — 8/14 plans complete
 | Phase 29 P02 | 2 | 2 tasks | 3 files |
 | Phase 30 P01 | 4 | 2 tasks | 8 files |
 | Phase 30 P02 | 3 | 2 tasks | 4 files |
+| Phase 31 P01 | 5 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,10 @@ Progress: [█████░░░░░] 57% (v6.0) — 8/14 plans complete
 - [Phase 30-02]: PayoutSimulator adjusts both spring_price and fall_price to simPrice for uniform market scenario — models 'what if price is X' cleanly without split spring/fall ambiguity
 - [Phase 30-02]: InsurancePdfDocument renders Page 2 (coverage matrix) conditionally only when pricing.length > 0 — avoids blank/misleading page when no pricing data loaded
 - [Phase 30-02]: PDF disclaimer appears as fixed footer on every page via react-pdf fixed prop — required on all insurance outputs per INS-08
+- [Phase 31-01]: claim_stage enum uses DO/EXCEPTION block for idempotency — CREATE TYPE does not support IF NOT EXISTS universally
+- [Phase 31-01]: Timeline events written in application code (PATCH/POST handlers), not DB triggers — matches established project pattern
+- [Phase 31-01]: computeDeadline returns null for notice_of_loss (uses INITIAL_DEADLINE_DAYS from date_of_loss instead) and closed (no deadline)
+- [Phase 31-01]: Adjuster assignment detection fires timeline event only when adjuster_name transitions from null/empty to a value
 
 ### Pending Todos
 
@@ -88,6 +93,6 @@ Progress: [█████░░░░░] 57% (v6.0) — 8/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 30-02-PLAN.md (payout simulator, insurance PDF export)
-Resume file: .planning/phases/30-insurance-decision-tool-ui/30-02-SUMMARY.md
-Next action: Phase 31 — Claims Data Foundation
+Stopped at: Completed 31-01-PLAN.md (claims schema, CRUD routes, timeline auto-events, shell page)
+Resume file: .planning/phases/31-claims-tables-api/31-01-SUMMARY.md
+Next action: Phase 32 — Claims Lifecycle UI (Kanban board, claim detail view)
