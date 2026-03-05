@@ -28,6 +28,7 @@ Progress: [██████████] 100% (v5.0 — Phase 24, 25, 26 compl
 | **Total** | **23** | **51** | |
 | Phase 25-auth-middleware-route-protection P01 | 2 | 2 tasks | 4 files |
 | Phase 26 P02 | 110 | 2 tasks | 2 files |
+| Phase 26-portal-ui P01 | 3m | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -55,6 +56,8 @@ Progress: [██████████] 100% (v5.0 — Phase 24, 25, 26 compl
 - [26-02]: Inaccessible cards use plain div (not Link) to prevent navigation — opacity-40 + cursor-not-allowed gives clear visual feedback
 - [26-02]: Module shell uses async params pattern (Promise<{module: string}>) for Next.js 14 App Router compatibility
 - [26-02]: notFound() called for unrecognized slugs — 404 is the correct response for invalid module paths
+- [Phase 26-01]: Source app edges use soil-border (#3a3020), portal module edges use accent (#C8860A at 0.5 opacity) to distinguish data sources from portal views
+- [Phase 26-01]: nodeLabel() helper renders dual-line labels as ReactNode inline — React Flow accepts ReactNode for data.label
 
 ### Pending Todos
 
