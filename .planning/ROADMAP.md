@@ -100,7 +100,12 @@ Plans:
   3. A user with role viewer or operator navigates to /admin and is redirected to /dashboard
   4. A user without access to a module navigates to /app/org-cert (or any module route) and is redirected to /dashboard?denied=true
   5. Admin opens the admin panel, toggles a user's module access or changes their role, and the change takes effect immediately on the next protected request
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 25-01-PLAN.md — Login page + auth server actions (login, logout, password reset)
+- [ ] 25-02-PLAN.md — Middleware + route protection (auth redirect, admin RBAC, module access)
+- [ ] 25-03-PLAN.md — Session UI (header with user menu/logout, denied toast, protected layout)
+- [ ] 25-04-PLAN.md — Admin panel (schema migration, API routes, user table with role/access management)
 
 ### Phase 26: Portal UI
 **Goal**: The portal has a public landing page with the React Flow farm ecosystem node map, a dashboard with access-aware module cards, an admin panel for managing users and module access, and placeholder shell pages for all 5 modules
@@ -141,5 +146,5 @@ Plans:
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
 | 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-04 |
-| 25. Auth + Middleware + Route Protection | v5.0 | 0/TBD | Not started | - |
+| 25. Auth + Middleware + Route Protection | v5.0 | 0/4 | Not started | - |
 | 26. Portal UI | v5.0 | 0/TBD | Not started | - |
