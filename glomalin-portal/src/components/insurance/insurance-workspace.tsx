@@ -1,10 +1,24 @@
 'use client'
 
 import { useState } from 'react'
+import dynamic from 'next/dynamic'
 import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
 import { PolicyDrawer } from './policy-drawer'
 import { CoverageMatrix } from './coverage-matrix'
 import { PayoutSimulator } from './payout-simulator'
+
+// SSR-guarded PDF button — @react-pdf/renderer cannot run on the server
+const InsurancePdfButton = dynamic(
+  () => import('./insurance-pdf-button').then((m) => ({ default: m.InsurancePdfButton })),
+  {
+    ssr: false,
+    loading: () => (
+      <button disabled className="bg-soil-accent text-soil-bg px-4 py-2 rounded font-mono text-sm font-bold opacity-50 cursor-not-allowed">
+        Loading...
+      </button>
+    ),
+  }
+)
 
 interface PolicyFormData {
   farm_name: string
@@ -168,8 +182,7 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
           <p className="text-soil-muted text-sm mt-1">2026 policy year — decision support tool</p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Placeholder for PDF button (Plan 30-02 will wire it) */}
-          <div id="insurance-pdf-button-slot" />
+          <InsurancePdfButton policies={policies} pricing={initialPricing} />
           <button
             onClick={openCreateDrawer}
             className="font-mono text-sm font-bold bg-soil-accent text-soil-bg rounded px-4 py-2 hover:opacity-90 transition-opacity"
