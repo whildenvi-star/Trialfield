@@ -26,6 +26,7 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 | v3.0 | 15-19 | 12 | 2026-03-04 |
 | v4.0 | 20-23 | 7 | 2026-03-04 |
 | **Total** | **23** | **51** | |
+| Phase 25-auth-middleware-route-protection P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -40,6 +41,9 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 - [24-02]: profiles.id is direct FK to auth.users(id) — Supabase pattern, not serial
 - [24-02]: Auto-profile trigger uses security definer to bypass RLS for new users
 - [24-03]: async cookies() pattern for Next.js 14 server Supabase client
+- [25-01]: Generic error messaging on login — "Invalid email or password" banner, no field hints (prevents user enumeration)
+- [25-01]: Suspense wrapper required around useSearchParams() in Next.js 14 App Router pages to avoid static rendering issues
+- [25-01]: resetPassword reads origin from request headers dynamically for redirectTo URL (works in both dev and production)
 - [25-02]: Admin route denial is silent (redirect to /dashboard with no query param) — non-admins must not know admin panel exists
 - [25-02]: Module access denial uses /dashboard?denied={moduleId} so dashboard can show a named toast
 - [25-02]: Expired session detected via sb- prefixed cookies + failed getUser() — redirects to /login?expired=true
@@ -56,6 +60,6 @@ Progress: [█████████░] 55% (v5.0 — Phase 24 complete, Phas
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 25-02-PLAN.md — middleware + RBAC route protection
+Stopped at: Completed 25-01-PLAN.md — login page and auth server actions
 Resume file: None
 Next action: Execute Phase 25 Plan 03 (admin panel)

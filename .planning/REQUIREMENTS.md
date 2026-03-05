@@ -14,7 +14,7 @@ Requirements for v5.0 Glomalin Portal — Next.js + Supabase Scaffold. Each maps
 
 ### Authentication
 
-- [ ] **AUTH-01**: User can log in with email and password via Supabase signInWithPassword
+- [x] **AUTH-01**: User can log in with email and password via Supabase signInWithPassword
 - [x] **AUTH-02**: Unauthenticated users are redirected to /login by middleware
 
 ### Authorization
@@ -128,7 +128,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SCF-03 | Phase 24 | Pending |
 | SUP-01 | Phase 24 | Pending |
 | SUP-02 | Phase 24 | Pending |
-| AUTH-01 | Phase 25 | Pending |
+| AUTH-01 | Phase 25 | Complete |
 | AUTH-02 | Phase 25 | Complete |
 | RBAC-01 | Phase 25 | Complete |
 | RBAC-02 | Phase 25 | Complete |
