@@ -9,8 +9,8 @@ Requirements for v5.0 Glomalin Portal — Next.js + Supabase Scaffold. Each maps
 
 ### Supabase Foundation
 
-- [ ] **SUP-01**: Supabase project schema (profiles, module_access) deployed with RLS policies and auto-profile trigger
-- [ ] **SUP-02**: Browser and server Supabase clients configured for Next.js 14 App Router SSR
+- [x] **SUP-01**: Supabase project schema (profiles, module_access) deployed with RLS policies and auto-profile trigger
+- [x] **SUP-02**: Browser and server Supabase clients configured for Next.js 14 App Router SSR
 
 ### Authentication
 
@@ -33,9 +33,9 @@ Requirements for v5.0 Glomalin Portal — Next.js + Supabase Scaffold. Each maps
 
 ### Scaffold
 
-- [ ] **SCF-01**: Next.js 14 App Router project with Tailwind CSS and dark soil color palette (font-mono)
-- [ ] **SCF-02**: Module definitions in lib/modules.js with id, label, sublabel, route
-- [ ] **SCF-03**: .env.local.example with Supabase connection variables
+- [x] **SCF-01**: Next.js 14 App Router project with Tailwind CSS and dark soil color palette (font-mono)
+- [x] **SCF-02**: Module definitions in lib/modules.js with id, label, sublabel, route
+- [x] **SCF-03**: .env.local.example with Supabase connection variables
 
 ## v4.0 Requirements (Complete)
 

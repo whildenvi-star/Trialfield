@@ -86,9 +86,9 @@
   5. lib/modules.js defines all 5 portal modules (macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting) with id, label, sublabel, and route
 **Plans**: 3 plans
 Plans:
-- [ ] 24-01-PLAN.md — Scaffold Next.js 14 App Router + Tailwind dark soil palette + JetBrains Mono
-- [ ] 24-02-PLAN.md — Supabase schema SQL (profiles, module_access, RLS, trigger) + seed data
-- [ ] 24-03-PLAN.md — Module registry + Supabase browser/server clients + env documentation
+- [x] 24-01-PLAN.md — Scaffold Next.js 14 App Router + Tailwind dark soil palette + JetBrains Mono
+- [x] 24-02-PLAN.md — Supabase schema SQL (profiles, module_access, RLS, trigger) + seed data
+- [x] 24-03-PLAN.md — Module registry + Supabase browser/server clients + env documentation
 
 ### Phase 25: Auth + Middleware + Route Protection
 **Goal**: Users can log in with email and password, unauthenticated requests are redirected to /login by middleware, admin routes reject non-admin users, and module routes enforce per-user access grants
@@ -140,6 +140,6 @@ Plans:
 | 21. Farm-Budget Field Editor Polish | v4.0 | 2/2 | Complete | 2026-03-04 |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
-| 24. Project Scaffold + Supabase Foundation | 3/3 | Complete   | 2026-03-05 | - |
+| 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-04 |
 | 25. Auth + Middleware + Route Protection | v5.0 | 0/TBD | Not started | - |
 | 26. Portal UI | v5.0 | 0/TBD | Not started | - |
