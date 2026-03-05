@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 ## Current Position
 
-Phase: 28 of 33 (FSA Planting Workflow UI) — COMPLETE
-Plan: 2 of 2 in Phase 28 — COMPLETE (Plans 28-01 and 28-02 done)
-Status: Phase 28 complete — ready for Phase 29
-Last activity: 2026-03-05 — Plan 28-02 complete (PDF/CSV Acreage Reporting Summary export)
+Phase: 29 of 33 (Insurance Tables + Calculation Engine) — IN PROGRESS
+Plan: 1 of 2 in Phase 29 — COMPLETE (Plan 29-01 done)
+Status: Phase 29 in progress — Plan 29-01 complete, Plan 29-02 next
+Last activity: 2026-03-05 — Plan 29-01 complete (insurance schema migration, calc engine, API route, module shell page)
 
-Progress: [██░░░░░░░░] 29% (v6.0) — 4/14 plans complete
+Progress: [███░░░░░░░] 36% (v6.0) — 5/14 plans complete
 
 ## Performance Metrics
 
@@ -29,6 +29,7 @@ Progress: [██░░░░░░░░] 29% (v6.0) — 4/14 plans complete
 | **Total** | **26** | **60** | |
 | Phase 28 P01 | 28 | 2 | 2026-03-05 |
 | Phase 28-fsa-planting-workflow-ui P02 | 5 | 2 tasks | 4 files |
+| Phase 29 P01 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -56,6 +57,9 @@ Progress: [██░░░░░░░░] 29% (v6.0) — 4/14 plans complete
 - [Phase 28-02]: react-pdf isolation: only acreage-pdf.tsx and acreage-pdf-button.tsx import @react-pdf/renderer — enforced by architecture, SSR guard via dynamic({ ssr: false })
 - [Phase 28-02]: PDF disclaimer required: "This is a reporting summary for producer records. It is not an official FSA-578 government form." — applies to all FSA PDF outputs
 - [Phase 28-02]: dynamic() named export syntax: import(mod).then(m => ({ default: m.NamedExport })) — required for named exports with next/dynamic
+- [Phase 29-01]: computeClaimAlert requires both actual > 0 AND guarantee > 0 to avoid false positives from ins_482 corrupt data (actual=40000, guarantee=0)
+- [Phase 29-01]: computeAphFromClus returns { avgAph, count, totalRecords } to distinguish no-CLU-match from CLUs-found-but-no-APH — critical since all 444 CLU records have aph=0
+- [Phase 29-01]: migrate-29.ts is separate from migrate-fsa.ts — only runs ALTER TABLE additions, does not re-run Phase 27 data migration
 
 ### Pending Todos
 
@@ -64,7 +68,7 @@ Progress: [██░░░░░░░░] 29% (v6.0) — 4/14 plans complete
 ### Blockers/Concerns
 
 - [Ph27]: Verify whether prior-year (2025) fsa-acres data exists for year-over-year comparison — if not, that feature stays v7+
-- [Ph29]: Verify RP vs RP-HPE formula against ISU Extension FM-1849 before writing lib/insurance/calc.ts
+- [Ph29 RESOLVED]: RP vs RP-HPE formula check — not blocking Phase 29; payout simulator is Phase 30 UI feature, computeInsurancePolicy() already in lib/fsa/calc.ts. Formula check deferred to Phase 30 pre-work.
 - [Ph31]: Spike signed upload URL + RLS behavior in this Supabase project before building upload UI (service_role vs anon key upload path differs by project config)
 - Supabase project credentials required for glomalin-portal runtime
 - CNH FieldOps staging API — mock mode active in organic-cert (not blocking v6.0)
@@ -72,6 +76,6 @@ Progress: [██░░░░░░░░] 29% (v6.0) — 4/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 28-02-PLAN.md (PDF/CSV Acreage Reporting Summary export — Phase 28 complete)
-Resume file: .planning/phases/28-fsa-planting-workflow-ui/28-02-SUMMARY.md
-Next action: Phase 29 — Insurance Data Foundation (insurance_policies, insurance_pricing tables, Supabase migration, calc engine)
+Stopped at: Completed 29-01-PLAN.md (Insurance schema migration script, calc engine, GET /api/insurance/policies, insurance module shell page)
+Resume file: .planning/phases/29-insurance-tables-calculation-engine/29-01-SUMMARY.md
+Next action: Phase 29 Plan 02 — APH auto-detect route, grain-ticket yield bridge API, claim alert detection

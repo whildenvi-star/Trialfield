@@ -20,7 +20,7 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 
 ### Insurance Decision Tool
 
-- [ ] **INS-01**: User can see existing insurance policies (migrated from fsa-acres) in the portal
+- [x] **INS-01**: User can see existing insurance policies (migrated from fsa-acres) in the portal
 - [ ] **INS-02**: User can create, edit, and delete insurance policies with slide-out editor
 - [ ] **INS-03**: User can see a coverage level comparison matrix across RP, RP-HPE, and YP at 50-85%
 - [ ] **INS-04**: User can simulate payout scenarios with interactive yield and price sliders
@@ -102,7 +102,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FSA-06 | Phase 27 | Complete |
 | FSA-07 | Phase 28 | Complete |
 | FSA-08 | Phase 28 | Complete |
-| INS-01 | Phase 29 | Pending |
+| INS-01 | Phase 29 | Complete |
 | INS-02 | Phase 30 | Pending |
 | INS-03 | Phase 30 | Pending |
 | INS-04 | Phase 30 | Pending |
