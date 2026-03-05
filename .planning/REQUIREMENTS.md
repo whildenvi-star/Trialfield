@@ -24,9 +24,9 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 - [ ] **INS-02**: User can create, edit, and delete insurance policies with slide-out editor
 - [ ] **INS-03**: User can see a coverage level comparison matrix across RP, RP-HPE, and YP at 50-85%
 - [ ] **INS-04**: User can simulate payout scenarios with interactive yield and price sliders
-- [ ] **INS-05**: User can see APH yield auto-populated from CLU records
-- [ ] **INS-06**: User can sync actual yield from grain-tickets for post-harvest comparison
-- [ ] **INS-07**: User can see potential claim alerts when actual yield < effective guarantee
+- [x] **INS-05**: User can see APH yield auto-populated from CLU records
+- [x] **INS-06**: User can sync actual yield from grain-tickets for post-harvest comparison
+- [x] **INS-07**: User can see potential claim alerts when actual yield < effective guarantee
 - [ ] **INS-08**: User can generate an insurance summary report
 
 ### Claims Tracking
@@ -106,9 +106,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INS-02 | Phase 30 | Pending |
 | INS-03 | Phase 30 | Pending |
 | INS-04 | Phase 30 | Pending |
-| INS-05 | Phase 29 | Pending |
-| INS-06 | Phase 29 | Pending |
-| INS-07 | Phase 29 | Pending |
+| INS-05 | Phase 29 | Complete |
+| INS-06 | Phase 29 | Complete |
+| INS-07 | Phase 29 | Complete |
 | INS-08 | Phase 30 | Pending |
 | CLM-01 | Phase 32 | Pending |
 | CLM-02 | Phase 32 | Pending |

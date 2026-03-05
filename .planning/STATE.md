@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 ## Current Position
 
-Phase: 29 of 33 (Insurance Tables + Calculation Engine) — IN PROGRESS
-Plan: 1 of 2 in Phase 29 — COMPLETE (Plan 29-01 done)
-Status: Phase 29 in progress — Plan 29-01 complete, Plan 29-02 next
-Last activity: 2026-03-05 — Plan 29-01 complete (insurance schema migration, calc engine, API route, module shell page)
+Phase: 29 of 33 (Insurance Tables + Calculation Engine) — COMPLETE
+Plan: 2 of 2 in Phase 29 — COMPLETE (Plans 29-01 and 29-02 done)
+Status: Phase 29 complete — Phase 30 (Insurance Policy UI) next
+Last activity: 2026-03-05 — Plan 29-02 complete (APH lookup, yield-sync, policies/[id] PATCH endpoints)
 
-Progress: [███░░░░░░░] 36% (v6.0) — 5/14 plans complete
+Progress: [████░░░░░░] 43% (v6.0) — 6/14 plans complete
 
 ## Performance Metrics
 
@@ -30,6 +30,7 @@ Progress: [███░░░░░░░] 36% (v6.0) — 5/14 plans complete
 | Phase 28 P01 | 28 | 2 | 2026-03-05 |
 | Phase 28-fsa-planting-workflow-ui P02 | 5 | 2 tasks | 4 files |
 | Phase 29 P01 | 3 | 2 tasks | 5 files |
+| Phase 29 P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,9 @@ Progress: [███░░░░░░░] 36% (v6.0) — 5/14 plans complete
 - [Phase 29-01]: computeClaimAlert requires both actual > 0 AND guarantee > 0 to avoid false positives from ins_482 corrupt data (actual=40000, guarantee=0)
 - [Phase 29-01]: computeAphFromClus returns { avgAph, count, totalRecords } to distinguish no-CLU-match from CLUs-found-but-no-APH — critical since all 444 CLU records have aph=0
 - [Phase 29-01]: migrate-29.ts is separate from migrate-fsa.ts — only runs ALTER TABLE additions, does not re-run Phase 27 data migration
+- [Phase 29-02]: yield-sync returns HTTP 200 not 502 when grain-tickets offline — offline is expected during dev; 502 implies the insurance service failed
+- [Phase 29-02]: PATCH policies/[id] fetches current row before claim_alert recompute — ensures merged values used, not just patch delta
+- [Phase 29-02]: Next.js 15+ dynamic route params typed as Promise and awaited — breaking change from Next.js 14 sync params
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ Progress: [███░░░░░░░] 36% (v6.0) — 5/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 29-01-PLAN.md (Insurance schema migration script, calc engine, GET /api/insurance/policies, insurance module shell page)
-Resume file: .planning/phases/29-insurance-tables-calculation-engine/29-01-SUMMARY.md
-Next action: Phase 29 Plan 02 — APH auto-detect route, grain-ticket yield bridge API, claim alert detection
+Stopped at: Completed 29-02-PLAN.md (APH lookup, yield-sync, policies/[id] PATCH endpoints)
+Resume file: .planning/phases/29-insurance-tables-calculation-engine/29-02-SUMMARY.md
+Next action: Phase 30 — Insurance Policy UI (30-01-PLAN.md)
