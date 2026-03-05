@@ -90,3 +90,49 @@
 
 ---
 
+
+## v4.0 Cross-Module Polish & Settlement Closure (Shipped: 2026-03-04)
+
+**Delivered:** Bug fixes, field editor polish, FSA crop sync from macro rollup, and settlement reconciliation closure with configurable tolerances, fuzzy matching, dispute resolution, and multi-buyer season summaries.
+
+**Phases completed:** 20-23 (4 phases, 7 plans)
+**Requirements:** 14/14 complete (FIX-01..02, BUD-01..04, FSA-01..04, REC-01..04)
+
+**Key accomplishments:**
+- Farm-registry field save fix — reportingAcres, organicAcres, ownership, growerId all persist correctly
+- Farm-budget field editor polish — category subtotals, COP coloring, accounting parentheses, Orders/Deliveries tabs
+- FSA crop sync from farm-budget macro rollup with enterprise-level side-by-side acres preview
+- Grain-tickets settlement closure — configurable tolerance, fuzzy matching by date+weight, dispute resolution workflow, multi-buyer season summary
+
+**Git range:** `feat(20-01)` → `feat(23-02)` (17 commits)
+
+**Archive:** (inline in ROADMAP.md)
+
+---
+
+## v5.0 Glomalin Portal — Next.js + Supabase Scaffold (Shipped: 2026-03-05)
+
+**Delivered:** Unified portal app (glomalin-portal/) built with Next.js 14 App Router + Supabase. Authenticated entry point to all farm modules with role-based access control, module-level permissions, admin user management, and a React Flow farm ecosystem node map on the public landing page.
+
+**Phases completed:** 24-26 (3 phases, 9 plans)
+**Timeline:** 1 day (2026-03-04 → 2026-03-05)
+**Stats:** 57 files changed, 10,891 insertions, 35 deletions (~1,848 LOC TypeScript/CSS)
+**Requirements:** 15/15 complete (SCF-01..03, SUP-01..02, AUTH-01..02, RBAC-01..04, UI-01..04)
+
+**Key accomplishments:**
+- Next.js 14 App Router project with dark soil Tailwind palette (7 color tokens), JetBrains Mono, and Supabase SSR clients
+- Supabase schema with profiles, module_access, RLS policies, auto-profile trigger, and admin write migration
+- Email/password auth with login page, forgot password, server actions, and session management
+- Middleware route protection — auth redirect, admin RBAC (silent denial), module access checks with denied toast
+- Admin panel with user table, role dropdowns, module toggle switches, and email invite flow
+- React Flow hub-and-spoke node map (12 nodes, 11 animated edges, hover tooltips) on public landing page
+- Dashboard with access-aware module cards (locked/unlocked) and dynamic module shell pages
+
+**Git range:** `feat(24-01)` → `feat(26-02)` (17 commits in glomalin-portal)
+
+**Known tech debt:** browser.ts Supabase client unused, no admin nav link in header, REQUIREMENTS.md traceability stale
+
+**Archive:** [milestones/v5.0-ROADMAP.md](milestones/v5.0-ROADMAP.md) | [milestones/v5.0-REQUIREMENTS.md](milestones/v5.0-REQUIREMENTS.md) | [milestones/v5.0-MILESTONE-AUDIT.md](milestones/v5.0-MILESTONE-AUDIT.md)
+
+---
+

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A modular agricultural operations platform for Hughes Farm. Currently includes: (1) an organic certification audit system that compiles field plans, inputs, seed, rotations, and harvest data from across the ecosystem and produces print-ready USDA NOP inspection reports, (2) a grain ticket traceability system that tracks every load from combine to settlement, reconciles against buyer payments, flags discrepancies, and includes an AI chat agent for natural language data queries, and (3) a farm budget system with a full procurement pipeline (forecasts, orders, deliveries, print reports). Built for farm managers and office staff who need reliable, no-nonsense operational tools.
+A modular agricultural operations platform for Hughes Farm. Includes: (1) an organic certification audit system that compiles field plans, inputs, seed, rotations, and harvest data from across the ecosystem and produces print-ready USDA NOP inspection reports, (2) a grain ticket traceability system that tracks every load from combine to settlement, reconciles against buyer payments, flags discrepancies, and includes an AI chat agent for natural language data queries, (3) a farm budget system with a full procurement pipeline (forecasts, orders, deliveries, print reports), and (4) a unified portal (Glomalin Portal) built with Next.js 14 + Supabase that serves as the authenticated entry point to all farm modules with role-based access control, module-level permissions, and an admin panel. Built for farm managers and office staff who need reliable, no-nonsense operational tools.
 
 ## Core Value
 
@@ -38,19 +38,11 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Farm-registry save fix, farm-budget field editor polish (category totals, accounting parentheses, Orders/Deliveries tabs), FSA crop sync from macro rollup with side-by-side preview, and grain-tickets settlement closure (configurable tolerance, fuzzy matching, dispute resolution workflow, multi-buyer season summary). 4 phases, 7 plans, 14 requirements — all complete.
 
-## Current Milestone: v5.0 Glomalin Portal — Next.js + Supabase Scaffold
+## Completed Milestone: v5.0 Glomalin Portal — Next.js + Supabase Scaffold (2026-03-05)
 
-**Goal:** Build a unified portal app (glomalin-portal) using Next.js 14 App Router + Supabase that serves as the authenticated entry point to all farm modules, with role-based access control, module-level permissions, admin user management, and a React Flow node map on the landing page.
+**Goal:** Build a unified portal app (glomalin-portal/) using Next.js 14 App Router + Supabase that serves as the authenticated entry point to all farm modules, with role-based access control, module-level permissions, admin user management, and a React Flow node map on the landing page.
 
-**Target features:**
-- Supabase auth with email/password login
-- Role-based access (admin, agronomist, operator, viewer)
-- Per-module access control (granted/denied per user per module)
-- Admin panel for user management and module access toggling
-- Dashboard with module cards (locked/unlocked based on access)
-- React Flow node map on public landing page (dark soil aesthetic)
-- Module shell pages ready for future content
-- Middleware-based route protection with role and module checks
+**Delivered:** Next.js 14 project with dark soil Tailwind palette, Supabase schema (profiles, module_access, RLS, auto-profile trigger), email/password auth with middleware route protection (auth + admin RBAC + module access), admin panel with user/role/module management, React Flow hub-and-spoke node map on public landing page, dashboard with access-aware module cards, and dynamic module shell pages. 3 phases, 9 plans, 15 requirements — all complete.
 
 ## Requirements
 
@@ -102,17 +94,18 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - ✓ Multi-buyer season summary with totals, payment status, variance — v4.0
 - ✓ Fuzzy settlement matching by date + weight — v4.0
 - ✓ Disputed ticket resolution workflow with status, notes, date — v4.0
+- ✓ Supabase auth with email/password login and session management — v5.0
+- ✓ Role-based access control (admin, agronomist, operator, viewer) via Supabase profiles — v5.0
+- ✓ Per-module access control with admin-managed grants — v5.0
+- ✓ Admin panel for user + module access management — v5.0
+- ✓ Dashboard with module cards reflecting access state — v5.0
+- ✓ React Flow node map on public landing page — v5.0
+- ✓ Middleware route protection (auth + role + module checks) — v5.0
+- ✓ Module shell pages for macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting — v5.0
 
 ### Active
 
-- [ ] Supabase auth with email/password login and session management
-- [ ] Role-based access control (admin, agronomist, operator, viewer)
-- [ ] Per-module access control with admin-managed grants
-- [ ] Admin panel for user + module access management
-- [ ] Dashboard with module cards reflecting access state
-- [ ] React Flow node map on public landing page
-- [ ] Middleware route protection (auth + role + module checks)
-- [ ] Module shell pages for macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting
+(No active requirements — next milestone not yet defined)
 
 ### Deferred
 
@@ -137,24 +130,26 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - Elevator-side software — Hughes Farm is the seller, not the elevator
 - Real-time futures price integration — prices come from contracts already signed
 - Automated PDF settlement parsing — PDF formats vary wildly
+- User signup/registration flow — admin creates users; no self-registration
 
 ## Context
 
-Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget (Express + JSON, port 3001), fsa-acres, grain-tickets (Express + Prisma + PostgreSQL, port 3000), meristem-malt, farm-registry (Express + JSON, port 3005). All apps share the farm-registry for field data.
+Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget (Express + JSON, port 3001), fsa-acres, grain-tickets (Express + Prisma + PostgreSQL, port 3000), meristem-malt, farm-registry (Express + JSON, port 3005), glomalin-portal (Next.js 14 + Supabase, ~1,848 LOC TypeScript/CSS). All apps share the farm-registry for field data. Glomalin Portal is the unified auth entry point.
 
-**Port map:** 3000 grain-tickets, 3001 farm-budget, 3002 fsa-acres, 3003 meristem-malt, 3004 organic-cert, 3005 farm-registry
+**Port map:** 3000 grain-tickets, 3001 farm-budget, 3002 fsa-acres, 3003 meristem-malt, 3004 organic-cert, 3005 farm-registry, 3006 glomalin-portal (Next.js dev)
 
-**Total shipped:** 51 plans across 23 phases in 5 milestones (v1.0, v1.1, v2.0, v3.0, v4.0).
+**Total shipped:** 60 plans across 26 phases in 6 milestones (v1.0, v1.1, v2.0, v3.0, v4.0, v5.0).
 
 Primary users are farm office staff (daily ticket entry) and farm manager (farm planning, certification, settlement reconciliation).
 
 ## Constraints
 
-- **Tech stack**: Next.js + React + Prisma + PostgreSQL (organic-cert); Express + vanilla JS (grain-tickets, farm-budget)
+- **Tech stack**: Next.js + React + Prisma + PostgreSQL (organic-cert); Express + vanilla JS (grain-tickets, farm-budget); Next.js 14 + Supabase (glomalin-portal)
 - **Data source**: Case IH Field Ops API (OAuth2, CNH Industrial endpoints)
 - **Output format**: Print-ready PDF reports for on-site inspector review
 - **UX philosophy**: Farming-first, minimal clicks, "get shit done" — no unnecessary complexity
 - **Ecosystem fit**: Must integrate with existing modular farm app ecosystem
+- **Auth**: Supabase for glomalin-portal; NextAuth for organic-cert (legacy)
 
 ## Key Decisions
 
@@ -175,6 +170,11 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | Organic-cert as compilation engine | Farm-budget is source of truth; duplicating data entry is wasteful | ✓ Good — zero double-entry achieved |
 | Yearly rotation snapshots | Farm-budget is single-season; organic-cert must accumulate rotation history | ✓ Good — NOP 3-year history works |
 | claude-haiku for Glomalin agent | Cost-effective for high-frequency grain queries | ✓ Good — responsive and affordable |
+| Glomalin Portal as separate Next.js 14 project | Greenfield in glomalin-portal/ — don't modify existing working modules | ✓ Good — clean separation, no regressions |
+| Supabase over NextAuth for portal | Supabase provides auth + DB + RLS in one; portal is new project, no legacy constraint | ✓ Good — simpler than Prisma + NextAuth combo |
+| No self-registration for v5.0 | Admin creates users; small team doesn't need signup flow | ✓ Good — kept scope minimal |
+| Dark soil aesthetic for portal | Farm-first branding (#080604 bg, #C8860A accent, JetBrains Mono) | ✓ Good — distinctive, professional |
+| React Flow for landing page node map | Visual representation of farm ecosystem; hub-and-spoke layout shows data flow | ✓ Good — 12-node map with animated edges |
 
 ---
-*Last updated: 2026-03-04 after v5.0 milestone started*
+*Last updated: 2026-03-05 after v5.0 milestone*

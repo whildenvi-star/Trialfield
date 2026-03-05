@@ -7,7 +7,7 @@
 - ✅ **v2.0 Grain Traceability + Chat Agent** — Phases 9-14 (shipped 2026-03-04) — [archive](milestones/v2.0-ROADMAP.md)
 - ✅ **v3.0 Organic Cert Transparency + Procurement** — Phases 15-19 (shipped 2026-03-04) — [archive](milestones/v3.0-ROADMAP.md)
 - ✅ **v4.0 Cross-Module Polish & Settlement Closure** — Phases 20-23 (shipped 2026-03-04)
-- 🚧 **v5.0 Glomalin Portal — Next.js + Supabase Scaffold** — Phases 24-26 (in progress)
+- ✅ **v5.0 Glomalin Portal — Next.js + Supabase Scaffold** — Phases 24-26 (shipped 2026-03-05) — [archive](milestones/v5.0-ROADMAP.md)
 
 ## Phases
 
@@ -64,62 +64,14 @@
 
 </details>
 
-### 🚧 v5.0 Glomalin Portal — Next.js + Supabase Scaffold (In Progress)
+<details>
+<summary>✅ v5.0 Glomalin Portal — Next.js + Supabase Scaffold (Phases 24-26) — SHIPPED 2026-03-05</summary>
 
-**Milestone Goal:** Build a unified portal app (glomalin-portal/) using Next.js 14 App Router + Supabase that serves as the authenticated entry point to all farm modules, with role-based access control, module-level permissions, admin user management, and a React Flow node map on the landing page.
+- [x] Phase 24: Project Scaffold + Supabase Foundation (3/3 plans) — completed 2026-03-05
+- [x] Phase 25: Auth + Middleware + Route Protection (4/4 plans) — completed 2026-03-05
+- [x] Phase 26: Portal UI (2/2 plans) — completed 2026-03-05
 
-- [x] **Phase 24: Project Scaffold + Supabase Foundation** - Next.js 14 project initialized with Tailwind dark soil config, Supabase schema deployed, and both browser/server clients wired for SSR (completed 2026-03-05)
-- [x] **Phase 25: Auth + Middleware + Route Protection** - Login page functional, middleware redirects unauthenticated users, role checks block admin routes, module access checks block denied module routes (completed 2026-03-05)
-- [x] **Phase 26: Portal UI** - Public landing page with React Flow node map, dashboard with access-aware module cards, admin panel for user/access management, and module shell pages (completed 2026-03-05)
-
-## Phase Details
-
-### Phase 24: Project Scaffold + Supabase Foundation
-**Goal**: A working Next.js 14 App Router project exists in glomalin-portal/ with Tailwind configured for the dark soil palette, all Supabase infrastructure deployed (schema, RLS, auto-profile trigger), and both browser and server clients operational for SSR
-**Depends on**: Nothing (greenfield project in new directory)
-**Requirements**: SCF-01, SCF-02, SCF-03, SUP-01, SUP-02
-**Success Criteria** (what must be TRUE):
-  1. Running `npm run dev` in glomalin-portal/ starts a Next.js 14 App Router project on a local port with no errors
-  2. The dark soil color palette (bg #080604, surface #0e0c0b, accent #C8860A, font-mono) is applied globally via Tailwind config and visible on any page
-  3. A Supabase schema with profiles and module_access tables, RLS policies, and auto-profile trigger is deployable from a schema.sql file and passes a smoke test (insert user, read profile)
-  4. A .env.local.example file documents all required Supabase environment variables
-  5. lib/modules.js defines all 5 portal modules (macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting) with id, label, sublabel, and route
-**Plans**: 3 plans
-Plans:
-- [x] 24-01-PLAN.md — Scaffold Next.js 14 App Router + Tailwind dark soil palette + JetBrains Mono
-- [x] 24-02-PLAN.md — Supabase schema SQL (profiles, module_access, RLS, trigger) + seed data
-- [x] 24-03-PLAN.md — Module registry + Supabase browser/server clients + env documentation
-
-### Phase 25: Auth + Middleware + Route Protection
-**Goal**: Users can log in with email and password, unauthenticated requests are redirected to /login by middleware, admin routes reject non-admin users, and module routes enforce per-user access grants
-**Depends on**: Phase 24
-**Requirements**: AUTH-01, AUTH-02, RBAC-01, RBAC-02, RBAC-03, RBAC-04
-**Success Criteria** (what must be TRUE):
-  1. User navigates to /login, enters valid email and password, and is redirected to /dashboard with an active session
-  2. User navigates directly to /dashboard (or any protected route) without a session and is redirected to /login
-  3. A user with role viewer or operator navigates to /admin and is redirected to /dashboard
-  4. A user without access to a module navigates to /app/org-cert (or any module route) and is redirected to /dashboard?denied=true
-  5. Admin opens the admin panel, toggles a user's module access or changes their role, and the change takes effect immediately on the next protected request
-**Plans**: 4 plans
-Plans:
-- [ ] 25-01-PLAN.md — Login page + auth server actions (login, logout, password reset)
-- [ ] 25-02-PLAN.md — Middleware + route protection (auth redirect, admin RBAC, module access)
-- [ ] 25-03-PLAN.md — Session UI (header with user menu/logout, denied toast, protected layout)
-- [ ] 25-04-PLAN.md — Admin panel (schema migration, API routes, user table with role/access management)
-
-### Phase 26: Portal UI
-**Goal**: The portal has a public landing page with the React Flow farm ecosystem node map, a dashboard with access-aware module cards, an admin panel for managing users and module access, and placeholder shell pages for all 5 modules
-**Depends on**: Phase 25
-**Requirements**: UI-01, UI-02, UI-03, UI-04
-**Success Criteria** (what must be TRUE):
-  1. Unauthenticated user visits the landing page and sees a React Flow node map of the farm ecosystem rendered with the dark soil aesthetic
-  2. Authenticated user visits /dashboard and sees module cards — cards for modules they have access to link through, cards for modules they lack access to are visually locked/grayed
-  3. Admin visits /admin and sees a user table with per-module toggle switches and a role dropdown; toggling a switch or changing a role persists the change
-  4. User with access visits /app/macro-rollup (or any module route) and sees a shell page with the module name and a "coming soon" placeholder
-**Plans**: 2 plans
-Plans:
-- [ ] 26-01-PLAN.md — Landing page with React Flow hub-and-spoke node map (animated edges, hover tooltips, dark soil aesthetic)
-- [ ] 26-02-PLAN.md — Dashboard module cards (access-aware) + dynamic module shell pages + admin panel verification
+</details>
 
 ## Progress
 
@@ -148,6 +100,6 @@ Plans:
 | 21. Farm-Budget Field Editor Polish | v4.0 | 2/2 | Complete | 2026-03-04 |
 | 22. FSA Crop Sync Improvement | v4.0 | 1/1 | Complete | 2026-03-04 |
 | 23. Settlement Closure | v4.0 | 3/3 | Complete | 2026-03-04 |
-| 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-04 |
-| 25. Auth + Middleware + Route Protection | 4/4 | Complete    | 2026-03-05 | - |
-| 26. Portal UI | 2/2 | Complete    | 2026-03-05 | - |
+| 24. Project Scaffold + Supabase Foundation | v5.0 | 3/3 | Complete | 2026-03-05 |
+| 25. Auth + Middleware + Route Protection | v5.0 | 4/4 | Complete | 2026-03-05 |
+| 26. Portal UI | v5.0 | 2/2 | Complete | 2026-03-05 |
