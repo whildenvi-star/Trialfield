@@ -55,6 +55,6 @@ Progress: [░░░░░░░░░░] 0% (v6.0)
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: v6.0 roadmap created — ready to plan Phase 27
-Resume file: None
+Stopped at: Phase 27 context gathered
+Resume file: .planning/phases/27-fsa-data-foundation-migration/27-CONTEXT.md
 Next action: /gsd:plan-phase 27
