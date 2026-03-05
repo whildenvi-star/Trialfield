@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 ## Current Position
 
 Phase: 27 of 33 (FSA Data Foundation + Migration)
-Plan: 1 of 2 in Phase 27
-Status: In progress
-Last activity: 2026-03-05 — Plan 27-01 complete (schema + migration script + fsa-578 module + CLU records API)
+Plan: 2 of 2 in Phase 27 — COMPLETE
+Status: Phase 27 complete
+Last activity: 2026-03-05 — Plan 27-02 complete (calc engine TypeScript port + validation API + auto-populate preview API)
 
-Progress: [█░░░░░░░░░] 7% (v6.0) — 1/14 plans complete
+Progress: [█░░░░░░░░░] 14% (v6.0) — 2/14 plans complete
 
 ## Performance Metrics
 
@@ -44,6 +44,10 @@ Progress: [█░░░░░░░░░] 7% (v6.0) — 1/14 plans complete
 - [27-01]: ins_482 migrated with notes flag — actual=40000 with no farm/crop is suspicious, Phase 29 UI will surface for review
 - [27-01]: Option A module slug — fsa-578 added alongside fsa-reporting in modules.ts (additive, no module_access data migration risk)
 - [27-01]: Claims use delete-then-insert pattern (not upsert) — no natural legacy_id, policy_id FK is uniqueness anchor
+- [27-02]: computeInsurancePolicy signature is (policy, pricing) not (policy, cluRecords, pricing) — CLU-based FSA acres sum handled at UI layer; calc engine only does pricing lookup for payout simulator
+- [27-02]: tillageSummary/coverCropSummary return multi-year arrays (2024+2025 combined) — Phase 28 UI renders tabs without multiple API calls
+- [27-02]: buildAutoPopulateProposals in route file not calc.ts — integration logic (depends on farm-budget API shape) not pure business logic
+- [27-02]: no-insurance warning emits per-crop — enables Phase 28 clickable filter links per crop
 
 ### Pending Todos
 
@@ -60,6 +64,6 @@ Progress: [█░░░░░░░░░] 7% (v6.0) — 1/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-05
-Stopped at: Completed 27-01-PLAN.md (migration script + module registration + page + API route)
-Resume file: .planning/phases/27-fsa-data-foundation-migration/27-01-SUMMARY.md
-Next action: Run migration after adding Supabase credentials to glomalin-portal/.env.local, then /gsd:execute-phase 27 (plan 27-02)
+Stopped at: Completed 27-02-PLAN.md (calc engine TypeScript port + validation API + auto-populate preview API)
+Resume file: .planning/phases/27-fsa-data-foundation-migration/27-02-SUMMARY.md
+Next action: Phase 28 (FSA UI) — run /gsd:execute-phase 28 once Supabase credentials are added and migration is run

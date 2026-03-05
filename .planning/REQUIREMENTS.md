@@ -13,8 +13,8 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 - [ ] **FSA-02**: User can view CLU records as cards grouped by Farm/Tract/CLU with status badges
 - [ ] **FSA-03**: User can edit crop, practice, planting date, and organic flag on a CLU card
 - [ ] **FSA-04**: User can bulk-select CLUs and mark as reported to FSA
-- [ ] **FSA-05**: User can see validation warnings (missing crop, date, unreported) with clickable links
-- [ ] **FSA-06**: User can auto-populate CLU crop assignments from farm-budget macro rollup with preview
+- [x] **FSA-05**: User can see validation warnings (missing crop, date, unreported) with clickable links
+- [x] **FSA-06**: User can auto-populate CLU crop assignments from farm-budget macro rollup with preview
 - [ ] **FSA-07**: User can generate a print-ready FSA Acreage Reporting Summary PDF
 - [ ] **FSA-08**: User can export CLU records as CSV
 
@@ -98,8 +98,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FSA-02 | Phase 28 | Pending |
 | FSA-03 | Phase 28 | Pending |
 | FSA-04 | Phase 28 | Pending |
-| FSA-05 | Phase 27 | Pending |
-| FSA-06 | Phase 27 | Pending |
+| FSA-05 | Phase 27 | Complete |
+| FSA-06 | Phase 27 | Complete |
 | FSA-07 | Phase 28 | Pending |
 | FSA-08 | Phase 28 | Pending |
 | INS-01 | Phase 29 | Pending |
