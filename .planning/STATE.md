@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 31 (Claims Data Foundation)
+**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 32 (Claims Lifecycle UI)
 
 ## Current Position
 
-Phase: 31 of 33 (Claims Data Foundation) — COMPLETE
-Plan: 2 of 2 in Phase 31 — COMPLETE (Plan 31-02: Signed URL Document Upload API)
-Status: Phase 31 complete — Phase 32 (Claims Lifecycle UI) next
-Last activity: 2026-03-05 — Plan 31-02 complete (signed URL upload endpoint + document metadata CRUD)
+Phase: 32 of 33 (Claims Lifecycle UI) — IN PROGRESS
+Plan: 1 of 2 in Phase 32 — COMPLETE (Plan 32-01: Claims Kanban Board)
+Status: Plan 32-01 complete — Plan 32-02 (Claim Detail Drawer) next
+Last activity: 2026-03-06 — Plan 32-01 complete (dnd-kit Kanban board, deadline alert banner, optimistic stage changes)
 
-Progress: [██████░░░░] 71% (v6.0) — 10/14 plans complete
+Progress: [███████░░░] 78% (v6.0) — 11/14 plans complete
 
 ## Performance Metrics
 
@@ -34,6 +34,7 @@ Progress: [██████░░░░] 71% (v6.0) — 10/14 plans complete
 | Phase 30 P01 | 4 | 2 tasks | 8 files |
 | Phase 30 P02 | 3 | 2 tasks | 4 files |
 | Phase 31 P01 | 5 | 2 tasks | 7 files |
+| Phase 32 P01 | 8 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,11 @@ Progress: [██████░░░░] 71% (v6.0) — 10/14 plans complete
 - [Phase 31-02]: Three-step signed URL upload: server generates URL → client PUT to Storage → client POST metadata — file bytes never route through Next.js (1MB limit)
 - [Phase 31-02]: doc_upload timeline event is non-fatal (same pattern as created event) — document metadata saved successfully even if timeline insert fails
 - [Phase 31-02]: Signed download URLs use 3600s expiry in GET /documents list — balances link longevity against security for Phase 32 UI
+- [Phase 32-01]: STAGE_ORDER uses CONTEXT.md visual order (notice_of_loss → filed → under_review → adjuster_assigned → settled → closed), not DB enum order
+- [Phase 32-01]: settled stage displays as 'Settled / Approved' — DB has `settled` not `approved_denied`
+- [Phase 32-01]: Optimistic revert captures previousClaims before setClaims, restores on non-ok PATCH response
+- [Phase 32-01]: Note prompt is bottom-right floating toast (not modal), 10s auto-dismiss, skippable per CONTEXT.md
+- [Phase 32-01]: SortableContext items array built overdue-first to match visual rendered order — avoids dnd-kit pitfall 3
 
 ### Pending Todos
 
@@ -96,7 +102,7 @@ Progress: [██████░░░░] 71% (v6.0) — 10/14 plans complete
 
 ## Session Continuity
 
-Last session: 2026-03-05
-Stopped at: Completed 31-02-PLAN.md (signed URL upload endpoint + document metadata CRUD)
-Resume file: .planning/phases/31-claims-tables-api/31-02-SUMMARY.md
-Next action: Phase 32 — Claims Lifecycle UI (Kanban board, claim detail view, document upload UI)
+Last session: 2026-03-06
+Stopped at: Completed 32-01-PLAN.md (Claims Kanban board, deadline alert banner, optimistic stage changes)
+Resume file: .planning/phases/32-claims-lifecycle-ui/32-01-SUMMARY.md
+Next action: Plan 32-02 — Claim Detail Drawer (slide-over with Timeline, Documents, Financials tabs)
