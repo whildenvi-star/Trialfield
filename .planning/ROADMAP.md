@@ -203,11 +203,11 @@ Plans:
   2. User can click an insurance policy and navigate to create a new claim pre-filled from that policy
   3. When a user marks a CLU as Prevented Planting, a prompt appears offering to create a claim with the relevant policy and CLU data pre-filled
   4. The portal dashboard shows three summary cards — FSA reporting progress, Insurance coverage status, Claims pipeline count — each reflecting live data without a page reload
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 33-01: FSA-Insurance-Claims navigation links + prevented planting trigger
-- [ ] 33-02: Dashboard summary cards (FSA + Insurance + Claims)
+- [ ] 33-01-PLAN.md — Cross-module navigation links (CLU-to-Policy, Policy-to-Claim) + prevented planting trigger
+- [ ] 33-02-PLAN.md — Dashboard summary cards (FSA + Insurance + Claims)
 
 ## Progress
 
