@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 33 (Integration Dashboard) — COMPLETE
+**Current focus:** Phase 34 (Insurance Claims UI Wiring) — 1/1 plans complete
 
 ## Current Position
 
-Phase: 33 of 33 (Cross-Module Integration Dashboard) — COMPLETE
-Plan: 2 of 2 in Phase 33 — COMPLETE (Plan 33-02: Dashboard Summary Cards)
-Status: v6.0 ALL PLANS COMPLETE — 14/14 plans shipped
-Last activity: 2026-03-06 — Plan 33-02 complete (SummaryCards with Promise.allSettled dashboard queries)
+Phase: 34 of 34 (Insurance Claims UI Wiring) — COMPLETE
+Plan: 1 of 1 in Phase 34 — COMPLETE (Plan 34-01: APH + Sync Yield + File Claim UI Wiring)
+Status: Phase 34 complete — INS-05, INS-06, CLM-07 closed
+Last activity: 2026-03-06 — Plan 34-01 complete (APH auto-fetch in PolicyDrawer, Sync Yield + File Claim modal in InsuranceWorkspace)
 
-Progress: [██████████] 100% (v6.0) — 14/14 plans complete
+Progress: [██████████] 100% (v6.0 + Phase 34)
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [██████████] 100% (v6.0) — 14/14 plans complete
 | Phase 32 P01 | 8 | 2 tasks | 8 files |
 | Phase 32 P02 | 5 | 2 tasks | 4 files |
 | Phase 33 P02 | 2 | 1 tasks | 2 files |
+| Phase 33-cross-module-integration-dashboard P01 | 5 | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,13 @@ Progress: [██████████] 100% (v6.0) — 14/14 plans complete
 - [Phase 33]: SummaryCards shown to all authenticated users regardless of module_access — informational only, RBAC enforced at destination pages
 - [Phase 33]: claimAlerts > 0 triggers yellow border + yellow text on Insurance card — amber warning pattern without hard error state
 - [Phase 33]: Null fallback renders em dash for each card when Supabase query fails — dashboard usable during DB issues
+- [Phase 33-01]: [33-01]: dismissedPpIds state managed at CluWorkspace level — survives expand/collapse cycles within a session
+- [Phase 33-01]: [33-01]: Linked policy fetch uses undefined as loading sentinel (undefined=loading, null=not-found)
+- [Phase 33-01]: [33-01]: InsuranceWorkspace useEffect dependency array is [] (mount-only) — searchParams for highlight/action only read once at load
+- [Phase 34-01]: APH display is purely informational — avgAph never added to PolicyFormData or included in onSave (INS-05)
+- [Phase 34-01]: syncFeedback auto-clears after 5 seconds using setTimeout with functional updater to avoid stale closure (INS-06)
+- [Phase 34-01]: handleFileClaim navigates to /app/claims only after confirming res.ok — not optimistically (CLM-07)
+- [Phase 34-01]: Sync Yield uses full policy row replacement from API response (not partial merge) to capture recomputed claim_alert
 
 ### Pending Todos
 
@@ -113,6 +121,6 @@ Progress: [██████████] 100% (v6.0) — 14/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: Completed 33-02-PLAN.md (SummaryCards with Promise.allSettled dashboard queries)
-Resume file: .planning/phases/33-cross-module-integration-dashboard/33-02-SUMMARY.md
-Next action: v6.0 COMPLETE — all 14 plans shipped across phases 27-33
+Stopped at: Completed 34-01-PLAN.md (APH auto-fetch, Sync Yield, File Claim UI wiring)
+Resume file: .planning/phases/34-insurance-claims-ui-wiring/34-01-SUMMARY.md
+Next action: Phase 34 COMPLETE — INS-05, INS-06, CLM-07 closed
