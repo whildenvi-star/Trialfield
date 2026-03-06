@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-05)
 
 ## Current Position
 
-Phase: 32 of 33 (Claims Lifecycle UI) — IN PROGRESS
-Plan: 1 of 2 in Phase 32 — COMPLETE (Plan 32-01: Claims Kanban Board)
-Status: Plan 32-01 complete — Plan 32-02 (Claim Detail Drawer) next
-Last activity: 2026-03-06 — Plan 32-01 complete (dnd-kit Kanban board, deadline alert banner, optimistic stage changes)
+Phase: 32 of 33 (Claims Lifecycle UI) — COMPLETE
+Plan: 2 of 2 in Phase 32 — COMPLETE (Plan 32-02: Claim Detail Drawer)
+Status: Phase 32 complete — Phase 33 (Integration Dashboard) next
+Last activity: 2026-03-06 — Plan 32-02 complete (ClaimDrawer slide-over, TimelineFeed, DocumentUpload)
 
-Progress: [███████░░░] 78% (v6.0) — 11/14 plans complete
+Progress: [████████░░] 86% (v6.0) — 12/14 plans complete
 
 ## Performance Metrics
 
@@ -35,6 +35,7 @@ Progress: [███████░░░] 78% (v6.0) — 11/14 plans complete
 | Phase 30 P02 | 3 | 2 tasks | 4 files |
 | Phase 31 P01 | 5 | 2 tasks | 7 files |
 | Phase 32 P01 | 8 | 2 tasks | 8 files |
+| Phase 32 P02 | 5 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,11 @@ Progress: [███████░░░] 78% (v6.0) — 11/14 plans complete
 - [Phase 32-01]: Optimistic revert captures previousClaims before setClaims, restores on non-ok PATCH response
 - [Phase 32-01]: Note prompt is bottom-right floating toast (not modal), 10s auto-dismiss, skippable per CONTEXT.md
 - [Phase 32-01]: SortableContext items array built overdue-first to match visual rendered order — avoids dnd-kit pitfall 3
+- [Phase 32-02]: ClaimDrawer uses direct import (not dynamic) — no browser-only DnD APIs, SSR is safe
+- [Phase 32-02]: Timeline and document state owned by ClaimDrawer, passed to child components as props
+- [Phase 32-02]: Stage dropdown PATCH mirrors drag-and-drop flow; optimistic stage_change appended to local timeline
+- [Phase 32-02]: FileRejection typed from react-dropzone import — readonly errors[] resolves TS2322 on onDrop callback
+- [Phase 32-02]: refetchDocuments called by DocumentUpload onUploadComplete — ClaimDrawer re-GETs /documents
 
 ### Pending Todos
 
@@ -103,6 +109,6 @@ Progress: [███████░░░] 78% (v6.0) — 11/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: Completed 32-01-PLAN.md (Claims Kanban board, deadline alert banner, optimistic stage changes)
-Resume file: .planning/phases/32-claims-lifecycle-ui/32-01-SUMMARY.md
-Next action: Plan 32-02 — Claim Detail Drawer (slide-over with Timeline, Documents, Financials tabs)
+Stopped at: Completed 32-02-PLAN.md (ClaimDrawer slide-over, TimelineFeed with optimistic notes, DocumentUpload with signed URL)
+Resume file: .planning/phases/32-claims-lifecycle-ui/32-02-SUMMARY.md
+Next action: Phase 33 — Cross-Module Integration Dashboard

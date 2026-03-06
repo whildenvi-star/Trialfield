@@ -83,7 +83,7 @@
 - [x] **Phase 29: Insurance Tables + Calculation Engine** (2 plans) - Schema migration + calc engine + policies API, APH auto-detect + yield bridge + claim alerts (completed 2026-03-05)
 - [x] **Phase 30: Insurance Decision Tool UI** - Policy CRUD, coverage matrix, payout simulator, insurance summary report (completed 2026-03-05)
 - [x] **Phase 31: Claims Tables + API** - Supabase schema, Storage bucket, route handlers for claims/documents/timeline, create-from-policy API (completed 2026-03-05)
-- [ ] **Phase 32: Claims Lifecycle UI** - Kanban board, drag-and-drop pipeline, claim detail view, document upload, deadline alerts, timeline notes
+- [x] **Phase 32: Claims Lifecycle UI** - Kanban board, drag-and-drop pipeline, claim detail view, document upload, deadline alerts, timeline notes (completed 2026-03-06)
 - [ ] **Phase 34: Insurance & Claims UI Wiring** - Wire APH auto-populate, Sync Yield button, File Claim button into existing UI (gap closure)
 - [ ] **Phase 33: Cross-Module Integration + Dashboard** - FSA-Insurance-Claims navigation links, prevented planting trigger, dashboard summary cards
 
@@ -244,6 +244,6 @@ Plans:
 | 29. Insurance Tables + Calculation Engine | 2/2 | Complete    | 2026-03-05 | - |
 | 30. Insurance Decision Tool UI | 2/2 | Complete    | 2026-03-05 | - |
 | 31. Claims Tables + API | 2/2 | Complete    | 2026-03-05 | - |
-| 32. Claims Lifecycle UI | 1/2 | In Progress|  | - |
+| 32. Claims Lifecycle UI | 2/2 | Complete   | 2026-03-06 | - |
 | 34. Insurance & Claims UI Wiring | v6.0 | 0/1 | Not started | - |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 0/2 | Not started | - |
