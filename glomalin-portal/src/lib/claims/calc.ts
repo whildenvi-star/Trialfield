@@ -69,3 +69,93 @@ export function computeDeadline(stage: string, stageEnteredAt: Date): Date | nul
   if (days === undefined) return null
   return addDays(stageEnteredAt, days)
 }
+
+// ---------------------------------------------------------------------------
+// Kanban UI helpers — deadline display and card styling
+// ---------------------------------------------------------------------------
+
+/**
+ * Visual column order for the Kanban board (per 32-CONTEXT.md user decision).
+ * This is NOT the DB enum order — visual order differs intentionally.
+ * 'settled' maps to display label "Settled / Approved" since the DB enum
+ * uses `settled` rather than `approved_denied` (see 32-RESEARCH.md open question 1).
+ */
+export const STAGE_ORDER = [
+  'notice_of_loss',
+  'filed',
+  'under_review',
+  'adjuster_assigned',
+  'settled',
+  'closed',
+] as const
+
+/** Display labels for each pipeline stage */
+export const STAGE_LABELS: Record<string, string> = {
+  notice_of_loss: 'Notice of Loss',
+  filed: 'Filed',
+  under_review: 'Under Review',
+  adjuster_assigned: 'Adjuster Assigned',
+  settled: 'Settled / Approved',
+  closed: 'Closed',
+}
+
+/**
+ * Returns the number of calendar days remaining until the deadline.
+ * Negative values indicate an overdue claim.
+ * Returns null when the claim is closed or has no deadline.
+ */
+export function getDeadlineDaysRemaining(
+  deadlineAt: string | null,
+  stage: string,
+): number | null {
+  if (!deadlineAt || stage === 'closed') return null
+  const now = new Date()
+  const deadline = new Date(deadlineAt)
+  return Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+/**
+ * Returns Tailwind CSS classes for the card left border based on deadline urgency:
+ *   - overdue (days < 0):   pulsing red
+ *   - urgent  (days < 7):   red
+ *   - soon    (days <= 30): amber
+ *   - ok      (days > 30):  green
+ *   - no deadline:          default soil border
+ */
+export function getDeadlineBorderClass(
+  deadlineAt: string | null,
+  stage: string,
+): string {
+  const days = getDeadlineDaysRemaining(deadlineAt, stage)
+  if (days === null) return 'border-[#2a2218]'
+  if (days < 0) return 'border-l-4 border-l-red-600 animate-pulse border-[#2a2218]'
+  if (days < 7) return 'border-l-4 border-l-red-500 border-[#2a2218]'
+  if (days <= 30) return 'border-l-4 border-l-amber-500 border-[#2a2218]'
+  return 'border-l-4 border-l-[#7A9E7E] border-[#2a2218]'
+}
+
+/**
+ * Returns a human-readable countdown string for the deadline badge on a card.
+ * Examples: "14d left", "Due today", "3d overdue", or null when no deadline applies.
+ */
+export function getDeadlineCountdown(
+  deadlineAt: string | null,
+  stage: string,
+): string | null {
+  const days = getDeadlineDaysRemaining(deadlineAt, stage)
+  if (days === null) return null
+  if (days < 0) return `${Math.abs(days)}d overdue`
+  if (days === 0) return 'Due today'
+  return `${days}d left`
+}
+
+/**
+ * Returns true if the claim is overdue (deadline passed and claim is not closed).
+ */
+export function isOverdue(claim: {
+  deadline_at: string | null
+  stage: string
+}): boolean {
+  const days = getDeadlineDaysRemaining(claim.deadline_at, claim.stage)
+  return days !== null && days < 0
+}
