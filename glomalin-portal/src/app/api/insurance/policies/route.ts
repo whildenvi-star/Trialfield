@@ -24,11 +24,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  // Optional farm_number and crop filters for CLU-to-Policy lookup (Phase 33)
+  const farmNumber = searchParams.get('farm_number')
+  const cropFilter = searchParams.get('crop')
+
+  let query = supabase
     .from('insurance_policies')
     .select('*')
     .eq('policy_year', year)
-    .order('farm_name')
+
+  if (farmNumber) {
+    query = query.eq('farm_number', farmNumber)
+  }
+
+  if (cropFilter) {
+    // ilike for case-insensitive match — FSA crop names vs insurance crop names may differ in casing
+    query = query.ilike('crop', cropFilter)
+  }
+
+  query = query.order('farm_name')
+
+  const { data, error } = await query
 
   if (error) {
     return NextResponse.json(

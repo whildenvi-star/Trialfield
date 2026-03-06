@@ -34,6 +34,7 @@ export interface CluRecord {
   aph: number | null
   line_number: string | null
   policy_number: string | null
+  prevented_planting: boolean
 }
 
 export interface PricingEntry {
