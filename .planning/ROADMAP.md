@@ -244,6 +244,6 @@ Plans:
 | 29. Insurance Tables + Calculation Engine | 2/2 | Complete    | 2026-03-05 | - |
 | 30. Insurance Decision Tool UI | 2/2 | Complete    | 2026-03-05 | - |
 | 31. Claims Tables + API | 2/2 | Complete    | 2026-03-05 | - |
-| 32. Claims Lifecycle UI | 2/2 | Complete   | 2026-03-06 | - |
+| 32. Claims Lifecycle UI | 2/2 | Complete    | 2026-03-06 | - |
 | 34. Insurance & Claims UI Wiring | v6.0 | 0/1 | Not started | - |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 0/2 | Not started | - |
