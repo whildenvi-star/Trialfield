@@ -433,11 +433,18 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                         </button>
                         <span className="text-soil-border">|</span>
                         <button
-                          onClick={(e) => handleCreateClaim(policy, e)}
-                          className="text-xs text-soil-muted hover:text-amber-400 transition-colors font-mono"
-                          title="File a claim for this policy"
+                          onClick={() => handleSyncYield(policy.id)}
+                          disabled={syncingId === policy.id}
+                          className="text-xs text-soil-muted hover:text-soil-green transition-colors font-mono disabled:opacity-50"
                         >
-                          + Claim
+                          {syncingId === policy.id ? 'Syncing...' : 'Sync Yield'}
+                        </button>
+                        <span className="text-soil-border">|</span>
+                        <button
+                          onClick={() => setFilingPolicy(policy)}
+                          className="text-xs text-soil-muted hover:text-soil-accent transition-colors font-mono"
+                        >
+                          File Claim
                         </button>
                         <span className="text-soil-border">|</span>
                         <button
@@ -447,6 +454,11 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                           Delete
                         </button>
                       </div>
+                      {syncFeedback?.id === policy.id && (
+                        <p className={`text-[10px] mt-1 ${syncFeedback.type === 'success' ? 'text-soil-green' : 'text-red-400'}`}>
+                          {syncFeedback.message}
+                        </p>
+                      )}
                     </td>
                   </tr>
                 )
@@ -507,6 +519,69 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
         onClose={() => setDrawerOpen(false)}
         onSave={handleDrawerSave}
       />
+
+      {/* File Claim modal */}
+      {filingPolicy !== null && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-40 bg-black/40"
+            onClick={() => setFilingPolicy(null)}
+            aria-hidden="true"
+          />
+          {/* Modal card */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-soil-surface border border-soil-border rounded-lg p-6 font-mono">
+              <h2 className="text-soil-accent font-semibold text-base mb-1">File a Claim</h2>
+              <p className="text-soil-muted text-xs mb-4">
+                {filingPolicy.farm_name ?? '(no farm)'} — {filingPolicy.crop ?? 'no crop'} — {filingPolicy.plan_type ?? '—'}
+              </p>
+
+              <div className="mb-3">
+                <label className="block text-xs text-soil-muted mb-1">
+                  Date of Loss <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={claimDate}
+                  onChange={(e) => setClaimDate(e.target.value)}
+                  className="w-full bg-soil-bg border border-soil-border text-soil-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-soil-accent"
+                />
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-xs text-soil-muted mb-1">
+                  Description <span className="text-soil-muted font-normal normal-case">(optional)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={claimDesc}
+                  onChange={(e) => setClaimDesc(e.target.value)}
+                  placeholder="Brief description of loss event..."
+                  className="w-full bg-soil-bg border border-soil-border text-soil-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-soil-accent resize-none placeholder:text-soil-muted"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setFilingPolicy(null)}
+                  className="text-sm text-soil-muted hover:text-soil-text transition-colors font-mono px-3 py-1.5"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFileClaim}
+                  disabled={!claimDate || claimSubmitting}
+                  className="text-sm font-bold bg-soil-accent text-soil-bg rounded px-4 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-mono"
+                >
+                  {claimSubmitting ? 'Filing...' : 'Submit Claim'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
