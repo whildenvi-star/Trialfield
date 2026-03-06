@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { DeadlineAlertBanner } from './deadline-alert-banner'
+import { ClaimDrawer } from './claim-drawer'
 import type { Claim } from './claim-card'
 
 // SSR guard — dnd-kit uses browser-only APIs (window, pointer events)
@@ -115,9 +116,11 @@ export function ClaimsWorkspace({ initialClaims }: ClaimsWorkspaceProps) {
     setDrawerOpen(true)
   }
 
-  // Suppress unused var warnings — drawerOpen and selectedClaimId used in Plan 32-02
-  void drawerOpen
-  void selectedClaimId
+  function handleClaimUpdated(updated: Claim) {
+    setClaims((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+  }
+
+  const selectedClaim = claims.find((c) => c.id === selectedClaimId) ?? null
 
   return (
     <div className="min-h-screen bg-[#080604] text-[#e8d8c0]">
@@ -144,6 +147,14 @@ export function ClaimsWorkspace({ initialClaims }: ClaimsWorkspaceProps) {
           claims={claims}
           onStageChange={handleStageChange}
           onCardClick={handleCardClick}
+        />
+
+        {/* Claim detail drawer — direct import (no browser-only DnD APIs) */}
+        <ClaimDrawer
+          open={drawerOpen}
+          claim={selectedClaim}
+          onClose={() => setDrawerOpen(false)}
+          onClaimUpdated={handleClaimUpdated}
         />
 
         {/* Note prompt — bottom-right floating toast, auto-dismisses after 10s */}
