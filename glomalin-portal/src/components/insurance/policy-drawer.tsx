@@ -60,6 +60,8 @@ function policyToForm(policy: InsurancePolicy): PolicyFormData {
 export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProps) {
   const isEdit = policy !== null
   const [form, setForm] = useState<PolicyFormData>(EMPTY_FORM)
+  const [aphData, setAphData] = useState<{ avgAph: number; count: number; totalRecords: number } | null>(null)
+  const [aphLoading, setAphLoading] = useState(false)
 
   // Sync form when policy changes or drawer opens
   useEffect(() => {
@@ -67,6 +69,22 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
       setForm(isEdit ? policyToForm(policy!) : EMPTY_FORM)
     }
   }, [open, policy, isEdit])
+
+  // APH auto-fetch from CLU records when drawer opens in edit mode
+  useEffect(() => {
+    if (!open || !policy?.crop) {
+      setAphData(null)
+      return
+    }
+    setAphLoading(true)
+    const params = new URLSearchParams({ crop: policy.crop })
+    if (policy.farm_name) params.set('farmName', policy.farm_name)
+    fetch('/api/insurance/aph-lookup?' + params)
+      .then((r) => r.json())
+      .then((data) => setAphData(data))
+      .catch(() => setAphData(null))
+      .finally(() => setAphLoading(false))
+  }, [open, policy?.crop, policy?.farm_name])
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -277,6 +295,25 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
               placeholder="e.g. 18.50"
             />
           </div>
+
+          {/* APH from CLU Records — informational display only, not a form field */}
+          {open && policy && (
+            <div className="mb-3 rounded border border-soil-border bg-soil-bg px-3 py-2 text-xs font-mono">
+              <p className="text-soil-accent font-semibold mb-1">APH from CLU Records</p>
+              {aphLoading ? (
+                <p className="text-soil-muted">Loading...</p>
+              ) : aphData && aphData.count > 0 ? (
+                <p className="text-soil-text">
+                  {aphData.avgAph} bu/ac{' '}
+                  <span className="text-soil-muted">(avg of {aphData.count} records)</span>
+                </p>
+              ) : aphData && aphData.totalRecords > 0 && aphData.count === 0 ? (
+                <p className="text-soil-muted">CLU records found — no APH values entered yet</p>
+              ) : (
+                <p className="text-soil-muted">No matching CLU records found</p>
+              )}
+            </div>
+          )}
 
           {/* Other */}
           <p className="text-xs text-soil-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
