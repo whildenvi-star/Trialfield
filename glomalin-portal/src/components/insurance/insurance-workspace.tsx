@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
 import { PolicyDrawer } from './policy-drawer'
@@ -41,11 +42,39 @@ interface InsuranceWorkspaceProps {
 }
 
 export function InsuranceWorkspace({ initialPolicies, initialPricing }: InsuranceWorkspaceProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [policies, setPolicies] = useState<InsurancePolicy[]>(initialPolicies)
   const [selectedPolicyId, setSelectedPolicyId] = useState<string | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create')
   const [editingPolicy, setEditingPolicy] = useState<InsurancePolicy | null>(null)
+  // Sync Yield state
+  const [syncingId, setSyncingId] = useState<string | null>(null)
+  const [syncFeedback, setSyncFeedback] = useState<{ id: string; message: string; type: 'success' | 'error' } | null>(null)
+  // File Claim modal state
+  const [filingPolicy, setFilingPolicy] = useState<InsurancePolicy | null>(null)
+  const [claimDate, setClaimDate] = useState('')
+  const [claimDesc, setClaimDesc] = useState('')
+  const [claimSubmitting, setClaimSubmitting] = useState(false)
+
+  // Handle ?highlight= and ?action=create URL params on mount (cross-module navigation from CluCard)
+  useEffect(() => {
+    const highlight = searchParams.get('highlight')
+    const action = searchParams.get('action')
+
+    if (highlight) {
+      setSelectedPolicyId(highlight)
+    }
+
+    if (action === 'create') {
+      setEditingPolicy(null)
+      setDrawerMode('create')
+      setDrawerOpen(true)
+    }
+    // Only run on mount — searchParams reference is stable on first render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Stat card calculations
   const totalPolicies = policies.length
@@ -150,6 +179,62 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
       if (selectedPolicyId === id) setSelectedPolicyId(null)
     } catch (err) {
       console.error('Network error deleting policy:', err)
+    }
+  }
+
+  async function handleSyncYield(policyId: string) {
+    setSyncingId(policyId)
+    setSyncFeedback(null)
+    try {
+      const res = await fetch('/api/insurance/yield-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ policyId }),
+      })
+      const data = await res.json()
+      if (data.matched && data.policy) {
+        // Full row replacement — data.policy includes actual_synced_from_grain and recomputed claim_alert
+        setPolicies((prev) => prev.map((p) => (p.id === policyId ? data.policy : p)))
+        setSyncFeedback({ id: policyId, message: 'Yield synced successfully', type: 'success' })
+      } else {
+        const msg = data.error || 'No grain ticket match found'
+        setSyncFeedback({ id: policyId, message: msg, type: 'error' })
+      }
+    } catch {
+      setSyncFeedback({ id: policyId, message: 'Network error', type: 'error' })
+    } finally {
+      setSyncingId(null)
+      // Auto-clear feedback after 5 seconds
+      setTimeout(() => setSyncFeedback((prev) => (prev?.id === policyId ? null : prev)), 5000)
+    }
+  }
+
+  async function handleFileClaim() {
+    if (!filingPolicy || !claimDate) return
+    setClaimSubmitting(true)
+    try {
+      const res = await fetch('/api/claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          policy_id: filingPolicy.id,
+          date_of_loss: claimDate,
+          description: claimDesc || null,
+        }),
+      })
+      if (res.ok) {
+        setFilingPolicy(null)
+        setClaimDate('')
+        setClaimDesc('')
+        router.push('/app/claims')
+      } else {
+        const err = await res.json().catch(() => ({}))
+        console.error('Failed to create claim:', err)
+      }
+    } catch (err) {
+      console.error('Network error filing claim:', err)
+    } finally {
+      setClaimSubmitting(false)
     }
   }
 
@@ -345,6 +430,14 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                           className="text-xs text-soil-muted hover:text-soil-accent transition-colors font-mono"
                         >
                           Edit
+                        </button>
+                        <span className="text-soil-border">|</span>
+                        <button
+                          onClick={(e) => handleCreateClaim(policy, e)}
+                          className="text-xs text-soil-muted hover:text-amber-400 transition-colors font-mono"
+                          title="File a claim for this policy"
+                        >
+                          + Claim
                         </button>
                         <span className="text-soil-border">|</span>
                         <button

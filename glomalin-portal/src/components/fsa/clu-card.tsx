@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import type { CluRecord, ValidationWarning } from '@/lib/fsa/calc'
 import { CropTypeahead } from './crop-typeahead'
 
@@ -12,6 +13,8 @@ interface CluCardProps {
   onToggleExpand: () => void
   onToggleSelect: () => void
   onSave: (updated: CluRecord) => void
+  isPpPromptDismissed?: boolean
+  onDismissPpPrompt?: (id: string) => void
 }
 
 type DraftFields = {
@@ -19,6 +22,7 @@ type DraftFields = {
   use: string
   grain_plant_date: string
   organic: boolean
+  prevented_planting: boolean
 }
 
 export function CluCard({
@@ -29,16 +33,25 @@ export function CluCard({
   onToggleExpand,
   onToggleSelect,
   onSave,
+  isPpPromptDismissed = false,
+  onDismissPpPrompt,
 }: CluCardProps) {
+  const router = useRouter()
   const [draft, setDraft] = useState<DraftFields>({
     crop: record.crop ?? '',
     use: record.use ?? '',
     grain_plant_date: record.grain_plant_date ?? '',
     organic: record.organic,
+    prevented_planting: record.prevented_planting ?? false,
   })
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Linked insurance policy state for CLU-to-Policy cross-nav
+  const [linkedPolicy, setLinkedPolicy] = useState<{ id: string } | null | undefined>(undefined)
+  const [claimCreating, setClaimCreating] = useState(false)
+  const [claimError, setClaimError] = useState<string | null>(null)
 
   // Re-initialize draft when record changes or card expands
   useEffect(() => {
@@ -48,11 +61,38 @@ export function CluCard({
         use: record.use ?? '',
         grain_plant_date: record.grain_plant_date ?? '',
         organic: record.organic,
+        prevented_planting: record.prevented_planting ?? false,
       })
       setFieldErrors({})
       setSaveError(null)
     }
   }, [isExpanded, record])
+
+  // Fetch linked insurance policy when card expands
+  useEffect(() => {
+    if (!isExpanded) return
+    if (!record.crop) {
+      setLinkedPolicy(null)
+      return
+    }
+    setLinkedPolicy(undefined) // undefined = loading
+
+    const params = new URLSearchParams({
+      farm_number: record.farm_number,
+      crop: record.crop ?? '',
+      year: String(record.crop_year),
+    })
+
+    fetch(`/api/insurance/policies?${params.toString()}`)
+      .then((res) => res.json())
+      .then((json) => {
+        const policies: Array<{ id: string }> = json.policies ?? []
+        setLinkedPolicy(policies.length > 0 ? policies[0] : null)
+      })
+      .catch(() => {
+        setLinkedPolicy(null)
+      })
+  }, [isExpanded, record.farm_number, record.crop, record.crop_year])
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {}
@@ -79,6 +119,7 @@ export function CluCard({
           use: draft.use.trim() || null,
           grain_plant_date: draft.grain_plant_date.trim() || null,
           organic: draft.organic,
+          prevented_planting: draft.prevented_planting,
         }),
       })
       const json = await res.json()
@@ -101,16 +142,50 @@ export function CluCard({
       use: record.use ?? '',
       grain_plant_date: record.grain_plant_date ?? '',
       organic: record.organic,
+      prevented_planting: record.prevented_planting ?? false,
     })
     setFieldErrors({})
     setSaveError(null)
     onToggleExpand()
   }
 
+  const handleCreatePreventedPlantingClaim = async () => {
+    if (!linkedPolicy) return
+    setClaimCreating(true)
+    setClaimError(null)
+    try {
+      const res = await fetch('/api/claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          policy_id: linkedPolicy.id,
+          date_of_loss: new Date().toISOString().slice(0, 10),
+          description: `Prevented Planting - ${record.crop} - Farm ${record.farm_number}`,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setClaimError((err as { error?: string }).error ?? 'Failed to create claim')
+        return
+      }
+      router.push('/app/claims')
+    } catch {
+      setClaimError('Network error — please try again')
+    } finally {
+      setClaimCreating(false)
+    }
+  }
+
   const displayName = record.field_name ?? `CLU ${record.clu}`
   const errorCount = warnings.filter((w) => w.severity === 'error').length
   const warningCount = warnings.filter((w) => w.severity === 'warning').length
   const totalWarnings = errorCount + warningCount
+
+  // Show PP prompt when prevented_planting is true (either from draft or saved record)
+  const showPpPrompt =
+    (draft.prevented_planting || record.prevented_planting) &&
+    !isPpPromptDismissed &&
+    isExpanded
 
   return (
     <div
@@ -164,6 +239,13 @@ export function CluCard({
         {record.organic && (
           <span className="font-mono text-xs font-bold text-soil-green bg-soil-green/10 border border-soil-green/30 rounded px-1.5 py-0.5 flex-shrink-0">
             O
+          </span>
+        )}
+
+        {/* Prevented planting badge */}
+        {record.prevented_planting && (
+          <span className="font-mono text-xs font-bold text-amber-300 bg-amber-950/30 border border-amber-700/50 rounded px-1.5 py-0.5 flex-shrink-0">
+            PP
           </span>
         )}
 
@@ -254,6 +336,107 @@ export function CluCard({
               Organic
             </label>
           </div>
+
+          {/* Prevented Planting toggle */}
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id={`pp-${record.id}`}
+              className="w-4 h-4 accent-soil-accent cursor-pointer"
+              checked={draft.prevented_planting}
+              onChange={(e) => setDraft((d) => ({ ...d, prevented_planting: e.target.checked }))}
+            />
+            <label
+              htmlFor={`pp-${record.id}`}
+              className="font-mono text-sm text-soil-text cursor-pointer"
+            >
+              Prevented Planting
+            </label>
+          </div>
+
+          {/* Insurance policy link */}
+          <div className="border-t border-soil-border pt-3">
+            <p className="font-mono text-xs text-soil-muted uppercase tracking-wider mb-2">
+              Insurance Policy
+            </p>
+            {linkedPolicy === undefined && (
+              <p className="font-mono text-xs text-soil-muted">Looking up policy...</p>
+            )}
+            {linkedPolicy !== undefined && linkedPolicy !== null && (
+              <button
+                onClick={() => router.push(`/app/insurance?highlight=${linkedPolicy.id}`)}
+                className="font-mono text-xs text-soil-accent hover:underline underline-offset-2 transition-colors"
+              >
+                View Insurance Policy &rarr;
+              </button>
+            )}
+            {linkedPolicy === null && (
+              <button
+                onClick={() =>
+                  router.push(
+                    `/app/insurance?action=create&farm=${record.farm_number}&crop=${encodeURIComponent(record.crop ?? '')}`
+                  )
+                }
+                className="font-mono text-xs text-soil-muted hover:text-soil-accent transition-colors"
+              >
+                No policy &mdash; Add one &rarr;
+              </button>
+            )}
+          </div>
+
+          {/* Prevented Planting claim prompt */}
+          {showPpPrompt && (
+            <div className="rounded-md border border-amber-700/50 bg-amber-950/30 px-4 py-3">
+              <p className="font-mono text-xs text-amber-300 font-semibold mb-2">
+                Prevented Planting detected
+              </p>
+              {linkedPolicy ? (
+                <div className="flex items-center gap-3">
+                  <p className="font-mono text-xs text-amber-300 flex-1">
+                    A policy is linked. File a prevented planting claim?
+                  </p>
+                  <button
+                    onClick={handleCreatePreventedPlantingClaim}
+                    disabled={claimCreating}
+                    className="font-mono text-xs font-bold bg-amber-700 text-amber-100 rounded px-3 py-1 hover:bg-amber-600 disabled:opacity-50 transition-colors flex-shrink-0"
+                  >
+                    {claimCreating ? 'Creating...' : 'Create Claim'}
+                  </button>
+                  <button
+                    onClick={() => onDismissPpPrompt?.(record.id)}
+                    className="font-mono text-xs text-amber-500 hover:text-amber-300 transition-colors flex-shrink-0"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <p className="font-mono text-xs text-amber-300 flex-1">
+                    No policy found — add a policy before filing a claim.
+                  </p>
+                  <button
+                    onClick={() =>
+                      router.push(
+                        `/app/insurance?action=create&farm=${record.farm_number}&crop=${encodeURIComponent(record.crop ?? '')}`
+                      )
+                    }
+                    className="font-mono text-xs font-bold bg-amber-950 border border-amber-700/50 text-amber-300 rounded px-3 py-1 hover:bg-amber-900 transition-colors flex-shrink-0"
+                  >
+                    Add Policy First
+                  </button>
+                  <button
+                    onClick={() => onDismissPpPrompt?.(record.id)}
+                    className="font-mono text-xs text-amber-500 hover:text-amber-300 transition-colors flex-shrink-0"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
+              {claimError && (
+                <p className="font-mono text-xs text-red-400 mt-2">{claimError}</p>
+              )}
+            </div>
+          )}
 
           {/* Save error */}
           {saveError && (

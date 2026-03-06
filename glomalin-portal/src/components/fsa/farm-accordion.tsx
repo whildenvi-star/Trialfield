@@ -19,6 +19,8 @@ interface FarmAccordionProps {
   onSelectAllInTract: (tractRecords: CluRecord[]) => void
   onSave: (updated: CluRecord) => void
   warningsByRecordId: Map<string, ValidationWarning[]>
+  dismissedPpIds: Set<string>
+  onDismissPpPrompt: (id: string) => void
 }
 
 export function FarmAccordion({
@@ -37,6 +39,8 @@ export function FarmAccordion({
   onSelectAllInTract,
   onSave,
   warningsByRecordId,
+  dismissedPpIds,
+  onDismissPpPrompt,
 }: FarmAccordionProps) {
   const farmRecords = Object.values(tracts).flat()
   const totalAcres = farmRecords.reduce((sum, r) => sum + (r.fsa_acres || 0), 0)
@@ -119,6 +123,8 @@ export function FarmAccordion({
                 onSelectAllInTract={onSelectAllInTract}
                 onSave={onSave}
                 warningsByRecordId={warningsByRecordId}
+                dismissedPpIds={dismissedPpIds}
+                onDismissPpPrompt={onDismissPpPrompt}
               />
             )
           })}

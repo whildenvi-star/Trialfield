@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { InsuranceWorkspace } from '@/components/insurance/insurance-workspace'
 import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
@@ -21,9 +22,13 @@ export default async function InsurancePage() {
   const pricing: PricingEntry[] = (pricingData as PricingEntry[]) ?? []
 
   return (
-    <InsuranceWorkspace
-      initialPolicies={policies}
-      initialPricing={pricing}
-    />
+    // Suspense required: InsuranceWorkspace uses useSearchParams() for ?highlight= and ?action= params
+    // Without Suspense, Next.js 14 will throw during SSR when useSearchParams is called.
+    <Suspense fallback={null}>
+      <InsuranceWorkspace
+        initialPolicies={policies}
+        initialPricing={pricing}
+      />
+    </Suspense>
   )
 }

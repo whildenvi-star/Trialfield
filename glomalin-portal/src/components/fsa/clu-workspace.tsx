@@ -105,6 +105,8 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [warnings, setWarnings] = useState<ValidationWarning[]>([])
+  // Track dismissed prevented planting prompt IDs — persists within a session across card expand/collapse
+  const [dismissedPpIds, setDismissedPpIds] = useState<Set<string>>(new Set())
 
   // Smart defaults: farms/tracts with any unreported CLU start expanded
   const [expandedFarms, setExpandedFarms] = useState<Set<string>>(() => {
@@ -185,6 +187,14 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
 
   const handleSaveRecord = (updated: CluRecord) => {
     setRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+  }
+
+  const handleDismissPpPrompt = (id: string) => {
+    setDismissedPpIds((prev) => {
+      const next = new Set(prev)
+      next.add(id)
+      return next
+    })
   }
 
   const handleBulkAction = async (
@@ -326,6 +336,8 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
               onSelectAllInTract={handleSelectAllInTract}
               onSave={handleSaveRecord}
               warningsByRecordId={warningsByRecordId}
+              dismissedPpIds={dismissedPpIds}
+              onDismissPpPrompt={handleDismissPpPrompt}
             />
           )
         })}
