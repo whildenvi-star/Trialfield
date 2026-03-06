@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MODULES } from '@/lib/modules'
+import { SummaryCards } from '@/components/dashboard/summary-cards'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -28,6 +29,38 @@ export default async function DashboardPage() {
       .map((row) => row.module)
   )
 
+  // Fetch summary data for the three FSA/Insurance/Claims modules in parallel.
+  // Use Promise.allSettled so a single table query failure does not crash the dashboard.
+  const results = await Promise.allSettled([
+    supabase.from('clu_records').select('id, reported').eq('crop_year', 2026),
+    supabase.from('insurance_policies').select('id').eq('policy_year', 2026).eq('claim_alert', 'potential'),
+    supabase.from('claims').select('id').neq('stage', 'closed'),
+  ])
+
+  // FSA summary: count total rows and filter for reported=true
+  const fsaResult = results[0]
+  const fsaSummary =
+    fsaResult.status === 'fulfilled' && !fsaResult.value.error && fsaResult.value.data !== null
+      ? {
+          reported: fsaResult.value.data.filter((row) => row.reported === true).length,
+          total: fsaResult.value.data.length,
+        }
+      : null
+
+  // Insurance summary: count rows with claim_alert='potential'
+  const insuranceResult = results[1]
+  const insuranceSummary =
+    insuranceResult.status === 'fulfilled' && !insuranceResult.value.error && insuranceResult.value.data !== null
+      ? { claimAlerts: insuranceResult.value.data.length }
+      : null
+
+  // Claims summary: count open claims (stage != 'closed')
+  const claimsResult = results[2]
+  const claimsSummary =
+    claimsResult.status === 'fulfilled' && !claimsResult.value.error && claimsResult.value.data !== null
+      ? { openCount: claimsResult.value.data.length }
+      : null
+
   return (
     <div>
       <h1 className="text-2xl font-bold font-mono text-soil-text tracking-wide">
@@ -36,6 +69,13 @@ export default async function DashboardPage() {
       <p className="mt-2 mb-6 text-soil-muted font-mono text-sm">
         Farm Modules
       </p>
+
+      {/* Summary cards: FSA reporting progress, Insurance alerts, Claims pipeline */}
+      <SummaryCards
+        fsa={fsaSummary}
+        insurance={insuranceSummary}
+        claims={claimsSummary}
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {MODULES.map((mod) => {
@@ -68,8 +108,8 @@ export default async function DashboardPage() {
                   <p className="text-sm text-soil-muted font-mono mt-1">
                     {mod.sublabel}
                   </p>
-                  <p className="text-xs font-mono text-soil-green mt-3 uppercase tracking-wider">
-                    Coming Soon
+                  <p className={`text-xs font-mono mt-3 uppercase tracking-wider ${mod.status === 'live' ? 'text-soil-green' : 'text-soil-muted'}`}>
+                    {mod.status === 'live' ? 'Active' : 'Coming Soon'}
                   </p>
                 </div>
               </Link>
