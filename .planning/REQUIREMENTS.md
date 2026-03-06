@@ -44,7 +44,7 @@ Requirements for milestone v6.0 FSA Acres, Insurance & Claims. Each maps to road
 - [ ] **INT-01**: User can navigate from FSA CLU to related insurance policy
 - [ ] **INT-02**: User can navigate from insurance policy to create a claim
 - [ ] **INT-03**: User sees prompted claim creation when CLU marked Prevented Planting
-- [ ] **INT-04**: User can see FSA, Insurance, and Claims summary cards on portal dashboard
+- [x] **INT-04**: User can see FSA, Insurance, and Claims summary cards on portal dashboard
 
 ## Future Requirements
 
@@ -120,7 +120,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INT-01 | Phase 33 | Pending |
 | INT-02 | Phase 33 | Pending |
 | INT-03 | Phase 33 | Pending |
-| INT-04 | Phase 33 | Pending |
+| INT-04 | Phase 33 | Complete |
 
 **Coverage:**
 - v6.0 requirements: 27 total

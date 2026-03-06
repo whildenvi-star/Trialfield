@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 32 (Claims Lifecycle UI)
+**Current focus:** v6.0 FSA Acres, Insurance & Claims — Phase 33 (Integration Dashboard) — COMPLETE
 
 ## Current Position
 
-Phase: 32 of 33 (Claims Lifecycle UI) — COMPLETE
-Plan: 2 of 2 in Phase 32 — COMPLETE (Plan 32-02: Claim Detail Drawer)
-Status: Phase 32 complete — Phase 33 (Integration Dashboard) next
-Last activity: 2026-03-06 — Plan 32-02 complete (ClaimDrawer slide-over, TimelineFeed, DocumentUpload)
+Phase: 33 of 33 (Cross-Module Integration Dashboard) — COMPLETE
+Plan: 2 of 2 in Phase 33 — COMPLETE (Plan 33-02: Dashboard Summary Cards)
+Status: v6.0 ALL PLANS COMPLETE — 14/14 plans shipped
+Last activity: 2026-03-06 — Plan 33-02 complete (SummaryCards with Promise.allSettled dashboard queries)
 
-Progress: [████████░░] 86% (v6.0) — 12/14 plans complete
+Progress: [██████████] 100% (v6.0) — 14/14 plans complete
 
 ## Performance Metrics
 
@@ -36,6 +36,7 @@ Progress: [████████░░] 86% (v6.0) — 12/14 plans complete
 | Phase 31 P01 | 5 | 2 tasks | 7 files |
 | Phase 32 P01 | 8 | 2 tasks | 8 files |
 | Phase 32 P02 | 5 | 2 tasks | 4 files |
+| Phase 33 P02 | 2 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,9 @@ Progress: [████████░░] 86% (v6.0) — 12/14 plans complete
 - [Phase 32-02]: Stage dropdown PATCH mirrors drag-and-drop flow; optimistic stage_change appended to local timeline
 - [Phase 32-02]: FileRejection typed from react-dropzone import — readonly errors[] resolves TS2322 on onDrop callback
 - [Phase 32-02]: refetchDocuments called by DocumentUpload onUploadComplete — ClaimDrawer re-GETs /documents
+- [Phase 33]: SummaryCards shown to all authenticated users regardless of module_access — informational only, RBAC enforced at destination pages
+- [Phase 33]: claimAlerts > 0 triggers yellow border + yellow text on Insurance card — amber warning pattern without hard error state
+- [Phase 33]: Null fallback renders em dash for each card when Supabase query fails — dashboard usable during DB issues
 
 ### Pending Todos
 
@@ -109,6 +113,6 @@ Progress: [████████░░] 86% (v6.0) — 12/14 plans complete
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: Completed 32-02-PLAN.md (ClaimDrawer slide-over, TimelineFeed with optimistic notes, DocumentUpload with signed URL)
-Resume file: .planning/phases/32-claims-lifecycle-ui/32-02-SUMMARY.md
-Next action: Phase 33 — Cross-Module Integration Dashboard
+Stopped at: Completed 33-02-PLAN.md (SummaryCards with Promise.allSettled dashboard queries)
+Resume file: .planning/phases/33-cross-module-integration-dashboard/33-02-SUMMARY.md
+Next action: v6.0 COMPLETE — all 14 plans shipped across phases 27-33
