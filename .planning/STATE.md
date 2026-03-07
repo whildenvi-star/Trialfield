@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 ## Current Position
 
 Phase: 40 of 43 (ASCIIBannerStrip Component)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-07 — v8.0 roadmap created (phases 40-43)
+Plan: 1 of 2 in current phase
+Status: Executing
+Last activity: 2026-03-07 — Completed 40-01 (noise extraction + API refactor)
 
-Progress: [░░░░░░░░░░] 0% (v8.0)
+Progress: [█░░░░░░░░░] 10% (v8.0)
 
 **v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
 
@@ -30,6 +30,7 @@ Progress: [░░░░░░░░░░] 0% (v8.0)
 | v5.0 | 24-26 | 9 | 2026-03-05 |
 | v6.0 | 27-34 | 15 | 2026-03-06 |
 | **Total** | **34** | **75** | |
+| Phase 40 P01 | 2min | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -41,6 +42,8 @@ Progress: [░░░░░░░░░░] 0% (v8.0)
 - [v8.0]: Canvas-only rendering with pure TypeScript noise functions — no external animation deps
 - [v8.0]: Scene toggle is easter egg (hidden), not visible UI control
 - [v8.0]: v7.0 and v8.0 run as parallel tracks — no cross-dependencies
+- [Phase 40]: Noise utilities extracted to standalone ascii-noise.ts for Phase 43 scene reuse
+- [Phase 40]: ASCIIBannerStrip props simplified to {height, className, paused} — nodeCount/bgColor hardcoded internally
 
 ### Pending Todos
 
@@ -55,6 +58,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: v8.0 roadmap created (phases 40-43, 22 requirements mapped)
+Stopped at: Completed 40-01-PLAN.md
 Resume file: —
-Next action: `/gsd:plan-phase 40` to plan the ASCIIBannerStrip component
+Next action: Execute 40-02-PLAN.md (visual refinement)

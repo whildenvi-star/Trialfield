@@ -36,12 +36,12 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 ### Banner
 
 - [ ] **BANNER-01**: ASCIIBannerStrip component renders animated ASCII mycelial network at configurable height (default 72px)
-- [ ] **BANNER-02**: Canvas auto-measures on mount + resize with 150ms debounce, respects devicePixelRatio
+- [x] **BANNER-02**: Canvas auto-measures on mount + resize with 150ms debounce, respects devicePixelRatio
 - [ ] **BANNER-03**: Character grid uses brightness-mapped ASCII ramp (" .·:;░▒▓█") with cyan-palette coloring
-- [ ] **BANNER-04**: Pure noise utility functions (noise2D, fbm, generateMycelium) with no external deps
+- [x] **BANNER-04**: Pure noise utility functions (noise2D, fbm, generateMycelium) with no external deps
 - [ ] **BANNER-05**: requestAnimationFrame loop targeting ~50fps with cleanup on unmount and tab-hidden throttle
-- [ ] **BANNER-06**: Bottom gradient overlay fades strip into page background seamlessly
-- [ ] **BANNER-07**: Random time offset per instance so banners on different pages don't synchronize
+- [x] **BANNER-06**: Bottom gradient overlay fades strip into page background seamlessly
+- [x] **BANNER-07**: Random time offset per instance so banners on different pages don't synchronize
 
 ### Shell Integration
 
@@ -108,12 +108,12 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 | ONB-03 | Phase 38 | Pending |
 | SEC-03 | Phase 39 | Pending |
 | BANNER-01 | Phase 40 | Pending |
-| BANNER-02 | Phase 40 | Pending |
+| BANNER-02 | Phase 40 | Complete |
 | BANNER-03 | Phase 40 | Pending |
-| BANNER-04 | Phase 40 | Pending |
+| BANNER-04 | Phase 40 | Complete |
 | BANNER-05 | Phase 40 | Pending |
-| BANNER-06 | Phase 40 | Pending |
-| BANNER-07 | Phase 40 | Pending |
+| BANNER-06 | Phase 40 | Complete |
+| BANNER-07 | Phase 40 | Complete |
 | SHELL-01 | Phase 41 | Pending |
 | SHELL-02 | Phase 41 | Pending |
 | SHELL-03 | Phase 41 | Pending |
