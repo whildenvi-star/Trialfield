@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Header from '@/components/header'
 import DeniedToast from '@/components/denied-toast'
+import ASCIIBannerStrip from '@/components/layout/ASCIIBannerStrip'
 
 export default async function ProtectedLayout({
   children,
@@ -35,6 +36,13 @@ export default async function ProtectedLayout({
           role: profile?.role ?? 'viewer',
         }}
       />
+      {/* 72px desktop / 48px mobile */}
+      <div className="hidden md:block">
+        <ASCIIBannerStrip height={72} />
+      </div>
+      <div className="block md:hidden">
+        <ASCIIBannerStrip height={48} />
+      </div>
       <Suspense fallback={null}>
         <DeniedToast />
       </Suspense>
