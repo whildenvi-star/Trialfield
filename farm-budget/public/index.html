@@ -5,9 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>macro-rollup</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <meta name="theme-color" content="#0a0e09">
+  <meta name="theme-color" content="#080a0f">
   <script>
     // Apply saved theme before first paint to prevent flash
     (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
@@ -32,8 +35,6 @@
           </button>
           <div class="nav-dropdown-menu" id="enterprise-menu"></div>
         </div>
-        <button class="tab-btn" data-tab="forecasts">Forecasts</button>
-        <button class="tab-btn" data-tab="seeds">Seeds</button>
         <button class="tab-btn" data-tab="reference">Reference</button>
         <button class="tab-btn" data-tab="programs">Programs</button>
         <button class="tab-btn" data-tab="sales">Sales</button>
@@ -52,7 +53,32 @@
         <div class="hero-content">
           <div class="term-line"><span class="term-prompt">user@farm:~/budget$</span> <span class="term-cmd">macro-rollup --season <span id="dash-year"></span></span></div>
           <div class="term-line term-output">enterprise dashboard loaded &mdash; all systems nominal <span class="term-ok">[OK]</span></div>
-          <div class="term-line term-output dim">6 enterprises online &middot; ready for input<span class="term-cursor"></span></div>
+          <div class="term-line term-output dim">6 enterprises online &middot; ready for input</div>
+          <div class="term-chat" id="term-chat">
+            <div class="term-chat-log" id="term-chat-log"></div>
+            <div class="term-chat-input-line">
+              <span class="term-prompt">user@glomalin:~$</span>
+              <input type="text" id="term-chat-input" class="term-chat-input" placeholder="ask the network..." autocomplete="off" spellcheck="false">
+            </div>
+          </div>
+        </div>
+        <div class="hero-futures" id="hero-futures">
+          <div class="futures-header">
+            <span class="futures-label">CBOT FUTURES</span>
+            <button class="futures-edit-btn" id="futures-edit-btn" title="Edit tracked contracts">&#9881;</button>
+          </div>
+          <div class="futures-widgets" id="futures-widgets"></div>
+          <div class="futures-config-panel" id="futures-config-panel" style="display:none">
+            <div class="futures-config-rows" id="futures-config-rows"></div>
+            <div class="futures-config-actions">
+              <button class="futures-config-add" id="futures-config-add">+ Add</button>
+              <button class="futures-config-save" id="futures-config-save">Save</button>
+              <button class="futures-config-cancel" id="futures-config-cancel">Cancel</button>
+            </div>
+            <div class="futures-config-help">
+              Symbol format: ZC<b>Z</b>26.CBT &mdash; month codes: F=Jan G=Feb H=Mar J=Apr K=May M=Jun N=Jul Q=Aug U=Sep V=Oct X=Nov Z=Dec
+            </div>
+          </div>
         </div>
       </div>
       <div class="dashboard-controls">
@@ -187,14 +213,10 @@
         </div>
       </details>
 
-      <div class="dashboard-panels" style="margin-top:1.5rem">
+      <div style="margin-top:1.5rem">
         <div class="panel">
-          <h3>Expenses vs Income by Enterprise</h3>
-          <div style="position:relative;height:280px"><canvas id="chart-ent-bars"></canvas></div>
-        </div>
-        <div class="panel">
-          <h3>Farm-Wide Expense Breakdown</h3>
-          <div style="display:flex;justify-content:center"><canvas id="chart-exp-doughnut" width="240" height="240"></canvas></div>
+          <h3>Net Margin by Enterprise</h3>
+          <div style="position:relative;height:320px"><canvas id="chart-net-margin"></canvas></div>
         </div>
       </div>
     </section>
@@ -235,73 +257,7 @@
       <div id="ent-module-view" class="hidden"></div>
     </section>
 
-    <!-- FORECASTS / DEMAND -->
-    <section id="tab-forecasts" class="tab-content">
-      <h2>Forecast &amp; Demand</h2>
-
-      <!-- Sub-navigation -->
-      <div class="ref-sub-nav">
-        <button class="ref-sub-btn active" data-fc-sub="forecast">Forecast Hub</button>
-        <button class="ref-sub-btn" data-fc-sub="demand">Product Demand</button>
-      </div>
-
-      <!-- Forecast Hub (existing) -->
-      <div id="fc-sub-forecast" class="fc-sub-content active">
-        <h3>Procurement Forecast</h3>
-        <p class="edit-hint">Aggregated demand from field plans. Select items and create orders.</p>
-        <div class="forecast-controls" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-          <button id="fc-create-order" class="btn-primary btn-sm" disabled>Create Order from Selected</button>
-          <button id="fc-print-menu" class="btn-sm">Print Reports &#9662;</button>
-          <span id="fc-summary" style="color:var(--text-light);font-size:0.85rem"></span>
-        </div>
-        <div id="fc-categories"></div>
-      </div>
-
-      <!-- Product Demand Table for Receiving Manager -->
-      <div id="fc-sub-demand" class="fc-sub-content">
-        <h3>Product Demand Table</h3>
-        <p class="edit-hint">Receiving manager view — all expected incoming products with forecasted quantities from active farm plans.</p>
-        <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-          <input type="text" id="demand-search" placeholder="Search products...">
-          <select id="demand-filter-status">
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="ordered">Ordered</option>
-            <option value="received">Received</option>
-          </select>
-          <select id="demand-filter-type">
-            <option value="">All Types</option>
-            <option value="seed">Seeds</option>
-            <option value="input">Inputs</option>
-          </select>
-          <button id="demand-refresh" class="btn-sm">Refresh</button>
-          <button id="demand-export-csv" class="btn-sm">Export CSV</button>
-          <button id="demand-print" class="btn-sm">Print</button>
-          <span id="demand-count" style="color:var(--text-light);font-size:0.85rem"></span>
-        </div>
-        <div class="table-info"><span id="demand-info"></span></div>
-        <div class="table-wrap">
-          <table id="demand-table" class="demand-table">
-            <thead>
-              <tr>
-                <th>Product Name</th>
-                <th>Type</th>
-                <th>Supplier</th>
-                <th title="Unit/Pack type">Unit/Pack</th>
-                <th title="Pack quantity">Pack Qty</th>
-                <th title="Total units expected based on farm plans">Total Expected</th>
-                <th title="Quantity already ordered">Ordered</th>
-                <th title="Quantity delivered/received">Delivered</th>
-                <th title="Expected delivery window">Delivery Window</th>
-                <th title="Current status">Status</th>
-              </tr>
-            </thead>
-            <tbody id="demand-tbody"></tbody>
-          </table>
-        </div>
-        <div id="demand-generated" style="color:var(--text-light);font-size:0.75rem;margin-top:0.5rem"></div>
-      </div>
-    </section>
+    <!-- Forecasts tab removed — content merged into Reference tab -->
 
     <!-- ORDERS -->
     <section id="tab-orders" class="tab-content">
@@ -339,10 +295,13 @@
       <!-- Sub-navigation -->
       <div class="ref-sub-nav">
         <button class="ref-sub-btn active" data-ref-sub="products">Products</button>
+        <button class="ref-sub-btn" data-ref-sub="seeds">Seeds</button>
         <button class="ref-sub-btn" data-ref-sub="implements">Implements</button>
         <button class="ref-sub-btn" data-ref-sub="suppliers">Suppliers</button>
         <button class="ref-sub-btn" data-ref-sub="unit-packs">Unit/Packs</button>
         <button class="ref-sub-btn" data-ref-sub="labor">Labor &amp; Overhead</button>
+        <button class="ref-sub-btn" data-ref-sub="forecast">Forecast</button>
+        <button class="ref-sub-btn" data-ref-sub="demand">Demand</button>
       </div>
 
       <!-- Products Sub-section -->
@@ -539,11 +498,10 @@
         </table>
       </div>
       </div><!-- /ref-sub-labor -->
-    </section>
 
-    <!-- SEEDS MANAGER -->
-    <section id="tab-seeds" class="tab-content">
-      <h2>Seeds Manager</h2>
+      <!-- Seeds Sub-section (merged from Seeds tab) -->
+      <div id="ref-sub-seeds" class="ref-sub-content">
+      <h3>Seeds Manager</h3>
       <p class="edit-hint">Double-click any cell to edit in place.</p>
       <div class="filters">
         <input type="text" id="seed-search" placeholder="Search seeds...">
@@ -577,6 +535,64 @@
           <tbody id="seed-demand-tbody"></tbody>
         </table>
       </div>
+      </div><!-- /ref-sub-seeds -->
+
+      <!-- Forecast Sub-section (merged from Forecasts tab) -->
+      <div id="ref-sub-forecast" class="ref-sub-content">
+      <h3>Procurement Forecast</h3>
+      <p class="edit-hint">Aggregated demand from field plans. Select items and create orders.</p>
+      <div class="forecast-controls" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+        <button id="fc-create-order" class="btn-primary btn-sm" disabled>Create Order from Selected</button>
+        <button id="fc-print-menu" class="btn-sm">Print Reports &#9662;</button>
+        <span id="fc-summary" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <div id="fc-categories"></div>
+      </div><!-- /ref-sub-forecast -->
+
+      <!-- Demand Sub-section (merged from Forecasts tab) -->
+      <div id="ref-sub-demand" class="ref-sub-content">
+      <h3>Product Demand Table</h3>
+      <p class="edit-hint">Receiving manager view — all expected incoming products with forecasted quantities from active farm plans.</p>
+      <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
+        <input type="text" id="demand-search" placeholder="Search products...">
+        <select id="demand-filter-status">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="ordered">Ordered</option>
+          <option value="received">Received</option>
+        </select>
+        <select id="demand-filter-type">
+          <option value="">All Types</option>
+          <option value="seed">Seeds</option>
+          <option value="input">Inputs</option>
+        </select>
+        <button id="demand-refresh" class="btn-sm">Refresh</button>
+        <button id="demand-export-csv" class="btn-sm">Export CSV</button>
+        <button id="demand-print" class="btn-sm">Print</button>
+        <span id="demand-count" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <div class="table-info"><span id="demand-info"></span></div>
+      <div class="table-wrap">
+        <table id="demand-table" class="demand-table">
+          <thead>
+            <tr>
+              <th>Product Name</th>
+              <th>Type</th>
+              <th>Supplier</th>
+              <th title="Unit/Pack type">Unit/Pack</th>
+              <th title="Pack quantity">Pack Qty</th>
+              <th title="Total units expected based on farm plans">Total Expected</th>
+              <th title="Quantity already ordered">Ordered</th>
+              <th title="Quantity delivered/received">Delivered</th>
+              <th title="Expected delivery window">Delivery Window</th>
+              <th title="Current status">Status</th>
+            </tr>
+          </thead>
+          <tbody id="demand-tbody"></tbody>
+        </table>
+      </div>
+      <div id="demand-generated" style="color:var(--text-light);font-size:0.75rem;margin-top:0.5rem"></div>
+      </div><!-- /ref-sub-demand -->
     </section>
 
     <!-- PROGRAMS (Agronomic Templates) -->
@@ -587,6 +603,7 @@
         <button id="prog-add" class="btn-primary btn-sm">+ New Program</button>
         <span id="prog-count" style="color:var(--text-light);font-size:0.85rem"></span>
       </div>
+      <div id="prog-suggestions" class="prog-suggestions" style="margin-bottom:1rem"></div>
       <div id="prog-cards" class="prog-cards"></div>
 
       <!-- Bulk Deploy Panel (hidden until triggered) -->
@@ -617,60 +634,6 @@
       <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis.</p>
       <div id="crop-types-container"></div>
       <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
-
-      <h3>Sales Summary</h3>
-      <div class="table-info"><span id="sales-summary-info"></span></div>
-      <div class="table-wrap">
-        <table id="sales-summary-table">
-          <thead>
-            <tr>
-              <th>Crop</th>
-              <th title="Total projected production">Proj Total</th>
-              <th title="Amount sold via contracts">Amt Sold</th>
-              <th title="Percentage of projected total sold">% Sold</th>
-              <th title="Weighted average sale price">Avg Price</th>
-              <th title="Cost of Production: breakeven price per unit">COP</th>
-              <th title="Remaining unsold production">Remaining</th>
-              <th>Unit</th>
-            </tr>
-          </thead>
-          <tbody id="sales-summary-tbody"></tbody>
-        </table>
-      </div>
-
-      <h3>Contract Log</h3>
-      <div class="filters">
-        <input type="text" id="sale-search" placeholder="Search contracts...">
-        <select id="sale-filter-crop">
-          <option value="">All Crops</option>
-        </select>
-        <select id="sale-filter-status">
-          <option value="">All Status</option>
-          <option value="open">Open</option>
-          <option value="done">Done</option>
-        </select>
-        <button id="sale-add" class="btn-primary btn-sm">+ Add Contract</button>
-      </div>
-      <div class="table-info"><span id="sales-count"></span></div>
-      <div class="table-wrap">
-        <table id="sales-table">
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Crop</th>
-              <th>Buyer</th>
-              <th title="Basis adjustment from CBOT price">Basis</th>
-              <th>Price</th>
-              <th title="Chicago Board of Trade reference price">CBOT</th>
-              <th>Notes</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="sales-tbody"></tbody>
-        </table>
-      </div>
 
       <!-- Hedging Strategy Assessment -->
       <div id="hedging-panel" class="hedging-panel">
@@ -755,6 +718,40 @@
         </div>
       </div>
 
+      <h3>Contract Log</h3>
+      <div class="filters">
+        <input type="text" id="sale-search" placeholder="Search contracts...">
+        <select id="sale-filter-crop">
+          <option value="">All Crops</option>
+        </select>
+        <select id="sale-filter-status">
+          <option value="">All Status</option>
+          <option value="open">Open</option>
+          <option value="done">Done</option>
+        </select>
+        <button id="sale-add" class="btn-primary btn-sm">+ Add Contract</button>
+      </div>
+      <div class="table-info"><span id="sales-count"></span></div>
+      <div class="table-wrap">
+        <table id="sales-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Crop</th>
+              <th>Buyer</th>
+              <th title="Basis adjustment from CBOT price">Basis</th>
+              <th>Price</th>
+              <th title="Chicago Board of Trade reference price">CBOT</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sales-tbody"></tbody>
+        </table>
+      </div>
+
       <!-- Buyer Discount Schedules -->
       <h3>Buyer Discount Schedules</h3>
       <p class="edit-hint">Set moisture discount tiers per buyer. These are used when a field has Harvest Moisture % and a Buyer assigned.</p>
@@ -778,6 +775,7 @@
           </select>
         </div>
       </div>
+      <div id="map-stats" class="map-stats"></div>
       <div id="farm-map" style="height:600px;border-radius:6px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.1)"></div>
       <div id="map-legend" class="map-legend"></div>
       <div id="map-link-panel" class="map-link-panel hidden">
@@ -810,7 +808,7 @@
         </div>
 
         <!-- Program Template Application -->
-        <div class="prog-apply-bar" style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:flex-end;background:var(--highlight);border:1px solid var(--border);padding:0.75rem">
+        <div class="prog-apply-bar" style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:flex-end;flex-wrap:wrap;background:var(--highlight);border:1px solid var(--border);padding:0.75rem">
           <div class="form-group" style="flex:1;margin:0">
             <label style="font-size:0.8rem;color:var(--text-light)">Apply Program Template</label>
             <select id="ed-apply-program" style="font-size:0.85rem">
@@ -855,7 +853,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Field Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(rent basis)</span> <button type="button" id="ed-sync-acres" class="btn-link" style="font-size:0.7rem;margin-left:0.5rem;color:var(--primary);cursor:pointer;border:none;background:none;text-decoration:underline;" title="Pull acres & rent from Farm Registry">Sync from Registry</button></label>
+            <label style="display:flex;align-items:baseline;gap:0.35rem;flex-wrap:wrap;">Field Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(rent basis)</span> <button type="button" id="ed-sync-acres" class="btn-link" style="font-size:0.7rem;color:var(--primary);cursor:pointer;border:none;background:none;text-decoration:underline;" title="Pull acres & rent from Farm Registry">Sync</button></label>
             <input type="number" id="ed-acres" step="0.01" min="0">
             <div id="ed-acres-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
           </div>
@@ -1247,7 +1245,7 @@
     function update() {
       var isLight = document.body.classList.contains('light');
       btn.innerHTML = isLight ? '&#9790;' : '&#9788;';
-      if (meta) meta.content = isLight ? '#ffffff' : '#0a0e09';
+      if (meta) meta.content = isLight ? '#ffffff' : '#080a0f';
     }
     update();
     btn.addEventListener('click', function () {
@@ -1256,6 +1254,297 @@
       localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
       update();
       window.dispatchEvent(new Event('theme-change'));
+    });
+  })();
+  </script>
+
+  <!-- Futures sparkline charts (Chart.js + server proxy) -->
+  <script>
+  (function () {
+    var chartInstances = [];
+    var configOpen = false;
+
+    function isLight() { return document.body.classList.contains('light'); }
+
+    function renderFutures(data) {
+      var container = document.getElementById('futures-widgets');
+      if (!container) return;
+      container.innerHTML = '';
+      chartInstances.forEach(function (c) { c.destroy(); });
+      chartInstances = [];
+
+      data.forEach(function (item) {
+        var wrap = document.createElement('div');
+        wrap.className = 'futures-widget-wrap';
+
+        if (item.error) {
+          wrap.innerHTML = '<div class="futures-price-row"><span class="futures-crop-label">' + item.label + '</span></div>' +
+            '<div class="futures-chart-box"><span class="futures-no-data">No data</span></div>';
+          container.appendChild(wrap);
+          return;
+        }
+
+        var up = item.change >= 0;
+        var arrow = up ? '&#9650;' : '&#9660;';
+        var changeClass = up ? 'futures-up' : 'futures-down';
+        var priceStr = item.price != null ? '$' + item.price.toFixed(2) : '--';
+        var changeStr = (up ? '+$' : '-$') + Math.abs(item.change).toFixed(2) + ' (' + (up ? '+' : '') + item.changePct.toFixed(1) + '%)';
+
+        wrap.innerHTML =
+          '<div class="futures-price-row">' +
+            '<span class="futures-crop-label">' + item.label + ' <span class="futures-contract">' + item.contract + '</span></span>' +
+            '<span class="futures-price">' + priceStr + '</span>' +
+          '</div>' +
+          '<div class="futures-price-row">' +
+            '<span class="' + changeClass + '">' + arrow + ' ' + changeStr + '</span>' +
+          '</div>' +
+          '<div class="futures-chart-box"><canvas id="fc-' + item.key + '"></canvas></div>';
+
+        container.appendChild(wrap);
+
+        // Build sparkline
+        var closes = (item.closes || []).filter(function (v) { return v != null; });
+        if (closes.length < 2) return;
+        var canvas = document.getElementById('fc-' + item.key);
+        var lineColor = up ? '#7A9E7E' : '#c05050';
+        var fillColor = up ? 'rgba(122,158,126,0.15)' : 'rgba(192,80,80,0.15)';
+        if (isLight()) {
+          lineColor = up ? '#2d7a3a' : '#b03030';
+          fillColor = up ? 'rgba(45,122,58,0.10)' : 'rgba(176,48,48,0.10)';
+        }
+        var labels = closes.map(function (_, i) { return i; });
+        var ch = new Chart(canvas, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              data: closes,
+              borderColor: lineColor,
+              backgroundColor: fillColor,
+              fill: true,
+              borderWidth: 1.5,
+              pointRadius: 0,
+              tension: 0.3
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            scales: {
+              x: { display: false },
+              y: { display: false }
+            },
+            animation: { duration: 600 }
+          }
+        });
+        chartInstances.push(ch);
+      });
+    }
+
+    function loadFutures() {
+      fetch('/api/futures')
+        .then(function (r) { return r.json(); })
+        .then(function (data) { renderFutures(data); })
+        .catch(function (err) { console.warn('[Futures] load failed:', err); });
+    }
+
+    // --- Config panel ---
+    function buildConfigRow(c) {
+      var row = document.createElement('div');
+      row.className = 'futures-config-row';
+      row.innerHTML =
+        '<input class="fc-label" placeholder="Label" value="' + (c.label || '') + '">' +
+        '<input class="fc-symbol" placeholder="ZCZ26.CBT" value="' + (c.symbol || '') + '">' +
+        '<input class="fc-contract" placeholder="DEC 26" value="' + (c.contract || '') + '">' +
+        '<button class="fc-remove" title="Remove">&times;</button>';
+      row.querySelector('.fc-remove').addEventListener('click', function () { row.remove(); });
+      return row;
+    }
+
+    function openConfig() {
+      configOpen = true;
+      var panel = document.getElementById('futures-config-panel');
+      var rows = document.getElementById('futures-config-rows');
+      panel.style.display = 'block';
+      document.getElementById('futures-widgets').style.display = 'none';
+      rows.innerHTML = '';
+      fetch('/api/futures-config')
+        .then(function (r) { return r.json(); })
+        .then(function (contracts) {
+          contracts.forEach(function (c) { rows.appendChild(buildConfigRow(c)); });
+        });
+    }
+
+    function closeConfig() {
+      configOpen = false;
+      document.getElementById('futures-config-panel').style.display = 'none';
+      document.getElementById('futures-widgets').style.display = 'flex';
+    }
+
+    function saveConfig() {
+      var rowEls = document.querySelectorAll('#futures-config-rows .futures-config-row');
+      var contracts = [];
+      rowEls.forEach(function (row) {
+        var label = row.querySelector('.fc-label').value.trim();
+        var symbol = row.querySelector('.fc-symbol').value.trim();
+        var contract = row.querySelector('.fc-contract').value.trim();
+        if (symbol) {
+          contracts.push({
+            key: label.toLowerCase().replace(/\s+/g, '-') || 'c' + contracts.length,
+            label: label.toUpperCase() || symbol,
+            symbol: symbol,
+            contract: contract
+          });
+        }
+      });
+      if (contracts.length === 0) return;
+      fetch('/api/futures-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contracts)
+      }).then(function () {
+        closeConfig();
+        loadFutures();
+      });
+    }
+
+    // Wire up buttons after DOM ready
+    function initConfigUI() {
+      document.getElementById('futures-edit-btn').addEventListener('click', function () {
+        if (configOpen) closeConfig(); else openConfig();
+      });
+      document.getElementById('futures-config-save').addEventListener('click', saveConfig);
+      document.getElementById('futures-config-cancel').addEventListener('click', closeConfig);
+      document.getElementById('futures-config-add').addEventListener('click', function () {
+        document.getElementById('futures-config-rows').appendChild(buildConfigRow({ label: '', symbol: '', contract: '' }));
+      });
+    }
+
+    // Load on page ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () { loadFutures(); initConfigUI(); });
+    } else {
+      loadFutures();
+      initConfigUI();
+    }
+    // Refresh every 15 minutes
+    setInterval(loadFutures, 15 * 60 * 1000);
+    // Rebuild on theme change
+    window.addEventListener('theme-change', loadFutures);
+  })();
+  </script>
+
+  <!-- Glomalin Terminal Chat -->
+  <script>
+  (function () {
+    'use strict';
+    var chatLog = document.getElementById('term-chat-log');
+    var chatInput = document.getElementById('term-chat-input');
+    var history = [];
+    var busy = false;
+
+    function escHtml(s) {
+      var d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    function appendLine(cls, html) {
+      var div = document.createElement('div');
+      div.className = 'term-line ' + cls;
+      div.innerHTML = html;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+      return div;
+    }
+
+    function sendMessage() {
+      if (busy) return;
+      var msg = chatInput.value.trim();
+      if (!msg) return;
+      chatInput.value = '';
+      // Show user message
+      appendLine('term-chat-user', '<span class="term-chat-arrow">&gt;</span> ' + escHtml(msg));
+      history.push({ role: 'user', content: msg });
+      // Keep last 20 messages
+      if (history.length > 20) history = history.slice(-20);
+
+      busy = true;
+      chatInput.disabled = true;
+      chatInput.placeholder = '';
+
+      // Thinking indicator
+      var thinkEl = appendLine('term-chat-thinking', '<span class="term-chat-dots">...</span>');
+
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, history: history.slice(0, -1) })
+      }).then(function (resp) {
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        // Remove thinking indicator
+        if (thinkEl.parentNode) thinkEl.parentNode.removeChild(thinkEl);
+
+        var reader = resp.body.getReader();
+        var decoder = new TextDecoder();
+        var responseEl = appendLine('term-chat-response', '');
+        var fullText = '';
+        var buffer = '';
+
+        function read() {
+          reader.read().then(function (result) {
+            if (result.done) {
+              history.push({ role: 'assistant', content: fullText });
+              busy = false;
+              chatInput.disabled = false;
+              chatInput.placeholder = 'ask the network...';
+              chatInput.focus();
+              return;
+            }
+            buffer += decoder.decode(result.value, { stream: true });
+            // Parse SSE lines
+            var lines = buffer.split('\n');
+            buffer = lines.pop(); // keep incomplete line
+            for (var i = 0; i < lines.length; i++) {
+              var line = lines[i];
+              if (line.indexOf('data: ') === 0) {
+                var data = line.slice(6);
+                if (data === '[DONE]') continue;
+                try {
+                  var parsed = JSON.parse(data);
+                  if (parsed.text) {
+                    fullText += parsed.text;
+                    responseEl.innerHTML = escHtml(fullText);
+                    chatLog.scrollTop = chatLog.scrollHeight;
+                  }
+                  if (parsed.error) {
+                    responseEl.innerHTML = '<span class="term-chat-err">' + escHtml(parsed.error) + '</span>';
+                  }
+                } catch (e) { /* skip malformed */ }
+              }
+            }
+            read();
+          }).catch(function (err) {
+            if (thinkEl.parentNode) thinkEl.parentNode.removeChild(thinkEl);
+            appendLine('term-chat-response', '<span class="term-chat-err">stream error: ' + escHtml(err.message) + '</span>');
+            busy = false;
+            chatInput.disabled = false;
+            chatInput.placeholder = 'ask the network...';
+          });
+        }
+        read();
+      }).catch(function (err) {
+        if (thinkEl.parentNode) thinkEl.parentNode.removeChild(thinkEl);
+        appendLine('term-chat-response', '<span class="term-chat-err">' + escHtml(err.message) + '</span>');
+        busy = false;
+        chatInput.disabled = false;
+        chatInput.placeholder = 'ask the network...';
+      });
+    }
+
+    chatInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
     });
   })();
   </script>

@@ -4,34 +4,34 @@
    ============================================================ */
 
 :root {
-  --bg: #0a0e09;
-  --bg-raised: #0f140e;
-  --card: #111611;
-  --card-alt: #0d120c;
-  --primary: #4af626;
-  --primary-dim: #2a8a18;
-  --primary-light: #5fff3a;
-  --text: #a8b8a0;
-  --text-light: #5c6e54;
-  --text-bright: #d0e0c8;
-  --border: #1e2e1a;
-  --border-light: #283828;
-  --highlight: #142210;
+  --bg: #080a0f;
+  --bg-raised: #0e1118;
+  --card: #0c1015;
+  --card-alt: #0a0e14;
+  --primary: #14b8a6;
+  --primary-dim: #0d9488;
+  --primary-light: #2dd4bf;
+  --text: #cbd5e1;
+  --text-light: #64748b;
+  --text-bright: #e2e8f0;
+  --border: #1e293b;
+  --border-light: #334155;
+  --highlight: #0f172a;
   --danger: #ff3b30;
-  --success: #4af626;
+  --success: #7A9E7E;
   --blue: #4a9eff;
   --amber: #ffb800;
   --purple: #b388ff;
   --teal: #64ffda;
   --orange: #ff6e40;
-  --profit-pos: #0d1f0a;
+  --profit-pos: #0a1520;
   --profit-neg: #1f0a0a;
   --transition-fast: 0.15s ease;
   --transition-slide: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow-hover: 0 0 16px rgba(74, 246, 38, 0.06);
-  --glow: 0 0 6px rgba(74, 246, 38, 0.3);
+  --shadow-hover: 0 0 16px rgba(20, 184, 166, 0.06);
+  --glow: 0 0 6px rgba(20, 184, 166, 0.3);
   --glow-amber: 0 0 6px rgba(255, 184, 0, 0.2);
-  --font-mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -39,33 +39,32 @@
    LIGHT PALETTE — Day mode (body.light class toggles via theme-toggle)
    ============================================================ */
 body.light {
-  --bg: #f5f5f0;
+  --bg: #f8fafc;
   --bg-raised: #ffffff;
-  --card: #fafaf7;
-  --card-alt: #f0f0eb;
-  --primary: #2a7a14;
-  --primary-dim: #1e5a0e;
-  --primary-light: #3aaa24;
-  --text: #2c3e28;
-  --text-light: #6b7c65;
-  --text-bright: #1a2e16;
-  --border: #d4ddd0;
-  --border-light: #c8d4c4;
-  --highlight: #eaf4e6;
-  --hover: #e8ede6;
+  --card: #f1f5f9;
+  --card-alt: #e2e8f0;
+  --primary: #0d9488;
+  --primary-dim: #0f766e;
+  --primary-light: #14b8a6;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --text-bright: #0f172a;
+  --border: #cbd5e1;
+  --border-light: #e2e8f0;
+  --highlight: #f0fdfa;
+  --hover: #e2e8f0;
   --input-bg: #ffffff;
-  --input-border: #c5d0c0;
+  --input-border: #cbd5e1;
   --danger: #c0392b;
-  --success: #2a7a14;
+  --success: #0d9488;
   --amber: #b8860b;
-  --profit-pos: #e8f5e3;
+  --profit-pos: #f0fdfa;
   --profit-neg: #fdecea;
-  --glow: 0 0 6px rgba(42, 122, 20, 0.2);
+  --glow: 0 0 6px rgba(13, 148, 136, 0.2);
   --glow-amber: 0 0 6px rgba(184, 134, 11, 0.15);
   scrollbar-color: var(--border) var(--bg);
 }
 
-body.light::after { display: none; } /* remove scanlines in light mode */
 
 body.light ::selection {
   background: var(--primary);
@@ -79,24 +78,8 @@ body.light ::selection {
   color: var(--bg);
 }
 
-/* Subtle scanline overlay */
-body::after {
-  content: '';
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 3px,
-    rgba(0, 0, 0, 0.02) 3px,
-    rgba(0, 0, 0, 0.02) 4px
-  );
-}
-
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-mono);
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
@@ -117,13 +100,14 @@ body {
    HEADER & NAV — terminal prompt bar
    ============================================================ */
 header {
-  background: #060906;
+  background: #060810;
   color: var(--text);
   padding: 0.75rem 1.5rem 0;
   position: sticky;
   top: 0;
   z-index: 100;
   border-bottom: 1px solid var(--border);
+  overflow: visible;
 }
 
 header h1 {
@@ -190,8 +174,9 @@ header h1::before {
   left: 0;
   background: var(--card);
   border: 1px solid var(--border);
-  z-index: 120;
+  z-index: 200;
   min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
 .nav-dropdown-menu.open { display: block; }
@@ -804,6 +789,22 @@ td.editing input, td.editing select {
   font-size: 0.75rem;
 }
 
+/* Clickable dashboard rows → navigate to enterprise */
+.dash-clickable-row {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.dash-clickable-row:hover {
+  background: var(--highlight);
+}
+.dash-clickable-header {
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.dash-clickable-header:hover {
+  color: var(--primary);
+}
+
 .prod-type-row {
   cursor: pointer;
   background: var(--card);
@@ -1020,6 +1021,9 @@ td.editing input, td.editing select {
   overflow: hidden;
   margin-bottom: 1rem;
   padding: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
 }
 
 .hero-overlay { display: none; }
@@ -1028,6 +1032,191 @@ td.editing input, td.editing select {
   position: relative;
   z-index: 1;
   padding: 1rem 1.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- Futures sparklines (right side of hero banner) ---- */
+.hero-futures {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.futures-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.futures-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-light);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  text-align: right;
+  opacity: 0.7;
+}
+
+.futures-edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 0.7rem;
+  opacity: 0.4;
+  padding: 0;
+  line-height: 1;
+}
+.futures-edit-btn:hover { opacity: 0.9; }
+
+.futures-widgets {
+  display: flex;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.futures-widget-wrap {
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.futures-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 0 0.25rem;
+  font-family: var(--font-mono);
+}
+
+.futures-crop-label {
+  font-size: 0.6rem;
+  color: var(--text-light);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.futures-contract {
+  font-size: 0.5rem;
+  opacity: 0.5;
+}
+
+.futures-price {
+  font-size: 0.75rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.futures-up {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: #7A9E7E;
+}
+
+.futures-down {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: #c05050;
+}
+
+body.light .futures-up { color: #2d7a3a; }
+body.light .futures-down { color: #b03030; }
+
+.futures-chart-box {
+  height: 50px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 0.15rem;
+}
+
+.futures-chart-box canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.futures-no-data {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--text-light);
+  opacity: 0.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* Config panel */
+.futures-config-panel {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.25rem 0;
+}
+
+.futures-config-row {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.2rem;
+}
+
+.futures-config-row input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  padding: 0.2rem 0.3rem;
+  border-radius: 2px;
+}
+
+.futures-config-row .fc-label { width: 65px; }
+.futures-config-row .fc-symbol { width: 95px; }
+.futures-config-row .fc-contract { width: 55px; }
+
+.futures-config-row .fc-remove {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 0.8rem;
+  padding: 0 0.2rem;
+  opacity: 0.5;
+}
+.futures-config-row .fc-remove:hover { opacity: 1; color: #c05050; }
+
+.futures-config-actions {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+}
+
+.futures-config-actions button {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  cursor: pointer;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.futures-config-save { background: var(--primary) !important; color: #fff !important; border-color: var(--primary) !important; }
+.futures-config-save:hover { opacity: 0.85; }
+
+.futures-config-help {
+  font-size: 0.5rem;
+  color: var(--text-light);
+  opacity: 0.5;
+  margin-top: 0.3rem;
+  line-height: 1.4;
 }
 
 .hero-content h2 {
@@ -1093,6 +1282,81 @@ td.editing input, td.editing select {
   animation: blink 1s step-end infinite;
   margin-left: 2px;
 }
+
+/* --- Terminal Chat --- */
+.term-chat {
+  margin-top: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  max-height: 140px;
+  border-top: 1px solid var(--border);
+  padding-top: 0.35rem;
+}
+.term-chat-log {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-dim) transparent;
+}
+.term-chat-log::-webkit-scrollbar { width: 4px; }
+.term-chat-log::-webkit-scrollbar-thumb { background: var(--primary-dim); border-radius: 2px; }
+.term-chat-log .term-line {
+  font-size: 0.72rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.term-chat-user {
+  color: var(--text-bright);
+}
+.term-chat-arrow {
+  color: var(--primary);
+  font-weight: 700;
+}
+.term-chat-response {
+  color: var(--text-light);
+  padding-left: 0.5rem;
+}
+.term-chat-err {
+  color: #c05050;
+}
+.term-chat-thinking .term-chat-dots {
+  color: var(--primary-dim);
+  animation: blink 1s step-end infinite;
+}
+.term-chat-input-line {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.2rem;
+}
+.term-chat-input-line .term-prompt {
+  font-size: 0.72rem;
+  flex-shrink: 0;
+}
+.term-chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-bright);
+  caret-color: var(--primary);
+  padding: 0;
+}
+.term-chat-input::placeholder {
+  color: var(--text-light);
+  opacity: 0.5;
+}
+.term-chat-input:disabled {
+  opacity: 0.4;
+}
+
+/* Light theme overrides */
+body.light .term-chat-response { color: var(--text-light); }
+body.light .term-chat-err { color: #b33; }
 
 /* ============================================================
    DASHBOARD CONTROLS & PANELS
@@ -1242,7 +1506,8 @@ td.editing input, td.editing select {
   background: rgba(0, 0, 0, 0.7);
   z-index: 200;
   display: none;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
   opacity: 0;
   transition: opacity var(--transition-slide);
 }
@@ -1253,20 +1518,23 @@ td.editing input, td.editing select {
 }
 
 .editor-panel {
-  width: 640px;
-  max-width: 90vw;
+  width: 720px;
+  max-width: 92vw;
+  max-height: 90vh;
   background: var(--card);
-  height: 100vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid var(--primary-dim);
-  transform: translateX(100%);
-  transition: transform var(--transition-slide);
+  border: 1px solid var(--primary-dim);
+  border-radius: 6px;
+  transform: scale(0.95);
+  opacity: 0;
+  transition: transform var(--transition-slide), opacity var(--transition-slide);
 }
 
 .overlay.visible .editor-panel {
-  transform: translateX(0);
+  transform: scale(1);
+  opacity: 1;
 }
 
 .editor-header {
@@ -1276,6 +1544,7 @@ td.editing input, td.editing select {
   padding: 0.75rem 1rem;
   border-bottom: 1px solid var(--border);
   background: var(--bg);
+  border-radius: 6px 6px 0 0;
 }
 
 .editor-header h2 {
@@ -1291,7 +1560,7 @@ td.editing input, td.editing select {
 
 .editor-header .btn-close { color: var(--text-light); }
 
-.editor-body { flex: 1; padding: 1rem; overflow-y: auto; }
+.editor-body { flex: 1; padding: 1.25rem 1.5rem; overflow-y: auto; }
 
 .editor-footer {
   padding: 0.6rem 1rem;
@@ -1335,7 +1604,19 @@ td.editing input, td.editing select {
 .editor-section[open] summary::before { transform: rotate(90deg); }
 .editor-section summary:hover { background: var(--highlight); color: var(--primary); }
 
-.editor-section-body { padding: 0.65rem; }
+.editor-section-body { padding: 0.65rem; overflow-x: auto; }
+
+.editor-panel .form-group label {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.editor-panel .form-group input,
+.editor-panel .form-group select {
+  min-width: 0;
+  width: 100%;
+}
 
 /* ============================================================
    PREVIEW PANEL
@@ -1793,6 +2074,15 @@ td.editing input, td.editing select {
 }
 .map-upload-btn { cursor: pointer; }
 #farm-map { z-index: 1; }
+.map-stats {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+.map-stats span { white-space: nowrap; }
 .map-legend {
   margin-top: 0.6rem;
   padding: 0.6rem 0.85rem;
@@ -1884,7 +2174,7 @@ td.editing input, td.editing select {
   header { padding: 0.6rem 0.75rem 0; }
   header h1 { font-size: 0.85rem; }
 
-  .nav-primary { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .nav-primary { flex-wrap: wrap; }
   .tab-btn { padding: 0.4rem 0.6rem; font-size: 0.7rem; min-height: 40px; flex-shrink: 0; }
 
   main { padding: 0.75rem; }
@@ -2225,6 +2515,44 @@ td.editing input, td.editing select {
   display: flex;
   gap: 0.4rem;
   justify-content: flex-end;
+}
+
+.prog-suggest-panel {
+  background: var(--card-alt);
+  border: 1px dashed var(--border-light);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.prog-suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+.prog-suggest-item:hover { background: var(--highlight); }
+
+.prog-suggest-icon {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--primary);
+  min-width: 1.2rem;
+  text-align: center;
+}
+
+.prog-suggest-text {
+  font-size: 0.85rem;
+  color: var(--text-bright);
+}
+
+.prog-suggest-detail {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  margin-left: auto;
 }
 
 .prog-badge {
