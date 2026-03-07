@@ -93,7 +93,7 @@
 
 **Milestone Goal:** Deploy the entire 8-app farm operations platform to a public URL so 6-15 coworkers can access it with role-based permissions and email-invite onboarding. Infrastructure milestone — no new features.
 
-- [ ] **Phase 35: VPS Provisioning + Process Management** - PM2 ecosystem config, production env templates, CORS lockdown, port configuration, and Next.js production builds
+- [x] **Phase 35: VPS Provisioning + Process Management** - PM2 ecosystem config, production env templates, CORS lockdown, port configuration, and Next.js production builds (completed 2026-03-07)
 - [ ] **Phase 36: Reverse Proxy + HTTPS** - Caddy reverse proxy with auto-HTTPS subdomain routing and deployment README
 - [ ] **Phase 37: Database + Backups** - Production PostgreSQL setup, daily backup scripts, and secrets documentation
 - [ ] **Phase 38: Email Invite + Onboarding** - Production email invite flow, invited user signup, and password reset
@@ -193,7 +193,7 @@ Plans:
 | 32. Claims Lifecycle UI | v6.0 | 2/2 | Complete | 2026-03-06 |
 | 34. Insurance & Claims UI Wiring | v6.0 | 1/1 | Complete | 2026-03-06 |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
-| 35. VPS Provisioning + Process Management | v7.0 | 0/2 | Not started | - |
+| 35. VPS Provisioning + Process Management | 2/2 | Complete   | 2026-03-07 | - |
 | 36. Reverse Proxy + HTTPS | v7.0 | 0/? | Not started | - |
 | 37. Database + Backups | v7.0 | 0/? | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |

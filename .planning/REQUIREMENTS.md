@@ -11,14 +11,14 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 
 - [ ] **INFRA-01**: All 8 apps run under PM2 with auto-restart, defined in a single ecosystem config
 - [ ] **INFRA-02**: Caddy reverse proxy routes subdomain traffic to correct app with auto-HTTPS
-- [ ] **INFRA-03**: Production `.env` templates exist for every app with documented placeholder values
+- [x] **INFRA-03**: Production `.env` templates exist for every app with documented placeholder values
 - [ ] **INFRA-04**: Deployment README provides step-by-step VPS setup (Node.js, PostgreSQL, Caddy, PM2, git clone, DNS)
-- [ ] **INFRA-05**: grain-tickets port configurable via PORT env var (avoids conflict with portal on 3000)
+- [x] **INFRA-05**: grain-tickets port configurable via PORT env var (avoids conflict with portal on 3000)
 - [ ] **INFRA-06**: Both Next.js apps (portal, organic-cert) build and start in production mode
 
 ### Security
 
-- [ ] **SEC-01**: All Express apps restrict CORS to portal domain only
+- [x] **SEC-01**: All Express apps restrict CORS to portal domain only
 - [ ] **SEC-02**: Daily backup scripts run for JSON data files (7-day retention) and PostgreSQL (pg_dump)
 - [ ] **SEC-03**: Each Express app exposes a `/health` endpoint returning 200
 - [ ] **SEC-04**: Production secrets documented (what to rotate, where they go)
@@ -54,9 +54,9 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | INFRA-01 | Phase 35 | Pending |
-| INFRA-03 | Phase 35 | Pending |
-| INFRA-05 | Phase 35 | Pending |
-| SEC-01 | Phase 35 | Pending |
+| INFRA-03 | Phase 35 | Complete |
+| INFRA-05 | Phase 35 | Complete |
+| SEC-01 | Phase 35 | Complete |
 | INFRA-06 | Phase 35 | Pending |
 | INFRA-02 | Phase 36 | Pending |
 | INFRA-04 | Phase 36 | Pending |

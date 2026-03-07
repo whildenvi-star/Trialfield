@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v7.0 Public Deployment & Team Onboarding — Phase 35 ready to plan
+**Current focus:** v7.0 Public Deployment & Team Onboarding — Phase 35 in progress
 
 ## Current Position
 
 Phase: 35 of 39 (VPS Provisioning + Process Management)
-Plan: —
-Status: Ready to plan
-Last activity: 2026-03-06 — Roadmap created for v7.0
+Plan: 2 of 2 complete
+Status: Phase 35 complete
+Last activity: 2026-03-06 — Completed 35-02 CORS + Env Templates
 
-Progress: [░░░░░░░░░░] 0% (v7.0)
+Progress: [##░░░░░░░░] 20% (v7.0)
 
 ## Performance Metrics
 
@@ -38,6 +38,10 @@ Progress: [░░░░░░░░░░] 0% (v7.0)
 - [v7.0]: Caddy for reverse proxy (auto-HTTPS via Let's Encrypt, zero config TLS)
 - [v7.0]: Supabase default mailer for invites (not custom SMTP) — sufficient for invite volume
 - [v7.0]: No self-registration — admin creates/invites all users
+- [35-01]: grain-tickets port moved from 3000 to 3007 to avoid portal conflict
+- [35-01]: 512M memory limit for Next.js apps, 256M for Express apps in PM2
+- [35-01]: organic-cert has nested .git — committed separately from parent repo
+- [35-02]: CORS fallback defaults to http://localhost:3000 for dev convenience
 
 ### Pending Todos
 
@@ -53,6 +57,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: Roadmap created for v7.0 — 5 phases (35-39), 13 requirements mapped
+Stopped at: Completed 35-02-PLAN.md (CORS + Env Templates)
 Resume file: —
-Next action: Plan Phase 35 (VPS Provisioning + Process Management)
+Next action: Phase 36 (Caddy Reverse Proxy)
