@@ -203,12 +203,15 @@ Plans:
 **Depends on**: Phase 40 (tokens inform banner colors — BANNER component must import from tokens)
 **Requirements**: TOKEN-01, TOKEN-02, TOKEN-03, TOKEN-04, TOKEN-05
 **Success Criteria** (what must be TRUE):
-  1. A src/styles/tokens.ts file exists exporting named color constants, font stack, and spacing values — and is the single source of truth for the design system
+  1. A src/lib/tokens.ts file exists exporting named color constants, font stack, and spacing values — and is the single source of truth for the design system
   2. The ASCIIBannerStrip component imports all color values from tokens.ts with zero hardcoded hex strings in the component file
   3. The portal header, dashboard cards, navigation, and badges all render in the navy/cyan palette — no remnants of the old soil palette (#080604, #C8860A, #2a2218) visible
   4. tailwind.config.ts references the token values so Tailwind utility classes produce navy/cyan colors
   5. A DESIGN.md file documents the token system, font stack, spacing scale, and component color patterns — enough for a developer to build a new component in the correct style
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 42-01-PLAN.md — Create tokens.ts, migrate Tailwind config to glomalin-* namespace, wire ASCIIBannerStrip to tokens
+- [ ] 42-02-PLAN.md — Batch rename soil-* to glomalin-* across all portal components, create DESIGN.md
 
 ### Phase 43: Scene Expansion
 **Goal**: Multiple ASCII animation scenes are available (mycelium, drone landscape, seasonal) with an easter egg toggle and smooth crossfade transitions between scenes
@@ -270,5 +273,5 @@ Plans:
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 42. Design Token Alignment & Palette Swap | v8.0 | 0/? | Not started | - |
+| 42. Design Token Alignment & Palette Swap | v8.0 | 0/2 | Not started | - |
 | 43. Scene Expansion | v8.0 | 0/2 | Not started | - |
