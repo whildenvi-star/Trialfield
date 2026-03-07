@@ -197,7 +197,7 @@ Plans:
 | 34. Insurance & Claims UI Wiring | v6.0 | 1/1 | Complete | 2026-03-06 |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
 | 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
-| 36. Reverse Proxy + HTTPS | v7.0 | 0/2 | Not started | - |
+| 36. Reverse Proxy + HTTPS | 1/2 | In Progress|  | - |
 | 37. Database + Backups | v7.0 | 0/? | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |

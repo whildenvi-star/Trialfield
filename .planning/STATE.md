@@ -16,7 +16,7 @@ Last activity: 2026-03-07 — Milestone v8.0 started
 
 Progress: [░░░░░░░░░░] 0% (v8.0)
 
-**v7.0 status:** Phase 35 complete, phases 36-39 pending (deployment — independent track)
+**v7.0 status:** Phase 36 plan 1 of 2 complete, phases 37-39 pending (deployment — independent track)
 
 ## Performance Metrics
 
@@ -44,6 +44,8 @@ Progress: [░░░░░░░░░░] 0% (v8.0)
 - [35-01]: 512M memory limit for Next.js apps, 256M for Express apps in PM2
 - [35-01]: organic-cert has nested .git — committed separately from parent repo
 - [35-02]: CORS fallback defaults to http://localhost:3000 for dev convenience
+- [36-01]: DOMAIN env var placeholder in Caddyfile for deploy-time domain config
+- [36-01]: X-Forwarded-Proto header only on Next.js apps (portal, cert) for secure cookies
 
 ### Pending Todos
 
