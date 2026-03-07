@@ -12,9 +12,11 @@ interface HeaderUser {
 
 interface HeaderProps {
   user: HeaderUser
+  bannerDisabled?: boolean
+  onBannerToggle?: () => void
 }
 
-export default function Header({ user }: HeaderProps) {
+export default function Header({ user, bannerDisabled, onBannerToggle }: HeaderProps) {
   const [open, setOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -43,7 +45,7 @@ export default function Header({ user }: HeaderProps) {
           {/* Left: Branding */}
           <Link
             href="/dashboard"
-            className="text-soil-accent font-bold tracking-wider font-mono text-sm hover:opacity-80 transition-opacity"
+            className="text-soil-gold font-bold tracking-wider font-mono text-sm hover:opacity-80 transition-opacity"
           >
             GLOMALIN
           </Link>
@@ -76,6 +78,21 @@ export default function Header({ user }: HeaderProps) {
                   </p>
                 </div>
                 <div className="border-t border-soil-border" />
+                {onBannerToggle && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={onBannerToggle}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-soil-text font-mono hover:bg-soil-border transition-colors"
+                    >
+                      <span>Banner</span>
+                      <span className={bannerDisabled ? 'text-soil-muted' : 'text-soil-accent'}>
+                        {bannerDisabled ? '[OFF]' : '[ON]'}
+                      </span>
+                    </button>
+                    <div className="border-t border-soil-border" />
+                  </>
+                )}
                 <form action={logout}>
                   <button
                     type="submit"

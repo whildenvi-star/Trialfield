@@ -1,9 +1,8 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import Header from '@/components/header'
+import BannerSection from '@/components/layout/banner-section'
 import DeniedToast from '@/components/denied-toast'
-import ASCIIBannerStrip from '@/components/layout/ASCIIBannerStrip'
 
 export default async function ProtectedLayout({
   children,
@@ -29,20 +28,13 @@ export default async function ProtectedLayout({
 
   return (
     <div className="min-h-screen bg-soil-bg">
-      <Header
+      <BannerSection
         user={{
           email: user.email ?? '',
           fullName: profile?.full_name ?? null,
           role: profile?.role ?? 'viewer',
         }}
       />
-      {/* 72px desktop / 48px mobile */}
-      <div className="hidden md:block">
-        <ASCIIBannerStrip height={72} />
-      </div>
-      <div className="block md:hidden">
-        <ASCIIBannerStrip height={48} nodeCount={6} />
-      </div>
       <Suspense fallback={null}>
         <DeniedToast />
       </Suspense>
