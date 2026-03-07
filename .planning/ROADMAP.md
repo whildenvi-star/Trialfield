@@ -121,7 +121,7 @@
   3. grain-tickets starts on a configurable PORT (not hardcoded 3000) so it coexists with the portal
   4. Both Next.js apps (glomalin-portal, organic-cert) run via `next start` in production mode (not `next dev`)
   5. Express apps reject cross-origin requests from any domain other than the portal origin
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [x] 35-01-PLAN.md — PM2 ecosystem config, grain-tickets port fix, Next.js production builds
 - [x] 35-02-PLAN.md — CORS lockdown on Express apps, .env.example templates for all 8 apps
@@ -134,7 +134,7 @@ Plans:
   1. User can open `portal.farm-domain.com` in a browser and see the Glomalin Portal landing page over HTTPS
   2. Each app is reachable at its own subdomain (e.g., `tickets.farm-domain.com`, `budget.farm-domain.com`) with a valid TLS certificate
   3. A deployment README exists with step-by-step instructions covering DNS, Caddy, PM2, Node.js, PostgreSQL, and git clone — enough for someone to rebuild the VPS from scratch
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [x] 36-01-PLAN.md — Caddyfile with subdomain-to-port routing and auto-HTTPS for all 8 apps
 - [x] 36-02-PLAN.md — DEPLOY.md step-by-step VPS setup guide (DNS, Node.js, PostgreSQL, Caddy, PM2)
@@ -178,7 +178,7 @@ Plans:
   3. The animation runs at ~50fps on a standard laptop, pauses when the browser tab is hidden, and cleans up all timers/RAF on unmount
   4. The bottom edge of the strip fades seamlessly into the page background via gradient overlay — no hard line visible
   5. Two ASCIIBannerStrip instances on the same page animate out of sync with each other (random time offset)
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [x] 40-01-PLAN.md -- Extract noise utilities, refactor component API (height/className/paused)
 - [x] 40-02-PLAN.md -- Enhance visual behavior: tendril growth, node lifecycle, white highlights, clock-based resume
@@ -193,7 +193,7 @@ Plans:
   3. With prefers-reduced-motion enabled in OS settings, the banner shows a single static ASCII frame with no animation loop running
   4. A user can disable the banner entirely via their settings, and it stays disabled across page navigations and sessions
   5. On initial page load, the banner fades in smoothly (opacity 0 to 1 over 400ms) rather than popping in abruptly
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [x] 41-01-PLAN.md — Mobile responsive nodeCount + accessibility attributes
 - [x] 41-02-PLAN.md — User banner disable toggle with localStorage persistence
@@ -208,10 +208,11 @@ Plans:
   3. The portal header, dashboard cards, navigation, and badges all render in the navy/cyan palette — no remnants of the old soil palette (#080604, #C8860A, #2a2218) visible
   4. tailwind.config.ts references the token values so Tailwind utility classes produce navy/cyan colors
   5. A DESIGN.md file documents the token system, font stack, spacing scale, and component color patterns — enough for a developer to build a new component in the correct style
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 42-01-PLAN.md — Create tokens.ts, migrate Tailwind config to glomalin-* namespace, wire ASCIIBannerStrip to tokens
 - [ ] 42-02-PLAN.md — Batch rename soil-* to glomalin-* across all portal components, create DESIGN.md
+- [ ] 42-03-PLAN.md — Gap closure: wire remaining hardcoded hex values to tokens.ts
 
 ### Phase 43: Scene Expansion
 **Goal**: Multiple ASCII animation scenes are available (mycelium, drone landscape, seasonal) with an easter egg toggle and smooth crossfade transitions between scenes
@@ -223,7 +224,7 @@ Plans:
   3. A user's scene preference persists across sessions (stored per-user), and defaults to mycelium for new users
   4. Switching scenes triggers a 200ms opacity crossfade — no flash or hard cut between the old and new scene
   5. Clicking a bright mycelium node in the banner cycles to the next scene with no visible button or toggle UI (easter egg discovery)
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 43-01-PLAN.md — Scene engine architecture, drone landscape renderer, crossfade transitions
 - [ ] 43-02-PLAN.md — Seasonal scene renderer, scene preference persistence, easter egg click-to-cycle
