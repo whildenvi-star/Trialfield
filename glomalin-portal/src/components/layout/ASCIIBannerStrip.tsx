@@ -21,6 +21,7 @@ interface ASCIIBannerStripProps {
   height?: number
   className?: string
   paused?: boolean
+  nodeCount?: number
 }
 
 const DEFAULT_BG_COLOR = '#080a0f'
@@ -30,6 +31,7 @@ export default function ASCIIBannerStrip({
   height = 72,
   className,
   paused = false,
+  nodeCount = DEFAULT_NODE_COUNT,
 }: ASCIIBannerStripProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -174,7 +176,7 @@ export default function ASCIIBannerStrip({
     const container = containerRef.current
     if (!canvas || !container) return
 
-    initNodes(DEFAULT_NODE_COUNT)
+    initNodes(nodeCount)
 
     const resize = () => {
       const dpr = window.devicePixelRatio || 1
@@ -227,7 +229,7 @@ export default function ASCIIBannerStrip({
       window.removeEventListener('resize', handleResize)
       clearTimeout(resizeTimer)
     }
-  }, [initNodes, prefersReducedMotion, render])
+  }, [initNodes, prefersReducedMotion, render, nodeCount])
 
   // Handle paused prop: stop/restart RAF loop
   useEffect(() => {
@@ -261,6 +263,8 @@ export default function ASCIIBannerStrip({
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-hidden="true"
       className={`relative w-full overflow-hidden${className ? ` ${className}` : ''}`}
       style={{
         height,
