@@ -3,12 +3,15 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import {
   noise2D,
-  fbm,
   generateMycelium,
+  tickNodes,
+  tickEdges,
+  initEdgeStates,
   CHAR_RAMP,
   charColor,
   charOpacity,
   type MyceliumNode,
+  type EdgeState,
   type Pulse,
 } from './ascii-noise'
 
@@ -33,6 +36,7 @@ export default function ASCIIBannerStrip({
   const animRef = useRef<number>(0)
   const nodesRef = useRef<MyceliumNode[]>([])
   const edgesRef = useRef<[number, number][]>([])
+  const edgeStatesRef = useRef<EdgeState[]>([])
   const pulsesRef = useRef<Pulse[]>([])
   const timeOffsetRef = useRef(Math.random() * 100)
   const [visible, setVisible] = useState(false)
@@ -42,8 +46,9 @@ export default function ASCIIBannerStrip({
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-  // Initialize mycelium nodes
+  // Initialize mycelium nodes with lifecycle
   const initNodes = useCallback((count: number) => {
+    const now = Date.now() * 0.001 + timeOffsetRef.current
     const newNodes: MyceliumNode[] = []
     for (let i = 0; i < count; i++) {
       newNodes.push({
@@ -52,6 +57,8 @@ export default function ASCIIBannerStrip({
         vx: (Math.random() - 0.5) * 0.0003,
         vy: (Math.random() - 0.5) * 0.0003,
         radius: 0.02 + Math.random() * 0.015,
+        birthTime: now - Math.random() * 10, // stagger initial births
+        lifespan: 8 + Math.random() * 7,     // 8-15s
       })
     }
     nodesRef.current = newNodes
@@ -59,7 +66,6 @@ export default function ASCIIBannerStrip({
     // Build edges: connect nearby nodes (Delaunay-ish)
     const edges: [number, number][] = []
     for (let i = 0; i < count; i++) {
-      // Connect to 2-3 nearest neighbors
       const dists: { idx: number; d: number }[] = []
       for (let j = 0; j < count; j++) {
         if (i === j) continue
@@ -71,13 +77,15 @@ export default function ASCIIBannerStrip({
       const connectCount = 2 + Math.floor(Math.random() * 2)
       for (let k = 0; k < Math.min(connectCount, dists.length); k++) {
         const j = dists[k].idx
-        // Avoid duplicate edges
         if (!edges.some(([a, b]) => (a === i && b === j) || (a === j && b === i))) {
           edges.push([i, j])
         }
       }
     }
     edgesRef.current = edges
+
+    // Initialize edge growth states (staggered)
+    edgeStatesRef.current = initEdgeStates(edges.length, now)
 
     // Initial pulses
     pulsesRef.current = edges.slice(0, 4).map((_, idx) => ({
@@ -104,18 +112,14 @@ export default function ASCIIBannerStrip({
 
     const nodes = nodesRef.current
     const edges = edgesRef.current
+    const edgeStates = edgeStatesRef.current
     const pulses = pulsesRef.current
 
-    // Update node positions (slow drift)
-    for (const node of nodes) {
-      node.x += node.vx
-      node.y += node.vy
-      // Bounce at boundaries
-      if (node.x < 0.02 || node.x > 0.98) node.vx *= -1
-      if (node.y < 0.05 || node.y > 0.95) node.vy *= -1
-      node.x = Math.max(0.02, Math.min(0.98, node.x))
-      node.y = Math.max(0.05, Math.min(0.95, node.y))
-    }
+    // Tick node positions and lifecycle
+    tickNodes(nodes, time, cols, rows)
+
+    // Tick edge growth/retraction
+    tickEdges(edgeStates, time)
 
     // Update pulses
     for (const pulse of pulses) {
@@ -127,8 +131,8 @@ export default function ASCIIBannerStrip({
       }
     }
 
-    // Generate brightness grid
-    const grid = generateMycelium(cols, rows, time, nodes, pulses, edges)
+    // Generate brightness grid with tendril growth
+    const grid = generateMycelium(cols, rows, time, nodes, pulses, edges, edgeStates)
 
     // Clear canvas
     ctx.clearRect(0, 0, w, h)
@@ -140,7 +144,7 @@ export default function ASCIIBannerStrip({
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         const brightness = grid[r * cols + c]
-        if (brightness < 0.01) continue // skip empty
+        if (brightness < 0.01) continue
 
         const charIdx = Math.min(
           CHAR_RAMP.length - 1,
@@ -157,7 +161,7 @@ export default function ASCIIBannerStrip({
 
     ctx.globalAlpha = 1
 
-    // Bottom gradient overlay: transparent → bgColor
+    // Bottom gradient overlay: transparent -> bgColor
     const grad = ctx.createLinearGradient(0, h * 0.65, 0, h)
     grad.addColorStop(0, 'transparent')
     grad.addColorStop(1, DEFAULT_BG_COLOR)
@@ -197,19 +201,20 @@ export default function ASCIIBannerStrip({
     requestAnimationFrame(() => setVisible(true))
 
     if (prefersReducedMotion) {
-      // Single static frame
-      render(canvas, timeOffsetRef.current)
+      // Single static frame using clock-based time
+      render(canvas, Date.now() * 0.001 + timeOffsetRef.current)
     } else {
-      // Animation loop
+      // Animation loop — clock-based time for tab resume
       let lastFrame = 0
       const FRAME_INTERVAL = 1000 / 50 // ~50fps
 
       const loop = (timestamp: number) => {
         if (timestamp - lastFrame >= FRAME_INTERVAL) {
           lastFrame = timestamp
-          // Throttle when tab hidden
           if (!document.hidden) {
-            render(canvas, timestamp * 0.001 + timeOffsetRef.current)
+            // Clock-based time: animation progresses even when tab is hidden
+            const animTime = Date.now() * 0.001 + timeOffsetRef.current
+            render(canvas, animTime)
           }
         }
         animRef.current = requestAnimationFrame(loop)
@@ -226,7 +231,7 @@ export default function ASCIIBannerStrip({
 
   // Handle paused prop: stop/restart RAF loop
   useEffect(() => {
-    if (prefersReducedMotion) return // static frame, nothing to pause
+    if (prefersReducedMotion) return
 
     const canvas = canvasRef.current
     if (!canvas) return
@@ -235,7 +240,7 @@ export default function ASCIIBannerStrip({
       cancelAnimationFrame(animRef.current)
       animRef.current = 0
     } else if (animRef.current === 0) {
-      // Restart animation loop
+      // Restart animation loop — clock-based time
       let lastFrame = 0
       const FRAME_INTERVAL = 1000 / 50
 
@@ -243,7 +248,8 @@ export default function ASCIIBannerStrip({
         if (timestamp - lastFrame >= FRAME_INTERVAL) {
           lastFrame = timestamp
           if (!document.hidden) {
-            render(canvas, timestamp * 0.001 + timeOffsetRef.current)
+            const animTime = Date.now() * 0.001 + timeOffsetRef.current
+            render(canvas, animTime)
           }
         }
         animRef.current = requestAnimationFrame(loop)
