@@ -10,6 +10,7 @@
 - ✅ **v5.0 Glomalin Portal — Next.js + Supabase Scaffold** — Phases 24-26 (shipped 2026-03-05) — [archive](milestones/v5.0-ROADMAP.md)
 - ✅ **v6.0 FSA Acres, Insurance & Claims** — Phases 27-34 (shipped 2026-03-06)
 - 🚧 **v7.0 Public Deployment & Team Onboarding** — Phases 35-39 (in progress)
+- 🚧 **v8.0 ASCII Banner Strip & Design System** — Phases 40-43 (in progress, parallel with v7.0)
 
 ## Phases
 
@@ -99,6 +100,15 @@
 - [ ] **Phase 38: Email Invite + Onboarding** - Production email invite flow, invited user signup, and password reset
 - [ ] **Phase 39: Production Hardening** - Health check endpoints on all Express apps
 
+### v8.0 ASCII Banner Strip & Design System (In Progress — Parallel Track)
+
+**Milestone Goal:** Add an animated ASCII mycelial network banner strip as integrated design chrome across all portal module pages, unify the Glomalin design system with a canonical navy/cyan palette, and expand with additional ASCII animation scenes.
+
+- [ ] **Phase 40: ASCIIBannerStrip Component** - Standalone animated ASCII mycelial network canvas component at ~50fps with no external deps
+- [ ] **Phase 41: App Shell Integration** - Banner wired into protected layout with mobile responsive, a11y, and user disable setting
+- [ ] **Phase 42: Design Token Alignment & Palette Swap** - Portal-wide navy/cyan design system replacing soil palette with canonical token file
+- [ ] **Phase 43: Scene Expansion** - Additional ASCII scenes (drone, seasonal) with easter egg toggle and crossfade transitions
+
 ## Phase Details
 
 ### Phase 35: VPS Provisioning + Process Management
@@ -113,8 +123,8 @@
   5. Express apps reject cross-origin requests from any domain other than the portal origin
 **Plans**: 2 plans
 Plans:
-- [ ] 35-01-PLAN.md — PM2 ecosystem config, grain-tickets port fix, Next.js production builds
-- [ ] 35-02-PLAN.md — CORS lockdown on Express apps, .env.example templates for all 8 apps
+- [x] 35-01-PLAN.md — PM2 ecosystem config, grain-tickets port fix, Next.js production builds
+- [x] 35-02-PLAN.md — CORS lockdown on Express apps, .env.example templates for all 8 apps
 
 ### Phase 36: Reverse Proxy + HTTPS
 **Goal**: Users access every app through clean subdomains with automatic HTTPS — no port numbers, no HTTP
@@ -126,8 +136,8 @@ Plans:
   3. A deployment README exists with step-by-step instructions covering DNS, Caddy, PM2, Node.js, PostgreSQL, and git clone — enough for someone to rebuild the VPS from scratch
 **Plans**: 2 plans
 Plans:
-- [ ] 36-01-PLAN.md — Caddyfile with subdomain-to-port routing and auto-HTTPS for all 8 apps
-- [ ] 36-02-PLAN.md — DEPLOY.md step-by-step VPS setup guide (DNS, Node.js, PostgreSQL, Caddy, PM2)
+- [x] 36-01-PLAN.md — Caddyfile with subdomain-to-port routing and auto-HTTPS for all 8 apps
+- [x] 36-02-PLAN.md — DEPLOY.md step-by-step VPS setup guide (DNS, Node.js, PostgreSQL, Caddy, PM2)
 
 ### Phase 37: Database + Backups
 **Goal**: Production data is safe — PostgreSQL databases run with correct credentials and daily backups protect against data loss
@@ -156,6 +166,54 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Each of the 6 Express apps responds to `GET /health` with HTTP 200 and a JSON body indicating the app name and status
   2. PM2 or a simple curl script can hit all health endpoints and report which apps are up or down
+**Plans**: TBD
+
+### Phase 40: ASCIIBannerStrip Component
+**Goal**: Standalone component renders an animated ASCII mycelial network on a canvas element at ~50fps with retina support, pure noise functions, and no external dependencies
+**Depends on**: Nothing (greenfield component in glomalin-portal)
+**Requirements**: BANNER-01, BANNER-02, BANNER-03, BANNER-04, BANNER-05, BANNER-06, BANNER-07
+**Success Criteria** (what must be TRUE):
+  1. Importing ASCIIBannerStrip and rendering it in any page shows a smoothly animating ASCII mycelial network at the configured height (default 72px)
+  2. Resizing the browser window causes the canvas to re-measure and re-render within 150ms without visual glitch or memory leak
+  3. The animation runs at ~50fps on a standard laptop, pauses when the browser tab is hidden, and cleans up all timers/RAF on unmount
+  4. The bottom edge of the strip fades seamlessly into the page background via gradient overlay — no hard line visible
+  5. Two ASCIIBannerStrip instances on the same page animate out of sync with each other (random time offset)
+**Plans**: TBD
+
+### Phase 41: App Shell Integration
+**Goal**: The ASCII banner appears on every protected page between the header and content, with mobile responsive sizing, accessibility support, and a user toggle to disable it
+**Depends on**: Phase 40 (ASCIIBannerStrip component must exist)
+**Requirements**: SHELL-01, SHELL-02, SHELL-03, SHELL-04, SHELL-05
+**Success Criteria** (what must be TRUE):
+  1. Navigating to any protected route (dashboard, module pages, admin) shows the ASCII banner between the header and page content
+  2. On a mobile viewport (<768px), the banner renders at 48px height with reduced node count (6 mycelium nodes) — no horizontal scroll or layout break
+  3. With prefers-reduced-motion enabled in OS settings, the banner shows a single static ASCII frame with no animation loop running
+  4. A user can disable the banner entirely via their settings, and it stays disabled across page navigations and sessions
+  5. On initial page load, the banner fades in smoothly (opacity 0 to 1 over 400ms) rather than popping in abruptly
+**Plans**: TBD
+
+### Phase 42: Design Token Alignment & Palette Swap
+**Goal**: The entire Glomalin Portal uses a unified navy/cyan design system defined in a canonical token file, replacing the original soil palette across all components
+**Depends on**: Phase 40 (tokens inform banner colors — BANNER component must import from tokens)
+**Requirements**: TOKEN-01, TOKEN-02, TOKEN-03, TOKEN-04, TOKEN-05
+**Success Criteria** (what must be TRUE):
+  1. A src/styles/tokens.ts file exists exporting named color constants, font stack, and spacing values — and is the single source of truth for the design system
+  2. The ASCIIBannerStrip component imports all color values from tokens.ts with zero hardcoded hex strings in the component file
+  3. The portal header, dashboard cards, navigation, and badges all render in the navy/cyan palette — no remnants of the old soil palette (#080604, #C8860A, #2a2218) visible
+  4. tailwind.config.ts references the token values so Tailwind utility classes produce navy/cyan colors
+  5. A DESIGN.md file documents the token system, font stack, spacing scale, and component color patterns — enough for a developer to build a new component in the correct style
+**Plans**: TBD
+
+### Phase 43: Scene Expansion
+**Goal**: Multiple ASCII animation scenes are available (mycelium, drone landscape, seasonal) with an easter egg toggle and smooth crossfade transitions between scenes
+**Depends on**: Phase 40 (base rendering engine), Phase 41 (shell integration for scene display)
+**Requirements**: SCENE-01, SCENE-02, SCENE-03, SCENE-04, SCENE-05
+**Success Criteria** (what must be TRUE):
+  1. Switching to the DRONE scene shows a procedural rolling landscape with visible cloud layer, crop rows, and depth fog — distinctly different from the mycelium scene
+  2. In SEASONAL mode, the banner automatically renders a planting animation in spring, growth in summer, harvest in fall, and dormant in winter based on the current calendar month
+  3. A user's scene preference persists across sessions (stored per-user), and defaults to mycelium for new users
+  4. Switching scenes triggers a 200ms opacity crossfade — no flash or hard cut between the old and new scene
+  5. Clicking a bright mycelium node in the banner cycles to the next scene with no visible button or toggle UI (easter egg discovery)
 **Plans**: TBD
 
 ## Progress
@@ -197,7 +255,11 @@ Plans:
 | 34. Insurance & Claims UI Wiring | v6.0 | 1/1 | Complete | 2026-03-06 |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
 | 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
-| 36. Reverse Proxy + HTTPS | 2/2 | Complete    | 2026-03-07 | - |
+| 36. Reverse Proxy + HTTPS | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 37. Database + Backups | v7.0 | 0/? | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
+| 40. ASCIIBannerStrip Component | v8.0 | 0/? | Not started | - |
+| 41. App Shell Integration | v8.0 | 0/? | Not started | - |
+| 42. Design Token Alignment & Palette Swap | v8.0 | 0/? | Not started | - |
+| 43. Scene Expansion | v8.0 | 0/? | Not started | - |

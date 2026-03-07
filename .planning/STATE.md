@@ -2,21 +2,21 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-06)
+See: .planning/PROJECT.md (updated 2026-03-07)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
 **Current focus:** v8.0 ASCII Banner Strip & Design System (parallel with v7.0 deployment)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements for v8.0
-Last activity: 2026-03-07 — Milestone v8.0 started
+Phase: 40 of 43 (ASCIIBannerStrip Component)
+Plan: 0 of ? in current phase
+Status: Ready to plan
+Last activity: 2026-03-07 — v8.0 roadmap created (phases 40-43)
 
 Progress: [░░░░░░░░░░] 0% (v8.0)
 
-**v7.0 status:** Phase 36 plan 2 of 2 complete, phases 37-39 pending (deployment — independent track)
+**v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
 
 ## Performance Metrics
 
@@ -36,18 +36,11 @@ Progress: [░░░░░░░░░░] 0% (v8.0)
 ### Decisions
 
 - [v7.0]: Infrastructure-only milestone — no new features, deployment + onboarding only
-- [v7.0]: PM2 on bare metal VPS (not Docker) — simpler for 6-15 users, JSON apps cannot multi-instance
-- [v7.0]: Caddy for reverse proxy (auto-HTTPS via Let's Encrypt, zero config TLS)
-- [v7.0]: Supabase default mailer for invites (not custom SMTP) — sufficient for invite volume
-- [v7.0]: No self-registration — admin creates/invites all users
-- [35-01]: grain-tickets port moved from 3000 to 3007 to avoid portal conflict
-- [35-01]: 512M memory limit for Next.js apps, 256M for Express apps in PM2
-- [35-01]: organic-cert has nested .git — committed separately from parent repo
-- [35-02]: CORS fallback defaults to http://localhost:3000 for dev convenience
-- [36-01]: DOMAIN env var placeholder in Caddyfile for deploy-time domain config
-- [36-01]: X-Forwarded-Proto header only on Next.js apps (portal, cert) for secure cookies
-- [36-02]: DEPLOY.md at repo root as single deployment reference (368 lines, 12 sections)
-- [36-02]: /srv/farm-ops as canonical deploy path on VPS
+- [v7.0]: PM2 on bare metal VPS (not Docker) — simpler for 6-15 users
+- [v8.0]: Navy/cyan palette replaces soil palette — no earth tones in final design system
+- [v8.0]: Canvas-only rendering with pure TypeScript noise functions — no external animation deps
+- [v8.0]: Scene toggle is easter egg (hidden), not visible UI control
+- [v8.0]: v7.0 and v8.0 run as parallel tracks — no cross-dependencies
 
 ### Pending Todos
 
@@ -56,13 +49,12 @@ None active.
 ### Blockers/Concerns
 
 - Supabase project credentials required for glomalin-portal production runtime
-- CNH FieldOps staging API — mock mode active in organic-cert (not blocking v7.0)
-- DNS configuration needed — subdomain records must point to VPS IP before Caddy can issue certs
-- Supabase email templates may need production URL updates for invite/reset links
+- DNS configuration needed for v7.0 subdomain routing
+- Token migration (Phase 42) will touch many existing components — risk of visual regressions
 
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 36-02-PLAN.md (VPS Deployment Guide)
+Stopped at: v8.0 roadmap created (phases 40-43, 22 requirements mapped)
 Resume file: —
-Next action: Phase 37 or continue v8.0 requirements
+Next action: `/gsd:plan-phase 40` to plan the ASCIIBannerStrip component
