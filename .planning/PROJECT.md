@@ -44,18 +44,24 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Next.js 14 project with dark soil Tailwind palette, Supabase schema (profiles, module_access, RLS, auto-profile trigger), email/password auth with middleware route protection (auth + admin RBAC + module access), admin panel with user/role/module management, React Flow hub-and-spoke node map on public landing page, dashboard with access-aware module cards, and dynamic module shell pages. 3 phases, 9 plans, 15 requirements — all complete.
 
-## Current Milestone: v6.0 FSA Acres, Insurance & Claims
+## Completed Milestone: v6.0 FSA Acres, Insurance & Claims (2026-03-06)
 
 **Goal:** Transform the FSA Acres module from a flat spreadsheet into an intuitive, guided workflow — then extend with an interactive crop insurance decision tool and a structured claims tracking system. All built inside glomalin-portal/ (Next.js 14 + Supabase).
 
+**Delivered:** Card-based CLU editor with bulk actions and validation, FSA acreage reporting PDF, insurance coverage matrix and payout simulator, claims Kanban with document upload and timeline, cross-module navigation (CLU→Policy→Claim), dashboard summary cards, APH auto-populate, yield sync, and file-claim flow. 8 phases, 15 plans, 27 requirements — all complete.
+
+## Current Milestone: v7.0 Public Deployment & Team Onboarding
+
+**Goal:** Deploy the entire 8-app farm operations platform to a public URL so 6-15 coworkers can access it with role-based permissions and email-invite onboarding. Infrastructure milestone — no new features.
+
 **Target features:**
-- Codebase audit of existing fsa-acres/ module to inform architecture
-- Card-based planting/practice assignment workflow for CLUs with bulk actions, templates, validation, and year-over-year comparison
-- FSA-578 export (print-ready form layout)
-- Interactive crop insurance coverage comparison matrix and payout scenario simulator
-- Insurance historical performance dashboard and policy tracker
-- Claims lifecycle tracker (Kanban pipeline, document management, deadline alerts, analytics)
-- Cross-module integration (FSA → Insurance → Claims), dashboard summary cards, responsive tablet layout
+- Single VPS deployment with PM2 process management for all 8 apps
+- Caddy reverse proxy with auto-HTTPS and subdomain routing
+- Production PostgreSQL for grain-tickets and organic-cert
+- Production environment configuration and secret management
+- Email invite flow for coworker onboarding (already built, needs production wiring)
+- Daily backup scripts for JSON data files and PostgreSQL databases
+- Health check endpoints and production hardening
 
 ## Requirements
 
@@ -118,21 +124,13 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 ### Active
 
-- [ ] FSA planting/practice assignment workflow redesign (card-based, bulk actions, templates)
-- [ ] Inline validation for FSA-578 data (acreage mismatch, missing fields, date ranges)
-- [ ] Auto-population from Macro Roll-Up and CNH FieldOps data
-- [ ] Year-over-year comparison view for planting decisions
-- [ ] FSA-578 export (print-ready PDF)
-- [ ] Crop insurance coverage level comparison matrix with heat map
-- [ ] Payout scenario simulator (RP/RP-HPE/YP with SCO/ECO layers)
-- [ ] Insurance historical performance dashboard
-- [ ] Policy tracker with premium scheduling
-- [ ] Claims lifecycle tracker (Kanban pipeline board)
-- [ ] Claim detail view with timeline, documents, financials
-- [ ] Claims deadline & alert system
-- [ ] Claims analytics dashboard
-- [ ] Cross-module integration (FSA ↔ Insurance ↔ Claims)
-- [ ] Dashboard summary cards for FSA, Insurance, Claims
+- [ ] PM2 ecosystem config for all 8 apps with production env templates
+- [ ] CORS middleware on all Express apps restricted to portal origin
+- [ ] Caddy reverse proxy with auto-HTTPS subdomain routing
+- [ ] Production database setup (PostgreSQL for grain-tickets + organic-cert)
+- [ ] Email invite flow wired for production domain
+- [ ] Daily backup scripts for JSON files and PostgreSQL
+- [ ] Health check endpoints and production hardening
 
 ### Deferred
 

@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-05)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 34 (Insurance Claims UI Wiring) — 1/1 plans complete
+**Current focus:** v7.0 Public Deployment & Team Onboarding — defining requirements
 
 ## Current Position
 
-Phase: 34 of 34 (Insurance Claims UI Wiring) — COMPLETE
-Plan: 1 of 1 in Phase 34 — COMPLETE (Plan 34-01: APH + Sync Yield + File Claim UI Wiring)
-Status: Phase 34 complete — INS-05, INS-06, CLM-07 closed
-Last activity: 2026-03-06 — Plan 34-01 complete (APH auto-fetch in PolicyDrawer, Sync Yield + File Claim modal in InsuranceWorkspace)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v7.0
+Last activity: 2026-03-06 — Milestone v7.0 started
 
-Progress: [██████████] 100% (v6.0 + Phase 34)
+Progress: [░░░░░░░░░░] 0% (v7.0)
 
 ## Performance Metrics
 
@@ -121,6 +121,6 @@ Progress: [██████████] 100% (v6.0 + Phase 34)
 ## Session Continuity
 
 Last session: 2026-03-06
-Stopped at: Completed 34-01-PLAN.md (APH auto-fetch, Sync Yield, File Claim UI wiring)
-Resume file: .planning/phases/34-insurance-claims-ui-wiring/34-01-SUMMARY.md
-Next action: Phase 34 COMPLETE — INS-05, INS-06, CLM-07 closed
+Stopped at: Starting v7.0 milestone — Public Deployment & Team Onboarding
+Resume file: —
+Next action: Define requirements, create roadmap
