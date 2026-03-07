@@ -53,7 +53,7 @@ export function FarmAccordion({
     <div className="bg-glomalin-surface border border-glomalin-border rounded-lg overflow-hidden">
       {/* Farm header */}
       <div
-        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#141210] transition-colors"
+        className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-glomalin-highlight transition-colors"
         onClick={onToggleExpand}
       >
         {/* Select All checkbox */}
@@ -93,7 +93,7 @@ export function FarmAccordion({
         </div>
 
         {/* Acres badge */}
-        <span className="font-mono text-xs text-glomalin-muted bg-[#1a1714] border border-glomalin-border rounded px-2 py-0.5">
+        <span className="font-mono text-xs text-glomalin-muted bg-glomalin-surface border border-glomalin-border rounded px-2 py-0.5">
           {totalAcres.toLocaleString('en-US', { maximumFractionDigits: 2 })} ac
         </span>
 

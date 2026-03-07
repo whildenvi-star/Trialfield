@@ -43,7 +43,7 @@ export function TractAccordion({
     <div className="ml-4 border-l border-glomalin-border">
       {/* Tract header */}
       <div
-        className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-[#141210] transition-colors"
+        className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-glomalin-highlight transition-colors"
         onClick={onToggleExpand}
       >
         {/* Select All checkbox */}
@@ -76,7 +76,7 @@ export function TractAccordion({
         </span>
 
         {/* Record count badge */}
-        <span className="font-mono text-xs text-glomalin-muted bg-[#1a1714] border border-glomalin-border rounded px-2 py-0.5">
+        <span className="font-mono text-xs text-glomalin-muted bg-glomalin-surface border border-glomalin-border rounded px-2 py-0.5">
           {records.length} CLU{records.length !== 1 ? 's' : ''}
         </span>
 
