@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { MODULES } from '@/lib/modules'
+import { MODULES, getEmbedUrl } from '@/lib/modules'
+import { EmbedFrame } from '@/components/embed-frame'
 
 interface ModulePageProps {
   params: Promise<{ module: string }>
@@ -17,11 +18,40 @@ export default async function ModulePage({ params }: ModulePageProps) {
     notFound()
   }
 
+  // Embedded module: render iframe
+  if (mod.type === 'embed') {
+    const embedUrl = getEmbedUrl(mod)
+
+    if (!embedUrl) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="text-xl font-bold font-mono text-glomalin-text">
+            {mod.label}
+          </h1>
+          <p className="text-glomalin-muted font-mono text-sm mt-2">
+            Embed URL not configured. Set NEXT_PUBLIC_EMBED_URL_{mod.embedKey} in .env.local
+          </p>
+          <div className="mt-8">
+            <Link
+              href="/dashboard"
+              className="text-sm font-mono text-glomalin-muted hover:text-glomalin-accent transition-colors"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      )
+    }
+
+    return <EmbedFrame src={embedUrl} title={mod.label} />
+  }
+
+  // Coming Soon fallback for modules not yet built
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh]">
       {/* Module placeholder icon */}
       <svg
-        className="w-16 h-16 text-soil-border mb-6"
+        className="w-16 h-16 text-glomalin-border mb-6"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -35,18 +65,18 @@ export default async function ModulePage({ params }: ModulePageProps) {
       </svg>
 
       {/* Module name */}
-      <h1 className="text-3xl font-bold font-mono text-soil-text tracking-wide">
+      <h1 className="text-3xl font-bold font-mono text-glomalin-text tracking-wide">
         {mod.label}
       </h1>
 
       {/* Module sublabel */}
-      <p className="text-lg text-soil-muted font-mono mt-2">{mod.sublabel}</p>
+      <p className="text-lg text-glomalin-muted font-mono mt-2">{mod.sublabel}</p>
 
       {/* Divider */}
-      <div className="w-16 h-px bg-soil-border my-6" />
+      <div className="w-16 h-px bg-glomalin-border my-6" />
 
       {/* Coming Soon badge */}
-      <span className="text-sm font-mono text-soil-accent uppercase tracking-widest border border-soil-accent/30 rounded-full px-4 py-1.5">
+      <span className="text-sm font-mono text-glomalin-accent uppercase tracking-widest border border-glomalin-accent/30 rounded-full px-4 py-1.5">
         Coming Soon
       </span>
 
@@ -54,7 +84,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
       <div className="mt-8">
         <Link
           href="/dashboard"
-          className="text-sm font-mono text-soil-muted hover:text-soil-accent transition-colors"
+          className="text-sm font-mono text-glomalin-muted hover:text-glomalin-accent transition-colors"
         >
           Back to Dashboard
         </Link>

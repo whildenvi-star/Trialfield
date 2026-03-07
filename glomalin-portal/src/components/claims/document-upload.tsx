@@ -141,13 +141,13 @@ export function DocumentUpload({ claimId, documents, onUploadComplete }: Documen
     <div className="flex-1 overflow-y-auto flex flex-col px-5 py-4">
       {/* Document list */}
       {documents.length === 0 ? (
-        <p className="text-[#6a5a4a] font-mono text-xs mb-6">No documents uploaded yet.</p>
+        <p className="text-glomalin-muted font-mono text-xs mb-6">No documents uploaded yet.</p>
       ) : (
         <div className="mb-6 space-y-2">
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className="flex items-center justify-between py-2 border-b border-[#2a2218]"
+              className="flex items-center justify-between py-2 border-b border-glomalin-border"
             >
               <div className="flex-1 min-w-0">
                 {doc.signedUrl ? (
@@ -155,14 +155,14 @@ export function DocumentUpload({ claimId, documents, onUploadComplete }: Documen
                     href={doc.signedUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-[#C8860A] font-mono text-xs underline underline-offset-2 hover:opacity-80 transition-opacity truncate block"
+                    className="text-glomalin-accent font-mono text-xs underline underline-offset-2 hover:opacity-80 transition-opacity truncate block"
                   >
                     {doc.filename}
                   </a>
                 ) : (
-                  <p className="text-[#e8d8c0] font-mono text-xs truncate">{doc.filename}</p>
+                  <p className="text-glomalin-text font-mono text-xs truncate">{doc.filename}</p>
                 )}
-                <p className="text-[#6a5a4a] font-mono text-xs mt-0.5">
+                <p className="text-glomalin-muted font-mono text-xs mt-0.5">
                   {formatFileSize(doc.file_size)} ·{' '}
                   {new Date(doc.created_at).toLocaleDateString('en-US', {
                     month: 'short',
@@ -182,8 +182,8 @@ export function DocumentUpload({ claimId, documents, onUploadComplete }: Documen
         className={[
           'border-2 border-dashed rounded p-6 text-center transition-colors cursor-pointer',
           isDragActive
-            ? 'border-[#C8860A] bg-[#C8860A]/5'
-            : 'border-[#2a2218] hover:border-[#6a5a4a]',
+            ? 'border-glomalin-accent bg-glomalin-accent/5'
+            : 'border-glomalin-border hover:border-glomalin-muted',
           uploading ? 'opacity-50 cursor-not-allowed' : '',
         ]
           .filter(Boolean)
@@ -191,15 +191,15 @@ export function DocumentUpload({ claimId, documents, onUploadComplete }: Documen
       >
         <input {...getInputProps()} />
         {uploading ? (
-          <p className="text-[#6a5a4a] font-mono text-xs">Uploading...</p>
+          <p className="text-glomalin-muted font-mono text-xs">Uploading...</p>
         ) : isDragActive ? (
-          <p className="text-[#C8860A] font-mono text-xs">Drop the file here...</p>
+          <p className="text-glomalin-accent font-mono text-xs">Drop the file here...</p>
         ) : (
           <>
-            <p className="text-[#6a5a4a] font-mono text-xs mb-2">
+            <p className="text-glomalin-muted font-mono text-xs mb-2">
               Drop a file here or click to select
             </p>
-            <p className="text-[#6a5a4a] font-mono text-xs opacity-60">
+            <p className="text-glomalin-muted font-mono text-xs opacity-60">
               PDF, JPG, PNG, WebP, XLSX, CSV — max 25MB
             </p>
           </>

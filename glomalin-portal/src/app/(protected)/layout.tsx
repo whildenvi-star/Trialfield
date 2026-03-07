@@ -27,7 +27,7 @@ export default async function ProtectedLayout({
     .single()
 
   return (
-    <div className="min-h-screen bg-soil-bg">
+    <div className="min-h-screen bg-glomalin-bg">
       <BannerSection
         user={{
           email: user.email ?? '',

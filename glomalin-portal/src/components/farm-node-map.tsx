@@ -22,23 +22,24 @@ interface NodeData {
 
 // ------- Node styling helpers -------
 const HUB_STYLE: React.CSSProperties = {
-  background: '#0e0c0b',
-  border: '2px solid #C8860A',
+  background: '#0c1015',
+  border: '2px solid #14b8a6',
   borderRadius: '8px',
-  color: '#e8d8c0',
+  color: '#cbd5e1',
   fontFamily: 'JetBrains Mono, monospace',
   fontWeight: 700,
   fontSize: '13px',
   width: 160,
   padding: '12px 16px',
   textAlign: 'center',
+  boxShadow: '0 0 20px rgba(20, 184, 166, 0.15)',
 }
 
 const SOURCE_STYLE: React.CSSProperties = {
-  background: '#0e0c0b',
-  border: '1px solid #2a2218',
+  background: '#0c1015',
+  border: '1px solid #1e293b',
   borderRadius: '6px',
-  color: '#e8d8c0',
+  color: '#cbd5e1',
   fontFamily: 'JetBrains Mono, monospace',
   fontSize: '11px',
   width: 140,
@@ -47,10 +48,11 @@ const SOURCE_STYLE: React.CSSProperties = {
 }
 
 const MODULE_STYLE: React.CSSProperties = {
-  background: '#0e0c0b',
-  border: '1px solid #3a3020',
+  background: '#0c1015',
+  border: '1px solid #334155',
+  borderLeft: '2px solid #14b8a6',
   borderRadius: '6px',
-  color: '#e8d8c0',
+  color: '#cbd5e1',
   fontFamily: 'JetBrains Mono, monospace',
   fontSize: '11px',
   width: 130,
@@ -151,7 +153,7 @@ function buildEdges(): Edge[] {
       source: app.id,
       target: 'hub',
       animated: true,
-      style: { stroke: '#3a3020', strokeWidth: 1.5 },
+      style: { stroke: '#334155', strokeWidth: 1.5 },
     })
   })
 
@@ -161,7 +163,7 @@ function buildEdges(): Edge[] {
       source: mod.id,
       target: 'hub',
       animated: true,
-      style: { stroke: '#C8860A', strokeWidth: 1, opacity: 0.5 },
+      style: { stroke: '#14b8a6', strokeWidth: 1, opacity: 0.4 },
     })
   })
 
@@ -180,8 +182,8 @@ function nodeLabel(data: NodeData): React.ReactNode {
   if (data.sublabel) {
     return (
       <div>
-        <div style={{ fontWeight: 600, fontSize: '11px', color: '#e8d8c0' }}>{data.label}</div>
-        <div style={{ fontSize: '9px', color: '#6a5a4a', marginTop: '2px' }}>{data.sublabel}</div>
+        <div style={{ fontWeight: 600, fontSize: '11px', color: '#cbd5e1' }}>{data.label}</div>
+        <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>{data.sublabel}</div>
       </div>
     )
   }
@@ -250,7 +252,7 @@ export default function FarmNodeMap() {
         panOnDrag={false}
         style={{ background: 'transparent' }}
       >
-        <Background color="#1a1410" gap={32} size={1} />
+        <Background color="#1e293b" gap={32} size={1} />
       </ReactFlow>
 
       {/* Hover tooltip */}
@@ -260,9 +262,9 @@ export default function FarmNodeMap() {
           style={{
             left: tooltip.x,
             top: tooltip.y,
-            background: '#0e0c0b',
-            border: '1px solid #2a2218',
-            color: '#e8d8c0',
+            background: '#0c1015',
+            border: '1px solid #1e293b',
+            color: '#cbd5e1',
             maxWidth: 220,
           }}
         >

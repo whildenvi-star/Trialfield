@@ -78,19 +78,19 @@ export function CoverageMatrix({ policy, pricing }: CoverageMatrixProps) {
   const hasPlanType = policy.plan_type && policy.plan_type.trim()
 
   return (
-    <div className="rounded-lg border border-soil-border overflow-hidden">
+    <div className="rounded-lg border border-glomalin-border overflow-hidden">
       {!hasPlanType && (
-        <div className="px-4 py-2 bg-soil-bg border-b border-soil-border">
-          <p className="text-xs text-soil-muted italic">
+        <div className="px-4 py-2 bg-glomalin-bg border-b border-glomalin-border">
+          <p className="text-xs text-glomalin-muted italic">
             Select a plan type via Edit to highlight the active column
           </p>
         </div>
       )}
 
       {/* CSS grid: label column + 3 plan type columns */}
-      <div className="grid grid-cols-4 gap-px bg-soil-border font-mono text-sm">
+      <div className="grid grid-cols-4 gap-px bg-glomalin-border font-mono text-sm">
         {/* Header row */}
-        <div className="bg-soil-surface px-3 py-2 text-xs text-soil-muted uppercase tracking-wide">
+        <div className="bg-glomalin-surface px-3 py-2 text-xs text-glomalin-muted uppercase tracking-wide">
           Coverage
         </div>
         {PLAN_TYPES.map((pt) => {
@@ -98,8 +98,8 @@ export function CoverageMatrix({ policy, pricing }: CoverageMatrixProps) {
           return (
             <div
               key={pt}
-              className={`bg-soil-surface px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide ${
-                isActive ? 'text-soil-accent border-b-2 border-soil-accent' : 'text-soil-accent'
+              className={`bg-glomalin-surface px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide ${
+                isActive ? 'text-glomalin-accent border-b-2 border-glomalin-accent' : 'text-glomalin-accent'
               }`}
             >
               {pt}
@@ -117,8 +117,8 @@ export function CoverageMatrix({ policy, pricing }: CoverageMatrixProps) {
               {/* Coverage label */}
               <div
                 key={`label-${coverage}`}
-                className={`bg-soil-surface px-3 py-2 text-soil-muted text-xs ${
-                  isCurrentLevel ? 'border-l-2 border-soil-accent text-soil-accent font-semibold' : ''
+                className={`bg-glomalin-surface px-3 py-2 text-glomalin-muted text-xs ${
+                  isCurrentLevel ? 'border-l-2 border-glomalin-accent text-glomalin-accent font-semibold' : ''
                 }`}
               >
                 {coverage}%
@@ -138,7 +138,7 @@ export function CoverageMatrix({ policy, pricing }: CoverageMatrixProps) {
                     key={`${coverage}-${pt}`}
                     className={`px-3 py-2 text-center text-xs ${
                       isCurrentLevel ? 'border-l-0' : ''
-                    } ${cell.indemnity > 0 ? 'text-soil-text' : 'text-soil-muted'}`}
+                    } ${cell.indemnity > 0 ? 'text-glomalin-text' : 'text-glomalin-muted'}`}
                     style={{ backgroundColor: bgColor }}
                   >
                     {formatDollars(cell.indemnity)}
@@ -150,8 +150,8 @@ export function CoverageMatrix({ policy, pricing }: CoverageMatrixProps) {
         })}
       </div>
 
-      <div className="px-3 py-2 bg-soil-bg border-t border-soil-border">
-        <p className="text-xs text-soil-muted italic">
+      <div className="px-3 py-2 bg-glomalin-bg border-t border-glomalin-border">
+        <p className="text-xs text-glomalin-muted italic">
           Indemnity = shortfall bushels × price × planted acres. Figures are illustrative —
           verify with your agent.
         </p>

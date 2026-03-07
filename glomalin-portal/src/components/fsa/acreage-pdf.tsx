@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   farmHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2a2218',
+    backgroundColor: '#1e293b',
     paddingTop: 6,
     paddingBottom: 6,
     paddingLeft: 8,
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   },
   grandTotalRow: {
     flexDirection: 'row',
-    backgroundColor: '#2a2218',
+    backgroundColor: '#1e293b',
     paddingTop: 5,
     paddingBottom: 5,
     marginTop: 6,

@@ -33,11 +33,11 @@ export function ClaimColumn({ stage, claims, onCardClick }: ClaimColumnProps) {
     <div className="flex-none w-64 flex flex-col">
       {/* Column header */}
       <div className="flex items-center justify-between mb-2 px-1">
-        <h3 className="text-xs font-mono uppercase text-[#6a5a4a] tracking-wider">
+        <h3 className="text-xs font-mono uppercase text-glomalin-muted tracking-wider">
           {STAGE_LABELS[stage] ?? stage}
         </h3>
         {claims.length > 0 && (
-          <span className="text-xs font-mono text-[#6a5a4a] bg-[#2a2218] rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+          <span className="text-xs font-mono text-glomalin-muted bg-glomalin-border rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
             {claims.length}
           </span>
         )}
@@ -52,12 +52,12 @@ export function ClaimColumn({ stage, claims, onCardClick }: ClaimColumnProps) {
           ref={setNodeRef}
           className={[
             'flex-1 flex flex-col gap-2 rounded p-2 min-h-[120px] transition-colors',
-            isOver ? 'bg-[#C8860A]/5 border border-dashed border-[#C8860A]/40' : 'border border-transparent',
+            isOver ? 'bg-glomalin-accent/5 border border-dashed border-glomalin-accent/40' : 'border border-transparent',
           ].join(' ')}
         >
           {sortedClaims.length === 0 ? (
             <div className="flex items-center justify-center flex-1 min-h-[80px]">
-              <span className="text-xs font-mono text-[#2a2218]">No claims</span>
+              <span className="text-xs font-mono text-glomalin-border">No claims</span>
             </div>
           ) : (
             sortedClaims.map((claim) => (

@@ -55,8 +55,8 @@ export function PayoutSimulator({ policy, pricing }: PayoutSimulatorProps) {
   // No pricing data case
   if (!matchingPricing) {
     return (
-      <div className="rounded-lg border border-soil-border bg-soil-surface px-4 py-6">
-        <p className="text-xs text-soil-muted italic font-mono">
+      <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-4 py-6">
+        <p className="text-xs text-glomalin-muted italic font-mono">
           No pricing data available for {policy.crop ?? '(no crop)'}. Add pricing data to enable
           simulation.
         </p>
@@ -65,15 +65,15 @@ export function PayoutSimulator({ policy, pricing }: PayoutSimulatorProps) {
   }
 
   return (
-    <div className="rounded-lg border border-soil-border bg-soil-surface px-4 py-4">
+    <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-4 py-4">
       {/* Disclaimer — above all results */}
-      <p className="text-xs text-soil-muted italic mb-4">
+      <p className="text-xs text-glomalin-muted italic mb-4">
         Results are illustrative only. Verify all figures with your insurance agent.
       </p>
 
       {/* Yield slider */}
       <div className="mb-4">
-        <p className="text-xs text-soil-muted font-mono mb-1">
+        <p className="text-xs text-glomalin-muted font-mono mb-1">
           Simulated Yield: {simYield.toFixed(1)} bu/ac
         </p>
         <input
@@ -83,9 +83,9 @@ export function PayoutSimulator({ policy, pricing }: PayoutSimulatorProps) {
           step={1}
           value={simYield}
           onChange={(e) => setSimYield(Number(e.target.value))}
-          className="w-full accent-soil-accent"
+          className="w-full accent-glomalin-accent"
         />
-        <div className="flex justify-between text-xs text-soil-muted font-mono mt-0.5">
+        <div className="flex justify-between text-xs text-glomalin-muted font-mono mt-0.5">
           <span>0</span>
           <span>{yieldMax} bu/ac</span>
         </div>
@@ -93,7 +93,7 @@ export function PayoutSimulator({ policy, pricing }: PayoutSimulatorProps) {
 
       {/* Price slider */}
       <div className="mb-5">
-        <p className="text-xs text-soil-muted font-mono mb-1">
+        <p className="text-xs text-glomalin-muted font-mono mb-1">
           Price: ${simPrice.toFixed(2)}/bu
         </p>
         <input
@@ -103,9 +103,9 @@ export function PayoutSimulator({ policy, pricing }: PayoutSimulatorProps) {
           step={0.05}
           value={simPrice}
           onChange={(e) => setSimPrice(Number(e.target.value))}
-          className="w-full accent-soil-accent"
+          className="w-full accent-glomalin-accent"
         />
-        <div className="flex justify-between text-xs text-soil-muted font-mono mt-0.5">
+        <div className="flex justify-between text-xs text-glomalin-muted font-mono mt-0.5">
           <span>$0.00</span>
           <span>${priceMax.toFixed(2)}/bu</span>
         </div>
@@ -115,24 +115,24 @@ export function PayoutSimulator({ policy, pricing }: PayoutSimulatorProps) {
       {result && (
         <div className="grid grid-cols-3 gap-3">
           {/* Effective Guarantee */}
-          <div className="bg-soil-bg border border-soil-border rounded px-4 py-3">
-            <p className="text-xs text-soil-muted font-mono mb-1">Effective Guarantee</p>
-            <p className="text-lg font-mono font-bold text-soil-text">
+          <div className="bg-glomalin-bg border border-glomalin-border rounded px-4 py-3">
+            <p className="text-xs text-glomalin-muted font-mono mb-1">Effective Guarantee</p>
+            <p className="text-lg font-mono font-bold text-glomalin-text">
               {result.effectiveGuarantee.toFixed(1)}{' '}
-              <span className="text-xs font-normal text-soil-muted">bu/ac</span>
+              <span className="text-xs font-normal text-glomalin-muted">bu/ac</span>
             </p>
           </div>
 
           {/* Est. Indemnity */}
           <div
-            className={`bg-soil-bg rounded px-4 py-3 border ${
-              result.indemnity > 0 ? 'border-yellow-700' : 'border-soil-border'
+            className={`bg-glomalin-bg rounded px-4 py-3 border ${
+              result.indemnity > 0 ? 'border-yellow-700' : 'border-glomalin-border'
             }`}
           >
-            <p className="text-xs text-soil-muted font-mono mb-1">Est. Indemnity</p>
+            <p className="text-xs text-glomalin-muted font-mono mb-1">Est. Indemnity</p>
             <p
               className={`text-lg font-mono font-bold ${
-                result.indemnity > 0 ? 'text-yellow-400' : 'text-soil-muted'
+                result.indemnity > 0 ? 'text-yellow-400' : 'text-glomalin-muted'
               }`}
             >
               {formatDollars(result.indemnity)}
@@ -140,9 +140,9 @@ export function PayoutSimulator({ policy, pricing }: PayoutSimulatorProps) {
           </div>
 
           {/* Projected Revenue */}
-          <div className="bg-soil-bg border border-soil-border rounded px-4 py-3">
-            <p className="text-xs text-soil-muted font-mono mb-1">Projected Revenue</p>
-            <p className="text-lg font-mono font-bold text-soil-text">
+          <div className="bg-glomalin-bg border border-glomalin-border rounded px-4 py-3">
+            <p className="text-xs text-glomalin-muted font-mono mb-1">Projected Revenue</p>
+            <p className="text-lg font-mono font-bold text-glomalin-text">
               {formatDollars(result.projectedRevenue)}
             </p>
           </div>

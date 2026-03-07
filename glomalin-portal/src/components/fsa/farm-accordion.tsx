@@ -50,7 +50,7 @@ export function FarmAccordion({
   const tractEntries = Object.entries(tracts)
 
   return (
-    <div className="bg-soil-surface border border-soil-border rounded-lg overflow-hidden">
+    <div className="bg-glomalin-surface border border-glomalin-border rounded-lg overflow-hidden">
       {/* Farm header */}
       <div
         className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-[#141210] transition-colors"
@@ -59,7 +59,7 @@ export function FarmAccordion({
         {/* Select All checkbox */}
         <input
           type="checkbox"
-          className="w-4 h-4 accent-soil-accent cursor-pointer flex-shrink-0"
+          className="w-4 h-4 accent-glomalin-accent cursor-pointer flex-shrink-0"
           checked={allSelected}
           ref={(el) => {
             if (el) el.indeterminate = !allSelected && someSelected
@@ -74,7 +74,7 @@ export function FarmAccordion({
 
         {/* Chevron */}
         <span
-          className={`text-soil-muted transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+          className={`text-glomalin-muted transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
           style={{ display: 'inline-block' }}
         >
           &#9654;
@@ -82,30 +82,30 @@ export function FarmAccordion({
 
         {/* Farm info */}
         <div className="flex-1 min-w-0">
-          <span className="font-mono font-bold text-soil-accent text-sm">
+          <span className="font-mono font-bold text-glomalin-accent text-sm">
             Farm {farmNumber}
           </span>
           {farmName && (
-            <span className="font-mono text-soil-muted text-sm ml-2">
+            <span className="font-mono text-glomalin-muted text-sm ml-2">
               {farmName}
             </span>
           )}
         </div>
 
         {/* Acres badge */}
-        <span className="font-mono text-xs text-soil-muted bg-[#1a1714] border border-soil-border rounded px-2 py-0.5">
+        <span className="font-mono text-xs text-glomalin-muted bg-[#1a1714] border border-glomalin-border rounded px-2 py-0.5">
           {totalAcres.toLocaleString('en-US', { maximumFractionDigits: 2 })} ac
         </span>
 
         {/* Tract count badge */}
-        <span className="font-mono text-xs text-soil-muted">
+        <span className="font-mono text-xs text-glomalin-muted">
           {tractEntries.length} tract{tractEntries.length !== 1 ? 's' : ''}
         </span>
       </div>
 
       {/* Tract accordions */}
       {isExpanded && (
-        <div className="border-t border-soil-border">
+        <div className="border-t border-glomalin-border">
           {tractEntries.map(([tractNumber, tractRecords]) => {
             const tractKey = `${farmNumber}-${tractNumber}`
             return (

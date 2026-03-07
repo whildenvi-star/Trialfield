@@ -153,13 +153,13 @@ export default function AdminPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold font-mono text-soil-text tracking-wide mb-8">
+      <h1 className="text-2xl font-bold font-mono text-glomalin-text tracking-wide mb-8">
         User Management
       </h1>
 
       {/* Invite form */}
-      <div className="mb-8 p-4 border border-soil-border rounded bg-soil-surface">
-        <h2 className="text-sm font-mono font-semibold text-soil-muted uppercase tracking-widest mb-3">
+      <div className="mb-8 p-4 border border-glomalin-border rounded bg-glomalin-surface">
+        <h2 className="text-sm font-mono font-semibold text-glomalin-muted uppercase tracking-widest mb-3">
           Create New User
         </h2>
         <form onSubmit={handleInvite} className="flex flex-wrap gap-3 items-start">
@@ -168,14 +168,14 @@ export default function AdminPage() {
             value={inviteEmail}
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="user@example.com"
-            className="bg-soil-bg border border-soil-border text-soil-text rounded px-3 py-2 font-mono text-sm focus:outline-none focus:border-soil-accent w-64"
+            className="bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-3 py-2 font-mono text-sm focus:outline-none focus:border-glomalin-accent w-64"
             disabled={inviting}
             required
           />
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value)}
-            className="bg-soil-bg border border-soil-border text-soil-text rounded px-3 py-2 font-mono text-sm focus:outline-none focus:border-soil-accent"
+            className="bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-3 py-2 font-mono text-sm focus:outline-none focus:border-glomalin-accent"
             disabled={inviting}
           >
             {ROLES.map((r) => (
@@ -187,7 +187,7 @@ export default function AdminPage() {
           <button
             type="submit"
             disabled={inviting}
-            className="bg-soil-accent text-soil-bg px-4 py-2 rounded font-bold font-mono text-sm disabled:opacity-50"
+            className="bg-glomalin-accent text-glomalin-bg px-4 py-2 rounded font-bold font-mono text-sm disabled:opacity-50"
           >
             {inviting ? 'Sending...' : 'Invite User'}
           </button>
@@ -197,7 +197,7 @@ export default function AdminPage() {
             </span>
           )}
           {inviteSuccess && (
-            <span className="text-soil-green font-mono text-sm self-center">
+            <span className="text-glomalin-green font-mono text-sm self-center">
               {inviteSuccess}
             </span>
           )}
@@ -219,31 +219,31 @@ export default function AdminPage() {
 
       {/* User table */}
       {loading ? (
-        <div className="text-soil-muted font-mono text-sm">Loading users...</div>
+        <div className="text-glomalin-muted font-mono text-sm">Loading users...</div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border border-soil-border font-mono text-sm">
+          <table className="w-full border border-glomalin-border font-mono text-sm">
             <thead>
-              <tr className="bg-soil-surface">
-                <th className="text-left px-4 py-3 text-soil-muted font-semibold border-b border-soil-border">
+              <tr className="bg-glomalin-surface">
+                <th className="text-left px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border">
                   Name
                 </th>
-                <th className="text-left px-4 py-3 text-soil-muted font-semibold border-b border-soil-border">
+                <th className="text-left px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border">
                   Email
                 </th>
-                <th className="text-left px-4 py-3 text-soil-muted font-semibold border-b border-soil-border">
+                <th className="text-left px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border">
                   Role
                 </th>
                 {MODULES.map((mod) => (
                   <th
                     key={mod.id}
-                    className="text-center px-3 py-3 text-soil-muted font-semibold border-b border-soil-border whitespace-nowrap"
+                    className="text-center px-3 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border whitespace-nowrap"
                     title={mod.label}
                   >
                     {mod.label}
                   </th>
                 ))}
-                <th className="text-left px-4 py-3 text-soil-muted font-semibold border-b border-soil-border">
+                <th className="text-left px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border">
                   Last Login
                 </th>
               </tr>
@@ -253,7 +253,7 @@ export default function AdminPage() {
                 <tr>
                   <td
                     colSpan={3 + MODULES.length + 1}
-                    className="text-center px-4 py-6 text-soil-muted"
+                    className="text-center px-4 py-6 text-glomalin-muted"
                   >
                     No users found
                   </td>
@@ -264,20 +264,20 @@ export default function AdminPage() {
                 return (
                   <tr
                     key={user.id}
-                    className="border-b border-soil-border hover:bg-soil-surface/50 transition-colors"
+                    className="border-b border-glomalin-border hover:bg-glomalin-surface/50 transition-colors"
                   >
                     {/* Name */}
-                    <td className="px-4 py-3 text-soil-text">
+                    <td className="px-4 py-3 text-glomalin-text">
                       {user.fullName || (
-                        <span className="text-soil-muted">—</span>
+                        <span className="text-glomalin-muted">—</span>
                       )}
                       {isCurrentUser && (
-                        <span className="ml-2 text-xs text-soil-accent">(you)</span>
+                        <span className="ml-2 text-xs text-glomalin-accent">(you)</span>
                       )}
                     </td>
 
                     {/* Email */}
-                    <td className="px-4 py-3 text-soil-text">{user.email}</td>
+                    <td className="px-4 py-3 text-glomalin-text">{user.email}</td>
 
                     {/* Role dropdown */}
                     <td className="px-4 py-3">
@@ -285,7 +285,7 @@ export default function AdminPage() {
                         value={user.role}
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
                         disabled={isCurrentUser || isSaving(user.id, 'role')}
-                        className={`bg-soil-bg border border-soil-border text-soil-text rounded px-2 py-1 text-xs focus:outline-none focus:border-soil-accent transition-opacity ${
+                        className={`bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-2 py-1 text-xs focus:outline-none focus:border-glomalin-accent transition-opacity ${
                           isCurrentUser
                             ? 'opacity-40 cursor-not-allowed'
                             : isSaving(user.id, 'role')
@@ -320,7 +320,7 @@ export default function AdminPage() {
                             className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none ${
                               saving ? 'opacity-50' : ''
                             } ${
-                              granted ? 'bg-soil-accent' : 'bg-soil-border'
+                              granted ? 'bg-glomalin-accent' : 'bg-glomalin-border'
                             }`}
                             title={`${granted ? 'Revoke' : 'Grant'} ${mod.label} access`}
                             aria-label={`${granted ? 'Revoke' : 'Grant'} ${mod.label} access for ${user.email}`}
@@ -338,11 +338,11 @@ export default function AdminPage() {
                     {/* Last login */}
                     <td className="px-4 py-3">
                       {user.lastSignIn ? (
-                        <span className="text-soil-muted">
+                        <span className="text-glomalin-muted">
                           {formatLastSignIn(user.lastSignIn)}
                         </span>
                       ) : (
-                        <span className="text-soil-muted">Never</span>
+                        <span className="text-glomalin-muted">Never</span>
                       )}
                     </td>
                   </tr>

@@ -189,10 +189,10 @@ export function CluCard({
 
   return (
     <div
-      className={`bg-soil-surface border rounded-lg overflow-hidden transition-all duration-150 ${
+      className={`bg-glomalin-surface border rounded-lg overflow-hidden transition-all duration-150 ${
         isExpanded
-          ? 'border-soil-accent ring-1 ring-soil-accent'
-          : 'border-soil-border hover:border-soil-muted'
+          ? 'border-glomalin-accent ring-1 ring-glomalin-accent'
+          : 'border-glomalin-border hover:border-glomalin-muted'
       }`}
     >
       {/* Collapsed / summary row */}
@@ -203,7 +203,7 @@ export function CluCard({
         {/* Checkbox */}
         <input
           type="checkbox"
-          className="w-4 h-4 accent-soil-accent cursor-pointer flex-shrink-0"
+          className="w-4 h-4 accent-glomalin-accent cursor-pointer flex-shrink-0"
           checked={isSelected}
           onChange={onToggleSelect}
           onClick={(e) => e.stopPropagation()}
@@ -212,18 +212,18 @@ export function CluCard({
 
         {/* Field name + CLU */}
         <div className="flex-1 min-w-0">
-          <span className="font-mono text-sm text-soil-text truncate block">
+          <span className="font-mono text-sm text-glomalin-text truncate block">
             {displayName}
           </span>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mono text-xs text-soil-muted">
+            <span className="font-mono text-xs text-glomalin-muted">
               {record.crop ?? <span className="italic text-amber-400">no crop</span>}
             </span>
             {record.use && (
-              <span className="font-mono text-xs text-soil-muted">&middot; {record.use}</span>
+              <span className="font-mono text-xs text-glomalin-muted">&middot; {record.use}</span>
             )}
             {record.grain_plant_date && (
-              <span className="font-mono text-xs text-soil-muted">
+              <span className="font-mono text-xs text-glomalin-muted">
                 &middot; {record.grain_plant_date}
               </span>
             )}
@@ -231,13 +231,13 @@ export function CluCard({
         </div>
 
         {/* Acres */}
-        <span className="font-mono text-xs text-soil-muted flex-shrink-0">
+        <span className="font-mono text-xs text-glomalin-muted flex-shrink-0">
           {(record.fsa_acres || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })} ac
         </span>
 
         {/* Organic badge */}
         {record.organic && (
-          <span className="font-mono text-xs font-bold text-soil-green bg-soil-green/10 border border-soil-green/30 rounded px-1.5 py-0.5 flex-shrink-0">
+          <span className="font-mono text-xs font-bold text-glomalin-green bg-glomalin-green/10 border border-glomalin-green/30 rounded px-1.5 py-0.5 flex-shrink-0">
             O
           </span>
         )}
@@ -251,7 +251,7 @@ export function CluCard({
 
         {/* Status badge */}
         {record.reported ? (
-          <span className="font-mono text-xs text-soil-green bg-soil-green/10 border border-soil-green/30 rounded px-2 py-0.5 flex-shrink-0">
+          <span className="font-mono text-xs text-glomalin-green bg-glomalin-green/10 border border-glomalin-green/30 rounded px-2 py-0.5 flex-shrink-0">
             Reported
           </span>
         ) : (
@@ -273,10 +273,10 @@ export function CluCard({
 
       {/* Expanded / edit view */}
       {isExpanded && (
-        <div className="border-t border-soil-border px-4 py-4 space-y-4">
+        <div className="border-t border-glomalin-border px-4 py-4 space-y-4">
           {/* Crop */}
           <div>
-            <label className="block font-mono text-xs text-soil-muted uppercase tracking-wider mb-1">
+            <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
               Crop
             </label>
             <CropTypeahead
@@ -290,11 +290,11 @@ export function CluCard({
 
           {/* Practice / Use */}
           <div>
-            <label className="block font-mono text-xs text-soil-muted uppercase tracking-wider mb-1">
+            <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
               Practice / Use
             </label>
             <select
-              className="w-full bg-soil-bg border border-soil-border rounded px-3 py-2 font-mono text-sm text-soil-text focus:outline-none focus:border-soil-accent"
+              className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
               value={draft.use}
               onChange={(e) => setDraft((d) => ({ ...d, use: e.target.value }))}
             >
@@ -306,12 +306,12 @@ export function CluCard({
 
           {/* Planting date */}
           <div>
-            <label className="block font-mono text-xs text-soil-muted uppercase tracking-wider mb-1">
+            <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
               Planting Date
             </label>
             <input
               type="date"
-              className="w-full bg-soil-bg border border-soil-border rounded px-3 py-2 font-mono text-sm text-soil-text focus:outline-none focus:border-soil-accent"
+              className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
               value={draft.grain_plant_date}
               onChange={(e) => setDraft((d) => ({ ...d, grain_plant_date: e.target.value }))}
             />
@@ -325,13 +325,13 @@ export function CluCard({
             <input
               type="checkbox"
               id={`organic-${record.id}`}
-              className="w-4 h-4 accent-soil-accent cursor-pointer"
+              className="w-4 h-4 accent-glomalin-accent cursor-pointer"
               checked={draft.organic}
               onChange={(e) => setDraft((d) => ({ ...d, organic: e.target.checked }))}
             />
             <label
               htmlFor={`organic-${record.id}`}
-              className="font-mono text-sm text-soil-text cursor-pointer"
+              className="font-mono text-sm text-glomalin-text cursor-pointer"
             >
               Organic
             </label>
@@ -342,30 +342,30 @@ export function CluCard({
             <input
               type="checkbox"
               id={`pp-${record.id}`}
-              className="w-4 h-4 accent-soil-accent cursor-pointer"
+              className="w-4 h-4 accent-glomalin-accent cursor-pointer"
               checked={draft.prevented_planting}
               onChange={(e) => setDraft((d) => ({ ...d, prevented_planting: e.target.checked }))}
             />
             <label
               htmlFor={`pp-${record.id}`}
-              className="font-mono text-sm text-soil-text cursor-pointer"
+              className="font-mono text-sm text-glomalin-text cursor-pointer"
             >
               Prevented Planting
             </label>
           </div>
 
           {/* Insurance policy link */}
-          <div className="border-t border-soil-border pt-3">
-            <p className="font-mono text-xs text-soil-muted uppercase tracking-wider mb-2">
+          <div className="border-t border-glomalin-border pt-3">
+            <p className="font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-2">
               Insurance Policy
             </p>
             {linkedPolicy === undefined && (
-              <p className="font-mono text-xs text-soil-muted">Looking up policy...</p>
+              <p className="font-mono text-xs text-glomalin-muted">Looking up policy...</p>
             )}
             {linkedPolicy !== undefined && linkedPolicy !== null && (
               <button
                 onClick={() => router.push(`/app/insurance?highlight=${linkedPolicy.id}`)}
-                className="font-mono text-xs text-soil-accent hover:underline underline-offset-2 transition-colors"
+                className="font-mono text-xs text-glomalin-accent hover:underline underline-offset-2 transition-colors"
               >
                 View Insurance Policy &rarr;
               </button>
@@ -377,7 +377,7 @@ export function CluCard({
                     `/app/insurance?action=create&farm=${record.farm_number}&crop=${encodeURIComponent(record.crop ?? '')}`
                   )
                 }
-                className="font-mono text-xs text-soil-muted hover:text-soil-accent transition-colors"
+                className="font-mono text-xs text-glomalin-muted hover:text-glomalin-accent transition-colors"
               >
                 No policy &mdash; Add one &rarr;
               </button>
@@ -448,14 +448,14 @@ export function CluCard({
             <button
               onClick={handleSave}
               disabled={saving}
-              className="font-mono text-sm font-bold bg-soil-accent text-soil-bg rounded px-4 py-2 hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-2 hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={handleCancel}
               disabled={saving}
-              className="font-mono text-sm text-soil-muted hover:text-soil-text transition-colors disabled:opacity-50"
+              className="font-mono text-sm text-glomalin-muted hover:text-glomalin-text transition-colors disabled:opacity-50"
             >
               Cancel
             </button>

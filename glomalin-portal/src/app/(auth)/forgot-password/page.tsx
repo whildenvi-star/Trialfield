@@ -10,20 +10,20 @@ function ForgotPasswordForm() {
   const isSent = searchParams.get('sent') === 'true'
 
   return (
-    <div className="bg-soil-surface border border-soil-border rounded-lg p-8 w-full">
+    <div className="bg-glomalin-surface border border-glomalin-border rounded-lg p-8 w-full">
       {/* Branding */}
       <div className="text-center mb-8">
-        <h1 className="text-xl font-bold tracking-wider text-soil-accent font-mono">
+        <h1 className="text-xl font-bold tracking-wider text-glomalin-accent font-mono">
           Reset Password
         </h1>
-        <p className="text-soil-muted text-sm mt-1">
+        <p className="text-glomalin-muted text-sm mt-1">
           GLOMALIN Farm Operations Portal
         </p>
       </div>
 
       {/* Sent confirmation */}
       {isSent && (
-        <div className="mb-4 px-4 py-3 rounded border border-soil-green bg-soil-green/10 text-soil-green text-sm">
+        <div className="mb-4 px-4 py-3 rounded border border-glomalin-green bg-glomalin-green/10 text-glomalin-green text-sm">
           If an account exists with that email, a password reset link has been sent.
         </div>
       )}
@@ -31,7 +31,7 @@ function ForgotPasswordForm() {
       {/* Reset form */}
       <form action={resetPassword} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor="email" className="text-soil-muted text-xs uppercase tracking-wider">
+          <label htmlFor="email" className="text-glomalin-muted text-xs uppercase tracking-wider">
             Email Address
           </label>
           <input
@@ -41,13 +41,13 @@ function ForgotPasswordForm() {
             placeholder="you@example.com"
             required
             autoComplete="email"
-            className="bg-soil-bg border border-soil-border text-soil-text rounded px-3 py-2 text-sm placeholder:text-soil-muted focus:outline-none focus:border-soil-accent transition-colors"
+            className="bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-3 py-2 text-sm placeholder:text-glomalin-muted focus:outline-none focus:border-glomalin-accent transition-colors"
           />
         </div>
 
         <button
           type="submit"
-          className="bg-soil-accent text-soil-bg font-bold w-full py-2 rounded text-sm tracking-wide hover:opacity-90 transition-opacity mt-2"
+          className="bg-glomalin-accent text-glomalin-bg font-bold w-full py-2 rounded text-sm tracking-wide hover:opacity-90 transition-opacity mt-2"
         >
           Send Reset Link
         </button>
@@ -57,7 +57,7 @@ function ForgotPasswordForm() {
       <div className="text-center mt-4">
         <Link
           href="/login"
-          className="text-soil-muted text-sm hover:text-soil-accent transition-colors"
+          className="text-glomalin-muted text-sm hover:text-glomalin-accent transition-colors"
         >
           Back to login
         </Link>
@@ -69,9 +69,9 @@ function ForgotPasswordForm() {
 export default function ForgotPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="bg-soil-surface border border-soil-border rounded-lg p-8 w-full">
+      <div className="bg-glomalin-surface border border-glomalin-border rounded-lg p-8 w-full">
         <div className="text-center">
-          <h1 className="text-xl font-bold tracking-wider text-soil-accent font-mono">
+          <h1 className="text-xl font-bold tracking-wider text-glomalin-accent font-mono">
             Reset Password
           </h1>
         </div>

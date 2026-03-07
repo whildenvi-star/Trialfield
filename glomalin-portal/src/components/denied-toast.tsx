@@ -49,11 +49,11 @@ export default function DeniedToast() {
         visible ? 'opacity-100' : 'opacity-0'
       }`}
     >
-      <div className="bg-soil-surface border border-soil-border rounded-lg shadow-xl p-4">
+      <div className="bg-glomalin-surface border border-glomalin-border rounded-lg shadow-xl p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5">
             <svg
-              className="w-5 h-5 text-soil-accent"
+              className="w-5 h-5 text-glomalin-accent"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -67,11 +67,11 @@ export default function DeniedToast() {
             </svg>
           </div>
           <div>
-            <p className="text-soil-text text-sm font-mono">
+            <p className="text-glomalin-text text-sm font-mono">
               You don&apos;t have access to{' '}
-              <span className="text-soil-accent font-bold">{moduleLabel}</span>.
+              <span className="text-glomalin-accent font-bold">{moduleLabel}</span>.
             </p>
-            <p className="text-soil-muted text-xs mt-1">
+            <p className="text-glomalin-muted text-xs mt-1">
               Contact your administrator for access.
             </p>
           </div>

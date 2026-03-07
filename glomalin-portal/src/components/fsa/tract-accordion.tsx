@@ -40,7 +40,7 @@ export function TractAccordion({
   const unreportedCount = records.filter((r) => !r.reported).length
 
   return (
-    <div className="ml-4 border-l border-soil-border">
+    <div className="ml-4 border-l border-glomalin-border">
       {/* Tract header */}
       <div
         className="flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-[#141210] transition-colors"
@@ -49,7 +49,7 @@ export function TractAccordion({
         {/* Select All checkbox */}
         <input
           type="checkbox"
-          className="w-4 h-4 accent-soil-accent cursor-pointer flex-shrink-0"
+          className="w-4 h-4 accent-glomalin-accent cursor-pointer flex-shrink-0"
           checked={allSelected}
           ref={(el) => {
             if (el) el.indeterminate = !allSelected && someSelected
@@ -64,19 +64,19 @@ export function TractAccordion({
 
         {/* Chevron */}
         <span
-          className={`text-soil-muted text-xs transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+          className={`text-glomalin-muted text-xs transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
           style={{ display: 'inline-block' }}
         >
           &#9654;
         </span>
 
         {/* Tract info */}
-        <span className="font-mono text-sm text-soil-text">
+        <span className="font-mono text-sm text-glomalin-text">
           Tract {tractNumber}
         </span>
 
         {/* Record count badge */}
-        <span className="font-mono text-xs text-soil-muted bg-[#1a1714] border border-soil-border rounded px-2 py-0.5">
+        <span className="font-mono text-xs text-glomalin-muted bg-[#1a1714] border border-glomalin-border rounded px-2 py-0.5">
           {records.length} CLU{records.length !== 1 ? 's' : ''}
         </span>
 

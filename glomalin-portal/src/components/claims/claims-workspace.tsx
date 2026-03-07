@@ -14,7 +14,7 @@ const ClaimsKanban = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="text-[#6a5a4a] font-mono text-sm py-12 text-center">
+      <div className="text-glomalin-muted font-mono text-sm py-12 text-center">
         Loading board...
       </div>
     ),
@@ -123,18 +123,18 @@ export function ClaimsWorkspace({ initialClaims }: ClaimsWorkspaceProps) {
   const selectedClaim = claims.find((c) => c.id === selectedClaimId) ?? null
 
   return (
-    <div className="min-h-screen bg-[#080604] text-[#e8d8c0]">
+    <div className="min-h-screen bg-glomalin-bg text-glomalin-text">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
         {/* Page header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-mono font-semibold text-[#e8d8c0]">Claims</h1>
-          <p className="mt-1 text-sm text-[#6a5a4a] font-mono">
+          <h1 className="text-2xl font-mono font-semibold text-glomalin-text">Claims</h1>
+          <p className="mt-1 text-sm text-glomalin-muted font-mono">
             Crop Insurance Claims Tracking
           </p>
         </div>
 
         {/* Tracking disclaimer */}
-        <div className="mb-6 px-4 py-3 rounded border border-[#2a2218] bg-[#0e0c0b] text-xs text-[#6a5a4a] font-mono">
+        <div className="mb-6 px-4 py-3 rounded border border-glomalin-border bg-glomalin-surface text-xs text-glomalin-muted font-mono">
           This is a tracking tool for producer records. It does not file or submit claims
           to insurance companies.
         </div>
@@ -159,12 +159,12 @@ export function ClaimsWorkspace({ initialClaims }: ClaimsWorkspaceProps) {
 
         {/* Note prompt — bottom-right floating toast, auto-dismisses after 10s */}
         {pendingNoteClaimId && (
-          <div className="fixed bottom-6 right-6 z-50 w-80 rounded border border-[#2a2218] bg-[#0e0c0b] shadow-xl shadow-black/60 p-4 font-mono">
-            <p className="text-xs text-[#6a5a4a] mb-2">
+          <div className="fixed bottom-6 right-6 z-50 w-80 rounded border border-glomalin-border bg-glomalin-surface shadow-xl shadow-black/60 p-4 font-mono">
+            <p className="text-xs text-glomalin-muted mb-2">
               Add a note about this stage change?
             </p>
             <textarea
-              className="w-full rounded border border-[#2a2218] bg-[#080604] text-[#e8d8c0] text-xs p-2 resize-none focus:outline-none focus:border-[#C8860A] transition-colors"
+              className="w-full rounded border border-glomalin-border bg-glomalin-bg text-glomalin-text text-xs p-2 resize-none focus:outline-none focus:border-glomalin-accent transition-colors"
               rows={2}
               placeholder="Optional note..."
               value={noteText}
@@ -174,13 +174,13 @@ export function ClaimsWorkspace({ initialClaims }: ClaimsWorkspaceProps) {
             <div className="flex items-center justify-end gap-2 mt-2">
               <button
                 onClick={dismissNotePrompt}
-                className="text-xs text-[#6a5a4a] hover:text-[#e8d8c0] transition-colors px-2 py-1"
+                className="text-xs text-glomalin-muted hover:text-glomalin-text transition-colors px-2 py-1"
               >
                 Skip
               </button>
               <button
                 onClick={handleSubmitNote}
-                className="text-xs bg-[#C8860A] text-[#080604] rounded px-3 py-1 font-semibold hover:opacity-90 transition-opacity"
+                className="text-xs bg-glomalin-accent text-glomalin-bg rounded px-3 py-1 font-semibold hover:opacity-90 transition-opacity"
               >
                 Add Note
               </button>

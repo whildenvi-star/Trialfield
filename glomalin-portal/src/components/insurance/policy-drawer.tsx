@@ -99,8 +99,8 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
   }
 
   const inputClass =
-    'w-full bg-soil-bg border border-soil-border text-soil-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-soil-accent placeholder:text-soil-muted'
-  const labelClass = 'block text-xs text-soil-muted font-mono mb-1'
+    'w-full bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-glomalin-accent placeholder:text-glomalin-muted'
+  const labelClass = 'block text-xs text-glomalin-muted font-mono mb-1'
   const fieldClass = 'mb-3'
 
   return (
@@ -116,18 +116,18 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
 
       {/* Slide-out panel */}
       <div
-        className={`fixed inset-y-0 right-0 z-50 w-[480px] bg-soil-surface border-l border-soil-border flex flex-col transition-transform duration-200 ${
+        className={`fixed inset-y-0 right-0 z-50 w-[480px] bg-glomalin-surface border-l border-glomalin-border flex flex-col transition-transform duration-200 ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-soil-border">
-          <h2 className="font-mono font-semibold text-soil-text text-base">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-glomalin-border">
+          <h2 className="font-mono font-semibold text-glomalin-text text-base">
             {isEdit ? 'Edit Policy' : 'New Policy'}
           </h2>
           <button
             onClick={onClose}
-            className="text-soil-muted hover:text-soil-text transition-colors font-mono text-xl leading-none"
+            className="text-glomalin-muted hover:text-glomalin-text transition-colors font-mono text-xl leading-none"
             aria-label="Close drawer"
           >
             ×
@@ -137,7 +137,7 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
         {/* Scrollable form body */}
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-5 py-4">
           {/* Policy Details */}
-          <p className="text-xs text-soil-accent font-mono font-semibold uppercase tracking-wide mb-3">
+          <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3">
             Policy Details
           </p>
 
@@ -182,7 +182,7 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
 
           <div className={fieldClass}>
             <label className={labelClass} htmlFor="plan_type">
-              Plan Type <span className="text-soil-muted normal-case font-normal">(RP is most common)</span>
+              Plan Type <span className="text-glomalin-muted normal-case font-normal">(RP is most common)</span>
             </label>
             <select
               id="plan_type"
@@ -229,7 +229,7 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
           </div>
 
           {/* Acres & Yields */}
-          <p className="text-xs text-soil-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
+          <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
             Acres &amp; Yields
           </p>
 
@@ -298,25 +298,25 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
 
           {/* APH from CLU Records — informational display only, not a form field */}
           {open && policy && (
-            <div className="mb-3 rounded border border-soil-border bg-soil-bg px-3 py-2 text-xs font-mono">
-              <p className="text-soil-accent font-semibold mb-1">APH from CLU Records</p>
+            <div className="mb-3 rounded border border-glomalin-border bg-glomalin-bg px-3 py-2 text-xs font-mono">
+              <p className="text-glomalin-accent font-semibold mb-1">APH from CLU Records</p>
               {aphLoading ? (
-                <p className="text-soil-muted">Loading...</p>
+                <p className="text-glomalin-muted">Loading...</p>
               ) : aphData && aphData.count > 0 ? (
-                <p className="text-soil-text">
+                <p className="text-glomalin-text">
                   {aphData.avgAph} bu/ac{' '}
-                  <span className="text-soil-muted">(avg of {aphData.count} records)</span>
+                  <span className="text-glomalin-muted">(avg of {aphData.count} records)</span>
                 </p>
               ) : aphData && aphData.totalRecords > 0 && aphData.count === 0 ? (
-                <p className="text-soil-muted">CLU records found — no APH values entered yet</p>
+                <p className="text-glomalin-muted">CLU records found — no APH values entered yet</p>
               ) : (
-                <p className="text-soil-muted">No matching CLU records found</p>
+                <p className="text-glomalin-muted">No matching CLU records found</p>
               )}
             </div>
           )}
 
           {/* Other */}
-          <p className="text-xs text-soil-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
+          <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
             Other
           </p>
 
@@ -350,7 +350,7 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
           <div className="pt-2 pb-4">
             <button
               type="submit"
-              className="w-full bg-soil-accent text-soil-bg font-mono font-bold text-sm rounded px-4 py-2 hover:opacity-90 transition-opacity"
+              className="w-full bg-glomalin-accent text-glomalin-bg font-mono font-bold text-sm rounded px-4 py-2 hover:opacity-90 transition-opacity"
             >
               {isEdit ? 'Save Changes' : 'Create Policy'}
             </button>

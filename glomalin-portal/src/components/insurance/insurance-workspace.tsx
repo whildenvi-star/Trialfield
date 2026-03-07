@@ -14,7 +14,7 @@ const InsurancePdfButton = dynamic(
   {
     ssr: false,
     loading: () => (
-      <button disabled className="bg-soil-accent text-soil-bg px-4 py-2 rounded font-mono text-sm font-bold opacity-50 cursor-not-allowed">
+      <button disabled className="bg-glomalin-accent text-glomalin-bg px-4 py-2 rounded font-mono text-sm font-bold opacity-50 cursor-not-allowed">
         Loading...
       </button>
     ),
@@ -263,14 +263,14 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
       {/* Page header row */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-mono font-semibold text-soil-accent">Crop Insurance</h1>
-          <p className="text-soil-muted text-sm mt-1">2026 policy year — decision support tool</p>
+          <h1 className="text-2xl font-mono font-semibold text-glomalin-accent">Crop Insurance</h1>
+          <p className="text-glomalin-muted text-sm mt-1">2026 policy year — decision support tool</p>
         </div>
         <div className="flex items-center gap-3">
           <InsurancePdfButton policies={policies} pricing={initialPricing} />
           <button
             onClick={openCreateDrawer}
-            className="font-mono text-sm font-bold bg-soil-accent text-soil-bg rounded px-4 py-2 hover:opacity-90 transition-opacity"
+            className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-2 hover:opacity-90 transition-opacity"
           >
             Add Policy
           </button>
@@ -279,57 +279,57 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div className="rounded-lg border border-soil-border bg-soil-surface px-5 py-4">
-          <p className="text-xs text-soil-muted uppercase tracking-wide font-mono mb-1">Policies</p>
-          <p className="text-3xl font-mono font-bold text-soil-text">{totalPolicies}</p>
+        <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-5 py-4">
+          <p className="text-xs text-glomalin-muted uppercase tracking-wide font-mono mb-1">Policies</p>
+          <p className="text-3xl font-mono font-bold text-glomalin-text">{totalPolicies}</p>
         </div>
-        <div className="rounded-lg border border-soil-border bg-soil-surface px-5 py-4">
-          <p className="text-xs text-soil-muted uppercase tracking-wide font-mono mb-1">Crops Insured</p>
-          <p className="text-3xl font-mono font-bold text-soil-text">{cropsInsured}</p>
+        <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-5 py-4">
+          <p className="text-xs text-glomalin-muted uppercase tracking-wide font-mono mb-1">Crops Insured</p>
+          <p className="text-3xl font-mono font-bold text-glomalin-text">{cropsInsured}</p>
         </div>
-        <div className="rounded-lg border border-soil-border bg-soil-surface px-5 py-4">
-          <p className="text-xs text-soil-muted uppercase tracking-wide font-mono mb-1">Claim Alerts</p>
-          <p className={`text-3xl font-mono font-bold ${claimAlerts > 0 ? 'text-yellow-400' : 'text-soil-text'}`}>
+        <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-5 py-4">
+          <p className="text-xs text-glomalin-muted uppercase tracking-wide font-mono mb-1">Claim Alerts</p>
+          <p className={`text-3xl font-mono font-bold ${claimAlerts > 0 ? 'text-yellow-400' : 'text-glomalin-text'}`}>
             {claimAlerts}
           </p>
         </div>
       </div>
 
       {/* Disclaimer */}
-      <p className="text-xs text-soil-muted mb-6 italic">
+      <p className="text-xs text-glomalin-muted mb-6 italic">
         This is a decision-support tool, not an official insurance summary. Verify all figures
         with your insurance agent before making coverage decisions.
       </p>
 
       {/* Policy table */}
       {policies.length === 0 ? (
-        <div className="rounded-lg border border-soil-border bg-soil-surface px-6 py-12 text-center">
-          <p className="text-soil-muted text-sm">
+        <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-6 py-12 text-center">
+          <p className="text-glomalin-muted text-sm">
             No insurance policies found for 2026. Click{' '}
             <button
               onClick={openCreateDrawer}
-              className="text-soil-accent underline underline-offset-2"
+              className="text-glomalin-accent underline underline-offset-2"
             >
               Add Policy
             </button>{' '}
             to create one, or run{' '}
-            <code className="text-soil-accent">npx tsx scripts/migrate-fsa.ts</code> to import
+            <code className="text-glomalin-accent">npx tsx scripts/migrate-fsa.ts</code> to import
             existing data.
           </p>
         </div>
       ) : (
-        <div className="rounded-lg border border-soil-border overflow-hidden mb-8">
+        <div className="rounded-lg border border-glomalin-border overflow-hidden mb-8">
           <table className="w-full text-sm font-mono">
             <thead>
-              <tr className="bg-soil-surface border-b border-soil-border">
-                <th className="px-4 py-3 text-left text-soil-accent font-semibold">Farm</th>
-                <th className="px-4 py-3 text-left text-soil-accent font-semibold">Crop</th>
-                <th className="px-4 py-3 text-left text-soil-accent font-semibold">Plan Type</th>
-                <th className="px-4 py-3 text-right text-soil-accent font-semibold">Coverage</th>
-                <th className="px-4 py-3 text-right text-soil-accent font-semibold">Guarantee (bu/ac)</th>
-                <th className="px-4 py-3 text-right text-soil-accent font-semibold">Actual (bu/ac)</th>
-                <th className="px-4 py-3 text-center text-soil-accent font-semibold">Alert</th>
-                <th className="px-4 py-3 text-center text-soil-accent font-semibold">Actions</th>
+              <tr className="bg-glomalin-surface border-b border-glomalin-border">
+                <th className="px-4 py-3 text-left text-glomalin-accent font-semibold">Farm</th>
+                <th className="px-4 py-3 text-left text-glomalin-accent font-semibold">Crop</th>
+                <th className="px-4 py-3 text-left text-glomalin-accent font-semibold">Plan Type</th>
+                <th className="px-4 py-3 text-right text-glomalin-accent font-semibold">Coverage</th>
+                <th className="px-4 py-3 text-right text-glomalin-accent font-semibold">Guarantee (bu/ac)</th>
+                <th className="px-4 py-3 text-right text-glomalin-accent font-semibold">Actual (bu/ac)</th>
+                <th className="px-4 py-3 text-center text-glomalin-accent font-semibold">Alert</th>
+                <th className="px-4 py-3 text-center text-glomalin-accent font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -344,17 +344,17 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                     onClick={() =>
                       setSelectedPolicyId(isSelected ? null : policy.id)
                     }
-                    className={`border-b border-soil-border last:border-0 cursor-pointer transition-colors ${
+                    className={`border-b border-glomalin-border last:border-0 cursor-pointer transition-colors ${
                       isSelected
-                        ? 'border-l-2 border-l-soil-accent bg-soil-surface'
+                        ? 'border-l-2 border-l-glomalin-accent bg-glomalin-surface'
                         : isAlternateRow
-                        ? 'bg-soil-bg hover:bg-soil-surface'
-                        : 'bg-soil-surface hover:bg-soil-bg'
+                        ? 'bg-glomalin-bg hover:bg-glomalin-surface'
+                        : 'bg-glomalin-surface hover:bg-glomalin-bg'
                     }`}
                   >
                     {/* Farm name */}
                     <td className="px-4 py-3">
-                      <span className={hasVerifyNote ? 'text-orange-400' : 'text-soil-text'}>
+                      <span className={hasVerifyNote ? 'text-orange-400' : 'text-glomalin-text'}>
                         {policy.farm_name ?? '(no farm)'}
                       </span>
                       {hasVerifyNote && (
@@ -365,46 +365,46 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                     </td>
 
                     {/* Crop */}
-                    <td className="px-4 py-3 text-soil-text">
-                      {policy.crop ?? <span className="text-soil-muted">(none)</span>}
+                    <td className="px-4 py-3 text-glomalin-text">
+                      {policy.crop ?? <span className="text-glomalin-muted">(none)</span>}
                     </td>
 
                     {/* Plan Type */}
                     <td className="px-4 py-3">
                       {policy.plan_type ? (
-                        <span className="text-soil-accent text-xs font-semibold">{policy.plan_type}</span>
+                        <span className="text-glomalin-accent text-xs font-semibold">{policy.plan_type}</span>
                       ) : (
-                        <span className="text-soil-muted text-xs">—</span>
+                        <span className="text-glomalin-muted text-xs">—</span>
                       )}
                     </td>
 
                     {/* Coverage level */}
-                    <td className="px-4 py-3 text-right text-soil-text">
+                    <td className="px-4 py-3 text-right text-glomalin-text">
                       {policy.coverage_level}%
                     </td>
 
                     {/* Guarantee bu/ac */}
-                    <td className="px-4 py-3 text-right text-soil-text">
+                    <td className="px-4 py-3 text-right text-glomalin-text">
                       {policy.guarantee > 0 ? (
                         policy.guarantee.toFixed(1)
                       ) : (
-                        <span className="text-soil-muted">—</span>
+                        <span className="text-glomalin-muted">—</span>
                       )}
                     </td>
 
                     {/* Actual bu/ac */}
-                    <td className="px-4 py-3 text-right text-soil-text">
+                    <td className="px-4 py-3 text-right text-glomalin-text">
                       {policy.actual > 0 ? (
                         <span>
                           {policy.actual.toFixed(1)}
                           {policy.actual_synced_from_grain && (
-                            <span className="ml-1 text-xs text-soil-muted" title="Synced from grain tickets">
+                            <span className="ml-1 text-xs text-glomalin-muted" title="Synced from grain tickets">
                               (GT)
                             </span>
                           )}
                         </span>
                       ) : (
-                        <span className="text-soil-muted">—</span>
+                        <span className="text-glomalin-muted">—</span>
                       )}
                     </td>
 
@@ -415,7 +415,7 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                           Potential
                         </span>
                       ) : (
-                        <span className="text-soil-muted text-xs">—</span>
+                        <span className="text-glomalin-muted text-xs">—</span>
                       )}
                     </td>
 
@@ -427,35 +427,35 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => openEditDrawer(policy)}
-                          className="text-xs text-soil-muted hover:text-soil-accent transition-colors font-mono"
+                          className="text-xs text-glomalin-muted hover:text-glomalin-accent transition-colors font-mono"
                         >
                           Edit
                         </button>
-                        <span className="text-soil-border">|</span>
+                        <span className="text-glomalin-border">|</span>
                         <button
                           onClick={() => handleSyncYield(policy.id)}
                           disabled={syncingId === policy.id}
-                          className="text-xs text-soil-muted hover:text-soil-green transition-colors font-mono disabled:opacity-50"
+                          className="text-xs text-glomalin-muted hover:text-glomalin-green transition-colors font-mono disabled:opacity-50"
                         >
                           {syncingId === policy.id ? 'Syncing...' : 'Sync Yield'}
                         </button>
-                        <span className="text-soil-border">|</span>
+                        <span className="text-glomalin-border">|</span>
                         <button
                           onClick={() => setFilingPolicy(policy)}
-                          className="text-xs text-soil-muted hover:text-soil-accent transition-colors font-mono"
+                          className="text-xs text-glomalin-muted hover:text-glomalin-accent transition-colors font-mono"
                         >
                           File Claim
                         </button>
-                        <span className="text-soil-border">|</span>
+                        <span className="text-glomalin-border">|</span>
                         <button
                           onClick={() => handleDelete(policy.id)}
-                          className="text-xs text-soil-muted hover:text-red-400 transition-colors font-mono"
+                          className="text-xs text-glomalin-muted hover:text-red-400 transition-colors font-mono"
                         >
                           Delete
                         </button>
                       </div>
                       {syncFeedback?.id === policy.id && (
-                        <p className={`text-[10px] mt-1 ${syncFeedback.type === 'success' ? 'text-soil-green' : 'text-red-400'}`}>
+                        <p className={`text-[10px] mt-1 ${syncFeedback.type === 'success' ? 'text-glomalin-green' : 'text-red-400'}`}>
                           {syncFeedback.message}
                         </p>
                       )}
@@ -472,10 +472,10 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
       {selectedPolicy && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-mono font-semibold text-soil-accent text-base">
+            <h2 className="font-mono font-semibold text-glomalin-accent text-base">
               Coverage Comparison
             </h2>
-            <p className="text-xs text-soil-muted font-mono">
+            <p className="text-xs text-glomalin-muted font-mono">
               {selectedPolicy.farm_name ?? '(no farm)'} — {selectedPolicy.crop ?? 'no crop'}
             </p>
           </div>
@@ -487,10 +487,10 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
       {selectedPolicy && (
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-mono font-semibold text-soil-accent text-base">
+            <h2 className="font-mono font-semibold text-glomalin-accent text-base">
               Payout Simulator
             </h2>
-            <p className="text-xs text-soil-muted font-mono">
+            <p className="text-xs text-glomalin-muted font-mono">
               {selectedPolicy.farm_name ?? '(no farm)'} — {selectedPolicy.crop ?? 'no crop'}
             </p>
           </div>
@@ -531,14 +531,14 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
           />
           {/* Modal card */}
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-md bg-soil-surface border border-soil-border rounded-lg p-6 font-mono">
-              <h2 className="text-soil-accent font-semibold text-base mb-1">File a Claim</h2>
-              <p className="text-soil-muted text-xs mb-4">
+            <div className="w-full max-w-md bg-glomalin-surface border border-glomalin-border rounded-lg p-6 font-mono">
+              <h2 className="text-glomalin-accent font-semibold text-base mb-1">File a Claim</h2>
+              <p className="text-glomalin-muted text-xs mb-4">
                 {filingPolicy.farm_name ?? '(no farm)'} — {filingPolicy.crop ?? 'no crop'} — {filingPolicy.plan_type ?? '—'}
               </p>
 
               <div className="mb-3">
-                <label className="block text-xs text-soil-muted mb-1">
+                <label className="block text-xs text-glomalin-muted mb-1">
                   Date of Loss <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -546,34 +546,34 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
                   required
                   value={claimDate}
                   onChange={(e) => setClaimDate(e.target.value)}
-                  className="w-full bg-soil-bg border border-soil-border text-soil-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-soil-accent"
+                  className="w-full bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-glomalin-accent"
                 />
               </div>
 
               <div className="mb-5">
-                <label className="block text-xs text-soil-muted mb-1">
-                  Description <span className="text-soil-muted font-normal normal-case">(optional)</span>
+                <label className="block text-xs text-glomalin-muted mb-1">
+                  Description <span className="text-glomalin-muted font-normal normal-case">(optional)</span>
                 </label>
                 <textarea
                   rows={3}
                   value={claimDesc}
                   onChange={(e) => setClaimDesc(e.target.value)}
                   placeholder="Brief description of loss event..."
-                  className="w-full bg-soil-bg border border-soil-border text-soil-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-soil-accent resize-none placeholder:text-soil-muted"
+                  className="w-full bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-glomalin-accent resize-none placeholder:text-glomalin-muted"
                 />
               </div>
 
               <div className="flex items-center justify-end gap-3">
                 <button
                   onClick={() => setFilingPolicy(null)}
-                  className="text-sm text-soil-muted hover:text-soil-text transition-colors font-mono px-3 py-1.5"
+                  className="text-sm text-glomalin-muted hover:text-glomalin-text transition-colors font-mono px-3 py-1.5"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleFileClaim}
                   disabled={!claimDate || claimSubmitting}
-                  className="text-sm font-bold bg-soil-accent text-soil-bg rounded px-4 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-mono"
+                  className="text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-1.5 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed font-mono"
                 >
                   {claimSubmitting ? 'Filing...' : 'Submit Claim'}
                 </button>

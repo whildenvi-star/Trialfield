@@ -77,7 +77,7 @@ export function ClaimCard({
     claim.indemnity_amount != null ? claim.indemnity_amount : claim.effective_guarantee
 
   // Countdown pill color class
-  let countdownPillClass = 'bg-[#7A9E7E]/10 text-[#7A9E7E] border-[#7A9E7E]/30'
+  let countdownPillClass = 'bg-glomalin-green/10 text-glomalin-green border-glomalin-green/30'
   if (countdown) {
     if (overdue) {
       countdownPillClass = 'bg-red-900/20 text-red-400 border-red-600/40 animate-pulse'
@@ -108,7 +108,7 @@ export function ClaimCard({
             }
       }
       className={[
-        'rounded border bg-[#0e0c0b] p-3 font-mono text-xs',
+        'rounded border bg-glomalin-surface p-3 font-mono text-xs',
         'cursor-grab active:cursor-grabbing select-none',
         'transition-shadow hover:shadow-md hover:shadow-black/40',
         borderClass,
@@ -119,12 +119,12 @@ export function ClaimCard({
         .join(' ')}
     >
       {/* Crop name */}
-      <p className="text-[#e8d8c0] font-semibold text-sm mb-1 truncate">
+      <p className="text-glomalin-text font-semibold text-sm mb-1 truncate">
         {claim.crop ?? '—'}
       </p>
 
       {/* Coverage type + level */}
-      <p className="text-[#6a5a4a] mb-2">
+      <p className="text-glomalin-muted mb-2">
         {claim.coverage_type ?? '—'}
         {claim.coverage_level != null ? ` ${claim.coverage_level}%` : ''}
       </p>
@@ -144,7 +144,7 @@ export function ClaimCard({
           <span />
         )}
 
-        <span className="text-[#e8d8c0] text-right">
+        <span className="text-glomalin-text text-right">
           {formatCurrency(displayAmount)}
         </span>
       </div>

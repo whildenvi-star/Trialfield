@@ -4,7 +4,7 @@
  * TimelineFeed — unified chronological feed for claim events and user notes.
  *
  * Renders system events (stage_change, doc_upload, etc.) in muted gray styling
- * and user notes with accent (#C8860A) left border per Phase 32 CONTEXT.md design decision:
+ * and user notes with accent (glomalin-accent) left border per Phase 32 CONTEXT.md design decision:
  * "Unified chronological feed mixing system events and user notes"
  *
  * Note submission is optimistic — appends immediately to local state, replaces with
@@ -60,9 +60,9 @@ function TimelineEventRow({
 
   if (event.event_type === 'note') {
     return (
-      <div className="border-l-2 border-l-[#C8860A] pl-3">
-        <p className="text-[#e8d8c0] text-xs font-mono leading-relaxed">{event.note}</p>
-        <p className="text-[#6a5a4a] text-xs font-mono mt-0.5">{timestamp}</p>
+      <div className="border-l-2 border-l-glomalin-accent pl-3">
+        <p className="text-glomalin-text text-xs font-mono leading-relaxed">{event.note}</p>
+        <p className="text-glomalin-muted text-xs font-mono mt-0.5">{timestamp}</p>
       </div>
     )
   }
@@ -82,23 +82,23 @@ function TimelineEventRow({
       const docText = filename ? `Document uploaded: ${filename}` : 'Document uploaded'
       return (
         <div className="flex items-start gap-2">
-          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#6a5a4a] flex-shrink-0" />
+          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-glomalin-muted flex-shrink-0" />
           <div>
-            <p className="text-[#6a5a4a] text-xs font-mono">
+            <p className="text-glomalin-muted text-xs font-mono">
               {docText}
               {onSwitchToDocuments && (
                 <>
                   {' '}
                   <button
                     onClick={onSwitchToDocuments}
-                    className="text-[#C8860A] underline underline-offset-2 hover:opacity-80 transition-opacity"
+                    className="text-glomalin-accent underline underline-offset-2 hover:opacity-80 transition-opacity"
                   >
                     View
                   </button>
                 </>
               )}
             </p>
-            <p className="text-[#6a5a4a] text-xs font-mono opacity-60 mt-0.5">{timestamp}</p>
+            <p className="text-glomalin-muted text-xs font-mono opacity-60 mt-0.5">{timestamp}</p>
           </div>
         </div>
       )
@@ -123,10 +123,10 @@ function TimelineEventRow({
 
   return (
     <div className="flex items-start gap-2">
-      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-[#6a5a4a] flex-shrink-0" />
+      <span className="mt-1 h-1.5 w-1.5 rounded-full bg-glomalin-muted flex-shrink-0" />
       <div>
-        <p className="text-[#6a5a4a] text-xs font-mono">{systemText}</p>
-        <p className="text-[#6a5a4a] text-xs font-mono opacity-60 mt-0.5">{timestamp}</p>
+        <p className="text-glomalin-muted text-xs font-mono">{systemText}</p>
+        <p className="text-glomalin-muted text-xs font-mono opacity-60 mt-0.5">{timestamp}</p>
       </div>
     </div>
   )
@@ -214,7 +214,7 @@ export function TimelineFeed({ claimId, timeline, setTimeline, onSwitchTab }: Ti
       {/* Timeline feed — scrollable, newest at bottom */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {timeline.length === 0 && (
-          <p className="text-[#6a5a4a] font-mono text-xs">No events yet.</p>
+          <p className="text-glomalin-muted font-mono text-xs">No events yet.</p>
         )}
         {timeline.map((event, idx) => (
           <TimelineEventRow
@@ -226,12 +226,12 @@ export function TimelineFeed({ claimId, timeline, setTimeline, onSwitchTab }: Ti
       </div>
 
       {/* Always-visible inline note input at bottom of Timeline tab */}
-      <div className="border-t border-[#2a2218] px-5 py-4 flex-shrink-0">
+      <div className="border-t border-glomalin-border px-5 py-4 flex-shrink-0">
         {noteError && (
           <p className="text-red-400 text-xs font-mono mb-2">{noteError}</p>
         )}
         <textarea
-          className="w-full rounded border border-[#2a2218] bg-[#080604] text-[#e8d8c0] text-xs font-mono p-2 resize-none focus:outline-none focus:border-[#C8860A] transition-colors placeholder:text-[#6a5a4a]"
+          className="w-full rounded border border-glomalin-border bg-glomalin-bg text-glomalin-text text-xs font-mono p-2 resize-none focus:outline-none focus:border-glomalin-accent transition-colors placeholder:text-glomalin-muted"
           rows={3}
           placeholder="Add a note... (Enter to submit, Shift+Enter for new line)"
           value={noteText}
@@ -243,7 +243,7 @@ export function TimelineFeed({ claimId, timeline, setTimeline, onSwitchTab }: Ti
           <button
             onClick={() => handleAddNote(noteText)}
             disabled={submitting || !noteText.trim()}
-            className="text-xs bg-[#C8860A] text-[#080604] rounded px-3 py-1 font-mono font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+            className="text-xs bg-glomalin-accent text-glomalin-bg rounded px-3 py-1 font-mono font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
           >
             {submitting ? 'Saving...' : 'Add Note'}
           </button>

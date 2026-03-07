@@ -69,9 +69,9 @@ export function BulkActionBar({ selectedCount, onAction, onClear }: BulkActionBa
       )}
 
       {/* Sticky bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-soil-surface border-t border-soil-accent px-6 py-3 flex items-center gap-4">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-glomalin-surface border-t border-glomalin-accent px-6 py-3 flex items-center gap-4">
         {/* Selection count */}
-        <span className="font-mono text-sm font-bold text-soil-accent flex-shrink-0">
+        <span className="font-mono text-sm font-bold text-glomalin-accent flex-shrink-0">
           {selectedCount} selected
         </span>
 
@@ -88,13 +88,13 @@ export function BulkActionBar({ selectedCount, onAction, onClear }: BulkActionBa
             <button
               onClick={handleAssignConfirm}
               disabled={!assignCrop.trim()}
-              className="font-mono text-sm font-bold bg-soil-accent text-soil-bg rounded px-4 py-1.5 hover:opacity-90 disabled:opacity-50 transition-opacity"
+              className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-1.5 hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               Assign
             </button>
             <button
               onClick={handleAssignCancel}
-              className="font-mono text-sm text-soil-muted hover:text-soil-text transition-colors"
+              className="font-mono text-sm text-glomalin-muted hover:text-glomalin-text transition-colors"
             >
               Cancel
             </button>
@@ -104,7 +104,7 @@ export function BulkActionBar({ selectedCount, onAction, onClear }: BulkActionBa
           <>
             <button
               onClick={handleReportedClick}
-              className="font-mono text-sm text-soil-green border border-soil-green/40 rounded px-3 py-1.5 hover:bg-soil-green/10 transition-colors"
+              className="font-mono text-sm text-glomalin-green border border-glomalin-green/40 rounded px-3 py-1.5 hover:bg-glomalin-green/10 transition-colors"
             >
               Mark Reported
             </button>
@@ -116,13 +116,13 @@ export function BulkActionBar({ selectedCount, onAction, onClear }: BulkActionBa
             </button>
             <button
               onClick={() => setAssignMode(true)}
-              className="font-mono text-sm text-soil-text border border-soil-border rounded px-3 py-1.5 hover:border-soil-muted transition-colors"
+              className="font-mono text-sm text-glomalin-text border border-glomalin-border rounded px-3 py-1.5 hover:border-glomalin-muted transition-colors"
             >
               Assign Crop
             </button>
             <button
               onClick={onClear}
-              className="font-mono text-sm text-soil-muted hover:text-soil-text transition-colors ml-auto"
+              className="font-mono text-sm text-glomalin-muted hover:text-glomalin-text transition-colors ml-auto"
             >
               Clear
             </button>

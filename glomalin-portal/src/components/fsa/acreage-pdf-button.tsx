@@ -17,7 +17,7 @@ export function AcreagePdfButton({ records }: AcreagePdfButtonProps) {
     >
       {({ loading }) => (
         <button
-          className="bg-soil-accent text-soil-bg px-4 py-2 rounded font-mono text-sm font-bold hover:opacity-90 disabled:opacity-50"
+          className="bg-glomalin-accent text-glomalin-bg px-4 py-2 rounded font-mono text-sm font-bold hover:opacity-90 disabled:opacity-50"
           disabled={loading}
           type="button"
         >

@@ -127,11 +127,11 @@ export function getDeadlineBorderClass(
   stage: string,
 ): string {
   const days = getDeadlineDaysRemaining(deadlineAt, stage)
-  if (days === null) return 'border-[#2a2218]'
-  if (days < 0) return 'border-l-4 border-l-red-600 animate-pulse border-[#2a2218]'
-  if (days < 7) return 'border-l-4 border-l-red-500 border-[#2a2218]'
-  if (days <= 30) return 'border-l-4 border-l-amber-500 border-[#2a2218]'
-  return 'border-l-4 border-l-[#7A9E7E] border-[#2a2218]'
+  if (days === null) return 'border-glomalin-border'
+  if (days < 0) return 'border-l-4 border-l-red-600 animate-pulse border-glomalin-border'
+  if (days < 7) return 'border-l-4 border-l-red-500 border-glomalin-border'
+  if (days <= 30) return 'border-l-4 border-l-amber-500 border-glomalin-border'
+  return 'border-l-4 border-l-[#7A9E7E] border-glomalin-border'
 }
 
 /**

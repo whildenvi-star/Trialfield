@@ -29,7 +29,7 @@ export function CropTypeahead({ value, onChange, className }: CropTypeaheadProps
         // Extract unique crop names from proposals
         const proposals = Array.isArray(json.proposals) ? json.proposals : []
         const farmCrops: string[] = proposals
-          .map((p: { crop?: string }) => p.crop)
+          .map((p: { proposedCrop?: string | null }) => p.proposedCrop)
           .filter((c: unknown): c is string => typeof c === 'string' && c.trim().length > 0)
 
         // Merge and deduplicate with FSA list
@@ -70,7 +70,7 @@ export function CropTypeahead({ value, onChange, className }: CropTypeaheadProps
     <div ref={containerRef} className={`relative ${className ?? ''}`}>
       <input
         type="text"
-        className="w-full bg-soil-bg border border-soil-border rounded px-3 py-2 font-mono text-sm text-soil-text focus:outline-none focus:border-soil-accent"
+        className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
         value={value}
         onChange={(e) => {
           onChange(e.target.value)
@@ -82,11 +82,11 @@ export function CropTypeahead({ value, onChange, className }: CropTypeaheadProps
         autoComplete="off"
       />
       {open && filtered.length > 0 && (
-        <ul className="absolute z-10 top-full left-0 right-0 mt-1 bg-soil-bg border border-soil-border rounded shadow-lg max-h-48 overflow-y-auto">
+        <ul className="absolute z-10 top-full left-0 right-0 mt-1 bg-glomalin-bg border border-glomalin-border rounded shadow-lg max-h-48 overflow-y-auto">
           {filtered.map((opt) => (
             <li
               key={opt}
-              className="px-3 py-2 font-mono text-sm text-soil-text cursor-pointer hover:bg-soil-surface"
+              className="px-3 py-2 font-mono text-sm text-glomalin-text cursor-pointer hover:bg-glomalin-surface"
               onMouseDown={(e) => {
                 e.preventDefault()
                 onChange(opt)

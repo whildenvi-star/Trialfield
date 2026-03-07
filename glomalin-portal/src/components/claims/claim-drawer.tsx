@@ -142,8 +142,8 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
     [
       'px-4 py-2 text-xs font-mono font-semibold transition-colors border-b-2',
       activeTab === tab
-        ? 'border-b-[#C8860A] text-[#C8860A]'
-        : 'border-b-transparent text-[#6a5a4a] hover:text-[#e8d8c0]',
+        ? 'border-b-glomalin-accent text-glomalin-accent'
+        : 'border-b-transparent text-glomalin-muted hover:text-glomalin-text',
     ].join(' ')
 
   return (
@@ -161,23 +161,23 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
       <div
         className={[
           'fixed inset-y-0 right-0 z-50 w-full sm:w-[520px]',
-          'bg-[#0e0c0b] border-l border-[#2a2218]',
+          'bg-glomalin-surface border-l border-glomalin-border',
           'flex flex-col transition-transform duration-200',
           open ? 'translate-x-0' : 'translate-x-full',
         ].join(' ')}
       >
         {/* Header — always visible */}
-        <div className="px-5 py-4 border-b border-[#2a2218] flex-shrink-0">
+        <div className="px-5 py-4 border-b border-glomalin-border flex-shrink-0">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <h2 className="font-mono font-bold text-lg text-[#e8d8c0] truncate">
+              <h2 className="font-mono font-bold text-lg text-glomalin-text truncate">
                 {claim?.crop ?? '—'}
               </h2>
-              <div className="mt-0.5 text-xs text-[#6a5a4a] font-mono space-y-0.5">
+              <div className="mt-0.5 text-xs text-glomalin-muted font-mono space-y-0.5">
                 {claim?.date_of_loss && (
                   <p>
                     Date of Loss:{' '}
-                    <span className="text-[#e8d8c0]">
+                    <span className="text-glomalin-text">
                       {new Date(claim.date_of_loss).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -189,7 +189,7 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
                 {claim?.cause_of_loss && (
                   <p>
                     Cause of Loss:{' '}
-                    <span className="text-[#e8d8c0]">{claim.cause_of_loss}</span>
+                    <span className="text-glomalin-text">{claim.cause_of_loss}</span>
                   </p>
                 )}
               </div>
@@ -198,7 +198,7 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
             {/* Close button */}
             <button
               onClick={onClose}
-              className="text-[#6a5a4a] hover:text-[#e8d8c0] transition-colors font-mono text-xl leading-none flex-shrink-0 mt-0.5"
+              className="text-glomalin-muted hover:text-glomalin-text transition-colors font-mono text-xl leading-none flex-shrink-0 mt-0.5"
               aria-label="Close drawer"
             >
               ×
@@ -207,12 +207,12 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
 
           {/* Stage dropdown */}
           <div className="mt-3">
-            <label className="block text-xs text-[#6a5a4a] font-mono mb-1">Stage</label>
+            <label className="block text-xs text-glomalin-muted font-mono mb-1">Stage</label>
             <select
               value={claim?.stage ?? ''}
               onChange={(e) => handleStageChange(e.target.value)}
               disabled={stageUpdating || !claim}
-              className="w-full bg-[#080604] border border-[#2a2218] text-[#e8d8c0] font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-[#C8860A] transition-colors disabled:opacity-50"
+              className="w-full bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-glomalin-accent transition-colors disabled:opacity-50"
             >
               {STAGE_ORDER.map((stage) => (
                 <option key={stage} value={stage}>
@@ -224,7 +224,7 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
         </div>
 
         {/* Tab bar */}
-        <div className="flex border-b border-[#2a2218] flex-shrink-0">
+        <div className="flex border-b border-glomalin-border flex-shrink-0">
           <button className={tabButtonClass('timeline')} onClick={() => setActiveTab('timeline')}>
             Timeline
           </button>
@@ -246,7 +246,7 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
         <div className="flex-1 overflow-hidden flex flex-col">
           {loading && (
             <div className="flex-1 flex items-center justify-center">
-              <p className="text-[#6a5a4a] font-mono text-xs">Loading...</p>
+              <p className="text-glomalin-muted font-mono text-xs">Loading...</p>
             </div>
           )}
 
@@ -289,7 +289,7 @@ function FinancialsTab({ claim }: { claim: Claim | null }) {
   if (!claim) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <p className="text-[#6a5a4a] font-mono text-xs">No claim selected.</p>
+        <p className="text-glomalin-muted font-mono text-xs">No claim selected.</p>
       </div>
     )
   }
@@ -319,35 +319,35 @@ function FinancialsTab({ claim }: { claim: Claim | null }) {
 
   return (
     <div className="flex-1 overflow-y-auto px-5 py-4">
-      <p className="text-xs text-[#C8860A] font-mono font-semibold uppercase tracking-wide mb-4">
+      <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-4">
         Financial Summary
       </p>
       <div className="font-mono">
         {rows.map((row) => (
           <div
             key={row.label}
-            className="flex justify-between py-2 border-b border-[#2a2218]"
+            className="flex justify-between py-2 border-b border-glomalin-border"
           >
-            <span className="text-[#6a5a4a] text-xs">{row.label}</span>
-            <span className="text-[#e8d8c0] text-xs">{row.value}</span>
+            <span className="text-glomalin-muted text-xs">{row.label}</span>
+            <span className="text-glomalin-text text-xs">{row.value}</span>
           </div>
         ))}
       </div>
 
       {/* Adjuster section (if present) */}
       {claim.adjuster_name && (
-        <div className="mt-4 pt-4 border-t border-[#2a2218]">
-          <p className="text-xs text-[#C8860A] font-mono font-semibold uppercase tracking-wide mb-3">
+        <div className="mt-4 pt-4 border-t border-glomalin-border">
+          <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3">
             Adjuster
           </p>
-          <div className="flex justify-between py-2 border-b border-[#2a2218]">
-            <span className="text-[#6a5a4a] text-xs font-mono">Name</span>
-            <span className="text-[#e8d8c0] text-xs font-mono">{claim.adjuster_name as string}</span>
+          <div className="flex justify-between py-2 border-b border-glomalin-border">
+            <span className="text-glomalin-muted text-xs font-mono">Name</span>
+            <span className="text-glomalin-text text-xs font-mono">{claim.adjuster_name as string}</span>
           </div>
           {claim.adjuster_phone && (
-            <div className="flex justify-between py-2 border-b border-[#2a2218]">
-              <span className="text-[#6a5a4a] text-xs font-mono">Phone</span>
-              <span className="text-[#e8d8c0] text-xs font-mono">{claim.adjuster_phone as string}</span>
+            <div className="flex justify-between py-2 border-b border-glomalin-border">
+              <span className="text-glomalin-muted text-xs font-mono">Phone</span>
+              <span className="text-glomalin-text text-xs font-mono">{claim.adjuster_phone as string}</span>
             </div>
           )}
         </div>

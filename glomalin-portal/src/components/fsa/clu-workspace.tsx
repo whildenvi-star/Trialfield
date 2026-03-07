@@ -16,7 +16,7 @@ const AcreagePdfButton = dynamic(
   {
     ssr: false,
     loading: () => (
-      <span className="text-soil-muted font-mono text-sm">Loading PDF...</span>
+      <span className="text-glomalin-muted font-mono text-sm">Loading PDF...</span>
     ),
   }
 )
@@ -285,10 +285,10 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
       {/* Page header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-mono font-bold text-soil-text tracking-wide">
+          <h1 className="text-2xl font-mono font-bold text-glomalin-text tracking-wide">
             FSA Acreage Reporting
           </h1>
-          <p className="text-soil-muted font-mono text-sm mt-2">
+          <p className="text-glomalin-muted font-mono text-sm mt-2">
             {records.length.toLocaleString()} CLU records &middot; Crop year 2026
           </p>
         </div>
@@ -298,7 +298,7 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
           <button
             type="button"
             onClick={() => exportCsv(records)}
-            className="bg-soil-surface border border-soil-border text-soil-text px-4 py-2 rounded font-mono text-sm hover:border-soil-accent"
+            className="bg-glomalin-surface border border-glomalin-border text-glomalin-text px-4 py-2 rounded font-mono text-sm hover:border-glomalin-accent"
           >
             Export CSV
           </button>
@@ -307,7 +307,7 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
 
       {/* Error banner */}
       {loadError && (
-        <div className="bg-soil-surface border border-red-800 rounded-lg px-4 py-3 mb-6 font-mono text-sm text-red-400">
+        <div className="bg-glomalin-surface border border-red-800 rounded-lg px-4 py-3 mb-6 font-mono text-sm text-red-400">
           Failed to load CLU records: {loadError}
         </div>
       )}
