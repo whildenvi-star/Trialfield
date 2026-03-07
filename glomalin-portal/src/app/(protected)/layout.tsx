@@ -41,7 +41,7 @@ export default async function ProtectedLayout({
         <ASCIIBannerStrip height={72} />
       </div>
       <div className="block md:hidden">
-        <ASCIIBannerStrip height={48} />
+        <ASCIIBannerStrip height={48} nodeCount={6} />
       </div>
       <Suspense fallback={null}>
         <DeniedToast />
