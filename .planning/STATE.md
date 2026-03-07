@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 41 of 43 (App Shell Integration)
-Plan: 2 of 2 in current phase
-Status: Phase 41 complete
-Last activity: 2026-03-07 — Completed 41-02 (banner toggle with localStorage persistence)
+Phase: 43 of 43 (Scene Expansion)
+Plan: 1 of 2 in current phase
+Status: Plan 43-01 complete
+Last activity: 2026-03-07 — Completed 43-01 (scene engine + drone landscape + crossfade)
 
-Progress: [█████░░░░░] 50% (v8.0 -- Phase 41 complete, Phases 42-43 remaining)
+Progress: [████████░░] 75% (v8.0 -- Phase 43 Plan 01 complete, Plan 02 remaining)
 
 **v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
 
@@ -34,6 +34,7 @@ Progress: [█████░░░░░] 50% (v8.0 -- Phase 41 complete, Phase
 | Phase 40 P02 | 3min | 2 tasks | 2 files |
 | Phase 41 P01 | 1min | 2 tasks | 2 files |
 | Phase 41 P02 | 4min | 2 tasks | 3 files |
+| Phase 43 P01 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -54,6 +55,9 @@ Progress: [█████░░░░░] 50% (v8.0 -- Phase 41 complete, Phase
 - [Phase 40]: Background fbm opacity 0.03-0.05 for dark negative space aesthetic
 - [Phase 41]: localStorage (not Supabase) for banner preference — no schema changes, instant toggle
 - [Phase 41]: BannerSection client wrapper bridges server layout with client-only localStorage
+- [Phase 43]: SceneRenderer interface uses Float32Array brightness grid for drop-in scene swapping
+- [Phase 43]: Crossfade blends brightness grids per-cell (not CSS opacity) for character-level transitions
+- [Phase 43]: onNodeClick detects bright cells (>0.65) in stored grid for easter egg hook
 
 ### Pending Todos
 
@@ -68,6 +72,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 41-02-PLAN.md (Phase 41 complete)
+Stopped at: Completed 43-01-PLAN.md
 Resume file: —
-Next action: Execute Phase 42 (design token extraction)
+Next action: Execute Phase 43 Plan 02 (seasonal scene, scene cycling, easter egg wiring)

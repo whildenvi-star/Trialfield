@@ -274,4 +274,4 @@ Plans:
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 0/2 | Not started | - |
-| 43. Scene Expansion | v8.0 | 0/2 | Not started | - |
+| 43. Scene Expansion | 1/2 | In Progress|  | - |
