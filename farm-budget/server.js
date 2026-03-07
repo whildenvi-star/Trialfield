@@ -11,15 +11,22 @@ const fieldopsClient = require('./fieldops/client');
 const fieldopsSync = require('./fieldops/sync');
 // node-cron loaded on demand only when FieldOps sync is enabled
 
+const cors = require('cors');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const DATA_FILE = path.join(__dirname, 'data', 'data.json');
 const MAX_BACKUPS = 5;
 
+const corsOptions = {
+  origin: process.env.PORTAL_ORIGIN || 'http://localhost:3000',
+  credentials: true
+};
 // Gzip all responses — ~60-70% payload reduction for JSON/HTML/JS/CSS
 app.use(compression());
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '50mb' }));
-// Static files: cache for 1 hour in browser, revalidate via ETag
+// Static files: no cache during development
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
 
 // perf: Cache-Control on GET API responses — reference data cached longer
@@ -518,24 +525,6 @@ crudRoutes('suppliers', 'suppliers', 'sup');
 // Unit/Pack Definitions — configurable unit types with pack sizing
 crudRoutes('unit-packs', 'unitPacks', 'up');
 
-// Seed default unit packs if collection is empty on first load
-(function ensureDefaultUnitPacks() {
-  if (!store.unitPacks || store.unitPacks.length === 0) {
-    store.unitPacks = [
-      { id: 'up_bag50', name: 'Bag', packQty: 50, packDesc: '50 lb bag', packUom: 'lbs' },
-      { id: 'up_bag80', name: 'Bag', packQty: 80, packDesc: '80 lb bag', packUom: 'lbs' },
-      { id: 'up_tote40', name: 'Tote', packQty: 40, packDesc: '40 unit tote', packUom: 'units' },
-      { id: 'up_probox50', name: 'ProBox', packQty: 50, packDesc: '50 lb ProBox', packUom: 'lbs' },
-      { id: 'up_probox80', name: 'ProBox', packQty: 80, packDesc: '80 lb ProBox', packUom: 'lbs' },
-      { id: 'up_pallet', name: 'Pallet', packQty: 2000, packDesc: '2000 lb pallet', packUom: 'lbs' },
-      { id: 'up_jug25', name: 'Jug', packQty: 2.5, packDesc: '2.5 gal jug', packUom: 'gallons' },
-      { id: 'up_drum55', name: 'Drum', packQty: 55, packDesc: '55 gal drum', packUom: 'gallons' },
-      { id: 'up_bin', name: 'Bin', packQty: 2000, packDesc: '2000 lb bin', packUom: 'lbs' },
-      { id: 'up_unit', name: 'Unit', packQty: 1, packDesc: '1 unit', packUom: 'units' },
-      { id: 'up_each', name: 'Each', packQty: 1, packDesc: '1 each', packUom: 'units' }
-    ];
-  }
-})();
 
 // Orders
 crudRoutes('orders', 'orders', 'ord');
@@ -1136,6 +1125,373 @@ app.put('/api/farm-geojson', async (req, res) => {
   res.json({ ok: true });
 });
 
+// --- Futures Price Feed (Yahoo Finance proxy with 15-min cache) ---
+const futuresCache = { data: null, ts: 0 };
+const DEFAULT_FUTURES_CONFIG = [
+  { key: 'corn',     symbol: 'ZCZ26.CBT',  label: 'CORN',     contract: 'DEC 26' },
+  { key: 'soybeans', symbol: 'ZSX26.CBT',  label: 'SOYBEANS', contract: 'NOV 26' },
+  { key: 'wheat',    symbol: 'ZWN26.CBT',  label: 'WHEAT',    contract: 'JUL 26' }
+];
+
+function getFuturesContracts() {
+  return (store.futuresConfig && store.futuresConfig.length > 0)
+    ? store.futuresConfig
+    : DEFAULT_FUTURES_CONFIG;
+}
+
+app.get('/api/futures-config', (req, res) => {
+  res.json(getFuturesContracts());
+});
+
+app.put('/api/futures-config', async (req, res) => {
+  var contracts = req.body;
+  if (!Array.isArray(contracts) || contracts.length === 0) {
+    return res.status(400).json({ error: 'Must provide an array of contracts' });
+  }
+  store.futuresConfig = contracts.map(function (c) {
+    return { key: c.key || '', symbol: c.symbol || '', label: c.label || '', contract: c.contract || '' };
+  });
+  // Invalidate cache so next fetch uses new symbols
+  futuresCache.data = null;
+  futuresCache.ts = 0;
+  await saveData();
+  res.json(store.futuresConfig);
+});
+
+async function fetchFuturesData() {
+  const now = Date.now();
+  if (futuresCache.data && now - futuresCache.ts < 15 * 60 * 1000) {
+    return futuresCache.data;
+  }
+  var FUTURES_CONTRACTS = getFuturesContracts();
+  const results = await Promise.allSettled(
+    FUTURES_CONTRACTS.map(async (c) => {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(c.symbol)}?range=1mo&interval=1d`;
+      const resp = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FarmBudget/1.0)' }
+      });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json();
+      const result = json.chart.result[0];
+      const meta = result.meta;
+      const quotes = result.indicators.quote[0];
+      const timestamps = result.timestamp || [];
+      const closes = (quotes.close || []).filter(v => v != null);
+      const lastClose = closes.length ? closes[closes.length - 1] : null;
+      const prevClose = closes.length > 1 ? closes[closes.length - 2] : lastClose;
+      const change = lastClose && prevClose ? lastClose - prevClose : 0;
+      const changePct = prevClose ? (change / prevClose) * 100 : 0;
+      // CBOT grains quote in cents (USX) — convert to $/bu for display
+      var isCents = (meta.currency || '').toUpperCase() === 'USX';
+      var divisor = isCents ? 100 : 1;
+      var rawCloses = (quotes.close || []).slice(-30);
+      return {
+        key: c.key,
+        label: c.label,
+        contract: c.contract,
+        symbol: c.symbol,
+        price: lastClose != null ? Math.round(lastClose / divisor * 10000) / 10000 : null,
+        change: Math.round((change / divisor) * 10000) / 10000,
+        changePct: Math.round(changePct * 100) / 100,
+        unit: '$/bu',
+        timestamps: timestamps.slice(-30),
+        closes: rawCloses.map(function (v) { return v != null ? v / divisor : null; })
+      };
+    })
+  );
+  var contracts = getFuturesContracts();
+  const data = results.map((r, i) => {
+    if (r.status === 'fulfilled') return r.value;
+    return { key: contracts[i].key, label: contracts[i].label, contract: contracts[i].contract, error: r.reason.message };
+  });
+  futuresCache.data = data;
+  futuresCache.ts = now;
+  return data;
+}
+
+app.get('/api/futures', async (req, res) => {
+  try {
+    const data = await fetchFuturesData();
+    res.json(data);
+  } catch (err) {
+    console.error('[Futures] fetch error:', err.message);
+    res.status(502).json({ error: 'Failed to fetch futures data' });
+  }
+});
+
+// --- Glomalin Terminal Chat (Claude API) ---
+app.post('/api/chat', async (req, res) => {
+  var apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.write('data: ' + JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured in .env' }) + '\n\n');
+    res.write('data: [DONE]\n\n');
+    return res.end();
+  }
+
+  var userMessage = (req.body.message || '').trim();
+  var chatHistory = req.body.history || [];
+  if (!userMessage) {
+    return res.status(400).json({ error: 'No message provided' });
+  }
+
+  // Gather live farm context from store + cross-module queries
+  var contextParts = [];
+
+  // --- LOCAL: Dashboard & Enterprise Summaries ---
+  try {
+    var dashboard = Calc.computeDashboard(store.fields, store.enterprises, getRefs(), store.settings, { yieldMode: 'projected' });
+    var entSummary = (dashboard.enterpriseSummaries || []).map(function (s) {
+      var t = s.totals;
+      return s.enterprise.shortName + ': ' + t.acres + ' ac, rent $' + (t.rent || 0).toFixed(0) +
+        ', expenses $' + (t.expTotal || 0).toFixed(0) + ', crop income $' + (t.cropIncome || 0).toFixed(0) +
+        ', profit $' + (t.cropProfit || 0).toFixed(0) + '/ac' +
+        ', w/ payments $' + (t.profitWithPayments || 0).toFixed(0) + '/ac';
+    });
+    contextParts.push('ENTERPRISE SUMMARIES:\n' + entSummary.join('\n'));
+
+    var cropRows = [];
+    ['conventional', 'organic'].forEach(function (cat) {
+      (dashboard[cat] || []).forEach(function (eg) {
+        (eg.cropRows || []).forEach(function (r) {
+          cropRows.push(eg.enterprise.shortName + ' ' + r.crop + ': ' + r.acres + ' ac, yield ' +
+            r.avgYield + ' ' + (r.unit || 'bu') + '/ac, profit $' + (r.profitPerAcre || 0).toFixed(2) + '/ac, COP $' + (r.cop || 0).toFixed(2) + '/bu');
+        });
+      });
+    });
+    if (cropRows.length) contextParts.push('CROP DETAIL:\n' + cropRows.join('\n'));
+  } catch (e) {
+    contextParts.push('Dashboard data unavailable: ' + e.message);
+  }
+
+  // --- LOCAL: Field-level data ---
+  try {
+    var fieldLines = store.fields.map(function (f) {
+      var ent = store.enterprises.find(function (e) { return e.id === f.enterpriseId; });
+      var entName = ent ? ent.shortName : 'unassigned';
+      var inputCost = (f.inputs || []).reduce(function (s, inp) { return s + (inp.totalCost || 0); }, 0);
+      return f.name + ' (' + entName + '): ' + (f.acres || 0) + ' ac, crop ' + (f.crop || 'none') +
+        ', rent $' + (f.rentPerAcre || 0).toFixed(0) + '/ac, input cost $' + inputCost.toFixed(0) +
+        ', yield ' + (f.projectedYield || 0) + ' ' + (f.yieldUnit || 'bu') + '/ac';
+    });
+    if (fieldLines.length) contextParts.push('FIELDS (' + fieldLines.length + '):\n' + fieldLines.join('\n'));
+  } catch (e) { /* skip */ }
+
+  // --- LOCAL: Programs (crop insurance, gov payments) ---
+  try {
+    if (store.programs && store.programs.length) {
+      var progLines = store.programs.map(function (p) {
+        return p.name + ' (' + (p.type || p.category || 'program') + '): ' +
+          (p.fieldsApplied || 0) + ' fields, $' + (p.paymentPerAcre || p.amount || 0) + '/ac';
+      });
+      contextParts.push('PROGRAMS:\n' + progLines.join('\n'));
+    }
+  } catch (e) { /* skip */ }
+
+  // --- LOCAL: Procurement (orders & deliveries) ---
+  try {
+    if (store.orders && store.orders.length) {
+      var orderLines = store.orders.map(function (o) {
+        return o.productName + ' from ' + (o.supplierName || 'TBD') + ': ' +
+          (o.quantity || 0) + ' ' + (o.unit || 'units') + ', status ' + (o.status || 'pending') +
+          ', $' + (o.totalCost || 0).toFixed(0);
+      });
+      contextParts.push('ORDERS (' + store.orders.length + '):\n' + orderLines.join('\n'));
+    }
+    if (store.deliveries && store.deliveries.length) {
+      contextParts.push('DELIVERIES: ' + store.deliveries.length + ' received');
+    }
+  } catch (e) { /* skip */ }
+
+  // --- LOCAL: Seeds ---
+  try {
+    if (store.seeds && store.seeds.length) {
+      var seedLines = store.seeds.map(function (s) {
+        return (s.variety || s.name || 'unknown') + ': ' + (s.crop || '') +
+          ', $' + (s.pricePerUnit || 0).toFixed(2) + '/' + (s.unit || 'bag') +
+          ', rate ' + (s.seedingRate || 0) + '/ac';
+      });
+      contextParts.push('SEED VARIETIES (' + store.seeds.length + '):\n' + seedLines.join('\n'));
+    }
+  } catch (e) { /* skip */ }
+
+  // --- LOCAL: Sales / Buyers ---
+  try {
+    if (store.sales && store.sales.length) {
+      var saleLines = store.sales.map(function (s) {
+        return (s.buyer || s.buyerName || 'unknown') + ': ' + (s.crop || '') +
+          ' ' + (s.bushels || s.quantity || 0) + ' bu @ $' + (s.pricePerBu || s.price || 0).toFixed(2);
+      });
+      contextParts.push('SALES CONTRACTS (' + store.sales.length + '):\n' + saleLines.join('\n'));
+    }
+    if (store.buyers && store.buyers.length) {
+      contextParts.push('BUYERS: ' + store.buyers.map(function (b) { return b.name; }).join(', '));
+    }
+  } catch (e) { /* skip */ }
+
+  // --- LOCAL: Futures ---
+  try {
+    if (futuresCache.data) {
+      var futStr = futuresCache.data.map(function (f) {
+        if (f.error) return f.label + ': unavailable';
+        return f.label + ' (' + f.contract + '): $' + f.price + '/bu, chg ' +
+          (f.change >= 0 ? '+' : '') + f.change + ' (' + f.changePct + '%)';
+      }).join('\n');
+      contextParts.push('CBOT FUTURES:\n' + futStr);
+    }
+  } catch (e) { /* skip */ }
+
+  // --- LOCAL: Settings & Counts ---
+  contextParts.push('SETTINGS: Season ' + (store.settings.year || 'N/A') +
+    ', fuel $' + (store.settings.fuelPrice || 0) + '/gal' +
+    ', machinery $' + (store.settings.machineryRate || 0) + '/ac' +
+    ', wage $' + (store.settings.wageRate || 0) + '/hr' +
+    ', carry months ' + (store.settings.carryMonths || 0));
+
+  contextParts.push('NETWORK: ' + (store.fields || []).length + ' budget fields, ' +
+    (store.enterprises || []).length + ' enterprises, ' +
+    (store.products || []).length + ' products, ' +
+    (store.seeds || []).length + ' seed varieties, ' +
+    (store.orders || []).length + ' orders, ' +
+    (store.deliveries || []).length + ' deliveries');
+
+  // --- CROSS-MODULE: Parallel queries with 3s timeout ---
+  var crossModuleQueries = [
+    { name: 'FARM REGISTRY', url: 'http://localhost:3005/api/fields', transform: function (data) {
+      if (!Array.isArray(data)) return null;
+      var total = data.reduce(function (s, f) { return s + (f.reportingAcres || 0); }, 0);
+      var organic = data.reduce(function (s, f) { return s + (f.organicAcres || 0); }, 0);
+      return data.length + ' registered fields, ' + total.toFixed(1) + ' total ac, ' + organic.toFixed(1) + ' organic ac';
+    }},
+    { name: 'GRAIN TICKETS', url: 'http://localhost:3000/api/stats', transform: function (data) {
+      if (!data) return null;
+      var lines = [];
+      if (data.totalTickets) lines.push(data.totalTickets + ' tickets');
+      if (data.totalWeight) lines.push(Math.round(data.totalWeight).toLocaleString() + ' lbs total');
+      if (data.byCrop) {
+        Object.keys(data.byCrop).forEach(function (c) {
+          var cr = data.byCrop[c];
+          lines.push(c + ': ' + (cr.count || cr.tickets || 0) + ' loads, ' + Math.round(cr.weight || cr.totalWeight || 0).toLocaleString() + ' lbs');
+        });
+      }
+      return lines.join('\n') || JSON.stringify(data).slice(0, 300);
+    }},
+    { name: 'FSA ACRES', url: 'http://localhost:3002/api/rollup/summary-metrics', transform: function (data) {
+      if (!data) return null;
+      var lines = [];
+      if (data.totalEnrolledAcres) lines.push('Enrolled: ' + data.totalEnrolledAcres + ' ac');
+      if (data.totalFarms) lines.push(data.totalFarms + ' farms');
+      if (data.complianceRate) lines.push('Compliance: ' + data.complianceRate + '%');
+      if (data.reportingProgress) lines.push('Reporting: ' + data.reportingProgress);
+      return lines.join(', ') || JSON.stringify(data).slice(0, 300);
+    }}
+  ];
+
+  var crossResults = await Promise.allSettled(crossModuleQueries.map(function (q) {
+    var ctrl = new AbortController();
+    var timer = setTimeout(function () { ctrl.abort(); }, 3000);
+    return fetch(q.url, { signal: ctrl.signal })
+      .then(function (r) { clearTimeout(timer); return r.json(); })
+      .then(function (data) { return { name: q.name, text: q.transform(data) }; })
+      .catch(function () { clearTimeout(timer); return { name: q.name, text: null }; });
+  }));
+
+  crossResults.forEach(function (r) {
+    if (r.status === 'fulfilled' && r.value && r.value.text) {
+      contextParts.push(r.value.name + ':\n' + r.value.text);
+    }
+  });
+
+  var systemPrompt = 'You are Glomalin, the terminal AI for a farming operation\'s macro rollup dashboard. ' +
+    'You have access to live data from the entire Glomalin network — farm budget, grain tickets, ' +
+    'farm registry, FSA acres, and CBOT futures. Answer questions concisely in a terminal style — ' +
+    'short, data-driven responses. Use numbers and units. No markdown headers or bullet lists — plain text, ' +
+    'line breaks for structure. Keep responses under 200 words unless the user asks for detail.\n\n' +
+    'LIVE DATA:\n' + contextParts.join('\n\n');
+
+  // Build messages array
+  var messages = [];
+  chatHistory.forEach(function (m) {
+    if (m.role === 'user' || m.role === 'assistant') {
+      messages.push({ role: m.role, content: m.content });
+    }
+  });
+  messages.push({ role: 'user', content: userMessage });
+
+  // SSE streaming
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  try {
+    var claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 512,
+        stream: true,
+        system: systemPrompt,
+        messages: messages
+      })
+    });
+
+    if (!claudeResp.ok) {
+      var errText = await claudeResp.text();
+      res.write('data: ' + JSON.stringify({ error: 'Claude API error: ' + claudeResp.status }) + '\n\n');
+      res.write('data: [DONE]\n\n');
+      console.error('[Chat] Claude API error:', claudeResp.status, errText);
+      return res.end();
+    }
+
+    var reader = claudeResp.body.getReader();
+    var decoder = new TextDecoder();
+    var sseBuffer = '';
+
+    function processStream() {
+      reader.read().then(function (result) {
+        if (result.done) {
+          res.write('data: [DONE]\n\n');
+          return res.end();
+        }
+        sseBuffer += decoder.decode(result.value, { stream: true });
+        var lines = sseBuffer.split('\n');
+        sseBuffer = lines.pop();
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i];
+          if (line.indexOf('data: ') === 0) {
+            var payload = line.slice(6).trim();
+            if (!payload || payload === '[DONE]') continue;
+            try {
+              var evt = JSON.parse(payload);
+              if (evt.type === 'content_block_delta' && evt.delta && evt.delta.text) {
+                res.write('data: ' + JSON.stringify({ text: evt.delta.text }) + '\n\n');
+              }
+            } catch (e) { /* skip */ }
+          }
+        }
+        processStream();
+      }).catch(function (err) {
+        console.error('[Chat] Stream error:', err.message);
+        res.write('data: ' + JSON.stringify({ error: 'stream interrupted' }) + '\n\n');
+        res.write('data: [DONE]\n\n');
+        res.end();
+      });
+    }
+    processStream();
+  } catch (err) {
+    console.error('[Chat] Error:', err.message);
+    res.write('data: ' + JSON.stringify({ error: err.message }) + '\n\n');
+    res.write('data: [DONE]\n\n');
+    res.end();
+  }
+});
+
 // --- FieldOps Integration Routes ---
 app.get('/api/fieldops/status', (req, res) => {
   res.json({
@@ -1554,6 +1910,27 @@ function migrateData() {
 
 // --- Start ---
 loadData();
+// Ensure collections added after initial data.json creation exist
+if (!store.unitPacks) store.unitPacks = [];
+if (!store.programs) store.programs = [];
+if (!store.orders) store.orders = [];
+if (!store.deliveries) store.deliveries = [];
+// Re-run default seeding for unitPacks (the IIFE ran before loadData replaced store)
+if (store.unitPacks.length === 0) {
+  store.unitPacks = [
+    { id: 'up_bag50', name: 'Bag', packQty: 50, packDesc: '50 lb bag', packUom: 'lbs' },
+    { id: 'up_bag80', name: 'Bag', packQty: 80, packDesc: '80 lb bag', packUom: 'lbs' },
+    { id: 'up_tote40', name: 'Tote', packQty: 40, packDesc: '40 unit tote', packUom: 'units' },
+    { id: 'up_probox50', name: 'ProBox', packQty: 50, packDesc: '50 lb ProBox', packUom: 'lbs' },
+    { id: 'up_probox80', name: 'ProBox', packQty: 80, packDesc: '80 lb ProBox', packUom: 'lbs' },
+    { id: 'up_pallet', name: 'Pallet', packQty: 2000, packDesc: '2000 lb pallet', packUom: 'lbs' },
+    { id: 'up_jug25', name: 'Jug', packQty: 2.5, packDesc: '2.5 gal jug', packUom: 'gallons' },
+    { id: 'up_drum55', name: 'Drum', packQty: 55, packDesc: '55 gal drum', packUom: 'gallons' },
+    { id: 'up_bin', name: 'Bin', packQty: 2000, packDesc: '2000 lb bin', packUom: 'lbs' },
+    { id: 'up_unit', name: 'Unit', packQty: 1, packDesc: '1 unit', packUom: 'units' },
+    { id: 'up_each', name: 'Each', packQty: 1, packDesc: '1 each', packUom: 'units' }
+  ];
+}
 if (migrateData()) {
   saveData().then(function () { console.log('Data migrated (suppliers, labor hours, discount schedules, settings)'); });
 }

@@ -45,7 +45,11 @@ function getAnthropic() {
   return anthropic;
 }
 
-app.use(cors());
+const corsOptions = {
+  origin: process.env.PORTAL_ORIGIN || 'http://localhost:3000',
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/photos', express.static(PHOTO_DIR));

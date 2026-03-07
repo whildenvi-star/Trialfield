@@ -7,11 +7,18 @@ var path = require('path');
 var https = require('https');
 var Calc = require('./public/calc.js');
 
+var cors = require('cors');
+
 var app = express();
 var PORT = process.env.PORT || 3002;
 var DATA_FILE = path.join(__dirname, 'data', 'data.json');
 var MAX_BACKUPS = 5;
 
+var corsOptions = {
+  origin: process.env.PORTAL_ORIGIN || 'http://localhost:3000',
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 

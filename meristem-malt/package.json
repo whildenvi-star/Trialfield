@@ -1,0 +1,13 @@
+{
+  "name": "meristem-malt",
+  "version": "1.0.0",
+  "description": "Meristem Malt Cost Calculator - Break-even pricing and cost forecasting",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.0"
+  }
+}

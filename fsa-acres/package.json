@@ -1,0 +1,15 @@
+{
+  "name": "fsa-acres",
+  "version": "1.0.0",
+  "description": "FSA Acre Reporting & Crop Insurance Tracker",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "import": "node import.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "xlsx": "^0.18.5"
+  }
+}
