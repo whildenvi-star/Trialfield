@@ -62,10 +62,10 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 ### Scenes
 
 - [x] **SCENE-01**: DRONE scene — procedural rolling landscape with fbm noise, cloud layer, crop rows, depth fog
-- [ ] **SCENE-02**: SEASONAL scene — auto-select animation by calendar month (planting/growth/harvest/dormant)
-- [ ] **SCENE-03**: Scene preference stored per-user, default mycelium
+- [x] **SCENE-02**: SEASONAL scene — auto-select animation by calendar month (planting/growth/harvest/dormant)
+- [x] **SCENE-03**: Scene preference stored per-user, default mycelium
 - [x] **SCENE-04**: 200ms opacity crossfade on scene switch
-- [ ] **SCENE-05**: Easter egg trigger — clicking a bright mycelium node cycles to next scene (no visible UI)
+- [x] **SCENE-05**: Easter egg trigger — clicking a bright mycelium node cycles to next scene (no visible UI)
 
 ## Future Requirements
 
@@ -125,10 +125,10 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 | TOKEN-04 | Phase 42 | Pending |
 | TOKEN-05 | Phase 42 | Pending |
 | SCENE-01 | Phase 43 | Complete |
-| SCENE-02 | Phase 43 | Pending |
-| SCENE-03 | Phase 43 | Pending |
+| SCENE-02 | Phase 43 | Complete |
+| SCENE-03 | Phase 43 | Complete |
 | SCENE-04 | Phase 43 | Complete |
-| SCENE-05 | Phase 43 | Pending |
+| SCENE-05 | Phase 43 | Complete |
 
 **Coverage:**
 - v7.0 requirements: 13 total (7 complete, 6 pending)

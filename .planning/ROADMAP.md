@@ -107,7 +107,7 @@
 - [x] **Phase 40: ASCIIBannerStrip Component** - Standalone animated ASCII mycelial network canvas component at ~50fps with no external deps (completed 2026-03-07)
 - [x] **Phase 41: App Shell Integration** - Banner wired into protected layout with mobile responsive, a11y, and user disable setting (completed 2026-03-07)
 - [ ] **Phase 42: Design Token Alignment & Palette Swap** - Portal-wide navy/cyan design system replacing soil palette with canonical token file
-- [ ] **Phase 43: Scene Expansion** - Additional ASCII scenes (drone, seasonal) with easter egg toggle and crossfade transitions
+- [x] **Phase 43: Scene Expansion** - Additional ASCII scenes (drone, seasonal) with easter egg toggle and crossfade transitions (completed 2026-03-07)
 
 ## Phase Details
 
@@ -274,4 +274,4 @@ Plans:
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | 1/2 | In Progress|  | - |
-| 43. Scene Expansion | 1/2 | In Progress|  | - |
+| 43. Scene Expansion | 2/2 | Complete   | 2026-03-07 | - |

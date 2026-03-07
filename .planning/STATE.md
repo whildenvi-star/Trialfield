@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 ## Current Position
 
 Phase: 43 of 43 (Scene Expansion)
-Plan: 1 of 2 in current phase
-Status: Plan 43-01 complete
-Last activity: 2026-03-07 — Completed 43-01 (scene engine + drone landscape + crossfade)
+Plan: 2 of 2 in current phase
+Status: Phase 43 complete
+Last activity: 2026-03-07 — Completed 43-02 (seasonal scene, persistence, easter egg)
 
-Progress: [████████░░] 75% (v8.0 -- Phase 43 Plan 01 complete, Plan 02 remaining)
+Progress: [██████████] 100% (v8.0 -- Phase 43 complete, all plans shipped)
 
 **v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
 
@@ -36,6 +36,7 @@ Progress: [████████░░] 75% (v8.0 -- Phase 43 Plan 01 complet
 | Phase 41 P02 | 4min | 2 tasks | 3 files |
 | Phase 43 P01 | 3min | 2 tasks | 4 files |
 | Phase 42 P01 | 2min | 2 tasks | 4 files |
+| Phase 43 P02 | 12min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -59,6 +60,9 @@ Progress: [████████░░] 75% (v8.0 -- Phase 43 Plan 01 complet
 - [Phase 43]: SceneRenderer interface uses Float32Array brightness grid for drop-in scene swapping
 - [Phase 43]: Crossfade blends brightness grids per-cell (not CSS opacity) for character-level transitions
 - [Phase 43]: onNodeClick detects bright cells (>0.65) in stored grid for easter egg hook
+- [Phase 43]: Seasonal renderer is stateless (no refs) unlike mycelium — simpler architecture
+- [Phase 43]: Scene preference in localStorage alongside banner-disabled — orthogonal controls
+- [Phase 43]: handleNodeClick uses React state updater to avoid stale closures in cycling
 - [Phase 42]: Dropped gold (#C8860A) from tokens -- soil remnant incompatible with cyan palette
 - [Phase 42]: Dual export pattern: colors (camelCase for JS/canvas) + tailwindColors (kebab-case for Tailwind)
 - [Phase 42]: Token scope limited to colors and fonts -- spacing/radius/shadows use Tailwind defaults
@@ -76,6 +80,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 42-01-PLAN.md
+Stopped at: Completed 43-02-PLAN.md
 Resume file: —
-Next action: Execute Phase 42 Plan 02 (component migration to glomalin-* classes)
+Next action: Phase 43 complete. Execute Phase 42 Plan 02 or start next milestone.
