@@ -50,7 +50,7 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Card-based CLU editor with bulk actions and validation, FSA acreage reporting PDF, insurance coverage matrix and payout simulator, claims Kanban with document upload and timeline, cross-module navigation (CLU→Policy→Claim), dashboard summary cards, APH auto-populate, yield sync, and file-claim flow. 8 phases, 15 plans, 27 requirements — all complete.
 
-## Current Milestone: v7.0 Public Deployment & Team Onboarding
+## Current Milestone: v7.0 Public Deployment & Team Onboarding (In Progress)
 
 **Goal:** Deploy the entire 8-app farm operations platform to a public URL so 6-15 coworkers can access it with role-based permissions and email-invite onboarding. Infrastructure milestone — no new features.
 
@@ -62,6 +62,17 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - Email invite flow for coworker onboarding (already built, needs production wiring)
 - Daily backup scripts for JSON data files and PostgreSQL databases
 - Health check endpoints and production hardening
+
+## Current Milestone: v8.0 ASCII Banner Strip & Design System (In Parallel)
+
+**Goal:** Add an animated ASCII mycelial network banner strip as integrated design chrome across all portal module pages, unify the Glomalin design system with a canonical navy/cyan palette, and expand with additional ASCII animation scenes.
+
+**Target features:**
+- ASCIIBannerStrip component with animated mycelial network art (canvas, ~50fps, no external deps)
+- App shell integration — banner between header and content on every protected page
+- Navy/cyan design token system replacing the current soil palette across the entire portal
+- Scene expansion — drone landscape, seasonal animations, user-selectable with crossfade
+- Mobile responsive, prefers-reduced-motion support, user disable setting
 
 ## Requirements
 
@@ -124,6 +135,7 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 ### Active
 
+**v7.0 — Deployment:**
 - [ ] PM2 ecosystem config for all 8 apps with production env templates
 - [ ] CORS middleware on all Express apps restricted to portal origin
 - [ ] Caddy reverse proxy with auto-HTTPS subdomain routing
@@ -131,6 +143,15 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - [ ] Email invite flow wired for production domain
 - [ ] Daily backup scripts for JSON files and PostgreSQL
 - [ ] Health check endpoints and production hardening
+
+**v8.0 — ASCII Banner & Design System:**
+- [ ] ASCIIBannerStrip component with animated mycelial network (canvas, ~50fps, retina)
+- [ ] App shell integration — banner in protected layout, mobile responsive, a11y
+- [ ] Navy/cyan design token system (src/styles/tokens.ts) replacing soil palette
+- [ ] Full portal palette migration (tailwind, components, header, cards, nav)
+- [ ] DESIGN.md documenting the token system and component patterns
+- [ ] Scene expansion — drone landscape, seasonal animations, per-user preference
+- [ ] Scene toggle UI with crossfade transitions
 
 ### Deferred
 
@@ -206,4 +227,4 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | Supabase for FSA/Insurance/Claims data | Consistent with portal architecture; RLS for access control already in place | — Pending |
 
 ---
-*Last updated: 2026-03-04 after v6.0 milestone start*
+*Last updated: 2026-03-07 after v8.0 milestone start*

@@ -5,16 +5,18 @@
 See: .planning/PROJECT.md (updated 2026-03-06)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v7.0 Public Deployment & Team Onboarding — Phase 35 in progress
+**Current focus:** v8.0 ASCII Banner Strip & Design System (parallel with v7.0 deployment)
 
 ## Current Position
 
-Phase: 35 of 39 (VPS Provisioning + Process Management)
-Plan: 2 of 2 complete
-Status: Phase 35 complete
-Last activity: 2026-03-06 — Completed 35-02 CORS + Env Templates
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements for v8.0
+Last activity: 2026-03-07 — Milestone v8.0 started
 
-Progress: [##░░░░░░░░] 20% (v7.0)
+Progress: [░░░░░░░░░░] 0% (v8.0)
+
+**v7.0 status:** Phase 35 complete, phases 36-39 pending (deployment — independent track)
 
 ## Performance Metrics
 
@@ -56,7 +58,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-06
-Stopped at: Completed 35-02-PLAN.md (CORS + Env Templates)
+Last session: 2026-03-07
+Stopped at: Starting v8.0 milestone
 Resume file: —
-Next action: Phase 36 (Caddy Reverse Proxy)
+Next action: Define v8.0 requirements and roadmap
