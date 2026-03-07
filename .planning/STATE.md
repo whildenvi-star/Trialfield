@@ -16,7 +16,7 @@ Last activity: 2026-03-07 — Milestone v8.0 started
 
 Progress: [░░░░░░░░░░] 0% (v8.0)
 
-**v7.0 status:** Phase 36 plan 1 of 2 complete, phases 37-39 pending (deployment — independent track)
+**v7.0 status:** Phase 36 plan 2 of 2 complete, phases 37-39 pending (deployment — independent track)
 
 ## Performance Metrics
 
@@ -46,6 +46,8 @@ Progress: [░░░░░░░░░░] 0% (v8.0)
 - [35-02]: CORS fallback defaults to http://localhost:3000 for dev convenience
 - [36-01]: DOMAIN env var placeholder in Caddyfile for deploy-time domain config
 - [36-01]: X-Forwarded-Proto header only on Next.js apps (portal, cert) for secure cookies
+- [36-02]: DEPLOY.md at repo root as single deployment reference (368 lines, 12 sections)
+- [36-02]: /srv/farm-ops as canonical deploy path on VPS
 
 ### Pending Todos
 
@@ -61,6 +63,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Starting v8.0 milestone
+Stopped at: Completed 36-02-PLAN.md (VPS Deployment Guide)
 Resume file: —
-Next action: Define v8.0 requirements and roadmap
+Next action: Phase 37 or continue v8.0 requirements
