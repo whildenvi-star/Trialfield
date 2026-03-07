@@ -195,8 +195,8 @@ Plans:
   5. On initial page load, the banner fades in smoothly (opacity 0 to 1 over 400ms) rather than popping in abruptly
 **Plans**: 2 plans
 Plans:
-- [ ] 41-01-PLAN.md — Mobile responsive nodeCount + accessibility attributes
-- [ ] 41-02-PLAN.md — User banner disable toggle with localStorage persistence
+- [x] 41-01-PLAN.md — Mobile responsive nodeCount + accessibility attributes
+- [x] 41-02-PLAN.md — User banner disable toggle with localStorage persistence
 
 ### Phase 42: Design Token Alignment & Palette Swap
 **Goal**: The entire Glomalin Portal uses a unified navy/cyan design system defined in a canonical token file, replacing the original soil palette across all components
@@ -220,7 +220,10 @@ Plans:
   3. A user's scene preference persists across sessions (stored per-user), and defaults to mycelium for new users
   4. Switching scenes triggers a 200ms opacity crossfade — no flash or hard cut between the old and new scene
   5. Clicking a bright mycelium node in the banner cycles to the next scene with no visible button or toggle UI (easter egg discovery)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 43-01-PLAN.md — Scene engine architecture, drone landscape renderer, crossfade transitions
+- [ ] 43-02-PLAN.md — Seasonal scene renderer, scene preference persistence, easter egg click-to-cycle
 
 ## Progress
 
@@ -266,6 +269,6 @@ Plans:
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 41. App Shell Integration | 2/2 | Complete    | 2026-03-07 | - |
+| 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 0/? | Not started | - |
-| 43. Scene Expansion | v8.0 | 0/? | Not started | - |
+| 43. Scene Expansion | v8.0 | 0/2 | Not started | - |
