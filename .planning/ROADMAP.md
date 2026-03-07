@@ -180,8 +180,8 @@ Plans:
   5. Two ASCIIBannerStrip instances on the same page animate out of sync with each other (random time offset)
 **Plans**: 2 plans
 Plans:
-- [ ] 40-01-PLAN.md -- Extract noise utilities, refactor component API (height/className/paused)
-- [ ] 40-02-PLAN.md -- Enhance visual behavior: tendril growth, node lifecycle, white highlights, clock-based resume
+- [x] 40-01-PLAN.md -- Extract noise utilities, refactor component API (height/className/paused)
+- [x] 40-02-PLAN.md -- Enhance visual behavior: tendril growth, node lifecycle, white highlights, clock-based resume
 
 ### Phase 41: App Shell Integration
 **Goal**: The ASCII banner appears on every protected page between the header and content, with mobile responsive sizing, accessibility support, and a user toggle to disable it
@@ -193,7 +193,10 @@ Plans:
   3. With prefers-reduced-motion enabled in OS settings, the banner shows a single static ASCII frame with no animation loop running
   4. A user can disable the banner entirely via their settings, and it stays disabled across page navigations and sessions
   5. On initial page load, the banner fades in smoothly (opacity 0 to 1 over 400ms) rather than popping in abruptly
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 41-01-PLAN.md — Mobile responsive nodeCount + accessibility attributes
+- [ ] 41-02-PLAN.md — User banner disable toggle with localStorage persistence
 
 ### Phase 42: Design Token Alignment & Palette Swap
 **Goal**: The entire Glomalin Portal uses a unified navy/cyan design system defined in a canonical token file, replacing the original soil palette across all components
@@ -262,7 +265,7 @@ Plans:
 | 37. Database + Backups | v7.0 | 0/? | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
-| 40. ASCIIBannerStrip Component | 2/2 | Complete    | 2026-03-07 | - |
-| 41. App Shell Integration | v8.0 | 0/? | Not started | - |
+| 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
+| 41. App Shell Integration | v8.0 | 0/2 | Not started | - |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 0/? | Not started | - |
 | 43. Scene Expansion | v8.0 | 0/? | Not started | - |
