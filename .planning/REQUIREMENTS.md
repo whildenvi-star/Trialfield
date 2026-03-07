@@ -29,9 +29,47 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 - [ ] **ONB-02**: Invited user can set password, log in, and see dashboard with granted modules
 - [ ] **ONB-03**: User can reset forgotten password via email link in production
 
+## v8.0 Requirements
+
+Requirements for ASCII Banner Strip & Design System milestone. Each maps to roadmap phases.
+
+### Banner
+
+- [ ] **BANNER-01**: ASCIIBannerStrip component renders animated ASCII mycelial network at configurable height (default 72px)
+- [ ] **BANNER-02**: Canvas auto-measures on mount + resize with 150ms debounce, respects devicePixelRatio
+- [ ] **BANNER-03**: Character grid uses brightness-mapped ASCII ramp (" .·:;░▒▓█") with cyan-palette coloring
+- [ ] **BANNER-04**: Pure noise utility functions (noise2D, fbm, generateMycelium) with no external deps
+- [ ] **BANNER-05**: requestAnimationFrame loop targeting ~50fps with cleanup on unmount and tab-hidden throttle
+- [ ] **BANNER-06**: Bottom gradient overlay fades strip into page background seamlessly
+- [ ] **BANNER-07**: Random time offset per instance so banners on different pages don't synchronize
+
+### Shell Integration
+
+- [ ] **SHELL-01**: Banner wired into protected layout between header and page content
+- [ ] **SHELL-02**: Mobile responsive — 48px height, 6 mycelium nodes at <768px
+- [ ] **SHELL-03**: prefers-reduced-motion renders single static ASCII frame, no animation loop
+- [ ] **SHELL-04**: User setting to disable banner entirely (stored in existing user prefs)
+- [ ] **SHELL-05**: CSS fade-in on mount (opacity 0→1 over 400ms)
+
+### Design Tokens
+
+- [ ] **TOKEN-01**: Create src/styles/tokens.ts exporting canonical navy/cyan palette, fonts, and spacing
+- [ ] **TOKEN-02**: ASCIIBannerStrip imports all colors from shared tokens (no hardcoded hex)
+- [ ] **TOKEN-03**: Migrate tailwind.config.ts from soil palette to navy/cyan design tokens
+- [ ] **TOKEN-04**: Migrate existing portal components (header, cards, badges, nav) to token-based colors
+- [ ] **TOKEN-05**: Create DESIGN.md documenting token system, font stack, spacing, component patterns
+
+### Scenes
+
+- [ ] **SCENE-01**: DRONE scene — procedural rolling landscape with fbm noise, cloud layer, crop rows, depth fog
+- [ ] **SCENE-02**: SEASONAL scene — auto-select animation by calendar month (planting/growth/harvest/dormant)
+- [ ] **SCENE-03**: Scene preference stored per-user, default mycelium
+- [ ] **SCENE-04**: 200ms opacity crossfade on scene switch
+- [ ] **SCENE-05**: Easter egg trigger — clicking a bright mycelium node cycles to next scene (no visible UI)
+
 ## Future Requirements
 
-### v8.0+ Candidates
+### v9.0+ Candidates
 
 - **MON-01**: Uptime monitoring with email alerts when an app goes down
 - **CI-01**: Automated deployment pipeline (git push → build → restart)
@@ -43,11 +81,14 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 | Feature | Reason |
 |---------|--------|
 | Docker/containerization | Adds complexity; PM2 on bare metal is simpler for 6-15 users |
-| CI/CD pipeline | Manual deploy is fine for now; automate in v8.0+ |
+| CI/CD pipeline | Manual deploy is fine for now; automate in v9.0+ |
 | Load balancer / multi-instance | Single VPS handles 6-15 users; JSON apps can't multi-instance anyway |
 | CDN for static assets | Not needed at this scale |
 | Database migration (JSON to PostgreSQL) | Would require app rewrites; defer to future milestone |
 | Custom domain email (SMTP) | Supabase default mailer works for invite volume |
+| Green/earth-tone palette | Glomalin design system is navy/cyan — no organic color schemes |
+| External animation libraries | Canvas-only rendering with pure TypeScript noise functions |
+| Visible scene toggle UI | Scene switching is an easter egg, not a prominent UI feature |
 
 ## Traceability
 
@@ -66,12 +107,35 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 | ONB-02 | Phase 38 | Pending |
 | ONB-03 | Phase 38 | Pending |
 | SEC-03 | Phase 39 | Pending |
+| BANNER-01 | Phase 40 | Pending |
+| BANNER-02 | Phase 40 | Pending |
+| BANNER-03 | Phase 40 | Pending |
+| BANNER-04 | Phase 40 | Pending |
+| BANNER-05 | Phase 40 | Pending |
+| BANNER-06 | Phase 40 | Pending |
+| BANNER-07 | Phase 40 | Pending |
+| SHELL-01 | Phase 41 | Pending |
+| SHELL-02 | Phase 41 | Pending |
+| SHELL-03 | Phase 41 | Pending |
+| SHELL-04 | Phase 41 | Pending |
+| SHELL-05 | Phase 41 | Pending |
+| TOKEN-01 | Phase 42 | Pending |
+| TOKEN-02 | Phase 42 | Pending |
+| TOKEN-03 | Phase 42 | Pending |
+| TOKEN-04 | Phase 42 | Pending |
+| TOKEN-05 | Phase 42 | Pending |
+| SCENE-01 | Phase 43 | Pending |
+| SCENE-02 | Phase 43 | Pending |
+| SCENE-03 | Phase 43 | Pending |
+| SCENE-04 | Phase 43 | Pending |
+| SCENE-05 | Phase 43 | Pending |
 
 **Coverage:**
-- v7.0 requirements: 13 total
-- Mapped to phases: 13
+- v7.0 requirements: 13 total (7 complete, 6 pending)
+- v8.0 requirements: 22 total
+- Mapped to phases: 35 total
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-06 after initial definition*
+*Last updated: 2026-03-07 after v8.0 requirements added*
