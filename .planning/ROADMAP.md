@@ -273,5 +273,5 @@ Plans:
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 42. Design Token Alignment & Palette Swap | v8.0 | 0/2 | Not started | - |
+| 42. Design Token Alignment & Palette Swap | 1/2 | In Progress|  | - |
 | 43. Scene Expansion | 1/2 | In Progress|  | - |

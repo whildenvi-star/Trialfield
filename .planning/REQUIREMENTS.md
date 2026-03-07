@@ -53,9 +53,9 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 
 ### Design Tokens
 
-- [ ] **TOKEN-01**: Create src/styles/tokens.ts exporting canonical navy/cyan palette, fonts, and spacing
-- [ ] **TOKEN-02**: ASCIIBannerStrip imports all colors from shared tokens (no hardcoded hex)
-- [ ] **TOKEN-03**: Migrate tailwind.config.ts from soil palette to navy/cyan design tokens
+- [x] **TOKEN-01**: Create src/styles/tokens.ts exporting canonical navy/cyan palette, fonts, and spacing
+- [x] **TOKEN-02**: ASCIIBannerStrip imports all colors from shared tokens (no hardcoded hex)
+- [x] **TOKEN-03**: Migrate tailwind.config.ts from soil palette to navy/cyan design tokens
 - [ ] **TOKEN-04**: Migrate existing portal components (header, cards, badges, nav) to token-based colors
 - [ ] **TOKEN-05**: Create DESIGN.md documenting token system, font stack, spacing, component patterns
 
@@ -119,9 +119,9 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 | SHELL-03 | Phase 41 | Complete |
 | SHELL-04 | Phase 41 | Complete |
 | SHELL-05 | Phase 41 | Complete |
-| TOKEN-01 | Phase 42 | Pending |
-| TOKEN-02 | Phase 42 | Pending |
-| TOKEN-03 | Phase 42 | Pending |
+| TOKEN-01 | Phase 42 | Complete |
+| TOKEN-02 | Phase 42 | Complete |
+| TOKEN-03 | Phase 42 | Complete |
 | TOKEN-04 | Phase 42 | Pending |
 | TOKEN-05 | Phase 42 | Pending |
 | SCENE-01 | Phase 43 | Complete |

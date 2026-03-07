@@ -35,6 +35,7 @@ Progress: [████████░░] 75% (v8.0 -- Phase 43 Plan 01 complet
 | Phase 41 P01 | 1min | 2 tasks | 2 files |
 | Phase 41 P02 | 4min | 2 tasks | 3 files |
 | Phase 43 P01 | 3min | 2 tasks | 4 files |
+| Phase 42 P01 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,9 @@ Progress: [████████░░] 75% (v8.0 -- Phase 43 Plan 01 complet
 - [Phase 43]: SceneRenderer interface uses Float32Array brightness grid for drop-in scene swapping
 - [Phase 43]: Crossfade blends brightness grids per-cell (not CSS opacity) for character-level transitions
 - [Phase 43]: onNodeClick detects bright cells (>0.65) in stored grid for easter egg hook
+- [Phase 42]: Dropped gold (#C8860A) from tokens -- soil remnant incompatible with cyan palette
+- [Phase 42]: Dual export pattern: colors (camelCase for JS/canvas) + tailwindColors (kebab-case for Tailwind)
+- [Phase 42]: Token scope limited to colors and fonts -- spacing/radius/shadows use Tailwind defaults
 
 ### Pending Todos
 
@@ -72,6 +76,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 43-01-PLAN.md
+Stopped at: Completed 42-01-PLAN.md
 Resume file: —
-Next action: Execute Phase 43 Plan 02 (seasonal scene, scene cycling, easter egg wiring)
+Next action: Execute Phase 42 Plan 02 (component migration to glomalin-* classes)
