@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 43 of 43 (Scene Expansion)
+Phase: 43 of 43 (all phases complete)
 Plan: 2 of 2 in current phase
-Status: Phase 43 complete
-Last activity: 2026-03-07 — Completed 43-02 (seasonal scene, persistence, easter egg)
+Status: Phase 42 complete (plan 02 shipped)
+Last activity: 2026-03-07 — Completed 42-02 (component migration, DESIGN.md)
 
-Progress: [██████████] 100% (v8.0 -- Phase 43 complete, all plans shipped)
+Progress: [██████████] 100% (v8.0 -- All phases complete, all plans shipped)
 
 **v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
 
@@ -37,6 +37,7 @@ Progress: [██████████] 100% (v8.0 -- Phase 43 complete, all 
 | Phase 43 P01 | 3min | 2 tasks | 4 files |
 | Phase 42 P01 | 2min | 2 tasks | 4 files |
 | Phase 43 P02 | 12min | 3 tasks | 3 files |
+| Phase 42 P02 | 2min | 2 tasks | 38 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Progress: [██████████] 100% (v8.0 -- Phase 43 complete, all 
 - [Phase 42]: Dropped gold (#C8860A) from tokens -- soil remnant incompatible with cyan palette
 - [Phase 42]: Dual export pattern: colors (camelCase for JS/canvas) + tailwindColors (kebab-case for Tailwind)
 - [Phase 42]: Token scope limited to colors and fonts -- spacing/radius/shadows use Tailwind defaults
+- [Phase 42]: soil-gold mapped to glomalin-accent in all 4 occurrences (login, landing, header, embed-frame)
+- [Phase 42]: DESIGN.md kept in glomalin-portal/ (portal-specific, not project root)
 
 ### Pending Todos
 
@@ -75,11 +78,11 @@ None active.
 
 - Supabase project credentials required for glomalin-portal production runtime
 - DNS configuration needed for v7.0 subdomain routing
-- Token migration (Phase 42) will touch many existing components — risk of visual regressions
+- Token migration (Phase 42) complete — 37 files migrated successfully
 
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 43-02-PLAN.md
+Stopped at: Completed 42-02-PLAN.md
 Resume file: —
-Next action: Phase 43 complete. Execute Phase 42 Plan 02 or start next milestone.
+Next action: Phase 42 complete. All v8.0 phases shipped.
