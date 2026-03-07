@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 40 of 43 (ASCIIBannerStrip Component)
-Plan: 1 of 2 in current phase
-Status: Executing
-Last activity: 2026-03-07 — Completed 40-01 (noise extraction + API refactor)
+Phase: 40 of 43 (ASCIIBannerStrip Component) -- COMPLETE
+Plan: 2 of 2 in current phase
+Status: Phase complete
+Last activity: 2026-03-07 — Completed 40-02 (visual refinement: tendril growth, node lifecycle, white highlights)
 
-Progress: [█░░░░░░░░░] 10% (v8.0)
+Progress: [██░░░░░░░░] 25% (v8.0 -- Phase 40 complete, Phases 41-43 remaining)
 
 **v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
 
@@ -31,6 +31,7 @@ Progress: [█░░░░░░░░░] 10% (v8.0)
 | v6.0 | 27-34 | 15 | 2026-03-06 |
 | **Total** | **34** | **75** | |
 | Phase 40 P01 | 2min | 1 tasks | 3 files |
+| Phase 40 P02 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -44,6 +45,9 @@ Progress: [█░░░░░░░░░] 10% (v8.0)
 - [v8.0]: v7.0 and v8.0 run as parallel tracks — no cross-dependencies
 - [Phase 40]: Noise utilities extracted to standalone ascii-noise.ts for Phase 43 scene reuse
 - [Phase 40]: ASCIIBannerStrip props simplified to {height, className, paused} — nodeCount/bgColor hardcoded internally
+- [Phase 40]: Clock-based animation time (Date.now) for tab-resume continuity instead of RAF delta accumulation
+- [Phase 40]: Node lifecycle: 2s grow-in, variable active, 2s fade-out with position respawn
+- [Phase 40]: Background fbm opacity 0.03-0.05 for dark negative space aesthetic
 
 ### Pending Todos
 
@@ -58,6 +62,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 40-01-PLAN.md
+Stopped at: Completed 40-02-PLAN.md (Phase 40 complete)
 Resume file: —
-Next action: Execute 40-02-PLAN.md (visual refinement)
+Next action: Plan Phase 41 (App Shell Integration)
