@@ -16,6 +16,7 @@ import {
 import type { SceneType } from './scene-types'
 import { generateDroneLandscape } from './scene-drone'
 import { generateSeasonal } from './scene-seasonal'
+import { colors } from '@/lib/tokens'
 
 // ── Component ───────────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ interface ASCIIBannerStripProps {
   onNodeClick?: () => void
 }
 
-const DEFAULT_BG_COLOR = '#080a0f'
+const DEFAULT_BG_COLOR = colors.bg
 const DEFAULT_NODE_COUNT = 10
 const CROSSFADE_DURATION = 200 // ms
 
