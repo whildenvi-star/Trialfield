@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 ## Current Position
 
 Phase: 43 of 43 (all phases complete)
-Plan: 2 of 2 in current phase
-Status: Phase 42 complete (plan 02 shipped)
-Last activity: 2026-03-07 — Completed 42-02 (component migration, DESIGN.md)
+Plan: 3 of 3 in phase 42
+Status: Phase 42 complete (plan 03 gap closure shipped)
+Last activity: 2026-03-07 — Completed 42-03 (hardcoded hex elimination)
 
 Progress: [██████████] 100% (v8.0 -- All phases complete, all plans shipped)
 
@@ -38,6 +38,7 @@ Progress: [██████████] 100% (v8.0 -- All phases complete, al
 | Phase 42 P01 | 2min | 2 tasks | 4 files |
 | Phase 43 P02 | 12min | 3 tasks | 3 files |
 | Phase 42 P02 | 2min | 2 tasks | 38 files |
+| Phase 42 P03 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,8 @@ Progress: [██████████] 100% (v8.0 -- All phases complete, al
 - [Phase 42]: Token scope limited to colors and fonts -- spacing/radius/shadows use Tailwind defaults
 - [Phase 42]: soil-gold mapped to glomalin-accent in all 4 occurrences (login, landing, header, embed-frame)
 - [Phase 42]: DESIGN.md kept in glomalin-portal/ (portal-specific, not project root)
+- [Phase 42]: Added borderLight (#334155) to tokens -- slate-700 for module borders/edge strokes
+- [Phase 42]: Added bannerGradient object to tokens -- cyan brightness ramp for canvas rendering
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 42-02-PLAN.md
+Stopped at: Completed 42-03-PLAN.md
 Resume file: —
-Next action: Phase 42 complete. All v8.0 phases shipped.
+Next action: Phase 42 fully complete (all 3 plans shipped). All v8.0 phases shipped.
