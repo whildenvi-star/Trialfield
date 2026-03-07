@@ -124,7 +124,10 @@ Plans:
   1. User can open `portal.farm-domain.com` in a browser and see the Glomalin Portal landing page over HTTPS
   2. Each app is reachable at its own subdomain (e.g., `tickets.farm-domain.com`, `budget.farm-domain.com`) with a valid TLS certificate
   3. A deployment README exists with step-by-step instructions covering DNS, Caddy, PM2, Node.js, PostgreSQL, and git clone — enough for someone to rebuild the VPS from scratch
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 36-01-PLAN.md — Caddyfile with subdomain-to-port routing and auto-HTTPS for all 8 apps
+- [ ] 36-02-PLAN.md — DEPLOY.md step-by-step VPS setup guide (DNS, Node.js, PostgreSQL, Caddy, PM2)
 
 ### Phase 37: Database + Backups
 **Goal**: Production data is safe — PostgreSQL databases run with correct credentials and daily backups protect against data loss
@@ -193,8 +196,8 @@ Plans:
 | 32. Claims Lifecycle UI | v6.0 | 2/2 | Complete | 2026-03-06 |
 | 34. Insurance & Claims UI Wiring | v6.0 | 1/1 | Complete | 2026-03-06 |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
-| 35. VPS Provisioning + Process Management | 2/2 | Complete    | 2026-03-07 | - |
-| 36. Reverse Proxy + HTTPS | v7.0 | 0/? | Not started | - |
+| 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
+| 36. Reverse Proxy + HTTPS | v7.0 | 0/2 | Not started | - |
 | 37. Database + Backups | v7.0 | 0/? | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
