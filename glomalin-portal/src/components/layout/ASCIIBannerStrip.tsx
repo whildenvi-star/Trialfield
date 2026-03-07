@@ -15,6 +15,7 @@ import {
 } from './ascii-noise'
 import type { SceneType } from './scene-types'
 import { generateDroneLandscape } from './scene-drone'
+import { generateSeasonal } from './scene-seasonal'
 
 // ── Component ───────────────────────────────────────────────────────
 
@@ -125,8 +126,7 @@ export default function ASCIIBannerStrip({
       case 'drone':
         return generateDroneLandscape(cols, rows, time)
       case 'seasonal':
-        // Fall through to mycelium until Plan 02 implements seasonal
-        // eslint-disable-next-line no-fallthrough
+        return generateSeasonal(cols, rows, time)
       case 'mycelium':
       default: {
         const nodes = nodesRef.current
@@ -189,8 +189,7 @@ export default function ASCIIBannerStrip({
       const progress = Math.min(1, (Date.now() - transitionStartRef.current) / CROSSFADE_DURATION)
 
       // Need mycelium tick if either scene is mycelium
-      const needsMyceliumTick = prevScene === 'mycelium' || prevScene === 'seasonal' ||
-                                 activeScene === 'mycelium' || activeScene === 'seasonal'
+      const needsMyceliumTick = prevScene === 'mycelium' || activeScene === 'mycelium'
 
       const prevGrid = generateGrid(prevScene, cols, rows, time, needsMyceliumTick)
       const activeGrid = generateGrid(activeScene, cols, rows, time, false)
@@ -207,7 +206,7 @@ export default function ASCIIBannerStrip({
       }
     } else {
       // No transition — render active scene only
-      const needsMyceliumTick = activeScene === 'mycelium' || activeScene === 'seasonal'
+      const needsMyceliumTick = activeScene === 'mycelium'
       grid = generateGrid(activeScene, cols, rows, time, needsMyceliumTick)
     }
 
