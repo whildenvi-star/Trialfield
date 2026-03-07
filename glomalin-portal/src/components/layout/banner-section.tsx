@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import Header from '@/components/header'
 import ASCIIBannerStrip from '@/components/layout/ASCIIBannerStrip'
 
@@ -14,20 +14,29 @@ interface BannerSectionProps {
   }
 }
 
-export default function BannerSection({ user }: BannerSectionProps) {
-  const [bannerDisabled, setBannerDisabled] = useState(() => {
-    if (typeof window === 'undefined') return false
+function readPreference(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
     return localStorage.getItem(STORAGE_KEY) === 'true'
-  })
-
-  // Sync to localStorage on change
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, bannerDisabled ? 'true' : 'false')
-  }, [bannerDisabled])
-
-  const toggleBanner = () => {
-    setBannerDisabled((prev) => !prev)
+  } catch {
+    return false
   }
+}
+
+export default function BannerSection({ user }: BannerSectionProps) {
+  const [bannerDisabled, setBannerDisabled] = useState<boolean>(readPreference)
+
+  const toggleBanner = useCallback(() => {
+    setBannerDisabled((prev) => {
+      const next = !prev
+      try {
+        localStorage.setItem(STORAGE_KEY, next ? 'true' : 'false')
+      } catch {
+        // localStorage unavailable (private browsing, quota exceeded)
+      }
+      return next
+    })
+  }, [])
 
   return (
     <>
