@@ -1,3 +1,5 @@
+import { bannerGradient } from '@/lib/tokens'
+
 // ── Noise utilities (no external deps) ──────────────────────────────
 
 export function noise2D(x: number, y: number, seed: number): number {
@@ -53,11 +55,11 @@ export interface Pulse {
 
 export const CHAR_RAMP = ' .\u00b7:;\u2591\u2592\u2593\u2588'
 
-const COLOR_WHITE     = '#ffffff'    // peak highlights (>0.85)
-const COLOR_BRIGHTEST = '#22d3ee'    // cyan-300 (0.65–0.85)
-const COLOR_MID       = '#0e7490'    // cyan-700 (0.35–0.65)
-const COLOR_DIM       = '#164e63'    // cyan-900 (0.15–0.35)
-const COLOR_FAINT     = '#0c2a3a'    // (<0.15)
+const COLOR_WHITE     = bannerGradient.white
+const COLOR_BRIGHTEST = bannerGradient.brightest
+const COLOR_MID       = bannerGradient.mid
+const COLOR_DIM       = bannerGradient.dim
+const COLOR_FAINT     = bannerGradient.faint
 
 export function charColor(brightness: number): string {
   if (brightness > 0.85) return COLOR_WHITE

@@ -12,6 +12,7 @@ export const colors = {
   bg:          '#080a0f',
   surface:     '#0c1015',
   border:      '#1e293b',
+  borderLight: '#334155',
   accent:      '#14b8a6',
   accentDim:   '#0d9488',
   accentLight: '#2dd4bf',
@@ -21,12 +22,23 @@ export const colors = {
   highlight:   '#0f172a',
 } as const
 
+// ── Banner gradient (cyan brightness ramp for canvas rendering) ─────
+// Used by ascii-noise.ts charColor() — ordered brightest to faintest
+export const bannerGradient = {
+  white:     '#ffffff',    // peak highlights (>0.85)
+  brightest: '#22d3ee',    // cyan-300 (0.65-0.85)
+  mid:       '#0e7490',    // cyan-700 (0.35-0.65)
+  dim:       '#164e63',    // cyan-900 (0.15-0.35)
+  faint:     '#0c2a3a',    // (<0.15)
+} as const
+
 // ── Colors (kebab-case keys — for Tailwind class generation) ───────
 // Produces classes like `bg-glomalin-accent-dim`, `text-glomalin-accent-light`
 export const tailwindColors: Record<string, string> = {
   bg:             colors.bg,
   surface:        colors.surface,
   border:         colors.border,
+  'border-light': colors.borderLight,
   accent:         colors.accent,
   'accent-dim':   colors.accentDim,
   'accent-light': colors.accentLight,

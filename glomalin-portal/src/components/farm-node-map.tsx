@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react'
 import { ReactFlow, Background, useNodesState, useEdgesState, type Node, type Edge, type NodeMouseHandler } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
+import { colors } from '@/lib/tokens'
 
 // ------- Tooltip state -------
 interface TooltipState {
@@ -22,24 +23,24 @@ interface NodeData {
 
 // ------- Node styling helpers -------
 const HUB_STYLE: React.CSSProperties = {
-  background: '#0c1015',
-  border: '2px solid #14b8a6',
+  background: colors.surface,
+  border: `2px solid ${colors.accent}`,
   borderRadius: '8px',
-  color: '#cbd5e1',
+  color: colors.text,
   fontFamily: 'JetBrains Mono, monospace',
   fontWeight: 700,
   fontSize: '13px',
   width: 160,
   padding: '12px 16px',
   textAlign: 'center',
-  boxShadow: '0 0 20px rgba(20, 184, 166, 0.15)',
+  boxShadow: `0 0 20px ${colors.accent}26`,
 }
 
 const SOURCE_STYLE: React.CSSProperties = {
-  background: '#0c1015',
-  border: '1px solid #1e293b',
+  background: colors.surface,
+  border: `1px solid ${colors.border}`,
   borderRadius: '6px',
-  color: '#cbd5e1',
+  color: colors.text,
   fontFamily: 'JetBrains Mono, monospace',
   fontSize: '11px',
   width: 140,
@@ -48,11 +49,11 @@ const SOURCE_STYLE: React.CSSProperties = {
 }
 
 const MODULE_STYLE: React.CSSProperties = {
-  background: '#0c1015',
-  border: '1px solid #334155',
-  borderLeft: '2px solid #14b8a6',
+  background: colors.surface,
+  border: `1px solid ${colors.borderLight}`,
+  borderLeft: `2px solid ${colors.accent}`,
   borderRadius: '6px',
-  color: '#cbd5e1',
+  color: colors.text,
   fontFamily: 'JetBrains Mono, monospace',
   fontSize: '11px',
   width: 130,
@@ -153,7 +154,7 @@ function buildEdges(): Edge[] {
       source: app.id,
       target: 'hub',
       animated: true,
-      style: { stroke: '#334155', strokeWidth: 1.5 },
+      style: { stroke: colors.borderLight, strokeWidth: 1.5 },
     })
   })
 
@@ -163,7 +164,7 @@ function buildEdges(): Edge[] {
       source: mod.id,
       target: 'hub',
       animated: true,
-      style: { stroke: '#14b8a6', strokeWidth: 1, opacity: 0.4 },
+      style: { stroke: colors.accent, strokeWidth: 1, opacity: 0.4 },
     })
   })
 
@@ -182,8 +183,8 @@ function nodeLabel(data: NodeData): React.ReactNode {
   if (data.sublabel) {
     return (
       <div>
-        <div style={{ fontWeight: 600, fontSize: '11px', color: '#cbd5e1' }}>{data.label}</div>
-        <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>{data.sublabel}</div>
+        <div style={{ fontWeight: 600, fontSize: '11px', color: colors.text }}>{data.label}</div>
+        <div style={{ fontSize: '9px', color: colors.muted, marginTop: '2px' }}>{data.sublabel}</div>
       </div>
     )
   }
@@ -252,7 +253,7 @@ export default function FarmNodeMap() {
         panOnDrag={false}
         style={{ background: 'transparent' }}
       >
-        <Background color="#1e293b" gap={32} size={1} />
+        <Background color={colors.border} gap={32} size={1} />
       </ReactFlow>
 
       {/* Hover tooltip */}
@@ -262,9 +263,9 @@ export default function FarmNodeMap() {
           style={{
             left: tooltip.x,
             top: tooltip.y,
-            background: '#0c1015',
-            border: '1px solid #1e293b',
-            color: '#cbd5e1',
+            background: colors.surface,
+            border: `1px solid ${colors.border}`,
+            color: colors.text,
             maxWidth: 220,
           }}
         >
