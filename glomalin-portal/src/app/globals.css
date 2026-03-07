@@ -4,13 +4,13 @@
 
 @layer base {
   body {
-    @apply bg-soil-bg text-soil-text font-mono;
+    @apply bg-glomalin-bg text-glomalin-text font-mono;
   }
 }
 
-/* React Flow edge glow — subtle amber drop-shadow matching soil accent */
+/* React Flow edge glow — subtle teal drop-shadow matching glomalin accent */
 .react-flow__edge-path {
-  filter: drop-shadow(0 0 3px rgba(200, 134, 10, 0.3));
+  filter: drop-shadow(0 0 3px rgba(20, 184, 166, 0.3));
 }
 
 /* Slow down the dash animation to feel ambient rather than frantic */

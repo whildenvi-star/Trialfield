@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { tailwindColors, fonts } from "./src/lib/tokens";
 
 const config: Config = {
   content: [
@@ -9,18 +10,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        soil: {
-          bg: '#080604',
-          surface: '#0e0c0b',
-          border: '#2a2218',
-          accent: '#C8860A',
-          text: '#e8d8c0',
-          muted: '#6a5a4a',
-          green: '#7A9E7E',
-        },
+        glomalin: tailwindColors,
       },
       fontFamily: {
-        mono: ['JetBrains Mono', 'monospace'],
+        mono: [...fonts.mono],
       },
     },
   },
