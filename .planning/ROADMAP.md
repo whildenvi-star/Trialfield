@@ -178,7 +178,10 @@ Plans:
   3. The animation runs at ~50fps on a standard laptop, pauses when the browser tab is hidden, and cleans up all timers/RAF on unmount
   4. The bottom edge of the strip fades seamlessly into the page background via gradient overlay — no hard line visible
   5. Two ASCIIBannerStrip instances on the same page animate out of sync with each other (random time offset)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 40-01-PLAN.md -- Extract noise utilities, refactor component API (height/className/paused)
+- [ ] 40-02-PLAN.md -- Enhance visual behavior: tendril growth, node lifecycle, white highlights, clock-based resume
 
 ### Phase 41: App Shell Integration
 **Goal**: The ASCII banner appears on every protected page between the header and content, with mobile responsive sizing, accessibility support, and a user toggle to disable it
@@ -259,7 +262,7 @@ Plans:
 | 37. Database + Backups | v7.0 | 0/? | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
-| 40. ASCIIBannerStrip Component | v8.0 | 0/? | Not started | - |
+| 40. ASCIIBannerStrip Component | v8.0 | 0/2 | Not started | - |
 | 41. App Shell Integration | v8.0 | 0/? | Not started | - |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 0/? | Not started | - |
 | 43. Scene Expansion | v8.0 | 0/? | Not started | - |
