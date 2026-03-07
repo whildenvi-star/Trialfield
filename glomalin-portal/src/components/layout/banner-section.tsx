@@ -3,8 +3,12 @@
 import { useState, useCallback } from 'react'
 import Header from '@/components/header'
 import ASCIIBannerStrip from '@/components/layout/ASCIIBannerStrip'
+import { type SceneType, nextScene } from '@/components/layout/scene-types'
 
 const STORAGE_KEY = 'glomalin-banner-disabled'
+const SCENE_KEY = 'glomalin-scene'
+
+const VALID_SCENES: SceneType[] = ['mycelium', 'drone', 'seasonal']
 
 interface BannerSectionProps {
   user: {
@@ -23,8 +27,22 @@ function readPreference(): boolean {
   }
 }
 
+function readScenePreference(): SceneType {
+  if (typeof window === 'undefined') return 'mycelium'
+  try {
+    const stored = localStorage.getItem(SCENE_KEY)
+    if (stored && VALID_SCENES.includes(stored as SceneType)) {
+      return stored as SceneType
+    }
+    return 'mycelium'
+  } catch {
+    return 'mycelium'
+  }
+}
+
 export default function BannerSection({ user }: BannerSectionProps) {
   const [bannerDisabled, setBannerDisabled] = useState<boolean>(readPreference)
+  const [scene, setScene] = useState<SceneType>(readScenePreference)
 
   const toggleBanner = useCallback(() => {
     setBannerDisabled((prev) => {
@@ -33,6 +51,18 @@ export default function BannerSection({ user }: BannerSectionProps) {
         localStorage.setItem(STORAGE_KEY, next ? 'true' : 'false')
       } catch {
         // localStorage unavailable (private browsing, quota exceeded)
+      }
+      return next
+    })
+  }, [])
+
+  const handleNodeClick = useCallback(() => {
+    setScene((current) => {
+      const next = nextScene(current)
+      try {
+        localStorage.setItem(SCENE_KEY, next)
+      } catch {
+        // localStorage unavailable
       }
       return next
     })
@@ -49,10 +79,10 @@ export default function BannerSection({ user }: BannerSectionProps) {
         <>
           {/* 72px desktop / 48px mobile */}
           <div className="hidden md:block">
-            <ASCIIBannerStrip height={72} />
+            <ASCIIBannerStrip height={72} scene={scene} onNodeClick={handleNodeClick} />
           </div>
           <div className="block md:hidden">
-            <ASCIIBannerStrip height={48} nodeCount={6} />
+            <ASCIIBannerStrip height={48} nodeCount={6} scene={scene} onNodeClick={handleNodeClick} />
           </div>
         </>
       )}
