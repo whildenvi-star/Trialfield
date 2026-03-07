@@ -99,8 +99,6 @@ export function nodeLifecycleBrightness(node: MyceliumNode, time: number): numbe
 export function tickNodes(
   nodes: MyceliumNode[],
   time: number,
-  cols: number,
-  rows: number,
 ): void {
   for (const node of nodes) {
     // Drift

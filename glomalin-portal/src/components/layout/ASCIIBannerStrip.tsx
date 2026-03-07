@@ -2,7 +2,6 @@
 
 import { useRef, useEffect, useCallback, useState } from 'react'
 import {
-  noise2D,
   generateMycelium,
   tickNodes,
   tickEdges,
@@ -14,6 +13,8 @@ import {
   type EdgeState,
   type Pulse,
 } from './ascii-noise'
+import type { SceneType } from './scene-types'
+import { generateDroneLandscape } from './scene-drone'
 
 // ── Component ───────────────────────────────────────────────────────
 
@@ -22,16 +23,21 @@ interface ASCIIBannerStripProps {
   className?: string
   paused?: boolean
   nodeCount?: number
+  scene?: SceneType
+  onNodeClick?: () => void
 }
 
 const DEFAULT_BG_COLOR = '#080a0f'
 const DEFAULT_NODE_COUNT = 10
+const CROSSFADE_DURATION = 200 // ms
 
 export default function ASCIIBannerStrip({
   height = 72,
   className,
   paused = false,
   nodeCount = DEFAULT_NODE_COUNT,
+  scene = 'mycelium',
+  onNodeClick,
 }: ASCIIBannerStripProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -42,6 +48,16 @@ export default function ASCIIBannerStrip({
   const pulsesRef = useRef<Pulse[]>([])
   const timeOffsetRef = useRef(Math.random() * 100)
   const [visible, setVisible] = useState(false)
+
+  // Scene transition state
+  const activeSceneRef = useRef<SceneType>(scene)
+  const prevSceneRef = useRef<SceneType | null>(null)
+  const transitionStartRef = useRef<number>(0)
+
+  // Track latest grid for click detection
+  const lastGridRef = useRef<Float32Array | null>(null)
+  const lastColsRef = useRef(0)
+  const lastRowsRef = useRef(0)
 
   // Check reduced motion preference
   const prefersReducedMotion =
@@ -97,6 +113,57 @@ export default function ASCIIBannerStrip({
     }))
   }, [])
 
+  // Generate grid for a given scene type
+  const generateGrid = useCallback((
+    sceneType: SceneType,
+    cols: number,
+    rows: number,
+    time: number,
+    tickMycelium: boolean,
+  ): Float32Array => {
+    switch (sceneType) {
+      case 'drone':
+        return generateDroneLandscape(cols, rows, time)
+      case 'seasonal':
+        // Fall through to mycelium until Plan 02 implements seasonal
+        // eslint-disable-next-line no-fallthrough
+      case 'mycelium':
+      default: {
+        const nodes = nodesRef.current
+        const edges = edgesRef.current
+        const edgeStates = edgeStatesRef.current
+        const pulses = pulsesRef.current
+
+        if (tickMycelium) {
+          // Tick node positions and lifecycle
+          tickNodes(nodes, time)
+          // Tick edge growth/retraction
+          tickEdges(edgeStates, time)
+          // Update pulses
+          for (const pulse of pulses) {
+            pulse.t += pulse.speed
+            if (pulse.t > 1) {
+              pulse.t = 0
+              pulse.edgeIdx = Math.floor(Math.random() * edges.length)
+              pulse.speed = 0.002 + Math.random() * 0.003
+            }
+          }
+        }
+
+        return generateMycelium(cols, rows, time, nodes, pulses, edges, edgeStates)
+      }
+    }
+  }, [])
+
+  // Handle scene prop changes — trigger crossfade
+  useEffect(() => {
+    if (scene !== activeSceneRef.current) {
+      prevSceneRef.current = activeSceneRef.current
+      activeSceneRef.current = scene
+      transitionStartRef.current = Date.now()
+    }
+  }, [scene])
+
   const render = useCallback((canvas: HTMLCanvasElement, time: number) => {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
@@ -112,29 +179,42 @@ export default function ASCIIBannerStrip({
 
     if (cols < 2 || rows < 1) return
 
-    const nodes = nodesRef.current
-    const edges = edgesRef.current
-    const edgeStates = edgeStatesRef.current
-    const pulses = pulsesRef.current
+    // Determine if transition is in progress
+    const prevScene = prevSceneRef.current
+    const activeScene = activeSceneRef.current
+    let grid: Float32Array
 
-    // Tick node positions and lifecycle
-    tickNodes(nodes, time, cols, rows)
+    if (prevScene !== null) {
+      // Crossfade in progress
+      const progress = Math.min(1, (Date.now() - transitionStartRef.current) / CROSSFADE_DURATION)
 
-    // Tick edge growth/retraction
-    tickEdges(edgeStates, time)
+      // Need mycelium tick if either scene is mycelium
+      const needsMyceliumTick = prevScene === 'mycelium' || prevScene === 'seasonal' ||
+                                 activeScene === 'mycelium' || activeScene === 'seasonal'
 
-    // Update pulses
-    for (const pulse of pulses) {
-      pulse.t += pulse.speed
-      if (pulse.t > 1) {
-        pulse.t = 0
-        pulse.edgeIdx = Math.floor(Math.random() * edges.length)
-        pulse.speed = 0.002 + Math.random() * 0.003
+      const prevGrid = generateGrid(prevScene, cols, rows, time, needsMyceliumTick)
+      const activeGrid = generateGrid(activeScene, cols, rows, time, false)
+
+      // Blend grids
+      grid = new Float32Array(cols * rows)
+      for (let i = 0; i < grid.length; i++) {
+        grid[i] = prevGrid[i] * (1 - progress) + activeGrid[i] * progress
       }
+
+      // End transition when complete
+      if (progress >= 1.0) {
+        prevSceneRef.current = null
+      }
+    } else {
+      // No transition — render active scene only
+      const needsMyceliumTick = activeScene === 'mycelium' || activeScene === 'seasonal'
+      grid = generateGrid(activeScene, cols, rows, time, needsMyceliumTick)
     }
 
-    // Generate brightness grid with tendril growth
-    const grid = generateMycelium(cols, rows, time, nodes, pulses, edges, edgeStates)
+    // Store grid for click detection
+    lastGridRef.current = grid
+    lastColsRef.current = cols
+    lastRowsRef.current = rows
 
     // Clear canvas
     ctx.clearRect(0, 0, w, h)
@@ -169,7 +249,37 @@ export default function ASCIIBannerStrip({
     grad.addColorStop(1, DEFAULT_BG_COLOR)
     ctx.fillStyle = grad
     ctx.fillRect(0, h * 0.65, w, h * 0.35)
-  }, [])
+  }, [generateGrid])
+
+  // Click handler for easter egg node detection
+  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!onNodeClick) return
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const grid = lastGridRef.current
+    if (!grid) return
+
+    const rect = canvas.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+
+    const charH = 10
+    const charW = charH * 0.6
+    const col = Math.floor(x / charW)
+    const row = Math.floor(y / charH)
+
+    const cols = lastColsRef.current
+    const rows = lastRowsRef.current
+
+    if (col >= 0 && col < cols && row >= 0 && row < rows) {
+      const brightness = grid[row * cols + col]
+      if (brightness > 0.65) {
+        onNodeClick()
+      }
+    }
+  }, [onNodeClick])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -276,6 +386,7 @@ export default function ASCIIBannerStrip({
         ref={canvasRef}
         className="absolute inset-0"
         style={{ background: 'transparent' }}
+        onClick={handleCanvasClick}
       />
     </div>
   )
