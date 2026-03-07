@@ -105,7 +105,7 @@
 **Milestone Goal:** Add an animated ASCII mycelial network banner strip as integrated design chrome across all portal module pages, unify the Glomalin design system with a canonical navy/cyan palette, and expand with additional ASCII animation scenes.
 
 - [x] **Phase 40: ASCIIBannerStrip Component** - Standalone animated ASCII mycelial network canvas component at ~50fps with no external deps (completed 2026-03-07)
-- [ ] **Phase 41: App Shell Integration** - Banner wired into protected layout with mobile responsive, a11y, and user disable setting
+- [x] **Phase 41: App Shell Integration** - Banner wired into protected layout with mobile responsive, a11y, and user disable setting (completed 2026-03-07)
 - [ ] **Phase 42: Design Token Alignment & Palette Swap** - Portal-wide navy/cyan design system replacing soil palette with canonical token file
 - [ ] **Phase 43: Scene Expansion** - Additional ASCII scenes (drone, seasonal) with easter egg toggle and crossfade transitions
 
@@ -266,6 +266,6 @@ Plans:
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 41. App Shell Integration | 1/2 | In Progress|  | - |
+| 41. App Shell Integration | 2/2 | Complete   | 2026-03-07 | - |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 0/? | Not started | - |
 | 43. Scene Expansion | v8.0 | 0/? | Not started | - |

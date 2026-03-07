@@ -48,7 +48,7 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 - [x] **SHELL-01**: Banner wired into protected layout between header and page content
 - [x] **SHELL-02**: Mobile responsive — 48px height, 6 mycelium nodes at <768px
 - [x] **SHELL-03**: prefers-reduced-motion renders single static ASCII frame, no animation loop
-- [ ] **SHELL-04**: User setting to disable banner entirely (stored in existing user prefs)
+- [x] **SHELL-04**: User setting to disable banner entirely (stored in existing user prefs)
 - [x] **SHELL-05**: CSS fade-in on mount (opacity 0→1 over 400ms)
 
 ### Design Tokens
@@ -117,7 +117,7 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 | SHELL-01 | Phase 41 | Complete |
 | SHELL-02 | Phase 41 | Complete |
 | SHELL-03 | Phase 41 | Complete |
-| SHELL-04 | Phase 41 | Pending |
+| SHELL-04 | Phase 41 | Complete |
 | SHELL-05 | Phase 41 | Complete |
 | TOKEN-01 | Phase 42 | Pending |
 | TOKEN-02 | Phase 42 | Pending |

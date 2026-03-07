@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 ## Current Position
 
 Phase: 41 of 43 (App Shell Integration)
-Plan: 1 of 2 in current phase
-Status: Plan 1 complete
-Last activity: 2026-03-07 — Completed 41-01 (nodeCount prop and accessibility attributes)
+Plan: 2 of 2 in current phase
+Status: Phase 41 complete
+Last activity: 2026-03-07 — Completed 41-02 (banner toggle with localStorage persistence)
 
-Progress: [████░░░░░░] 38% (v8.0 -- Phase 41 plan 1 complete, plan 2 + Phases 42-43 remaining)
+Progress: [█████░░░░░] 50% (v8.0 -- Phase 41 complete, Phases 42-43 remaining)
 
 **v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
 
@@ -33,6 +33,7 @@ Progress: [████░░░░░░] 38% (v8.0 -- Phase 41 plan 1 complete
 | Phase 40 P01 | 2min | 1 tasks | 3 files |
 | Phase 40 P02 | 3min | 2 tasks | 2 files |
 | Phase 41 P01 | 1min | 2 tasks | 2 files |
+| Phase 41 P02 | 4min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -51,6 +52,8 @@ Progress: [████░░░░░░] 38% (v8.0 -- Phase 41 plan 1 complete
 - [Phase 40]: Clock-based animation time (Date.now) for tab-resume continuity instead of RAF delta accumulation
 - [Phase 40]: Node lifecycle: 2s grow-in, variable active, 2s fade-out with position respawn
 - [Phase 40]: Background fbm opacity 0.03-0.05 for dark negative space aesthetic
+- [Phase 41]: localStorage (not Supabase) for banner preference — no schema changes, instant toggle
+- [Phase 41]: BannerSection client wrapper bridges server layout with client-only localStorage
 
 ### Pending Todos
 
@@ -65,6 +68,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 41-01-PLAN.md
+Stopped at: Completed 41-02-PLAN.md (Phase 41 complete)
 Resume file: —
-Next action: Execute 41-02-PLAN.md
+Next action: Execute Phase 42 (design token extraction)
