@@ -111,7 +111,10 @@
   3. grain-tickets starts on a configurable PORT (not hardcoded 3000) so it coexists with the portal
   4. Both Next.js apps (glomalin-portal, organic-cert) run via `next start` in production mode (not `next dev`)
   5. Express apps reject cross-origin requests from any domain other than the portal origin
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 35-01-PLAN.md — PM2 ecosystem config, grain-tickets port fix, Next.js production builds
+- [ ] 35-02-PLAN.md — CORS lockdown on Express apps, .env.example templates for all 8 apps
 
 ### Phase 36: Reverse Proxy + HTTPS
 **Goal**: Users access every app through clean subdomains with automatic HTTPS — no port numbers, no HTTP
@@ -190,7 +193,7 @@
 | 32. Claims Lifecycle UI | v6.0 | 2/2 | Complete | 2026-03-06 |
 | 34. Insurance & Claims UI Wiring | v6.0 | 1/1 | Complete | 2026-03-06 |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
-| 35. VPS Provisioning + Process Management | v7.0 | 0/? | Not started | - |
+| 35. VPS Provisioning + Process Management | v7.0 | 0/2 | Not started | - |
 | 36. Reverse Proxy + HTTPS | v7.0 | 0/? | Not started | - |
 | 37. Database + Backups | v7.0 | 0/? | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
