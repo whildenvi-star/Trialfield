@@ -14,6 +14,9 @@ var PORT = process.env.PORT || 3002;
 var DATA_FILE = path.join(__dirname, 'data', 'data.json');
 var MAX_BACKUPS = 5;
 
+// Health check — before CORS/middleware for fast, dependency-free response
+app.get('/health', function (req, res) { res.json({ status: 'ok', app: 'fsa-acres', uptime: process.uptime() }); });
+
 var corsOptions = {
   origin: process.env.PORTAL_ORIGIN || 'http://localhost:3000',
   credentials: true

@@ -14,6 +14,9 @@ const DATA_FILE = path.join(__dirname, 'data', 'data.json');
 const PHOTO_DIR = path.join(__dirname, 'data', 'photos');
 const MAX_BACKUPS = 5;
 
+// Health check — before CORS/middleware for fast, dependency-free response
+app.get('/health', (req, res) => res.json({ status: 'ok', app: 'seed-inventory', uptime: process.uptime() }));
+
 // Ensure directories exist
 if (!fs.existsSync(path.dirname(DATA_FILE))) fs.mkdirSync(path.dirname(DATA_FILE), { recursive: true });
 if (!fs.existsSync(PHOTO_DIR)) fs.mkdirSync(PHOTO_DIR, { recursive: true });

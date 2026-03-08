@@ -46,6 +46,9 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3007;
 
+// Health check — before CORS/middleware for fast, dependency-free response
+app.get('/health', (req, res) => res.json({ status: 'ok', app: 'grain-tickets', uptime: process.uptime() }));
+
 const corsOptions = {
   origin: process.env.PORTAL_ORIGIN || 'http://localhost:3000',
   credentials: true

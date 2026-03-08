@@ -15,6 +15,9 @@ const DATA_FILE = path.join(__dirname, 'data', 'data.json');
 const SHAPEFILE_DIR = path.join(__dirname, 'data', 'shapefiles');
 const MAX_BACKUPS = 5;
 
+// Health check — before CORS/middleware for fast, dependency-free response
+app.get('/health', (req, res) => res.json({ status: 'ok', app: 'farm-registry', uptime: process.uptime() }));
+
 // Ensure shapefile directory exists
 if (!fs.existsSync(SHAPEFILE_DIR)) fs.mkdirSync(SHAPEFILE_DIR, { recursive: true });
 
