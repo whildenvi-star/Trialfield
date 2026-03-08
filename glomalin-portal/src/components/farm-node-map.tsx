@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ReactFlow, Background, useNodesState, useEdgesState, type Node, type Edge, type NodeMouseHandler } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { colors } from '@/lib/tokens'
@@ -46,6 +47,7 @@ const SOURCE_STYLE: React.CSSProperties = {
   width: 140,
   padding: '8px 12px',
   textAlign: 'center',
+  cursor: 'pointer',
 }
 
 const MODULE_STYLE: React.CSSProperties = {
@@ -59,6 +61,7 @@ const MODULE_STYLE: React.CSSProperties = {
   width: 130,
   padding: '8px 12px',
   textAlign: 'center',
+  cursor: 'pointer',
 }
 
 // ------- Layout math -------
@@ -193,6 +196,7 @@ function nodeLabel(data: NodeData): React.ReactNode {
 
 // ------- Main component -------
 export default function FarmNodeMap() {
+  const router = useRouter()
   const [nodes, , onNodesChange] = useNodesState(
     INITIAL_NODES.map((n) => ({
       ...n,
@@ -211,11 +215,12 @@ export default function FarmNodeMap() {
   const onNodeMouseEnter: NodeMouseHandler = useCallback(
     (event, node) => {
       const desc = (node.data as NodeData).description as string
+      const clickHint = node.id !== 'hub' ? '\nClick to sign in' : ''
       setTooltip({
         visible: true,
         x: event.clientX + 12,
         y: event.clientY - 10,
-        text: desc || '',
+        text: (desc || '') + clickHint,
       })
     },
     []
@@ -234,6 +239,15 @@ export default function FarmNodeMap() {
     setTooltip((prev) => ({ ...prev, visible: false }))
   }, [])
 
+  const onNodeClick: NodeMouseHandler = useCallback(
+    (_event, node) => {
+      if (node.id !== 'hub') {
+        router.push('/login')
+      }
+    },
+    [router]
+  )
+
   return (
     <div className="relative w-full h-full">
       <ReactFlow
@@ -244,6 +258,7 @@ export default function FarmNodeMap() {
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseMove={onNodeMouseMove}
         onNodeMouseLeave={onNodeMouseLeave}
+        onNodeClick={onNodeClick}
         fitView
         fitViewOptions={{ padding: 0.15 }}
         proOptions={{ hideAttribution: true }}
@@ -267,6 +282,7 @@ export default function FarmNodeMap() {
             border: `1px solid ${colors.border}`,
             color: colors.text,
             maxWidth: 220,
+            whiteSpace: 'pre-line',
           }}
         >
           {tooltip.text}
