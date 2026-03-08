@@ -11,6 +11,7 @@
 - ✅ **v6.0 FSA Acres, Insurance & Claims** — Phases 27-34 (shipped 2026-03-06)
 - 🚧 **v7.0 Public Deployment & Team Onboarding** — Phases 35-39 (in progress)
 - 🚧 **v8.0 ASCII Banner Strip & Design System** — Phases 40-43 (in progress, parallel with v7.0)
+- 📋 **v9.0 Mobile PWA + Field Operations Logger** — Phases 44-48 (planned — after v7.0)
 
 ## Phases
 
@@ -147,7 +148,9 @@ Plans:
   1. A daily cron job backs up all JSON data files and PostgreSQL databases (grain-tickets, organic-cert) with 7-day retention
   2. A backup can be restored to a fresh database and the app works correctly (verified manually at least once)
   3. A secrets document lists every production secret (Supabase keys, DB passwords, API tokens), where each one goes, and how to rotate it
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 37-01-PLAN.md — Backup/restore scripts for all data stores + secrets reference document
 
 ### Phase 38: Email Invite + Onboarding
 **Goal**: Admin can invite coworkers by email and they can sign up, log in, and use their granted modules — the full onboarding path works end-to-end in production
@@ -210,9 +213,9 @@ Plans:
   5. A DESIGN.md file documents the token system, font stack, spacing scale, and component color patterns — enough for a developer to build a new component in the correct style
 **Plans**: 3 plans
 Plans:
-- [ ] 42-01-PLAN.md — Create tokens.ts, migrate Tailwind config to glomalin-* namespace, wire ASCIIBannerStrip to tokens
-- [ ] 42-02-PLAN.md — Batch rename soil-* to glomalin-* across all portal components, create DESIGN.md
-- [ ] 42-03-PLAN.md — Gap closure: wire remaining hardcoded hex values to tokens.ts
+- [x] 42-01-PLAN.md — Create tokens.ts, migrate Tailwind config to glomalin-* namespace, wire ASCIIBannerStrip to tokens
+- [x] 42-02-PLAN.md — Batch rename soil-* to glomalin-* across all portal components, create DESIGN.md
+- [x] 42-03-PLAN.md — Gap closure: wire remaining hardcoded hex values to tokens.ts
 
 ### Phase 43: Scene Expansion
 **Goal**: Multiple ASCII animation scenes are available (mycelium, drone landscape, seasonal) with an easter egg toggle and smooth crossfade transitions between scenes
@@ -226,8 +229,18 @@ Plans:
   5. Clicking a bright mycelium node in the banner cycles to the next scene with no visible button or toggle UI (easter egg discovery)
 **Plans**: 3 plans
 Plans:
-- [ ] 43-01-PLAN.md — Scene engine architecture, drone landscape renderer, crossfade transitions
-- [ ] 43-02-PLAN.md — Seasonal scene renderer, scene preference persistence, easter egg click-to-cycle
+- [x] 43-01-PLAN.md — Scene engine architecture, drone landscape renderer, crossfade transitions
+- [x] 43-02-PLAN.md — Seasonal scene renderer, scene preference persistence, easter egg click-to-cycle
+
+### v9.0 Mobile PWA + Field Operations Logger (Planned)
+
+**Milestone Goal:** Turn Glomalin Portal into a Progressive Web App so field operators can view crop plans, confirm field passes offline, and push confirmed operations into organic-cert's 3-year field histories for NOP compliance.
+
+- [ ] **Phase 44: PWA Infrastructure** - Service worker (@serwist/next), web app manifest, install prompt, offline shell, IndexedDB wrapper
+- [ ] **Phase 45: Crop Plan Viewer** - Mobile-first field list + detail pages showing crop, variety, population, inputs, rates, and planned passes (aggregated from farm-budget + farm-registry)
+- [ ] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes with operator attribution, writing to organic-cert FieldOperation table
+- [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
+- [ ] **Phase 48: Grain Tickets PWA + Express App Offline** - Extend PWA to grain-tickets entry with offline queue, dashboard read-only caching
 
 ## Progress
 
@@ -269,10 +282,15 @@ Plans:
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
 | 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 36. Reverse Proxy + HTTPS | v7.0 | 2/2 | Complete | 2026-03-07 |
-| 37. Database + Backups | v7.0 | 0/? | Not started | - |
+| 37. Database + Backups | v7.0 | 0/1 | Not started | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | 3/3 | Complete    | 2026-03-07 | - |
 | 43. Scene Expansion | 2/2 | Complete    | 2026-03-07 | - |
+| 44. PWA Infrastructure | v9.0 | 0/? | Planned | - |
+| 45. Crop Plan Viewer | v9.0 | 0/? | Planned | - |
+| 46. Field Pass Logger | v9.0 | 0/? | Planned | - |
+| 47. Offline Sync Engine | v9.0 | 0/? | Planned | - |
+| 48. Grain Tickets PWA + Express App Offline | v9.0 | 0/? | Planned | - |
