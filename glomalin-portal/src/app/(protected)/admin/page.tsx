@@ -42,6 +42,9 @@ export default function AdminPage() {
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('')
   const [inviteRole, setInviteRole] = useState<string>('viewer')
+  const [inviteModules, setInviteModules] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(MODULES.map((m) => [m.id, false]))
+  )
   const [inviting, setInviting] = useState(false)
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
@@ -132,13 +135,20 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+        body: JSON.stringify({
+          email: inviteEmail.trim(),
+          role: inviteRole,
+          modules: Object.entries(inviteModules)
+            .filter(([, v]) => v)
+            .map(([k]) => k),
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to invite user')
       setInviteSuccess(`Invite sent to ${inviteEmail.trim()}`)
       setInviteEmail('')
       setInviteRole('viewer')
+      setInviteModules(Object.fromEntries(MODULES.map((m) => [m.id, false])))
       // Refresh user list to include newly invited user
       await loadUsers()
     } catch (err) {
@@ -184,6 +194,29 @@ export default function AdminPage() {
               </option>
             ))}
           </select>
+          <div className="w-full flex flex-wrap gap-x-4 gap-y-1 items-center">
+            <span className="text-glomalin-muted font-mono text-xs uppercase tracking-wider">Modules:</span>
+            {MODULES.map((mod) => (
+              <label
+                key={mod.id}
+                className="flex items-center gap-1.5 font-mono text-xs text-glomalin-text cursor-pointer"
+              >
+                <input
+                  type="checkbox"
+                  checked={inviteModules[mod.id] ?? false}
+                  onChange={(e) =>
+                    setInviteModules((prev) => ({
+                      ...prev,
+                      [mod.id]: e.target.checked,
+                    }))
+                  }
+                  disabled={inviting}
+                  className="accent-glomalin-accent"
+                />
+                {mod.label}
+              </label>
+            ))}
+          </div>
           <button
             type="submit"
             disabled={inviting}

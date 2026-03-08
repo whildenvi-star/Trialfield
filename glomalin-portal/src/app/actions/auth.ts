@@ -35,8 +35,8 @@ export async function resetPassword(formData: FormData) {
   const email = formData.get('email') as string
 
   const headersList = await headers()
-  const origin = headersList.get('origin') ?? headersList.get('host') ?? 'http://localhost:3000'
-  const redirectTo = origin.startsWith('http') ? `${origin}/auth/callback` : `https://${origin}/auth/callback`
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || headersList.get('origin') || headersList.get('host') || 'http://localhost:3000'
+  const redirectTo = siteUrl.startsWith('http') ? `${siteUrl}/auth/callback` : `https://${siteUrl}/auth/callback`
 
   const supabase = await createClient()
 
