@@ -173,7 +173,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Each of the 6 Express apps responds to `GET /health` with HTTP 200 and a JSON body indicating the app name and status
   2. PM2 or a simple curl script can hit all health endpoints and report which apps are up or down
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 39-01-PLAN.md — Health check endpoints for all Express apps + aggregate check script
 
 ### v9.0 Mobile PWA + Field Operations Logger (Planned)
 
