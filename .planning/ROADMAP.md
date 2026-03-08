@@ -160,7 +160,10 @@ Plans:
   1. Admin clicks "Invite" in the admin panel, enters a coworker email, and the coworker receives an email with a signup link pointing to the production domain
   2. Invited user clicks the link, sets a password, and lands on the dashboard showing only their granted modules
   3. User can click "Forgot password" on the login page, receive a reset email, set a new password, and log back in
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 38-01-PLAN.md — Production-aware invite, callback, and password reset flows
+- [ ] 38-02-PLAN.md — End-to-end onboarding verification checkpoint
 
 ### Phase 39: Production Hardening
 **Goal**: Every Express app exposes a health check endpoint for monitoring and uptime verification
@@ -283,7 +286,7 @@ Plans:
 | 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 36. Reverse Proxy + HTTPS | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 37. Database + Backups | 1/1 | Complete    | 2026-03-08 | - |
-| 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
+| 38. Email Invite + Onboarding | v7.0 | 0/2 | Planned | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
