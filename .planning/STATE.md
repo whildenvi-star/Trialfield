@@ -5,18 +5,18 @@
 See: .planning/PROJECT.md (updated 2026-03-07)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v8.0 ASCII Banner Strip & Design System (parallel with v7.0 deployment)
+**Current focus:** v7.0 Public Deployment & Team Onboarding (phases 37-39)
 
 ## Current Position
 
-Phase: 43 of 43 (all phases complete)
-Plan: 3 of 3 in phase 42
-Status: Phase 42 complete (plan 03 gap closure shipped)
-Last activity: 2026-03-07 — Completed 42-03 (hardcoded hex elimination)
+Phase: 37 of 43
+Plan: 1 of 1 in phase 37
+Status: Phase 37 plan 01 complete (backup & restore scripts shipped)
+Last activity: 2026-03-07 — Completed 37-01 (backup/restore scripts + secrets template)
 
-Progress: [██████████] 100% (v8.0 -- All phases complete, all plans shipped)
+Progress: [██████████] 100% (v8.0 complete) | v7.0: [██████░░░░] 60% (phases 35-37 done, 38-39 pending)
 
-**v7.0 status:** Phases 35-36 complete, phases 37-39 pending (deployment — independent track)
+**v7.0 status:** Phases 35-37 complete, phases 38-39 pending (deployment pipeline + team onboarding)
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Progress: [██████████] 100% (v8.0 -- All phases complete, al
 | Phase 43 P02 | 12min | 3 tasks | 3 files |
 | Phase 42 P02 | 2min | 2 tasks | 38 files |
 | Phase 42 P03 | 3min | 2 tasks | 6 files |
+| Phase 37 P01 | 2min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Progress: [██████████] 100% (v8.0 -- All phases complete, al
 - [Phase 42]: DESIGN.md kept in glomalin-portal/ (portal-specific, not project root)
 - [Phase 42]: Added borderLight (#334155) to tokens -- slate-700 for module borders/edge strokes
 - [Phase 42]: Added bannerGradient object to tokens -- cyan brightness ramp for canvas rendering
+- [Phase 37]: pg_dump --format=custom for compressed dumps with selective restore support
+- [Phase 37]: Error counting pattern (not set -e) so partial failures complete remaining backups
+- [Phase 37]: Exit code equals error count for cron monitoring integration
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-07
-Stopped at: Completed 42-03-PLAN.md
+Stopped at: Completed 37-01-PLAN.md
 Resume file: —
-Next action: Phase 42 fully complete (all 3 plans shipped). All v8.0 phases shipped.
+Next action: Phase 37 complete (1 plan shipped). Next: Phase 38 (deployment pipeline) or Phase 39 (team onboarding).

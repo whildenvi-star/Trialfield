@@ -97,7 +97,7 @@
 
 - [x] **Phase 35: VPS Provisioning + Process Management** - PM2 ecosystem config, production env templates, CORS lockdown, port configuration, and Next.js production builds (completed 2026-03-07)
 - [x] **Phase 36: Reverse Proxy + HTTPS** - Caddy reverse proxy with auto-HTTPS subdomain routing and deployment README (completed 2026-03-07)
-- [ ] **Phase 37: Database + Backups** - Production PostgreSQL setup, daily backup scripts, and secrets documentation
+- [x] **Phase 37: Database + Backups** - Production PostgreSQL setup, daily backup scripts, and secrets documentation (completed 2026-03-08)
 - [ ] **Phase 38: Email Invite + Onboarding** - Production email invite flow, invited user signup, and password reset
 - [ ] **Phase 39: Production Hardening** - Health check endpoints on all Express apps
 
@@ -282,7 +282,7 @@ Plans:
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
 | 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 36. Reverse Proxy + HTTPS | v7.0 | 2/2 | Complete | 2026-03-07 |
-| 37. Database + Backups | v7.0 | 0/1 | Not started | - |
+| 37. Database + Backups | 1/1 | Complete   | 2026-03-08 | - |
 | 38. Email Invite + Onboarding | v7.0 | 0/? | Not started | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |

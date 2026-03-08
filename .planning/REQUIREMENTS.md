@@ -19,9 +19,9 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 ### Security
 
 - [x] **SEC-01**: All Express apps restrict CORS to portal domain only
-- [ ] **SEC-02**: Daily backup scripts run for JSON data files (7-day retention) and PostgreSQL (pg_dump)
+- [x] **SEC-02**: Daily backup scripts run for JSON data files (7-day retention) and PostgreSQL (pg_dump)
 - [ ] **SEC-03**: Each Express app exposes a `/health` endpoint returning 200
-- [ ] **SEC-04**: Production secrets documented (what to rotate, where they go)
+- [x] **SEC-04**: Production secrets documented (what to rotate, where they go)
 
 ### Onboarding
 
@@ -101,8 +101,8 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 | INFRA-06 | Phase 35 | Complete |
 | INFRA-02 | Phase 36 | Complete |
 | INFRA-04 | Phase 36 | Complete |
-| SEC-02 | Phase 37 | Pending |
-| SEC-04 | Phase 37 | Pending |
+| SEC-02 | Phase 37 | Complete |
+| SEC-04 | Phase 37 | Complete |
 | ONB-01 | Phase 38 | Pending |
 | ONB-02 | Phase 38 | Pending |
 | ONB-03 | Phase 38 | Pending |
