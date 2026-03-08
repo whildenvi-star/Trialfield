@@ -25,9 +25,9 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 
 ### Onboarding
 
-- [ ] **ONB-01**: Admin can invite a coworker by email and they receive a signup link
-- [ ] **ONB-02**: Invited user can set password, log in, and see dashboard with granted modules
-- [ ] **ONB-03**: User can reset forgotten password via email link in production
+- [x] **ONB-01**: Admin can invite a coworker by email and they receive a signup link
+- [x] **ONB-02**: Invited user can set password, log in, and see dashboard with granted modules
+- [x] **ONB-03**: User can reset forgotten password via email link in production
 
 ## v8.0 Requirements
 
@@ -103,9 +103,9 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 | INFRA-04 | Phase 36 | Complete |
 | SEC-02 | Phase 37 | Complete |
 | SEC-04 | Phase 37 | Complete |
-| ONB-01 | Phase 38 | Pending |
-| ONB-02 | Phase 38 | Pending |
-| ONB-03 | Phase 38 | Pending |
+| ONB-01 | Phase 38 | Complete |
+| ONB-02 | Phase 38 | Complete |
+| ONB-03 | Phase 38 | Complete |
 | SEC-03 | Phase 39 | Pending |
 | BANNER-01 | Phase 40 | Complete |
 | BANNER-02 | Phase 40 | Complete |

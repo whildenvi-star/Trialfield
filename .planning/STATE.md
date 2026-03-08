@@ -9,14 +9,14 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 37 of 43
-Plan: 1 of 1 in phase 37
-Status: Phase 37 plan 01 complete (backup & restore scripts shipped)
-Last activity: 2026-03-07 — Completed 37-01 (backup/restore scripts + secrets template)
+Phase: 38 of 43
+Plan: 1 of 2 in phase 38
+Status: Phase 38 plan 01 complete (invite/recovery email redirects + module access at invite time)
+Last activity: 2026-03-08 — Completed 38-01 (production-aware invite/recovery/reset flows)
 
-Progress: [██████████] 100% (v8.0 complete) | v7.0: [██████░░░░] 60% (phases 35-37 done, 38-39 pending)
+Progress: [██████████] 100% (v8.0 complete) | v7.0: [████████░░] 80% (phases 35-38 in progress, 39 pending)
 
-**v7.0 status:** Phases 35-37 complete, phases 38-39 pending (deployment pipeline + team onboarding)
+**v7.0 status:** Phases 35-37 complete, phase 38 plan 01 done (1 of 2), phase 39 pending
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [██████████] 100% (v8.0 complete) | v7.0: [██�
 | Phase 42 P02 | 2min | 2 tasks | 38 files |
 | Phase 42 P03 | 3min | 2 tasks | 6 files |
 | Phase 37 P01 | 2min | 2 tasks | 3 files |
+| Phase 38 P01 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ Progress: [██████████] 100% (v8.0 complete) | v7.0: [██�
 - [Phase 37]: pg_dump --format=custom for compressed dumps with selective restore support
 - [Phase 37]: Error counting pattern (not set -e) so partial failures complete remaining backups
 - [Phase 37]: Exit code equals error count for cron monitoring integration
+- [Phase 38]: NEXT_PUBLIC_SITE_URL with origin fallback for all email redirect URLs
+- [Phase 38]: URL type param (not session.recovery_sent_at) to detect invite vs recovery flows
+- [Phase 38]: Admin client for module_access inserts at invite time to bypass RLS
 
 ### Pending Todos
 
@@ -89,7 +93,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-07
-Stopped at: Completed 37-01-PLAN.md
+Last session: 2026-03-08
+Stopped at: Completed 38-01-PLAN.md
 Resume file: —
-Next action: Phase 37 complete (1 plan shipped). Next: Phase 38 (deployment pipeline) or Phase 39 (team onboarding).
+Next action: Continue phase 38 plan 02, then phase 39.
