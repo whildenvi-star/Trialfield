@@ -29,44 +29,6 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 - [x] **ONB-02**: Invited user can set password, log in, and see dashboard with granted modules
 - [x] **ONB-03**: User can reset forgotten password via email link in production
 
-## v8.0 Requirements
-
-Requirements for ASCII Banner Strip & Design System milestone. Each maps to roadmap phases.
-
-### Banner
-
-- [x] **BANNER-01**: ASCIIBannerStrip component renders animated ASCII mycelial network at configurable height (default 72px)
-- [x] **BANNER-02**: Canvas auto-measures on mount + resize with 150ms debounce, respects devicePixelRatio
-- [x] **BANNER-03**: Character grid uses brightness-mapped ASCII ramp (" .·:;░▒▓█") with cyan-palette coloring
-- [x] **BANNER-04**: Pure noise utility functions (noise2D, fbm, generateMycelium) with no external deps
-- [x] **BANNER-05**: requestAnimationFrame loop targeting ~50fps with cleanup on unmount and tab-hidden throttle
-- [x] **BANNER-06**: Bottom gradient overlay fades strip into page background seamlessly
-- [x] **BANNER-07**: Random time offset per instance so banners on different pages don't synchronize
-
-### Shell Integration
-
-- [x] **SHELL-01**: Banner wired into protected layout between header and page content
-- [x] **SHELL-02**: Mobile responsive — 48px height, 6 mycelium nodes at <768px
-- [x] **SHELL-03**: prefers-reduced-motion renders single static ASCII frame, no animation loop
-- [x] **SHELL-04**: User setting to disable banner entirely (stored in existing user prefs)
-- [x] **SHELL-05**: CSS fade-in on mount (opacity 0→1 over 400ms)
-
-### Design Tokens
-
-- [x] **TOKEN-01**: Create src/styles/tokens.ts exporting canonical navy/cyan palette, fonts, and spacing
-- [x] **TOKEN-02**: ASCIIBannerStrip imports all colors from shared tokens (no hardcoded hex)
-- [x] **TOKEN-03**: Migrate tailwind.config.ts from soil palette to navy/cyan design tokens
-- [x] **TOKEN-04**: Migrate existing portal components (header, cards, badges, nav) to token-based colors
-- [x] **TOKEN-05**: Create DESIGN.md documenting token system, font stack, spacing, component patterns
-
-### Scenes
-
-- [x] **SCENE-01**: DRONE scene — procedural rolling landscape with fbm noise, cloud layer, crop rows, depth fog
-- [x] **SCENE-02**: SEASONAL scene — auto-select animation by calendar month (planting/growth/harvest/dormant)
-- [x] **SCENE-03**: Scene preference stored per-user, default mycelium
-- [x] **SCENE-04**: 200ms opacity crossfade on scene switch
-- [x] **SCENE-05**: Easter egg trigger — clicking a bright mycelium node cycles to next scene (no visible UI)
-
 ## Future Requirements
 
 ### v9.0+ Candidates
@@ -107,35 +69,12 @@ Requirements for ASCII Banner Strip & Design System milestone. Each maps to road
 | ONB-02 | Phase 38 | Complete |
 | ONB-03 | Phase 38 | Complete |
 | SEC-03 | Phase 39 | Pending |
-| BANNER-01 | Phase 40 | Complete |
-| BANNER-02 | Phase 40 | Complete |
-| BANNER-03 | Phase 40 | Complete |
-| BANNER-04 | Phase 40 | Complete |
-| BANNER-05 | Phase 40 | Complete |
-| BANNER-06 | Phase 40 | Complete |
-| BANNER-07 | Phase 40 | Complete |
-| SHELL-01 | Phase 41 | Complete |
-| SHELL-02 | Phase 41 | Complete |
-| SHELL-03 | Phase 41 | Complete |
-| SHELL-04 | Phase 41 | Complete |
-| SHELL-05 | Phase 41 | Complete |
-| TOKEN-01 | Phase 42 | Complete |
-| TOKEN-02 | Phase 42 | Complete |
-| TOKEN-03 | Phase 42 | Complete |
-| TOKEN-04 | Phase 42 | Complete |
-| TOKEN-05 | Phase 42 | Complete |
-| SCENE-01 | Phase 43 | Complete |
-| SCENE-02 | Phase 43 | Complete |
-| SCENE-03 | Phase 43 | Complete |
-| SCENE-04 | Phase 43 | Complete |
-| SCENE-05 | Phase 43 | Complete |
 
 **Coverage:**
-- v7.0 requirements: 13 total (7 complete, 6 pending)
-- v8.0 requirements: 22 total
-- Mapped to phases: 35 total
+- v7.0 requirements: 13 total (12 complete, 1 pending)
+- Mapped to phases: 13 total
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-07 after v8.0 requirements added*
+*Last updated: 2026-03-08 after v8.0 archived (v7.0 requirements only)*

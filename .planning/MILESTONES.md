@@ -136,3 +136,44 @@
 
 ---
 
+
+## v6.0 FSA Acres, Insurance & Claims (Shipped: 2026-03-06)
+
+**Delivered:** FSA planting workflow, crop insurance decision tool, and claims lifecycle — all inside Glomalin Portal with cross-module navigation and dashboard integration.
+
+**Phases completed:** 27-34 (8 phases, 15 plans)
+**Requirements:** 27/27 complete (FSA-01..08, INS-01..08, CLM-01..07, INT-01..04)
+
+**Key accomplishments:**
+- FSA Data Foundation: Supabase tables (clu_records, insurance_policies, claims) with Express migration bridge
+- Card-based CLU editor with bulk actions, validation, and acreage reporting PDF
+- Insurance coverage matrix, payout simulator, and APH auto-populate
+- Claims Kanban with document upload, timeline feed, and dispute tracking
+- Cross-module integration dashboard with summary cards and CLU→Policy→Claim navigation
+
+**Archive:** (inline in ROADMAP.md)
+
+---
+
+## v8.0 ASCII Banner Strip & Design System (Shipped: 2026-03-08)
+
+**Delivered:** Animated ASCII mycelial network banner with multi-scene rendering (drone, seasonal, mycelium), unified navy/cyan design token system replacing the soil palette, and app shell integration with mobile responsive, a11y, and user controls.
+
+**Phases completed:** 40-43 (4 phases, 9 plans)
+**Timeline:** 1 day (2026-03-07)
+**Stats:** 74 files changed, 5,716 insertions, 522 deletions (1,241 LOC new TypeScript)
+**Requirements:** 22/22 complete (BANNER-01..07, SHELL-01..05, TOKEN-01..05, SCENE-01..05)
+
+**Key accomplishments:**
+- ASCIIBannerStrip canvas component with pure noise functions, tendril growth, node lifecycle, white highlights, ~50fps animation
+- App shell integration — banner in protected layout, mobile responsive (48px/6 nodes), prefers-reduced-motion, user disable toggle
+- Canonical tokens.ts with navy/cyan palette — migrated 37 portal files from soil-* to glomalin-* Tailwind classes, zero hardcoded hex
+- Multi-scene engine: drone landscape (terrain/crops/clouds/fog), seasonal animations (4 month-based scenes), 200ms crossfade transitions
+- Easter egg scene cycling via bright-node click, localStorage persistence for both scene preference and banner disabled state
+
+**Git range:** `feat(40-01)` → `feat(42-03)` (14 commits in glomalin-portal)
+
+**Archive:** [milestones/v8.0-ROADMAP.md](milestones/v8.0-ROADMAP.md) | [milestones/v8.0-REQUIREMENTS.md](milestones/v8.0-REQUIREMENTS.md) | [milestones/v8.0-MILESTONE-AUDIT.md](milestones/v8.0-MILESTONE-AUDIT.md)
+
+---
+

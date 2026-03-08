@@ -2,10 +2,10 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-07)
+See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v7.0 Public Deployment & Team Onboarding (phases 37-39)
+**Current focus:** v7.0 Public Deployment & Team Onboarding (phase 39 remaining)
 
 ## Current Position
 
@@ -14,8 +14,9 @@ Plan: 0 of ? in phase 39
 Status: Phase 38 complete (email invite onboarding verified end-to-end)
 Last activity: 2026-03-08 — Completed 38-02 (onboarding flows verified by user)
 
-Progress: [██████████] 100% (v8.0 complete) | v7.0: [█████████░] 90% (phases 35-38 complete, 39 pending)
+Progress: v8.0 [██████████] SHIPPED | v7.0: [█████████░] 90% (phases 35-38 complete, 39 pending)
 
+**v8.0:** Archived — 4 phases, 9 plans, 22/22 requirements (shipped 2026-03-08)
 **v7.0 status:** Phases 35-38 complete, phase 39 pending
 
 ## Performance Metrics
@@ -29,7 +30,9 @@ Progress: [██████████] 100% (v8.0 complete) | v7.0: [██�
 | v4.0 | 20-23 | 7 | 2026-03-04 |
 | v5.0 | 24-26 | 9 | 2026-03-05 |
 | v6.0 | 27-34 | 15 | 2026-03-06 |
-| **Total** | **34** | **75** | |
+| v7.0 | 35-38 | 7 | in progress |
+| v8.0 | 40-43 | 9 | 2026-03-08 |
+| **Total** | **39** | **84** | |
 | Phase 40 P01 | 2min | 1 tasks | 3 files |
 | Phase 40 P02 | 3min | 2 tasks | 2 files |
 | Phase 41 P01 | 1min | 2 tasks | 2 files |
@@ -49,39 +52,10 @@ Progress: [██████████] 100% (v8.0 complete) | v7.0: [██�
 
 - [v7.0]: Infrastructure-only milestone — no new features, deployment + onboarding only
 - [v7.0]: PM2 on bare metal VPS (not Docker) — simpler for 6-15 users
-- [v8.0]: Navy/cyan palette replaces soil palette — no earth tones in final design system
-- [v8.0]: Canvas-only rendering with pure TypeScript noise functions — no external animation deps
-- [v8.0]: Scene toggle is easter egg (hidden), not visible UI control
-- [v8.0]: v7.0 and v8.0 run as parallel tracks — no cross-dependencies
-- [Phase 40]: Noise utilities extracted to standalone ascii-noise.ts for Phase 43 scene reuse
-- [Phase 40]: ASCIIBannerStrip props simplified to {height, className, paused} — nodeCount/bgColor hardcoded internally
-- [Phase 41]: nodeCount re-exposed as prop (default 10) for mobile density control (6 nodes at 48px)
-- [Phase 41]: Decorative canvas components use role=img + aria-hidden=true
-- [Phase 40]: Clock-based animation time (Date.now) for tab-resume continuity instead of RAF delta accumulation
-- [Phase 40]: Node lifecycle: 2s grow-in, variable active, 2s fade-out with position respawn
-- [Phase 40]: Background fbm opacity 0.03-0.05 for dark negative space aesthetic
-- [Phase 41]: localStorage (not Supabase) for banner preference — no schema changes, instant toggle
-- [Phase 41]: BannerSection client wrapper bridges server layout with client-only localStorage
-- [Phase 43]: SceneRenderer interface uses Float32Array brightness grid for drop-in scene swapping
-- [Phase 43]: Crossfade blends brightness grids per-cell (not CSS opacity) for character-level transitions
-- [Phase 43]: onNodeClick detects bright cells (>0.65) in stored grid for easter egg hook
-- [Phase 43]: Seasonal renderer is stateless (no refs) unlike mycelium — simpler architecture
-- [Phase 43]: Scene preference in localStorage alongside banner-disabled — orthogonal controls
-- [Phase 43]: handleNodeClick uses React state updater to avoid stale closures in cycling
-- [Phase 42]: Dropped gold (#C8860A) from tokens -- soil remnant incompatible with cyan palette
-- [Phase 42]: Dual export pattern: colors (camelCase for JS/canvas) + tailwindColors (kebab-case for Tailwind)
-- [Phase 42]: Token scope limited to colors and fonts -- spacing/radius/shadows use Tailwind defaults
-- [Phase 42]: soil-gold mapped to glomalin-accent in all 4 occurrences (login, landing, header, embed-frame)
-- [Phase 42]: DESIGN.md kept in glomalin-portal/ (portal-specific, not project root)
-- [Phase 42]: Added borderLight (#334155) to tokens -- slate-700 for module borders/edge strokes
-- [Phase 42]: Added bannerGradient object to tokens -- cyan brightness ramp for canvas rendering
 - [Phase 37]: pg_dump --format=custom for compressed dumps with selective restore support
 - [Phase 37]: Error counting pattern (not set -e) so partial failures complete remaining backups
-- [Phase 37]: Exit code equals error count for cron monitoring integration
 - [Phase 38]: NEXT_PUBLIC_SITE_URL with origin fallback for all email redirect URLs
-- [Phase 38]: URL type param (not session.recovery_sent_at) to detect invite vs recovery flows
 - [Phase 38]: Admin client for module_access inserts at invite time to bypass RLS
-- [Phase 38]: All three onboarding flows (invite, signup, password reset) verified working end-to-end by user
 
 ### Pending Todos
 
@@ -91,11 +65,10 @@ None active.
 
 - Supabase project credentials required for glomalin-portal production runtime
 - DNS configuration needed for v7.0 subdomain routing
-- Token migration (Phase 42) complete — 37 files migrated successfully
 
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 38-02-PLAN.md
+Stopped at: Completed v8.0 milestone archival
 Resume file: —
-Next action: Begin phase 39.
+Next action: Plan and execute phase 39 (health check endpoints) to complete v7.0.

@@ -63,16 +63,11 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - Daily backup scripts for JSON data files and PostgreSQL databases
 - Health check endpoints and production hardening
 
-## Current Milestone: v8.0 ASCII Banner Strip & Design System (In Parallel)
+## Completed Milestone: v8.0 ASCII Banner Strip & Design System (2026-03-08)
 
 **Goal:** Add an animated ASCII mycelial network banner strip as integrated design chrome across all portal module pages, unify the Glomalin design system with a canonical navy/cyan palette, and expand with additional ASCII animation scenes.
 
-**Target features:**
-- ASCIIBannerStrip component with animated mycelial network art (canvas, ~50fps, no external deps)
-- App shell integration — banner between header and content on every protected page
-- Navy/cyan design token system replacing the current soil palette across the entire portal
-- Scene expansion — drone landscape, seasonal animations, user-selectable with crossfade
-- Mobile responsive, prefers-reduced-motion support, user disable setting
+**Delivered:** ASCIIBannerStrip canvas component with pure noise functions (~50fps, retina, no external deps), app shell integration (mobile responsive, a11y, user disable toggle), canonical tokens.ts with navy/cyan palette (37 files migrated from soil-* to glomalin-*), multi-scene engine (drone, seasonal, mycelium) with 200ms crossfade and easter egg scene cycling. 4 phases, 9 plans, 22 requirements — all complete.
 
 ## Requirements
 
@@ -132,26 +127,21 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - ✓ React Flow node map on public landing page — v5.0
 - ✓ Middleware route protection (auth + role + module checks) — v5.0
 - ✓ Module shell pages for macro-rollup, farm-registry, org-cert, inputs-seeds, fsa-reporting — v5.0
+- ✓ Card-based FSA CLU editor with bulk actions, validation, and acreage reporting PDF — v6.0
+- ✓ Insurance coverage matrix, payout simulator, and APH auto-populate — v6.0
+- ✓ Claims Kanban with document upload, timeline feed, and cross-module navigation — v6.0
+- ✓ PM2 ecosystem config, CORS lockdown, production env templates, Caddy reverse proxy — v7.0
+- ✓ Daily backup scripts for JSON + PostgreSQL with secrets documentation — v7.0
+- ✓ Email invite, signup, and password reset flows wired for production — v7.0
+- ✓ ASCIIBannerStrip canvas component with pure noise functions (~50fps, retina, no deps) — v8.0
+- ✓ App shell integration — banner in protected layout, mobile responsive, a11y, user toggle — v8.0
+- ✓ Navy/cyan design token system (tokens.ts) replacing soil palette across 37 files — v8.0
+- ✓ Multi-scene engine (drone, seasonal, mycelium) with crossfade and easter egg cycling — v8.0
 
 ### Active
 
-**v7.0 — Deployment:**
-- [ ] PM2 ecosystem config for all 8 apps with production env templates
-- [ ] CORS middleware on all Express apps restricted to portal origin
-- [ ] Caddy reverse proxy with auto-HTTPS subdomain routing
-- [ ] Production database setup (PostgreSQL for grain-tickets + organic-cert)
-- [ ] Email invite flow wired for production domain
-- [ ] Daily backup scripts for JSON files and PostgreSQL
-- [ ] Health check endpoints and production hardening
-
-**v8.0 — ASCII Banner & Design System:**
-- [ ] ASCIIBannerStrip component with animated mycelial network (canvas, ~50fps, retina)
-- [ ] App shell integration — banner in protected layout, mobile responsive, a11y
-- [ ] Navy/cyan design token system (src/styles/tokens.ts) replacing soil palette
-- [ ] Full portal palette migration (tailwind, components, header, cards, nav)
-- [ ] DESIGN.md documenting the token system and component patterns
-- [ ] Scene expansion — drone landscape, seasonal animations, per-user preference
-- [ ] Scene toggle UI with crossfade transitions
+**v7.0 — Remaining:**
+- [ ] Health check endpoints on all Express apps (Phase 39)
 
 ### Deferred
 
@@ -161,12 +151,12 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - Photo evidence attachment for field documentation
 - Multi-certifier support (EU, state programs) — USDA NOP only
 - Inspector portal/login — inspectors receive print reports, not digital access
-- Mobile-friendly responsive design (prep for future mobile app)
+- Mobile PWA + Field Operations Logger (planned as v9.0 — see .planning/v9.0-VISION.md)
 - Crop Year Accounting & QBO Integration (see .planning/v5.0-VISION.md — deferred to v6.0+)
 
 ### Out of Scope
 
-- Native mobile app — web-first, responsive design for now
+- Native mobile app — PWA approach chosen instead (v9.0)
 - Real-time field notifications — not needed for audit prep workflow
 - Automated compliance scoring — inspector makes the call, we provide the records
 - GIS/map-based split definition — label-based is sufficient for NOP audit
@@ -180,11 +170,11 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 ## Context
 
-Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget (Express + JSON, port 3001), fsa-acres, grain-tickets (Express + Prisma + PostgreSQL, port 3000), meristem-malt, farm-registry (Express + JSON, port 3005), glomalin-portal (Next.js 14 + Supabase, ~1,848 LOC TypeScript/CSS). All apps share the farm-registry for field data. Glomalin Portal is the unified auth entry point.
+Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget (Express + JSON, port 3001), fsa-acres, grain-tickets (Express + Prisma + PostgreSQL, port 3000), meristem-malt, farm-registry (Express + JSON, port 3005), glomalin-portal (Next.js 14 + Supabase, navy/cyan design system). All apps share the farm-registry for field data. Glomalin Portal is the unified auth entry point with animated ASCII banner, multi-scene rendering, and RBAC-gated modules (FSA, Insurance, Claims).
 
 **Port map:** 3000 grain-tickets, 3001 farm-budget, 3002 fsa-acres, 3003 meristem-malt, 3004 organic-cert, 3005 farm-registry, 3006 glomalin-portal (Next.js dev)
 
-**Total shipped:** 60 plans across 26 phases in 6 milestones (v1.0, v1.1, v2.0, v3.0, v4.0, v5.0).
+**Total shipped:** 84 plans across 39 phases in 8 milestones (v1.0 through v8.0). Production deployment in progress (v7.0 — PM2 + Caddy + Supabase on VPS).
 
 Primary users are farm office staff (daily ticket entry) and farm manager (farm planning, certification, settlement reconciliation).
 
@@ -219,12 +209,16 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | Glomalin Portal as separate Next.js 14 project | Greenfield in glomalin-portal/ — don't modify existing working modules | ✓ Good — clean separation, no regressions |
 | Supabase over NextAuth for portal | Supabase provides auth + DB + RLS in one; portal is new project, no legacy constraint | ✓ Good — simpler than Prisma + NextAuth combo |
 | No self-registration for v5.0 | Admin creates users; small team doesn't need signup flow | ✓ Good — kept scope minimal |
-| Dark soil aesthetic for portal | Farm-first branding (#080604 bg, #C8860A accent, JetBrains Mono) | ✓ Good — distinctive, professional |
+| Dark soil aesthetic for portal | Farm-first branding (#080604 bg, #C8860A accent, JetBrains Mono) | ⚠️ Revisit — replaced by navy/cyan in v8.0 |
 | React Flow for landing page node map | Visual representation of farm ecosystem; hub-and-spoke layout shows data flow | ✓ Good — 12-node map with animated edges |
-
-| Build FSA/Insurance/Claims inside glomalin-portal | Existing fsa-acres/ is Express+JSON; portal has Next.js 14 + Supabase + auth already | — Pending |
-| All three modules in one v6.0 milestone | Large scope but cohesive — FSA, insurance, and claims are tightly interconnected | — Pending |
-| Supabase for FSA/Insurance/Claims data | Consistent with portal architecture; RLS for access control already in place | — Pending |
+| Build FSA/Insurance/Claims inside glomalin-portal | Existing fsa-acres/ is Express+JSON; portal has Next.js 14 + Supabase + auth already | ✓ Good — shipped v6.0, all 27 reqs met |
+| All three modules in one v6.0 milestone | Large scope but cohesive — FSA, insurance, and claims are tightly interconnected | ✓ Good — cohesion justified; shipped in 2 days |
+| Supabase for FSA/Insurance/Claims data | Consistent with portal architecture; RLS for access control already in place | ✓ Good — RLS + FK chains work well |
+| PM2 on bare metal VPS (not Docker) | Simpler for 6-15 users; no container orchestration needed | ✓ Good — all 8 apps running in production |
+| Navy/cyan palette replacing soil aesthetic | Glomalin identity — distinctive, professional, cohesive with ASCII banner art | ✓ Good — 37 files migrated, zero hardcoded hex |
+| Canvas-only ASCII rendering (no external animation deps) | Pure TypeScript noise functions; no bundle bloat | ✓ Good — 1,241 LOC, ~50fps, retina support |
+| Easter egg scene toggle (not visible UI) | Discovery mechanic; keeps banner chrome clean | ✓ Good — bright-node click cycling works well |
+| localStorage for banner/scene prefs (not Supabase) | No schema changes; instant toggle; orthogonal controls | ✓ Good — simpler, no migration needed |
 
 ---
-*Last updated: 2026-03-07 after v8.0 milestone start*
+*Last updated: 2026-03-08 after v8.0 milestone completion*
