@@ -43,8 +43,16 @@ export async function POST(request: NextRequest) {
     }
   )
 
+  // Build production-aware redirect URL for invite email
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    request.headers.get('origin') ||
+    'http://localhost:3000'
+  const redirectTo = `${siteUrl}/auth/callback`
+
   const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
-    body.email
+    body.email,
+    { redirectTo }
   )
 
   if (inviteError) {
@@ -66,6 +74,23 @@ export async function POST(request: NextRequest) {
     if (roleError) {
       // Invite succeeded but role update failed — log and return partial success
       console.error('Invite succeeded but role update failed:', roleError)
+    }
+  }
+
+  // Grant module access at invite time if modules were specified
+  const modules: string[] = Array.isArray(body.modules) ? body.modules : []
+  if (modules.length > 0) {
+    const moduleRows = modules.map((moduleId: string) => ({
+      user_id: newUserId,
+      module: moduleId,
+      granted: true,
+    }))
+    const { error: moduleError } = await adminClient
+      .from('module_access')
+      .upsert(moduleRows, { onConflict: 'user_id,module' })
+
+    if (moduleError) {
+      console.error('Invite succeeded but module access grant failed:', moduleError)
     }
   }
 
