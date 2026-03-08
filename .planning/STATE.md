@@ -5,19 +5,19 @@
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v7.0 Public Deployment & Team Onboarding (phase 39 remaining)
+**Current focus:** v7.0 Public Deployment & Team Onboarding (phase 39 complete)
 
 ## Current Position
 
 Phase: 39 of 43
-Plan: 0 of ? in phase 39
-Status: Phase 38 complete (email invite onboarding verified end-to-end)
-Last activity: 2026-03-08 — Completed 38-02 (onboarding flows verified by user)
+Plan: 1 of 1 in phase 39
+Status: Phase 39 complete (health check endpoints on all Express apps)
+Last activity: 2026-03-08 — Completed 39-01 (health check endpoints + aggregate script)
 
-Progress: v8.0 [██████████] SHIPPED | v7.0: [█████████░] 90% (phases 35-38 complete, 39 pending)
+Progress: v8.0 [██████████] SHIPPED | v7.0: [██████████] 100% (phases 35-39 complete)
 
 **v8.0:** Archived — 4 phases, 9 plans, 22/22 requirements (shipped 2026-03-08)
-**v7.0 status:** Phases 35-38 complete, phase 39 pending
+**v7.0 status:** Phases 35-39 complete — milestone ready to ship
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: v8.0 [██████████] SHIPPED | v7.0: [█████
 | v4.0 | 20-23 | 7 | 2026-03-04 |
 | v5.0 | 24-26 | 9 | 2026-03-05 |
 | v6.0 | 27-34 | 15 | 2026-03-06 |
-| v7.0 | 35-38 | 7 | in progress |
+| v7.0 | 35-39 | 8 | in progress |
 | v8.0 | 40-43 | 9 | 2026-03-08 |
 | **Total** | **39** | **84** | |
 | Phase 40 P01 | 2min | 1 tasks | 3 files |
@@ -45,6 +45,7 @@ Progress: v8.0 [██████████] SHIPPED | v7.0: [█████
 | Phase 37 P01 | 2min | 2 tasks | 3 files |
 | Phase 38 P01 | 2min | 2 tasks | 4 files |
 | Phase 38 P02 | 1min | 1 tasks | 0 files |
+| Phase 39 P01 | 1min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -56,6 +57,7 @@ Progress: v8.0 [██████████] SHIPPED | v7.0: [█████
 - [Phase 37]: Error counting pattern (not set -e) so partial failures complete remaining backups
 - [Phase 38]: NEXT_PUBLIC_SITE_URL with origin fallback for all email redirect URLs
 - [Phase 38]: Admin client for module_access inserts at invite time to bypass RLS
+- [Phase 39]: Health routes before CORS middleware for fastest dependency-free response
 
 ### Pending Todos
 
@@ -69,6 +71,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed v8.0 milestone archival
+Stopped at: Completed 39-01-PLAN.md
 Resume file: —
-Next action: Plan and execute phase 39 (health check endpoints) to complete v7.0.
+Next action: Ship v7.0 milestone, then begin v9.0 planning.

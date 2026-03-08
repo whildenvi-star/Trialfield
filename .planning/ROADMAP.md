@@ -99,7 +99,7 @@
 - [x] **Phase 36: Reverse Proxy + HTTPS** - Caddy reverse proxy with auto-HTTPS subdomain routing and deployment README (completed 2026-03-07)
 - [x] **Phase 37: Database + Backups** - Production PostgreSQL setup, daily backup scripts, and secrets documentation (completed 2026-03-08)
 - [x] **Phase 38: Email Invite + Onboarding** - Production email invite flow, invited user signup, and password reset (completed 2026-03-08)
-- [ ] **Phase 39: Production Hardening** - Health check endpoints on all Express apps
+- [x] **Phase 39: Production Hardening** - Health check endpoints on all Express apps (completed 2026-03-08)
 
 <details>
 <summary>✅ v8.0 ASCII Banner Strip & Design System (Phases 40-43) — SHIPPED 2026-03-08</summary>
@@ -229,7 +229,7 @@ Plans:
 | 36. Reverse Proxy + HTTPS | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 37. Database + Backups | v7.0 | 1/1 | Complete | 2026-03-08 |
 | 38. Email Invite + Onboarding | v7.0 | 2/2 | Complete | 2026-03-08 |
-| 39. Production Hardening | v7.0 | 0/? | Not started | - |
+| 39. Production Hardening | 1/1 | Complete   | 2026-03-08 | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 3/3 | Complete | 2026-03-07 |

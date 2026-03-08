@@ -20,7 +20,7 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 
 - [x] **SEC-01**: All Express apps restrict CORS to portal domain only
 - [x] **SEC-02**: Daily backup scripts run for JSON data files (7-day retention) and PostgreSQL (pg_dump)
-- [ ] **SEC-03**: Each Express app exposes a `/health` endpoint returning 200
+- [x] **SEC-03**: Each Express app exposes a `/health` endpoint returning 200
 - [x] **SEC-04**: Production secrets documented (what to rotate, where they go)
 
 ### Onboarding
@@ -68,7 +68,7 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 | ONB-01 | Phase 38 | Complete |
 | ONB-02 | Phase 38 | Complete |
 | ONB-03 | Phase 38 | Complete |
-| SEC-03 | Phase 39 | Pending |
+| SEC-03 | Phase 39 | Complete |
 
 **Coverage:**
 - v7.0 requirements: 13 total (12 complete, 1 pending)
