@@ -9,14 +9,14 @@ See: .planning/PROJECT.md (updated 2026-03-07)
 
 ## Current Position
 
-Phase: 38 of 43
-Plan: 1 of 2 in phase 38
-Status: Phase 38 plan 01 complete (invite/recovery email redirects + module access at invite time)
-Last activity: 2026-03-08 — Completed 38-01 (production-aware invite/recovery/reset flows)
+Phase: 39 of 43
+Plan: 0 of ? in phase 39
+Status: Phase 38 complete (email invite onboarding verified end-to-end)
+Last activity: 2026-03-08 — Completed 38-02 (onboarding flows verified by user)
 
-Progress: [██████████] 100% (v8.0 complete) | v7.0: [████████░░] 80% (phases 35-38 in progress, 39 pending)
+Progress: [██████████] 100% (v8.0 complete) | v7.0: [█████████░] 90% (phases 35-38 complete, 39 pending)
 
-**v7.0 status:** Phases 35-37 complete, phase 38 plan 01 done (1 of 2), phase 39 pending
+**v7.0 status:** Phases 35-38 complete, phase 39 pending
 
 ## Performance Metrics
 
@@ -41,6 +41,7 @@ Progress: [██████████] 100% (v8.0 complete) | v7.0: [██�
 | Phase 42 P03 | 3min | 2 tasks | 6 files |
 | Phase 37 P01 | 2min | 2 tasks | 3 files |
 | Phase 38 P01 | 2min | 2 tasks | 4 files |
+| Phase 38 P02 | 1min | 1 tasks | 0 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,7 @@ Progress: [██████████] 100% (v8.0 complete) | v7.0: [██�
 - [Phase 38]: NEXT_PUBLIC_SITE_URL with origin fallback for all email redirect URLs
 - [Phase 38]: URL type param (not session.recovery_sent_at) to detect invite vs recovery flows
 - [Phase 38]: Admin client for module_access inserts at invite time to bypass RLS
+- [Phase 38]: All three onboarding flows (invite, signup, password reset) verified working end-to-end by user
 
 ### Pending Todos
 
@@ -94,6 +96,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-08
-Stopped at: Completed 38-01-PLAN.md
+Stopped at: Completed 38-02-PLAN.md
 Resume file: —
-Next action: Continue phase 38 plan 02, then phase 39.
+Next action: Begin phase 39.
