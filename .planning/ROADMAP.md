@@ -286,7 +286,7 @@ Plans:
 | 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 36. Reverse Proxy + HTTPS | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 37. Database + Backups | 1/1 | Complete    | 2026-03-08 | - |
-| 38. Email Invite + Onboarding | 2/2 | Complete   | 2026-03-08 | - |
+| 38. Email Invite + Onboarding | 2/2 | Complete    | 2026-03-08 | - |
 | 39. Production Hardening | v7.0 | 0/? | Not started | - |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
