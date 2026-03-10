@@ -78,6 +78,18 @@ export default function Header({ user, bannerDisabled, onBannerToggle }: HeaderP
                   </p>
                 </div>
                 <div className="border-t border-glomalin-border" />
+                {user.role === 'admin' && (
+                  <>
+                    <Link
+                      href="/admin"
+                      onClick={() => setOpen(false)}
+                      className="block w-full text-left px-4 py-2.5 text-sm text-glomalin-text font-mono hover:bg-glomalin-border transition-colors"
+                    >
+                      User Management
+                    </Link>
+                    <div className="border-t border-glomalin-border" />
+                  </>
+                )}
                 {onBannerToggle && (
                   <>
                     <button

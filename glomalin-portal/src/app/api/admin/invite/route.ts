@@ -56,8 +56,9 @@ export async function POST(request: NextRequest) {
   )
 
   if (inviteError) {
+    console.error('Invite error:', JSON.stringify(inviteError, null, 2))
     return NextResponse.json(
-      { error: inviteError.message ?? 'Failed to invite user' },
+      { error: inviteError.message ?? 'Failed to invite user', code: inviteError.code, status: inviteError.status },
       { status: 500 }
     )
   }
