@@ -28,6 +28,7 @@
       allFields = results[2];
       allLaborOverhead = results[3];
       allSuppliers = results[4];
+      computeProductDemandTotals(allFields, allProducts);
       renderProductTable(allProducts);
       renderProductDemand(allFields, allProducts);
       renderImplTable(allImplements);
@@ -43,8 +44,8 @@
 
   var CATEGORY_ORDER = ['Fertilizer', 'Chemical', 'Biological', 'Seed', 'Other'];
   // Default unit lists — augmented dynamically from unit-packs config
-  var DEFAULT_PURCHASE_UNITS = ['Ton', 'Gal', 'Lb', 'OZ', 'Bu', 'Each', 'Acre', 'Pts', 'Quart', 'Pack', 'UNIT', 'Tons'];
-  var DEFAULT_APP_UNITS = ['Lbs', 'OZ', 'Gal', 'Pts', 'Quart', 'Acre', 'Each', 'Tons', 'Pack', 'UNIT', 'lbs', 'oz', 'Bu'];
+  var DEFAULT_PURCHASE_UNITS = ['Ton', 'Gal', 'Lb', 'OZ', 'Bu', 'Each', 'Acre', 'Acres', 'Pts', 'Quart', 'Pack', 'UNIT', 'Tons'];
+  var DEFAULT_APP_UNITS = ['Lbs', 'OZ', 'Gal', 'Pts', 'Quart', 'Acre', 'Acres', 'Each', 'Tons', 'Pack', 'UNIT', 'lbs', 'oz', 'Bu'];
   var UNIT_CONVERSIONS = {
     'Ton:Lbs': 2000, 'Ton:lbs': 2000, 'Gal:OZ': 128, 'Gal:oz': 128,
     'Gal:Pts': 8, 'Gal:Quart': 4, 'Lb:OZ': 16, 'Lb:oz': 16, 'Bu:Lbs': 56, 'Bu:lbs': 56
@@ -69,7 +70,8 @@
   }
   var selectedProductIds = new Set();
   var simulatorPct = 0;
-  var collapsedCategories = new Set();
+  var collapsedCategories = new Set(CATEGORY_ORDER);
+  var productDemandTotals = {}; // productId → { qty (app units), purchaseQty }
 
   document.getElementById('inp-search').addEventListener('input', function () {
     var q = this.value.trim().toLowerCase();
@@ -170,6 +172,27 @@
     });
   }
 
+  // Compute total demand per product from field input assignments
+  function computeProductDemandTotals(fields, products) {
+    productDemandTotals = {};
+    var productIndex = {};
+    products.forEach(function (p) {
+      productIndex[(p.name || '').trim().toLowerCase()] = p;
+    });
+    fields.forEach(function (f) {
+      var fieldAcres = (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
+      (f.inputs || []).forEach(function (inp) {
+        if (!inp.productName) return;
+        var key = inp.productName.trim().toLowerCase();
+        var product = productIndex[key];
+        if (!product) return;
+        var appQty = (inp.quantity || 0) * fieldAcres;
+        if (!productDemandTotals[product.id]) productDemandTotals[product.id] = 0;
+        productDemandTotals[product.id] += appQty;
+      });
+    });
+  }
+
   function renderProductTable(products) {
     var container = document.getElementById('products-container');
     // Group by category
@@ -201,7 +224,9 @@
       html += '<th>Purch Unit</th>';
       html += '<th title="Computed from purchase price / conversion rate">App Price</th>';
       html += '<th>App Unit</th>';
+      html += '<th title="Total demand across all enterprises in purchase units">Demand</th>';
       html += '<th title="Organic / OMRI approved">ORG</th>';
+      html += '<th title="Used on certified organic ground">OG</th>';
       html += '<th></th>';
       html += '</tr></thead><tbody>';
       items.forEach(function (p) {
@@ -226,7 +251,14 @@
         html += '<td>' + util.escHtml(p.purchaseUnit || '--') + '</td>';
         html += '<td class="number' + previewCls + '">' + appDisplay + '</td>';
         html += '<td class="editable" data-id="' + p.id + '" data-field="unit" data-type="products">' + util.escHtml(p.unit) + '</td>';
+        var demandAppQty = productDemandTotals[p.id] || 0;
+        var demandPurchQty = demandAppQty && p.conversionRate ? demandAppQty / p.conversionRate : demandAppQty;
+        var demandLabel = demandPurchQty > 0
+          ? util.formatNum(demandPurchQty, 1) + ' ' + util.escHtml(p.purchaseUnit || p.unit || '')
+          : '<span style="color:var(--text-light)">--</span>';
+        html += '<td class="number">' + demandLabel + '</td>';
         html += '<td>' + (p.organic ? '<span class="prod-organic-badge">ORG</span>' : '') + '</td>';
+        html += '<td>' + (p.organicGround ? '<span class="prod-og-badge" style="background:#16a34a;color:#fff;padding:0.1rem 0.35rem;border-radius:3px;font-size:0.65rem;font-weight:600">OG</span>' : '') + '</td>';
         html += '<td><button class="btn-danger" data-del-id="' + p.id + '" data-del-type="products" style="font-size:0.7rem;padding:0.15rem 0.4rem">Del</button></td>';
         html += '</tr>';
       });
@@ -331,6 +363,11 @@
     orgCb.checked = !!product.organic;
     document.getElementById('pe-organic-label').textContent = orgCb.checked ? 'Yes' : 'No';
 
+    // Organic Ground checkbox
+    var ogCb = document.getElementById('pe-organicGround');
+    ogCb.checked = !!product.organicGround;
+    document.getElementById('pe-organicGround-label').textContent = ogCb.checked ? 'Yes' : 'No';
+
     // Supplier dropdown
     var supSelect = document.getElementById('pe-supplier');
     supSelect.innerHTML = '<option value="">-- none --</option>';
@@ -397,6 +434,9 @@
   document.getElementById('pe-organic').addEventListener('change', function () {
     document.getElementById('pe-organic-label').textContent = this.checked ? 'Yes' : 'No';
   });
+  document.getElementById('pe-organicGround').addEventListener('change', function () {
+    document.getElementById('pe-organicGround-label').textContent = this.checked ? 'Yes' : 'No';
+  });
 
   document.getElementById('pe-category').addEventListener('change', function () {
     var cat = this.value;
@@ -420,6 +460,7 @@
       category: document.getElementById('pe-category').value,
       supplierId: document.getElementById('pe-supplier').value,
       organic: document.getElementById('pe-organic').checked,
+      organicGround: document.getElementById('pe-organicGround').checked,
       unitBilledPrice: parseFloat(document.getElementById('pe-purchasePrice').value) || 0,
       purchaseUnit: document.getElementById('pe-purchaseUnit').value,
       unit: document.getElementById('pe-appUnit').value,
@@ -831,12 +872,14 @@
       (showFuelInUsage ? ' + ' + util.formatMoney(grandTotal.fuelCost, 0) + ' fuel' : '');
   }
 
-  // === PRODUCT DEMAND BY ENTERPRISE ===
+  // === PRODUCT DEMAND — EXPANDABLE FIELD VIEW ===
 
   function renderProductDemand(fields, products) {
     var enterprises = window.refData.enterprises;
-    if (!enterprises.length || !fields.length) {
-      document.getElementById('prod-demand-tbody').innerHTML = '<tr><td>No data</td></tr>';
+    var container = document.getElementById('prod-demand-container');
+    if (!container) return;
+    if (!fields.length) {
+      container.innerHTML = '<p style="color:var(--text-light)">No field data</p>';
       return;
     }
 
@@ -846,12 +889,15 @@
       productIndex[(p.name || '').trim().toLowerCase()] = p;
     });
 
-    // demand[productName][entIdx] = { qty, cost }
+    // Build enterprise index by id
+    var entMap = {};
+    enterprises.forEach(function (e) { entMap[e.id] = e; });
+
+    // demand[productName] = { totalQty, totalCost, fields: [{ name, acres, qty, cost, enterprise, season }] }
     var demand = {};
     fields.forEach(function (f) {
-      var entIdx = enterprises.findIndex(function (e) { return e.id === f.enterpriseId; });
-      if (entIdx < 0) return;
       var fieldAcres = (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
+      var ent = entMap[f.enterpriseId];
       (f.inputs || []).forEach(function (inp) {
         if (!inp.productName) return;
         var key = inp.productName.trim().toLowerCase();
@@ -860,74 +906,69 @@
         var fieldQty = (inp.quantity || 0) * fieldAcres;
         var fieldCost = fieldQty * appPrice;
 
-        if (!demand[inp.productName]) demand[inp.productName] = {};
-        if (!demand[inp.productName][entIdx]) demand[inp.productName][entIdx] = { qty: 0, cost: 0 };
-        demand[inp.productName][entIdx].qty += fieldQty;
-        demand[inp.productName][entIdx].cost += fieldCost;
+        if (!demand[inp.productName]) demand[inp.productName] = { totalQty: 0, totalCost: 0, fields: [] };
+        demand[inp.productName].totalQty += fieldQty;
+        demand[inp.productName].totalCost += fieldCost;
+        demand[inp.productName].fields.push({
+          name: f.name,
+          acres: fieldAcres,
+          rate: inp.quantity || 0,
+          qty: fieldQty,
+          cost: fieldCost,
+          enterprise: ent ? (ent.shortName || ent.name) : '--',
+          season: inp.season || '--'
+        });
       });
     });
 
-    // Build header
-    var thead = '<tr><th>Product</th><th>Supplier</th><th>Purchase</th><th>App Price</th>';
-    enterprises.forEach(function (e) {
-      thead += '<th title="' + util.escHtml(e.name) + '">' + util.escHtml(e.shortName) + '</th>';
-    });
-    thead += '<th>FARM TOTAL</th></tr>';
-    document.getElementById('prod-demand-thead').innerHTML = thead;
-
-    // Build rows
     var usedNames = Object.keys(demand).sort();
-    var html = '';
-    var grandTotals = {};
-    var grandTotal = { cost: 0 };
-    enterprises.forEach(function (e, idx) { grandTotals[idx] = { cost: 0 }; });
+    var grandTotal = 0;
+    usedNames.forEach(function (n) { grandTotal += demand[n].totalCost; });
 
+    var html = '';
     usedNames.forEach(function (name) {
+      var d = demand[name];
       var key = name.trim().toLowerCase();
       var product = productIndex[key];
-      var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
-      var supplierName = product ? getSupplierName(product.supplierId, 'product') : '--';
-      var purchaseLabel = product ? util.formatMoney(product.unitBilledPrice) : '--';
-      var appLabel = product ? util.formatMoney(appPrice, 4) + '/' + util.escHtml(product.unit || 'unit') : '--';
+      var unit = product ? (product.unit || 'units') : 'units';
+      var supplierName = product ? getSupplierName(product.supplierId, 'product') : '';
+      var safeId = key.replace(/[^a-z0-9]/g, '-');
 
-      html += '<tr><td>' + util.escHtml(name) + '</td>';
-      html += '<td>' + util.escHtml(supplierName) + '</td>';
-      html += '<td class="number">' + purchaseLabel + '</td>';
-      html += '<td class="number">' + appLabel + '</td>';
+      // Sort fields by qty descending
+      d.fields.sort(function (a, b) { return b.qty - a.qty; });
 
-      var rowTotal = { qty: 0, cost: 0 };
+      html += '<details class="demand-expand" id="prod-exp-' + safeId + '">';
+      html += '<summary class="demand-summary">';
+      html += '<span class="demand-name">' + util.escHtml(name) + '</span>';
+      if (supplierName) html += '<span class="demand-supplier">' + util.escHtml(supplierName) + '</span>';
+      html += '<span class="demand-totals">' + util.formatNum(d.totalQty, 0) + ' ' + util.escHtml(unit) +
+        ' &middot; ' + util.formatMoney(d.totalCost, 0) + '</span>';
+      html += '<span class="demand-field-count">' + d.fields.length + ' field' + (d.fields.length !== 1 ? 's' : '') + '</span>';
+      html += '</summary>';
 
-      enterprises.forEach(function (e, idx) {
-        var d = demand[name] && demand[name][idx];
-        if (d) {
-          rowTotal.qty += d.qty;
-          rowTotal.cost += d.cost;
-          grandTotals[idx].cost += d.cost;
+      html += '<table class="demand-fields-table"><thead><tr>' +
+        '<th>Field</th><th>Enterprise</th><th>Acres</th><th>Rate/' + util.escHtml(unit === 'Lbs' ? 'Ac' : 'Ac') + '</th>' +
+        '<th>Total ' + util.escHtml(unit) + '</th><th>Cost</th><th>Season</th>' +
+        '</tr></thead><tbody>';
 
-          var unitLabel = product ? (product.unit || '') : '';
-          html += '<td class="number">' + util.formatNum(d.qty, 0) + ' ' + util.escHtml(unitLabel) +
-            '<br><small style="color:var(--text-light)">' + util.formatMoney(d.cost, 0) + '</small></td>';
-        } else {
-          html += '<td class="number" style="color:var(--text-light)">--</td>';
-        }
+      d.fields.forEach(function (f) {
+        html += '<tr>' +
+          '<td>' + util.escHtml(f.name) + '</td>' +
+          '<td>' + util.escHtml(f.enterprise) + '</td>' +
+          '<td class="number">' + util.formatNum(f.acres, 1) + '</td>' +
+          '<td class="number">' + util.formatNum(f.rate, 1) + '</td>' +
+          '<td class="number">' + util.formatNum(f.qty, 0) + '</td>' +
+          '<td class="number">' + util.formatMoney(f.cost, 0) + '</td>' +
+          '<td>' + util.escHtml(f.season) + '</td>' +
+          '</tr>';
       });
 
-      grandTotal.cost += rowTotal.cost;
-      var totalUnit = product ? (product.unit || '') : '';
-      html += '<td class="number bold">' + util.formatNum(rowTotal.qty, 0) + ' ' + util.escHtml(totalUnit) +
-        '<br><small style="color:var(--text-light)">' + util.formatMoney(rowTotal.cost, 0) + '</small></td></tr>';
+      html += '</tbody></table></details>';
     });
 
-    // Grand total row
-    html += '<tr class="total-row"><td class="bold" colspan="4">TOTAL</td>';
-    enterprises.forEach(function (e, idx) {
-      html += '<td class="number bold">' + util.formatMoney(grandTotals[idx].cost, 0) + '</td>';
-    });
-    html += '<td class="number bold">' + util.formatMoney(grandTotal.cost, 0) + '</td></tr>';
-
-    document.getElementById('prod-demand-tbody').innerHTML = html;
+    container.innerHTML = html;
     document.getElementById('prod-demand-info').textContent =
-      usedNames.length + ' products in use, ' + util.formatMoney(grandTotal.cost, 0) + ' total input cost';
+      usedNames.length + ' products in use, ' + util.formatMoney(grandTotal, 0) + ' total input cost';
   }
 
   // === LABOR & OVERHEAD (Features 1 + 3) ===
