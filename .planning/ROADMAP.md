@@ -116,7 +116,7 @@
 
 **Milestone Goal:** Turn Glomalin Portal into a Progressive Web App so field operators can view crop plans, confirm field passes offline, and push confirmed operations into organic-cert's 3-year field histories for NOP compliance.
 
-- [ ] **Phase 44: PWA Infrastructure** - Service worker, web app manifest, install prompt, offline shell, IndexedDB wrapper
+- [x] **Phase 44: PWA Infrastructure** - Service worker, web app manifest, install prompt, offline shell, IndexedDB wrapper (completed 2026-03-17)
 - [ ] **Phase 45: Crop Plan Viewer** - Mobile-first field list and detail pages aggregating data from farm-budget and farm-registry, with offline caching
 - [ ] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API
 - [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
@@ -308,7 +308,7 @@ Plans:
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 3/3 | Complete | 2026-03-07 |
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 44. PWA Infrastructure | v9.0 | 0/2 | Not started | - |
+| 44. PWA Infrastructure | 2/2 | Complete   | 2026-03-17 | - |
 | 45. Crop Plan Viewer | v9.0 | 0/? | Not started | - |
 | 46. Field Pass Logger | v9.0 | 0/? | Not started | - |
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |

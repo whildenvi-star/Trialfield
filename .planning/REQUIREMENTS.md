@@ -29,6 +29,42 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 - [x] **ONB-02**: Invited user can set password, log in, and see dashboard with granted modules
 - [x] **ONB-03**: User can reset forgotten password via email link in production
 
+## v9.0 Requirements
+
+Requirements for Mobile PWA + Field Operations Logger milestone.
+
+### PWA Infrastructure
+
+- [x] **PWA-01**: Service worker registered via @serwist/next with web app manifest (add-to-home-screen, Glomalin branding)
+- [x] **PWA-02**: Offline shell — portal loads and is navigable without network; static assets cached by service worker
+- [ ] **PWA-03**: IndexedDB wrapper (via idb) providing read/write API for offline operation queue and cached crop plan data
+
+### Crop Plan Viewer
+
+- [ ] **CPV-01**: Portal API route that aggregates field + enterprise + input + seed + planned pass data from farm-budget and farm-registry with 60s TTL cache and graceful fallback
+- [ ] **CPV-02**: Mobile-optimized field list with search/filter, big tap targets, grouped by crop/enterprise
+- [ ] **CPV-03**: Field detail page showing crop, variety, population, planned inputs with rates, and planned pass checklist with pass status (planned vs confirmed)
+- [ ] **CPV-04**: Crop plan data cached in IndexedDB on each successful sync, displayed from cache when offline; stale-data indicator shows last sync time
+
+### Field Pass Logger
+
+- [ ] **FPL-01**: Operator can confirm a planned pass (tap checkbox → date picker defaults today + operator selector → CONFIRMED status written to organic-cert FieldOperation table)
+- [ ] **FPL-02**: Operator can add an unplanned pass (pick field, operation type, date, operator, optional notes → new CONFIRMED FieldOperation row)
+- [ ] **FPL-03**: Operator selector populated from Supabase profiles with operator role or above
+- [ ] **FPL-04**: All portal-logged operations written to organic-cert FieldOperation table via portal API route with `plannedSource: "mobile-logger"` audit tag
+
+### Offline Sync Engine
+
+- [ ] **OSE-01**: Pass confirmations and additions queued to IndexedDB when offline; queue persists across browser sessions
+- [ ] **OSE-02**: Background Sync API replays queued operations to portal API automatically on reconnect
+- [ ] **OSE-03**: Conflict detection when a pass was already confirmed (by FieldOps API or another user) — skip with notification rather than duplicating
+- [ ] **OSE-04**: Sync status UI shows queued count, last sync timestamp, per-item error state, and manual force-sync button
+
+### Grain Tickets PWA Extension
+
+- [ ] **GTP-01**: Grain tickets offline entry — new ticket form available offline with IndexedDB queue and sync-on-reconnect (same pattern as field pass logger)
+- [ ] **GTP-02**: Dashboard read-only caching — budget, FSA, and insurance summary views served from IndexedDB cache when offline
+
 ## Future Requirements
 
 ### v9.0+ Candidates
@@ -51,8 +87,15 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 | Green/earth-tone palette | Glomalin design system is navy/cyan — no organic color schemes |
 | External animation libraries | Canvas-only rendering with pure TypeScript noise functions |
 | Visible scene toggle UI | Scene switching is an easter egg, not a prominent UI feature |
+| Native mobile app (iOS/Android) | PWA covers the field crew use case |
+| GPS/location tracking of field passes | Not needed for NOP records |
+| Photo attachment on passes | Deferred (would need Supabase Storage scope) |
+| Push notifications | Deferred (requires VAPID setup + notification permission UX) |
+| Equipment/implement selection on mobile | Operators confirm pass type, not which tractor |
 
 ## Traceability
+
+### v7.0
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -70,11 +113,34 @@ Requirements for public deployment milestone. Each maps to roadmap phases.
 | ONB-03 | Phase 38 | Complete |
 | SEC-03 | Phase 39 | Complete |
 
+### v9.0
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| PWA-01 | Phase 44 | Complete |
+| PWA-02 | Phase 44 | Complete |
+| PWA-03 | Phase 44 | Pending |
+| CPV-01 | Phase 45 | Pending |
+| CPV-02 | Phase 45 | Pending |
+| CPV-03 | Phase 45 | Pending |
+| CPV-04 | Phase 45 | Pending |
+| FPL-01 | Phase 46 | Pending |
+| FPL-02 | Phase 46 | Pending |
+| FPL-03 | Phase 46 | Pending |
+| FPL-04 | Phase 46 | Pending |
+| OSE-01 | Phase 47 | Pending |
+| OSE-02 | Phase 47 | Pending |
+| OSE-03 | Phase 47 | Pending |
+| OSE-04 | Phase 47 | Pending |
+| GTP-01 | Phase 48 | Pending |
+| GTP-02 | Phase 48 | Pending |
+
 **Coverage:**
-- v7.0 requirements: 13 total (12 complete, 1 pending)
-- Mapped to phases: 13 total
+- v7.0 requirements: 13 total (13 complete)
+- v9.0 requirements: 17 total (0 complete, 17 pending)
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-06*
-*Last updated: 2026-03-08 after v8.0 archived (v7.0 requirements only)*
+*v9.0 requirements added: 2026-03-15*
+*Last updated: 2026-03-15 after v9.0 roadmap creation*
