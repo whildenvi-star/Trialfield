@@ -308,7 +308,7 @@ Plans:
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 3/3 | Complete | 2026-03-07 |
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 44. PWA Infrastructure | 2/2 | Complete   | 2026-03-17 | - |
+| 44. PWA Infrastructure | 2/2 | Complete    | 2026-03-17 | - |
 | 45. Crop Plan Viewer | v9.0 | 0/? | Not started | - |
 | 46. Field Pass Logger | v9.0 | 0/? | Not started | - |
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
