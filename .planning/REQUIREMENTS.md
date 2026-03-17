@@ -37,7 +37,7 @@ Requirements for Mobile PWA + Field Operations Logger milestone.
 
 - [x] **PWA-01**: Service worker registered via @serwist/next with web app manifest (add-to-home-screen, Glomalin branding)
 - [x] **PWA-02**: Offline shell — portal loads and is navigable without network; static assets cached by service worker
-- [ ] **PWA-03**: IndexedDB wrapper (via idb) providing read/write API for offline operation queue and cached crop plan data
+- [x] **PWA-03**: IndexedDB wrapper (via idb) providing read/write API for offline operation queue and cached crop plan data
 
 ### Crop Plan Viewer
 
@@ -119,7 +119,7 @@ Requirements for Mobile PWA + Field Operations Logger milestone.
 |-------------|-------|--------|
 | PWA-01 | Phase 44 | Complete |
 | PWA-02 | Phase 44 | Complete |
-| PWA-03 | Phase 44 | Pending |
+| PWA-03 | Phase 44 | Complete |
 | CPV-01 | Phase 45 | Pending |
 | CPV-02 | Phase 45 | Pending |
 | CPV-03 | Phase 45 | Pending |
