@@ -9,9 +9,9 @@
 - ✅ **v4.0 Cross-Module Polish & Settlement Closure** — Phases 20-23 (shipped 2026-03-04)
 - ✅ **v5.0 Glomalin Portal — Next.js + Supabase Scaffold** — Phases 24-26 (shipped 2026-03-05) — [archive](milestones/v5.0-ROADMAP.md)
 - ✅ **v6.0 FSA Acres, Insurance & Claims** — Phases 27-34 (shipped 2026-03-06)
-- 🚧 **v7.0 Public Deployment & Team Onboarding** — Phases 35-39 (in progress)
+- ✅ **v7.0 Public Deployment & Team Onboarding** — Phases 35-39 (shipped 2026-03-08)
 - ✅ **v8.0 ASCII Banner Strip & Design System** — Phases 40-43 (shipped 2026-03-08) — [archive](milestones/v8.0-ROADMAP.md)
-- 📋 **v9.0 Mobile PWA + Field Operations Logger** — Phases 44-48 (planned — after v7.0)
+- 📋 **v9.0 Mobile PWA + Field Operations Logger** — Phases 44-48 (planned)
 
 ## Phases
 
@@ -91,15 +91,16 @@
 
 </details>
 
-### v7.0 Public Deployment & Team Onboarding (In Progress)
+<details>
+<summary>✅ v7.0 Public Deployment & Team Onboarding (Phases 35-39) — SHIPPED 2026-03-08</summary>
 
-**Milestone Goal:** Deploy the entire 8-app farm operations platform to a public URL so 6-15 coworkers can access it with role-based permissions and email-invite onboarding. Infrastructure milestone — no new features.
+- [x] Phase 35: VPS Provisioning + Process Management (2/2 plans) — completed 2026-03-07
+- [x] Phase 36: Reverse Proxy + HTTPS (2/2 plans) — completed 2026-03-07
+- [x] Phase 37: Database + Backups (1/1 plan) — completed 2026-03-08
+- [x] Phase 38: Email Invite + Onboarding (2/2 plans) — completed 2026-03-08
+- [x] Phase 39: Production Hardening (1/1 plan) — completed 2026-03-08
 
-- [x] **Phase 35: VPS Provisioning + Process Management** - PM2 ecosystem config, production env templates, CORS lockdown, port configuration, and Next.js production builds (completed 2026-03-07)
-- [x] **Phase 36: Reverse Proxy + HTTPS** - Caddy reverse proxy with auto-HTTPS subdomain routing and deployment README (completed 2026-03-07)
-- [x] **Phase 37: Database + Backups** - Production PostgreSQL setup, daily backup scripts, and secrets documentation (completed 2026-03-08)
-- [x] **Phase 38: Email Invite + Onboarding** - Production email invite flow, invited user signup, and password reset (completed 2026-03-08)
-- [x] **Phase 39: Production Hardening** - Health check endpoints on all Express apps (completed 2026-03-08)
+</details>
 
 <details>
 <summary>✅ v8.0 ASCII Banner Strip & Design System (Phases 40-43) — SHIPPED 2026-03-08</summary>
@@ -110,6 +111,16 @@
 - [x] Phase 43: Scene Expansion (2/2 plans) — completed 2026-03-07
 
 </details>
+
+### v9.0 Mobile PWA + Field Operations Logger (Planned)
+
+**Milestone Goal:** Turn Glomalin Portal into a Progressive Web App so field operators can view crop plans, confirm field passes offline, and push confirmed operations into organic-cert's 3-year field histories for NOP compliance.
+
+- [ ] **Phase 44: PWA Infrastructure** - Service worker, web app manifest, install prompt, offline shell, IndexedDB wrapper
+- [ ] **Phase 45: Crop Plan Viewer** - Mobile-first field list and detail pages aggregating data from farm-budget and farm-registry, with offline caching
+- [ ] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API
+- [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
+- [ ] **Phase 48: Grain Tickets PWA + Dashboard Caching** - Extend offline pattern to grain-tickets entry and dashboard read-only views
 
 ## Phase Details
 
@@ -123,7 +134,7 @@
   3. grain-tickets starts on a configurable PORT (not hardcoded 3000) so it coexists with the portal
   4. Both Next.js apps (glomalin-portal, organic-cert) run via `next start` in production mode (not `next dev`)
   5. Express apps reject cross-origin requests from any domain other than the portal origin
-**Plans**: 3 plans
+**Plans**: 2 plans
 Plans:
 - [x] 35-01-PLAN.md — PM2 ecosystem config, grain-tickets port fix, Next.js production builds
 - [x] 35-02-PLAN.md — CORS lockdown on Express apps, .env.example templates for all 8 apps
@@ -136,7 +147,7 @@ Plans:
   1. User can open `portal.farm-domain.com` in a browser and see the Glomalin Portal landing page over HTTPS
   2. Each app is reachable at its own subdomain (e.g., `tickets.farm-domain.com`, `budget.farm-domain.com`) with a valid TLS certificate
   3. A deployment README exists with step-by-step instructions covering DNS, Caddy, PM2, Node.js, PostgreSQL, and git clone — enough for someone to rebuild the VPS from scratch
-**Plans**: 3 plans
+**Plans**: 2 plans
 Plans:
 - [x] 36-01-PLAN.md — Caddyfile with subdomain-to-port routing and auto-HTTPS for all 8 apps
 - [x] 36-02-PLAN.md — DEPLOY.md step-by-step VPS setup guide (DNS, Node.js, PostgreSQL, Caddy, PM2)
@@ -151,7 +162,7 @@ Plans:
   3. A secrets document lists every production secret (Supabase keys, DB passwords, API tokens), where each one goes, and how to rotate it
 **Plans**: 1 plan
 Plans:
-- [ ] 37-01-PLAN.md — Backup/restore scripts for all data stores + secrets reference document
+- [x] 37-01-PLAN.md — Backup/restore scripts for all data stores + secrets reference document
 
 ### Phase 38: Email Invite + Onboarding
 **Goal**: Admin can invite coworkers by email and they can sign up, log in, and use their granted modules — the full onboarding path works end-to-end in production
@@ -163,8 +174,8 @@ Plans:
   3. User can click "Forgot password" on the login page, receive a reset email, set a new password, and log back in
 **Plans**: 2 plans
 Plans:
-- [ ] 38-01-PLAN.md — Production-aware invite, callback, and password reset flows
-- [ ] 38-02-PLAN.md — End-to-end onboarding verification checkpoint
+- [x] 38-01-PLAN.md — Production-aware invite, callback, and password reset flows
+- [x] 38-02-PLAN.md — End-to-end onboarding verification checkpoint
 
 ### Phase 39: Production Hardening
 **Goal**: Every Express app exposes a health check endpoint for monitoring and uptime verification
@@ -175,17 +186,80 @@ Plans:
   2. PM2 or a simple curl script can hit all health endpoints and report which apps are up or down
 **Plans**: 1 plan
 Plans:
-- [ ] 39-01-PLAN.md — Health check endpoints for all Express apps + aggregate check script
+- [x] 39-01-PLAN.md — Health check endpoints for all Express apps + aggregate check script
 
-### v9.0 Mobile PWA + Field Operations Logger (Planned)
+### Phase 44: PWA Infrastructure
+**Goal**: The Glomalin Portal is installable as a PWA on mobile devices and loads its shell without network — the foundation all offline features depend on
+**Depends on**: Phase 43 (v8.0 complete — design system and app shell stable)
+**Requirements**: PWA-01, PWA-02, PWA-03
+**Success Criteria** (what must be TRUE):
+  1. On a mobile browser, the portal shows an "Add to Home Screen" install prompt and installs with the Glomalin icon and name
+  2. With network disabled after first visit, the portal shell (navigation, layout, chrome) loads and renders without a blank screen or browser error
+  3. An IndexedDB wrapper is importable from `lib/offline/db.ts` and passes read/write tests for both the operation queue and crop plan cache stores
+**Plans**: 2 plans
 
-**Milestone Goal:** Turn Glomalin Portal into a Progressive Web App so field operators can view crop plans, confirm field passes offline, and push confirmed operations into organic-cert's 3-year field histories for NOP compliance.
+Plans:
+- [ ] 44-01-PLAN.md — @serwist/next setup, web app manifest, install prompt, service worker caching strategy
+- [ ] 44-02-PLAN.md — IndexedDB wrapper (idb) with typed stores for operation queue and crop plan cache
 
-- [ ] **Phase 44: PWA Infrastructure** - Service worker (@serwist/next), web app manifest, install prompt, offline shell, IndexedDB wrapper
-- [ ] **Phase 45: Crop Plan Viewer** - Mobile-first field list + detail pages showing crop, variety, population, inputs, rates, and planned passes (aggregated from farm-budget + farm-registry)
-- [ ] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes with operator attribution, writing to organic-cert FieldOperation table
-- [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
-- [ ] **Phase 48: Grain Tickets PWA + Express App Offline** - Extend PWA to grain-tickets entry with offline queue, dashboard read-only caching
+### Phase 45: Crop Plan Viewer
+**Goal**: Field operators can see every field's crop plan and pass status on a mobile screen, and that data remains readable when they lose signal
+**Depends on**: Phase 44 (IndexedDB wrapper and offline shell must exist before caching can work)
+**Requirements**: CPV-01, CPV-02, CPV-03, CPV-04
+**Success Criteria** (what must be TRUE):
+  1. Operator opens the Crop Plan Viewer and sees a list of all fields with their crop, grouped and searchable, with tap targets large enough to use with gloves
+  2. Tapping a field shows the crop detail — variety, population, planned inputs with rates, and a pass checklist showing which passes are planned vs confirmed
+  3. After a successful online sync, the crop plan data persists in IndexedDB and the same field list and detail pages render correctly with network disabled
+  4. A "Last synced" badge is visible on the field list showing the timestamp of the most recent successful data fetch
+**Plans**: 2 plans
+
+Plans:
+- [ ] 45-01: Portal API route aggregating farm-budget + farm-registry data with TTL cache and graceful fallback
+- [ ] 45-02: Mobile-optimized field list with search/filter and IndexedDB cache integration
+- [ ] 45-03: Field detail page with crop info, input rates, and planned pass checklist
+
+### Phase 46: Field Pass Logger
+**Goal**: Operators can confirm planned passes and add unplanned passes from the field, with those confirmations writing into organic-cert's 3-year field history
+**Depends on**: Phase 45 (crop plan viewer and pass checklist must exist before confirmation UI is built on top of them)
+**Requirements**: FPL-01, FPL-02, FPL-03, FPL-04
+**Success Criteria** (what must be TRUE):
+  1. Operator taps a planned pass checkbox, picks today's date and their name from the operator selector, and the pass status updates to "Confirmed" in the UI
+  2. Operator can add an unplanned pass by tapping a floating action button, selecting field + operation type + date + operator, and seeing it appear in the pass list
+  3. A confirmed or added pass appears in organic-cert's FieldOperation table within seconds, tagged with `plannedSource: "mobile-logger"`, and is visible in the existing organic-cert field history views
+  4. The operator selector shows only users with operator role or above from Supabase profiles
+**Plans**: 2 plans
+
+Plans:
+- [ ] 46-01: Portal API route handler for FieldOperation writes to organic-cert with mobile-logger audit tag
+- [ ] 46-02: Confirm-pass UI (tap + date picker + operator selector) and add-unplanned-pass flow
+
+### Phase 47: Offline Sync Engine
+**Goal**: Pass confirmations made without signal are reliably delivered to organic-cert when connectivity returns — operators never lose work due to rural coverage gaps
+**Depends on**: Phase 46 (pass write operations must exist before they can be queued and replayed)
+**Requirements**: OSE-01, OSE-02, OSE-03, OSE-04
+**Success Criteria** (what must be TRUE):
+  1. Operator confirms a pass with network disabled — the operation is stored in IndexedDB and the pass appears optimistically as "Confirmed (pending sync)" in the UI; the queue count badge increments
+  2. When the device reconnects, the queued operations replay automatically (Background Sync API) and the "pending sync" indicator resolves without operator action
+  3. If a queued pass was already confirmed by the FieldOps API or another user, the sync skips it silently and shows a "Already confirmed — skipped" notification rather than creating a duplicate
+  4. The sync status panel shows queued operation count, last successful sync timestamp, any per-item errors, and a manual "Sync now" button that triggers immediate replay
+**Plans**: 2 plans
+
+Plans:
+- [ ] 47-01: IndexedDB operation queue with Background Sync API registration and replay handler
+- [ ] 47-02: Conflict detection logic and sync status UI (queued count, last sync, error state, force-sync button)
+
+### Phase 48: Grain Tickets PWA + Dashboard Caching
+**Goal**: The offline capability extends to grain ticket entry and read-only dashboard views, so office staff and operators both benefit from the PWA infrastructure
+**Depends on**: Phase 47 (offline sync engine and IndexedDB patterns must be proven before extending to another module)
+**Requirements**: GTP-01, GTP-02
+**Success Criteria** (what must be TRUE):
+  1. Office staff can enter a new grain ticket in the grain-tickets module with network disabled — the entry queues locally and syncs when connectivity returns, appearing in the ticket list without manual intervention
+  2. Budget, FSA, and insurance summary dashboard views load from IndexedDB cache when offline, showing the data from the last successful sync rather than an error or blank screen
+**Plans**: 2 plans
+
+Plans:
+- [ ] 48-01: Grain ticket offline entry with IndexedDB queue and sync-on-reconnect
+- [ ] 48-02: Dashboard read-only caching for budget, FSA, and insurance summary views
 
 ## Progress
 
@@ -223,19 +297,19 @@ Plans:
 | 30. Insurance Decision Tool UI | v6.0 | 2/2 | Complete | 2026-03-05 |
 | 31. Claims Tables + API | v6.0 | 2/2 | Complete | 2026-03-05 |
 | 32. Claims Lifecycle UI | v6.0 | 2/2 | Complete | 2026-03-06 |
-| 34. Insurance & Claims UI Wiring | v6.0 | 1/1 | Complete | 2026-03-06 |
 | 33. Cross-Module Integration + Dashboard | v6.0 | 2/2 | Complete | 2026-03-06 |
+| 34. Insurance & Claims UI Wiring | v6.0 | 1/1 | Complete | 2026-03-06 |
 | 35. VPS Provisioning + Process Management | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 36. Reverse Proxy + HTTPS | v7.0 | 2/2 | Complete | 2026-03-07 |
 | 37. Database + Backups | v7.0 | 1/1 | Complete | 2026-03-08 |
 | 38. Email Invite + Onboarding | v7.0 | 2/2 | Complete | 2026-03-08 |
-| 39. Production Hardening | 1/1 | Complete    | 2026-03-08 | - |
+| 39. Production Hardening | v7.0 | 1/1 | Complete | 2026-03-08 |
 | 40. ASCIIBannerStrip Component | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 3/3 | Complete | 2026-03-07 |
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 44. PWA Infrastructure | v9.0 | 0/? | Planned | - |
-| 45. Crop Plan Viewer | v9.0 | 0/? | Planned | - |
-| 46. Field Pass Logger | v9.0 | 0/? | Planned | - |
-| 47. Offline Sync Engine | v9.0 | 0/? | Planned | - |
-| 48. Grain Tickets PWA + Express App Offline | v9.0 | 0/? | Planned | - |
+| 44. PWA Infrastructure | v9.0 | 0/2 | Not started | - |
+| 45. Crop Plan Viewer | v9.0 | 0/? | Not started | - |
+| 46. Field Pass Logger | v9.0 | 0/? | Not started | - |
+| 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
+| 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
