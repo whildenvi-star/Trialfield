@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 import {
   findBestGrainMatch,
   computeClaimAlert,
@@ -11,17 +11,9 @@ import {
 // Fetches grain-ticket farm data and writes matched yieldPerAcre to insurance_policies.actual.
 // INS-06: Grain-ticket yield bridge with score-based matching.
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  // Auth check
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('insurance')
+  if (isGuardError(guard)) return guard
+  const { supabase } = guard
 
   // Parse request body
   let body: { policyId?: string }

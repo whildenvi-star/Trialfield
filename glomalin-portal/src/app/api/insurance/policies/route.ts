@@ -1,19 +1,10 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 
 export async function GET(request: Request) {
-  const supabase = await createClient()
-
-  // Auth check — API route is under /api, not /app, so middleware does not enforce module access.
-  // Auth check here is sufficient since only authenticated users call this endpoint.
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('insurance')
+  if (isGuardError(guard)) return guard
+  const { supabase } = guard
 
   // Parse year from query string, default to 2026
   const { searchParams } = new URL(request.url)
@@ -63,17 +54,9 @@ export async function GET(request: Request) {
 // POST /api/insurance/policies
 // Creates a new insurance policy. INS-02: Policy CRUD.
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  // Auth check
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('insurance')
+  if (isGuardError(guard)) return guard
+  const { supabase } = guard
 
   // Parse request body
   let body: Record<string, unknown>

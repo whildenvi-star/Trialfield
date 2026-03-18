@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 import { addDays, INITIAL_DEADLINE_DAYS } from '@/lib/claims/calc'
 
 // GET /api/claims
 // Returns a list of claims, optionally filtered by year.
 export async function GET(request: Request) {
-  const supabase = await createClient()
-
-  // Auth check
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('claims')
+  if (isGuardError(guard)) return guard
+  const { supabase } = guard
 
   // Parse optional year filter from query string
   const { searchParams } = new URL(request.url)
@@ -54,17 +46,9 @@ export async function GET(request: Request) {
 // Creates a new claim pre-filled from an insurance policy. CLM-07.
 // Body: { policy_id: string, date_of_loss: string, description: string }
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  // Auth check
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('claims')
+  if (isGuardError(guard)) return guard
+  const { user, supabase } = guard
 
   // Parse request body
   let body: Record<string, unknown>

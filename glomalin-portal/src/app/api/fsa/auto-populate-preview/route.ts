@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 
 // ===== Types =====
 
@@ -180,17 +180,9 @@ function buildAutoPopulateProposals(
 // ===== Route Handler =====
 
 export async function GET() {
-  const supabase = await createClient()
-
-  // Auth check
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('fsa-578')
+  if (isGuardError(guard)) return guard
+  const { supabase } = guard
 
   // Fetch farm-budget dashboard with timeout
   // CRITICAL: no caching of cross-app calls (revalidate: 0)

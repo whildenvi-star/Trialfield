@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 
 // Allowed MIME types for claim document uploads
 const ALLOWED_MIME_TYPES = new Set([
@@ -24,17 +24,9 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const supabase = await createClient()
-
-  // Auth check
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('claims')
+  if (isGuardError(guard)) return guard
+  const { supabase } = guard
 
   const { id } = await params
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 
 type BulkAction = 'mark-reported' | 'mark-unreported' | 'assign-crop'
 
@@ -10,16 +10,9 @@ interface BulkUpdateBody {
 }
 
 export async function POST(request: Request) {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
-
-  if (userError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const guard = await requireModuleAccess('fsa-578')
+  if (isGuardError(guard)) return guard
+  const { supabase } = guard
 
   let body: BulkUpdateBody
   try {
