@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 45 of 48 (v9.0 — Crop Plan Viewer)
-Plan: 1 of ? in phase 45
+Plan: 2 of ? in phase 45 (at checkpoint — awaiting human-verify)
 Status: In progress
-Last activity: 2026-03-20 — 45-01 complete: BFF crop plan API routes (field list + detail) with TTL cache
+Last activity: 2026-03-20 — 45-02 Tasks 1-2 complete: Crop Plan Viewer UI (field list + detail + offline sync utility)
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [░░░░░░░░░░] 0%
 
@@ -53,6 +53,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 45-01]: Module-level TTL cache (60s) in crop-plans/route.ts — simple, zero-dependency, scoped to list endpoint
 - [Phase 45-01]: Planned passes sourced from farm-budget machinery[] only; organic-cert enrichment deferred to Phase 46
 - [Phase 45-01]: Detail endpoint not cached — per-field requests infrequent, staleness risk higher than for list
+- [Phase 45-02]: Inline SVGs instead of lucide-react — not installed, consistent with existing install-prompt.tsx pattern
+- [Phase 45-02]: formatRelativeTime inline helper instead of date-fns — not installed, simple enough to inline
+- [Phase 45-02]: List page caches minimal shape to IndexedDB; detail page caches full shape on visit
 
 ### Pending Todos
 
@@ -67,6 +70,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 45-01-PLAN.md (Crop Plan Viewer API routes)
+Stopped at: Checkpoint 45-02-PLAN.md Task 3 — human-verify Crop Plan Viewer end-to-end on production
 Resume file: —
-Next action: `/gsd:execute-phase 45` for plan 02
+Next action: After human verification, `/gsd:execute-phase 45` to continue plan 02 (Task 3 checkpoint)
