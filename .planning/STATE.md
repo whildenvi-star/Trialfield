@@ -4,15 +4,15 @@
 
 See: .planning/PROJECT.md (updated 2026-03-20)
 
-**Core value:** Farm team members can view critical operations data and submit field observations from their phones, even with spotty connectivity, without needing a separate native app
-**Current focus:** Phase 1 — Mobile Shell
+**Core value:** Farm operations data flows accurately from planning through execution — the farm manager plans, the office team records reality, and the full picture is always available to those who need it
+**Current focus:** v2.0 Milestone — Projected vs Actual Farm Budget
 
 ## Current Position
 
-Phase: 1 of 4 (Mobile Shell)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-20 — Roadmap created, phases derived from requirements
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-20 — Milestone v2.0 started
 
 Progress: [░░░░░░░░░░] 0%
 
