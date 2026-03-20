@@ -1,16 +1,47 @@
-# Requirements: Glomalin Portal Mobile PWA
+# Requirements: Projected vs Actual Farm Budget
 
 **Defined:** 2026-03-20
-**Core Value:** Farm team members can view critical operations data and submit field observations from their phones, even with spotty connectivity
+**Core Value:** Farm operations data flows accurately from planning through execution — the farm manager plans, the office team records reality, and the full picture is always available to those who need it
 
-## v1 Requirements
+## v2.0 Requirements
 
-Requirements for initial release. Each maps to roadmap phases.
+Requirements for projected vs actual milestone. Each maps to roadmap phases.
+
+### Privacy & Auth
+
+- [ ] **PRIV-01**: Budget API strips financial fields (revenue, margin, sale prices, profit/acre) from responses for non-ADMIN roles
+- [ ] **PRIV-02**: `getAuthContext()` ADMIN fallback is removed — unauthenticated requests return error, not admin access
+- [ ] **PRIV-03**: New RBAC permissions `budget:read` (ADMIN + OFFICE) and `budget:financial` (ADMIN only) are enforced
+- [ ] **PRIV-04**: OFFICE role `sale:read` permission is removed
+
+### Actuals Entry
+
+- [ ] **ACT-01**: OFFICE user can update material input costs with actual invoice amounts
+- [ ] **ACT-02**: OFFICE user can confirm planned field operations as completed with actual dates
+- [ ] **ACT-03**: OFFICE user can enter actual harvest yield per acre
+- [ ] **ACT-04**: OFFICE user can update seed costs with actual purchase prices
+- [ ] **ACT-05**: Actuals entries are recorded immediately without approval
+
+### Budget Views
+
+- [ ] **VIEW-01**: Enterprise Budget tab shows projected and actual columns side by side
+- [ ] **VIEW-02**: Variance column shows difference between projected and actual with favorable/unfavorable color coding
+- [ ] **VIEW-03**: DataSource badges on line items indicate whether data is projected (synced) or actual (entered)
+- [ ] **VIEW-04**: Farm-wide budget summary page aggregates all enterprises for a crop year
+- [ ] **VIEW-05**: Farm-wide view mirrors Macro Rollup layout stylistically
+- [ ] **VIEW-06**: Financial columns (revenue, margin, profit) visible only to ADMIN on all views
+
+### Sync
+
+- [ ] **SYNC-01**: All enterprises (organic + conventional) sync from farm-budget service
+- [ ] **SYNC-02**: Existing organic enterprise data is preserved when sync expands to all enterprises
+
+## v1.0 Requirements (Paused — Mobile PWA)
 
 ### Mobile Dashboard
 
 - [ ] **DASH-01**: User can view a mobile-optimized dashboard with key data from accessible modules
-- [ ] **DASH-02**: User can perform one-tap quick actions on dashboard cards (e.g., mark task done)
+- [ ] **DASH-02**: User can perform one-tap quick actions on dashboard cards
 - [ ] **DASH-03**: Dashboard shows only modules the user has access to
 
 ### Mobile UX
@@ -24,41 +55,36 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **FIELD-02**: User can attach a photo to a field observation
 - [ ] **FIELD-03**: Field observations queue offline and sync when connectivity returns
 
-### Sync
+### Sync (Mobile)
 
-- [ ] **SYNC-01**: User sees a clear online/offline status indicator
-- [ ] **SYNC-02**: User sees a count of pending unsynced items
+- [ ] **MSYNC-01**: User sees a clear online/offline status indicator
+- [ ] **MSYNC-02**: User sees a count of pending unsynced items
 
-## v2 Requirements
+## v3.0 Requirements
 
-### Layout
+Deferred to future release. Tracked but not in current roadmap.
 
-- **LAYOUT-01**: Responsive layouts for individual module pages (FSA, Insurance, Claims, Macro Rollup)
+### Workflow Enhancements
 
-### Offline
+- **WF-01**: Bulk operation confirmation — one-click confirm all planned operations for an enterprise
+- **WF-02**: Inline actuals editing on Budget tab — click-to-edit cost fields without navigating to separate form
+- **WF-03**: Crop-year selector on farm-wide summary view
 
-- **OFFLINE-01**: Offline read access for dashboard and crop plan data
-- **OFFLINE-02**: Hardened sync with conflict detection and connectivity probe
+### Integration
 
-### PWA
-
-- **PWA-01**: Improved PWA install prompt (Android beforeinstallprompt + iOS manual instructions)
-- **PWA-02**: Push notifications for deadline alerts (insurance, claims)
-
-### Accessibility
-
-- **A11Y-01**: High-contrast outdoor display mode for field use
+- **INT-01**: Actuals sync back to farm-budget service
+- **INT-02**: Invoice attachment / document storage for material usages
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Native iOS/Android app | PWA approach is cheaper, reuses existing code, no app store overhead |
-| Real-time collaborative editing | Merge conflict complexity far exceeds value for 2-5 person team |
-| In-app chat / messaging | Duplicates existing communication tools team already uses |
-| Full module feature parity on mobile | Dashboard-first approach; link to desktop for deep module work |
-| GPS / location tagging | Low ROI for small team on known property; manual text input sufficient |
-| Rich analytics on mobile | Farm analytics need large tables/charts — desktop workflow |
+| Approval workflow for actuals entry | Admin trusts team; AuditLog already captures every change. Approval gate adds friction. |
+| Syncing actuals back to farm-budget service | Farm-budget is source of truth for projections; organic-cert records reality alongside, not inside it |
+| Invoice attachment / document storage | Adds file storage complexity not needed for projected vs actual comparison |
+| Real-time multi-user editing | Small team, low conflict probability, high implementation complexity |
+| Budget re-forecasting | That's the farm-budget service's job — organic-cert records actuals against the static plan |
+| Per-acre profitability map / heat map | Requires GIS rendering; tabular farm-wide summary achieves same analytical goal |
 
 ## Traceability
 
@@ -66,22 +92,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| UX-01 | Phase 1 | Pending |
-| UX-02 | Phase 1 | Pending |
-| SYNC-01 | Phase 2 | Pending |
-| SYNC-02 | Phase 2 | Pending |
-| DASH-01 | Phase 3 | Pending |
-| DASH-02 | Phase 3 | Pending |
-| DASH-03 | Phase 3 | Pending |
-| FIELD-01 | Phase 4 | Pending |
-| FIELD-02 | Phase 4 | Pending |
-| FIELD-03 | Phase 4 | Pending |
+| PRIV-01 | TBD | Pending |
+| PRIV-02 | TBD | Pending |
+| PRIV-03 | TBD | Pending |
+| PRIV-04 | TBD | Pending |
+| ACT-01 | TBD | Pending |
+| ACT-02 | TBD | Pending |
+| ACT-03 | TBD | Pending |
+| ACT-04 | TBD | Pending |
+| ACT-05 | TBD | Pending |
+| VIEW-01 | TBD | Pending |
+| VIEW-02 | TBD | Pending |
+| VIEW-03 | TBD | Pending |
+| VIEW-04 | TBD | Pending |
+| VIEW-05 | TBD | Pending |
+| VIEW-06 | TBD | Pending |
+| SYNC-01 | TBD | Pending |
+| SYNC-02 | TBD | Pending |
 
 **Coverage:**
-- v1 requirements: 10 total
-- Mapped to phases: 10
-- Unmapped: 0
+- v2.0 requirements: 17 total
+- Mapped to phases: 0
+- Unmapped: 17
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after roadmap creation*
+*Last updated: 2026-03-20 after initial definition*
