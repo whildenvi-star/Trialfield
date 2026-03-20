@@ -214,9 +214,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 45-01: Portal API route aggregating farm-budget + farm-registry data with TTL cache and graceful fallback
-- [ ] 45-02: Mobile-optimized field list with search/filter and IndexedDB cache integration
-- [ ] 45-03: Field detail page with crop info, input rates, and planned pass checklist
+- [ ] 45-01-PLAN.md — Portal API route aggregating farm-budget data with TTL cache and graceful fallback
+- [ ] 45-02-PLAN.md — Mobile-first field list + detail pages with search, offline cache, and pass checklist
 
 ### Phase 46: Field Pass Logger
 **Goal**: Operators can confirm planned passes and add unplanned passes from the field, with those confirmations writing into organic-cert's 3-year field history
@@ -309,7 +308,7 @@ Plans:
 | 42. Design Token Alignment & Palette Swap | v8.0 | 3/3 | Complete | 2026-03-07 |
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 44. PWA Infrastructure | 2/2 | Complete    | 2026-03-17 | - |
-| 45. Crop Plan Viewer | v9.0 | 0/? | Not started | - |
+| 45. Crop Plan Viewer | v9.0 | 0/2 | Not started | - |
 | 46. Field Pass Logger | v9.0 | 0/? | Not started | - |
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
