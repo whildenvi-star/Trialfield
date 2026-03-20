@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 
 ## Current Position
 
-Phase: 44 of 48 (v9.0 start — PWA Infrastructure)
-Plan: 2 of ? in phase 44
+Phase: 45 of 48 (v9.0 — Crop Plan Viewer)
+Plan: 1 of ? in phase 45
 Status: In progress
-Last activity: 2026-03-17 — 44-02 complete: IndexedDB offline data layer with typed stores and 18 passing tests
+Last activity: 2026-03-20 — 45-01 complete: BFF crop plan API routes (field list + detail) with TTL cache
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [░░░░░░░░░░] 0%
 
@@ -50,6 +50,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 44-02]: SSR guard at function-level so lib/offline/db.ts can be safely imported on server without throwing
 - [Phase 44]: Service worker disabled in dev (disable: NODE_ENV=development) to prevent dev asset caching
 - [Phase 44]: Static public/manifest.json over Next.js dynamic manifest route — simpler and fully compatible
+- [Phase 45-01]: Module-level TTL cache (60s) in crop-plans/route.ts — simple, zero-dependency, scoped to list endpoint
+- [Phase 45-01]: Planned passes sourced from farm-budget machinery[] only; organic-cert enrichment deferred to Phase 46
+- [Phase 45-01]: Detail endpoint not cached — per-field requests infrequent, staleness risk higher than for list
 
 ### Pending Todos
 
@@ -63,7 +66,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-17
-Stopped at: Completed 44-02-PLAN.md (IndexedDB offline data layer)
+Last session: 2026-03-20
+Stopped at: Completed 45-01-PLAN.md (Crop Plan Viewer API routes)
 Resume file: —
-Next action: `/gsd:execute-phase 44` for plan 03
+Next action: `/gsd:execute-phase 45` for plan 02

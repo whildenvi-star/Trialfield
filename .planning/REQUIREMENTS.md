@@ -41,7 +41,7 @@ Requirements for Mobile PWA + Field Operations Logger milestone.
 
 ### Crop Plan Viewer
 
-- [ ] **CPV-01**: Portal API route that aggregates field + enterprise + input + seed + planned pass data from farm-budget and farm-registry with 60s TTL cache and graceful fallback
+- [x] **CPV-01**: Portal API route that aggregates field + enterprise + input + seed + planned pass data from farm-budget and farm-registry with 60s TTL cache and graceful fallback
 - [ ] **CPV-02**: Mobile-optimized field list with search/filter, big tap targets, grouped by crop/enterprise
 - [ ] **CPV-03**: Field detail page showing crop, variety, population, planned inputs with rates, and planned pass checklist with pass status (planned vs confirmed)
 - [ ] **CPV-04**: Crop plan data cached in IndexedDB on each successful sync, displayed from cache when offline; stale-data indicator shows last sync time
@@ -120,7 +120,7 @@ Requirements for Mobile PWA + Field Operations Logger milestone.
 | PWA-01 | Phase 44 | Complete |
 | PWA-02 | Phase 44 | Complete |
 | PWA-03 | Phase 44 | Complete |
-| CPV-01 | Phase 45 | Pending |
+| CPV-01 | Phase 45 | Complete |
 | CPV-02 | Phase 45 | Pending |
 | CPV-03 | Phase 45 | Pending |
 | CPV-04 | Phase 45 | Pending |
