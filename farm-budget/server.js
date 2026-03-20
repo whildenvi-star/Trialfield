@@ -9,7 +9,9 @@ const compression = require('compression');
 const Calc = require('./public/calc.js');
 const fieldopsClient = require('./fieldops/client');
 const fieldopsSync = require('./fieldops/sync');
-// node-cron loaded on demand only when FieldOps sync is enabled
+const audit = require('./audit');
+const cron = require('node-cron');
+// node-cron loaded here for audit + FieldOps sync
 
 const cors = require('cors');
 
@@ -99,6 +101,29 @@ let store = {
   unitPacks: [],
   farmGeoJSON: null
 };
+
+// --- Audit state ---
+let latestAudit = null;
+const AUDIT_FILE = path.join(__dirname, 'data', 'audit-results.json');
+try {
+  if (fs.existsSync(AUDIT_FILE)) {
+    latestAudit = JSON.parse(fs.readFileSync(AUDIT_FILE, 'utf8'));
+    console.log('[Audit] Loaded persisted results from disk');
+  }
+} catch (e) { console.warn('[Audit] Could not load persisted audit:', e.message); }
+
+async function executeAudit() {
+  var start = Date.now();
+  latestAudit = audit.runAudit(store, Calc, getRefs);
+  latestAudit.durationMs = Date.now() - start;
+  console.log('[Audit] Completed: ' + latestAudit.summary.errors + ' errors, ' +
+    latestAudit.summary.warnings + ' warnings, ' + latestAudit.summary.info + ' info (' +
+    latestAudit.durationMs + 'ms)');
+  try {
+    await fsp.writeFile(AUDIT_FILE, JSON.stringify(latestAudit, null, 2));
+  } catch (e) { console.error('[Audit] Persist error:', e.message); }
+  return latestAudit;
+}
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
@@ -332,15 +357,15 @@ app.post('/api/fields/:id/split', async (req, res) => {
       acres: i === count - 1 ? Math.round((source.acres - acresEach * (count - 1)) * 100) / 100 : acresEach,
       plantedAcres: 0,
       rentPerAcre: rentPerAcre,
-      inputs: i === 0 ? JSON.parse(JSON.stringify(source.inputs || [])) : [],
-      seed: i === 0 && source.seed ? JSON.parse(JSON.stringify(source.seed)) : null,
-      seeds: i === 0 && source.seeds ? JSON.parse(JSON.stringify(source.seeds)) : [],
-      machinery: i === 0 ? JSON.parse(JSON.stringify(source.machinery || [])) : [],
+      inputs: JSON.parse(JSON.stringify(source.inputs || [])),
+      seed: source.seed ? JSON.parse(JSON.stringify(source.seed)) : null,
+      seeds: source.seeds ? JSON.parse(JSON.stringify(source.seeds)) : [],
+      machinery: JSON.parse(JSON.stringify(source.machinery || [])),
       yieldPerAcre: source.yieldPerAcre || 0,
       yieldUnit: source.yieldUnit || 'Bu',
       cropInsurancePerAcre: source.cropInsurancePerAcre || 0,
       insuranceIncomePerAcre: source.insuranceIncomePerAcre || 0,
-      auxPayments: [],
+      auxPayments: JSON.parse(JSON.stringify(source.auxPayments || [])),
       harvestMoisture: source.harvestMoisture || 0,
       buyerId: source.buyerId || '',
       registryFieldName: registryFieldName,
@@ -382,6 +407,41 @@ app.post('/api/fields/merge-split', async (req, res) => {
   store.fields.push(merged);
   await saveData();
   res.json(enrichField(merged));
+});
+
+// --- Link existing fields as a split group ---
+// For fields that share a registry parcel but weren't created via split
+app.post('/api/fields/link-split', async (req, res) => {
+  const { fieldIds, registryFieldName } = req.body;
+  if (!fieldIds || fieldIds.length < 2) {
+    return res.status(400).json({ error: 'Need at least 2 field IDs' });
+  }
+  if (!registryFieldName) {
+    return res.status(400).json({ error: 'registryFieldName is required' });
+  }
+
+  const fields = fieldIds.map(id => store.fields.find(f => f.id === id)).filter(Boolean);
+  if (fields.length < 2) {
+    return res.status(404).json({ error: 'Could not find all fields' });
+  }
+
+  // Check none are already in a different split group
+  const existing = fields.find(f => f.splitGroupId);
+  if (existing) {
+    return res.status(400).json({ error: '"' + existing.name + '" is already in a split group. Merge it first.' });
+  }
+
+  const sgId = generateId('sg');
+  fields.forEach(f => {
+    f.splitGroupId = sgId;
+    f.registryFieldName = registryFieldName;
+  });
+
+  await saveData();
+  res.json({
+    splitGroupId: sgId,
+    fields: fields.map(f => ({ id: f.id, name: f.name, acres: f.acres, crop: f.crop }))
+  });
 });
 
 // --- Generic CRUD factory ---
@@ -498,7 +558,7 @@ app.post('/api/fields/sync-registry', async (req, res) => {
       }
     });
 
-    // Validate split groups against registry totals
+    // Build split groups for rent allocation and validation
     const splitGroups = {};
     store.fields.forEach(f => {
       if (!f.splitGroupId) return;
@@ -510,6 +570,26 @@ app.post('/api/fields/sync-registry', async (req, res) => {
       const regMatch = regLookup[(group.registryFieldName || '').toLowerCase()];
       if (!regMatch) return;
       const allocatedAcres = group.fields.reduce((sum, f) => sum + (f.acres || 0), 0);
+
+      // Allocate full registry rent proportionally across sub-fields.
+      // Uses effective rent acres (DBL CROP fields count at 0.5× since calc.js applies
+      // cropTypeMultiplier to rentPerAcre). This ensures the total rent across all
+      // sub-fields sums to the registry check amount.
+      var totalEffectiveAcres = group.fields.reduce(function (sum, f) {
+        var mult = (f.cropType || '').toUpperCase().indexOf('DBL') >= 0 ? 0.5 : 1.0;
+        return sum + (f.acres || 0) * mult;
+      }, 0);
+      if (regMatch.totalRentDollars > 0 && totalEffectiveAcres > 0) {
+        var rate = Math.round((regMatch.totalRentDollars / totalEffectiveAcres) * 100) / 100;
+        group.fields.forEach(f => {
+          if (Math.abs((f.rentPerAcre || 0) - rate) > 0.001) {
+            f.rentPerAcre = rate;
+            changed = true;
+          }
+        });
+      }
+
+      // Warn if allocated acres don't match registry
       const delta = Math.round((allocatedAcres - regMatch.reportingAcres) * 100) / 100;
       if (Math.abs(delta) > 0.01) {
         results.splitWarnings.push({
@@ -1447,6 +1527,53 @@ app.get('/api/futures', async (req, res) => {
   }
 });
 
+// --- Budget Audit API ---
+app.get('/api/audit', (req, res) => {
+  if (!latestAudit) return res.json({ message: 'No audit has run yet', alerts: [], summary: null });
+  var result = latestAudit;
+  // Filter support
+  var alerts = result.alerts.filter(function (a) { return !a.resolved; });
+  if (req.query.severity) alerts = alerts.filter(function (a) { return a.severity === req.query.severity; });
+  if (req.query.category) alerts = alerts.filter(function (a) { return a.category === req.query.category; });
+  if (req.query.fieldId) alerts = alerts.filter(function (a) { return a.fieldId === req.query.fieldId; });
+  // Summary-only mode for badge polling
+  if (req.query.summary === 'true') {
+    var unresolved = result.alerts.filter(function (a) { return !a.resolved; });
+    var s = { errors: 0, warnings: 0, info: 0 };
+    unresolved.forEach(function (a) {
+      if (a.severity === 'error') s.errors++;
+      else if (a.severity === 'warning') s.warnings++;
+      else s.info++;
+    });
+    return res.json({ runAt: result.runAt, summary: s });
+  }
+  res.json({ runAt: result.runAt, durationMs: result.durationMs, fieldsAudited: result.fieldsAudited, alerts: alerts, summary: result.summary });
+});
+
+app.post('/api/audit/run', async (req, res) => {
+  try {
+    var result = await executeAudit();
+    res.json(result);
+  } catch (err) {
+    console.error('[Audit] Manual run error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/audit/resolve', async (req, res) => {
+  if (!latestAudit) return res.status(404).json({ error: 'No audit results' });
+  var alertId = req.body.alertId;
+  if (!alertId) return res.status(400).json({ error: 'alertId required' });
+  var found = false;
+  latestAudit.alerts.forEach(function (a) {
+    if (a.id === alertId) { a.resolved = true; found = true; }
+  });
+  if (!found) return res.status(404).json({ error: 'Alert not found' });
+  // Re-persist
+  try { await fsp.writeFile(AUDIT_FILE, JSON.stringify(latestAudit, null, 2)); } catch (e) { /* ignore */ }
+  res.json({ ok: true });
+});
+
 // --- Glomalin Terminal Chat (Claude API) ---
 app.post('/api/chat', async (req, res) => {
   var apiKey = process.env.ANTHROPIC_API_KEY;
@@ -1631,11 +1758,33 @@ app.post('/api/chat', async (req, res) => {
     }
   });
 
+  // --- AUDIT ALERTS ---
+  try {
+    if (latestAudit && latestAudit.alerts) {
+      var unresolvedAlerts = latestAudit.alerts.filter(function (a) { return !a.resolved; });
+      if (unresolvedAlerts.length > 0) {
+        var auditErrors = unresolvedAlerts.filter(function (a) { return a.severity === 'error'; });
+        var auditWarnings = unresolvedAlerts.filter(function (a) { return a.severity === 'warning'; });
+        var alertLines = ['AUDIT ALERTS (' + unresolvedAlerts.length + ' unresolved, last run ' + latestAudit.runAt + '):'];
+        auditErrors.forEach(function (a) {
+          alertLines.push('[ERROR] ' + a.message);
+        });
+        auditWarnings.slice(0, 10).forEach(function (a) {
+          alertLines.push('[WARN] ' + a.message);
+        });
+        if (auditWarnings.length > 10) alertLines.push('... and ' + (auditWarnings.length - 10) + ' more warnings');
+        contextParts.push(alertLines.join('\n'));
+      }
+    }
+  } catch (e) { /* skip */ }
+
   var systemPrompt = 'You are Glomalin, the terminal AI for a farming operation\'s macro rollup dashboard. ' +
     'You have access to live data from the entire Glomalin network — farm budget, grain tickets, ' +
     'farm registry, FSA acres, and CBOT futures. Answer questions concisely in a terminal style — ' +
     'short, data-driven responses. Use numbers and units. No markdown headers or bullet lists — plain text, ' +
-    'line breaks for structure. Keep responses under 200 words unless the user asks for detail.\n\n' +
+    'line breaks for structure. Keep responses under 200 words unless the user asks for detail. ' +
+    'If there are AUDIT ALERTS in the data, proactively mention them when relevant. When a user asks about ' +
+    'a field with audit issues, cite the specific alerts. Recommend the user investigate flagged items.\n\n' +
     'LIVE DATA:\n' + contextParts.join('\n\n');
 
   // Build messages array
@@ -2206,7 +2355,6 @@ app.listen(PORT, '0.0.0.0', () => {
     }, 30000);
 
     // Schedule recurring sync
-    var cron = require('node-cron');
     cron.schedule('*/' + intervalMin + ' * * * *', function () {
       fieldopsSync.runSync(store, generateId, saveData)
         .then(function (r) { console.log('[FieldOps] Scheduled sync:', r.status); })
@@ -2215,4 +2363,16 @@ app.listen(PORT, '0.0.0.0', () => {
   } else {
     console.log('[FieldOps] Sync disabled (set FIELDOPS_SYNC_ENABLED=true in .env to enable)');
   }
+
+  // --- Scheduled Budget Audit ---
+  var auditSchedule = process.env.AUDIT_CRON || '0 6 * * *';
+  cron.schedule(auditSchedule, function () {
+    executeAudit().catch(function (e) { console.error('[Audit] Cron error:', e.message); });
+  });
+  console.log('[Audit] Scheduled: ' + auditSchedule);
+
+  // Run initial audit 10 seconds after startup
+  setTimeout(function () {
+    executeAudit().catch(function (e) { console.error('[Audit] Initial run error:', e.message); });
+  }, 10000);
 });
