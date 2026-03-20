@@ -1,8 +1,40 @@
 # Architecture Research
 
-**Domain:** Mobile PWA enhancements for Next.js 14 App Router farm operations portal
+**Domain:** Projected vs Actual Farm Budget — Integration with Existing Organic-Cert App
 **Researched:** 2026-03-20
-**Confidence:** HIGH (based on existing codebase analysis + verified Serwist/Next.js docs)
+**Confidence:** HIGH — based on direct reading of the existing codebase (schema, rbac, auth, budget route, detail page)
+
+---
+
+## Context: What Already Exists
+
+This is a subsequent milestone on an existing Next.js 16 app (`organic-cert`). The
+architecture below focuses entirely on how the actuals data layer and role-filtered views
+**integrate with existing models**. Nothing here rebuilds what already works.
+
+### Current Projected Data Layer
+
+```
+FieldEnterprise (source of truth for admin's crop plan)
+├── targetYieldPerAcre / targetPricePerUnit  — projected revenue inputs
+├── SeedUsage[]       — projected seed (rate, variety, acres, purchasePrice via SeedLot)
+├── MaterialUsage[]   — projected inputs (rate, unitCost, totalCost)
+├── FieldOperation[]  — projected field passes (passStatus: PLANNED or CONFIRMED)
+└── /api/field-enterprises/[id]/budget-summary  — computes cost totals on-the-fly
+```
+
+The budget-summary route is purely computed — no stored aggregate. It reads the projected
+relations, calculates totals, and returns `revenueProjection` (yield × price × acres
+− costs). This is where role filtering must be applied.
+
+### Current RBAC State
+
+`src/lib/rbac.ts` has a flat permission matrix. ADMIN and OFFICE currently have identical
+permissions. There is no budget-specific permission. The route-level guard uses
+`getAuthContext()` from `src/lib/auth.ts`, which has an important fallback: when no
+session cookie is present (e.g., the cert tracker running inside an iframe), it returns
+the first active ADMIN user from the DB. This fallback must be accounted for when writing
+budget route guards — do not assume no session means unauthenticated.
 
 ---
 
@@ -11,398 +43,582 @@
 ### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        BROWSER / PWA SHELL                          │
-├───────────────────────────────┬─────────────────────────────────────┤
-│   Mobile Layout Layer         │   Desktop Layout Layer              │
-│   (Tailwind responsive)       │   (existing layout unchanged)       │
-│  ┌───────────────────────┐    │  ┌──────────────────────────────┐   │
-│  │  MobileNav (bottom)   │    │  │  BannerSection (existing)    │   │
-│  │  QuickDashboard       │    │  │  Module pages (existing)     │   │
-│  │  TouchForm components │    │  │  EmbedFrame (existing)       │   │
-│  └───────────────────────┘    │  └──────────────────────────────┘   │
-├───────────────────────────────┴─────────────────────────────────────┤
-│                        SERVICE WORKER (Serwist)                     │
-│  ┌──────────────┐  ┌─────────────────┐  ┌────────────────────────┐  │
-│  │ Precache     │  │ Runtime Cache   │  │ Offline Queue Drain    │  │
-│  │ (app shell)  │  │ (API responses) │  │ (on navigator.online)  │  │
-│  └──────────────┘  └─────────────────┘  └────────────────────────┘  │
-├─────────────────────────────────────────────────────────────────────┤
-│                     OFFLINE LAYER (IndexedDB)                       │
-│  ┌──────────────────────┐   ┌──────────────────────────────────┐    │
-│  │  operation-queue     │   │  crop-plan-cache + new stores    │    │
-│  │  (existing)          │   │  (dashboard-cache, field-notes)  │    │
-│  └──────────────────────┘   └──────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────────────┤
-│                    NEXT.JS APP ROUTER (server)                      │
-│  ┌──────────────┐  ┌───────────────┐  ┌───────────────────────┐     │
-│  │  Page Layer  │  │  API Layer    │  │  Auth / Middleware     │     │
-│  │  (protected) │  │  /api/mobile/ │  │  (unchanged)          │     │
-│  └──────────────┘  └───────────────┘  └───────────────────────┘     │
-├─────────────────────────────────────────────────────────────────────┤
-│                    SUPABASE (source of truth)                       │
-│  ┌──────────────┐  ┌───────────────┐  ┌───────────────────────┐     │
-│  │  Auth        │  │  DB + RLS     │  │  Realtime (optional)  │     │
-│  └──────────────┘  └───────────────┘  └───────────────────────┘     │
+┌──────────────────────────────────────────────────────────────────────┐
+│                        UI Layer (Client Components)                   │
+├──────────────────────┬──────────────────────┬────────────────────────┤
+│  Budget Tab          │  Budget Tab          │  Budget Tab            │
+│  (OFFICE view)       │  (ADMIN view)        │  (CREW/AUDITOR)        │
+│  Agronomic data only │  Full projected vs   │  No budget tab shown   │
+│  Actuals entry forms │  actual comparison   │                        │
+└──────────┬───────────┴──────────┬───────────┴────────────────────────┘
+           │                      │
+┌──────────▼──────────────────────▼───────────────────────────────────┐
+│                          API Routes Layer                             │
+│  /api/field-enterprises/[id]/budget-summary   MODIFY: role filter   │
+│  /api/field-enterprises/[id]/actuals          NEW: OFFICE+ write    │
+│  /api/field-enterprises/[id]/actuals/[id]     NEW: PUT/DELETE       │
+│  /api/field-enterprises/[id]/actuals-summary  NEW: ADMIN read only  │
+└──────────────────────────────────┬──────────────────────────────────┘
+                                   │
+┌──────────────────────────────────▼──────────────────────────────────┐
+│                       Data Layer (Prisma / PostgreSQL)               │
+│                                                                      │
+│  ── EXISTING (read-only from OFFICE perspective) ──────────────────  │
+│  FieldEnterprise → SeedUsage, MaterialUsage, FieldOperation          │
+│  HarvestEvent (organic traceability — unchanged)                     │
+│                                                                      │
+│  ── NEW (actuals layer) ────────────────────────────────────────── │
+│  ActualSeedUsage       linked to FieldEnterprise                     │
+│  ActualMaterialUsage   linked to FieldEnterprise + Material?         │
+│  ActualFieldOperation  linked to FieldEnterprise                     │
+│  ActualYield           linked to FieldEnterprise                     │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### Component Boundaries
+---
 
-| Component | Responsibility | Communicates With |
-|-----------|----------------|-------------------|
-| `MobileNav` | Bottom navigation bar for mobile, hides on desktop | Layout layer only; reads module list from `modules.ts` |
-| `QuickDashboard` | Condensed module-tile view for small screens | Supabase (module_access), `modules.ts` |
-| `TouchFormWrapper` | Touch-friendly form shell (larger hit targets, stacked layout) | Wraps existing form components; no new data dependencies |
-| `OfflineBanner` | Shows connectivity status and pending-sync count | IndexedDB operation-queue (read-only count) |
-| `EmbedFrame` (enhanced) | Renders iframe for embedded modules; adds mobile fallback UI | modules.ts embedKey; Caddy proxy; navigator.onLine |
-| `MobileInstallPrompt` | PWA install banner (beforeinstallprompt capture) | Browser install API only |
-| Service Worker (`sw.ts`) | Precache app shell; runtime-cache API responses; listen for sync events | Serwist runtime; IndexedDB queue; /api/* endpoints |
-| Offline sync (`crop-plan-sync.ts` + new peers) | Drain IndexedDB queue → POST to /api/mobile/* on reconnect | IndexedDB, /api/mobile/* |
-| `src/lib/offline/db.ts` | IndexedDB singleton; schema for all offline stores | Called by sync modules and client components |
-| `/api/mobile/*` routes | Accept queued writes from field; no module guard | Supabase server client; guard.ts (optional for some endpoints) |
+## Component Responsibilities
+
+| Component | Responsibility | Implementation |
+|-----------|----------------|----------------|
+| `ActualFieldOperation` | Records an actual field pass (date, cost, applicator) | New Prisma model, FK to `FieldEnterprise` |
+| `ActualMaterialUsage` | Records an as-applied invoice line (product, rate, actual cost) | New Prisma model, optional FK to `Material` for catalog linkage |
+| `ActualSeedUsage` | Records actual seed purchased and applied (variety, actual price) | New Prisma model, optional FK to `SeedLot` for catalog linkage |
+| `ActualYield` | Records actual harvest yield; contains admin-only sale price fields | New Prisma model, agronomic fields visible to OFFICE, financial fields ADMIN-only |
+| `actuals/route.ts` | OFFICE and ADMIN reads + writes for all actual record types | New route; dispatches by `type` body param or sub-routes per type |
+| `actuals-summary/route.ts` | ADMIN-only computed comparison of projected vs actual totals | New route; ADMIN guard; calls `actuals-summary.ts` compute function |
+| `budget-summary/route.ts` | Modified to strip financial fields for non-ADMIN callers | Existing route; add `getAuthContext()` + role check |
+| `src/lib/actuals-summary.ts` | Compute actual cost totals from the 4 Actual* models | New lib file; mirrors reduce-and-sum pattern from budget-summary route |
+| `BudgetTab.tsx` (extracted) | Renders projected-only (OFFICE) or dual comparison (ADMIN) | Extracted from `[id]/page.tsx`; receives `role` prop |
+| `ActualsEntryForm.tsx` | Inline form for OFFICE to record invoices, yields | New component; used inside `BudgetTab` |
 
 ---
 
 ## Recommended Project Structure
 
-Only new/changed paths are shown. Existing paths stay where they are.
+Only new and modified paths. Existing paths stay where they are.
 
 ```
 src/
-├── app/
-│   └── (protected)/
-│       ├── layout.tsx              # ADD: mobile nav slot + responsive shell
-│       ├── dashboard/
-│       │   └── page.tsx            # MODIFY: responsive grid (existing tiles)
-│       └── app/
-│           └── [module]/
-│               └── page.tsx        # MODIFY: mobile embed fallback UI
-│
-├── components/
-│   ├── layout/
-│   │   ├── MobileNav.tsx           # NEW: bottom nav for mobile
-│   │   └── MobileShell.tsx         # NEW: viewport wrapper (safe-area insets)
-│   ├── dashboard/
-│   │   └── QuickDashboard.tsx      # NEW: condensed mobile tile grid
-│   ├── pwa/
-│   │   ├── InstallPrompt.tsx       # MODIFY: improve UX (existing file)
-│   │   ├── OfflineBanner.tsx       # MODIFY: add pending-sync count (existing)
-│   │   └── MobileInstallGuide.tsx  # NEW: add-to-home-screen instructions
-│   ├── embed/
-│   │   └── EmbedFallback.tsx       # NEW: mobile message for iframe modules
-│   └── forms/
-│       └── TouchField.tsx          # NEW: touch-optimized input wrapper
-│
 ├── lib/
-│   └── offline/
-│       ├── db.ts                   # MODIFY: add field-notes + dashboard-cache stores
-│       ├── types.ts                # MODIFY: add FieldNote, DashboardSnapshot types
-│       ├── crop-plan-sync.ts       # EXISTS: already drains crop-plan queue
-│       ├── field-notes-sync.ts     # NEW: drain field-notes queue → /api/mobile/notes
-│       └── sync-manager.ts         # NEW: orchestrate all sync modules on reconnect
+│   ├── actuals-summary.ts          NEW: compute actual totals (same pattern as budget-summary)
+│   └── rbac.ts                     MODIFY: add budget:read, budget:financial permissions
 │
-└── sw.ts                           # MODIFY: add runtime caching rules + sync listener
+├── app/
+│   └── api/
+│       └── field-enterprises/
+│           └── [id]/
+│               ├── budget-summary/
+│               │   └── route.ts    MODIFY: apply role filter on revenueProjection
+│               ├── actuals/
+│               │   ├── route.ts    NEW: GET list, POST new actual (all 4 types)
+│               │   └── [recordId]/
+│               │       └── route.ts NEW: PUT/DELETE individual actual record
+│               └── actuals-summary/
+│                   └── route.ts    NEW: ADMIN-only projected vs actual comparison
+│
+└── components/
+    └── field-enterprise/
+        ├── BudgetTab.tsx           NEW (extracted): receives role + both budget + actuals data
+        └── ActualsEntryForm.tsx    NEW: inline entry form for OFFICE role
 ```
 
 ### Structure Rationale
 
-- **`components/layout/`**: Mobile nav lives here beside existing `BannerSection`; both are layout concerns and the protected layout.tsx decides which to render.
-- **`components/embed/`**: Separating the mobile embed fallback from `embed-frame.tsx` avoids inflating the existing component with device-detection logic.
-- **`lib/offline/sync-manager.ts`**: A single entry point for all sync operations prevents the service worker from having to know about individual sync modules. The SW fires one event; sync-manager dispatches to all queues.
-- **Mobile routes are not created** — responsive design handles layout differences. Separate `/mobile/*` routes would duplicate business logic, split middleware concerns, and require maintaining two route trees. The existing module structure is clean; Tailwind breakpoints are the right seam.
+- **`actuals-summary` as a separate route:** The projected budget-summary route already
+  has a clear shape. The comparison view needs both projected totals AND actual totals
+  merged into a single response. Keeping them as separate fetch calls that the `BudgetTab`
+  component merges client-side is cleaner than complicating the budget-summary route.
+
+- **Extracting `BudgetTab.tsx`:** The detail page (`[id]/page.tsx`) already exceeds the
+  token read limit at 25k+ tokens. It cannot be safely extended in its current form.
+  Extracting the Budget tab is a structural prerequisite, not optional cleanup.
+
+- **`actuals/route.ts` dispatching all 4 types:** Rather than four separate sub-routes
+  (`/actuals/seed`, `/actuals/material`, etc.), a single route with a `type` field in the
+  POST body keeps the API surface small. The route's internal switch handles which model
+  to write. This matches the existing pattern used by `operations/route.ts`.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Responsive-First, Not Mobile-Separate Routes
+### Pattern 1: Actuals as a Parallel Layer, Not Modifications to Projected
 
-**What:** Use Tailwind CSS breakpoints (`sm:`, `md:`, `lg:`) to render the correct UI in a single route, with conditional component rendering for structurally different mobile elements (e.g., bottom nav vs. top banner).
+**What:** Four new Prisma models (`ActualSeedUsage`, `ActualMaterialUsage`,
+`ActualFieldOperation`, `ActualYield`) sit alongside the existing projected models. Each
+has a `fieldEnterpriseId` FK. Actuals entry never touches `SeedUsage`, `MaterialUsage`,
+or `FieldOperation`.
 
-**When to use:** Always — for dashboard, module pages, forms, login. The only exception is the embed router (`[module]/page.tsx`), which renders an iframe full-screen; mobile gets a fallback message component instead.
+**When to use:** Always — for every actual record type. The farm manager's projected plan
+must be immutable from OFFICE's perspective.
 
-**Trade-offs:** Pro — single source of truth per route, no logic duplication, auth/access control is unchanged. Con — some pages need non-trivial layout refactoring. Worth it: maintaining two parallel route trees is a maintenance trap.
+**Trade-offs:** More models, but clean separation. The projected records cannot be
+corrupted by actuals entry. The budget sync re-run from farm-budget will not overwrite
+actual invoice data. Audits remain clean.
 
-**Example:**
-```typescript
-// src/app/(protected)/layout.tsx
-// Render bottom nav on mobile, existing banner on desktop
-export default function ProtectedLayout({ children }) {
-  return (
-    <div className="min-h-screen">
-      <BannerSection className="hidden md:flex" />     {/* desktop */}
-      <main className="pb-16 md:pb-0">{children}</main>
-      <MobileNav className="flex md:hidden" />          {/* mobile */}
-    </div>
-  )
+**Prisma additions (condensed to key fields):**
+
+```prisma
+model ActualFieldOperation {
+  id                String          @id @default(cuid())
+  fieldEnterpriseId String
+  fieldEnterprise   FieldEnterprise @relation(fields: [fieldEnterpriseId], references: [id])
+  type              FieldOpType
+  operationDate     DateTime
+  description       String?
+  acresWorked       Float?
+  actualCostPerAcre Float?
+  actualTotalCost   Float?
+  invoiceNumber     String?
+  vendorName        String?
+  enteredById       String?
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([fieldEnterpriseId, operationDate])
+}
+
+model ActualMaterialUsage {
+  id                String          @id @default(cuid())
+  fieldEnterpriseId String
+  fieldEnterprise   FieldEnterprise @relation(fields: [fieldEnterpriseId], references: [id])
+  materialId        String?         // optional — link to Material catalog if known
+  material          Material?       @relation(fields: [materialId], references: [id])
+  productName       String          // free-text — invoice line may not match catalog name
+  applicationDate   DateTime
+  rate              Float?
+  rateUnit          String?
+  acres             Float?
+  actualUnitCost    Float?
+  actualTotalCost   Float?
+  invoiceNumber     String?
+  vendorName        String?
+  enteredById       String?
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([fieldEnterpriseId, applicationDate])
+}
+
+model ActualSeedUsage {
+  id                String          @id @default(cuid())
+  fieldEnterpriseId String
+  fieldEnterprise   FieldEnterprise @relation(fields: [fieldEnterpriseId], references: [id])
+  seedLotId         String?         // optional — link to SeedLot catalog if known
+  seedLot           SeedLot?        @relation(fields: [seedLotId], references: [id])
+  variety           String
+  plantingDate      DateTime?
+  rate              Float?
+  rateUnit          String?
+  acres             Float?
+  actualPricePerUnit Float?
+  actualTotalCost   Float?
+  invoiceNumber     String?
+  vendorName        String?
+  enteredById       String?
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}
+
+model ActualYield {
+  id                  String          @id @default(cuid())
+  fieldEnterpriseId   String
+  fieldEnterprise     FieldEnterprise @relation(fields: [fieldEnterpriseId], references: [id])
+  harvestDate         DateTime?
+  yieldPerAcre        Float?
+  yieldUnit           String?         // "Bu", "lbs"
+  acres               Float?
+  // ADMIN-only fields — stripped by API for non-ADMIN callers:
+  actualSalePrice     Float?
+  actualSalePriceUnit String?
+  actualGrossRevenue  Float?
+  enteredById         String?
+  notes               String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 }
 ```
 
-### Pattern 2: Foreground Queue + Online-Event Drain (not Background Sync API)
-
-**What:** When a user submits field data offline, write immediately to IndexedDB operation-queue with status `pending`. On `navigator.online` event (foreground) or service worker `sync` event (background), call `sync-manager.ts` which drains all pending queues by POSTing to `/api/mobile/*`.
-
-**When to use:** All field data writes — field notes, crop plan edits, equipment logs. The Background Sync API (`SyncManager`) is used as an enhancement layer over the existing foreground queue, not a replacement.
-
-**Trade-offs:** Foreground queue is reliable and debuggable; Background Sync API provides retry-after-close on supporting browsers. Using both gives maximum coverage. The existing `crop-plan-sync.ts` already implements the foreground half — extend it rather than replace.
-
-**Example:**
-```typescript
-// src/lib/offline/sync-manager.ts
-export async function drainAllQueues() {
-  await drainCropPlanQueue()    // existing
-  await drainFieldNotesQueue()  // new
-  // additional queues added here as features grow
-}
-
-// Called from both:
-// 1. navigator.online event listener (client component)
-// 2. service worker 'sync' event handler (sw.ts)
+Also add the back-relations on `FieldEnterprise`:
+```prisma
+// In FieldEnterprise model, add:
+actualSeedUsages       ActualSeedUsage[]
+actualMaterialUsages   ActualMaterialUsage[]
+actualFieldOperations  ActualFieldOperation[]
+actualYields           ActualYield[]
 ```
 
-### Pattern 3: Serwist Runtime Caching — Network-First for API, CacheFirst for Static
+### Pattern 2: Role Filter Applied at the API Route, Not in the Client
 
-**What:** The service worker uses two distinct caching strategies: `NetworkFirst` for `/api/mobile/*` (freshness critical, fall back to cache offline), `CacheFirst` for static assets and fonts (stability critical, never stale).
+**What:** Every budget-related API route calls `getAuthContext()` and returns different
+JSON shapes depending on the caller's role. Financial fields never reach the wire for
+non-ADMIN callers.
 
-**When to use:** The existing `sw.ts` already uses Serwist. Add `runtimeCaching` entries — do not rewrite the SW from scratch.
+**When to use:** Always. Client-side hiding is cosmetic only — browser DevTools exposes
+any data the client receives. The API route is the only trustworthy enforcement point.
 
-**Trade-offs:** `NetworkFirst` adds latency when online (network round-trip before cache). For a farm ops portal on rural connectivity, the offline fallback value outweighs the latency cost. Stale-While-Revalidate is a second option for non-critical API responses (e.g., field lists that change infrequently).
+**RBAC changes to `src/lib/rbac.ts`:**
 
-**Example:**
 ```typescript
-// src/sw.ts — runtime caching additions
-defaultHandler: new NetworkFirst({
-  cacheName: 'mobile-api-cache',
-  matchOptions: { ignoreSearch: false },
-  plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 86400 })]
-}),
-runtimeCaching: [
-  {
-    matcher: /^\/api\/mobile\//,
-    handler: new NetworkFirst({ cacheName: 'mobile-api' }),
-  },
-  {
-    matcher: /\.(png|jpg|svg|woff2)$/,
-    handler: new CacheFirst({ cacheName: 'static-assets' }),
+// Add two new permissions:
+// budget:read — can see cost totals, material rates, field operations, yield quantities
+// budget:financial — can see rental rates, sale price, gross margin, profit/acre
+
+// ADMIN permissions — add:
+"budget:read", "budget:financial"
+
+// OFFICE permissions — add:
+"budget:read"
+// Note: budget:financial intentionally absent
+
+// CREW, AUDITOR — no budget permissions added
+```
+
+**Modified `budget-summary/route.ts` guard pattern:**
+
+```typescript
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const ctx = await getAuthContext();
+  // getAuthContext() returns ADMIN fallback when no session — that's fine
+  // CREW and AUDITOR have no budget:read — return 403
+  if (!ctx || !hasPermission(ctx.role as Role, "budget:read")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-]
+  const isAdmin = hasPermission(ctx.role as Role, "budget:financial");
+
+  // ... existing computation ...
+
+  return NextResponse.json({
+    seedCosts,
+    materialCosts,
+    operationCosts,
+    totalSeedCost,
+    totalMaterialCost,
+    totalOperationCost,
+    totalCostOfProduction,
+    costPerAcre,
+    // Only returned to callers with budget:financial permission
+    revenueProjection: isAdmin ? revenueProjection : null,
+    acres,
+  });
+}
 ```
 
-### Pattern 4: Iframe Modules — Graceful Mobile Degradation
+**New `actuals/route.ts` guard:**
 
-**What:** Embedded modules (grain-tickets, farm-budget, etc.) use iframes proxied via Caddy at `/embed/*`. On mobile, iframes are problematic: Safari resizes them to content height regardless of CSS, touch events may not propagate correctly, and offline mode cannot cache cross-origin iframe content. The correct pattern is: detect mobile viewport in `EmbedFrame.tsx`, render a fallback message component instead of the iframe, and provide a button to open the embedded app in a new browser tab.
-
-**When to use:** Any module where `module.type === 'embed'` and the viewport is mobile (`window.innerWidth < 768` or a CSS-based media query check via a hook).
-
-**Trade-offs:** Mobile users cannot use embedded modules inline. This is the correct trade-off: a broken iframe experience (double scrollbars, unresponsive touch, iframe dancing) is worse than a clear "open in browser" call to action. Native modules are fully accessible on mobile. Embedded module mobile support is out of scope for this milestone per PROJECT.md.
-
-**Example:**
 ```typescript
-// src/components/embed/EmbedFallback.tsx
-export function EmbedFallback({ module }: { module: Module }) {
-  return (
-    <div className="flex flex-col items-center gap-4 p-6 text-center">
-      <p>This module is best used on desktop.</p>
-      <a href={module.embedUrl} target="_blank" rel="noopener noreferrer"
-         className="btn-primary">
-        Open {module.label} in browser
-      </a>
-    </div>
-  )
+// POST — OFFICE and ADMIN can write
+const ctx = await getAuthContext();
+if (!ctx || !hasPermission(ctx.role as Role, "budget:read")) {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
+```
+
+**New `actuals-summary/route.ts` guard (ADMIN only):**
+
+```typescript
+const ctx = await getAuthContext();
+if (!ctx || !hasPermission(ctx.role as Role, "budget:financial")) {
+  return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+}
+```
+
+**`ActualYield` financial field stripping in `actuals/route.ts` GET:**
+
+```typescript
+// When returning ActualYield records to OFFICE callers:
+const sanitized = actualYields.map(y => {
+  const { actualSalePrice, actualSalePriceUnit, actualGrossRevenue, ...safe } = y;
+  return isAdmin ? y : safe;
+});
+```
+
+### Pattern 3: Dual-View in Existing Budget Tab via Role Prop
+
+**What:** Extract the Budget tab JSX from `[id]/page.tsx` into a `BudgetTab.tsx` component.
+Pass `role` as a prop. Inside `BudgetTab`, conditionally fetch and render:
+- OFFICE: budget-summary (no financial fields) + actuals list + entry forms
+- ADMIN: budget-summary + actuals-summary (comparison) + actuals list + entry forms
+
+**When to use:** The detail page is already over the safe file size. Extraction is a
+pre-condition, not optional. Do it first before adding any dual-view logic.
+
+**Trade-offs:** Adds a component file. Eliminates risk of corrupting the large detail
+page while adding dual-view logic. Role prop instead of reading from a global store keeps
+the component testable in isolation.
+
+**Proposed Budget tab layout (ADMIN comparison view):**
+
+```
+Budget Tab
+├── Summary cards row
+│   ├── Projected Cost/acre  |  Actual Cost/acre   |  Variance
+│   ├── Projected Yield      |  Actual Yield        |  (agronomic, not financial)
+│   └── Projected Margin     |  Actual Margin       |  (ADMIN only)
+│
+├── Seed section
+│   ├── Projected row (variety, rate, price/unit, total)
+│   └── Actual row (variety, actual price, invoice #, total)
+│
+├── Materials section
+│   ├── Projected row (product, rate, unit cost, total)
+│   └── Actual row (product, actual cost, invoice, vendor)
+│
+├── Field Operations section
+│   ├── Projected row (type, date, cost/acre, total)
+│   └── Actual row (type, date, actual cost, vendor)
+│
+└── Actual Yield section
+    ├── Actual yield/acre, acres (visible to OFFICE)
+    └── Actual sale price, gross revenue (ADMIN only)
+```
+
+**OFFICE view (same tab, filtered data):**
+
+```
+Budget Tab
+├── Agronomic summary only (no prices, no margin)
+│
+├── Actual Seed — "Record Actual" inline form
+│   (variety, planting date, rate, acres, actual price, invoice #, vendor)
+│
+├── Actual Materials — "Record Invoice" inline form
+│   (product name, date, rate, acres, actual cost, invoice #, vendor)
+│
+├── Actual Field Operations — "Record Pass" inline form
+│   (type, date, acres, actual cost, vendor)
+│
+└── Actual Yield — "Record Yield" inline form
+    (harvest date, yield/acre, acres — NO sale price field)
 ```
 
 ---
 
 ## Data Flow
 
-### Request Flow — Online
+### Actuals Entry Flow (OFFICE)
 
 ```
-User action (mobile browser)
+Sandy opens enterprise detail page (role=OFFICE)
     ↓
-React component (client)
+BudgetTab renders with role="OFFICE"
     ↓
-fetch() → /api/mobile/* or /api/{module}/*
+Parallel fetch:
+  GET /api/field-enterprises/[id]/budget-summary
+    → returns costs/rates, revenueProjection: null
+  GET /api/field-enterprises/[id]/actuals
+    → returns existing actual records (sale price stripped from ActualYield)
     ↓
-Middleware (auth check) → Route handler (guard check)
+Sandy clicks "Record Invoice" in Materials section
     ↓
-Supabase DB query
+ActualsEntryForm opens inline
     ↓
-NextResponse.json → Component state update → Re-render
+POST /api/field-enterprises/[id]/actuals
+  body: { type: "MATERIAL", productName, applicationDate, ... }
+    ↓
+Route checks: OFFICE has budget:read → allowed
+    ↓
+Creates ActualMaterialUsage in DB
+    ↓
+Returns new record → BudgetTab refreshes actuals list
 ```
 
-### Request Flow — Offline Write
+### Projected vs Actual Comparison Flow (ADMIN)
 
 ```
-User submits field note (no connectivity)
+Admin opens enterprise detail page (role=ADMIN)
     ↓
-Client detects navigator.onLine === false
+BudgetTab renders with role="ADMIN"
     ↓
-Write to IndexedDB operation-queue (status: 'pending')
+Parallel fetch:
+  GET /api/field-enterprises/[id]/budget-summary
+    → full response including revenueProjection
+  GET /api/field-enterprises/[id]/actuals-summary
+    → actualTotalSeedCost, actualTotalMaterialCost, actualTotalOperationCost,
+      actualYield, actualGrossRevenue, variance fields vs projected
     ↓
-Optimistic UI update (show "saved locally")
+BudgetTab merges the two responses
     ↓
-OfflineBanner shows pending count
-    ↓
-[connectivity restored]
-    ↓
-navigator 'online' event OR service worker 'sync' event
-    ↓
-sync-manager.ts → drainAllQueues()
-    ↓
-POST to /api/mobile/notes (or appropriate endpoint)
-    ↓
-200 OK → mark operation 'synced' in IndexedDB → banner clears
+Renders comparison rows: Projected | Actual | Variance
 ```
 
-### State Management
+### Role Filter Data Flow
 
 ```
-Source of truth:  Supabase DB (server)
-        ↓ (sync on reconnect)
-Offline state:    IndexedDB (operation-queue, crop-plan-cache, field-notes-cache)
-        ↓ (read for UI)
-Client state:     React useState / server component initial props
-        ↓ (ephemeral)
-UI state:         localStorage (theme, text-scale — unchanged)
-```
-
-### Data Flow — Module Access (unchanged, shown for clarity)
-
-```
-User navigates to /app/{moduleId}
+Request hits any budget API route
     ↓
-middleware.ts → module_access table check
-    ↓ (denied)              ↓ (granted)
-redirect /dashboard     Server component fetches data
-?denied={moduleId}          ↓
-                        Render module page (responsive layout)
+getAuthContext() → { role, farmId, ... }
+    │
+    ├── ADMIN → hasPermission("budget:financial") = true
+    │     → full payload including revenueProjection, sale price, margin
+    │
+    ├── OFFICE → hasPermission("budget:read") = true, "budget:financial" = false
+    │     → cost/rate fields returned; revenueProjection: null; ActualYield sale price stripped
+    │
+    └── CREW / AUDITOR / null → hasPermission("budget:read") = false
+          → 403 Forbidden
 ```
-
----
-
-## Scaling Considerations
-
-This is an internal tool for 2-5 users. Scaling is not a concern. Architecture should optimize for maintainability and offline reliability, not throughput.
-
-| Scale | Architecture |
-|-------|-------------|
-| 2-5 users (current) | Single DigitalOcean Droplet + PM2 is correct. No changes needed. |
-| 5-20 users | Same architecture. IndexedDB queue patterns hold fine. |
-| 20+ users | Would need sync conflict resolution strategy (last-write-wins is fine for now; flag for later). |
-
-### Scaling Priorities (if ever needed)
-
-1. **First bottleneck:** Offline queue conflicts (two field team members editing same record offline). Mitigation: add `user_id` + `timestamp` to queue operations now; conflict resolution can be added later without schema changes.
-2. **Second bottleneck:** Service worker cache size on low-storage devices. Mitigation: `ExpirationPlugin` with `maxEntries` limits already available in Serwist.
-
----
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Separate `/mobile/*` Route Tree
-
-**What people do:** Create `/mobile/dashboard`, `/mobile/app/fsa-578`, etc. as separate routes with mobile-specific page components.
-
-**Why it's wrong:** Duplicates business logic, access control checks, and data fetching. Middleware module access guards must be replicated. Two trees drift apart. Auth callback and session handling becomes ambiguous.
-
-**Do this instead:** Single route tree. Tailwind breakpoints for layout differences. Conditional component rendering for structurally divergent elements (bottom nav, condensed dashboard). The only "mobile-specific" code is layout and UI components — not routes.
-
-### Anti-Pattern 2: Iframe Mobile "Fix" via CSS Hacks
-
-**What people do:** Apply `height: 100vh !important`, `overflow: hidden`, `transform: scale()`, or postMessage resize hacks to make embedded Express apps work on mobile.
-
-**Why it's wrong:** Mobile Safari ignores most iframe height constraints. Resize hacks cause "iframe dancing" (resize → scrollbar appears → content reflows → resize again). Touch events may not propagate to the iframe. This path leads to a broken, janky experience that undermines the PWA goal.
-
-**Do this instead:** Detect mobile, render `EmbedFallback` with a link to open the Express app directly in a tab. Accept that embedded modules are desktop-only for this milestone.
-
-### Anti-Pattern 3: Replacing the Existing Offline Layer
-
-**What people do:** Scrap `crop-plan-sync.ts` and rewrite a unified offline system from scratch.
-
-**Why it's wrong:** The existing offline layer works. `drainCropPlanQueue()` is tested, deployed, and running. Rewriting introduces regression risk with no user-facing benefit.
-
-**Do this instead:** Extend `db.ts` with new stores. Add new sync modules alongside the existing one. Wire everything through `sync-manager.ts` as the single dispatch point. The existing code is composable — use it.
-
-### Anti-Pattern 4: Using Background Sync API Exclusively
-
-**What people do:** Replace the `navigator.online` foreground queue drain with `ServiceWorkerRegistration.sync.register()` only.
-
-**Why it's wrong:** Background Sync API browser support is still incomplete (Safari added partial support only). In a rural farm setting where the portal must be reliable, betting everything on Background Sync API means failures on iOS devices. The foreground queue drain on `navigator.online` is the reliable baseline.
-
-**Do this instead:** Use both. `navigator.online` event → foreground drain (always works). `ServiceWorkerRegistration.sync.register()` → background drain (enhancement for supporting browsers). The `sync-manager.drainAllQueues()` function is called by both paths.
 
 ---
 
 ## Integration Points
 
-### External Services
+### Existing Models — No Changes Needed
 
-| Service | Integration Pattern | Notes |
-|---------|---------------------|-------|
-| Supabase Auth | Unchanged — cookie-based session via middleware | No mobile-specific changes needed |
-| Supabase DB | Unchanged — server components + API routes | Mobile reads go through `/api/mobile/*` |
-| Caddy proxy (`/embed/*`) | Unchanged — Express apps via reverse proxy | Mobile clients get `EmbedFallback` instead of iframe |
-| DigitalOcean Droplet | Unchanged — PM2 from `/var/www/` | No infrastructure changes for this milestone |
+| Model | How Actuals Layer Uses It |
+|-------|--------------------------|
+| `FieldEnterprise` | FK anchor for all 4 Actual* models via `fieldEnterpriseId` |
+| `Material` | Optional FK on `ActualMaterialUsage.materialId` — OFFICE can link invoice to catalog product |
+| `SeedLot` | Optional FK on `ActualSeedUsage.seedLotId` — enables future cross-reference to projected seed |
+| `FieldOperation` (PLANNED) | Read-only — displayed alongside `ActualFieldOperation` in ADMIN comparison view |
+| `HarvestEvent` | Coexists with `ActualYield` — `HarvestEvent` serves organic traceability; `ActualYield` serves budget actuals. They are separate concerns and should stay separate. |
+| `AuditLog` | All actuals writes should call `logAudit()` using the existing pattern |
 
-### Internal Boundaries
+### Existing Models — Modifications Needed
 
-| Boundary | Communication | Notes |
-|----------|---------------|-------|
-| `sw.ts` ↔ `sync-manager.ts` | Service worker fires `sync` event; client-side `sync-manager` drains queues | SW cannot import TS modules directly; queue drain logic stays in client-side lib |
-| `MobileNav` ↔ `modules.ts` | Direct import of module registry | MobileNav reads only `live` modules the user has access; access state passed as prop from layout |
-| `OfflineBanner` ↔ `db.ts` | Client component calls `getDb()` to count pending operations | Polling interval (5s) or IDBObserver pattern — polling is simpler and sufficient for this team size |
-| `EmbedFrame` ↔ `EmbedFallback` | `EmbedFrame.tsx` conditionally renders one or the other | Device detection via `useIsMobile()` hook (window.matchMedia inside useEffect) — not user-agent string |
-| Field-notes sync ↔ `/api/mobile/notes` | POST queued operations on drain | `/api/mobile/notes` route needs to be created as part of field-notes feature |
+| File | Change |
+|------|--------|
+| `prisma/schema.prisma` | Add 4 new Actual* models; add back-relations on `FieldEnterprise` |
+| `src/lib/rbac.ts` | Add `budget:read` and `budget:financial` permissions; grant appropriately per role |
+| `budget-summary/route.ts` | Add `getAuthContext()` call; strip `revenueProjection` for non-ADMIN |
+| `[id]/page.tsx` | Extract `BudgetTab` JSX into `src/components/field-enterprise/BudgetTab.tsx` |
+
+### New Files to Create
+
+| File | Purpose |
+|------|---------|
+| `prisma/schema.prisma` (migration) | New Actual* models |
+| `src/lib/actuals-summary.ts` | Compute actual totals — mirrors budget-summary reduce-and-sum pattern |
+| `src/app/api/field-enterprises/[id]/actuals/route.ts` | GET list + POST new actual (dispatched by `type`) |
+| `src/app/api/field-enterprises/[id]/actuals/[recordId]/route.ts` | PUT/DELETE individual actual record |
+| `src/app/api/field-enterprises/[id]/actuals-summary/route.ts` | ADMIN-only computed comparison response |
+| `src/components/field-enterprise/BudgetTab.tsx` | Extracted + extended budget tab component |
+| `src/components/field-enterprise/ActualsEntryForm.tsx` | Inline entry form for OFFICE actuals |
 
 ---
 
-## Build Order Implications
+## Suggested Build Order
 
-Dependencies between components determine which must be built first:
+Dependencies between pieces determine the order. Role filtering must be in place before
+actuals data is exposed. Schema migration must land before any route can write.
 
-**Phase 1 — Foundation (no dependencies on new code):**
-1. `MobileShell.tsx` + safe-area CSS tokens — all other mobile layout depends on this
-2. `MobileNav.tsx` — depends on MobileShell + modules.ts (already exists)
-3. Responsive layout pass on `(protected)/layout.tsx` and `dashboard/page.tsx`
+1. **Schema migration** — Add 4 Actual* models and back-relations to `FieldEnterprise`.
+   Run `prisma migrate dev`. No UI changes yet. Zero risk to existing functionality.
 
-**Phase 2 — Offline Enhancement (depends on Phase 1 for UI feedback):**
-1. Extend `db.ts` + `types.ts` with new stores — all new sync modules depend on this
-2. `sync-manager.ts` — depends on updated db.ts
-3. `field-notes-sync.ts` — depends on sync-manager
-4. `OfflineBanner` pending-count enhancement — depends on db.ts read
+2. **RBAC update + budget-summary role filter** — Add `budget:read` / `budget:financial`
+   permissions to `rbac.ts`. Modify `budget-summary/route.ts` to call `getAuthContext()`
+   and strip `revenueProjection` for non-ADMIN. This is the privacy gate — it must be
+   in place and verified before any actuals UI is built.
 
-**Phase 3 — Service Worker (depends on Phase 2 sync architecture):**
-1. `sw.ts` runtime caching additions — depends on knowing which API routes to cache
-2. Service worker `sync` event → sync-manager.drainAllQueues() wiring
+3. **Actuals API routes** — Build `actuals/route.ts` (GET + POST) and
+   `actuals/[recordId]/route.ts` (PUT + DELETE). Verify with curl before touching UI.
 
-**Phase 4 — Embed Handling (depends on Phase 1 layout):**
-1. `EmbedFallback.tsx` + `useIsMobile()` hook
-2. `EmbedFrame.tsx` modification to conditionally render fallback
+4. **Actuals-summary API route** — Build the ADMIN-only comparison endpoint. This computes
+   actual totals using `src/lib/actuals-summary.ts` and returns a projected vs actual
+   shape that `BudgetTab` will consume.
 
-**Phase 5 — PWA Install Experience (independent, can be done anytime after Phase 1):**
-1. `MobileInstallGuide.tsx`
-2. `InstallPrompt.tsx` improvements
+5. **BudgetTab extraction** — Extract the Budget tab section from `[id]/page.tsx` into
+   `src/components/field-enterprise/BudgetTab.tsx`. No functional change — pure
+   structural refactor. This is a hard prerequisite for steps 6 and 7 because the detail
+   page file is already too large to safely extend.
+
+6. **OFFICE actuals entry UI** — Add `ActualsEntryForm` components inside `BudgetTab`
+   for `role !== "ADMIN"`. Renders entry forms for each actual type.
+
+7. **ADMIN comparison view** — Add projected vs actual side-by-side rendering inside
+   `BudgetTab` for `role === "ADMIN"`. Fetches `actuals-summary` in parallel with
+   `budget-summary`.
+
+8. **All-enterprise sync expansion** — Modify the macro sync to pull all enterprises
+   (not just organic). This is independent of the actuals layer and can be done at any
+   step after 3 without blocking anything else.
+
+---
+
+## Scaling Considerations
+
+This is a 3-5 person internal tool on a single DigitalOcean Droplet. Scaling is not a
+concern. The meaningful operational constraints:
+
+| Concern | Approach |
+|---------|----------|
+| Privacy enforcement | API route is the only trustworthy enforcement point — never depend on client-side field hiding |
+| Audit trail | Use existing `logAudit()` from `src/lib/audit-logger.ts` for all actuals writes |
+| Schema migrations | All additive — new models, no changes to existing columns. Zero downtime. |
+| `getAuthContext()` fallback | The fallback returns first ADMIN user when no session exists; budget routes must check `hasPermission()` explicitly rather than checking for `null` alone |
+
+---
+
+## Anti-Patterns
+
+### Anti-Pattern 1: Modifying Projected Records to Record Actuals
+
+**What people do:** Update `MaterialUsage.unitCost` or `FieldOperation.costPerAcre` with
+the actual invoice value after the fact.
+
+**Why it's wrong:** Destroys the projected plan. The admin can no longer compare planned
+versus actual. A subsequent budget sync from farm-budget would overwrite the actual data.
+
+**Do this instead:** Always write actuals to the new `Actual*` models. The projected
+records are logically read-only from OFFICE's perspective.
+
+### Anti-Pattern 2: Filtering Financial Data Only in the Client
+
+**What people do:** Fetch the full budget-summary JSON (including `revenueProjection`)
+and conditionally hide margin/revenue rows in JSX based on the user's role.
+
+**Why it's wrong:** The financial data is still sent over the network. Any user who opens
+browser DevTools or intercepts the API response can see sale prices and gross margins.
+
+**Do this instead:** Strip financial fields in the API route before sending the response.
+The client never receives data it is not authorized to see.
+
+### Anti-Pattern 3: Putting Projected vs Actual on Separate Tabs
+
+**What people do:** Add a second "Actuals" tab next to the existing "Budget" tab so the
+user switches back and forth to compare numbers.
+
+**Why it's wrong:** Context-switching between tabs to compare a projected row to an
+actual row is poor UX for the farm manager. The whole value of the comparison view is
+seeing variance at a glance without navigating.
+
+**Do this instead:** One "Budget" tab with an inline two-column layout (Projected |
+Actual) per section. This mirrors the Macro Rollup layout Sandy is familiar with.
+
+### Anti-Pattern 4: Storing Computed Totals on FieldEnterprise
+
+**What people do:** Add `actualTotalCostOfProduction` or `actualYieldPerAcre` columns
+to `FieldEnterprise` and update them on every actuals write.
+
+**Why it's wrong:** Denormalized computed columns drift out of sync when records are
+updated or deleted. They require careful update triggers and add migration complexity.
+The existing system deliberately computes on-the-fly — the budget-summary route is proof
+this approach works.
+
+**Do this instead:** Compute actual totals in `actuals-summary/route.ts` using the same
+reduce-and-sum pattern already in `budget-summary/route.ts`. Performance is more than
+adequate for a single enterprise at this scale.
 
 ---
 
 ## Sources
 
-- Next.js official PWA guide: https://nextjs.org/docs/app/guides/progressive-web-apps
-- Serwist Next.js getting started: https://serwist.pages.dev/docs/next/getting-started
-- Serwist runtime caching strategies: https://serwist.pages.dev/docs/serwist/runtime-caching/caching-strategies
-- Serwist NetworkFirst strategy: https://serwist.pages.dev/docs/serwist/runtime-caching/caching-strategies/network-first
-- MDN — Offline and background operation in PWAs: https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation
-- Foreground Queue vs Background Sync patterns: https://blog.tomaszgil.me/offline-support-in-web-apps-foreground-queue-vs-background-sync
-- Offline sync conflict resolution patterns (Feb 2026): https://www.sachith.co.uk/offline-sync-conflict-resolution-patterns-architecture-trade%E2%80%91offs-practical-guide-feb-19-2026/
-- PWA iframe handling patterns: https://pwafire.org/developer/codelabs/how-to-handle-iframes-in-pwa/
-- Responsive iframe problems on mobile: https://www.andyshora.com/iframes-responsive-web-apps-tips.html
-- Offline-first with Next.js, IndexedDB, Supabase (Jan 2026): https://medium.com/@oluwadaprof/building-an-offline-first-pwa-notes-app-with-next-js-indexeddb-and-supabase-f861aa3a06f9
-- Advanced PWA: Offline, Push, Background Sync: https://rishikc.com/articles/advanced-pwa-features-offline-push-background-sync/
-- Existing codebase: `/Users/glomalinguild/.planning/codebase/ARCHITECTURE.md` + `STRUCTURE.md` (HIGH confidence — direct analysis)
+- Direct reading of `prisma/schema.prisma` — existing models, enums, indexes, relations
+- Direct reading of `src/lib/rbac.ts` — permission matrix per role (verified ADMIN and OFFICE currently identical, no budget-specific permissions)
+- Direct reading of `src/lib/auth.ts` — `getAuthContext()` pattern, including ADMIN fallback when no session
+- Direct reading of `src/app/api/field-enterprises/[id]/budget-summary/route.ts` — on-the-fly computation pattern, full response shape
+- Direct reading of `src/app/(app)/field-enterprises/[id]/page.tsx` — existing tab structure, BudgetSummary interface, client component data fetching
+- Direct reading of `src/app/api/field-enterprises/[id]/route.ts` — existing route guard (absence of role check in current routes confirmed)
+- `PROJECT.md` milestone context — privacy requirements, role definitions (Sandy = OFFICE), Macro Rollup layout parity goal, no approval gate for actuals
 
 ---
-*Architecture research for: Mobile PWA enhancements — Next.js 14 App Router farm operations portal*
+
+*Architecture research for: Projected vs Actual Farm Budget — organic-cert app v2.0*
 *Researched: 2026-03-20*

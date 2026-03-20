@@ -1,198 +1,157 @@
 # Pitfalls Research
 
-**Domain:** Mobile PWA enhancements for existing Next.js 14 / Supabase farm operations portal
+**Domain:** Adding role-based budget filtering and projected vs actual actuals entry to an existing Next.js farm operations app
 **Researched:** 2026-03-20
-**Confidence:** MEDIUM — core pitfalls verified across multiple sources; farm-specific combinations inferred from project context
+**Confidence:** HIGH — all pitfalls are grounded in direct inspection of the existing codebase at `~/Desktop/my-project-one/organic-cert/`; no speculative claims
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Offline Sync Conflicts Silently Overwrite Field Data
+### Pitfall 1: `getAuthContext()` Falls Back to ADMIN — Making Role Filtering Pointless
 
 **What goes wrong:**
-The existing `operation-queue` in IndexedDB uses a drain-and-POST approach on reconnect. If two team members (e.g., both in the field with spotty signal) edit the same crop plan record while offline, whichever device syncs last silently wins. The other user's field observations are permanently lost with no warning.
+Every API route and server component that calls `getAuthContext()` silently falls back to the first active ADMIN user when no session cookie is present. The app currently runs inside an iframe in the portal, where session cookies do not propagate. The result: any unauthenticated request (iframe load, API call from the portal context, or a CREW member accessing the app directly) gets treated as ADMIN. Adding role-conditional rendering in the UI while the session is always resolved as ADMIN means no filtering ever actually fires.
 
 **Why it happens:**
-The current sync in `src/lib/offline/crop-plan-sync.ts` queues operations with timestamps but the server-side handler likely applies them in arrival order, not by field-level conflict detection. Last-write-wins based on `modified_at` is the default assumption — simple to implement, catastrophic when farm crew members diverge on the same record.
+The fallback was intentional for the iframe embedding scenario (see `src/lib/auth.ts` lines 78–109). It works fine when every user should see everything. It breaks the moment any response must differ by role.
 
 **How to avoid:**
-- Add a `client_version` counter or `device_id` + `local_seq` to every queued operation before building out sync for additional modules.
-- Server-side: reject conflicting writes with a 409 Conflict status and return the current server state; client surfaces a merge prompt rather than silently losing data.
-- For the small team (2-5 people), a field-level last-write-wins with a visible "last synced by [user] at [time]" audit trail is acceptable — but only if it is visible, never silent.
-- Do not extend the existing operation queue pattern to new modules (claims, insurance) without first adding conflict metadata to the schema.
+Before building any role-filtered view or API gate, resolve the auth fallback. Options in order of preference:
+1. Pass the portal's session token in a request header (e.g., `X-Auth-Token`) when the cert-tracker loads inside the iframe. Read this header in `getAuthContext()` and validate it against the session store.
+2. Use a signed embed token scoped to a specific user identity (not just "give admin"), so the iframe context carries a real role.
+3. At minimum: change the fallback so it returns `null` and let API routes 401, rather than silently granting ADMIN. Then fix the iframe auth properly.
 
 **Warning signs:**
-- Operation queue drain logs show no conflict status codes (only 200s) — means conflicts are being silently accepted.
-- Team members report data "reverting" after they re-enter the field.
-- Multiple devices going offline simultaneously with overlapping data scope.
+- Sandy (OFFICE role) logs in and still sees the Budget tab with profit/margin data.
+- API calls to `/api/field-enterprises/[id]/budget-summary` from the browser return `revenueProjection` with `targetPrice` and `projectedGrossMargin` regardless of who is logged in.
+- `getAuthContext()` always returns `role: "ADMIN"` in server logs even when Sandy is the active user.
 
-**Phase to address:** Offline sync phase — before extending IndexedDB caching to any module beyond crop plans.
+**Phase to address:**
+Phase 1 (RBAC & Auth Foundation). Nothing else can be built correctly until this is fixed. All downstream role-filtering work assumes `getAuthContext()` returns the actual caller's role.
 
 ---
 
-### Pitfall 2: Service Worker Caches Next.js RSC Payloads as Stale HTML
+### Pitfall 2: The `budget-summary` API Route Has No Auth Check — It Returns All Financial Data to Any Caller
 
 **What goes wrong:**
-Next.js App Router uses React Server Component payloads (`?_rsc=...` query parameter) for client-side navigation. If a service worker applies a `stale-while-revalidate` or `cache-first` strategy to `/app/*` routes without excluding RSC payloads, users get stale module data from cache while the server has newer records. This is especially bad for a farm portal where claim deadlines and insurance calculations are time-sensitive.
+`/api/field-enterprises/[id]/budget-summary/route.ts` contains zero authentication or role checks. It computes and returns `targetPricePerUnit`, `projectedGrossRevenue`, `projectedGrossMargin`, and `projectedMarginPerAcre` to any HTTP client that can reach the server. The main enterprise GET route (`/api/field-enterprises/[id]/route.ts`) also has no auth check and returns the full `FieldEnterprise` row including `targetPricePerUnit` and `fallowCostAmount` directly from Prisma.
 
 **Why it happens:**
-`next-pwa` (shadowwalker package — unmaintained since ~2022) defaults to `stale-while-revalidate` for navigations, which silently serves cached RSC payloads. The existing service worker registration in `src/app/layout.tsx` must be audited to confirm what strategy is applied to dynamic routes.
+These routes were built before role filtering was a requirement. The guard pattern exists in admin routes (`/api/admin/`) but was never applied to field-enterprise routes.
 
 **How to avoid:**
-- Use `NetworkFirst` for all `/app/*` navigation requests and all `/api/*` routes — never cache-first for dynamic data.
-- Use `CacheFirst` only for static assets: fonts, images, JS/CSS bundles with content-hashed filenames.
-- Explicitly exclude `_rsc` query parameter URLs from the page cache, or use a `NetworkFirst` strategy with a generous timeout (3-5 seconds) and offline fallback page.
-- If using Workbox directly (preferred over unmaintained `next-pwa`), register a separate route handler for RSC payloads.
-- Name the service worker file something other than `sw.js` — Next.js 14 uses that name internally for asset precaching.
+Add `getAuthContext()` to every field-enterprise API route. For the `budget-summary` route specifically:
+- If `role !== "ADMIN"`, strip `revenueProjection`, `operationCosts.costPerAcre`, `operationCosts.totalCost`, `totalCostOfProduction`, and `costPerAcre` from the response before returning.
+- Do this at the API layer, not only in the UI. UI-only filtering is insufficient because the raw JSON is visible in DevTools network tab.
+
+For the main enterprise GET route:
+- Strip `targetPricePerUnit`, `targetPriceUnit`, `fallowCostAmount`, `fallowCostCategory` from the response for non-ADMIN roles.
 
 **Warning signs:**
-- After deploying a data change (e.g., adding a new claim), users on mobile still see old data without a hard refresh.
-- Chrome DevTools Application → Cache Storage shows RSC response payloads cached under page URLs.
-- `next-pwa` version in `package.json` references `shadowwalker/next-pwa` (abandoned) rather than `ducanh-next-pwa` (actively maintained fork).
+- Opening DevTools Network tab as Sandy and inspecting the `budget-summary` response shows `revenueProjection` object.
+- `/api/field-enterprises/[id]` response contains `targetPricePerUnit` in the JSON payload for an OFFICE session.
+- No `getAuthContext()` import in `budget-summary/route.ts`.
 
-**Phase to address:** Service worker / caching strategy phase — audit and reconfigure before any new offline features are added.
+**Phase to address:**
+Phase 1 (RBAC & Auth Foundation). Must be locked down before Phase 2 touches any UI.
 
 ---
 
-### Pitfall 3: Embedded Express Modules (iframes) Are Invisible to the Service Worker
+### Pitfall 3: Removing the Organic-Only Filter From `sync-macro` Creates Duplicate Enterprises for Existing Organic Fields
 
 **What goes wrong:**
-The portal has embedded modules (FSA, insurance sub-apps) loaded via iframes pointing to Express apps behind Caddy reverse proxy at `/embed/*`. The main Next.js service worker cannot cache or intercept requests made from inside those iframes — they are in a separate browsing context. On mobile in rural areas, when connectivity drops, iframe-based modules go blank with a browser error rather than a graceful offline fallback.
+The current sync at `/api/fields/sync-macro` filters to organic enterprises only (line 165–169 of `sync-macro/route.ts`). It matches budget fields to local `FieldEnterprise` rows using `{ fieldId, cropYear, crop, label: null }`. When the filter is removed to allow conventional enterprises, the match query is unchanged. A conventional budget field named "Kopp" with crop "Corn" will look for an existing enterprise on that field for that year and crop. If no match exists, it creates one. This is correct. But if the organic enterprise on that same field has a different `organicStatus` value, the upsert logic will create a second enterprise instead of recognizing it. Worse, if a field was previously synced as organic and the budget service now categorizes it differently, the enterprise is not updated — a new one is created alongside the old one, duplicating the crop plan.
 
 **Why it happens:**
-Service workers are scoped to an origin and browsing context. A service worker registered by the parent page at `portal.whughesfarms.com` does not intercept fetch requests made by an iframe even on the same origin, because the iframe has its own registration scope. The same-origin Caddy proxy keeps iframes on the same origin, which helps, but the Express apps themselves would need their own service worker to handle offline caching of their resources.
+The match key `{ fieldId, cropYear, crop, label: null }` does not include `organicStatus`. Organic and conventional crops of the same type on the same field in the same year are indistinguishable by the current key.
 
 **How to avoid:**
-- Do not attempt to make iframe-based modules work offline via the parent service worker — this is architecturally impossible.
-- For offline resilience: detect connectivity in the parent and overlay an "offline" UI over the iframe before it renders a browser error page.
-- Consider wrapping iframe navigation behind a connectivity check: show a toast "Offline — embedded module unavailable" and hide the iframe when `navigator.onLine === false`.
-- Long-term: convert the highest-priority embedded module to a native React page (already the pattern for claims, FSA 578 native pages) to gain offline capability.
-- Mark iframe modules explicitly in `src/lib/modules.ts` as `offline: false` so the mobile UI can gracefully degrade them.
+Before removing the organic filter:
+1. Update the upsert match key to include `organicStatus` derived from the budget enterprise's `category` field.
+2. Add a dry-run option that returns what would be created vs updated without committing — run it against the current dataset to see collisions before going live.
+3. Wrap the expanded sync in a database transaction with a rollback condition if duplicate-key violations are detected.
 
 **Warning signs:**
-- Users see a blank or browser-error iframe on mobile when signal drops.
-- Chrome DevTools shows no service worker activity on requests originating from the iframe.
-- Any attempt to add offline caching for `/embed/*` paths in the service worker produces no effect.
+- After running expanded sync, a field shows two `FieldEnterprise` rows with the same `fieldId`, `cropYear`, and `crop` but different `organicStatus` values.
+- The `@@unique([fieldId, cropYear, crop, label])` constraint on `FieldEnterprise` throws a Prisma unique constraint violation error during sync.
+- Sync result counts show unexpectedly high `enterprises.created` numbers.
 
-**Phase to address:** Mobile layout / offline phase — add connectivity detection and graceful degradation UI before shipping mobile responsiveness for embedded modules.
+**Phase to address:**
+Phase 3 (All-Enterprise Sync Expansion). Do not expand the sync until the match key issue is resolved.
 
 ---
 
-### Pitfall 4: Mobile Service Worker Update Strands Users on Old App Version
+### Pitfall 4: Budget Summary Is Computed From Relations That Mix PLANNED and CONFIRMED Operations — Actuals Entry Will Break the Existing Totals
 
 **What goes wrong:**
-After deploying a bug fix or data schema change, users who installed the PWA to their home screen continue running the old service worker. New service workers wait in `waiting` state until all tabs are closed — on mobile, tabs are rarely fully closed. Users can operate on a stale app for days without knowing there is an update.
+`budget-summary/route.ts` computes `totalOperationCost` by iterating `enterprise.fieldOperations` without filtering by `passStatus`. It sums `costPerAcre * acresWorked` for both `PLANNED` budget-imported operations and `CONFIRMED` actual operations. When Sandy enters actuals (CONFIRMED passes), they will be added on top of the PLANNED projected costs, inflating the total. The admin will see a combined number that is neither the projection nor the reality — it is both doubled.
 
 **Why it happens:**
-The default service worker lifecycle requires the user to close all tabs before the new worker activates. Farm workers check the portal in the morning, keep it open all day, and rarely notice the update prompt if it exists at all.
+The `passStatus` field exists and was built for exactly this purpose, but the `budget-summary` computation does not use it. The UI on lines 246 and 396 of the detail page already filters by `passStatus` in some places, but the API route does not.
 
 **How to avoid:**
-- Implement an update notification UI: when `navigator.serviceWorker.waiting` fires, show a banner "New version available — tap to update" that calls `skipWaiting()` and reloads.
-- Do not call `skipWaiting()` automatically without user confirmation — this can cause in-progress form submissions or sync operations to be interrupted mid-flight.
-- After any data schema change to IndexedDB (adding stores, changing versions), increment the `DB_VERSION` constant in `src/lib/offline/db.ts` — failing to do so causes silent schema mismatch errors in existing installs.
+Split `budget-summary` into two computation paths before any actuals are entered:
+- **Projected:** filters `fieldOperations` where `passStatus === "PLANNED"`, uses projected `costPerAcre` from budget import.
+- **Actual:** filters `fieldOperations` where `passStatus === "CONFIRMED"`, uses costs recorded at confirmation time.
+- Return both paths in the response (`projected: {...}, actual: {...}`), not a merged total.
+
+Similarly split seed and material costs: projected = synced values, actual = values entered by Sandy.
+
+The schema already supports this via `passStatus` and `plannedSource`. The computation just needs to use them.
 
 **Warning signs:**
-- After a deploy, `navigator.serviceWorker.controller.scriptURL` differs from the current deployed version on some devices.
-- Users report seeing data from before a correction was applied.
-- No "update available" toast or banner exists in the current codebase.
+- `totalCostOfProduction` in the budget summary grows unexpectedly after Sandy confirms a field pass.
+- The admin's budget tab shows a total higher than either the projected plan or Sandy's actuals alone.
+- `budget-summary` route does not filter `fieldOperations` by `passStatus`.
 
-**Phase to address:** PWA install experience phase — implement update notification before promoting the PWA install prompt.
+**Phase to address:**
+Phase 2 (Actuals Entry + Dual-Layer Computation). Must be addressed before actuals entry goes live.
 
 ---
 
-## Moderate Pitfalls
-
-### Pitfall 5: Touch Targets Too Small on Desktop-First Form Layouts
+### Pitfall 5: The UI Budget Tab Has No Role Check — It Will Show Financial Data to Sandy by Default
 
 **What goes wrong:**
-The existing desktop-first Tailwind layouts likely have form controls sized for mouse precision. On mobile in the field — gloves, direct sunlight, one thumb — a 28px button or a 20px checkbox will generate frequent mis-taps. Users either abandon forms or submit incorrect data.
+The field enterprise detail page (`src/app/(app)/field-enterprises/[id]/page.tsx`) fetches and renders `budgetSummary` including `revenueProjection.targetPrice`, `projectedGrossMargin`, `projectedGrossRevenue`, and `projectedMarginPerAcre` with no role check anywhere in the component. The component does not call `getAuthContext()` or `useSession()`. The role shown in the header is passed as a prop from the layout (`role={user?.role || "ADMIN"}`), but the detail page does not receive that prop and does not use it.
 
 **Why it happens:**
-Tailwind's default utilities (`p-2`, `text-sm`, `gap-2`) produce visually compact forms designed for desktop. Converting desktop-first to mobile-first by adding `sm:` prefixes without auditing minimum touch target sizes is the common shortcut.
+Role-based view filtering was not a requirement when the budget tab was built. The page is a client component — it fetches data on mount and renders what the API returns.
 
 **How to avoid:**
-- WCAG 2.5.5 requires minimum 44×44px touch targets. Apple HIG recommends 44pt; Google Material recommends 48dp.
-- Audit every interactive element (buttons, checkboxes, selects, date pickers) in the four native module pages (FSA 578, insurance, claims, macro rollup) and enforce `min-h-[44px] min-w-[44px]` with adequate spacing.
-- For field data entry (observations, notes): use full-width inputs, large font sizes (`text-base` minimum, `text-lg` preferred), and single-column layouts — never multi-column on small screens.
-- Avoid dropdowns with many options — on mobile a `<select>` with 30+ crop varieties is painful. Use searchable comboboxes or group options.
-- Outdoor use means high ambient light: ensure contrast ratios exceed WCAG AA (4.5:1) for text on all form elements; Tailwind's default `gray-300` borders often fail this on white backgrounds in direct sun.
+Two layers are required:
+1. **API layer** (see Pitfall 2): strip financial fields from the `budget-summary` response for non-ADMIN.
+2. **UI layer**: pass the user's role down to the detail page (from layout or a session hook), then conditionally render the Budget tab, tab badge, and all `$` figures only when `role === "ADMIN"`.
+
+Do not rely on API filtering alone — the tab and its badge should not appear in Sandy's navigation at all. Do not rely on UI filtering alone — never trust client-side hiding for sensitive data.
 
 **Warning signs:**
-- Chrome DevTools mobile emulator shows any interactive element under 44px in height.
-- Any `text-xs` or `text-sm` form labels without adequate line-height on form inputs.
-- Multi-column grid layouts on form pages without `grid-cols-1` breakpoint at `sm`.
+- The Budget tab appears in Sandy's tab bar.
+- No `role` variable in `src/app/(app)/field-enterprises/[id]/page.tsx`.
+- No conditional rendering around `<TabsTrigger value="budget">` or `<TabsContent value="budget">`.
 
-**Phase to address:** Mobile layout / responsive design phase.
+**Phase to address:**
+Phase 1 (RBAC & Auth Foundation) for the gate; Phase 2 for the dual-layer view that replaces the hidden tab with Sandy's actuals entry view.
 
 ---
 
-### Pitfall 6: `navigator.onLine` Is Not a Reliable Connectivity Signal for Rural Networks
+### Pitfall 6: OFFICE Role Currently Has `sale:read` — Sale Prices May Leak Through Other Routes
 
 **What goes wrong:**
-The existing sync logic in `src/lib/offline/crop-plan-sync.ts` triggers on reconnect using `navigator.onLine`. In rural areas, `navigator.onLine` returns `true` whenever the device has a network interface — including a signal bar that technically connects but cannot route traffic (common with edge LTE and farm Wi-Fi). The sync triggers, the fetch times out or fails, and the queue operation is marked 'failed' with no retry, silently dropping field data.
+`src/lib/rbac.ts` grants OFFICE the `sale:read` and `sale:write` permissions. If any sale route or component joins or returns `pricePerUnit`, `totalRevenue`, or similar fields, Sandy can read sale prices through those routes independently of the budget tab. Hiding the budget tab does not help if `/api/sales` returns per-unit prices in the response.
 
 **Why it happens:**
-`navigator.onLine` reflects the presence of a network interface, not actual internet reachability. Rural signal fluctuates: a device can oscillate between "technically connected" and "effectively offline" every 30 seconds.
+`sale:read` was granted to OFFICE for recording loadouts and sales (operational data), not for viewing financial performance. The permission is the right one for the action but does not distinguish between "can record a sale" and "can see the margin on that sale."
 
 **How to avoid:**
-- Use a reachability probe (lightweight HEAD request to a known fast endpoint — e.g., `/api/health` or a small Supabase edge function) before attempting sync. Only drain the queue after the probe returns 200.
-- Implement exponential backoff with jitter on sync retries: 1s → 2s → 4s → 8s → max 60s. Current code has "retry with backoff" noted in ARCHITECTURE.md but the implementation should be verified.
-- Distinguish between `navigator.onLine === false` (definitely offline) and "probe failed" (effectively offline). Show different UI states: "No network" vs "Network unreliable — retrying sync."
-- Do not drain the entire operation queue in a single fetch burst. Process operations one at a time (or in small batches of 3-5) so a connection drop mid-sync leaves the queue partially drained rather than corrupted.
+Audit every route protected by `sale:read` and `sale:write`. For routes that return financial performance fields (`pricePerUnit`, `totalRevenue`, `grossMargin`), apply the same stripping logic used for the budget summary: if `role !== "ADMIN"`, omit those fields. Consider adding a new permission `budget:read` distinct from `sale:read` and gating financial performance fields exclusively on it.
 
 **Warning signs:**
-- Sync log shows operations going from `queued` to `failed` (not `synced`) immediately after reconnect.
-- Users report submitting field data that "disappeared" after a connectivity event.
-- No reachability probe visible in `src/lib/offline/crop-plan-sync.ts` — only `navigator.onLine` event listener.
+- `/api/field-enterprises/[id]/route.ts` GET response includes `targetPricePerUnit` without a role check.
+- Sale-related API routes return `pricePerUnit` or margin figures to OFFICE sessions.
 
-**Phase to address:** Offline sync reliability phase — audit before extending sync to new modules.
-
----
-
-### Pitfall 7: Desktop Scrolling Tables and Accordions Break on Small Screens
-
-**What goes wrong:**
-The FSA CLU workspace renders 1000+ records in grouped accordions. On desktop, wide tables with horizontal scroll work. On mobile, horizontal-scroll tables inside accordions inside a fixed-height sidebar layout produce nested scroll traps — the outer page scroll is hijacked by the inner scroll, making the content impossible to navigate on touch.
-
-**Why it happens:**
-Nested overflow containers (`overflow-x-auto` inside `overflow-y-scroll` inside a flex column) create touch event ambiguity. Browsers handle this inconsistently across iOS Safari and Android Chrome.
-
-**How to avoid:**
-- Audit all `overflow-x-auto` or `overflow-x-scroll` table containers for mobile. Replace wide tables with stacked card layouts at `sm:` breakpoint — each record becomes a card with label: value pairs.
-- The CLU workspace already has a virtualization gap (CONCERNS.md: renders all 1000+ records). This is a mobile crisis: 1000 DOM nodes on a phone causes jank. Implement windowing (`react-virtual` or `@tanstack/react-virtual`) before mobile launch of FSA module.
-- Avoid horizontal scroll entirely on mobile — if a table cannot convert to cards, restrict the mobile view to the 3-4 most critical columns and add a "view details" drilldown.
-- Test on real devices or BrowserStack with iOS Safari — Chrome DevTools mobile emulation does not reproduce iOS scroll trap behavior.
-
-**Warning signs:**
-- `overflow-x-auto` container inside a `flex` or `grid` with `overflow-y-auto` parent.
-- Performance tab in Chrome DevTools shows >16ms frame times when scrolling the CLU workspace on a mobile-profile throttle.
-- Page has no `sm:grid-cols-1` or `sm:flex-col` breakpoint overrides on any table container.
-
-**Phase to address:** Mobile layout / responsive design phase — FSA module specifically needs virtualization before mobile responsiveness work.
-
----
-
-### Pitfall 8: PWA Install Prompt Appears Before Users Trust the App
-
-**What goes wrong:**
-Showing the "Add to Home Screen" install prompt on first visit before users have experienced the app's value causes immediate dismissal. On iOS Safari specifically, if the user dismisses the native prompt, it cannot be shown again programmatically — they would need to manually use the Share → Add to Home Screen flow indefinitely.
-
-**Why it happens:**
-Developers add `beforeinstallprompt` listener and fire it on first meaningful load. Farm workers who are unfamiliar with PWAs dismiss it reflexively. On iOS there is no `beforeinstallprompt` at all — the install must be taught via UI.
-
-**How to avoid:**
-- Defer the Android install prompt until after the user has completed at least one meaningful action (e.g., viewed a module, submitted a field observation).
-- For iOS: add a persistent but dismissable "Install app" banner in the portal header that explains the benefit ("works offline in the field") and shows step-by-step instructions.
-- Never rely solely on the browser's native install prompt — add an explicit in-app install flow.
-- Track install state in localStorage; do not re-prompt users who have already installed.
-
-**Warning signs:**
-- Install prompt fires on `/dashboard` page load for new users with no engagement gate.
-- No iOS-specific install instructions exist in the current `src/components/pwa/` directory.
-- No dismissal state stored in localStorage.
-
-**Phase to address:** PWA install experience phase.
+**Phase to address:**
+Phase 1 (RBAC & Auth Foundation). Audit should be a deliverable of Phase 1 before any new views are built.
 
 ---
 
@@ -200,11 +159,11 @@ Developers add `beforeinstallprompt` listener and fire it on first meaningful lo
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Extend existing `operation-queue` to new modules without conflict metadata | Fast to ship offline for claims | Silent data loss when two field users edit same claim offline | Never — add `device_id` and `client_version` from the start |
-| `stale-while-revalidate` for all Next.js routes | Simple single-strategy config | Stale claim deadlines and insurance data served from cache | Never for dynamic data — only for static assets |
-| `navigator.onLine` as sole connectivity signal | One-line implementation | Failed syncs silently drop field data on rural LTE | Never for sync trigger — use reachability probe |
-| Skip mobile testing on real devices, use DevTools emulation only | Faster dev cycle | iOS Safari scroll traps, touch event bugs, and PWA install behavior undetected | Never for PWA/offline features — must test on real iOS Safari |
-| Ignore iframe modules during mobile pass | Reduces scope | Blank white iframes on mobile when offline — looks broken | Acceptable in Phase 1 only if iframe modules are explicitly hidden on small screens |
+| UI-only role filtering (hide the tab, don't gate the API) | Faster to implement | API remains open; any developer or curious user with DevTools can read financial data | Never — financial data requires API-layer enforcement |
+| Keep `getAuthContext()` ADMIN fallback, add role checks that depend on it | No iframe auth work needed | All role checks are vacuous; filtering never fires | Never for this milestone |
+| Compute projected+actual as one merged total | Simpler summary route | Inflates totals once Sandy starts entering actuals; breaks admin comparison view | Never once actuals entry is live |
+| Remove organic filter from sync without updating the match key | Enables all-enterprise sync quickly | Creates duplicate enterprises for fields that were already synced | Never — run the dry-run first |
+| Store actuals by overwriting projected fields | No schema changes needed | Admin loses the projected plan; no comparison possible | Never — actuals must be a separate layer |
 
 ---
 
@@ -212,10 +171,10 @@ Developers add `beforeinstallprompt` listener and fire it on first meaningful lo
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Supabase Realtime (if added) | Using Realtime subscription as primary sync instead of IndexedDB queue | Use IndexedDB queue as source of truth; Realtime as a live UI update layer only. Realtime requires network — not offline-safe. |
-| Background Sync API | Registering sync tag without checking browser support; Safari does not support Background Sync as of 2025 | Gate Background Sync behind feature detection (`'SyncManager' in window`); fall back to `navigator.onLine` event for iOS. |
-| Supabase mobile auth tokens (`getUser()` only) | Token revocation not checked on every sync call (noted in CONCERNS.md) | Before a sync batch, validate the token is still live. A revoked-but-unexpired token will let sync proceed against Supabase RLS and fail with a 403 mid-queue, corrupting queue state. |
-| Caddy + Express iframes | Assuming Caddy same-origin rewrite means service worker covers embedded app resources | Service worker scope does not follow reverse proxy rewrites — the embedded Express app needs its own offline strategy or must be excluded from offline requirements. |
+| `farm-budget` service (port 3001) — expanded sync | Assume enterprise `category` field maps cleanly to `organicStatus` on `FieldEnterprise` | Explicitly test the category values the budget service returns for conventional enterprises; the current filter checks for `"organic"` and `"ORG"` system codes — conventional may use different values entirely |
+| `budget-summary` route — dual-layer response | Add a `type=projected\|actual` query param and branch inside the same route | Keep projected and actual as separate named fields in one response object; the admin comparison view needs both simultaneously |
+| `fieldOperations` — actuals entry | Reuse the existing CONFIRMED flow by just letting Sandy edit any operation | CONFIRMED ops with `plannedSource: "budget-import"` are the projected plan; Sandy should create new CONFIRMED ops without `plannedSource`, not edit the budget-imported ones |
+| `sync-macro` — re-run after expansion | Assume re-running is safe because it deletes and recreates PLANNED ops | `deleteMany` where `passStatus: "PLANNED" AND plannedSource: "budget-import"` is safe; but if the conventional expansion creates enterprises that match existing organic enterprises incorrectly, re-running will delete organic PLANNED ops for those fields |
 
 ---
 
@@ -223,10 +182,9 @@ Developers add `beforeinstallprompt` listener and fire it on first meaningful lo
 
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Rendering 1000+ CLU records in DOM on mobile | Scroll jank, 200ms+ interaction latency, device heat | `@tanstack/react-virtual` windowing before mobile launch of FSA module | Immediate on mid-range Android phones |
-| Syncing entire operation queue in one fetch burst | Single dropped request fails partial sync with no progress saved | Process queue in batches of 3-5; mark each operation `synced` immediately after its own 200 response | Any time connectivity drops during sync (common in rural LTE) |
-| Loading all insurance policies on mount | 5-10 second blank screen on mobile for farms with 100+ policies | Cursor-based pagination; load first 20 on mount, paginate on scroll | ~50 policies on a 3G connection |
-| No service worker cache size limit | Cache grows unbounded; iOS evicts entire PWA cache when storage pressure is high | Set `maxEntries` and `maxAgeSeconds` in Workbox runtime caching config | After 2-4 weeks of daily use on a 64GB iPhone |
+| Computing budget summary on every page load with N+1 relation queries | Slow tab render for large enterprises with many material usages or field operations | The current `budget-summary` route loads all relations in one Prisma `include` call — this is correct; maintain this pattern when adding actuals layer | At ~50+ materialUsages per enterprise the query is still fast; not a concern at farm scale |
+| Running expanded sync without batching (current sync is already N individual Prisma calls per field) | Sync timeout on large field counts | The registry sync already uses a single `$transaction`; the macro sync does not — this is a pre-existing debt, acceptable for farm scale (~50 fields) | Not a blocker; document as known debt |
+| Fetching both projected and actual budget summaries as two separate API calls in the admin comparison view | Double network round trips; UI flicker | Return `{ projected: {...}, actual: {...} }` from a single enhanced `budget-summary` route | Not a performance concern at farm scale; more a code quality issue |
 
 ---
 
@@ -234,10 +192,10 @@ Developers add `beforeinstallprompt` listener and fire it on first meaningful lo
 
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Service worker caches authenticated API responses | Cached responses served to wrong user if device is shared or after logout | Include `Authorization` header in cache key; on logout, call `caches.delete()` to clear all API response caches |
-| IndexedDB data persists after logout | Next user on a shared device (farm office tablet) sees previous user's field data | On logout (`src/app/actions/auth.ts`), call `getDb()` and clear all IndexedDB stores — do not rely on browser-level cleanup |
-| Mobile API routes still using service role key (CONCERNS.md) | Full database write access if key leaks from mobile network traffic | Replace with user-scoped Supabase auth tokens before extending mobile API for PWA field data submission |
-| Operation queue contains PII / sensitive farm data in plaintext IndexedDB | iOS/Android device backup may include IndexedDB data | Evaluate whether crop plan data is sensitive enough to warrant encryption at rest in IndexedDB (low priority for this team size, but flag) |
+| `getAuthContext()` ADMIN fallback active while role-based filtering is in production | Any unauthenticated request (cron, embed, misconfigured browser) reads financial data as ADMIN | Fix iframe auth before Phase 2 goes live; change fallback to return `null` and 401 |
+| Financial fields returned in the main enterprise GET response (`targetPricePerUnit`, `fallowCostAmount`) | Sandy can read sale prices by inspecting network traffic even if the budget tab is hidden | Strip financial fields from enterprise GET response for non-ADMIN roles at the route level |
+| Actuals write route not checking that the caller has OFFICE or ADMIN role | CREW member or unauthenticated caller can write actuals | All mutation routes for actuals must check `role === "ADMIN" || role === "OFFICE"` after fixing the auth fallback |
+| `sale:read` on OFFICE grants access to any sale-adjacent data without per-field financial filtering | Sale price becomes visible through a non-budget route | Introduce `budget:read` permission gated to ADMIN only; audit all routes that join or return price/margin fields |
 
 ---
 
@@ -245,25 +203,22 @@ Developers add `beforeinstallprompt` listener and fire it on first meaningful lo
 
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No offline indicator in UI | Farm worker submits form, thinks it worked, data is only queued — discovers loss later | Persistent "Offline — data will sync on reconnect" banner when `navigator.onLine === false` or probe fails |
-| Sync failure shown only in browser console | Failed field observations silently lost | Show a persistent badge or notification: "3 items pending sync — tap to retry" |
-| Date pickers using desktop calendar widget | Finger-impossible to use on phone; requires precise tap on tiny day cells | Use native `<input type="date">` on mobile — browser-native date picker is thumb-friendly and locale-aware |
-| Full-width desktop navigation sidebar on mobile | Sidebar collapses viewport space, navigation targets too small | Convert BannerSection / sidebar to a bottom navigation bar (4-5 icons) for mobile, following iOS and Android conventions |
-| Form submitting while offline with no feedback | User taps Submit, spinner appears, nothing happens, no explanation | Detect offline state before submission; if offline, immediately queue the operation and show "Saved offline — will sync automatically" |
-| Multi-step complex forms with no progress save | Rural connectivity drop mid-form loses all entered data | Auto-save form state to localStorage or IndexedDB on every field change; restore draft on return |
+| Showing Sandy an empty Budget tab or a "No access" message | Confusing — Sandy doesn't know why the tab is empty or what she's supposed to do | Hide the Budget tab entirely for OFFICE; replace it with an "Actuals Entry" tab that shows Sandy's workflow |
+| Dual projected/actual view that shows both columns always | Admin overwhelmed by doubled rows for every line item | Default to projected-only view; let admin toggle "Show Actuals" or use a side-by-side mode only when actuals exist |
+| Displaying currency symbols and totals in Sandy's actuals entry form | Sandy questions whether she's entering costs or viewing the budget; role confusion | Sandy's form shows quantities (rate, acres, passes) and unit costs for her own invoices — not aggregate financial totals or margins |
+| Sync button available to Sandy triggers expanded sync that pulls conventional enterprises | Sandy inadvertently creates unreviewed conventional enterprises | Scope the sync button by role; OFFICE can trigger actuals sync but not the crop-plan import sync |
+| Projected vs actual comparison shows "0" actuals before Sandy has entered anything | Admin sees an alarming view with all actuals at $0 | Show comparison view only when at least one actual exists; otherwise show projected-only with a status indicator |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Offline mode:** Offline banner exists but only triggers on `navigator.onLine === false` — verify it also triggers when reachability probe fails (the rural LTE scenario)
-- [ ] **Operation queue:** Drain-on-reconnect code runs — verify it has exponential backoff implemented, not just documented in ARCHITECTURE.md
-- [ ] **Service worker update:** New service worker installs — verify there is a visible "Update available" UI prompt; `skipWaiting()` without UI is a data-loss risk
-- [ ] **Logout + IndexedDB:** Logout redirects to `/login` — verify it also clears all IndexedDB stores (`operation-queue`, `crop-plan-cache`) to prevent data bleed on shared devices
-- [ ] **Mobile forms:** Forms render on mobile viewport — verify every interactive element meets 44px minimum touch target height in actual device test, not DevTools emulation
-- [ ] **Iframe modules on mobile:** Embedded modules display — verify they show a graceful "unavailable offline" state rather than a blank iframe when connectivity is absent
-- [ ] **PWA install on iOS:** Install flow works on Android — verify there is an explicit in-app instruction for iOS Safari users (no `beforeinstallprompt` on iOS)
-- [ ] **Cache invalidation on deploy:** Service worker updates on next load — verify RSC payload routes use `NetworkFirst`, not `StaleWhileRevalidate`, so fresh data is served after a deploy
+- [ ] **Role-filtered budget tab:** Often missing API-layer stripping — verify that `/api/field-enterprises/[id]/budget-summary` returns no `revenueProjection`, no `costPerAcre`, and no `totalCostOfProduction` in an OFFICE session (not just that the tab is hidden in the UI)
+- [ ] **Auth fallback fix:** Often declared fixed when only the UI path is gated — verify that a `curl` request with no session cookie to `/api/field-enterprises/[id]/budget-summary` returns `401` rather than financial data
+- [ ] **Dual-layer computation:** Often "done" when the UI shows two columns — verify that projected totals do not change after Sandy confirms a field pass (projected layer must be frozen to PLANNED ops only)
+- [ ] **All-enterprise sync expansion:** Often done when conventional enterprises appear — verify that no existing organic `FieldEnterprise` rows were duplicated by running a query for `GROUP BY fieldId, cropYear, crop, label HAVING COUNT(*) > 1`
+- [ ] **Actuals entry form:** Often done when Sandy can save a record — verify that submitting an actuals record does not modify any field on the budget-imported PLANNED operation (actuals and projected must remain separate rows)
+- [ ] **Financial field audit:** Often done when the budget tab is gated — verify that `targetPricePerUnit` is absent from the `/api/field-enterprises/[id]` GET response for an OFFICE session
 
 ---
 
@@ -271,11 +226,11 @@ Developers add `beforeinstallprompt` listener and fire it on first meaningful lo
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Offline sync conflict silently lost field data | HIGH — data may be unrecoverable | Add server-side `conflict_log` table; implement client `device_id` tracking retroactively; manually reconcile from user recall or paper records |
-| Stale RSC payload served from cache after deploy | LOW — force refresh clears it | Add cache-busting query param to navigation routes; instruct users to "pull to refresh" or hard reload; update service worker to use NetworkFirst going forward |
-| Service worker update stranded users on old version | MEDIUM — requires users to manually close/reopen PWA | Send push notification or in-app alert prompting users to refresh; document manual "clear site data" process for support |
-| IndexedDB data persists after logout on shared device | HIGH if sensitive data — requires manual device-level clear | Immediately implement logout → IndexedDB clear; document "clear site data" in browser settings as interim mitigation |
-| 1000-node DOM on mobile FSA module causes crash | MEDIUM — requires adding virtualization | Gate FSA module behind "desktop recommended" banner on mobile until virtualization is implemented |
+| ADMIN fallback bypasses all role filters after launch | HIGH | Immediately disable iframe embed until proper token auth is implemented; all role-filtered views are compromised until then |
+| Duplicate enterprises created by expanded sync | MEDIUM | Write a migration script to identify duplicates (`GROUP BY fieldId, cropYear, crop, label`); merge actuals from the duplicate onto the canonical enterprise; delete the duplicate; re-run sync with the fixed match key |
+| Projected totals inflated by actuals entries | MEDIUM | Patch `budget-summary` to filter by `passStatus`; totals will self-correct on next page load — no data migration required since the underlying records are correct |
+| Financial fields in API response exposed to OFFICE | LOW | Add role stripping to the route handler; no data migration required; fix is a one-file change |
+| Sandy's actuals overwrote projected PLANNED operations | HIGH | Restore PLANNED operations from the last sync run or from the `farm-budget` service via a fresh sync; any actuals stored as mutations on PLANNED rows are lost |
 
 ---
 
@@ -283,32 +238,28 @@ Developers add `beforeinstallprompt` listener and fire it on first meaningful lo
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Offline sync conflict overwrites field data | Offline sync extension phase | Two-device test: both offline, edit same record, reconnect — confirm conflict is surfaced, not silently resolved |
-| Stale RSC payloads from service worker | Service worker / caching phase | Deploy a data change; confirm mobile users see updated data without hard refresh |
-| iframe modules invisible to service worker | Mobile layout phase | Drop connectivity while on an embedded module; confirm graceful fallback UI, not blank iframe |
-| Service worker update strands users | PWA install experience phase | Deploy new service worker; confirm update prompt appears on next app load without closing all tabs |
-| Touch targets too small | Mobile layout / responsive phase | Axe DevTools or manual audit: all interactive elements ≥ 44px height on 375px viewport |
-| `navigator.onLine` unreliable in rural LTE | Offline sync reliability phase | Simulate "connected but unreachable" using DevTools "slow 3G" + request blocking; confirm sync does not silently fail |
-| Desktop scroll tables break on mobile | Mobile layout phase | Test FSA CLU workspace on real iOS Safari and Android Chrome; nested scroll traps are device-specific |
-| Install prompt dismissed permanently on iOS | PWA install experience phase | Fresh iOS Safari session; confirm install instructions visible without triggering native prompt |
+| `getAuthContext()` ADMIN fallback | Phase 1: RBAC & Auth Foundation | `curl` with no session returns 401 on budget routes |
+| `budget-summary` no auth check | Phase 1: RBAC & Auth Foundation | OFFICE session API call omits all financial fields |
+| Main enterprise GET returns financial fields | Phase 1: RBAC & Auth Foundation | OFFICE session response has no `targetPricePerUnit` |
+| UI budget tab has no role check | Phase 1: RBAC & Auth Foundation | Sandy's UI shows no Budget tab and no `$` badge |
+| `sale:read` leaks prices through other routes | Phase 1: RBAC & Auth Foundation | Audit log confirms no price fields in OFFICE-accessible routes |
+| Dual-layer computation merges projected + actual | Phase 2: Actuals Entry + Dual-Layer Computation | Projected total unchanged after Sandy confirms a pass |
+| Expanded sync creates duplicate enterprises | Phase 3: All-Enterprise Sync Expansion | No duplicate `(fieldId, cropYear, crop, label)` after sync |
+| Organic match key collision with conventional | Phase 3: All-Enterprise Sync Expansion | Dry-run reports zero collisions before live sync |
 
 ---
 
 ## Sources
 
-- [Offline sync & conflict resolution patterns — Sachith Dassanayake (Feb 2026)](https://www.sachith.co.uk/offline-sync-conflict-resolution-patterns-architecture-trade%E2%80%91offs-practical-guide-feb-19-2026/) — MEDIUM confidence (single source, recent)
-- [Offline-first frontend apps 2025: IndexedDB and SQLite — LogRocket](https://blog.logrocket.com/offline-first-frontend-apps-2025-indexeddb-sqlite/) — MEDIUM confidence
-- [Next.js discussions: stale data with service worker and GSSP](https://github.com/vercel/next.js/discussions/52024) — HIGH confidence (official Next.js discussion)
-- [Next.js discussions: building offline-first App Router PWA](https://github.com/vercel/next.js/discussions/82498) — HIGH confidence (official Next.js discussion)
-- [Service Worker in iFrame — digiinvent.com](https://digiinvent.com/service-worker-in-iframe/) — MEDIUM confidence (aligns with MDN scope documentation)
-- [Offline and background operation — MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation) — HIGH confidence (official MDN)
-- [PWA caching strategies checklist — Zeepalm](https://www.zeepalm.com/blog/pwa-offline-functionality-caching-strategies-checklist) — MEDIUM confidence
-- [Mobile form usability — UX Planet / Nick Babich](https://uxplanet.org/mobile-form-usability-2279f672917d) — MEDIUM confidence (widely cited UX source)
-- [IndexedDB pain points and oddities — GitHub Gist / pesterhazy](https://gist.github.com/pesterhazy/4de96193af89a6dd5ce682ce2adff49a) — HIGH confidence (community-verified Safari IndexedDB transaction issues)
-- [Progressive Web Apps 2026 Performance Guide — digitalapplied.com](https://www.digitalapplied.com/blog/progressive-web-apps-2026-pwa-performance-guide) — LOW confidence (single source, verify independently)
-- Project codebase: `src/lib/offline/`, `src/lib/modules.ts`, `src/app/api/mobile/`, `src/middleware.ts`, `.planning/codebase/CONCERNS.md` — HIGH confidence (direct codebase analysis)
+- Direct code inspection: `src/lib/auth.ts` — `getAuthContext()` fallback behavior, lines 78–109
+- Direct code inspection: `src/app/api/field-enterprises/[id]/budget-summary/route.ts` — no auth check
+- Direct code inspection: `src/app/api/field-enterprises/[id]/route.ts` — no auth check, full row returned
+- Direct code inspection: `src/app/api/fields/sync-macro/route.ts` — organic filter lines 165–169, match key pattern
+- Direct code inspection: `src/lib/rbac.ts` — OFFICE role includes `sale:read`, `sale:write`
+- Direct code inspection: `src/app/(app)/field-enterprises/[id]/page.tsx` — no role variable, no budget tab gate
+- Direct code inspection: `src/app/(app)/layout.tsx` — `role={user?.role || "ADMIN"}` default
+- Direct code inspection: `prisma/schema.prisma` — `FieldEnterprise.targetPricePerUnit`, `PassStatus` enum, `@@unique` constraint
 
 ---
-
-*Pitfalls research for: Mobile PWA enhancements — Next.js 14 / Supabase farm operations portal*
+*Pitfalls research for: v2.0 Projected vs Actual Farm Budget — role-based filtering and actuals entry on existing organic-cert app*
 *Researched: 2026-03-20*

@@ -1,8 +1,34 @@
 # Feature Research
 
-**Domain:** Mobile PWA farm operations — internal team tool for small farm crew (2-5 people)
+**Domain:** Projected vs actual farm budget — role-filtered views, actuals entry, variance comparison for internal farm operations tool
 **Researched:** 2026-03-20
-**Confidence:** MEDIUM — based on competitor analysis, PWA best practices docs (MDN, industry sources), and agriculture app market research. Specific to a small-team internal tool, not a commercial product.
+**Confidence:** HIGH — based on direct codebase inspection (schema, RBAC, budget-summary route, sync-macro route), project requirements in PROJECT.md, and verified patterns from ERP/farm management industry research.
+
+---
+
+## Context: What Already Exists
+
+This milestone adds a layer on top of existing infrastructure. Understanding what is already built is essential for scoping what is new.
+
+**Already in schema:**
+- `FieldEnterprise` — has `targetYieldPerAcre`, `targetPricePerUnit` (projected revenue fields synced from farm-budget)
+- `FieldOperation` — has `passStatus` (PLANNED | CONFIRMED), `costPerAcre`, `totalCost`, `dataSource` (MANUAL | SYNCED)
+- `MaterialUsage` — has `unitCost`, `totalCost`, `dataSource`
+- `SeedUsage` — has `dataSource`
+- `HarvestEvent` — records actual yield per acre, moisture, test weight
+- `SaleDelivery` — records actual price per unit, net revenue
+- `AuditLog` — full change trail
+
+**Already in API:**
+- `GET /api/field-enterprises/[id]/budget-summary` — computes projected seed/material/operation costs and revenue projection on the fly from PLANNED+CONFIRMED ops combined; does NOT separate projected from actual
+
+**Already in RBAC (`src/lib/rbac.ts`):**
+- ADMIN: all permissions including `sale:read`, `enterprise:lock`
+- OFFICE: nearly identical to ADMIN — currently has `sale:read` and `sale:write` (this needs restricting for financial privacy)
+- CREW: field operation writes only
+- AUDITOR: read-only
+
+**Gap identified:** OFFICE role currently has `sale:read` — budget privacy requires this to be stripped or a new permission layer applied at the data field level, not just at the route level.
 
 ---
 
@@ -10,118 +36,138 @@
 
 ### Table Stakes (Users Expect These)
 
-Features field workers assume exist. Missing these = tool gets abandoned for paper or text messages.
+Features Sandy (OFFICE) and the farm manager (ADMIN) will assume work correctly. Missing any of these makes the v2.0 milestone feel incomplete or broken.
 
 | Feature | Why Expected | Complexity | Notes |
 |---------|--------------|------------|-------|
-| Mobile-responsive layouts for all module pages | Workers access from phones in the field; broken desktop layouts make the tool unusable | MEDIUM | All existing modules (FSA 578, Insurance, Claims, Macro Rollup) need responsive treatment; embedded iframe modules require special handling |
-| Touch-friendly forms for data entry | Fingers, gloves, field conditions — small tap targets are painful and cause errors | MEDIUM | Large tap targets (min 44px), clear labels, minimal required fields, avoid multi-column layouts on mobile |
-| Offline read access to critical data | Rural farms have spotty cellular; data must be readable without signal | MEDIUM | IndexedDB caching already exists for crop plans — needs extension to cover dashboard + key module data |
-| Offline write queue with sync-on-reconnect | Field observations entered without signal must not be lost | HIGH | Operation queue pattern already in place (`src/lib/offline/`) — extend to new field data entry forms |
-| Persistent login / session on mobile | Re-logging in every field visit kills adoption; sessions must survive app close | LOW | Supabase cookie-based auth already handles this; verify PWA session persistence after install |
-| PWA install prompt / installability | Field workers need a home screen icon — "go to website" is a barrier to daily use | LOW | Manifest already exists; improve beforeinstallprompt UX and fallback instructions for iOS |
-| Visible sync status indicator | Workers need to know when they're offline and whether their data submitted | LOW | Simple online/offline banner + pending queue count badge — critical trust signal |
-| Quick-access home screen dashboard | Workers open the app dozens of times a day; they need their most-used info immediately | MEDIUM | Single-screen view of most critical module data and pending tasks; no deep navigation required |
-| Basic push notifications for time-sensitive alerts | Field teams need to know when critical data changes (insurance deadline, claim status) | MEDIUM | Web Push API via service worker; requires Supabase edge function or webhook trigger; iOS requires PWA install |
+| Role-filtered budget API responses — financial fields stripped for OFFICE/CREW | Sandy must never see rental rates, overhead, labor, sale prices, profit/acre — this is the foundational privacy constraint for the entire milestone | MEDIUM | Not a new route — modify existing budget-summary response to omit `revenueProjection`, `targetPricePerUnit`, margin fields based on session role. Requires session auth in the GET handler (currently unauthenticated). |
+| Role-filtered enterprise detail page — Budget tab hides revenue/margin for OFFICE | The Budget tab on the field enterprise detail page shows revenue projection and gross margin — these must be invisible to OFFICE | LOW | UI conditional render based on role from session. Already have session available via `useSession()`. |
+| Projected vs actual column layout on Budget tab | Industry standard: Projected | Actual | Variance columns side by side. Any other layout pattern is unfamiliar and slows interpretation. | MEDIUM | The budget-summary API needs a parallel "actuals" calculation path. Actuals = CONFIRMED ops + confirmed material costs + actual harvest yield + actual sale price. |
+| Actuals entry for field operations — confirm planned passes as they occur | PLANNED ops are the projection. Office records the actual date, equipment, acres worked to CONFIRM them. This is the primary actuals entry workflow for equipment costs. | LOW | `passStatus` toggle (PLANNED → CONFIRMED) already exists in the schema and UI. Verify the edit flow works cleanly. May be complete already. |
+| Actuals entry for material inputs — record actual invoice quantities and costs | The as-applied rate and actual invoice price often differ from the budget. OFFICE enters the real numbers when invoices arrive. | MEDIUM | `MaterialUsage` already has `unitCost` and `totalCost` fields. Need a clear edit form that Sandy can use to update these after the projected values are synced in. Need to distinguish synced (projected) from edited (actual). |
+| Actuals entry for harvest yield — enter actual yield per acre from scale tickets | Actual yield is the most important actual data point. It drives actual revenue and actual margin calculations. | LOW | `HarvestEvent` already has `yieldPerAcre`, `acresHarvested`. The harvest entry form likely exists. Verify it is accessible and usable for OFFICE role. |
+| All-enterprise sync (organic + conventional) | Current sync only pulls organic enterprises. The farm budget covers the entire operation. ADMIN needs projected vs actual for all crops. | MEDIUM | `sync-macro` route filters to organic-category enterprises. Remove the category filter or add a parameter to include all. Conventional enterprises need the same `targetYieldPerAcre`, `targetPricePerUnit` sync treatment. |
+| Enterprise-level budget summary page with projected vs actual | Each field enterprise detail's Budget tab shows side-by-side projected vs actual for that enterprise. This is the primary consumer view. | MEDIUM | Extend `budget-summary` route to return both projected totals (from PLANNED ops / synced costs) and actual totals (from CONFIRMED ops / edited costs / harvest events). |
+| Farm-wide budget summary view — all enterprises in one view | ADMIN needs to see the whole farm at once, not click into each enterprise. Mirrors the Macro Rollup layout Sandy already knows. | HIGH | New page/component. Aggregates budget-summary data across all enterprises for a crop year. Requires a new API route or batched calls. Financial columns (revenue, margin) hidden for OFFICE. |
 
 ### Differentiators (Competitive Advantage)
 
-Features that make this portal a genuinely better tool for the W. Hughes Farms crew vs. generic farm apps.
+Features that make this tool distinctly more useful than a spreadsheet or generic farm management app for W. Hughes Farms specifically.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| Module-aware mobile dashboard | Dashboard shows only the modules this user has access to, surfacing relevant data at a glance — no hunting | LOW | Module access control already exists; dashboard can render access-filtered cards |
-| Field observation submission from phone | Crew can push notes, photos, and status updates from anywhere; office sees it immediately | MEDIUM | New form UI + API route + offline queue entry; photo support adds complexity (file upload queue) |
-| Optimistic UI updates with offline feedback | Form submit feels instant even offline; crew gets clear confirmation vs. silent failure | MEDIUM | Show pending state, queue confirmation toast, sync indicator — follows existing backoff retry pattern |
-| One-tap actions for common workflows | Frequently used actions (submit note, mark task done) accessible without 3+ taps | LOW | Progressive disclosure: surface common actions on dashboard cards rather than requiring navigation into module |
-| Text-scale and high-contrast mode | Field conditions: bright sunlight, dirty screens, gloves — accessibility settings that work outdoors | LOW | LocalStorage text-scale preference already exists; extend to contrast ratio setting (7:1 target for direct sunlight) |
-| Lightweight offline-first crop plan view | Crop plan data already cached offline — surface it as the primary offline dashboard content | LOW | Extend existing `crop-plan-sync.ts` to populate a mobile-friendly read view |
+| Variance column with favorable/unfavorable indicator | Variance = Actual − Projected. Color and sign (green/favorable, red/unfavorable) give instant read on whether costs are running over or under. Industry standard in ERP budget reports. | LOW | Computed client-side from projected and actual totals. Favorable = actual cost < projected cost (saved money) OR actual yield > projected yield. |
+| DataSource badge on individual line items (SYNCED vs edited) | Sandy can see at a glance which material usages still have synced/projected costs vs which have been updated with real invoice numbers. Prevents confusion about what's real vs estimated. | LOW | `dataSource` field already exists on `MaterialUsage` and `SeedUsage`. Render a subtle "Projected" vs "Actual" badge on each line in the Budget tab detail. |
+| Macro Rollup-style layout on farm-wide summary | Sandy already knows the Macro Rollup layout from the farm-budget service. Mirror that column structure (crop, acres, seed cost, input cost, equipment cost, yield, [revenue — admin only]) so the mental model transfers. | MEDIUM | Design work, not data work. Study Macro Rollup layout and match it. Financial columns conditionally rendered. |
+| Inline actuals editing from Budget tab | OFFICE can click a line item's cost to update it without navigating to a separate edit form. Faster workflow for invoice processing. | MEDIUM | Inline edit pattern: click → input appears → save on blur/enter. Applies to `MaterialUsage.unitCost` and `FieldOperation.costPerAcre`. |
+| Bulk operation confirmation (confirm all planned passes in one action) | At season-end, all planned ops become confirmed. One-click "Confirm all operations for this enterprise" saves Sandy from confirming each one individually. | LOW | POST to a new route `/api/field-enterprises/[id]/operations/confirm-all` — sets all PLANNED to CONFIRMED with today's date. Add admin confirmation prompt. |
+| Crop-year filter on farm-wide summary | Budget comparisons are always year-specific. Crop year selector at top of farm-wide view lets admin jump between years without navigating away. | LOW | UI select control. Already have `cropYear` on `FieldEnterprise`. Standard pattern. |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
-Features to deliberately not build for this context.
+Features to deliberately not build for this milestone.
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Real-time collaborative editing | Sounds modern and useful | Two crew members editing the same record simultaneously creates merge conflicts; server-wins or client-wins both cause data loss; CRDT complexity is months of work | Optimistic single-writer with conflict detection on sync — last-write-wins with timestamp is sufficient for a 2-5 person team |
-| Native iOS / Android app | App store presence feels professional | Enormous overhead: two codebases, store review cycles, device testing, MDM enrollment; contradicts the project constraint of no new infrastructure | PWA covers all requirements for a small internal team; install prompt is sufficient |
-| Rich analytics / reporting on mobile | Managers want data anywhere | Farm analytics require large tables, charts, and complex filtering — these are desktop workflows and kill mobile performance | Surface key KPI numbers on mobile dashboard; link to full desktop view for deep analysis |
-| Chat / messaging within the app | Team coordination feels essential | Duplicates existing communication tools (SMS, messaging apps) the team already uses; in-app chat requires real-time infra (WebSockets) and is high maintenance | Push notifications for critical alerts + field observations as structured notes are sufficient |
-| Automatic background data refresh | Always-fresh data sounds better | Periodic Background Sync API has limited browser support (Chrome only, no iOS Safari); silent failures confuse users | Pull-to-refresh + sync-on-foreground pattern is reliable and explicit; user controls when data refreshes |
-| Full module feature parity on mobile | Complete feature access from phone | Embedded iframe modules (Express apps) cannot be reliably made mobile-friendly without rebuilding them; scope creep risk | Mobile exposes read + quick-add for native modules; links to desktop for embedded module workflows |
-| GPS / location tagging on all records | Field data with location metadata sounds valuable | Geolocation API on mobile requires permission prompts, drains battery, and adds latency to form submission; low ROI for a 2-5 person team on a known property | Optional location field (manual text input: "North field, row 4") is simpler and sufficient |
+| Approval workflow for actuals entry | Sounds like a good audit trail — Sandy enters data, admin approves | PROJECT.md explicitly rules this out. Sandy's entries record immediately; admin trusts the team. An approval gate adds friction and blocks the office workflow. | AuditLog already captures every change with user, timestamp, old/new data. Admin can review changes in audit trail if needed. |
+| Syncing actuals back to farm-budget service | Seems natural — actuals should flow back to the source | PROJECT.md explicitly marks this as out of scope for this milestone. The farm-budget service is the source of truth for projections; organic-cert records reality alongside it, not inside it. Reverse sync creates a two-way dependency that complicates both systems. | Manual reconciliation by admin at season end. Future milestone if needed. |
+| Invoice attachment / document storage for actuals | Sandy would attach the invoice PDF to each material usage so there's a paper trail | Useful eventually, but adds file storage complexity (uploads, paths, serving files) that is not needed for projected vs actual comparisons. Scope creep risk for this milestone. | `Attachment` model already exists in schema for future use. Note in description field for now. |
+| Real-time multi-user editing of actuals | If farm manager and Sandy are both in the same enterprise at the same time | Two writers on the same record causes last-write-wins data loss with no conflict UI. Small team, low probability, high complexity to handle properly. | Page-level locking (show "Sandy is editing this" via optimistic UI) or simply accept last-write-wins — the team is small enough that conflicts are very rare. |
+| Percent-complete / progress tracking per enterprise | Shows how far through the season each enterprise is | Not how farm operations work. PLANNED vs CONFIRMED is sufficient signal for "what has happened vs what is planned." A percentage is a manufactured metric that will be wrong whenever reality diverges from the plan. | CONFIRMED operation count vs PLANNED count gives a factual ratio if needed. |
+| Budget forecasting / re-forecasting | Updating the projected budget mid-season based on actuals | This is the farm-budget service's job. Organic-cert records actuals against the static plan — it does not update the plan. Re-forecasting in organic-cert would duplicate farm-budget functionality and create two sources of truth for projected data. | Re-forecast in farm-budget service, then re-sync to organic-cert. |
+| Per-acre profitability map / heat map | Visual, map-based view of which fields are most profitable | Requires GIS rendering (MapBox, Leaflet, etc.), adds heavy dependency, and the farm manager already knows their fields by name. Premium complexity for minimal gain. | Tabular farm-wide summary with per-acre margin column (admin only) achieves the same analytical goal. |
 
 ---
 
 ## Feature Dependencies
 
 ```
-[PWA Install Prompt]
-    └──enables──> [Push Notifications on iOS]
+[All-Enterprise Sync]
+    └──required by──> [Farm-Wide Budget Summary]
+    └──required by──> [Projected vs Actual — Conventional Enterprises]
 
-[Offline Write Queue]
-    └──requires──> [Sync Status Indicator]
-    └──requires──> [Sync-on-Reconnect Logic]
-                       └──requires──> [Conflict Resolution Strategy]
+[Budget API Role Filtering]
+    └──required by──> [Farm-Wide Budget Summary (OFFICE view)]
+    └──required by──> [Enterprise Budget Tab (OFFICE view)]
+    └──required before──> [Any budget UI renders — privacy constraint]
 
-[Field Observation Submission]
-    └──requires──> [Touch-Friendly Forms]
-    └──requires──> [Offline Write Queue]
+[Projected vs Actual Budget Summary API]
+    └──requires──> [DataSource differentiation on MaterialUsage/FieldOperation]
+    └──requires──> [HarvestEvent actuals readable from budget-summary route]
+    └──feeds──> [Variance Column Display]
 
-[Module-Aware Dashboard]
-    └──requires──> [Mobile-Responsive Layouts]
-    └──requires──> [Module Access Control] (already exists)
+[Variance Column Display]
+    └──requires──> [Projected vs Actual Budget Summary API]
+    └──enhances──> [Enterprise Budget Tab]
+    └──enhances──> [Farm-Wide Budget Summary]
 
-[Push Notifications]
-    └──requires──> [PWA Install] (for iOS support)
-    └──requires──> [Service Worker] (already exists)
-    └──requires──> [Notification Trigger] (Supabase webhook or edge function)
+[Farm-Wide Budget Summary View]
+    └──requires──> [All-Enterprise Sync]
+    └──requires──> [Budget API Role Filtering]
+    └──requires──> [Projected vs Actual Budget Summary API]
 
-[Offline Read Access]
-    └──enhances──> [Module-Aware Dashboard]
+[Actuals Entry — Material Inputs]
+    └──enhances──> [Projected vs Actual Budget Summary API] (replaces SYNCED cost with real invoice cost)
+    └──depends on──> [DataSource badge] (Sandy knows what still needs updating)
 
-[Text-Scale / High-Contrast Mode]
-    └──enhances──> [Touch-Friendly Forms]
-    └──enhances──> [Module-Aware Dashboard]
+[Actuals Entry — Field Operations (confirm planned passes)]
+    └──leverages──> [Existing PassStatus PLANNED→CONFIRMED toggle] (may already work)
+    └──enhances──> [Projected vs Actual Budget Summary API]
+
+[Actuals Entry — Harvest Yield]
+    └──leverages──> [Existing HarvestEvent model and entry form]
+    └──feeds──> [Actual Revenue Calculation (ADMIN only)]
+
+[Bulk Operation Confirmation]
+    └──enhances──> [Actuals Entry — Field Operations]
+    └──requires──> [Existing FieldOperation PLANNED/CONFIRMED model]
+
+[Inline Actuals Editing]
+    └──enhances──> [Actuals Entry — Material Inputs]
+    └──enhances──> [Enterprise Budget Tab UX]
 ```
 
 ### Dependency Notes
 
-- **Push Notifications require PWA Install on iOS:** iOS Safari only supports Web Push for installed PWAs (added in iOS 16.4). Users must install to homescreen before notifications work. Build the install prompt before notification opt-in.
-- **Offline Write Queue requires Sync Status Indicator:** Without visible sync state, users submit forms twice thinking the first failed — causing duplicate records. These must ship together.
-- **Field Observation Submission requires Offline Write Queue:** A field data form that silently drops submissions when offline is worse than paper. Queue comes first.
-- **Module-Aware Dashboard requires responsive layouts:** Rendering module data on mobile without responsive layout foundations causes horizontal scroll and broken UI. Responsive treatment is the prerequisite.
+- **Budget API role filtering must ship before any budget UI:** Exposing the budget tab to OFFICE before financial fields are stripped violates the privacy constraint in PROJECT.md. This is the first thing to implement.
+- **All-enterprise sync is a prerequisite for farm-wide summary:** A farm-wide view that only shows organic enterprises is misleading. Fix the sync filter first, then build the aggregation view.
+- **Projected vs actual API split requires DataSource awareness:** The budget-summary route currently mixes PLANNED and CONFIRMED costs into one total. Splitting these (projected = SYNCED/PLANNED, actual = CONFIRMED/edited) is the core data modeling work for this milestone.
+- **HarvestEvent actuals are already stored — they just aren't consumed by budget-summary:** Actual yield and actual revenue from `HarvestEvent` and `SaleDelivery` are in the database but not included in the budget-summary calculation. Wiring these in is straightforward but must be intentional about role gating (`SaleDelivery.pricePerUnit` is ADMIN-only).
 
 ---
 
 ## MVP Definition
 
-### Launch With (v1) — Mobile-Usable Core
+This milestone (v2.0) is the MVP. The full scope is the minimum to make projected vs actual useful.
 
-Minimum needed for a field crew to prefer this over paper or texts.
+### Launch With (v2.0 core)
 
-- [ ] Mobile-responsive layouts for all native module pages (FSA 578, Insurance, Claims, Macro Rollup) — without this, the portal is functionally unusable on phones
-- [ ] Touch-friendly form controls (tap target sizing, single-column layout, clear labels) — applies to any existing forms + new field observation forms
-- [ ] Sync status indicator (online/offline banner + pending queue count) — trust signal, required with any offline write capability
-- [ ] Offline read access for dashboard + crop plan data — extend existing IndexedDB caching to cover quick-glance data
-- [ ] PWA install prompt improvement — better UX for Android (beforeinstallprompt) + manual instructions for iOS; home screen icon is table stakes
+Minimum needed for ADMIN to see projected vs actual and for OFFICE to enter actuals without seeing financial data.
 
-### Add After Validation (v1.x) — Field Data Push
+- [ ] **Budget API role filtering** — strip financial fields (revenue projection, gross margin, sale prices, rental rates) from responses for OFFICE/CREW roles. Must ship first — it's the privacy foundation.
+- [ ] **All-enterprise sync expansion** — remove organic-only filter in sync-macro so conventional enterprises sync with the same projected data fields. Without this, the farm-wide view is missing half the operation.
+- [ ] **Projected vs actual split in budget-summary API** — return `projected` and `actual` objects separately so the UI can render two columns. Projected = SYNCED/PLANNED cost basis. Actual = CONFIRMED ops + edited material costs + harvest actuals.
+- [ ] **Updated Budget tab on enterprise detail page** — render Projected | Actual | Variance columns. Show DataSource badge (Projected/Actual) on line items. Hide revenue/margin rows for OFFICE role.
+- [ ] **Farm-wide budget summary page** — new page listing all enterprises for a crop year with projected vs actual totals per enterprise. Financial columns ADMIN only. Mirrors Macro Rollup column structure.
+- [ ] **Actuals entry for material inputs** — edit form that lets Sandy update `unitCost` and `totalCost` on a `MaterialUsage` when the invoice arrives. Updates `dataSource` to MANUAL on save.
+- [ ] **Verify harvest actuals entry works for OFFICE role** — HarvestEvent form exists; confirm OFFICE role can enter yield without seeing price/revenue fields.
 
-Add once crew is using the portal daily from mobile.
+### Add After Validation (v2.x)
 
-- [ ] Field observation submission form (text note + optional photo) with offline queue — trigger: crew reporting they're still texting observations instead of using the portal
-- [ ] Optimistic UI + submission confirmation toasts — trigger: crew complaining about uncertainty after form submit
-- [ ] One-tap quick actions on dashboard cards — trigger: crew feedback that navigation is too deep
-- [ ] Push notifications for deadline alerts (insurance, claims) — trigger: crew asking to be notified of time-sensitive items
+Add once core projected vs actual comparison is working and being used.
 
-### Future Consideration (v2+) — Enhanced Workflow
+- [ ] **Bulk operation confirmation** — "Confirm all planned operations" button on enterprise detail. Trigger: Sandy reports confirming passes one by one is tedious.
+- [ ] **Inline actuals editing on Budget tab** — click-to-edit cost fields without navigating to separate form. Trigger: Sandy finds the current edit flow disruptive.
+- [ ] **Variance highlighting with color indicators** — green/favorable, amber/watch, red/over budget color coding on variance column. Trigger: admin requests faster visual scan of performance.
+- [ ] **Crop-year selector on farm-wide summary** — compare different years. Trigger: after first full year of actuals data is available.
 
-Defer until v1.x is stable and validated.
+### Future Consideration (v3+)
 
-- [ ] High-contrast / outdoor display mode — defer: low-end accessibility concern, address when crew reports readability issues in field
-- [ ] Photo attachment in field observations — defer: file upload queue adds significant complexity; text notes cover 90% of use cases
-- [ ] Per-module mobile offline views (beyond crop plans) — defer: requires module-by-module offline data modeling; complex
+Defer until v2.0 actuals workflow is stable and the team is using it regularly.
+
+- [ ] **Actuals sync back to farm-budget service** — PROJECT.md marks this out of scope; defer until farm-budget service is ready to receive actuals.
+- [ ] **Invoice attachment on material usages** — attach PDF invoices to records. Defer: file storage infrastructure not in scope.
+- [ ] **Per-enterprise profitability report PDF export** — printable season-end report. Defer: reporting module already exists; extend it later.
 
 ---
 
@@ -129,55 +175,102 @@ Defer until v1.x is stable and validated.
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Mobile-responsive layouts | HIGH | MEDIUM | P1 |
-| Touch-friendly forms | HIGH | LOW | P1 |
-| Sync status indicator | HIGH | LOW | P1 |
-| PWA install prompt improvement | HIGH | LOW | P1 |
-| Offline read (dashboard + crop plans) | HIGH | MEDIUM | P1 |
-| Field observation submission | HIGH | MEDIUM | P2 |
-| Optimistic UI / submission feedback | MEDIUM | LOW | P2 |
-| Push notifications (deadline alerts) | MEDIUM | MEDIUM | P2 |
-| One-tap quick actions on dashboard | MEDIUM | LOW | P2 |
-| High-contrast / outdoor display mode | MEDIUM | LOW | P3 |
-| Photo attachments | LOW | HIGH | P3 |
-| Per-module offline views | MEDIUM | HIGH | P3 |
+| Budget API role filtering (strip financial fields) | HIGH | MEDIUM | P1 — privacy foundation, nothing else ships without this |
+| All-enterprise sync expansion | HIGH | LOW | P1 — without this, farm-wide view is incomplete |
+| Projected vs actual split in budget-summary API | HIGH | MEDIUM | P1 — core data model for all UI features |
+| Updated Budget tab (two-column layout) | HIGH | MEDIUM | P1 — primary daily-use view for OFFICE and ADMIN |
+| Farm-wide budget summary page | HIGH | HIGH | P1 — ADMIN's primary season overview |
+| Actuals entry for material inputs | HIGH | MEDIUM | P1 — OFFICE's primary data entry workflow |
+| Harvest actuals entry verification (OFFICE role) | HIGH | LOW | P1 — verifying existing functionality works correctly |
+| Bulk operation confirmation | MEDIUM | LOW | P2 |
+| Inline actuals editing | MEDIUM | MEDIUM | P2 |
+| Variance color indicators | MEDIUM | LOW | P2 |
+| Crop-year filter on farm-wide summary | LOW | LOW | P2 |
+| Invoice attachment support | LOW | HIGH | P3 |
+| Actuals sync back to farm-budget | LOW | HIGH | P3 |
 
 **Priority key:**
-- P1: Must have for launch — crew can't use portal on mobile without these
-- P2: Should have — crew adopts daily use with these in place
-- P3: Nice to have — future milestone
+- P1: Required for v2.0 launch — ADMIN cannot do projected vs actual comparison without these
+- P2: Should have — meaningfully improves daily usability
+- P3: Nice to have — defer to future milestone
+
+---
+
+## Existing Model Mapping to Feature Areas
+
+This section maps the new v2.0 features to the Prisma models they read/write, to clarify what schema changes (if any) are needed.
+
+| Feature | Primary Model(s) | Schema Change Needed? |
+|---------|----------------|-----------------------|
+| Role-filtered API responses | Session (NextAuth) + budget-summary route | No schema change — API response transformation |
+| Projected costs (PLANNED/SYNCED) | `FieldOperation` (passStatus=PLANNED), `MaterialUsage` (dataSource=SYNCED), `SeedUsage` (dataSource=SYNCED) | No — fields exist |
+| Actual costs (CONFIRMED/MANUAL) | `FieldOperation` (passStatus=CONFIRMED), `MaterialUsage` (dataSource=MANUAL, edited unitCost) | No — fields exist |
+| Actual yield | `HarvestEvent.yieldPerAcre`, `acresHarvested` | No — fields exist |
+| Actual revenue (ADMIN only) | `SaleDelivery.pricePerUnit`, `netRevenue` | No — fields exist |
+| All-enterprise sync | `FieldEnterprise.organicStatus` — currently only ORGANIC synced | No schema change — remove category filter in sync-macro route |
+| Farm-wide aggregation | Aggregate across `FieldEnterprise` for a `cropYear` | No — new API route, no new model |
+| DataSource badge | `MaterialUsage.dataSource`, `SeedUsage.dataSource`, `FieldOperation.dataSource` | No — fields exist |
+
+**Conclusion:** No Prisma schema migrations are required for v2.0. All data fields needed for projected vs actual comparison already exist. The work is in API layer (splitting projected vs actual in budget-summary, adding role filtering) and UI layer (new two-column layout, farm-wide summary page).
+
+---
+
+## Role-Based Data Visibility Matrix
+
+Defines what each role sees in budget-related views. This is the specification for API filtering.
+
+| Data Field | ADMIN | OFFICE | CREW | AUDITOR |
+|-----------|-------|--------|------|---------|
+| Seed cost (projected) | YES | YES | NO | YES (read-only) |
+| Material input cost (projected) | YES | YES | NO | YES |
+| Equipment/operation cost (projected) | YES | YES | NO | YES |
+| Actual seed cost | YES | YES | NO | YES |
+| Actual material cost | YES | YES | NO | YES |
+| Actual operation cost | YES | YES | NO | YES |
+| Projected yield (bu/ac) | YES | YES | NO | YES |
+| Actual yield (bu/ac) | YES | YES | NO | YES |
+| Target price per unit ($/bu) | YES | NO | NO | NO |
+| Projected gross revenue | YES | NO | NO | NO |
+| Projected gross margin / profit | YES | NO | NO | NO |
+| Actual sale price ($/bu) | YES | NO | NO | NO |
+| Actual net revenue | YES | NO | NO | NO |
+| Variance (cost) | YES | YES | NO | YES |
+| Variance (revenue/margin) | YES | NO | NO | NO |
+| Cost per acre | YES | YES | NO | YES |
+| Profit per acre | YES | NO | NO | NO |
+
+**Implementation pattern:** The budget-summary API route checks session role and either includes or omits `revenueProjection` and related fields in the response. The UI Budget tab renders based on what the API returns — if `revenueProjection` is absent, the revenue/margin rows simply do not render. No separate UI role check needed beyond what the API enforces.
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature | Farmbrite | Agworld | FarmKeep | Our Approach |
-|---------|-----------|---------|----------|--------------|
-| Mobile access | Native iOS/Android apps | Native apps + web | Native apps | PWA — no app store, same codebase, sufficient for small internal team |
-| Offline mode | Partial (varies by module) | Limited | Not documented | Offline-first with IndexedDB queue; already partially implemented |
-| Field data entry | Forms in native app | Scouting forms + photo | Task checklists | Structured observation forms + offline queue |
-| Dashboard | Role-based dashboards | Agronomist-focused analytics | Simple task view | Module-access-aware quick-glance, tailored to farm ops roles |
-| Push notifications | Yes (native app) | Yes (native app) | Limited | Web Push via service worker; iOS requires install first |
-| Team coordination | Task assignment + messaging | Advisor-grower messaging | Shared task lists | Structured field observations; no in-app chat (deliberate) |
+Scoped to projected vs actual and role-filtered budget patterns, not general farm management features.
 
-**Takeaway:** Commercial competitors use native apps to deliver offline + push notifications reliably. A PWA closes most of that gap for an internal 2-5 person team at zero app store overhead — the tradeoff is acceptable given the constraints.
+| Feature | Granular Insights | Agworld | Ag Decision Maker (ISU) | Our Approach |
+|---------|------------------|---------|------------------------|--------------|
+| Projected vs actual comparison | Yes — real-time forecasts vs actuals by crop/field | Yes — plan vs actual costs in-season | Spreadsheet templates (not software) | Side-by-side columns per enterprise and farm-wide table |
+| Role-based financial visibility | Yes — custom role permissions per user | Limited — advisor/grower distinction | N/A | Hard-coded role matrix: ADMIN sees all financial data, OFFICE sees agronomic data only |
+| Actuals entry workflow | Syncs from equipment telematics and grain elevator | Manual entry or agronomist input | Manual spreadsheet | Manual entry by OFFICE role; planned pass confirmation for ops |
+| Farm-wide aggregation view | Yes — enterprise-level and farm-level dashboards | Yes — field and farm dashboards | Partial budget templates | Farm-wide summary page mirroring Macro Rollup layout |
+| Variance indicators | Yes — dashboard with color coding | Limited | Manual | Color-coded variance column (v2.x, after core is stable) |
+
+**Takeaway:** Commercial farm management platforms treat projected vs actual as a first-class feature with dashboard-level visibility. The W. Hughes Farms approach is simpler (no telematics sync, manual actuals entry) but the data model is already correct — the gap is entirely in the API and UI layer.
 
 ---
 
 ## Sources
 
-- [7 Best Mobile Apps for Farm Management - FarmstandApp](https://www.farmstandapp.com/67360/7-best-mobile-apps-for-farm-management/) — competitor feature set (MEDIUM confidence)
-- [Farmbrite Product Features](https://www.farmbrite.com/product) — feature comparison baseline (MEDIUM confidence)
-- [FarmKeep Farm Task Management](https://www.farmkeep.com/features/farm-task-management) — small team coordination patterns (MEDIUM confidence)
-- [Offline and background operation — MDN PWA Guide](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Offline_and_background_operation) — Background Sync API, Periodic Background Sync browser support (HIGH confidence)
-- [Best practices for PWAs — MDN](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Best_practices) — offline-first patterns, install prompt (HIGH confidence)
-- [Offline sync conflict resolution patterns — sachith.co.uk, Feb 2026](https://www.sachith.co.uk/offline-sync-conflict-resolution-patterns-architecture-trade%E2%80%91offs-practical-guide-feb-19-2026/) — conflict resolution strategies, anti-patterns (MEDIUM confidence)
-- [UX Research for Agriculture Mobile App — Medium/Nishant Dogra](https://medium.com/@mrdogra007/ux-research-analysis-and-strategy-check-list-for-agriculture-based-mobile-application-da5c58efd528) — farmer UX constraints: low-end devices, sunlight readability, offline needs (MEDIUM confidence)
-- [Agriculture app design guide — Gapsy Studio](https://gapsystudio.com/blog/agriculture-app-design/) — 7:1 contrast ratio for sunlight, task-oriented flows over dense dashboards (MEDIUM confidence)
-- [Offline + Sync Architecture for Field Operations — Alpha Software](https://www.alphasoftware.com/blog/offline-sync-architecture-tutorial-examples-tools-for-field-operations) — field operations offline architecture patterns (MEDIUM confidence)
-- [Agritech Mobile App Trends — Farmonaut](https://farmonaut.com/blogs/agritech-mobile-apps-top-7-agriculture-mobile-app-trends) — industry trends and feature expectations (LOW confidence, marketing source)
+- Direct codebase inspection: `prisma/schema.prisma`, `src/lib/rbac.ts`, `src/app/api/field-enterprises/[id]/budget-summary/route.ts`, `src/app/api/fields/sync-macro/route.ts`, `src/lib/ecosystem/budget-client.ts` — HIGH confidence
+- `.planning/PROJECT.md` — project requirements and constraints — HIGH confidence
+- [Budget vs Actual Analysis: Variance, Examples, and Tools — Qubit Capital](https://qubit.capital/blog/budget-vs-actual) — dual-column layout, variance display conventions — MEDIUM confidence
+- [How to Conduct a Plan vs Actual Analysis — LivePlan](https://www.liveplan.com/blog/managing/how-to-conduct-plan-vs-actual-financial-analysis) — projected vs actual patterns, column conventions — MEDIUM confidence
+- [Agworld farm management platform](https://www.agworld.com/us/) — farm management projected vs actual feature set — MEDIUM confidence
+- [Actuals in Accounting — NetSuite](https://www.netsuite.com/portal/resource/articles/accounting/actuals-in-accounting.shtml) — actuals workflow patterns in ERP — MEDIUM confidence
+- [Budget vs Actual Dashboard — Bold BI](https://www.boldbi.com/dashboard-examples/finance/budget-vs-actual-dashboard/) — variance visualization conventions — MEDIUM confidence
+- [Budgeting and Forecasting with ERP — Soft Engine](https://softengine.com/budgeting-and-forecasting-with-erp/) — role-based financial visibility patterns — MEDIUM confidence
 
 ---
 
-*Feature research for: Mobile PWA farm operations portal (W. Hughes Farms)*
+*Feature research for: Projected vs Actual Farm Budget — v2.0 milestone (W. Hughes Farms organic-cert app)*
 *Researched: 2026-03-20*
