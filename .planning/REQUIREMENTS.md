@@ -90,31 +90,48 @@ Deferred to future release. Tracked but not in current roadmap.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
+### v2.0 Requirements
+
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PRIV-01 | TBD | Pending |
-| PRIV-02 | TBD | Pending |
-| PRIV-03 | TBD | Pending |
-| PRIV-04 | TBD | Pending |
-| ACT-01 | TBD | Pending |
-| ACT-02 | TBD | Pending |
-| ACT-03 | TBD | Pending |
-| ACT-04 | TBD | Pending |
-| ACT-05 | TBD | Pending |
-| VIEW-01 | TBD | Pending |
-| VIEW-02 | TBD | Pending |
-| VIEW-03 | TBD | Pending |
-| VIEW-04 | TBD | Pending |
-| VIEW-05 | TBD | Pending |
-| VIEW-06 | TBD | Pending |
-| SYNC-01 | TBD | Pending |
-| SYNC-02 | TBD | Pending |
+| PRIV-01 | Phase 5 | Pending |
+| PRIV-02 | Phase 5 | Pending |
+| PRIV-03 | Phase 5 | Pending |
+| PRIV-04 | Phase 5 | Pending |
+| ACT-01 | Phase 6 | Pending |
+| ACT-02 | Phase 6 | Pending |
+| ACT-03 | Phase 6 | Pending |
+| ACT-04 | Phase 6 | Pending |
+| ACT-05 | Phase 6 | Pending |
+| VIEW-01 | Phase 6 | Pending |
+| VIEW-02 | Phase 6 | Pending |
+| VIEW-03 | Phase 6 | Pending |
+| VIEW-06 | Phase 6 | Pending |
+| SYNC-01 | Phase 7 | Pending |
+| SYNC-02 | Phase 7 | Pending |
+| VIEW-04 | Phase 8 | Pending |
+| VIEW-05 | Phase 8 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17
+- Mapped to phases: 17
+- Unmapped: 0
+
+### v1.0 Requirements (Paused)
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| UX-01 | Phase 1 | Paused |
+| UX-02 | Phase 1 | Paused |
+| MSYNC-01 | Phase 2 | Paused |
+| MSYNC-02 | Phase 2 | Paused |
+| DASH-01 | Phase 3 | Paused |
+| DASH-02 | Phase 3 | Paused |
+| DASH-03 | Phase 3 | Paused |
+| FIELD-01 | Phase 4 | Paused |
+| FIELD-02 | Phase 4 | Paused |
+| FIELD-03 | Phase 4 | Paused |
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after initial definition*
+*Last updated: 2026-03-20 — v2.0 traceability complete; all 17 requirements mapped to phases 5–8*

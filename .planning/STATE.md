@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 5 — Privacy Foundation
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-20 — Milestone v2.0 started
+Status: Not started
+Last activity: 2026-03-20 — v2.0 roadmap created; phases 5–8 defined
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -27,7 +27,10 @@ Progress: [░░░░░░░░░░] 0%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 5. Privacy Foundation | TBD | - | - |
+| 6. Actuals Entry and Enterprise Budget View | TBD | - | - |
+| 7. All-Enterprise Sync | TBD | - | - |
+| 8. Farm-Wide Budget Summary | TBD | - | - |
 
 **Recent Trend:**
 - Last 5 plans: none yet
@@ -42,23 +45,25 @@ Progress: [░░░░░░░░░░] 0%
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- [Init]: Enhance PWA over native app — cheaper, reuses existing code, no app store overhead
-- [Init]: Build on existing offline layer — IndexedDB + sync already working for crop plans
+- [v2.0 Init]: Actuals as separate parallel layer — projected records never overwritten; farm manager's crop plan is source of truth
+- [v2.0 Init]: Financial data hidden at API + UI level — response stripping required, UI-only hiding is insufficient
+- [v2.0 Init]: No approval gate for actuals entry — Sandy's entries record immediately; admin trusts team
+- [v2.0 Init]: All enterprises (not just organic) in scope for sync expansion
 
 ### Pending Todos
 
-None yet.
+- Confirm iframe auth token mechanism before Phase 5 planning — preferred fix for `getAuthContext()` ADMIN fallback is X-Auth-Token header from portal iframe; confirm portal can emit per-user signed token
+- Verify farm-budget service `category` field values for conventional enterprises before Phase 7 planning — sync filter currently checks `"organic"` and `"ORG"`; conventional values not confirmed from source
 
 ### Blockers/Concerns
 
-- [Phase 2]: Server-side conflict handler behavior in `src/app/api/mobile/` needs direct audit before offline sync hardening — inferred, not confirmed
-- [Phase 2]: TanStack Query version in portal (v4 vs v5 is a breaking change) — check before adding persistQueryClient
-- [Phase 2]: Existing service worker caching strategies (sw.ts + layout.tsx) need audit before Serwist migration — specifically whether RSC routes are under stale-while-revalidate
-- [Phase 3]: CLU workspace virtualization scope — if 1000+ CLU records, mobile performance needs decision before Phase 3 planning
-- [Phase 4]: Supabase push_subscriptions table design needed before any push notification work (v2 scope)
+- [Phase 5]: `getAuthContext()` ADMIN fallback is the highest-priority fix — all role filtering is meaningless until unauthenticated requests return 401 instead of ADMIN-level data. Verify with curl before any other budget work.
+- [Phase 6]: Budget-summary computation mixes PLANNED and CONFIRMED operations — must split projected/actual computation paths before actuals entry goes live, or confirmed passes inflate projected totals
+- [Phase 6]: `BudgetTab.tsx` extraction from `[id]/page.tsx` is a structural prerequisite before dual-view UI work — detail page already exceeds safe file size
+- [Phase 7]: Sync upsert match key collision — current key `{fieldId, cropYear, crop, label}` does not include `organicStatus`; conventional and organic crops of same type on same field will create duplicates. Update match key and run dry-run before going live.
 
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Roadmap created — ROADMAP.md and STATE.md written, REQUIREMENTS.md traceability updated
+Stopped at: v2.0 roadmap created — ROADMAP.md updated with phases 5–8, STATE.md updated to Phase 5, REQUIREMENTS.md traceability updated
 Resume file: None
