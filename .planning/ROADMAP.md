@@ -97,7 +97,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. A request with no session cookie to any budget API route receives a 401 error, not ADMIN-level data
   3. Sandy (OFFICE) can log in and view the enterprise Budget tab without seeing rental rates, overhead, labor, sale prices, or profit/acre anywhere in the page — including page source
   4. New `budget:read` and `budget:financial` permissions exist in rbac.ts and are enforced on the budget-summary route
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 05-01-PLAN.md — Auth foundation + RBAC permissions + API field stripping
+- [ ] 05-02-PLAN.md — UI role-conditional rendering + end-to-end verification
 
 #### Phase 6: Actuals Entry and Enterprise Budget View
 **Goal**: Sandy can record invoice costs, field operation confirmations, and harvest yields against the projected plan; the enterprise Budget tab shows projected and actual values side by side with variance
@@ -142,7 +145,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Privacy Foundation | 0/TBD | Not started | - |
+| 5. Privacy Foundation | 0/2 | Planning complete | - |
 | 6. Actuals Entry and Enterprise Budget View | 0/TBD | Not started | - |
 | 7. All-Enterprise Sync | 0/TBD | Not started | - |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
