@@ -117,7 +117,7 @@
 **Milestone Goal:** Turn Glomalin Portal into a Progressive Web App so field operators can view crop plans, confirm field passes offline, and push confirmed operations into organic-cert's 3-year field histories for NOP compliance.
 
 - [x] **Phase 44: PWA Infrastructure** - Service worker, web app manifest, install prompt, offline shell, IndexedDB wrapper (completed 2026-03-17)
-- [ ] **Phase 45: Crop Plan Viewer** - Mobile-first field list and detail pages aggregating data from farm-budget and farm-registry, with offline caching
+- [x] **Phase 45: Crop Plan Viewer** - Mobile-first field list and detail pages aggregating data from farm-budget and farm-registry, with offline caching (completed 2026-03-20)
 - [ ] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API
 - [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
 - [ ] **Phase 48: Grain Tickets PWA + Dashboard Caching** - Extend offline pattern to grain-tickets entry and dashboard read-only views
@@ -308,7 +308,7 @@ Plans:
 | 42. Design Token Alignment & Palette Swap | v8.0 | 3/3 | Complete | 2026-03-07 |
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 44. PWA Infrastructure | 2/2 | Complete    | 2026-03-17 | - |
-| 45. Crop Plan Viewer | 1/2 | In Progress|  | - |
+| 45. Crop Plan Viewer | 2/2 | Complete   | 2026-03-20 | - |
 | 46. Field Pass Logger | v9.0 | 0/? | Not started | - |
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
