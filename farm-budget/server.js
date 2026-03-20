@@ -28,9 +28,38 @@ const corsOptions = {
 // Gzip all responses — ~60-70% payload reduction for JSON/HTML/JS/CSS
 app.use(compression());
 app.use(cors(corsOptions));
+
 app.use(express.json({ limit: '50mb' }));
-// Static files: no cache during development
+
+// ── Embed-token gate ─────────────────────────────────────────────
+// Cookie-setting runs BEFORE static files so the initial page load
+// (/?token=xxx) sets the cookie even though express.static handles
+// the response. API routes are gated separately.
+if (process.env.EMBED_TOKEN) {
+  const cookieParser = require('cookie-parser');
+  app.use(cookieParser());
+  app.use((req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) {
+      res.cookie('embed_session', process.env.EMBED_TOKEN, {
+        httpOnly: true, sameSite: 'lax', secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+    next();
+  });
+}
+
+// Static files served before API auth so pages always load
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
+
+// API auth gate
+if (process.env.EMBED_TOKEN) {
+  app.use('/api', (req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) return next();
+    if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
+    res.status(403).json({ error: 'Forbidden' });
+  });
+}
 
 // perf: Cache-Control on GET API responses — reference data cached longer
 app.use('/api', (req, res, next) => {
@@ -116,10 +145,32 @@ function saveData() {
       _saveTimer = null;
       const resolvers = _saveResolvers.splice(0);
       saveDataImmediate()
-        .then(() => resolvers.forEach(r => r.resolve()))
+        .then(() => {
+          resolvers.forEach(r => r.resolve());
+          notifySeedInventory();
+        })
         .catch(err => resolvers.forEach(r => r.reject(err)));
     }, 500);
   });
+}
+
+// Live sync: notify seed-inventory to re-pull forecasts after every save.
+// Fire-and-forget — seed-inventory being down should never block farm-budget.
+let _notifyTimer = null;
+function notifySeedInventory() {
+  // Debounce notifications to 2s so rapid saves don't hammer seed-inventory
+  if (_notifyTimer) clearTimeout(_notifyTimer);
+  _notifyTimer = setTimeout(() => {
+    _notifyTimer = null;
+    var url = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/forecasts/sync-webhook';
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      .then(function (r) {
+        if (!r.ok) console.warn('[live-sync] seed-inventory returned', r.status);
+      })
+      .catch(function () {
+        // seed-inventory is down — silently ignore
+      });
+  }, 2000);
 }
 
 function generateId(prefix) {
@@ -187,6 +238,14 @@ app.get('/api/enterprises/:id', (req, res) => {
   res.json({ enterprise: ent, ...summary });
 });
 
+app.put('/api/enterprises/:id', async (req, res) => {
+  const idx = store.enterprises.findIndex(e => e.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Enterprise not found' });
+  Object.assign(store.enterprises[idx], req.body);
+  await saveData();
+  res.json(store.enterprises[idx]);
+});
+
 // --- Fields ---
 app.get('/api/fields', (req, res) => {
   let fields = store.fields;
@@ -225,7 +284,7 @@ app.put('/api/fields/:id', async (req, res) => {
   // Merge all provided fields
   const updatable = [
     'name', 'enterpriseId', 'systemCode', 'crop', 'cropType',
-    'acres', 'plantedAcres', 'rentPerAcre', 'inputs', 'seed', 'machinery',
+    'acres', 'plantedAcres', 'rentPerAcre', 'inputs', 'seed', 'seeds', 'machinery',
     'yieldPerAcre', 'yieldUnit', 'cropInsurancePerAcre',
     'insuranceIncomePerAcre', 'govPaymentLabel', 'govPaymentsPerAcre',
     'auxPayments', 'tariffsPerAcre', 'geometry', 'harvestMoisture', 'buyerId', 'templateId',
@@ -275,6 +334,7 @@ app.post('/api/fields/:id/split', async (req, res) => {
       rentPerAcre: rentPerAcre,
       inputs: i === 0 ? JSON.parse(JSON.stringify(source.inputs || [])) : [],
       seed: i === 0 && source.seed ? JSON.parse(JSON.stringify(source.seed)) : null,
+      seeds: i === 0 && source.seeds ? JSON.parse(JSON.stringify(source.seeds)) : [],
       machinery: i === 0 ? JSON.parse(JSON.stringify(source.machinery || [])) : [],
       yieldPerAcre: source.yieldPerAcre || 0,
       yieldUnit: source.yieldUnit || 'Bu',
@@ -327,7 +387,12 @@ app.post('/api/fields/merge-split', async (req, res) => {
 // --- Generic CRUD factory ---
 function crudRoutes(path, collectionName, prefix, parseFields, onChange) {
   app.get(`/api/${path}`, (req, res) => {
-    res.json(store[collectionName]);
+    var items = store[collectionName];
+    // Support ?organicGround=true filter for products and seeds
+    if (req.query.organicGround === 'true') {
+      items = items.filter(function (x) { return !!x.organicGround; });
+    }
+    res.json(items);
   });
 
   app.post(`/api/${path}`, async (req, res) => {
@@ -371,10 +436,15 @@ crudRoutes('seeds', 'seeds', 'seed');
 
 // --- Bulk sync acres & rent from Farm Registry ---
 const REGISTRY_URL = process.env.FARM_REGISTRY_URL || 'http://localhost:3005';
+const REGISTRY_TOKEN = process.env.EMBED_TOKEN || '';
+function registryUrl(path) {
+  var sep = path.indexOf('?') === -1 ? '?' : '&';
+  return REGISTRY_URL + path + (REGISTRY_TOKEN ? sep + 'token=' + encodeURIComponent(REGISTRY_TOKEN) : '');
+}
 
 app.post('/api/fields/sync-registry', async (req, res) => {
   try {
-    const resp = await fetch(REGISTRY_URL + '/api/fields?active=true');
+    const resp = await fetch(registryUrl('/api/fields?active=true'));
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);
     const regFields = await resp.json();
 
@@ -406,8 +476,13 @@ app.post('/api/fields/sync-registry', async (req, res) => {
         fieldChanged = true;
       }
 
-      // Sync rent: derive $/ac from registry totalRentDollars
-      if (match.totalRentDollars > 0 && match.reportingAcres > 0) {
+      // Sync rent: derive $/ac from registry totalRentDollars.
+      // Skip for split sub-fields: their registry match is the parent field whose
+      // reportingAcres reflects the full (pre-split) acreage, not the sub-field's
+      // allocated portion. Using parent acres as denominator would inflate the rate
+      // (e.g., parent 100ac registry field matched to a 50ac sub-field would double $/ac).
+      // Split sub-fields keep whatever rentPerAcre was last saved manually.
+      if (!isSplit && match.totalRentDollars > 0 && match.reportingAcres > 0) {
         var rate = Math.round((match.totalRentDollars / match.reportingAcres) * 100) / 100;
         if (Math.abs((field.rentPerAcre || 0) - rate) > 0.001) {
           field.rentPerAcre = rate;
@@ -454,10 +529,22 @@ app.post('/api/fields/sync-registry', async (req, res) => {
   }
 });
 
+// --- Proxy: search registry fields (avoids CORS when called from browser) ---
+app.get('/api/registry/search', async (req, res) => {
+  try {
+    const q = req.query.q || '';
+    const resp = await fetch(registryUrl('/api/fields/search?q=' + encodeURIComponent(q)));
+    if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+    res.json(await resp.json());
+  } catch (err) {
+    res.status(502).json({ error: 'Registry search failed: ' + err.message });
+  }
+});
+
 // --- Acre Reconciliation ---
 app.get('/api/dashboard/reconciliation', async (req, res) => {
   try {
-    const resp = await fetch(REGISTRY_URL + '/api/fields?active=true');
+    const resp = await fetch(registryUrl('/api/fields?active=true'));
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);
     const regFields = await resp.json();
 
@@ -740,7 +827,7 @@ app.get('/api/seed-varieties', (req, res) => {
 });
 
 // --- Forecast: aggregate field inputs + seeds into procurement view ---
-app.get('/api/forecast', function (req, res) {
+app.get('/api/forecast', async function (req, res) {
   res.set('Cache-Control', 'no-store');
 
   var productMap = {};
@@ -762,8 +849,11 @@ app.get('/api/forecast', function (req, res) {
           productName: inp.productName,
           supplierId: product ? (product.supplierId || '') : '',
           unit: product ? (product.unit || '') : '',
+          purchaseUnit: product ? (product.purchaseUnit || product.unit || '') : '',
+          conversionRate: product ? (product.conversionRate || 1) : 1,
           unitCost: product ? Calc.computeApplicationPrice(product) : 0,
           category: product ? (product.category || 'Other') : 'Other',
+          organicGround: product ? !!product.organicGround : false,
           totalQty: 0,
           fields: []
         };
@@ -808,8 +898,11 @@ app.get('/api/forecast', function (req, res) {
             productName: progInput.productName,
             supplierId: product ? (product.supplierId || '') : '',
             unit: product ? (product.unit || '') : '',
+            purchaseUnit: product ? (product.purchaseUnit || product.unit || '') : '',
+            conversionRate: product ? (product.conversionRate || 1) : 1,
             unitCost: product ? Calc.computeApplicationPrice(product) : 0,
             category: product ? (product.category || 'Other') : 'Other',
+            organicGround: product ? !!product.organicGround : false,
             totalQty: 0,
             fields: []
           };
@@ -848,6 +941,7 @@ app.get('/api/forecast', function (req, res) {
         unitCost: s ? (s.pricePerUnit || 0) : 0,
         category: 'Seed',
         isSeedVariety: true,
+        organicGround: s ? !!s.organicGround : false,
         totalQty: 0,
         fields: []
       };
@@ -856,19 +950,25 @@ app.get('/api/forecast', function (req, res) {
     productMap[mapKey].fields.push({ fieldName: field.name, acres: acres, qty: qty, season: 'Spring' });
   });
 
-  // Build ordered/delivered quantity maps from orders/deliveries
+  // Pull ordered/delivered quantities from seed-inventory (single source of truth for procurement)
   var orderedMap = {};
   var deliveredMap = {};
-  (store.orders || []).forEach(function (order) {
-    (order.items || []).forEach(function (item) {
-      orderedMap[item.productName] = (orderedMap[item.productName] || 0) + (item.orderedQty || 0);
-    });
-  });
-  (store.deliveries || []).forEach(function (del) {
-    (del.items || []).forEach(function (item) {
-      deliveredMap[item.productName] = (deliveredMap[item.productName] || 0) + (item.deliveredQty || 0);
-    });
-  });
+  try {
+    var siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation';
+    var siResp = await fetch(siUrl);
+    if (siResp.ok) {
+      var recon = await siResp.json();
+      recon.forEach(function (row) {
+        // Match by variety for seeds, productName for inputs
+        var key = row.type === 'SEED' ? row.variety : row.productName;
+        if (!key) return;
+        orderedMap[key] = (orderedMap[key] || 0) + (row.totalOrdered || 0);
+        deliveredMap[key] = (deliveredMap[key] || 0) + (row.totalDelivered || 0);
+      });
+    }
+  } catch (e) {
+    // seed-inventory unavailable — procurement columns will show 0
+  }
 
   // Resolve supplierName from suppliers
   var supplierMap = {};
@@ -885,13 +985,19 @@ app.get('/api/forecast', function (req, res) {
     if (!grouped[cat]) grouped[cat] = [];
     var ordered = orderedMap[row.productName] || 0;
     var delivered = deliveredMap[row.productName] || 0;
+    // Convert forecast to billed (purchase) units so forecast/ordered/delivered all match
+    var conv = row.conversionRate || 1;
+    var billedQty = row.isSeedVariety ? row.totalQty : Math.ceil(row.totalQty / conv * 100) / 100;
+    var billedUnit = row.isSeedVariety ? (row.unit || 'units') : (row.purchaseUnit || row.unit || '');
     grouped[cat].push(Object.assign({}, row, {
       supplierName: supplierMap[row.supplierId] || '',
       totalCost: Math.round(row.totalQty * (row.unitCost || 0) * 100) / 100,
+      billedQty: billedQty,
+      billedUnit: billedUnit,
       orderedQty: ordered,
       deliveredQty: delivered,
-      remaining: row.totalQty - ordered,
-      pctOrdered: row.totalQty > 0 ? Math.round(ordered / row.totalQty * 100) : 0
+      remaining: billedQty - ordered,
+      pctOrdered: billedQty > 0 ? Math.round(ordered / billedQty * 100) : 0
     }));
   });
 
@@ -902,9 +1008,122 @@ app.get('/api/forecast', function (req, res) {
   res.json({ categories: categories });
 });
 
+// --- Organic Ground Forecast ---
+// Returns forecast data filtered to products/seeds designated for certified organic ground
+app.get('/api/forecast/organic-ground', function (req, res) {
+  res.set('Cache-Control', 'no-store');
+
+  // Build indexes of organic-ground products and seeds
+  var productIndex = {};
+  (store.products || []).forEach(function (p) {
+    if (p.organicGround) {
+      productIndex[(p.name || '').trim().toLowerCase()] = p;
+    }
+  });
+
+  var seedIndex = {};
+  (store.seeds || []).forEach(function (s) {
+    if (s.organicGround) {
+      seedIndex[(s.variety || '').trim().toLowerCase()] = s;
+    }
+  });
+
+  // Aggregate field inputs — only organic-ground products
+  var inputs = [];
+  var inputMap = {};
+  (store.fields || []).forEach(function (field) {
+    var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    (field.inputs || []).forEach(function (inp) {
+      if (!inp.productName) return;
+      var key = inp.productName.trim().toLowerCase();
+      if (!productIndex[key]) return; // skip non-organic-ground
+      var product = productIndex[key];
+      if (!inputMap[key]) {
+        inputMap[key] = {
+          productId: product.id,
+          productName: inp.productName,
+          unit: product.unit || '',
+          category: product.category || 'Other',
+          totalQty: 0,
+          fields: []
+        };
+        inputs.push(inputMap[key]);
+      }
+      var fieldQty = (inp.quantity || 0) * acres;
+      inputMap[key].totalQty += fieldQty;
+      inputMap[key].fields.push({ fieldName: field.name, acres: acres, qty: fieldQty, rate: inp.quantity || 0 });
+    });
+  });
+
+  // Also check program-level inputs
+  (store.programs || []).forEach(function (prog) {
+    if (!prog.inputs || prog.inputs.length === 0) return;
+    var matchingFields = (store.fields || []).filter(function (f) {
+      return f.systemCode === prog.systemCode && f.crop === prog.crop;
+    });
+    if (matchingFields.length === 0) return;
+    prog.inputs.forEach(function (progInput) {
+      if (!progInput.productName) return;
+      var key = progInput.productName.trim().toLowerCase();
+      if (!productIndex[key]) return;
+      var product = productIndex[key];
+      matchingFields.forEach(function (field) {
+        var alreadyOnField = (field.inputs || []).some(function (fi) {
+          return (fi.productName || '').trim().toLowerCase() === key;
+        });
+        if (alreadyOnField) return;
+        var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+        if (!inputMap[key]) {
+          inputMap[key] = {
+            productId: product.id,
+            productName: progInput.productName,
+            unit: product.unit || '',
+            category: product.category || 'Other',
+            totalQty: 0,
+            fields: []
+          };
+          inputs.push(inputMap[key]);
+        }
+        var fieldQty = (progInput.quantity || 0) * acres;
+        inputMap[key].totalQty += fieldQty;
+        inputMap[key].fields.push({ fieldName: field.name, acres: acres, qty: fieldQty, rate: progInput.quantity || 0 });
+      });
+    });
+  });
+
+  // Aggregate seed varieties — only organic-ground seeds
+  var seeds = [];
+  var seedMap = {};
+  (store.fields || []).forEach(function (field) {
+    if (!field.seed || !field.seed.variety) return;
+    var vKey = field.seed.variety.trim().toLowerCase();
+    if (!seedIndex[vKey]) return; // skip non-organic-ground
+    var s = seedIndex[vKey];
+    var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    var pop = field.seed.population || 0;
+    var seedsPerUnit = s.seedsPerUnit || 1;
+    var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
+    if (!seedMap[vKey]) {
+      seedMap[vKey] = {
+        seedId: s.id,
+        crop: s.crop,
+        brand: s.brand || '',
+        variety: s.variety,
+        totalQty: 0,
+        fields: []
+      };
+      seeds.push(seedMap[vKey]);
+    }
+    seedMap[vKey].totalQty += qty;
+    seedMap[vKey].fields.push({ fieldName: field.name, acres: acres, qty: qty });
+  });
+
+  res.json({ inputs: inputs, seeds: seeds });
+});
+
 // --- Product Demand Table for Receiving Manager ---
 // Combines forecast data with order/delivery status for receiving area use
-app.get('/api/demand', function (req, res) {
+app.get('/api/demand', async function (req, res) {
   res.set('Cache-Control', 'no-store');
 
   var productIndex = {};
@@ -1010,21 +1229,27 @@ app.get('/api/demand', function (req, res) {
     });
   });
 
-  // Enrich with order/delivery status
+  // Pull ordered/delivered from seed-inventory (single source of truth for procurement)
   var orderedMap = {};
   var deliveredMap = {};
   var deliveryWindowMap = {};
-  (store.orders || []).forEach(function (order) {
-    (order.items || []).forEach(function (item) {
-      orderedMap[item.productName] = (orderedMap[item.productName] || 0) + (item.orderedQty || 0);
-      if (order.deliveryDate) deliveryWindowMap[item.productName] = order.deliveryDate;
-    });
-  });
-  (store.deliveries || []).forEach(function (del) {
-    (del.items || []).forEach(function (item) {
-      deliveredMap[item.productName] = (deliveredMap[item.productName] || 0) + (item.deliveredQty || 0);
-    });
-  });
+  try {
+    var siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation';
+    var siResp = await fetch(siUrl);
+    if (siResp.ok) {
+      var recon = await siResp.json();
+      recon.forEach(function (row) {
+        var key = row.type === 'SEED'
+          ? (row.variety + (row.crop ? ' (' + row.crop + ')' : ''))
+          : row.productName;
+        if (!key) return;
+        orderedMap[key] = (orderedMap[key] || 0) + (row.totalOrdered || 0);
+        deliveredMap[key] = (deliveredMap[key] || 0) + (row.totalDelivered || 0);
+      });
+    }
+  } catch (e) {
+    // seed-inventory unavailable — procurement columns will show 0
+  }
 
   demandRows.forEach(function (row) {
     var key = row.productName;
@@ -1812,6 +2037,19 @@ function migrateData() {
       changed = true;
     }
   });
+  // Migrate enterpriseId from crop type level down to each sub-crop
+  (store.cropTypes || []).forEach(function (ct) {
+    if (ct.enterpriseId && ct.subCrops) {
+      ct.subCrops.forEach(function (sc) {
+        if (sc.enterpriseId === undefined) {
+          sc.enterpriseId = ct.enterpriseId;
+          changed = true;
+        }
+      });
+      delete ct.enterpriseId;
+      changed = true;
+    }
+  });
   // Add split-field tracking properties
   (store.fields || []).forEach(function (f) {
     if (f.registryFieldName === undefined) {
@@ -1894,6 +2132,19 @@ function migrateData() {
   (store.products || []).forEach(function (p) {
     if (p.organic === undefined) {
       p.organic = /OMRI/i.test(p.name || '');
+      changed = true;
+    }
+  });
+  // Add organicGround designation — explicit flag for items used on certified organic ground
+  (store.products || []).forEach(function (p) {
+    if (p.organicGround === undefined) {
+      p.organicGround = !!p.organic; // default from existing OMRI-based organic flag
+      changed = true;
+    }
+  });
+  (store.seeds || []).forEach(function (s) {
+    if (s.organicGround === undefined) {
+      s.organicGround = false;
       changed = true;
     }
   });
