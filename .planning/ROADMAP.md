@@ -132,7 +132,7 @@ Plans:
   3. The unplanned-expense category dropdown contains exactly the categories accepted by the API — no silent failures when selecting any option
 **Plans:** 1/1 plans complete
 Plans:
-- [ ] 06.1-01-PLAN.md — Auth guard + seed formula fix + category alignment
+- [x] 06.1-01-PLAN.md — Auth guard + seed formula fix + category alignment
 
 #### Phase 7: All-Enterprise Sync
 **Goal**: The farm-budget sync pulls in all enterprises — organic and conventional — so the full farm operation is represented in the database before the farm-wide view is built

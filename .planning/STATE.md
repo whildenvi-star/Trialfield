@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 6.1 — Phase 6 Defect Fixes
-Plan: 1 of 1 (plan 01 awaiting Task 2 human-verify checkpoint)
-Status: Phase 06.1 in progress — Task 1 complete, Task 2 checkpoint awaiting human review
-Last activity: 2026-03-21 — Plan 06.1-01 Task 1 complete: auth guard on confirm route, seed $/ac formula fix, category alignment
+Phase: 6.1 — Phase 6 Defect Fixes — COMPLETE
+Plan: 1 of 1 (plan 01 complete — human-verified 2026-03-21)
+Status: Phase 06.1 complete — all three defect fixes verified; ready for Phase 07 All-Enterprise Sync
+Last activity: 2026-03-21 — Plan 06.1-01 complete: auth guard, seed $/ac formula, category alignment — human-verified
 
-Progress: [████████░░] 80%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -92,5 +92,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Plan 06.1-01 Task 2 checkpoint — human-verify auth guard, seed $/ac formula, and category list in confirm/route.ts and BudgetTab.tsx
+Stopped at: Phase 06.1 complete — Plan 06.1-01 fully verified; next is Phase 07 All-Enterprise Sync
 Resume file: None
