@@ -82,7 +82,7 @@ Phases 1–4 defined but not started. Paused in favor of v2.0 milestone. Phases 
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 5: Privacy Foundation** - Role enforcement locked down before any role-filtered view is built (completed 2026-03-21)
-- [ ] **Phase 6: Actuals Entry and Enterprise Budget View** - OFFICE can record actuals; enterprise Budget tab shows projected/actual/variance
+- [x] **Phase 6: Actuals Entry and Enterprise Budget View** - OFFICE can record actuals; enterprise Budget tab shows projected/actual/variance (completed 2026-03-21)
 - [ ] **Phase 7: All-Enterprise Sync** - Conventional enterprises sync alongside organic; full farm operation in database
 - [ ] **Phase 8: Farm-Wide Budget Summary** - ADMIN sees all enterprises for a crop year in one aggregated view
 
@@ -114,7 +114,7 @@ Plans:
   5. The enterprise Budget tab shows Projected, Actual, and Variance columns for each cost category; favorable variances display in green, unfavorable in red
   6. Each line item shows a badge indicating whether its value is projected (synced from farm-budget) or actual (entered by OFFICE)
   7. Financial columns (revenue projection, gross margin, profit/acre) are visible to ADMIN on the Budget tab and absent entirely for Sandy's session
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 - [ ] 06-01-PLAN.md — BudgetTab extraction + schema migration + budget:write RBAC
 - [ ] 06-02-PLAN.md — Budget-summary dual computation + actuals PATCH/POST API routes
@@ -150,7 +150,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
-| 6. Actuals Entry and Enterprise Budget View | 2/3 | In Progress|  |
+| 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete   | 2026-03-21 |
 | 7. All-Enterprise Sync | 0/TBD | Not started | - |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
 

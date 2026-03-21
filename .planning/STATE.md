@@ -41,6 +41,7 @@ Progress: [█████░░░░░] 50%
 | Phase 05-privacy-foundation P02 | 2 | 2 tasks | 2 files |
 | Phase 06-actuals-entry-and-enterprise-budget-view P01 | 4 | 2 tasks | 4 files |
 | Phase 06-actuals-entry-and-enterprise-budget-view P02 | ~8 min | 2 tasks | 5 files |
+| Phase 06 P03 | 10 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - [06-02]: null = not-entered for all actual fields — distinction between no data and zero spend; allActualsNull guard applied
 - [06-02]: Variance computed server-side only — no client-side variance math permitted
 - [06-02]: unplanned-cost uses material upsert (farmId_name key) for idempotent Unplanned category creation
+- [Phase 06]: Enter-to-advance uses ordered ref array in BudgetTab — ActualCell fires onAdvance callback, BudgetTab focuses next registered ref
+- [Phase 06]: PUT /operations/[recordId] added to revert CONFIRMED to PLANNED — clears operationDate, sets passStatus=PLANNED
+- [Phase 06]: BudgetSummary type exported from BudgetTab.tsx — enterprise detail page imports it to prevent drift
 
 ### Pending Todos
 
