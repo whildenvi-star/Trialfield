@@ -20,7 +20,7 @@ Requirements for projected vs actual milestone. Each maps to roadmap phases.
 - [ ] **ACT-02**: OFFICE user can confirm planned field operations as completed with actual dates
 - [ ] **ACT-03**: OFFICE user can enter actual harvest yield per acre
 - [ ] **ACT-04**: OFFICE user can update seed costs with actual purchase prices
-- [ ] **ACT-05**: Actuals entries are recorded immediately without approval
+- [x] **ACT-05**: Actuals entries are recorded immediately without approval
 
 ### Budget Views
 
@@ -29,7 +29,7 @@ Requirements for projected vs actual milestone. Each maps to roadmap phases.
 - [ ] **VIEW-03**: DataSource badges on line items indicate whether data is projected (synced) or actual (entered)
 - [ ] **VIEW-04**: Farm-wide budget summary page aggregates all enterprises for a crop year
 - [ ] **VIEW-05**: Farm-wide view mirrors Macro Rollup layout stylistically
-- [ ] **VIEW-06**: Financial columns (revenue, margin, profit) visible only to ADMIN on all views
+- [x] **VIEW-06**: Financial columns (revenue, margin, profit) visible only to ADMIN on all views
 
 ### Sync
 
@@ -102,11 +102,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACT-02 | Phase 6 | Pending |
 | ACT-03 | Phase 6 | Pending |
 | ACT-04 | Phase 6 | Pending |
-| ACT-05 | Phase 6 | Pending |
+| ACT-05 | Phase 6 | Complete |
 | VIEW-01 | Phase 6 | Pending |
 | VIEW-02 | Phase 6 | Pending |
 | VIEW-03 | Phase 6 | Pending |
-| VIEW-06 | Phase 6 | Pending |
+| VIEW-06 | Phase 6 | Complete |
 | SYNC-01 | Phase 7 | Pending |
 | SYNC-02 | Phase 7 | Pending |
 | VIEW-04 | Phase 8 | Pending |

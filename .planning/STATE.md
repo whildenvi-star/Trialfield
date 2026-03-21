@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 5 — Privacy Foundation
-Plan: 2 of TBD (phase complete — 2 plans shipped)
-Status: Phase 05 complete — ready for Phase 6 planning
-Last activity: 2026-03-21 — Plan 05-02 complete: role-conditional UI filtering verified end-to-end across all four PRIV requirements
+Phase: 6 — Actuals Entry and Enterprise Budget View
+Plan: 1 of 3 (plan 01 complete)
+Status: Phase 06 in progress — Plan 01 shipped (BudgetTab extraction, actuals schema, RBAC)
+Last activity: 2026-03-21 — Plan 06-01 complete: BudgetTab extracted, actuals fields migrated, budget:write RBAC added
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
@@ -39,6 +39,7 @@ Progress: [██░░░░░░░░] 20%
 *Updated after each plan completion*
 | Phase 05-privacy-foundation P01 | 2 | 2 tasks | 3 files |
 | Phase 05-privacy-foundation P02 | 2 | 2 tasks | 2 files |
+| Phase 06-actuals-entry-and-enterprise-budget-view P01 | 4 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -57,6 +58,8 @@ Recent decisions affecting current work:
 - [05-01]: Spread-conditional field stripping — financial fields absent from JSON keys, not set to null (no trace in DevTools)
 - [05-02]: Silent omission pattern — no lock icons or "admin only" labels; OFFICE sees cost data as if financial data doesn't exist
 - [05-02]: Defense-in-depth confirmed — API field stripping (Plan 01) + UI conditional rendering (Plan 02) enforce same RBAC rules independently
+- [Phase 06-actuals-entry-and-enterprise-budget-view]: refreshBudget targeted fetch avoids full page reload scroll-jump on budget save
+- [Phase 06-actuals-entry-and-enterprise-budget-view]: ACTUAL added to DataSource enum as additive change — no existing records modified
 
 ### Pending Todos
 
@@ -67,11 +70,11 @@ Recent decisions affecting current work:
 
 - [Phase 5 RESOLVED]: `getAuthContext()` ADMIN fallback removed in 05-01 — unauthenticated requests now return 401 at API level
 - [Phase 6]: Budget-summary computation mixes PLANNED and CONFIRMED operations — must split projected/actual computation paths before actuals entry goes live, or confirmed passes inflate projected totals
-- [Phase 6]: `BudgetTab.tsx` extraction from `[id]/page.tsx` is a structural prerequisite before dual-view UI work — detail page already exceeds safe file size
+- [Phase 6 RESOLVED]: `BudgetTab.tsx` extraction complete — detail page slimmed, dual-view UI work can proceed
 - [Phase 7]: Sync upsert match key collision — current key `{fieldId, cropYear, crop, label}` does not include `organicStatus`; conventional and organic crops of same type on same field will create duplicates. Update match key and run dry-run before going live.
 
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Phase 05 complete — 05-02-SUMMARY.md created, ready for Phase 6 planning
+Stopped at: Completed 06-01-PLAN.md: BudgetTab extraction, actuals schema fields, budget:write RBAC
 Resume file: None
