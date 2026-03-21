@@ -83,6 +83,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 5: Privacy Foundation** - Role enforcement locked down before any role-filtered view is built (completed 2026-03-21)
 - [x] **Phase 6: Actuals Entry and Enterprise Budget View** - OFFICE can record actuals; enterprise Budget tab shows projected/actual/variance (completed 2026-03-21)
+- [ ] **Phase 6.1: Phase 6 Defect Fixes** - Auth guard, seed variance unit fix, category alignment (INSERTED — gap closure)
 - [ ] **Phase 7: All-Enterprise Sync** - Conventional enterprises sync alongside organic; full farm operation in database
 - [ ] **Phase 8: Farm-Wide Budget Summary** - ADMIN sees all enterprises for a crop year in one aggregated view
 
@@ -120,6 +121,17 @@ Plans:
 - [ ] 06-02-PLAN.md — Budget-summary dual computation + actuals PATCH/POST API routes
 - [ ] 06-03-PLAN.md — Dual-column Budget tab UI with inline editing + human verification
 
+#### Phase 6.1: Phase 6 Defect Fixes (INSERTED — Gap Closure)
+**Goal**: Fix high-severity defects discovered by milestone audit in completed Phase 6 work — auth guard, seed variance units, and category alignment
+**Depends on**: Phase 6
+**Requirements**: ACT-02 (re-verify), VIEW-01 (re-verify), VIEW-02 (re-verify)
+**Gap Closure:** Closes integration and flow gaps from v2.0 audit
+**Success Criteria** (what must be TRUE):
+  1. `POST /api/import-plan/confirm` returns 401 for unauthenticated requests and 403 for users without `budget:write` — same pattern as all other Phase 6 write routes
+  2. Seed rows on the enterprise Budget tab show actual cost per acre (not price per unit) in the Actual column — variance is meaningful and unit-consistent with the Projected column
+  3. The unplanned-expense category dropdown contains exactly the categories accepted by the API — no silent failures when selecting any option
+**Plans**: TBD
+
 #### Phase 7: All-Enterprise Sync
 **Goal**: The farm-budget sync pulls in all enterprises — organic and conventional — so the full farm operation is represented in the database before the farm-wide view is built
 **Depends on**: Phase 6
@@ -145,12 +157,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-v2.0 phases execute in numeric order: 5 → 6 → 7 → 8
+v2.0 phases execute in numeric order: 5 → 6 → 6.1 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete    | 2026-03-21 |
+| 6.1. Phase 6 Defect Fixes | 0/TBD | Not started | - |
 | 7. All-Enterprise Sync | 0/TBD | Not started | - |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
 
