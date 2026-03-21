@@ -10,34 +10,35 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 5 — Privacy Foundation
-Plan: 2 of TBD
-Status: In progress — at checkpoint (Task 2: human-verify)
-Last activity: 2026-03-21 — Plan 05-02 Task 1 complete: role-conditional Budget tab and revenue section rendering added to enterprise detail page
+Plan: 2 of TBD (phase complete — 2 plans shipped)
+Status: Phase 05 complete — ready for Phase 6 planning
+Last activity: 2026-03-21 — Plan 05-02 complete: role-conditional UI filtering verified end-to-end across all four PRIV requirements
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 2
+- Average duration: ~5 min/plan
+- Total execution time: ~10 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 5. Privacy Foundation | TBD | - | - |
+| 5. Privacy Foundation | 2 | ~10 min | ~5 min |
 | 6. Actuals Entry and Enterprise Budget View | TBD | - | - |
 | 7. All-Enterprise Sync | TBD | - | - |
 | 8. Farm-Wide Budget Summary | TBD | - | - |
 
 **Recent Trend:**
-- Last 5 plans: none yet
-- Trend: —
+- Last 5 plans: 05-01 (~2 min), 05-02 (~8 min checkpoint)
+- Trend: Fast execution, checkpoint-gated verification
 
 *Updated after each plan completion*
 | Phase 05-privacy-foundation P01 | 2 | 2 tasks | 3 files |
+| Phase 05-privacy-foundation P02 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -54,6 +55,8 @@ Recent decisions affecting current work:
 - [05-01]: sale:read removed from OFFICE role — office staff cannot read sale records (write-only for sale data)
 - [05-01]: budget:financial is ADMIN-only — revenue, margin, sale price, and overhead category never visible to OFFICE
 - [05-01]: Spread-conditional field stripping — financial fields absent from JSON keys, not set to null (no trace in DevTools)
+- [05-02]: Silent omission pattern — no lock icons or "admin only" labels; OFFICE sees cost data as if financial data doesn't exist
+- [05-02]: Defense-in-depth confirmed — API field stripping (Plan 01) + UI conditional rendering (Plan 02) enforce same RBAC rules independently
 
 ### Pending Todos
 
@@ -70,5 +73,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: 05-02-PLAN.md Task 2 checkpoint — awaiting human verification of end-to-end privacy enforcement
+Stopped at: Phase 05 complete — 05-02-SUMMARY.md created, ready for Phase 6 planning
 Resume file: None

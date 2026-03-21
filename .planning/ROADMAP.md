@@ -81,7 +81,7 @@ Phases 1–4 defined but not started. Paused in favor of v2.0 milestone. Phases 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 5: Privacy Foundation** - Role enforcement locked down before any role-filtered view is built
+- [x] **Phase 5: Privacy Foundation** - Role enforcement locked down before any role-filtered view is built (completed 2026-03-21)
 - [ ] **Phase 6: Actuals Entry and Enterprise Budget View** - OFFICE can record actuals; enterprise Budget tab shows projected/actual/variance
 - [ ] **Phase 7: All-Enterprise Sync** - Conventional enterprises sync alongside organic; full farm operation in database
 - [ ] **Phase 8: Farm-Wide Budget Summary** - ADMIN sees all enterprises for a crop year in one aggregated view
@@ -97,7 +97,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. A request with no session cookie to any budget API route receives a 401 error, not ADMIN-level data
   3. Sandy (OFFICE) can log in and view the enterprise Budget tab without seeing rental rates, overhead, labor, sale prices, or profit/acre anywhere in the page — including page source
   4. New `budget:read` and `budget:financial` permissions exist in rbac.ts and are enforced on the budget-summary route
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 05-01-PLAN.md — Auth foundation + RBAC permissions + API field stripping
 - [ ] 05-02-PLAN.md — UI role-conditional rendering + end-to-end verification
@@ -145,7 +145,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Privacy Foundation | 1/2 | In Progress|  |
+| 5. Privacy Foundation | 2/2 | Complete   | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | 0/TBD | Not started | - |
 | 7. All-Enterprise Sync | 0/TBD | Not started | - |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
