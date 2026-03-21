@@ -130,7 +130,9 @@ Plans:
   1. `POST /api/import-plan/confirm` returns 401 for unauthenticated requests and 403 for users without `budget:write` — same pattern as all other Phase 6 write routes
   2. Seed rows on the enterprise Budget tab show actual cost per acre (not price per unit) in the Actual column — variance is meaningful and unit-consistent with the Projected column
   3. The unplanned-expense category dropdown contains exactly the categories accepted by the API — no silent failures when selecting any option
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 06.1-01-PLAN.md — Auth guard + seed formula fix + category alignment
 
 #### Phase 7: All-Enterprise Sync
 **Goal**: The farm-budget sync pulls in all enterprises — organic and conventional — so the full farm operation is represented in the database before the farm-wide view is built
