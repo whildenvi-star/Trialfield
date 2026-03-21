@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 5 — Privacy Foundation
-Plan: —
-Status: Not started
-Last activity: 2026-03-20 — v2.0 roadmap created; phases 5–8 defined
+Plan: 1 of TBD
+Status: In progress
+Last activity: 2026-03-21 — Plan 05-01 complete: auth ADMIN fallback removed, RBAC budget permissions added, budget-summary API gated
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
@@ -37,6 +37,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: —
 
 *Updated after each plan completion*
+| Phase 05-privacy-foundation P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -49,6 +50,10 @@ Recent decisions affecting current work:
 - [v2.0 Init]: Financial data hidden at API + UI level — response stripping required, UI-only hiding is insufficient
 - [v2.0 Init]: No approval gate for actuals entry — Sandy's entries record immediately; admin trusts team
 - [v2.0 Init]: All enterprises (not just organic) in scope for sync expansion
+- [05-01]: ADMIN fallback removed unconditionally — unauthenticated requests return null, callers return 401
+- [05-01]: sale:read removed from OFFICE role — office staff cannot read sale records (write-only for sale data)
+- [05-01]: budget:financial is ADMIN-only — revenue, margin, sale price, and overhead category never visible to OFFICE
+- [05-01]: Spread-conditional field stripping — financial fields absent from JSON keys, not set to null (no trace in DevTools)
 
 ### Pending Todos
 
@@ -57,13 +62,13 @@ Recent decisions affecting current work:
 
 ### Blockers/Concerns
 
-- [Phase 5]: `getAuthContext()` ADMIN fallback is the highest-priority fix — all role filtering is meaningless until unauthenticated requests return 401 instead of ADMIN-level data. Verify with curl before any other budget work.
+- [Phase 5 RESOLVED]: `getAuthContext()` ADMIN fallback removed in 05-01 — unauthenticated requests now return 401 at API level
 - [Phase 6]: Budget-summary computation mixes PLANNED and CONFIRMED operations — must split projected/actual computation paths before actuals entry goes live, or confirmed passes inflate projected totals
 - [Phase 6]: `BudgetTab.tsx` extraction from `[id]/page.tsx` is a structural prerequisite before dual-view UI work — detail page already exceeds safe file size
 - [Phase 7]: Sync upsert match key collision — current key `{fieldId, cropYear, crop, label}` does not include `organicStatus`; conventional and organic crops of same type on same field will create duplicates. Update match key and run dry-run before going live.
 
 ## Session Continuity
 
-Last session: 2026-03-20
-Stopped at: v2.0 roadmap created — ROADMAP.md updated with phases 5–8, STATE.md updated to Phase 5, REQUIREMENTS.md traceability updated
+Last session: 2026-03-21
+Stopped at: Completed 05-01-PLAN.md — auth ADMIN fallback removed, budget RBAC permissions added, budget-summary API gated with field stripping
 Resume file: None

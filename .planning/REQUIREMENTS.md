@@ -9,10 +9,10 @@ Requirements for projected vs actual milestone. Each maps to roadmap phases.
 
 ### Privacy & Auth
 
-- [ ] **PRIV-01**: Budget API strips financial fields (revenue, margin, sale prices, profit/acre) from responses for non-ADMIN roles
-- [ ] **PRIV-02**: `getAuthContext()` ADMIN fallback is removed — unauthenticated requests return error, not admin access
-- [ ] **PRIV-03**: New RBAC permissions `budget:read` (ADMIN + OFFICE) and `budget:financial` (ADMIN only) are enforced
-- [ ] **PRIV-04**: OFFICE role `sale:read` permission is removed
+- [x] **PRIV-01**: Budget API strips financial fields (revenue, margin, sale prices, profit/acre) from responses for non-ADMIN roles
+- [x] **PRIV-02**: `getAuthContext()` ADMIN fallback is removed — unauthenticated requests return error, not admin access
+- [x] **PRIV-03**: New RBAC permissions `budget:read` (ADMIN + OFFICE) and `budget:financial` (ADMIN only) are enforced
+- [x] **PRIV-04**: OFFICE role `sale:read` permission is removed
 
 ### Actuals Entry
 
@@ -94,10 +94,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PRIV-01 | Phase 5 | Pending |
-| PRIV-02 | Phase 5 | Pending |
-| PRIV-03 | Phase 5 | Pending |
-| PRIV-04 | Phase 5 | Pending |
+| PRIV-01 | Phase 5 | Complete |
+| PRIV-02 | Phase 5 | Complete |
+| PRIV-03 | Phase 5 | Complete |
+| PRIV-04 | Phase 5 | Complete |
 | ACT-01 | Phase 6 | Pending |
 | ACT-02 | Phase 6 | Pending |
 | ACT-03 | Phase 6 | Pending |
