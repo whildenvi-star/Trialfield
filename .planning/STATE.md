@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 5 — Privacy Foundation
-Plan: 1 of TBD
-Status: In progress
-Last activity: 2026-03-21 — Plan 05-01 complete: auth ADMIN fallback removed, RBAC budget permissions added, budget-summary API gated
+Plan: 2 of TBD
+Status: In progress — at checkpoint (Task 2: human-verify)
+Last activity: 2026-03-21 — Plan 05-02 Task 1 complete: role-conditional Budget tab and revenue section rendering added to enterprise detail page
 
 Progress: [█░░░░░░░░░] 10%
 
@@ -70,5 +70,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Completed 05-01-PLAN.md — auth ADMIN fallback removed, budget RBAC permissions added, budget-summary API gated with field stripping
+Stopped at: 05-02-PLAN.md Task 2 checkpoint — awaiting human verification of end-to-end privacy enforcement
 Resume file: None
