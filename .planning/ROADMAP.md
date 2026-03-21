@@ -114,7 +114,11 @@ Plans:
   5. The enterprise Budget tab shows Projected, Actual, and Variance columns for each cost category; favorable variances display in green, unfavorable in red
   6. Each line item shows a badge indicating whether its value is projected (synced from farm-budget) or actual (entered by OFFICE)
   7. Financial columns (revenue projection, gross margin, profit/acre) are visible to ADMIN on the Budget tab and absent entirely for Sandy's session
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 06-01-PLAN.md — BudgetTab extraction + schema migration + budget:write RBAC
+- [ ] 06-02-PLAN.md — Budget-summary dual computation + actuals PATCH/POST API routes
+- [ ] 06-03-PLAN.md — Dual-column Budget tab UI with inline editing + human verification
 
 #### Phase 7: All-Enterprise Sync
 **Goal**: The farm-budget sync pulls in all enterprises — organic and conventional — so the full farm operation is represented in the database before the farm-wide view is built
@@ -146,7 +150,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
-| 6. Actuals Entry and Enterprise Budget View | 0/TBD | Not started | - |
+| 6. Actuals Entry and Enterprise Budget View | 0/3 | Planned | - |
 | 7. All-Enterprise Sync | 0/TBD | Not started | - |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
 
