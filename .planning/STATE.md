@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 07 — All-Enterprise Sync
-Plan: 1 of 3 (plan 07-01 complete — 2026-03-21)
-Status: Plan 07-01 complete — EnterpriseType enum, type-aware upsert in sync-macro; ready for Plan 07-02
-Last activity: 2026-03-21 — Plan 07-01 complete: EnterpriseType schema, sync-macro all-enterprise expansion
+Plan: 2 of 3 (plan 07-02 complete — 2026-03-21)
+Status: Plan 07-02 complete — on-load sync trigger, stale indicator, human-verified end-to-end; ready for Plan 07-03
+Last activity: 2026-03-21 — Plan 07-02 complete: on-load budget sync, stale indicator, all-enterprise verification
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [████░░░░░░] 40%
 | Phase 06-actuals-entry-and-enterprise-budget-view P02 | ~8 min | 2 tasks | 5 files |
 | Phase 06 P03 | 10 | 2 tasks | 6 files |
 | Phase 06.1-phase-6-defect-fixes P01 | 8 | 1 tasks | 2 files |
+| Phase 07-all-enterprise-sync P02 | ~5 min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,9 @@ Recent decisions affecting current work:
 - [07-01]: EnterpriseType @default(ORGANIC) avoids backfill migration — all existing FieldEnterprise records are from organic-only sync
 - [07-01]: @@unique extended to include enterpriseType — resolves match key collision blocker; conventional and organic records for same field+year+crop can now coexist
 - [07-01]: organicStatus on new creates set to match enterpriseType for consistent dual-field state
+- [07-02]: Background sync never blocks initial Budget tab render — mount with existing DB data, update after sync completes
+- [07-02]: Stale indicator uses muted text only (no toast/modal) — sync failure is the exception, silent degradation preferred
+- [07-02]: Manual sync button in fields/page.tsx preserved as admin escape hatch; on-load sync does not replace it
 
 ### Pending Todos
 
@@ -95,6 +99,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-21
-Stopped at: Completed 07-01-PLAN.md — EnterpriseType enum, sync-macro all-enterprise expansion
+Last session: 2026-03-21T00:00:00Z
+Stopped at: Completed 07-02-PLAN.md — on-load sync trigger, stale indicator, human-verified end-to-end
 Resume file: None

@@ -84,7 +84,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Privacy Foundation** - Role enforcement locked down before any role-filtered view is built (completed 2026-03-21)
 - [x] **Phase 6: Actuals Entry and Enterprise Budget View** - OFFICE can record actuals; enterprise Budget tab shows projected/actual/variance (completed 2026-03-21)
 - [x] **Phase 6.1: Phase 6 Defect Fixes** - Auth guard, seed variance unit fix, category alignment (INSERTED — gap closure) (completed 2026-03-21)
-- [ ] **Phase 7: All-Enterprise Sync** - Conventional enterprises sync alongside organic; full farm operation in database
+- [x] **Phase 7: All-Enterprise Sync** - Conventional enterprises sync alongside organic; full farm operation in database (completed 2026-03-21)
 - [ ] **Phase 8: Farm-Wide Budget Summary** - ADMIN sees all enterprises for a crop year in one aggregated view
 
 ### Phase Details
@@ -142,7 +142,7 @@ Plans:
   1. After running sync, conventional enterprises appear in the database alongside existing organic enterprises
   2. Existing organic enterprise data (including any actuals entered in Phase 6) is unchanged after the expanded sync completes
   3. No duplicate enterprises are created when a conventional and organic crop of the same type exist on the same field in the same crop year
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 07-01-PLAN.md — Schema migration (EnterpriseType enum) + sync-macro all-enterprise expansion
 - [ ] 07-02-PLAN.md — On-load sync trigger + stale indicator + human verification
@@ -169,7 +169,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 6.1 → 7 → 8
 | 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete    | 2026-03-21 |
 | 6.1. Phase 6 Defect Fixes | 1/1 | Complete   | 2026-03-21 |
-| 7. All-Enterprise Sync | 1/2 | In Progress|  |
+| 7. All-Enterprise Sync | 2/2 | Complete   | 2026-03-21 |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
 
 ---
