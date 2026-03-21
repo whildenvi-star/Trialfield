@@ -169,7 +169,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 6.1 → 7 → 8
 | 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete    | 2026-03-21 |
 | 6.1. Phase 6 Defect Fixes | 1/1 | Complete   | 2026-03-21 |
-| 7. All-Enterprise Sync | 2/2 | Complete   | 2026-03-21 |
+| 7. All-Enterprise Sync | 2/2 | Complete    | 2026-03-21 |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
 
 ---
