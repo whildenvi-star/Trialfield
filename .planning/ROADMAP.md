@@ -83,7 +83,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 5: Privacy Foundation** - Role enforcement locked down before any role-filtered view is built (completed 2026-03-21)
 - [x] **Phase 6: Actuals Entry and Enterprise Budget View** - OFFICE can record actuals; enterprise Budget tab shows projected/actual/variance (completed 2026-03-21)
-- [ ] **Phase 6.1: Phase 6 Defect Fixes** - Auth guard, seed variance unit fix, category alignment (INSERTED — gap closure)
+- [x] **Phase 6.1: Phase 6 Defect Fixes** - Auth guard, seed variance unit fix, category alignment (INSERTED — gap closure) (completed 2026-03-21)
 - [ ] **Phase 7: All-Enterprise Sync** - Conventional enterprises sync alongside organic; full farm operation in database
 - [ ] **Phase 8: Farm-Wide Budget Summary** - ADMIN sees all enterprises for a crop year in one aggregated view
 
@@ -130,7 +130,7 @@ Plans:
   1. `POST /api/import-plan/confirm` returns 401 for unauthenticated requests and 403 for users without `budget:write` — same pattern as all other Phase 6 write routes
   2. Seed rows on the enterprise Budget tab show actual cost per acre (not price per unit) in the Actual column — variance is meaningful and unit-consistent with the Projected column
   3. The unplanned-expense category dropdown contains exactly the categories accepted by the API — no silent failures when selecting any option
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 06.1-01-PLAN.md — Auth guard + seed formula fix + category alignment
 
@@ -165,7 +165,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 6.1 → 7 → 8
 |-------|----------------|--------|-----------|
 | 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete    | 2026-03-21 |
-| 6.1. Phase 6 Defect Fixes | 0/TBD | Not started | - |
+| 6.1. Phase 6 Defect Fixes | 1/1 | Complete   | 2026-03-21 |
 | 7. All-Enterprise Sync | 0/TBD | Not started | - |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
 

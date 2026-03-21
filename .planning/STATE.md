@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 6 — Actuals Entry and Enterprise Budget View
-Plan: 3 of 3 (plan 03 complete — phase done)
-Status: Phase 06 complete — all three plans shipped; VIEW-01/02/03 requirements satisfied and human-verified
-Last activity: 2026-03-21 — Plan 06-03 complete: dual-column Budget tab UI with inline editing, keyboard navigation, operation confirmation, and data source badges
+Phase: 6.1 — Phase 6 Defect Fixes
+Plan: 1 of 1 (plan 01 awaiting Task 2 human-verify checkpoint)
+Status: Phase 06.1 in progress — Task 1 complete, Task 2 checkpoint awaiting human review
+Last activity: 2026-03-21 — Plan 06.1-01 Task 1 complete: auth guard on confirm route, seed $/ac formula fix, category alignment
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -42,6 +42,7 @@ Progress: [███████░░░] 70%
 | Phase 06-actuals-entry-and-enterprise-budget-view P01 | 4 | 2 tasks | 4 files |
 | Phase 06-actuals-entry-and-enterprise-budget-view P02 | ~8 min | 2 tasks | 5 files |
 | Phase 06 P03 | 10 | 2 tasks | 6 files |
+| Phase 06.1-phase-6-defect-fixes P01 | 8 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [06-03]: Material costs grouped by category keyword matching (fertilizer, chemical, custom) with otherMaterialRows fallback
 - [06-03]: Per-acre display: all line items divide by acres before rendering; save converts back with v*acres before PATCH
 - [06-03]: Unplanned ActualCell saves total cost (per-acre * acres) to match API expectation
+- [Phase 06.1]: Auth guard placed before request.json() — avoids parsing untrusted body from unauthenticated callers
+- [Phase 06.1]: Seed actualPerAcre = actualPricePerUnit * rate (client display formula only) — API storage unchanged
+- [Phase 06.1]: BUDGET_CATEGORIES replaced with exact copy of ALLOWED_CATEGORIES — no categories endpoint, static copy is correct pattern
 
 ### Pending Todos
 
@@ -88,5 +92,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Completed 06-03-PLAN.md: Budget Tab UI — dual-column Projected/Actual/Variance with inline editing, human-verified
+Stopped at: Plan 06.1-01 Task 2 checkpoint — human-verify auth guard, seed $/ac formula, and category list in confirm/route.ts and BudgetTab.tsx
 Resume file: None
