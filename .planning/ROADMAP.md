@@ -142,7 +142,7 @@ Plans:
   1. After running sync, conventional enterprises appear in the database alongside existing organic enterprises
   2. Existing organic enterprise data (including any actuals entered in Phase 6) is unchanged after the expanded sync completes
   3. No duplicate enterprises are created when a conventional and organic crop of the same type exist on the same field in the same crop year
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 07-01-PLAN.md — Schema migration (EnterpriseType enum) + sync-macro all-enterprise expansion
 - [ ] 07-02-PLAN.md — On-load sync trigger + stale indicator + human verification
@@ -169,7 +169,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 6.1 → 7 → 8
 | 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete    | 2026-03-21 |
 | 6.1. Phase 6 Defect Fixes | 1/1 | Complete   | 2026-03-21 |
-| 7. All-Enterprise Sync | 0/2 | Planned | - |
+| 7. All-Enterprise Sync | 1/2 | In Progress|  |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
 
 ---

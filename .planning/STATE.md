@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 6.1 — Phase 6 Defect Fixes — COMPLETE
-Plan: 1 of 1 (plan 01 complete — human-verified 2026-03-21)
-Status: Phase 06.1 complete — all three defect fixes verified; ready for Phase 07 All-Enterprise Sync
-Last activity: 2026-03-21 — Plan 06.1-01 complete: auth guard, seed $/ac formula, category alignment — human-verified
+Phase: 07 — All-Enterprise Sync
+Plan: 1 of 3 (plan 07-01 complete — 2026-03-21)
+Status: Plan 07-01 complete — EnterpriseType enum, type-aware upsert in sync-macro; ready for Plan 07-02
+Last activity: 2026-03-21 — Plan 07-01 complete: EnterpriseType schema, sync-macro all-enterprise expansion
 
-Progress: [██████████] 100%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
@@ -76,6 +76,10 @@ Recent decisions affecting current work:
 - [Phase 06.1]: Auth guard placed before request.json() — avoids parsing untrusted body from unauthenticated callers
 - [Phase 06.1]: Seed actualPerAcre = actualPricePerUnit * rate (client display formula only) — API storage unchanged
 - [Phase 06.1]: BUDGET_CATEGORIES replaced with exact copy of ALLOWED_CATEGORIES — no categories endpoint, static copy is correct pattern
+- [07-01]: enterpriseType derived from matchedField.organicStatus (registry source of truth), NOT budget enterprise category — a conventional enterprise can contain organic-certified fields
+- [07-01]: EnterpriseType @default(ORGANIC) avoids backfill migration — all existing FieldEnterprise records are from organic-only sync
+- [07-01]: @@unique extended to include enterpriseType — resolves match key collision blocker; conventional and organic records for same field+year+crop can now coexist
+- [07-01]: organicStatus on new creates set to match enterpriseType for consistent dual-field state
 
 ### Pending Todos
 
@@ -87,10 +91,10 @@ Recent decisions affecting current work:
 - [Phase 5 RESOLVED]: `getAuthContext()` ADMIN fallback removed in 05-01 — unauthenticated requests now return 401 at API level
 - [Phase 6 RESOLVED]: Budget-summary computation mixes PLANNED and CONFIRMED — resolved in 06-02; projected uses ALL ops, actual uses CONFIRMED only
 - [Phase 6 RESOLVED]: `BudgetTab.tsx` extraction complete — detail page slimmed, dual-view UI work can proceed
-- [Phase 7]: Sync upsert match key collision — current key `{fieldId, cropYear, crop, label}` does not include `organicStatus`; conventional and organic crops of same type on same field will create duplicates. Update match key and run dry-run before going live.
+- [Phase 7 RESOLVED]: Sync upsert match key collision — resolved in 07-01; @@unique now includes enterpriseType; findFirst uses enterpriseType in where clause
 
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Phase 06.1 complete — Plan 06.1-01 fully verified; next is Phase 07 All-Enterprise Sync
+Stopped at: Completed 07-01-PLAN.md — EnterpriseType enum, sync-macro all-enterprise expansion
 Resume file: None

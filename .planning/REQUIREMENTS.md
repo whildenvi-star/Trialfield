@@ -33,8 +33,8 @@ Requirements for projected vs actual milestone. Each maps to roadmap phases.
 
 ### Sync
 
-- [ ] **SYNC-01**: All enterprises (organic + conventional) sync from farm-budget service
-- [ ] **SYNC-02**: Existing organic enterprise data is preserved when sync expands to all enterprises
+- [x] **SYNC-01**: All enterprises (organic + conventional) sync from farm-budget service
+- [x] **SYNC-02**: Existing organic enterprise data is preserved when sync expands to all enterprises
 
 ## v1.0 Requirements (Paused — Mobile PWA)
 
@@ -107,8 +107,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIEW-02 | Phase 6, 6.1 | Complete |
 | VIEW-03 | Phase 6 | Complete |
 | VIEW-06 | Phase 6 | Complete |
-| SYNC-01 | Phase 7 | Pending |
-| SYNC-02 | Phase 7 | Pending |
+| SYNC-01 | Phase 7 | Complete |
+| SYNC-02 | Phase 7 | Complete |
 | VIEW-04 | Phase 8 | Pending |
 | VIEW-05 | Phase 8 | Pending |
 
