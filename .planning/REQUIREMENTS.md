@@ -24,9 +24,9 @@ Requirements for projected vs actual milestone. Each maps to roadmap phases.
 
 ### Budget Views
 
-- [ ] **VIEW-01**: Enterprise Budget tab shows projected and actual columns side by side
-- [ ] **VIEW-02**: Variance column shows difference between projected and actual with favorable/unfavorable color coding
-- [ ] **VIEW-03**: DataSource badges on line items indicate whether data is projected (synced) or actual (entered)
+- [x] **VIEW-01**: Enterprise Budget tab shows projected and actual columns side by side
+- [x] **VIEW-02**: Variance column shows difference between projected and actual with favorable/unfavorable color coding
+- [x] **VIEW-03**: DataSource badges on line items indicate whether data is projected (synced) or actual (entered)
 - [ ] **VIEW-04**: Farm-wide budget summary page aggregates all enterprises for a crop year
 - [ ] **VIEW-05**: Farm-wide view mirrors Macro Rollup layout stylistically
 - [x] **VIEW-06**: Financial columns (revenue, margin, profit) visible only to ADMIN on all views
@@ -103,9 +103,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ACT-03 | Phase 6 | Complete |
 | ACT-04 | Phase 6 | Complete |
 | ACT-05 | Phase 6 | Complete |
-| VIEW-01 | Phase 6 | Pending |
-| VIEW-02 | Phase 6 | Pending |
-| VIEW-03 | Phase 6 | Pending |
+| VIEW-01 | Phase 6 | Complete |
+| VIEW-02 | Phase 6 | Complete |
+| VIEW-03 | Phase 6 | Complete |
 | VIEW-06 | Phase 6 | Complete |
 | SYNC-01 | Phase 7 | Pending |
 | SYNC-02 | Phase 7 | Pending |

@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 6 — Actuals Entry and Enterprise Budget View
-Plan: 2 of 3 (plan 02 complete)
-Status: Phase 06 in progress — Plan 02 shipped (actuals API layer: budget-summary dual computation, four write routes)
-Last activity: 2026-03-21 — Plan 06-02 complete: budget-summary extended with projected/actual/variance; four PATCH/POST actuals routes created
+Plan: 3 of 3 (plan 03 complete — phase done)
+Status: Phase 06 complete — all three plans shipped; VIEW-01/02/03 requirements satisfied and human-verified
+Last activity: 2026-03-21 — Plan 06-03 complete: dual-column Budget tab UI with inline editing, keyboard navigation, operation confirmation, and data source badges
 
-Progress: [█████░░░░░] 50%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 06]: Enter-to-advance uses ordered ref array in BudgetTab — ActualCell fires onAdvance callback, BudgetTab focuses next registered ref
 - [Phase 06]: PUT /operations/[recordId] added to revert CONFIRMED to PLANNED — clears operationDate, sets passStatus=PLANNED
 - [Phase 06]: BudgetSummary type exported from BudgetTab.tsx — enterprise detail page imports it to prevent drift
+- [06-03]: Material costs grouped by category keyword matching (fertilizer, chemical, custom) with otherMaterialRows fallback
+- [06-03]: Per-acre display: all line items divide by acres before rendering; save converts back with v*acres before PATCH
+- [06-03]: Unplanned ActualCell saves total cost (per-acre * acres) to match API expectation
 
 ### Pending Todos
 
@@ -85,5 +88,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Completed 06-02-PLAN.md: Actuals API layer — budget-summary dual computation and four actuals write routes
+Stopped at: Completed 06-03-PLAN.md: Budget Tab UI — dual-column Projected/Actual/Variance with inline editing, human-verified
 Resume file: None
