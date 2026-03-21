@@ -155,7 +155,7 @@ Plans:
   1. ADMIN can navigate to a farm-wide budget summary page and see all enterprises for the current crop year listed with projected and actual totals
   2. The page layout and column structure mirrors the Macro Rollup layout Sandy already knows
   3. Financial columns (revenue, margin, profit) are visible to ADMIN on this page and absent for any OFFICE user who can access the page
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 08-01-PLAN.md — Farm-wide budget summary API endpoint (aggregation across all enterprises)
 - [ ] 08-02-PLAN.md — Budget summary page UI + sidebar navigation + human verification
@@ -173,7 +173,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 6.1 → 7 → 8
 | 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete    | 2026-03-21 |
 | 6.1. Phase 6 Defect Fixes | 1/1 | Complete   | 2026-03-21 |
 | 7. All-Enterprise Sync | 2/2 | Complete    | 2026-03-21 |
-| 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
+| 8. Farm-Wide Budget Summary | 1/2 | In Progress|  |
 
 ---
 

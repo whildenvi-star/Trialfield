@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 07 — All-Enterprise Sync
-Plan: 2 of 3 (plan 07-02 complete — 2026-03-21)
-Status: Plan 07-02 complete — on-load sync trigger, stale indicator, human-verified end-to-end; ready for Plan 07-03
-Last activity: 2026-03-21 — Plan 07-02 complete: on-load budget sync, stale indicator, all-enterprise verification
+Phase: 08 — Farm-Wide Budget Summary
+Plan: 1 of 2 (plan 08-01 complete — 2026-03-21)
+Status: Plan 08-01 complete — GET /api/budget-summary endpoint with organic/conventional grouping, per-acre projected+actual+variance, weighted-average subtotals, RBAC-gated financials; ready for Plan 08-02
+Last activity: 2026-03-21 — Plan 08-01 complete: farm-wide budget aggregation API endpoint
 
-Progress: [█████░░░░░] 50%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -44,6 +44,7 @@ Progress: [█████░░░░░] 50%
 | Phase 06 P03 | 10 | 2 tasks | 6 files |
 | Phase 06.1-phase-6-defect-fixes P01 | 8 | 1 tasks | 2 files |
 | Phase 07-all-enterprise-sync P02 | ~5 min | 2 tasks | 2 files |
+| Phase 08-farm-wide-budget-summary P01 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [07-02]: Background sync never blocks initial Budget tab render — mount with existing DB data, update after sync completes
 - [07-02]: Stale indicator uses muted text only (no toast/modal) — sync failure is the exception, silent degradation preferred
 - [07-02]: Manual sync button in fields/page.tsx preserved as admin escape hatch; on-load sync does not replace it
+- [08-01]: Operations column in farm-wide summary absorbs other-material costs and fallow costs (non-seed, non-fertilizer, non-chemical) — matches BudgetTab.tsx column layout
+- [08-01]: Actual per-acre values are null independently per category — allActualsNull guard only applies to actualTotalPerAcre
+- [08-01]: Weighted-average grand total spans all rows (organic + conventional combined); no simple sum across subtotals
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-21T00:00:00Z
-Stopped at: Completed 07-02-PLAN.md — on-load sync trigger, stale indicator, human-verified end-to-end
+Last session: 2026-03-21T23:43:58Z
+Stopped at: Completed 08-01-PLAN.md — GET /api/budget-summary farm-wide aggregation endpoint
 Resume file: None
