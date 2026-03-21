@@ -16,10 +16,10 @@ Requirements for projected vs actual milestone. Each maps to roadmap phases.
 
 ### Actuals Entry
 
-- [ ] **ACT-01**: OFFICE user can update material input costs with actual invoice amounts
-- [ ] **ACT-02**: OFFICE user can confirm planned field operations as completed with actual dates
-- [ ] **ACT-03**: OFFICE user can enter actual harvest yield per acre
-- [ ] **ACT-04**: OFFICE user can update seed costs with actual purchase prices
+- [x] **ACT-01**: OFFICE user can update material input costs with actual invoice amounts
+- [x] **ACT-02**: OFFICE user can confirm planned field operations as completed with actual dates
+- [x] **ACT-03**: OFFICE user can enter actual harvest yield per acre
+- [x] **ACT-04**: OFFICE user can update seed costs with actual purchase prices
 - [x] **ACT-05**: Actuals entries are recorded immediately without approval
 
 ### Budget Views
@@ -98,10 +98,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PRIV-02 | Phase 5 | Complete |
 | PRIV-03 | Phase 5 | Complete |
 | PRIV-04 | Phase 5 | Complete |
-| ACT-01 | Phase 6 | Pending |
-| ACT-02 | Phase 6 | Pending |
-| ACT-03 | Phase 6 | Pending |
-| ACT-04 | Phase 6 | Pending |
+| ACT-01 | Phase 6 | Complete |
+| ACT-02 | Phase 6 | Complete |
+| ACT-03 | Phase 6 | Complete |
+| ACT-04 | Phase 6 | Complete |
 | ACT-05 | Phase 6 | Complete |
 | VIEW-01 | Phase 6 | Pending |
 | VIEW-02 | Phase 6 | Pending |

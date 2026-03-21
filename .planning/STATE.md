@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 6 — Actuals Entry and Enterprise Budget View
-Plan: 1 of 3 (plan 01 complete)
-Status: Phase 06 in progress — Plan 01 shipped (BudgetTab extraction, actuals schema, RBAC)
-Last activity: 2026-03-21 — Plan 06-01 complete: BudgetTab extracted, actuals fields migrated, budget:write RBAC added
+Plan: 2 of 3 (plan 02 complete)
+Status: Phase 06 in progress — Plan 02 shipped (actuals API layer: budget-summary dual computation, four write routes)
+Last activity: 2026-03-21 — Plan 06-02 complete: budget-summary extended with projected/actual/variance; four PATCH/POST actuals routes created
 
-Progress: [███░░░░░░░] 30%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -40,6 +40,7 @@ Progress: [███░░░░░░░] 30%
 | Phase 05-privacy-foundation P01 | 2 | 2 tasks | 3 files |
 | Phase 05-privacy-foundation P02 | 2 | 2 tasks | 2 files |
 | Phase 06-actuals-entry-and-enterprise-budget-view P01 | 4 | 2 tasks | 4 files |
+| Phase 06-actuals-entry-and-enterprise-budget-view P02 | ~8 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -60,6 +61,10 @@ Recent decisions affecting current work:
 - [05-02]: Defense-in-depth confirmed — API field stripping (Plan 01) + UI conditional rendering (Plan 02) enforce same RBAC rules independently
 - [Phase 06-actuals-entry-and-enterprise-budget-view]: refreshBudget targeted fetch avoids full page reload scroll-jump on budget save
 - [Phase 06-actuals-entry-and-enterprise-budget-view]: ACTUAL added to DataSource enum as additive change — no existing records modified
+- [06-02]: Projected totals include ALL operations (PLANNED + CONFIRMED); actual operation cost uses CONFIRMED ops only
+- [06-02]: null = not-entered for all actual fields — distinction between no data and zero spend; allActualsNull guard applied
+- [06-02]: Variance computed server-side only — no client-side variance math permitted
+- [06-02]: unplanned-cost uses material upsert (farmId_name key) for idempotent Unplanned category creation
 
 ### Pending Todos
 
@@ -69,12 +74,12 @@ Recent decisions affecting current work:
 ### Blockers/Concerns
 
 - [Phase 5 RESOLVED]: `getAuthContext()` ADMIN fallback removed in 05-01 — unauthenticated requests now return 401 at API level
-- [Phase 6]: Budget-summary computation mixes PLANNED and CONFIRMED operations — must split projected/actual computation paths before actuals entry goes live, or confirmed passes inflate projected totals
+- [Phase 6 RESOLVED]: Budget-summary computation mixes PLANNED and CONFIRMED — resolved in 06-02; projected uses ALL ops, actual uses CONFIRMED only
 - [Phase 6 RESOLVED]: `BudgetTab.tsx` extraction complete — detail page slimmed, dual-view UI work can proceed
 - [Phase 7]: Sync upsert match key collision — current key `{fieldId, cropYear, crop, label}` does not include `organicStatus`; conventional and organic crops of same type on same field will create duplicates. Update match key and run dry-run before going live.
 
 ## Session Continuity
 
 Last session: 2026-03-21
-Stopped at: Completed 06-01-PLAN.md: BudgetTab extraction, actuals schema fields, budget:write RBAC
+Stopped at: Completed 06-02-PLAN.md: Actuals API layer — budget-summary dual computation and four actuals write routes
 Resume file: None
