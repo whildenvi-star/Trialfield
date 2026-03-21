@@ -145,7 +145,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Privacy Foundation | 2/2 | Complete   | 2026-03-21 |
+| 5. Privacy Foundation | 2/2 | Complete    | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | 0/TBD | Not started | - |
 | 7. All-Enterprise Sync | 0/TBD | Not started | - |
 | 8. Farm-Wide Budget Summary | 0/TBD | Not started | - |
