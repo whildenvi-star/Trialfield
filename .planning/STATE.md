@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: None — v2.0 milestone complete, next milestone not yet started
-Plan: —
-Status: v2.0 shipped 2026-03-22 — 17/17 requirements satisfied, 5 phases complete
-Last activity: 2026-03-22 — v2.0 milestone archived
+Phase: 04-field-data-entry — Plan 1/2 complete
+Plan: 04-01 complete, 04-02 next
+Status: Active — Phase 4 in progress
+Last activity: 2026-03-22 — 04-01 complete (FIELD-01, FIELD-02 satisfied)
 
-Progress: [          ] 0% (next milestone)
+Progress: [#####     ] 50% (phase 4: 1/2 plans done)
 
 ## Performance Metrics
 
@@ -32,6 +32,12 @@ Progress: [          ] 0% (next milestone)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 All v2.0 decisions marked with outcomes — see PROJECT.md.
+
+**04-01 decisions:**
+- Used (app) route group for observations page (not (protected) as plan stated — doesn't exist in this codebase)
+- Photo serve route guarded with getAuthContext() — consistent with API pattern
+- CREW sees only own observations; ADMIN/OFFICE see all farm observations
+- JSON submission when no photo, multipart when photo present — avoids FormData overhead for text-only
 
 ### Pending Todos
 
@@ -51,5 +57,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-03-22
-Stopped at: v2.0 milestone archived
+Stopped at: Completed 04-01-PLAN.md — FieldObservation model, API routes, mobile form
 Resume file: None
