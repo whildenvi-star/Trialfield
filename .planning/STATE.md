@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 
 ## Current Position
 
-Phase: 08 — Farm-Wide Budget Summary
-Plan: 1 of 2 (plan 08-01 complete — 2026-03-21)
-Status: Plan 08-01 complete — GET /api/budget-summary endpoint with organic/conventional grouping, per-acre projected+actual+variance, weighted-average subtotals, RBAC-gated financials; ready for Plan 08-02
-Last activity: 2026-03-21 — Plan 08-01 complete: farm-wide budget aggregation API endpoint
+Phase: 08 — Farm-Wide Budget Summary (COMPLETE)
+Plan: 2 of 2 (plan 08-02 complete — 2026-03-21)
+Status: Phase 08 complete — /budget-summary page with Macro Rollup layout, sidebar link, RBAC-gated financial columns, human-verified; v2.0 milestone complete
+Last activity: 2026-03-21 — Plan 08-02 complete: farm-wide budget summary page and sidebar link, human-verified
 
-Progress: [██████░░░░] 60%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -30,7 +30,7 @@ Progress: [██████░░░░] 60%
 | 5. Privacy Foundation | 2 | ~10 min | ~5 min |
 | 6. Actuals Entry and Enterprise Budget View | TBD | - | - |
 | 7. All-Enterprise Sync | TBD | - | - |
-| 8. Farm-Wide Budget Summary | TBD | - | - |
+| 8. Farm-Wide Budget Summary | 2 | ~12 min | ~6 min |
 
 **Recent Trend:**
 - Last 5 plans: 05-01 (~2 min), 05-02 (~8 min checkpoint)
@@ -45,6 +45,7 @@ Progress: [██████░░░░] 60%
 | Phase 06.1-phase-6-defect-fixes P01 | 8 | 1 tasks | 2 files |
 | Phase 07-all-enterprise-sync P02 | ~5 min | 2 tasks | 2 files |
 | Phase 08-farm-wide-budget-summary P01 | 2 | 1 tasks | 1 files |
+| Phase 08-farm-wide-budget-summary P02 | 10 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,8 @@ Recent decisions affecting current work:
 - [08-01]: Operations column in farm-wide summary absorbs other-material costs and fallow costs (non-seed, non-fertilizer, non-chemical) — matches BudgetTab.tsx column layout
 - [08-01]: Actual per-acre values are null independently per category — allActualsNull guard only applies to actualTotalPerAcre
 - [08-01]: Weighted-average grand total spans all rows (organic + conventional combined); no simple sum across subtotals
+- [Phase 08-farm-wide-budget-summary]: Simplified column layout: Seed/Fert/Chem/Ops Proj+Act per-acre only; no per-category variance columns — full detail available by clicking into enterprise
+- [Phase 08-farm-wide-budget-summary]: Favorable variance = actual < projected (lower cost is better); green for favorable, red for unfavorable, dash when no actuals
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-03-21T23:43:58Z
-Stopped at: Completed 08-01-PLAN.md — GET /api/budget-summary farm-wide aggregation endpoint
+Last session: 2026-03-21
+Stopped at: Completed 08-02-PLAN.md — farm-wide budget summary page and sidebar link, human-verified; Phase 08 complete
 Resume file: None

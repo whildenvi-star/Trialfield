@@ -85,7 +85,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Actuals Entry and Enterprise Budget View** - OFFICE can record actuals; enterprise Budget tab shows projected/actual/variance (completed 2026-03-21)
 - [x] **Phase 6.1: Phase 6 Defect Fixes** - Auth guard, seed variance unit fix, category alignment (INSERTED — gap closure) (completed 2026-03-21)
 - [x] **Phase 7: All-Enterprise Sync** - Conventional enterprises sync alongside organic; full farm operation in database (completed 2026-03-21)
-- [ ] **Phase 8: Farm-Wide Budget Summary** - ADMIN sees all enterprises for a crop year in one aggregated view
+- [x] **Phase 8: Farm-Wide Budget Summary** - ADMIN sees all enterprises for a crop year in one aggregated view (completed 2026-03-22)
 
 ### Phase Details
 
@@ -155,7 +155,7 @@ Plans:
   1. ADMIN can navigate to a farm-wide budget summary page and see all enterprises for the current crop year listed with projected and actual totals
   2. The page layout and column structure mirrors the Macro Rollup layout Sandy already knows
   3. Financial columns (revenue, margin, profit) are visible to ADMIN on this page and absent for any OFFICE user who can access the page
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 08-01-PLAN.md — Farm-wide budget summary API endpoint (aggregation across all enterprises)
 - [ ] 08-02-PLAN.md — Budget summary page UI + sidebar navigation + human verification
@@ -173,7 +173,7 @@ v2.0 phases execute in numeric order: 5 → 6 → 6.1 → 7 → 8
 | 6. Actuals Entry and Enterprise Budget View | 3/3 | Complete    | 2026-03-21 |
 | 6.1. Phase 6 Defect Fixes | 1/1 | Complete   | 2026-03-21 |
 | 7. All-Enterprise Sync | 2/2 | Complete    | 2026-03-21 |
-| 8. Farm-Wide Budget Summary | 1/2 | In Progress|  |
+| 8. Farm-Wide Budget Summary | 2/2 | Complete   | 2026-03-22 |
 
 ---
 
