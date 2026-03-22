@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 04-field-data-entry — Plan 1/2 complete
-Plan: 04-01 complete, 04-02 next
-Status: Active — Phase 4 in progress
-Last activity: 2026-03-22 — 04-01 complete (FIELD-01, FIELD-02 satisfied)
+Phase: 04-field-data-entry — Plan 2/2 complete
+Plan: 04-02 complete, Phase 4 complete
+Status: Phase 4 complete — all FIELD requirements satisfied (FIELD-01, FIELD-02, FIELD-03)
+Last activity: 2026-03-22 — 04-02 complete (FIELD-03 satisfied)
 
-Progress: [#####     ] 50% (phase 4: 1/2 plans done)
+Progress: [##########] 100% (phase 4: 2/2 plans done)
 
 ## Performance Metrics
 
@@ -38,6 +38,8 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - Photo serve route guarded with getAuthContext() — consistent with API pattern
 - CREW sees only own observations; ADMIN/OFFICE see all farm observations
 - JSON submission when no photo, multipart when photo present — avoids FormData overhead for text-only
+- [Phase 04-field-data-entry]: Queue-first IDB write before upload guarantees no data loss on network failure
+- [Phase 04-field-data-entry]: Safari Private Mode fallback: openObservationDB returns null, direct-upload path prevents crashes
 
 ### Pending Todos
 
@@ -57,5 +59,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-03-22
-Stopped at: Completed 04-01-PLAN.md — FieldObservation model, API routes, mobile form
+Stopped at: Completed 04-02-PLAN.md — IndexedDB offline queue and auto-sync for field observations
 Resume file: None

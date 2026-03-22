@@ -31,7 +31,7 @@ Phases 1–4 defined but not started. Paused in favor of v2.0 milestone. Phases 
 - [ ] **Phase 1: Mobile Shell** - Navigable, touch-friendly mobile layout foundation (paused)
 - [ ] **Phase 2: Offline Sync** - Hardened offline layer with visible sync status (paused)
 - [ ] **Phase 3: Mobile Dashboard** - Phone-optimized dashboard with module-aware data (paused)
-- [ ] **Phase 4: Field Data Entry** - Field observation submission with offline queue
+- [x] **Phase 4: Field Data Entry** - Field observation submission with offline queue (completed 2026-03-22)
 
 ### Phase Details (Paused)
 
@@ -93,7 +93,7 @@ v1.0 phases paused. v2.0 phases shipped.
 | 1. Mobile Shell | v1.0 | 0/0 | Paused | - |
 | 2. Offline Sync | v1.0 | 0/0 | Paused | - |
 | 3. Mobile Dashboard | v1.0 | 0/0 | Paused | - |
-| 4. Field Data Entry | 1/2 | In Progress|  | - |
+| 4. Field Data Entry | 2/2 | Complete   | 2026-03-22 | - |
 | 5. Privacy Foundation | v2.0 | 2/2 | Complete | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | v2.0 | 3/3 | Complete | 2026-03-21 |
 | 6.1. Phase 6 Defect Fixes | v2.0 | 1/1 | Complete | 2026-03-21 |
