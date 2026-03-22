@@ -3,6 +3,10 @@
    "roll up your sleeves, code by your bootstraps"
    ============================================================ */
 
+/* Hide header title row when embedded in portal iframe, but keep nav tabs */
+html.in-iframe .header-top { display: none !important; }
+html.in-iframe header { padding-top: 0; }
+
 :root {
   --bg: #080a0f;
   --bg-raised: #0e1118;
@@ -83,7 +87,7 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
-  font-size: 14px;
+  font-size: var(--size-base, 14px);
   scrollbar-width: thin;
   scrollbar-color: var(--border-light) var(--bg);
 }
@@ -377,6 +381,88 @@ h3 {
 .demand-type-badge.type-input {
   color: var(--amber);
   border-color: var(--amber);
+}
+
+/* Expandable demand cards */
+.demand-expand {
+  border: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+}
+
+.demand-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  background: var(--bg-elevated);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.demand-summary:hover {
+  background: var(--highlight);
+}
+
+.demand-expand[open] > .demand-summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.demand-name {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 180px;
+}
+
+.demand-supplier {
+  color: var(--text-light);
+  font-size: 0.75rem;
+  flex: 1;
+}
+
+.demand-totals {
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.demand-field-count {
+  color: var(--text-light);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: right;
+}
+
+.demand-fields-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.demand-fields-table th {
+  background: var(--bg);
+  padding: 0.35rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-light);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border);
+}
+
+.demand-fields-table td {
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--border-dim, var(--border));
+  color: var(--text);
+}
+
+.demand-fields-table tr:last-child td {
+  border-bottom: none;
 }
 
 /* Unit/Pack table inline editing */
@@ -756,6 +842,24 @@ td.editing input, td.editing select {
   color: var(--text-bright);
 }
 
+/* Actual rows (Sandy's entered data from portal) */
+.rg-actual > td {
+  border-top: 1px dashed var(--border-light);
+  font-style: italic;
+}
+.actual-label {
+  padding-left: 1.5rem !important;
+  font-size: 0.72rem;
+  color: #4af626;
+}
+.actual-cell {
+  color: #4af626;
+}
+body.light .actual-label,
+body.light .actual-cell {
+  color: #1a6b10;
+}
+
 /* Summary group — the payoff */
 .rg-summary {
   background: var(--highlight) !important;
@@ -974,7 +1078,7 @@ td.editing input, td.editing select {
 
 .field-card-metrics {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   gap: 0.4rem;
   flex: 1;
   min-width: 0;
@@ -983,14 +1087,14 @@ td.editing input, td.editing select {
 .metric { display: flex; flex-direction: column; }
 
 .metric-label {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--text-light);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .metric-value {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--amber);
 }
@@ -1358,6 +1462,27 @@ body.light .futures-down { color: #b03030; }
 body.light .term-chat-response { color: var(--text-light); }
 body.light .term-chat-err { color: #b33; }
 
+/* Audit badge */
+.audit-badge {
+  display: inline-block;
+  background: #c05050;
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.5rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
+  vertical-align: middle;
+  animation: audit-pulse 2s ease-in-out infinite;
+}
+.audit-badge.warn { background: #b08020; }
+body.light .audit-badge { background: #d04040; }
+body.light .audit-badge.warn { background: #c08800; }
+@keyframes audit-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 /* ============================================================
    DASHBOARD CONTROLS & PANELS
    ============================================================ */
@@ -1575,7 +1700,7 @@ body.light .term-chat-err { color: #b33; }
 .editor-section {
   margin-bottom: 0.6rem;
   border: 1px solid var(--border);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .editor-section summary {
@@ -1604,7 +1729,7 @@ body.light .term-chat-err { color: #b33; }
 .editor-section[open] summary::before { transform: rotate(90deg); }
 .editor-section summary:hover { background: var(--highlight); color: var(--primary); }
 
-.editor-section-body { padding: 0.65rem; overflow-x: auto; }
+.editor-section-body { padding: 0.65rem; overflow: visible; }
 
 .editor-panel .form-group label {
   font-size: 0.78rem;
@@ -1741,12 +1866,13 @@ body.light .term-chat-err { color: #b33; }
   position: absolute;
   top: 100%;
   left: 0;
-  width: 280px;
-  max-height: 220px;
+  width: 320px;
+  max-height: 260px;
   overflow-y: auto;
   background: var(--card);
   border: 1px solid var(--border);
-  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  z-index: 200;
 }
 .prod-ac-item {
   padding: 0.35rem 0.5rem;
@@ -1757,6 +1883,25 @@ body.light .term-chat-err { color: #b33; }
 }
 .prod-ac-item:hover { background: var(--highlight); color: var(--primary); }
 .prod-ac-item:last-child { border-bottom: none; }
+
+/* ============================================================
+   COLLAPSIBLE SECTIONS
+   ============================================================ */
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.collapsible-header:hover { color: var(--primary); }
+.collapse-arrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  transition: transform 0.15s;
+  color: var(--primary-dim);
+}
+.collapsible-section.open .collapse-arrow { transform: rotate(90deg); }
 
 /* ============================================================
    CROP TYPES ACCORDION
@@ -1798,6 +1943,56 @@ body.light .term-chat-err { color: #b33; }
   font-size: 0.7rem;
   color: var(--text-light);
   flex: 1;
+}
+.ctype-enterprise-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: rgba(74, 246, 38, 0.18);
+  color: #4af626;
+  border: 1px solid rgba(74, 246, 38, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.ctype-enterprise-badge.unassigned {
+  background: rgba(255, 160, 0, 0.18);
+  color: #ffa000;
+  border-color: rgba(255, 160, 0, 0.35);
+}
+.ctype-enterprise-select {
+  font-size: 0.74rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid rgba(74, 246, 38, 0.35);
+  border-radius: 4px;
+  background: rgba(74, 246, 38, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  min-width: 150px;
+  max-width: 200px;
+  flex-shrink: 0;
+}
+.ctype-enterprise-select:hover {
+  background: rgba(74, 246, 38, 0.12);
+  border-color: rgba(74, 246, 38, 0.5);
+}
+.ctype-enterprise-select.no-enterprise {
+  border-color: rgba(255, 160, 0, 0.45);
+  background: rgba(255, 160, 0, 0.08);
+}
+.subcrop-enterprise-select {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid rgba(74, 246, 38, 0.35);
+  border-radius: 4px;
+  background: rgba(74, 246, 38, 0.06);
+  color: var(--text);
+  cursor: pointer;
+  max-width: 130px;
+}
+.subcrop-enterprise-select:hover {
+  background: rgba(74, 246, 38, 0.12);
+  border-color: rgba(74, 246, 38, 0.5);
 }
 .ctype-symbol-select {
   font-family: var(--font-mono);
@@ -2703,7 +2898,7 @@ body.light .prog-stat span:last-child { color: #333; }
 .fc-category-total { color: var(--text-light); font-size: 0.85rem; }
 .fc-category-toggle { margin-left: auto; color: var(--text-light); font-size: 0.8rem; }
 
-.fc-row { display: grid; grid-template-columns: 1.5rem 2fr 1fr 0.8fr 0.8fr 0.8fr 0.8fr 1fr 1rem; gap: 0.5rem; align-items: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.fc-row { display: grid; grid-template-columns: 2fr 1fr 1fr 0.8fr 0.8fr 0.7fr 0.7fr 0.7fr 1fr; gap: 0.4rem; align-items: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
 .fc-row:hover { background: var(--highlight); }
 .fc-row.expanded { background: var(--highlight); }
 .fc-header { font-weight: 600; color: var(--text-light); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -2795,3 +2990,10 @@ body.light .prod-organic-badge { color: #1a7a1a; border-color: #4caf50; }
 body.light .sim-preview { color: #b8860b !important; background: rgba(184, 134, 11, 0.08) !important; }
 body.light #price-simulator summary { background: #f5f5f5; }
 body.light .prod-category-name { color: #222; }
+
+/* When embedded in an iframe, hide the title row and show toggle in nav */
+@media all {
+  .in-iframe .header-top { display: none; }
+  .in-iframe .nav-primary .theme-toggle { display: inline-block; }
+}
+.nav-primary .theme-toggle { display: none; }

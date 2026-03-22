@@ -250,6 +250,141 @@ app.get('/api/dashboard', (req, res) => {
   res.json(dashboard);
 });
 
+// --- Budget Field Details (for organic-cert budget-summary consumption) ---
+// Returns per-field computed budgets with all 10 cost categories (per-acre values)
+// so Sandy's view can mirror the macro rollup layout exactly.
+app.get('/api/budget-field-details', (req, res) => {
+  const refs = getRefs();
+  const rows = store.fields.map(field => {
+    const ent = store.enterprises.find(e => e.id === field.enterpriseId);
+    const b = Calc.computeFieldBudget(field, refs, store.settings);
+    return {
+      fieldId: field.id,
+      fieldName: field.name,
+      crop: field.crop,
+      acres: b.effectiveAcres,
+      enterpriseId: field.enterpriseId,
+      enterpriseName: ent ? ent.name : '',
+      category: ent ? ent.category : 'conventional',
+      // 10 cost categories (per-acre)
+      rentPerAcre: b.rentPerCropAcre,
+      fertPerAcre: b.totalFertPerAcre,
+      seedPerAcre: b.seedCostPerAcre,
+      machineryPerAcre: b.machineryPerAcre,
+      laborPerAcre: Calc.round2((b.laborPerAcre || 0) + (b.overheadPerAcre || 0)),
+      fuelPerAcre: b.fuelPerAcre,
+      dryingPerAcre: b.dryingPerAcre,
+      interestPerAcre: b.interestPerAcre,
+      insurancePerAcre: b.cropInsurancePerAcre,
+      expPerAcre: b.expPerAcre,
+      // Financial (organic-cert RBAC will gate visibility)
+      yieldPerAcre: b.yieldPerAcre,
+      pricePerUnit: b.pricePerUnit,
+      cropIncomePerAcre: b.cropIncomePerAcre,
+      profitPerAcre: b.profitPerAcre
+    };
+  });
+
+  // Group by category for subtotals
+  const organic = rows.filter(r => r.category === 'organic');
+  const conventional = rows.filter(r => r.category === 'conventional');
+
+  function computeSubtotal(subset) {
+    const totalAcres = subset.reduce((s, r) => s + r.acres, 0);
+    if (totalAcres === 0) return { acres: 0 };
+    const wa = key => Calc.round2(subset.reduce((s, r) => s + r[key] * r.acres, 0) / totalAcres);
+    return {
+      acres: totalAcres,
+      rentPerAcre: wa('rentPerAcre'),
+      fertPerAcre: wa('fertPerAcre'),
+      seedPerAcre: wa('seedPerAcre'),
+      machineryPerAcre: wa('machineryPerAcre'),
+      laborPerAcre: wa('laborPerAcre'),
+      fuelPerAcre: wa('fuelPerAcre'),
+      dryingPerAcre: wa('dryingPerAcre'),
+      interestPerAcre: wa('interestPerAcre'),
+      insurancePerAcre: wa('insurancePerAcre'),
+      expPerAcre: wa('expPerAcre'),
+      cropIncomePerAcre: wa('cropIncomePerAcre'),
+      profitPerAcre: wa('profitPerAcre')
+    };
+  }
+
+  res.json({
+    year: store.settings.year,
+    fields: rows,
+    organicSubtotal: computeSubtotal(organic),
+    conventionalSubtotal: computeSubtotal(conventional),
+    grandTotal: computeSubtotal(rows)
+  });
+});
+
+// --- Actuals from Portal (organic-cert) ---
+// Fetches Sandy's entered actuals from organic-cert and caches them briefly.
+// Called internally by the dashboard when yieldMode=actual, or directly via API.
+let _actualsCache = { data: null, expiry: 0 };
+
+async function fetchPortalActuals(year) {
+  const now = Date.now();
+  if (_actualsCache.data && _actualsCache.expiry > now) return _actualsCache.data;
+
+  const portalUrl = process.env.PORTAL_API_URL || 'http://localhost:3002';
+  const token = process.env.ECOSYSTEM_TOKEN || '';
+  try {
+    const res = await fetch(`${portalUrl}/api/budget-actuals?year=${year}&token=${encodeURIComponent(token)}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    // Build lookup map: "fieldname|crop" -> actuals
+    const map = {};
+    (json.actuals || []).forEach(a => {
+      const key = (a.fieldName || '').toLowerCase() + '|' + (a.crop || '').toLowerCase();
+      map[key] = a;
+    });
+    _actualsCache = { data: map, expiry: now + 30000 }; // 30s cache
+    return map;
+  } catch {
+    return null;
+  }
+}
+
+app.get('/api/actuals-from-portal', async (req, res) => {
+  const year = parseInt(req.query.year) || store.settings.year;
+  const actuals = await fetchPortalActuals(year);
+  if (!actuals) return res.json({ actuals: {} });
+  res.json({ actuals });
+});
+
+// Override the dashboard endpoint to include actuals overlay when yieldMode=actual
+app.get('/api/dashboard-with-actuals', async (req, res) => {
+  const yieldMode = req.query.yieldMode === 'actual' ? 'actual' : 'projected';
+  const dashboard = Calc.computeDashboard(store.fields, store.enterprises, getRefs(), store.settings, { yieldMode });
+
+  if (yieldMode === 'actual') {
+    // Overlay Sandy's actuals onto enterprise summaries
+    const actualsMap = await fetchPortalActuals(store.settings.year);
+    if (actualsMap) {
+      dashboard.enterpriseSummaries.forEach(es => {
+        es.budgets.forEach(fb => {
+          const key = (fb.field.name || '').toLowerCase() + '|' + (fb.field.crop || '').toLowerCase();
+          const actual = actualsMap[key];
+          if (actual) {
+            fb.actuals = {
+              seedTotal: actual.actualSeedTotal,
+              fertTotal: actual.actualFertTotal,
+              chemTotal: actual.actualChemTotal,
+              opsTotal: actual.actualOpsTotal,
+              total: actual.actualTotal,
+              acres: actual.acres
+            };
+          }
+        });
+      });
+    }
+  }
+
+  res.json(dashboard);
+});
+
 // --- Enterprises ---
 app.get('/api/enterprises', (req, res) => {
   res.json(store.enterprises);
@@ -571,16 +706,12 @@ app.post('/api/fields/sync-registry', async (req, res) => {
       if (!regMatch) return;
       const allocatedAcres = group.fields.reduce((sum, f) => sum + (f.acres || 0), 0);
 
-      // Allocate full registry rent proportionally across sub-fields.
-      // Uses effective rent acres (DBL CROP fields count at 0.5× since calc.js applies
-      // cropTypeMultiplier to rentPerAcre). This ensures the total rent across all
-      // sub-fields sums to the registry check amount.
-      var totalEffectiveAcres = group.fields.reduce(function (sum, f) {
-        var mult = (f.cropType || '').toUpperCase().indexOf('DBL') >= 0 ? 0.5 : 1.0;
-        return sum + (f.acres || 0) * mult;
-      }, 0);
-      if (regMatch.totalRentDollars > 0 && totalEffectiveAcres > 0) {
-        var rate = Math.round((regMatch.totalRentDollars / totalEffectiveAcres) * 100) / 100;
+      // Sync rent rate from registry for split sub-fields.
+      // Use registry reporting acres as denominator (not the split group's allocated
+      // acres) so the per-acre rate stays correct even when the split doesn't cover
+      // the full parcel.
+      if (regMatch.totalRentDollars > 0 && regMatch.reportingAcres > 0) {
+        var rate = Math.round((regMatch.totalRentDollars / regMatch.reportingAcres) * 100) / 100;
         group.fields.forEach(f => {
           if (Math.abs((f.rentPerAcre || 0) - rate) > 0.001) {
             f.rentPerAcre = rate;
@@ -1622,25 +1753,35 @@ app.post('/api/chat', async (req, res) => {
 
   // --- LOCAL: Field-level data ---
   try {
+    var refs = getRefs();
     var fieldLines = store.fields.map(function (f) {
       var ent = store.enterprises.find(function (e) { return e.id === f.enterpriseId; });
       var entName = ent ? ent.shortName : 'unassigned';
-      var inputCost = (f.inputs || []).reduce(function (s, inp) { return s + (inp.totalCost || 0); }, 0);
+      var b = Calc.computeFieldBudget(f, refs, store.settings);
       return f.name + ' (' + entName + '): ' + (f.acres || 0) + ' ac, crop ' + (f.crop || 'none') +
-        ', rent $' + (f.rentPerAcre || 0).toFixed(0) + '/ac, input cost $' + inputCost.toFixed(0) +
-        ', yield ' + (f.projectedYield || 0) + ' ' + (f.yieldUnit || 'bu') + '/ac';
+        ', rent $' + (f.rentPerAcre || 0).toFixed(0) + '/ac' +
+        ', input $' + (b.totalFertPerAcre || 0).toFixed(0) + '/ac' +
+        ', seed $' + (b.seedCostPerAcre || 0).toFixed(0) + '/ac' +
+        ', mach $' + (b.machineryPerAcre || 0).toFixed(0) + '/ac' +
+        ', yield ' + (b.yieldPerAcre || 0) + ' ' + (b.yieldUnit || 'bu') + '/ac' +
+        ', exp $' + (b.expPerAcre || 0).toFixed(0) + '/ac' +
+        ', profit $' + (b.profitPerAcre || 0).toFixed(0) + '/ac';
     });
     if (fieldLines.length) contextParts.push('FIELDS (' + fieldLines.length + '):\n' + fieldLines.join('\n'));
   } catch (e) { /* skip */ }
 
-  // --- LOCAL: Programs (crop insurance, gov payments) ---
+  // --- LOCAL: Programs (agronomic templates) ---
   try {
     if (store.programs && store.programs.length) {
       var progLines = store.programs.map(function (p) {
-        return p.name + ' (' + (p.type || p.category || 'program') + '): ' +
-          (p.fieldsApplied || 0) + ' fields, $' + (p.paymentPerAcre || p.amount || 0) + '/ac';
+        var linkedCount = store.fields.filter(function (f) { return f.templateId === p.id; }).length;
+        var inputCount = (p.inputs || []).length;
+        return p.name + ' (' + (p.crop || 'unknown') + ', ' + (p.systemCode || '') + '): ' +
+          linkedCount + ' fields, ' + inputCount + ' inputs' +
+          ', yield ' + (p.yieldPerAcre || 0) + ' ' + (p.yieldUnit || 'bu') + '/ac' +
+          ', ins $' + (p.cropInsurancePerAcre || 0).toFixed(0) + '/ac';
       });
-      contextParts.push('PROGRAMS:\n' + progLines.join('\n'));
+      contextParts.push('PROGRAMS (' + store.programs.length + '):\n' + progLines.join('\n'));
     }
   } catch (e) { /* skip */ }
 
@@ -1648,14 +1789,22 @@ app.post('/api/chat', async (req, res) => {
   try {
     if (store.orders && store.orders.length) {
       var orderLines = store.orders.map(function (o) {
-        return o.productName + ' from ' + (o.supplierName || 'TBD') + ': ' +
-          (o.quantity || 0) + ' ' + (o.unit || 'units') + ', status ' + (o.status || 'pending') +
-          ', $' + (o.totalCost || 0).toFixed(0);
+        var itemSummary = (o.items || []).map(function (it) {
+          var cost = (it.orderedQty || 0) * (it.unitCost || 0);
+          return it.productName + ' ' + (it.orderedQty || 0) + ' ' + (it.unit || 'units') + ' $' + cost.toFixed(0);
+        }).join('; ');
+        return (o.supplierName || 'TBD') + ' [' + (o.status || 'pending') + ']: ' + (itemSummary || 'no items');
       });
       contextParts.push('ORDERS (' + store.orders.length + '):\n' + orderLines.join('\n'));
     }
     if (store.deliveries && store.deliveries.length) {
-      contextParts.push('DELIVERIES: ' + store.deliveries.length + ' received');
+      var delLines = store.deliveries.map(function (d) {
+        var itemSummary = (d.items || []).map(function (it) {
+          return it.productName + ' ' + (it.deliveredQty || 0) + ' ' + (it.unit || 'units');
+        }).join('; ');
+        return (d.ticketNumber || 'no-ticket') + ' (' + (d.deliveredAt || 'unknown date') + '): ' + (itemSummary || 'no items');
+      });
+      contextParts.push('DELIVERIES (' + store.deliveries.length + '):\n' + delLines.join('\n'));
     }
   } catch (e) { /* skip */ }
 
@@ -1663,9 +1812,10 @@ app.post('/api/chat', async (req, res) => {
   try {
     if (store.seeds && store.seeds.length) {
       var seedLines = store.seeds.map(function (s) {
-        return (s.variety || s.name || 'unknown') + ': ' + (s.crop || '') +
-          ', $' + (s.pricePerUnit || 0).toFixed(2) + '/' + (s.unit || 'bag') +
-          ', rate ' + (s.seedingRate || 0) + '/ac';
+        return (s.variety || 'unknown') + ': ' + (s.crop || '') +
+          ', ' + (s.brand || '') +
+          ', $' + (s.pricePerUnit || 0).toFixed(2) + '/unit' +
+          ', ' + (s.seedsPerUnit || 0) + ' seeds/unit';
       });
       contextParts.push('SEED VARIETIES (' + store.seeds.length + '):\n' + seedLines.join('\n'));
     }

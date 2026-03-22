@@ -129,7 +129,11 @@
 
   // --- Load dashboard ---
   function loadDashboard() {
-    api.get('/api/dashboard?yieldMode=' + yieldMode).then(function (data) {
+    // Use actuals-aware endpoint when in actual mode to overlay Sandy's entered costs
+    var endpoint = yieldMode === 'actual'
+      ? '/api/dashboard-with-actuals?yieldMode=actual'
+      : '/api/dashboard?yieldMode=projected';
+    api.get(endpoint).then(function (data) {
       var mode = data.yieldMode || 'projected';
       renderCropTable('dash-conv-tbody', 'dash-conv-info', 'chart-conv-acres', 'convAcres', data.conventional, mode);
       renderCropTable('dash-org-tbody', 'dash-org-info', 'chart-org-acres', 'orgAcres', data.organic, mode);
@@ -158,6 +162,13 @@
     var cropAcres = [];
 
     entries.forEach(function (entry) {
+      // Find enterprise index for click navigation
+      var entIdx = -1;
+      var enterprises = window.refData.enterprises;
+      for (var ei = 0; ei < enterprises.length; ei++) {
+        if (enterprises[ei].id === entry.enterprise.id) { entIdx = ei; break; }
+      }
+
       entry.cropRows.forEach(function (row) {
         totalAcres += row.acres;
         cropCount++;
@@ -176,7 +187,7 @@
             ' fields have actual yield data">(' + row.actualCount + '/' + row.totalCount + ')</span>';
         }
 
-        html += '<tr>' +
+        html += '<tr class="dash-clickable-row" data-enterprise-idx="' + entIdx + '">' +
           '<td>' + util.escHtml(row.crop) + '</td>' +
           '<td class="number">' + util.formatNum(row.acres, 1) + '</td>' +
           '<td class="number">' + yieldText + '</td>' +
@@ -230,12 +241,24 @@
   function renderRollup(data) {
     var enterprises = data.enterpriseSummaries;
 
+    // Check if any enterprise has actuals data from portal
+    var hasActuals = enterprises.some(function (es) {
+      return es.budgets && es.budgets.some(function (fb) { return fb.actuals; });
+    });
+
     // Build column headers dynamically
     var theadRow = document.getElementById('dash-rollup-thead-row');
     if (theadRow) {
       var hHtml = '<th>Category</th>';
       for (var h = 0; h < enterprises.length; h++) {
-        hHtml += '<th>' + util.escHtml(enterprises[h].enterprise.shortName) + '</th>';
+        // Find enterprise index for click navigation
+        var ridx = -1;
+        var refEnts = window.refData.enterprises;
+        for (var ri = 0; ri < refEnts.length; ri++) {
+          if (refEnts[ri].id === enterprises[h].enterprise.id) { ridx = ri; break; }
+        }
+        hHtml += '<th class="dash-clickable-header" data-enterprise-idx="' + ridx + '">' +
+          util.escHtml(enterprises[h].enterprise.shortName) + '</th>';
       }
       hHtml += '<th>TOTAL</th>';
       theadRow.innerHTML = hHtml;
@@ -249,19 +272,24 @@
       // Fertilizer group
       { label: 'Spring Fert', key: 'springFert', group: 'fert', groupFirst: true, indent: true },
       { label: 'Fall Fert', key: 'fallFert', group: 'fert', indent: true },
-      { label: 'Total Fert', key: 'fert', bold: true, group: 'fert', groupLast: true, subtotal: true },
+      { label: 'Total Fert', key: 'fert', bold: true, group: 'fert', subtotal: true },
+      // Actuals rows for fert (only when data exists)
+      { label: '  Actual Fert', key: '_actualFert', group: 'fert', indent: true, actualRow: true, actualKey: 'fertTotal', groupLast: true },
       // Seed
-      { label: 'Seed', key: 'seed', group: 'seed', groupFirst: true, groupLast: true },
+      { label: 'Seed', key: 'seed', group: 'seed', groupFirst: true },
+      { label: '  Actual Seed', key: '_actualSeed', group: 'seed', indent: true, actualRow: true, actualKey: 'seedTotal', groupLast: true },
       // Operations group
       { label: 'Machinery', key: 'machinery', group: 'ops', groupFirst: true },
       { label: 'Labor & Overhead', key: 'laborOverhead', group: 'ops' },
       { label: 'Fuel', key: 'fuel', group: 'ops' },
-      { label: 'Drying', key: 'drying', group: 'ops', groupLast: true },
+      { label: 'Drying', key: 'drying', group: 'ops' },
+      { label: '  Actual Ops', key: '_actualOps', group: 'ops', indent: true, actualRow: true, actualKey: 'opsTotal', groupLast: true },
       // Carrying costs group
       { label: 'Interest', key: 'interest', group: 'carry', groupFirst: true },
       { label: 'Crop Insurance Premiums', key: 'insurance', group: 'carry', groupLast: true },
       // Summary totals (core farming KPIs: crop revenue − expenses)
       { label: 'Total Expenses', key: 'expTotal', highlight: true, group: 'summary', groupFirst: true },
+      { label: 'Actual Total', key: '_actualTotal', highlight: true, actualRow: true, actualKey: 'total', group: 'summary' },
       { label: 'Gross Income', key: 'cropIncome', highlight: true, group: 'summary' },
       { label: 'Operating Profit', key: 'cropProfit', highlight: true, profit: true, group: 'summary', groupLast: true },
       // Supplemental income (not included in operating KPIs above)
@@ -274,6 +302,9 @@
     var html = '';
 
     categories.forEach(function (cat) {
+      // Skip actual rows when no actuals data exists
+      if (cat.actualRow && !hasActuals) return;
+
       // Build row classes
       var classes = ['rollup-row'];
       if (cat.group) classes.push('rg-' + cat.group);
@@ -281,6 +312,7 @@
       if (cat.groupLast) classes.push('rg-last');
       if (cat.highlight) classes.push('row-highlight');
       if (cat.subtotal) classes.push('rg-subtotal');
+      if (cat.actualRow) classes.push('rg-actual');
 
       html += '<tr class="' + classes.join(' ') + '">';
 
@@ -288,28 +320,43 @@
       var labelCls = '';
       if (cat.indent) labelCls = 'rg-indent';
       else if (cat.bold || cat.highlight) labelCls = 'bold';
+      if (cat.actualRow) labelCls += ' actual-label';
       html += '<td class="' + labelCls + '">' + cat.label + '</td>';
 
       var total = 0;
       for (var i = 0; i < enterprises.length; i++) {
-        var val = enterprises[i].totals[cat.key] || 0;
+        var val;
+        if (cat.actualRow) {
+          // Sum actuals across all budgets in this enterprise
+          val = 0;
+          var budgets = enterprises[i].budgets || [];
+          budgets.forEach(function (fb) {
+            if (fb.actuals && fb.actuals[cat.actualKey] != null) {
+              val += fb.actuals[cat.actualKey];
+            }
+          });
+        } else {
+          val = enterprises[i].totals[cat.key] || 0;
+        }
         total += val;
         var cellCls = 'number';
         if (cat.profit) cellCls += ' ' + util.profitClass(val);
         if (cat.bold || cat.highlight) cellCls += ' bold';
+        if (cat.actualRow) cellCls += ' actual-cell';
         if (cat.fmt === 'num') {
           html += '<td class="' + cellCls + '">' + util.formatNum(val, 1) + '</td>';
         } else {
-          html += '<td class="' + cellCls + '">' + util.formatMoney(val, 0) + '</td>';
+          html += '<td class="' + cellCls + '">' + (val ? util.formatMoney(val, 0) : '—') + '</td>';
         }
       }
 
       var totalCls = 'number bold';
       if (cat.profit) totalCls += ' ' + util.profitClass(total);
+      if (cat.actualRow) totalCls += ' actual-cell';
       if (cat.fmt === 'num') {
         html += '<td class="' + totalCls + '">' + util.formatNum(total, 1) + '</td>';
       } else {
-        html += '<td class="' + totalCls + '">' + util.formatMoney(total, 0) + '</td>';
+        html += '<td class="' + totalCls + '">' + (total ? util.formatMoney(total, 0) : '—') + '</td>';
       }
       html += '</tr>';
     });
@@ -317,22 +364,32 @@
     tbody.innerHTML = html;
   }
 
-  // --- Summary Charts ---
+  // --- Net Margin by Enterprise Chart ---
   function renderSummaryCharts(data) {
     var enterprises = data.enterpriseSummaries;
-    var grand = data.grandTotals;
 
-    // Bar chart: expenses vs income by enterprise
     var labels = enterprises.map(function (e) { return e.enterprise.shortName; });
-    var expData = enterprises.map(function (e) { return e.totals.expTotal; });
-    var incData = enterprises.map(function (e) { return e.totals.incomeWithPayments; });
+    var revData = enterprises.map(function (e) { return e.totals.incomeWithPayments || 0; });
+    var expData = enterprises.map(function (e) { return e.totals.expTotal || 0; });
+    var netData = enterprises.map(function (e) {
+      return (e.totals.incomeWithPayments || 0) - (e.totals.expTotal || 0);
+    });
 
     var t = ct();
-    upsertChart('entBars', 'chart-ent-bars', 'bar', {
+    var C = getColors();
+    upsertChart('netMargin', 'chart-net-margin', 'bar', {
       labels: labels,
       datasets: [
+        { label: 'Revenue', data: revData, backgroundColor: t.incBar, borderColor: t.incBorder, borderWidth: 1, borderRadius: 2 },
         { label: 'Expenses', data: expData, backgroundColor: t.expBar, borderColor: t.expBorder, borderWidth: 1, borderRadius: 2 },
-        { label: 'Income', data: incData, backgroundColor: t.incBar, borderColor: t.incBorder, borderWidth: 1, borderRadius: 2 }
+        {
+          label: 'Net',
+          data: netData,
+          backgroundColor: netData.map(function (v) { return v >= 0 ? C.teal + '80' : C.danger + '80'; }),
+          borderColor: netData.map(function (v) { return v >= 0 ? C.teal : C.danger; }),
+          borderWidth: 1,
+          borderRadius: 2
+        }
       ]
     }, {
       responsive: true,
@@ -353,7 +410,11 @@
       scales: {
         y: {
           ticks: {
-            callback: function (v) { return v >= 1000 ? '$' + Math.round(v / 1000) + 'k' : '$' + v; },
+            callback: function (v) {
+              var abs = Math.abs(v);
+              var label = abs >= 1000 ? '$' + Math.round(abs / 1000) + 'k' : '$' + abs;
+              return v < 0 ? '-' + label : label;
+            },
             font: { size: 10 },
             color: t.tickColor
           },
@@ -365,47 +426,8 @@
         }
       }
     });
-
-    // Doughnut: expense breakdown by category (farm-wide)
-    var expCategories = [
-      { label: 'Rent', val: grand.rent },
-      { label: 'Fertilizer', val: grand.fert },
-      { label: 'Seed', val: grand.seed },
-      { label: 'Machinery', val: grand.machinery },
-      { label: 'Labor & OH', val: grand.laborOverhead },
-      { label: 'Fuel', val: grand.fuel },
-      { label: 'Drying', val: grand.drying },
-      { label: 'Interest', val: grand.interest },
-      { label: 'Crop Ins.', val: grand.insurance }
-    ];
-
-    var pal = getPalette();
-    upsertChart('expDoughnut', 'chart-exp-doughnut', 'doughnut', {
-      labels: expCategories.map(function (c) { return c.label; }),
-      datasets: [{
-        data: expCategories.map(function (c) { return Math.round(c.val || 0); }),
-        backgroundColor: pal.slice(0, expCategories.length),
-        borderWidth: 1,
-        borderColor: t.sliceBorder
-      }]
-    }, {
-      responsive: false,
-      cutout: '45%',
-      plugins: {
-        legend: { position: 'right', labels: { boxWidth: 8, font: { size: 10 }, color: t.legendColor, padding: 6 } },
-        tooltip: {
-          backgroundColor: t.tooltipBg,
-          borderColor: t.tooltipBorder,
-          borderWidth: 1,
-          titleColor: t.tooltipTitle,
-          bodyColor: t.tooltipBody,
-          callbacks: {
-            label: function (ctx) { return ctx.label + ': ' + util.formatMoney(ctx.raw, 0); }
-          }
-        }
-      }
-    });
   }
+
   // --- Production by Crop Type ---
   function renderProductionByType(data) {
     var tbody = document.getElementById('dash-production-tbody');
@@ -511,6 +533,23 @@
     });
   }
 
+  // --- Dashboard row click → navigate to enterprise ---
+  document.getElementById('tab-dashboard').addEventListener('click', function (e) {
+    var row = e.target.closest('.dash-clickable-row, .dash-clickable-header');
+    if (!row) return;
+    var idx = parseInt(row.getAttribute('data-enterprise-idx'), 10);
+    if (idx >= 0 && window.refData.enterprises[idx]) {
+      if (typeof window.activateEnterprise === 'function') {
+        window.activateEnterprise(idx);
+      } else {
+        location.hash = 'enterprise-' + idx;
+        window.dispatchEvent(new CustomEvent('tab-activate', {
+          detail: { tab: 'enterprise', enterpriseIdx: idx }
+        }));
+      }
+    }
+  });
+
   // --- Acre Reconciliation ---
   function loadReconciliation() {
     api.get('/api/dashboard/reconciliation').then(function (data) {
@@ -598,5 +637,55 @@
       btn.disabled = false;
       btn.textContent = 'Sync All from Registry';
     });
+  });
+
+  // --- Export Production by Crop Type as CSV ---
+  document.getElementById('btn-export-production').addEventListener('click', function () {
+    var tbody = document.getElementById('dash-production-tbody');
+    if (!tbody) return;
+
+    var rows = [['Type', 'Crop', 'Acres', 'Total Production', 'Avg Yield']];
+
+    tbody.querySelectorAll('tr').forEach(function (tr) {
+      if (tr.classList.contains('total-row')) return;
+
+      var cells = tr.querySelectorAll('td');
+      if (!cells.length) return;
+
+      var isType = tr.classList.contains('prod-type-row');
+      var isSub = tr.classList.contains('prod-sub-row');
+
+      var typeName = '';
+      var cropName = '';
+
+      if (isType) {
+        var swatch = cells[0].querySelector('.prod-type-swatch');
+        typeName = swatch ? swatch.textContent.trim() : cells[0].textContent.trim();
+        cropName = typeName;
+      } else if (isSub) {
+        typeName = tr.getAttribute('data-parent') || '';
+        cropName = cells[0].textContent.trim();
+      }
+
+      var acres = cells[1] ? cells[1].textContent.trim() : '';
+      var production = cells[2] ? cells[2].textContent.trim() : '';
+      var avgYield = cells[3] ? cells[3].textContent.trim() : '';
+
+      rows.push([typeName, cropName, acres, production, avgYield]);
+    });
+
+    var csv = rows.map(function (r) {
+      return r.map(function (c) {
+        return '"' + String(c).replace(/"/g, '""') + '"';
+      }).join(',');
+    }).join('\n');
+
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'production-by-crop-type-' + (window.refData.settings.year || 2026) + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    util.showToast('CSV exported');
   });
 })();
