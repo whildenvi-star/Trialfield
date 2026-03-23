@@ -94,7 +94,7 @@ v1.0 phases paused. v2.0 phases shipped.
 | 2. Offline Sync | v1.0 | 0/0 | Paused | - |
 | 3. Mobile Dashboard | v1.0 | 0/0 | Paused | - |
 | 4. Field Data Entry | 2/2 | Complete | 2026-03-22 |
-| 5. Privacy Foundation | v2.0 | 2/2 | Complete | 2026-03-21 |
+| 5. Privacy Foundation | 2/3 | In Progress|  | 2026-03-21 |
 | 6. Actuals Entry and Enterprise Budget View | v2.0 | 3/3 | Complete | 2026-03-21 |
 | 6.1. Phase 6 Defect Fixes | v2.0 | 1/1 | Complete | 2026-03-21 |
 | 7. All-Enterprise Sync | v2.0 | 2/2 | Complete | 2026-03-21 |
@@ -111,7 +111,7 @@ v1.0 phases paused. v2.0 phases shipped.
   3. Weed detections inside configurable buffer zones around corn stems are suppressed before actuation
   4. Blurry or dark frames pause actuation and alert the operator instead of running blind
   5. Annotated detection frames are logged at configurable intervals with automatic rotation/purge
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 - [ ] 05-01-PLAN.md — Training pipeline: Roboflow download, YOLOv8n training, TensorRT export

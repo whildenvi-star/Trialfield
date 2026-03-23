@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 04-field-data-entry — Plan 2/2 complete
-Plan: 04-02 complete (FIELD-03 satisfied) — phase 04 fully complete
-Status: Phase 4 complete — all gap closure plans executed
-Last activity: 2026-03-22 — 04-02 complete (FIELD-03 satisfied via offline queue, useObservationQueue hook, SyncStatus)
+Phase: 05-corn-specialized-weed-detection-with-stem-avoidance-training — Plan 1/3 complete
+Plan: 05-01 complete (CORN-01, CORN-07 satisfied) — training pipeline scripts created
+Status: Phase 5 in progress — plan 1 of 3 executed
+Last activity: 2026-03-23 — 05-01 complete (training pipeline: download_dataset.py, train_corn.py, export_engine.py)
 
-Progress: [##########] 100% (phase 4: 2/2 plans done)
+Progress: [###.......] 33% (phase 5: 1/3 plans done)
 
 ## Performance Metrics
 
@@ -51,6 +51,12 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - Direct upload fallback when IDB unavailable — Safari Private Mode won't crash the form
 - purgeOld(7) fires on mount fire-and-forget — keeps IDB from growing unbounded without blocking UI
 
+**05-01 decisions:**
+- FP16 (half=True) over INT8 for TensorRT export — ~26ms/frame on Orin Nano, avoids 1% mAP drop for crop-protection safety
+- data.yaml paths rewritten to relative after Roboflow download — prevents FileNotFoundError across machines (Pitfall 2 from RESEARCH.md)
+- ROBOFLOW_API_KEY via env var only — never hardcoded; argparse errors if missing
+- 3 distinct training scripts vs. monolith — enforces GPU-host vs Orin-only execution context separation
+
 ### Roadmap Evolution
 
 - Phase 5 added: Corn-specialized weed detection with stem avoidance training
@@ -72,6 +78,6 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 
 ## Session Continuity
 
-Last session: 2026-03-22
-Stopped at: Completed 04-02-PLAN.md — offline queue with auto-sync (FIELD-03 satisfied, phase 04 complete)
+Last session: 2026-03-23
+Stopped at: Completed 05-01-PLAN.md — training pipeline scripts (download, train, export)
 Resume file: None
