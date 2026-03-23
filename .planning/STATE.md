@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 05-corn-specialized-weed-detection-with-stem-avoidance-training — Plan 2/3 complete
-Plan: 05-02 complete (CORN-02, CORN-03, CORN-04 satisfied) — CornDetector, stem avoidance, frame quality modules
-Status: Phase 5 in progress — plan 2 of 3 executed
-Last activity: 2026-03-23 — 05-02 complete (corn_detector.py, stem_avoidance.py, frame_quality.py, 16 unit tests)
+Phase: 05-corn-specialized-weed-detection-with-stem-avoidance-training — Plan 3/3 complete
+Plan: 05-03 complete (CORN-05, CORN-06 satisfied) — algorithm=corn wired into hoot(), CORN_DETECT.ini, LogManager frame logging
+Status: Phase 5 complete — all 3 plans executed
+Last activity: 2026-03-23 — 05-03 complete (CORN_DETECT.ini, config_manager.py, owl.py, log_manager.py)
 
-Progress: [######....] 67% (phase 5: 2/3 plans done)
+Progress: [##########] 100% (phase 5: 3/3 plans done)
 
 ## Performance Metrics
 
@@ -64,6 +64,11 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - filter_weeds_for_actuation returns (actionable, suppressed) tuple so caller can log suppressed weeds
 - frame_quality_ok checks darkness before blur: dark frames skip the more expensive Laplacian computation
 
+**05-03 decisions:**
+- Corn-specific INI sections (CornDetector, StemAvoidance, FrameLogging) validated only when algorithm=corn via CORN_REQUIRED_CONFIG merged into working_config
+- corn_brightness_min local variable used in hoot() corn branch to avoid shadowing self.brightness_min (GreenOnBrown threshold)
+- log_detection() extended with optional frame/log_frames_dir params; image_path key always present in detection queue (None for non-corn)
+
 ### Roadmap Evolution
 
 - Phase 5 added: Corn-specialized weed detection with stem avoidance training
@@ -86,5 +91,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Completed 05-02-PLAN.md — CornDetector, stem avoidance, frame quality modules with 16 unit tests
+Stopped at: Completed 05-03-PLAN.md — algorithm=corn wired into hoot() loop, CORN_DETECT.ini valid, frame logging added to LogManager
 Resume file: None
