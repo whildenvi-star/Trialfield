@@ -100,6 +100,24 @@ v1.0 phases paused. v2.0 phases shipped.
 | 7. All-Enterprise Sync | v2.0 | 2/2 | Complete | 2026-03-21 |
 | 8. Farm-Wide Budget Summary | v2.0 | 2/2 | Complete | 2026-03-22 |
 
+### Phase 5: Corn-specialized weed detection with stem avoidance training
+
+**Goal:** Train and deploy a YOLOv8n corn detection model for the OWL inter-row actuator, with stem avoidance buffer zones, frame quality gating, and detection logging for post-run review
+**Depends on:** Phase 4
+**Requirements:** CORN-01, CORN-02, CORN-03, CORN-04, CORN-05, CORN-06, CORN-07
+**Success Criteria** (what must be TRUE):
+  1. Training pipeline produces a corn_detector.pt from a Roboflow dataset with corn-specific augmentation
+  2. CornDetector replaces GreenOnGreen when algorithm=corn, with matching inference return signature
+  3. Weed detections inside configurable buffer zones around corn stems are suppressed before actuation
+  4. Blurry or dark frames pause actuation and alert the operator instead of running blind
+  5. Annotated detection frames are logged at configurable intervals with automatic rotation/purge
+**Plans:** 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Training pipeline: Roboflow download, YOLOv8n training, TensorRT export
+- [ ] 05-02-PLAN.md — Detection modules: CornDetector, stem avoidance, frame quality gate
+- [ ] 05-03-PLAN.md — OWL integration: config, hoot() wiring, log extension, requirements
+
 ---
 
 *v1.0 roadmap created: 2026-03-20*
