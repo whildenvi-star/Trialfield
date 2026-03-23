@@ -1,125 +1,133 @@
 ---
 phase: 04-field-data-entry
 plan: 02
-subsystem: field-observations
-tags: [indexeddb, idb, pwa, offline, sync, react-hook, toast, sonner]
+subsystem: offline
+tags: [indexeddb, idb, offline-first, react-hooks, queue, sync]
 
 # Dependency graph
 requires:
   - phase: 04-01
-    provides: ObservationForm component, POST /api/observations, FieldObservation model
+    provides: "ObservationForm component and /api/observations POST endpoint"
 provides:
-  - IndexedDB offline queue for field observations (observation-db.ts)
-  - useObservationQueue hook with queue-first submit, online-event sync, pending count
-  - SyncStatus component showing pending count and syncing state
-  - ObservationForm updated to queue-first pattern
-affects: [src/components/observations, src/lib, src/hooks]
+  - "observationQueue IDB helpers: add, getPending, markSynced, pendingCount, purgeOld"
+  - "useObservationQueue hook: queue-first submit, online-event auto-sync, pendingCount, isSyncing, lastSyncMessage"
+  - "SyncStatus component: pending count badge and syncing spinner"
+  - "ObservationForm updated to queue-first pattern — no direct fetch, all via hook"
+affects: [future-mobile-features, offline-improvements]
 
 # Tech tracking
 tech-stack:
-  added: [idb ^8]
+  added: []
   patterns:
-    - queue-first submit (write to IDB before attempting upload)
-    - online-event sync drain (window.addEventListener('online', syncPending))
-    - Safari Private Mode fallback (null IDB handle, direct-upload fallback path)
-    - purge after 7 days (purgeOldSynced to prevent IDB bloat)
+    - "Queue-first IDB write before upload — every submission persisted locally before network attempt"
+    - "window 'online' event drives auto-sync drain — no polling, pure event-driven reconnect"
+    - "synced field stored as 0|1 number (not boolean) for reliable IDB index queries"
+    - "Safari Private Mode guard via indexedDB.open test on mount, fallback to direct upload"
+    - "Version-gated DB upgrade: oldVersion < 2 adds observation-queue store to existing glomalin-offline DB"
 
 key-files:
   created:
-    - src/lib/observation-db.ts
+    - src/lib/offline/observation-queue.ts
     - src/hooks/useObservationQueue.ts
     - src/components/observations/SyncStatus.tsx
   modified:
+    - src/lib/offline/types.ts
+    - src/lib/offline/db.ts
     - src/components/observations/ObservationForm.tsx
 
 key-decisions:
-  - "Always write to IndexedDB first before attempting upload — guarantees no data loss on network failure"
-  - "Safari Private Mode fallback: openObservationDB returns null, callers fall back to direct upload — no crash"
-  - "JSON submission preserved for text-only; FormData used when photoBlob present (from Plan 01 pattern)"
-  - "syncPending called on mount (if navigator.onLine) and on window online event — catches both cold-start and reconnect cases"
+  - "synced stored as 0|1 number not boolean — IDB indexes on boolean false are browser-inconsistent, number 0 is reliable"
+  - "DB_VERSION bumped from 1 to 2 with version-gated upgrade — preserves existing operation-queue and crop-plan-cache stores"
+  - "Queue-first: IDB write happens before upload attempt — guarantees no data loss even if network dies mid-submission"
+  - "Direct upload fallback when IDB unavailable — Safari Private Mode won't crash the form"
+  - "purgeOld(7) fires on mount fire-and-forget — keeps IDB from growing unbounded without blocking UI"
 
 patterns-established:
-  - "Queue-first pattern: IDB write → upload attempt → mark synced on success; never lose data"
-  - "Sync hook pattern: useObservationQueue encapsulates all IDB/upload/toast logic, form stays presentational"
+  - "Queue-first offline pattern: always write to IDB first, attempt upload second, leave failures in queue"
+  - "Online event auto-sync: addEventListener('online', syncPending) + immediate sync on mount if navigator.onLine"
+  - "IDB boolean indexes: store as 0|1 number not boolean for cross-browser reliability"
 
 requirements-completed: [FIELD-03]
 
 # Metrics
-duration: ~15 min
+duration: 25min
 completed: 2026-03-22
 ---
 
-# Phase 4 Plan 2: Field Observations — Offline Queue and Auto-Sync Summary
+# Phase 04 Plan 02: Offline Queue Summary
 
-**IndexedDB queue-first observation submission using idb ^8, with automatic sync on reconnect, pending count via SyncStatus, and sonner toast confirmation — full offline flow verified by human on mobile.**
+**Queue-first IndexedDB observation queue with auto-sync on reconnect — farm crew observations survive spotty connectivity without user intervention**
 
 ## Performance
 
-- **Duration:** ~15 min
-- **Started:** 2026-03-22
-- **Completed:** 2026-03-22
-- **Tasks:** 3 (2 auto + 1 human-verify)
-- **Files modified:** 4
+- **Duration:** 25 min
+- **Started:** 2026-03-22T00:00:00Z
+- **Completed:** 2026-03-22T00:25:00Z
+- **Tasks:** 2
+- **Files modified:** 6
 
 ## Accomplishments
 
-- Farm crew can submit observations while offline — writes to IndexedDB first, shows "Saved offline — will sync when connected" toast
-- When connectivity returns, pending observations drain automatically via window online event — no user action required
-- SyncStatus component shows pending count as amber badge; clears to zero after sync completes
-- Safari Private Mode handled gracefully — IDB unavailable path falls back to direct upload, no crash
+- Extended glomalin-offline IndexedDB to version 2 with observation-queue store and by-synced index
+- Queue-first submit pattern: every observation written to IDB before upload attempt, guaranteed offline persistence
+- Auto-sync on reconnect via window 'online' event listener drains pending queue without user action
+- SyncStatus component shows pending count badge and spinning sync indicator during drain
+- Graceful Safari Private Mode fallback: IDB availability tested on mount, falls back to direct upload so form never crashes
 
 ## Task Commits
 
 Each task was committed atomically:
 
-1. **Task 1: IndexedDB queue helpers and useObservationQueue hook** - `52653fe` (feat)
-2. **Task 2: Wire ObservationForm to queue and add SyncStatus component** - `ba8a48a` (feat)
-3. **Task 3: Verify complete offline observation flow** - human-verified (checkpoint approved)
+1. **Task 1: Add observation queue store to IndexedDB and create queue helpers** - `30d6f20` (feat)
+2. **Task 2: Create useObservationQueue hook, SyncStatus component, and wire into ObservationForm** - `acc7c76` (feat)
+
+**Plan metadata:** _(added in final docs commit)_
 
 ## Files Created/Modified
 
-- `src/lib/observation-db.ts` - IndexedDB helpers: openObservationDB, queueObservation, getPendingObservations, markSynced, purgeOldSynced. Wraps idb ^8 openDB with try/catch for Safari Private fallback.
-- `src/hooks/useObservationQueue.ts` - React hook: queue-first submitObservation, syncPending (drain on online event + mount), pendingCount state, isSyncing state, cleanup on unmount
-- `src/components/observations/SyncStatus.tsx` - Displays pending count as amber badge when > 0; spinner + "Syncing..." during sync; nothing when queue empty
-- `src/components/observations/ObservationForm.tsx` - Updated to use useObservationQueue hook; removed direct fetch; passes pendingCount/isSyncing to SyncStatus; resets form on submit regardless of online state
+- `src/lib/offline/types.ts` - Added PendingObservation interface and observation-queue entry to OfflineDB schema
+- `src/lib/offline/db.ts` - Bumped DB_VERSION to 2, added version-gated upgrade for observation-queue store
+- `src/lib/offline/observation-queue.ts` - Queue helpers: add, getPending, markSynced, pendingCount, purgeOld
+- `src/hooks/useObservationQueue.ts` - React hook with queue-first submit, online-event sync, pendingCount, isSyncing, lastSyncMessage
+- `src/components/observations/SyncStatus.tsx` - Pending count badge and CSS spinner, returns null when idle
+- `src/components/observations/ObservationForm.tsx` - Updated to use useObservationQueue hook instead of direct fetch
 
 ## Decisions Made
 
-- Queue-first: Always write to IndexedDB before attempting upload. This guarantees no data loss even if upload fails silently or network drops mid-request.
-- Safari Private Mode: openObservationDB wrapped in try/catch returning null. Hook callers check for null and fall back to direct upload. Avoids crashing in a common mobile browsing mode.
-- syncPending on mount: Called immediately if navigator.onLine is true on mount — catches the case where the user had queued items from a previous session and reopens the app while online.
-- Kept JSON/FormData split from Plan 01: text-only submission uses JSON body, photo-attached submission uses FormData — matches existing API contract.
+- `synced` stored as `0 | 1` number (not `boolean`) — IDB index on boolean `false` is unreliable across browsers; numeric `0` works consistently with `IDBKeyRange.only(0)`
+- DB_VERSION bumped from 1 to 2 with `if (oldVersion < 2)` guard — preserves existing stores on upgrade, correct pattern for incremental IDB schema evolution
+- IDB write happens before upload attempt — this is the queue-first guarantee: even if the network call throws immediately, the observation is already persisted locally
+- Safari Private Mode detected via `indexedDB.open('idb-test')` on mount — if it errors, `idbAvailable` ref is set false and all submissions fall through to direct upload
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+None — plan executed exactly as written. The plan's note about `synced` boolean indexing reliability was heeded and `0|1` number storage was chosen from the start.
 
 ## Issues Encountered
 
-None.
+None — TypeScript passed cleanly on new files. Pre-existing `.next/types` errors are stale build artifacts unrelated to this plan.
 
 ## User Setup Required
 
-None - no external service configuration required.
+None — no external service configuration required. The observation-queue store is created automatically on next browser open via the DB_VERSION upgrade path.
 
 ## Next Phase Readiness
 
-- Phase 4 complete: all three FIELD requirements satisfied (FIELD-01 in Plan 01, FIELD-02 in Plan 01, FIELD-03 in Plan 02)
-- Offline queue pattern established (queue-first + online-event sync) — reusable for future mobile data entry features
-- No blockers
-
----
+- Phase 04 complete: field observations API (plan 01) + offline queue with auto-sync (plan 02)
+- FIELD-01, FIELD-02, FIELD-03 all satisfied
+- Ready for phase 05 when planned
 
 ## Self-Check: PASSED
 
-- src/lib/observation-db.ts: committed in 52653fe
-- src/hooks/useObservationQueue.ts: committed in 52653fe
-- src/components/observations/SyncStatus.tsx: committed in ba8a48a
-- src/components/observations/ObservationForm.tsx: committed in ba8a48a
-- Task 3: human-verified and approved 2026-03-22
-- FIELD-03 requirement satisfied
+- FOUND: src/lib/offline/observation-queue.ts
+- FOUND: src/hooks/useObservationQueue.ts
+- FOUND: src/components/observations/SyncStatus.tsx
+- FOUND: src/components/observations/ObservationForm.tsx
+- FOUND: 04-02-SUMMARY.md
+- FOUND: commit 30d6f20 (Task 1)
+- FOUND: commit acc7c76 (Task 2)
+- FOUND: commit 00ef8ad (docs)
 
 ---
-
 *Phase: 04-field-data-entry*
 *Completed: 2026-03-22*

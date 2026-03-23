@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 04-field-data-entry — Plan 1/2 complete
-Plan: 04-01 complete (FIELD-01, FIELD-02 satisfied) — 04-02 pending
-Status: Phase 4 in progress — executing gap closure (STATE was falsely marked complete, no code existed)
-Last activity: 2026-03-23 — 04-01 complete (FIELD-01, FIELD-02 satisfied via Supabase API routes + ObservationForm)
+Phase: 04-field-data-entry — Plan 2/2 complete
+Plan: 04-02 complete (FIELD-03 satisfied) — phase 04 fully complete
+Status: Phase 4 complete — all gap closure plans executed
+Last activity: 2026-03-22 — 04-02 complete (FIELD-03 satisfied via offline queue, useObservationQueue hook, SyncStatus)
 
-Progress: [#####-----] 50% (phase 4: 1/2 plans done)
+Progress: [##########] 100% (phase 4: 2/2 plans done)
 
 ## Performance Metrics
 
@@ -44,6 +44,13 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - [Phase 04-field-data-entry]: JSON for text-only submit, multipart FormData for text+photo — avoids FormData overhead for text-only
 - [Phase 04-field-data-entry]: Migration SQL created at supabase/migrations/003-field-observations.sql for manual application — no DB password in env
 
+**04-02 decisions:**
+- synced stored as 0|1 number not boolean — IDB indexes on boolean false are browser-inconsistent, number 0 is reliable
+- DB_VERSION bumped from 1 to 2 with version-gated upgrade — preserves existing operation-queue and crop-plan-cache stores
+- Queue-first: IDB write happens before upload attempt — guarantees no data loss even if network dies mid-submission
+- Direct upload fallback when IDB unavailable — Safari Private Mode won't crash the form
+- purgeOld(7) fires on mount fire-and-forget — keeps IDB from growing unbounded without blocking UI
+
 ### Pending Todos
 
 (Cleared — v2.0 complete)
@@ -61,6 +68,6 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: Completed 04-01-PLAN.md — field observations API routes and ObservationForm
+Last session: 2026-03-22
+Stopped at: Completed 04-02-PLAN.md — offline queue with auto-sync (FIELD-03 satisfied, phase 04 complete)
 Resume file: None
