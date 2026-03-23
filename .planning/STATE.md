@@ -51,6 +51,10 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - Direct upload fallback when IDB unavailable — Safari Private Mode won't crash the form
 - purgeOld(7) fires on mount fire-and-forget — keeps IDB from growing unbounded without blocking UI
 
+### Roadmap Evolution
+
+- Phase 5 added: Corn-specialized weed detection with stem avoidance training
+
 ### Pending Todos
 
 (Cleared — v2.0 complete)
