@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const supabase = await createClient()
 
@@ -23,6 +23,8 @@ export async function PATCH(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
+  const { id: targetId } = await params
+
   // Read and validate body
   const body = await request.json()
   if (!body.module || typeof body.granted !== 'boolean') {
@@ -36,7 +38,7 @@ export async function PATCH(
   const { data: record, error: upsertError } = await supabase
     .from('module_access')
     .upsert(
-      { user_id: params.id, module: body.module, granted: body.granted },
+      { user_id: targetId, module: body.module, granted: body.granted },
       { onConflict: 'user_id,module' }
     )
     .select()

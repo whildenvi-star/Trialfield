@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
-export async function PATCH(
+export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -25,32 +26,35 @@ export async function PATCH(
 
   const { id: targetId } = await params
 
-  // Prevent self-role-change
+  // Prevent self-deletion
   if (targetId === user.id) {
     return NextResponse.json(
-      { error: 'Cannot change your own role' },
+      { error: 'Cannot delete your own account' },
       { status: 403 }
     )
   }
 
-  // Read and validate body
-  const body = await request.json()
-  const validRoles = ['admin', 'agronomist', 'operator', 'viewer']
-  if (!body.role || !validRoles.includes(body.role)) {
-    return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+  // Use admin client to delete from Supabase Auth (cascades to profiles via FK)
+  const adminClient = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  )
+
+  const { error: deleteError } = await adminClient.auth.admin.deleteUser(targetId)
+
+  if (deleteError) {
+    console.error('Delete user error:', JSON.stringify(deleteError, null, 2))
+    return NextResponse.json(
+      { error: deleteError.message ?? 'Failed to delete user' },
+      { status: 500 }
+    )
   }
 
-  // Update profile role
-  const { data: updated, error: updateError } = await supabase
-    .from('profiles')
-    .update({ role: body.role })
-    .eq('id', targetId)
-    .select()
-    .single()
-
-  if (updateError) {
-    return NextResponse.json({ error: 'Failed to update role' }, { status: 500 })
-  }
-
-  return NextResponse.json({ profile: updated })
+  return NextResponse.json({ success: true })
 }

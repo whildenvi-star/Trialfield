@@ -24,9 +24,15 @@ export async function POST(request: NextRequest) {
   // Read and validate body
   const body = await request.json()
   const validRoles = ['admin', 'agronomist', 'operator', 'viewer']
-  if (!body.email || !body.role || !validRoles.includes(body.role)) {
+  if (!body.email || !body.role || !validRoles.includes(body.role) || !body.password) {
     return NextResponse.json(
-      { error: 'Missing or invalid fields: email, role' },
+      { error: 'Missing or invalid fields: email, password, role' },
+      { status: 400 }
+    )
+  }
+  if (body.password.length < 6) {
+    return NextResponse.json(
+      { error: 'Password must be at least 6 characters' },
       { status: 400 }
     )
   }
@@ -43,31 +49,28 @@ export async function POST(request: NextRequest) {
     }
   )
 
-  // Build production-aware redirect URL for invite email
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    request.headers.get('origin') ||
-    'http://localhost:3000'
-  const redirectTo = `${siteUrl}/auth/callback`
+  // Create user directly with password (no email invite flow)
+  const { data: createData, error: createError } = await adminClient.auth.admin.createUser({
+    email: body.email,
+    password: body.password,
+    email_confirm: true,
+  })
 
-  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
-    body.email,
-    { redirectTo }
-  )
-
-  if (inviteError) {
-    console.error('Invite error:', JSON.stringify(inviteError, null, 2))
+  if (createError) {
+    console.error('Create user error:', JSON.stringify(createError, null, 2))
     return NextResponse.json(
-      { error: inviteError.message ?? 'Failed to invite user', code: inviteError.code, status: inviteError.status },
+      { error: createError.message ?? 'Failed to create user', code: createError.code, status: createError.status },
       { status: 500 }
     )
   }
 
-  const newUserId = inviteData.user.id
+  const newUserId = createData.user.id
 
-  // If role is not viewer, update the auto-created profile (trigger creates viewer by default)
+  // If role is not viewer, update the auto-created profile (trigger creates viewer by default).
+  // Use adminClient (service role) to bypass RLS — profiles_update_own only allows self-updates,
+  // and we're updating another user's profile on their behalf during provisioning.
   if (body.role !== 'viewer') {
-    const { error: roleError } = await supabase
+    const { error: roleError } = await adminClient
       .from('profiles')
       .update({ role: body.role })
       .eq('id', newUserId)

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { fetchBudgetService } from '@/app/api/mobile/_lib/proxy'
 
 // ===== Types =====
 
@@ -184,17 +185,11 @@ export async function GET() {
   if (isGuardError(guard)) return guard
   const { supabase } = guard
 
-  // Fetch farm-budget dashboard with timeout
-  // CRITICAL: no caching of cross-app calls (revalidate: 0)
+  // Fetch farm-budget dashboard — use proxy helper to include embed_session auth cookie
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let budgetData: any
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fetchOptions: any = {
-      signal: AbortSignal.timeout(5000),
-      next: { revalidate: 0 }, // CRITICAL: no stale data for cross-app calls
-    }
-    const res = await fetch('http://localhost:3001/api/dashboard', fetchOptions)
+    const res = await fetchBudgetService('/api/dashboard')
     if (!res.ok) throw new Error(`Budget returned ${res.status}`)
     budgetData = await res.json()
   } catch {

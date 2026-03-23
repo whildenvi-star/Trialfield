@@ -1,24 +1,20 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { fetchBudgetService } from '@/app/api/mobile/_lib/proxy'
 
 /**
  * Proxy to farm-budget API for programs and dashboard data.
  * Returns { programs, dashboard } for the crop comparison sandbox.
+ * Uses fetchBudgetService to include embed_session auth cookie.
  */
 export async function GET() {
   const guard = await requireModuleAccess('macro-rollup')
   if (isGuardError(guard)) return guard
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const fetchOptions: any = {
-    signal: AbortSignal.timeout(5000),
-    next: { revalidate: 0 },
-  }
-
   try {
     const [programsRes, dashboardRes] = await Promise.all([
-      fetch('http://localhost:3001/api/programs', fetchOptions),
-      fetch('http://localhost:3001/api/dashboard', fetchOptions),
+      fetchBudgetService('/api/programs'),
+      fetchBudgetService('/api/dashboard'),
     ])
 
     if (!programsRes.ok) throw new Error(`Programs: ${programsRes.status}`)

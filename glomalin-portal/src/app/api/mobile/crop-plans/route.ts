@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server'
 import { getMobileUser, isErrorResponse } from '../_lib/auth'
 import { fetchBudgetService } from '../_lib/proxy'
 
-/** 60-second in-memory TTL cache to prevent redundant upstream requests on rapid page loads. */
-let cached: { data: unknown; expiry: number } | null = null
+/**
+ * Per-user in-memory TTL cache (60s) to prevent redundant upstream requests on rapid page loads.
+ * Keyed by user ID to prevent cross-user data leaks — a module-level singleton shared across
+ * all requests would serve one user's field list to another user within the TTL window.
+ */
+const userCacheMap = new Map<string, { data: unknown; expiry: number }>()
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function buildFieldEntry(field: any, enterpriseLookup: Record<string, string>) {
@@ -22,9 +26,10 @@ export async function GET(request: Request) {
   const user = await getMobileUser(request)
   if (isErrorResponse(user)) return user
 
-  // Return cached response if still valid
-  if (cached && Date.now() < cached.expiry) {
-    return NextResponse.json(cached.data)
+  // Return cached response if still valid for this user
+  const userCache = userCacheMap.get(user.id)
+  if (userCache && Date.now() < userCache.expiry) {
+    return NextResponse.json(userCache.data)
   }
 
   try {
@@ -59,8 +64,8 @@ export async function GET(request: Request) {
       syncTimestamp: new Date().toISOString(),
     }
 
-    // Store in TTL cache with 60-second expiry
-    cached = { data: response, expiry: Date.now() + 60_000 }
+    // Store in per-user TTL cache with 60-second expiry
+    userCacheMap.set(user.id, { data: response, expiry: Date.now() + 60_000 })
 
     return NextResponse.json(response)
   } catch {
