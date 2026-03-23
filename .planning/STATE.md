@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 05-corn-specialized-weed-detection-with-stem-avoidance-training — Plan 1/3 complete
-Plan: 05-01 complete (CORN-01, CORN-07 satisfied) — training pipeline scripts created
-Status: Phase 5 in progress — plan 1 of 3 executed
-Last activity: 2026-03-23 — 05-01 complete (training pipeline: download_dataset.py, train_corn.py, export_engine.py)
+Phase: 05-corn-specialized-weed-detection-with-stem-avoidance-training — Plan 2/3 complete
+Plan: 05-02 complete (CORN-02, CORN-03, CORN-04 satisfied) — CornDetector, stem avoidance, frame quality modules
+Status: Phase 5 in progress — plan 2 of 3 executed
+Last activity: 2026-03-23 — 05-02 complete (corn_detector.py, stem_avoidance.py, frame_quality.py, 16 unit tests)
 
-Progress: [###.......] 33% (phase 5: 1/3 plans done)
+Progress: [######....] 67% (phase 5: 2/3 plans done)
 
 ## Performance Metrics
 
@@ -57,6 +57,13 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - ROBOFLOW_API_KEY via env var only — never hardcoded; argparse errors if missing
 - 3 distinct training scripts vs. monolith — enforces GPU-host vs Orin-only execution context separation
 
+**05-02 decisions:**
+- CORN_CLASS_ID=0, WEED_CLASS_ID=1 per data.yaml order confirmed in CONTEXT.md
+- Default confidence 0.75 per RESEARCH.md discretion recommendation (high precision over recall)
+- is_in_buffer uses <= boundary: weed exactly at radius distance is suppressed (crop protection priority)
+- filter_weeds_for_actuation returns (actionable, suppressed) tuple so caller can log suppressed weeds
+- frame_quality_ok checks darkness before blur: dark frames skip the more expensive Laplacian computation
+
 ### Roadmap Evolution
 
 - Phase 5 added: Corn-specialized weed detection with stem avoidance training
@@ -79,5 +86,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Completed 05-01-PLAN.md — training pipeline scripts (download, train, export)
+Stopped at: Completed 05-02-PLAN.md — CornDetector, stem avoidance, frame quality modules with 16 unit tests
 Resume file: None
