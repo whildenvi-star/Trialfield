@@ -1,79 +1,154 @@
 ---
 phase: 04-field-data-entry
 plan: 01
-subsystem: field-observations
-tags: [prisma, api, mobile, photo-upload, rbac]
-dependency_graph:
-  requires: []
-  provides: [FieldObservation model, POST /api/observations, GET /api/observations, GET /api/observations/photo/[filename], ObservationForm component, /app/observations/new page]
-  affects: [prisma/schema.prisma, Farm model, Field model, User model]
-tech_stack:
+subsystem: api
+tags: [supabase, next.js, file-upload, rls, mobile, react, canvas]
+
+# Dependency graph
+requires: []
+provides:
+  - POST /api/observations — accepts JSON (text-only) or multipart FormData (text+photo)
+  - GET /api/observations — returns current user's observations ordered by date desc
+  - GET /api/observations/photo/[filename] — authenticated photo serve with traversal protection
+  - ObservationForm component with camera capture, canvas resize, preview, fetch submit
+  - Page route at /app/observations/new
+  - Supabase field_observations table migration (003-field-observations.sql)
+affects: [04-02-offline-queue]
+
+# Tech tracking
+tech-stack:
   added: []
-  patterns: [multipart/form-data upload, canvas resize client-side, RBAC role filter, path traversal sanitize, disk write to uploads/observations/]
-key_files:
+  patterns:
+    - Supabase direct auth pattern in API routes (createClient + auth.getUser, no requireModuleAccess)
+    - multipart/form-data branch on content-type header for photo upload vs JSON for text-only
+    - Client-side canvas resize to 1200px JPEG 0.8 before upload via createImageBitmap + canvas.toBlob
+    - path.basename() sanitization for file serve routes to prevent path traversal
+
+key-files:
   created:
-    - prisma/schema.prisma (modified — FieldObservation model + inverse relations)
     - src/app/api/observations/route.ts
     - src/app/api/observations/photo/[filename]/route.ts
     - src/components/observations/ObservationForm.tsx
-    - src/app/(app)/observations/new/page.tsx
-  modified:
-    - prisma/schema.prisma
-decisions:
-  - Route group is (app) not (protected) — used existing (app) group to match project structure
-  - Photo serve route guards with getAuthContext() — consistent with API pattern; UUIDs are not secret but auth guard is belt-and-suspenders
-  - ObservationForm submits JSON when no photo, multipart when photo attached — avoids FormData overhead for text-only submissions
-  - CREW RBAC filter on GET uses submittedById = ctx.id — prevents crew from seeing each other's observations; ADMIN and OFFICE see all farm observations
-metrics:
-  duration: ~8 minutes
-  completed: 2026-03-22
-  tasks_completed: 2
-  files_created: 4
-  files_modified: 1
-requirements_completed: [FIELD-01, FIELD-02]
+    - src/app/(protected)/app/observations/new/page.tsx
+    - supabase/migrations/003-field-observations.sql
+  modified: []
+
+key-decisions:
+  - "field_observations uses Supabase RLS — users see only their own observations via auth.uid() = submitted_by"
+  - "Photo filename (not full path) stored in DB — full path reconstructed at serve time from process.cwd()"
+  - "JSON for text-only submit, multipart FormData for text+photo — avoids FormData overhead for text-only"
+  - "uploads/ directory created with fs.mkdir recursive — does not exist at deploy time"
+  - "Migration SQL created at supabase/migrations/003-field-observations.sql — applied manually (no DB password in env, Docker not running)"
+
+patterns-established:
+  - "Direct Supabase auth in observations API: createClient() + auth.getUser() without requireModuleAccess"
+  - "Photo resize pattern: createImageBitmap + canvas.toBlob(JPEG 0.8) client-side before upload"
+  - "Path traversal protection: path.basename(filename) in file serve routes"
+
+requirements-completed: [FIELD-01, FIELD-02]
+
+# Metrics
+duration: 4min
+completed: 2026-03-23
 ---
 
-# Phase 4 Plan 1: Field Observations — Model, API, and Mobile Form Summary
+# Phase 04 Plan 01: Field Observations Summary
 
-**One-liner:** FieldObservation Prisma model with multipart photo upload API, canvas client-side resize, and mobile-first form at /app/observations/new.
+**Supabase field_observations table, POST/GET/photo API routes with RLS, and mobile ObservationForm with canvas resize and camera capture**
 
-## What Was Built
+## Performance
 
-Farm crew can open `/app/observations/new`, type a field observation note, optionally attach a photo from their phone camera, and submit. The observation is persisted to the database; the photo (resized client-side to max 1200px at 0.8 JPEG quality) is stored to disk at `uploads/observations/`. A sonner toast confirms success.
+- **Duration:** ~4 min
+- **Started:** 2026-03-23T00:24:29Z
+- **Completed:** 2026-03-23T00:27:54Z
+- **Tasks:** 2
+- **Files modified:** 5 created
 
-## Tasks Completed
+## Accomplishments
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | FieldObservation Prisma model and API routes | 25ff57d | prisma/schema.prisma, src/app/api/observations/route.ts, src/app/api/observations/photo/[filename]/route.ts |
-| 2 | Mobile observation form with photo capture | a20e7f1 | src/components/observations/ObservationForm.tsx, src/app/(app)/observations/new/page.tsx |
+- POST /api/observations accepts JSON for text-only or multipart for text+photo, inserts into Supabase field_observations, stores photo on disk
+- GET /api/observations/photo/[filename] serves photos with auth check and path.basename() traversal protection
+- ObservationForm (175 lines) with camera trigger, createImageBitmap canvas resize to 1200px JPEG 0.8, preview thumbnail, and loading/feedback state
+- Supabase migration file for field_observations table with RLS policies and created_at index
 
-## Verification Results
+## Task Commits
 
-- `npx prisma db push` — success, database in sync
-- `npx tsc --noEmit` — no type errors
-- POST /api/observations accepts JSON and multipart/form-data with auth guard
-- GET /api/observations returns observations filtered by role (CREW = own only, ADMIN/OFFICE = all farm)
-- Photo serve route sanitizes filename with path.basename() and returns 404 if not found
-- Unauthenticated requests to all endpoints return 401
+Each task was committed atomically:
+
+1. **Task 1: Create Supabase field_observations table and API routes** - `a14a019` (feat)
+2. **Task 2: Build ObservationForm component and page route** - `87906d5` (feat)
+
+**Plan metadata:** (created below)
+
+## Files Created/Modified
+
+- `src/app/api/observations/route.ts` - POST and GET endpoints with Supabase auth, disk photo write
+- `src/app/api/observations/photo/[filename]/route.ts` - Authenticated photo serve with path traversal sanitization
+- `src/components/observations/ObservationForm.tsx` - Mobile form: textarea, camera input, canvas resize, preview, fetch submit
+- `src/app/(protected)/app/observations/new/page.tsx` - Page route rendering ObservationForm
+- `supabase/migrations/003-field-observations.sql` - Table schema with RLS policies and index
+
+## Decisions Made
+
+- **Supabase, not Prisma.** The codebase has zero Prisma — all DB via @supabase/supabase-js as required by plan.
+- **Migration file only** — Supabase CLI could not apply migration directly (no DB password in env, Docker not running). File created at `supabase/migrations/003-field-observations.sql` for manual application.
+- **Buffer cast** — TypeScript 5 requires `buffer as unknown as BodyInit` for `new Response(buffer)` in the photo serve route.
+- **RLS: users see only their own observations** — submitted_by policy uses auth.uid() = submitted_by.
 
 ## Deviations from Plan
 
 ### Auto-fixed Issues
 
-**1. [Rule 3 - Blocking Issue] Used (app) route group instead of (protected)**
-- **Found during:** Task 2
-- **Issue:** Plan specified `src/app/(protected)/app/observations/new/page.tsx` but the actual project uses `(app)` as the protected route group — `(protected)` does not exist in this codebase.
-- **Fix:** Created page at `src/app/(app)/observations/new/page.tsx` — matches existing convention (all protected pages live in `(app)`).
-- **Files modified:** src/app/(app)/observations/new/page.tsx
-- **Commit:** a20e7f1
+**1. [Rule 1 - Bug] Fixed TypeScript Buffer type error in photo serve route**
+- **Found during:** Task 1 (TypeScript verification)
+- **Issue:** `new Response(buffer)` errors as `Buffer<ArrayBufferLike>` not assignable to `BodyInit` in TS5
+- **Fix:** Cast `buffer as unknown as BodyInit`
+- **Files modified:** `src/app/api/observations/photo/[filename]/route.ts`
+- **Verification:** `npx tsc --noEmit` passes for all observations files
+- **Committed in:** `a14a019` (Task 1 commit)
 
-## Self-Check: PASSED
+---
 
-- prisma/schema.prisma: FOUND (FieldObservation model present)
-- src/app/api/observations/route.ts: FOUND
-- src/app/api/observations/photo/[filename]/route.ts: FOUND
-- src/components/observations/ObservationForm.tsx: FOUND
-- src/app/(app)/observations/new/page.tsx: FOUND
-- Commit 25ff57d: FOUND
-- Commit a20e7f1: FOUND
+**Total deviations:** 1 auto-fixed (Rule 1 - TypeScript type bug)
+**Impact on plan:** Fix necessary for compilation. No scope creep.
+
+## Issues Encountered
+
+- Supabase migration could not be applied automatically — no database password in `.env.local` and Docker (required for `npx supabase db push` to local) is not running. Migration SQL file created at `supabase/migrations/003-field-observations.sql` for the user to apply via Supabase dashboard SQL editor.
+
+## User Setup Required
+
+The field_observations table must be created in Supabase before the feature works. Run the following SQL in the Supabase dashboard SQL editor (Project: hmjmrdhwrzltckzuoaoh):
+
+```sql
+CREATE TABLE IF NOT EXISTS field_observations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  submitted_by uuid NOT NULL REFERENCES auth.users(id),
+  note text NOT NULL,
+  photo_path text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE field_observations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can insert own observations"
+  ON field_observations FOR INSERT
+  WITH CHECK (auth.uid() = submitted_by);
+
+CREATE POLICY "Users can read own observations"
+  ON field_observations FOR SELECT
+  USING (auth.uid() = submitted_by);
+
+CREATE INDEX IF NOT EXISTS idx_field_obs_user_date
+  ON field_observations(submitted_by, created_at DESC);
+```
+
+## Next Phase Readiness
+
+- API routes and form complete — ready for Plan 02 (offline queue)
+- Plan 02 will replace the direct fetch in ObservationForm with an IndexedDB queue-first pattern
+- uploads/observations/ directory created on first photo submit (no pre-creation needed)
+
+---
+*Phase: 04-field-data-entry*
+*Completed: 2026-03-23*
