@@ -41,6 +41,15 @@ export interface CachedCropPlan {
   cachedAt: string;              // ISO timestamp of cache write
 }
 
+// Pending observation — queued for upload, stored in IDB
+export interface PendingObservation {
+  localId?: number;          // autoIncrement key
+  note: string;
+  photoBlob?: Blob;          // resized JPEG blob stored in IDB
+  synced: 0 | 1;             // 0 = pending, 1 = synced (number for reliable IDB indexing)
+  createdAt: number;         // Date.now()
+}
+
 // DB schema type for idb
 export interface OfflineDB {
   'operation-queue': {
@@ -51,5 +60,10 @@ export interface OfflineDB {
   'crop-plan-cache': {
     key: string;
     value: CachedCropPlan;
+  };
+  'observation-queue': {
+    key: number;
+    value: PendingObservation;
+    indexes: { 'by-synced': number };
   };
 }
