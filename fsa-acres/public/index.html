@@ -4,10 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FSA Acre Reporting</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <meta name="theme-color" content="#0a0e09">
+  <link rel="stylesheet" href="platform-tokens.css">
+  <meta name="theme-color" content="#080a0f">
   <script>
     (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+    if(window!==window.top)document.documentElement.classList.add('in-iframe');
   </script>
 </head>
 <body>
@@ -315,6 +320,7 @@
       <h2 style="margin:0">Reports</h2>
       <select id="rpt-type" style="font-size:0.9rem">
         <option value="fsa">FSA Acreage Report</option>
+        <option value="intentions">Cropping Intentions by Tract/CLU</option>
         <option value="insurance">Crop Insurance Summary</option>
         <option value="checklist">Reporting Checklist</option>
       </select>
@@ -382,6 +388,7 @@
             <div class="form-group"><label>Field Name</label>
               <div class="ac-wrapper" id="ac-fieldName-wrapper">
                 <input id="ed-fieldName" autocomplete="off" placeholder="Type to search...">
+                <input id="ed-registryFieldId" type="hidden">
                 <div class="ac-dropdown" id="ac-fieldName-dropdown"></div>
               </div>
             </div>
@@ -432,6 +439,7 @@
     </div>
     <div class="editor-footer">
       <button class="btn-sm" id="editor-cancel">Cancel</button>
+      <button class="btn-orange" id="editor-split" title="Split this CLU into two records">Split CLU</button>
       <button class="btn-primary" id="editor-save">Save</button>
     </div>
   </div>
@@ -481,10 +489,10 @@
             <div class="form-group"><label>Planted Acres</label><input id="ied-plantedAcres" type="number" step="0.01"></div>
             <div class="form-group"><label>FSA Acres (override)</label><input id="ied-fsaAcresManual" type="number" step="0.01" placeholder="auto from CLU"></div>
             <div class="form-group"><label>APH (bu/ac)</label><input id="ied-guarantee" type="number" step="0.01"></div>
-            <div class="form-group"><label>Eff. Guarantee</label><input id="ied-effectiveGuarantee" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+            <div class="form-group"><label>Eff. Guarantee</label><input id="ied-effectiveGuarantee" readonly style="background:#f8fafc;color:var(--text-light)"></div>
             <div class="form-group" style="grid-column:1/-1"><span id="ied-aph-helper" style="font-size:0.8rem;color:var(--text-light)"></span></div>
             <div class="form-group"><label>Premium $/Ac</label><input id="ied-premiumPerAcre" type="number" step="0.01"></div>
-            <div class="form-group"><label>Total Premium</label><input id="ied-totalPremium" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+            <div class="form-group"><label>Total Premium</label><input id="ied-totalPremium" readonly style="background:#f8fafc;color:var(--text-light)"></div>
           </div>
         </div>
       </details>
@@ -494,9 +502,9 @@
         <div class="editor-section-body">
           <div class="form-grid">
             <div class="form-group"><label>Actual Yield (bu/ac)</label><input id="ied-actual" type="number" step="0.01"></div>
-            <div class="form-group"><label>Shortfall</label><input id="ied-shortfall" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
-            <div class="form-group"><label>Indemnity</label><input id="ied-indemnity" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
-            <div class="form-group"><label>FSA Acres (computed)</label><input id="ied-fsaAcresComputed" readonly style="background:#f5f5f0;color:var(--text-light)"></div>
+            <div class="form-group"><label>Shortfall</label><input id="ied-shortfall" readonly style="background:#f8fafc;color:var(--text-light)"></div>
+            <div class="form-group"><label>Indemnity</label><input id="ied-indemnity" readonly style="background:#f8fafc;color:var(--text-light)"></div>
+            <div class="form-group"><label>FSA Acres (computed)</label><input id="ied-fsaAcresComputed" readonly style="background:#f8fafc;color:var(--text-light)"></div>
             <div class="form-group" style="grid-column:1/-1">
               <label>Grain Ticket Yield</label>
               <span id="ied-grain-helper" style="font-size:0.82rem;min-height:1.2em"></span>
@@ -596,7 +604,7 @@
   function update() {
     var isLight = document.body.classList.contains('light');
     btn.textContent = isLight ? '[night]' : '[day]';
-    if (meta) meta.content = isLight ? '#ffffff' : '#0a0e09';
+    if (meta) meta.content = isLight ? '#ffffff' : '#080a0f';
   }
   update();
   btn.addEventListener('click', function () {
@@ -608,5 +616,7 @@
   });
 })();
 </script>
+<script src="settings-panel.js"></script>
+<script src="formatting-agent.js"></script>
 </body>
 </html>

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { isOrganicCrop } from '@/lib/fsa/calc'
 
-const EDITABLE_FIELDS = new Set(['crop', 'irrigated', 'organic', 'grain_plant_date', 'use', 'prevented_planting'])
+const EDITABLE_FIELDS = new Set(['crop', 'irrigated', 'organic', 'grain_plant_date', 'use', 'prevented_planting', 'registry_field_id', 'field_name'])
 
 export async function PATCH(
   request: Request,
@@ -26,6 +27,11 @@ export async function PATCH(
     if (EDITABLE_FIELDS.has(key)) {
       updates[key] = body[key]
     }
+  }
+
+  // Auto-sync organic flag when crop changes and organic wasn't explicitly set
+  if ('crop' in updates && !('organic' in body)) {
+    updates.organic = isOrganicCrop(updates.crop as string)
   }
 
   if (Object.keys(updates).length === 0) {

@@ -40,6 +40,11 @@
     .add-form label { font-size: 0.75rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.2rem; }
     .add-form input, .add-form select { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 4px; font-size: 0.85rem; }
     .add-form input:focus, .add-form select:focus { outline: none; border-color: var(--primary); }
+    .ac-wrapper { position: relative; }
+    .ac-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: var(--card); border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; max-height: 200px; overflow-y: auto; z-index: 100; display: none; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .ac-item { padding: 0.4rem 0.6rem; font-size: 0.85rem; cursor: pointer; }
+    .ac-item:hover, .ac-item.ac-active { background: #eef5ed; color: var(--primary); }
+    .ac-item .ac-hint { font-size: 0.75rem; color: var(--text-light); margin-left: 0.5rem; }
   </style>
 </head>
 <body>
@@ -87,8 +92,12 @@
     <h2>Farms</h2>
     <div class="add-form" id="farm-add-form">
       <div class="field">
-        <label>Farm Name</label>
-        <input type="text" id="farm-new-name" placeholder="e.g. North 40">
+        <label>Farm Name <span style="color:var(--text-light);font-weight:400">(from registry)</span></label>
+        <div class="ac-wrapper" style="width:200px">
+          <input type="text" id="farm-new-name" placeholder="Type to search registry..." autocomplete="off" style="width:100%">
+          <input type="hidden" id="farm-new-registry-id">
+          <div class="ac-dropdown" id="farm-name-dropdown"></div>
+        </div>
       </div>
       <div class="field">
         <label>Crop</label>
@@ -390,6 +399,90 @@
     });
 
     // ============================
+    // FARM NAME REGISTRY AUTOCOMPLETE
+    // ============================
+    var registryFields = [];
+
+    function loadRegistryFields() {
+      fetch('http://localhost:3005/api/fields/autocomplete')
+        .then(function (r) { return r.ok ? r.json() : { fields: [] }; })
+        .then(function (data) { registryFields = data.fields || []; })
+        .catch(function () { registryFields = []; });
+    }
+
+    (function initFarmNameAutocomplete() {
+      var input = document.getElementById('farm-new-name');
+      var hiddenId = document.getElementById('farm-new-registry-id');
+      var dropdown = document.getElementById('farm-name-dropdown');
+      var activeIdx = -1;
+      var currentMatches = [];
+
+      function renderDropdown(matches) {
+        currentMatches = matches;
+        if (!matches.length) { dropdown.style.display = 'none'; return; }
+        activeIdx = -1;
+        dropdown.innerHTML = matches.map(function (f, i) {
+          var hint = f.reportingAcres ? ' <span class="ac-hint">(' + Number(f.reportingAcres).toFixed(1) + ' ac)</span>' : '';
+          return '<div class="ac-item" data-idx="' + i + '">' + escHtml(f.name) + hint + '</div>';
+        }).join('');
+        dropdown.style.display = '';
+      }
+
+      function selectItem(field) {
+        input.value = field.name;
+        hiddenId.value = field.id || '';
+        dropdown.style.display = 'none';
+        currentMatches = [];
+      }
+
+      function updateHighlight() {
+        var items = dropdown.querySelectorAll('.ac-item');
+        items.forEach(function (el, i) { el.classList.toggle('ac-active', i === activeIdx); });
+        if (activeIdx >= 0 && items[activeIdx]) items[activeIdx].scrollIntoView({ block: 'nearest' });
+      }
+
+      input.addEventListener('input', function () {
+        hiddenId.value = '';
+        var q = input.value.trim().toLowerCase();
+        if (!q) { dropdown.style.display = 'none'; currentMatches = []; return; }
+        var matches = registryFields.filter(function (f) {
+          return f.name.toLowerCase().indexOf(q) !== -1 ||
+            (f.aliases || []).some(function (a) { return a.toLowerCase().indexOf(q) !== -1; });
+        });
+        matches.sort(function (a, b) {
+          var aS = a.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+          var bS = b.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+          return aS !== bS ? aS - bS : a.name.localeCompare(b.name);
+        });
+        renderDropdown(matches.slice(0, 12));
+      });
+
+      input.addEventListener('focus', function () {
+        if (input.value.trim()) input.dispatchEvent(new Event('input'));
+      });
+
+      input.addEventListener('keydown', function (e) {
+        var items = dropdown.querySelectorAll('.ac-item');
+        if (!items.length || dropdown.style.display === 'none') return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = (activeIdx + 1) % items.length; updateHighlight(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = activeIdx <= 0 ? items.length - 1 : activeIdx - 1; updateHighlight(); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (activeIdx >= 0 && currentMatches[activeIdx]) selectItem(currentMatches[activeIdx]); }
+        else if (e.key === 'Escape') { dropdown.style.display = 'none'; currentMatches = []; }
+      });
+
+      dropdown.addEventListener('click', function (e) {
+        var item = e.target.closest('.ac-item');
+        if (item) { var idx = parseInt(item.getAttribute('data-idx'), 10); if (currentMatches[idx]) selectItem(currentMatches[idx]); }
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!e.target.closest('#farm-add-form .ac-wrapper')) { dropdown.style.display = 'none'; currentMatches = []; }
+      });
+    })();
+
+    loadRegistryFields();
+
+    // ============================
     // FARMS
     // ============================
     var farms = [];
@@ -438,16 +531,19 @@
     // Add farm
     document.getElementById('farm-add-btn').addEventListener('click', function () {
       var name = document.getElementById('farm-new-name').value.trim();
-      if (!name) return alert('Enter a farm name');
+      if (!name) return alert('Select a farm from the registry dropdown');
+      var registryId = document.getElementById('farm-new-registry-id').value || null;
       api('POST', '/api/farms', {
         farm: name,
         crop: document.getElementById('farm-new-crop').value,
         acres: document.getElementById('farm-new-acres').value,
         unit: document.getElementById('farm-new-unit').value,
-        type: document.getElementById('farm-new-type').value
+        type: document.getElementById('farm-new-type').value,
+        registryId: registryId  // canonical farm-registry field ID
       }).then(function (r) {
         if (r.error) return alert(r.error);
         document.getElementById('farm-new-name').value = '';
+        document.getElementById('farm-new-registry-id').value = '';
         document.getElementById('farm-new-acres').value = '0';
         showToast('Farm "' + name + '" added');
         loadFarms();

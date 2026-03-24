@@ -668,7 +668,7 @@ app.get('/api/tillage-codes', function (req, res) {
   res.json(store.tillageCodes || Calc.TILLAGE_CODES);
 });
 
-// --- Registry proxy (field names for autocomplete) ---
+// --- Registry proxy (field names for autocomplete — legacy, returns names only) ---
 app.get('/api/registry/field-names', async function (req, res) {
   try {
     var resp = await fetch('http://localhost:3005/api/fields');
@@ -679,6 +679,21 @@ app.get('/api/registry/field-names', async function (req, res) {
       .map(function (f) { return f.name; })
       .sort();
     res.json(names);
+  } catch (err) {
+    res.status(502).json({ error: 'Farm registry unavailable' });
+  }
+});
+
+// --- Registry proxy (full field objects for dropdown — includes id, name, aliases) ---
+app.get('/api/registry/fields-autocomplete', async function (req, res) {
+  try {
+    var q = req.query.q || '';
+    var url = 'http://localhost:3005/api/fields/autocomplete' + (q ? '?q=' + encodeURIComponent(q) : '');
+    var resp = await fetch(url);
+    if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+    var data = await resp.json();
+    // data.fields is an array of { id, name, aliases, reportingAcres, organicAcres, ownership }
+    res.json(data.fields || []);
   } catch (err) {
     res.status(502).json({ error: 'Farm registry unavailable' });
   }

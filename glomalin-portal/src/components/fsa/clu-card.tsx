@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CluRecord, ValidationWarning } from '@/lib/fsa/calc'
 import { CropTypeahead } from './crop-typeahead'
+import { ConfirmDialog } from './confirm-dialog'
 
 interface CluCardProps {
   record: CluRecord
@@ -13,6 +14,7 @@ interface CluCardProps {
   onToggleExpand: () => void
   onToggleSelect: () => void
   onSave: (updated: CluRecord) => void
+  onDelete: (id: string) => void
   isPpPromptDismissed?: boolean
   onDismissPpPrompt?: (id: string) => void
 }
@@ -23,6 +25,17 @@ type DraftFields = {
   grain_plant_date: string
   organic: boolean
   prevented_planting: boolean
+  field_name: string
+  registry_field_id: string
+}
+
+interface RegistryField {
+  id: string
+  name: string
+  aliases: string[]
+  reportingAcres: number
+  organicAcres: number
+  ownership: string
 }
 
 export function CluCard({
@@ -33,20 +46,27 @@ export function CluCard({
   onToggleExpand,
   onToggleSelect,
   onSave,
+  onDelete,
   isPpPromptDismissed = false,
   onDismissPpPrompt,
 }: CluCardProps) {
   const router = useRouter()
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [draft, setDraft] = useState<DraftFields>({
     crop: record.crop ?? '',
     use: record.use ?? '',
     grain_plant_date: record.grain_plant_date ?? '',
     organic: record.organic,
     prevented_planting: record.prevented_planting ?? false,
+    field_name: record.field_name ?? '',
+    registry_field_id: record.registry_field_id ?? '',
   })
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [registryFields, setRegistryFields] = useState<RegistryField[]>([])
+  const [registryLoading, setRegistryLoading] = useState(false)
 
   // Linked insurance policy state for CLU-to-Policy cross-nav
   const [linkedPolicy, setLinkedPolicy] = useState<{ id: string } | null | undefined>(undefined)
@@ -62,11 +82,30 @@ export function CluCard({
         grain_plant_date: record.grain_plant_date ?? '',
         organic: record.organic,
         prevented_planting: record.prevented_planting ?? false,
+        field_name: record.field_name ?? '',
+        registry_field_id: record.registry_field_id ?? '',
       })
       setFieldErrors({})
       setSaveError(null)
     }
   }, [isExpanded, record])
+
+  // Load registry fields when card expands (for the field selector dropdown)
+  useEffect(() => {
+    if (!isExpanded || registryFields.length > 0) return
+    setRegistryLoading(true)
+    fetch('/api/registry/fields-autocomplete')
+      .then((r) => r.json())
+      .then((data: RegistryField[]) => {
+        setRegistryFields(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        // Non-fatal: field selector shows current value without dropdown if registry unavailable
+      })
+      .finally(() => {
+        setRegistryLoading(false)
+      })
+  }, [isExpanded, registryFields.length])
 
   // Fetch linked insurance policy when card expands
   useEffect(() => {
@@ -120,6 +159,8 @@ export function CluCard({
           grain_plant_date: draft.grain_plant_date.trim() || null,
           organic: draft.organic,
           prevented_planting: draft.prevented_planting,
+          field_name: draft.field_name.trim() || null,
+          registry_field_id: draft.registry_field_id.trim() || null,
         }),
       })
       const json = await res.json()
@@ -136,6 +177,26 @@ export function CluCard({
     }
   }
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    try {
+      const res = await fetch(`/api/fsa/clu-records/${record.id}`, {
+        method: 'DELETE',
+      })
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}))
+        setSaveError((json as { error?: string }).error ?? 'Delete failed')
+        return
+      }
+      onDelete(record.id)
+    } catch {
+      setSaveError('Network error — please try again')
+    } finally {
+      setDeleting(false)
+      setShowDeleteConfirm(false)
+    }
+  }
+
   const handleCancel = () => {
     setDraft({
       crop: record.crop ?? '',
@@ -143,6 +204,8 @@ export function CluCard({
       grain_plant_date: record.grain_plant_date ?? '',
       organic: record.organic,
       prevented_planting: record.prevented_planting ?? false,
+      field_name: record.field_name ?? '',
+      registry_field_id: record.registry_field_id ?? '',
     })
     setFieldErrors({})
     setSaveError(null)
@@ -274,6 +337,51 @@ export function CluCard({
       {/* Expanded / edit view */}
       {isExpanded && (
         <div className="border-t border-glomalin-border px-4 py-4 space-y-4">
+          {/* Registry Field Selector */}
+          <div>
+            <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+              Field (Registry)
+            </label>
+            {registryLoading ? (
+              <p className="font-mono text-xs text-glomalin-muted">Loading registry fields...</p>
+            ) : registryFields.length > 0 ? (
+              <select
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={draft.registry_field_id}
+                onChange={(e) => {
+                  const selectedId = e.target.value
+                  const field = registryFields.find((f) => f.id === selectedId)
+                  setDraft((d) => ({
+                    ...d,
+                    registry_field_id: selectedId,
+                    field_name: field ? field.name : d.field_name,
+                  }))
+                }}
+              >
+                <option value="">— select from registry —</option>
+                {registryFields.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                    {f.reportingAcres ? ` (${f.reportingAcres.toFixed(1)} ac)` : ''}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={draft.field_name}
+                onChange={(e) => setDraft((d) => ({ ...d, field_name: e.target.value }))}
+                placeholder="Registry unavailable — enter name"
+              />
+            )}
+            {draft.registry_field_id && (
+              <p className="font-mono text-xs text-glomalin-muted mt-0.5">
+                ID: {draft.registry_field_id}
+              </p>
+            )}
+          </div>
+
           {/* Crop */}
           <div>
             <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
@@ -447,19 +555,36 @@ export function CluCard({
           <div className="flex items-center gap-3 pt-1">
             <button
               onClick={handleSave}
-              disabled={saving}
+              disabled={saving || deleting}
               className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-2 hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               {saving ? 'Saving...' : 'Save'}
             </button>
             <button
               onClick={handleCancel}
-              disabled={saving}
+              disabled={saving || deleting}
               className="font-mono text-sm text-glomalin-muted hover:text-glomalin-text transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
+            <div className="flex-1" />
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={saving || deleting}
+              className="font-mono text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+            >
+              {deleting ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
+
+          {/* Delete confirmation */}
+          <ConfirmDialog
+            open={showDeleteConfirm}
+            title="Delete CLU Record"
+            message={`Permanently delete ${displayName} (${(record.fsa_acres || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })} ac)? This cannot be undone.`}
+            onConfirm={handleDelete}
+            onCancel={() => setShowDeleteConfirm(false)}
+          />
         </div>
       )}
     </div>

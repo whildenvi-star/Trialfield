@@ -2,6 +2,14 @@
 // Property names use snake_case to match Supabase column conventions.
 // All function signatures and logic are preserved from the original.
 
+// ===== Helpers =====
+
+/** Detect organic crop from name conventions (e.g. "Org Peas", "Organic SRWW") */
+export function isOrganicCrop(crop: string | null | undefined): boolean {
+  if (!crop) return false
+  return /\borg\b/i.test(crop) || /organic/i.test(crop)
+}
+
 // ===== Type Definitions =====
 
 export interface CluRecord {
@@ -12,6 +20,7 @@ export interface CluRecord {
   tract_number: string
   clu: string
   field_name: string | null
+  registry_field_id: string | null
   farm_name: string | null
   fsa_acres: number
   crop: string | null

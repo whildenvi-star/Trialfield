@@ -3,20 +3,21 @@
   'use strict';
 
   // ===== API helper =====
+  var B = window.__BASE || '';
   window.api = {
     get: function (url) {
-      return fetch(url).then(function (r) { return r.json(); });
+      return fetch(B + url).then(function (r) { return r.json(); });
     },
     post: function (url, body) {
-      return fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      return fetch(B + url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         .then(function (r) { return r.json(); });
     },
     put: function (url, body) {
-      return fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      return fetch(B + url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
         .then(function (r) { return r.json(); });
     },
     del: function (url) {
-      return fetch(url, { method: 'DELETE' }).then(function (r) { return r.json(); });
+      return fetch(B + url, { method: 'DELETE' }).then(function (r) { return r.json(); });
     }
   };
 
@@ -126,7 +127,7 @@
 
     // All editor field ids
     var fields = [
-      'farmNumber', 'farmName', 'tractNumber', 'clu', 'fieldName', 'crop', 'fsaAcres',
+      'farmNumber', 'farmName', 'tractNumber', 'clu', 'fieldName', 'registryFieldId', 'crop', 'fsaAcres',
       'landClass', 'use', 'grainPlantDate', 'irrigated', 'organic', 'doubleCrop', 'coverCrop',
       'tillage2025', 'cc2025', 'cc2025PlantDate', 'ntAdoption2025', 'ccAdoption2025',
       'tillage2024', 'cc2024', 'cc2024PlantDate', 'ntAdoption2024', 'ccAdoption2024',
@@ -164,7 +165,7 @@
   util.$('editor-save').addEventListener('click', function () {
     var data = {};
     var fields = [
-      'farmNumber', 'farmName', 'tractNumber', 'clu', 'fieldName', 'crop',
+      'farmNumber', 'farmName', 'tractNumber', 'clu', 'fieldName', 'registryFieldId', 'crop',
       'landClass', 'use', 'grainPlantDate',
       'tillage2025', 'cc2025', 'cc2025PlantDate', 'ntAdoption2025', 'ccAdoption2025',
       'tillage2024', 'cc2024', 'cc2024PlantDate', 'ntAdoption2024', 'ccAdoption2024',
@@ -205,32 +206,93 @@
     });
   });
 
-  // ===== Field Name Autocomplete =====
-  var registryFieldNames = [];
+  // ===== Split CLU =====
+  util.$('editor-split').addEventListener('click', function () {
+    if (editorState.isNew || !editorState.id) {
+      showToast('Save the record first, then split', 'info');
+      return;
+    }
 
-  function loadRegistryNames() {
-    api.get('/api/registry/field-names')
-      .then(function (names) { registryFieldNames = names || []; })
-      .catch(function () { registryFieldNames = []; });
+    var currentAcres = Number(util.$('ed-fsaAcres').value) || 0;
+    if (currentAcres <= 0) {
+      showToast('Cannot split a record with 0 acres', 'error');
+      return;
+    }
+
+    var splitAcres = prompt(
+      'Split CLU: ' + util.$('ed-fieldName').value + ' (' + currentAcres + ' ac)\n\n' +
+      'Enter acres for the NEW record.\n' +
+      'The original will keep the remainder.'
+    );
+    if (!splitAcres) return;
+    splitAcres = Number(splitAcres);
+    if (!splitAcres || splitAcres <= 0 || splitAcres >= currentAcres) {
+      showToast('Split acres must be between 0 and ' + currentAcres, 'error');
+      return;
+    }
+
+    var newCrop = prompt(
+      'What crop for the new ' + splitAcres + ' acre record?\n' +
+      '(Leave blank to copy current crop: ' + (util.$('ed-crop').value || 'none') + ')'
+    );
+    if (newCrop === null) return; // cancelled
+    if (!newCrop) newCrop = util.$('ed-crop').value || '';
+
+    api.post('/api/clu-records/' + editorState.id + '/split', {
+      splitAcres: splitAcres,
+      newCrop: newCrop
+    }).then(function (result) {
+      var remaining = result.original.fsaAcres;
+      showToast('Split: ' + remaining + ' ac + ' + splitAcres + ' ac (CLU ' + result.newRecord.clu + ')');
+      closeEditor();
+      if (editorState.onSave) editorState.onSave();
+      loadRefData();
+    }).catch(function () {
+      showToast('Split failed', 'error');
+    });
+  });
+
+  // Hide split button when creating new records
+  var origOpen = window.openEditor;
+  window.openEditor = function (record, isNew, onSave) {
+    origOpen(record, isNew, onSave);
+    util.$('editor-split').style.display = isNew ? 'none' : '';
+  };
+
+  // ===== Field Name Autocomplete (registry-backed, stores registryFieldId) =====
+  // registryFields: array of { id, name, aliases, reportingAcres, organicAcres, ownership }
+  var registryFields = [];
+
+  function loadRegistryFields() {
+    api.get('/api/registry/fields-autocomplete')
+      .then(function (fields) { registryFields = fields || []; })
+      .catch(function () { registryFields = []; });
   }
 
   (function initAutocomplete() {
     var input = util.$('ed-fieldName');
+    var hiddenId = util.$('ed-registryFieldId');
     var dropdown = util.$('ac-fieldName-dropdown');
     var activeIdx = -1;
+    // Track currently matched fields for keyboard navigation
+    var currentMatches = [];
 
     function renderDropdown(matches) {
+      currentMatches = matches;
       if (!matches.length) { dropdown.style.display = 'none'; return; }
       activeIdx = -1;
-      dropdown.innerHTML = matches.map(function (name, i) {
-        return '<div class="ac-item" data-idx="' + i + '">' + util.esc(name) + '</div>';
+      dropdown.innerHTML = matches.map(function (field, i) {
+        return '<div class="ac-item" data-idx="' + i + '">' + util.esc(field.name) + '</div>';
       }).join('');
       dropdown.style.display = '';
     }
 
-    function selectItem(name) {
-      input.value = name;
+    function selectItem(field) {
+      input.value = field.name;
+      // Store the canonical registry field ID alongside the display name
+      if (hiddenId) hiddenId.value = field.id || '';
       dropdown.style.display = 'none';
+      currentMatches = [];
     }
 
     function updateHighlight() {
@@ -244,17 +306,20 @@
     }
 
     input.addEventListener('input', function () {
+      // Clear registryFieldId when user types freely (selection required for ID)
+      if (hiddenId) hiddenId.value = '';
       var q = input.value.trim().toLowerCase();
-      if (!q) { dropdown.style.display = 'none'; return; }
-      var matches = registryFieldNames.filter(function (name) {
-        return name.toLowerCase().indexOf(q) !== -1;
+      if (!q) { dropdown.style.display = 'none'; currentMatches = []; return; }
+      var matches = registryFields.filter(function (field) {
+        return field.name.toLowerCase().indexOf(q) !== -1 ||
+          (field.aliases || []).some(function (a) { return a.toLowerCase().indexOf(q) !== -1; });
       });
       // Sort: prefix matches first, then contains
       matches.sort(function (a, b) {
-        var aStart = a.toLowerCase().indexOf(q) === 0 ? 0 : 1;
-        var bStart = b.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+        var aStart = a.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
+        var bStart = b.name.toLowerCase().indexOf(q) === 0 ? 0 : 1;
         if (aStart !== bStart) return aStart - bStart;
-        return a.localeCompare(b);
+        return a.name.localeCompare(b.name);
       });
       renderDropdown(matches.slice(0, 12));
     });
@@ -279,30 +344,35 @@
         updateHighlight();
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        if (activeIdx >= 0 && items[activeIdx]) {
-          selectItem(items[activeIdx].textContent);
+        if (activeIdx >= 0 && currentMatches[activeIdx]) {
+          selectItem(currentMatches[activeIdx]);
         }
       } else if (e.key === 'Escape') {
         dropdown.style.display = 'none';
+        currentMatches = [];
       }
     });
 
     dropdown.addEventListener('click', function (e) {
       var item = e.target.closest('.ac-item');
-      if (item) selectItem(item.textContent);
+      if (item) {
+        var idx = parseInt(item.getAttribute('data-idx'), 10);
+        if (currentMatches[idx]) selectItem(currentMatches[idx]);
+      }
     });
 
     // Close dropdown when clicking outside
     document.addEventListener('click', function (e) {
       if (!e.target.closest('#ac-fieldName-wrapper')) {
         dropdown.style.display = 'none';
+        currentMatches = [];
       }
     });
   })();
 
   // ===== Init =====
   loadRefData();
-  loadRegistryNames();
+  loadRegistryFields();
 
   // Fire initial tab-activate — restore from hash or default to season
   setTimeout(function () {
