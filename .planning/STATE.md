@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 49 of 61 (Canonical Field IDs)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-03-24 — v10.0 roadmap created (13 phases, 43 requirements mapped)
+Plan: 01 complete
+Status: In progress (plan 01/? complete)
+Last activity: 2026-03-24 — Phase 49 Plan 01 complete: registry field ID schema foundation across all 4 apps
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -44,6 +44,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [v10.0]: Merged small related phases: PIPE-05..08 combined (53), UXN-04..09 combined (54) — 13 phases total
 - [v9.0]: PWA approach (not native app) — @serwist/next, no app store
 - [v10.0]: Phase 49 (canonical field IDs) is the dependency root — all cross-module joins depend on it
+- [49-01]: Migration numbered 004 not 003 — 003-field-observations.sql already existed
+- [49-01]: grain-tickets Farm.registryId is the existing canonical field ID linkage — no Prisma change needed
+- [49-01]: fsa-acres uses Object.assign without allowlist — registryFieldId accepted implicitly, documented with comments
 
 ### Pending Todos
 
@@ -58,6 +61,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: v10.0 roadmap created, all 43 requirements mapped across 13 phases
+Stopped at: Completed 49-01-PLAN.md — registry field ID schema foundation
 Resume file: —
-Next action: `/gsd:plan-phase 49`
+Next action: Execute phase 49 plan 02 (backfill scripts)

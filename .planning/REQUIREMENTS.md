@@ -14,7 +14,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 - [ ] **CONS-03**: USDA RMA price scraper available in portal (migrated from fsa-acres) and updates insurance_pricing table
 - [ ] **CONS-04**: fsa-acres seasonal dashboard, reports, and GCS features continue working against consolidated data
 - [ ] **CONS-05**: One-time data migration script moves fsa-acres JSON records to Supabase with duplicate detection and verification
-- [ ] **CONS-06**: Every field record in every app has a registry_field_id that maps to farm-registry
+- [x] **CONS-06**: Every field record in every app has a registry_field_id that maps to farm-registry
 - [ ] **CONS-07**: Cross-module data joins use registry field ID, not string name matching
 - [ ] **CONS-08**: Backfill scripts populate registry_field_id in farm-budget, grain-tickets, portal clu_records, and fsa-acres
 - [ ] **CONS-09**: Canonical crop registry in farm-registry with crop ID, canonical name, and per-app name aliases
@@ -96,7 +96,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CONS-06 | Phase 49 | Pending |
+| CONS-06 | Phase 49 | Complete |
 | CONS-07 | Phase 49 | Pending |
 | CONS-08 | Phase 49 | Pending |
 | CONS-09 | Phase 50 | Pending |
