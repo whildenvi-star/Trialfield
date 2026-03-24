@@ -54,7 +54,25 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
+
 app.use(express.json());
+
+// ── Embed-token gate ─────────────────────────────────────────────
+// Cookie-setting MUST run before app.get('/') and express.static
+// so the initial page load (/?token=xxx) sets the cookie.
+if (process.env.EMBED_TOKEN) {
+  const cookieParser = require('cookie-parser');
+  app.use(cookieParser());
+  app.use((req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) {
+      res.cookie('embed_session', process.env.EMBED_TOKEN, {
+        httpOnly: true, sameSite: 'lax', secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+    next();
+  });
+}
 
 // Serve index.html with GLOMALIN_ENABLED injected — MUST be before express.static
 app.get('/', (req, res) => {
@@ -66,7 +84,18 @@ app.get('/', (req, res) => {
   res.type('html').send(html);
 });
 
+// Serve static files before API auth so pages always load
 app.use(express.static(path.join(__dirname, 'public')));
+
+// API auth gate — agent routes exempted (have own kill-switch + daily cap)
+if (process.env.EMBED_TOKEN) {
+  app.use('/api', (req, res, next) => {
+    if (req.path.startsWith('/agent')) return next();
+    if (req.query.token === process.env.EMBED_TOKEN) return next();
+    if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
+    res.status(403).json({ error: 'Forbidden' });
+  });
+}
 
 // perf: Cache-Control on GET API responses — allows browser to skip refetch for short TTL
 app.use('/api', (req, res, next) => {
@@ -725,7 +754,8 @@ app.put('/api/farms/:id', async (req, res) => {
       discount: 'discount',
       testWeight: 'testWeight',
       driver: 'driver',
-      truck: 'truck'
+      truck: 'truck',
+      registryId: 'registryId'  // farm-registry canonical field ID
     };
     const numericFields = ['acres', 'guarantee', 'coverage', 'claimThreshold', 'discount', 'testWeight', 'truck'];
     Object.entries(fieldMap).forEach(([clientField, dbField]) => {
@@ -915,7 +945,8 @@ app.post('/api/farms', async (req, res) => {
         discount: parseFloat(req.body.discount) || 0,
         testWeight: parseFloat(req.body.testWeight) || 56,
         driver: req.body.driver || null,
-        truck: parseFloat(req.body.truck) || 0
+        truck: parseFloat(req.body.truck) || 0,
+        registryId: req.body.registryId || null  // farm-registry canonical field ID
       }
     });
     res.status(201).json(dbFarmToJson(farm));
@@ -947,6 +978,66 @@ app.get('/api/farm-names', async (req, res) => {
   } catch (e) {
     console.error('GET /api/farm-names error:', e);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- Sync Farm acres from Farm Registry ---
+// Uses Farm.registryId for canonical ID lookup when available; falls back to name matching.
+const REGISTRY_URL = process.env.FARM_REGISTRY_URL || 'http://localhost:3005';
+app.post('/api/farms/sync-registry', async (req, res) => {
+  try {
+    const resp = await fetch(`${REGISTRY_URL}/api/fields?active=true`);
+    if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+    const regFields = await resp.json();
+
+    // Build ID lookup (canonical) and name/alias lookup (fallback)
+    const regById = {};
+    const regByName = {};
+    regFields.forEach(rf => {
+      regById[rf.id] = rf;
+      regByName[rf.name.toLowerCase()] = rf;
+      (rf.aliases || []).forEach(a => { regByName[a.toLowerCase()] = rf; });
+    });
+
+    const dbFarms = await prisma.farm.findMany();
+    const results = { synced: [], unmatched: [], unchanged: [] };
+
+    for (const farm of dbFarms) {
+      // Prefer canonical ID lookup; fall back to name matching for legacy records
+      let regField = farm.registryId ? regById[farm.registryId] : null;
+      if (!regField) {
+        regField = regByName[(farm.name || '').toLowerCase().trim()];
+      }
+      if (!regField) {
+        results.unmatched.push(farm.name);
+        continue;
+      }
+
+      const updateData = {};
+      // Store registryId so future syncs use the canonical ID path
+      if (!farm.registryId && regField.id) updateData.registryId = regField.id;
+      // Sync reporting acres from registry
+      if (Math.abs((farm.reportingAcres || 0) - (regField.reportingAcres || 0)) > 0.001) {
+        updateData.reportingAcres = regField.reportingAcres;
+      }
+      // Sync organic acres from registry
+      if (Math.abs((farm.organicAcres || 0) - (regField.organicAcres || 0)) > 0.001) {
+        updateData.organicAcres = regField.organicAcres;
+      }
+
+      if (Object.keys(updateData).length > 0) {
+        updateData.syncedAt = new Date();
+        await prisma.farm.update({ where: { id: farm.id }, data: updateData });
+        results.synced.push({ name: farm.name, ...updateData });
+      } else {
+        results.unchanged.push(farm.name);
+      }
+    }
+
+    res.json(results);
+  } catch (err) {
+    console.error('POST /api/farms/sync-registry error:', err);
+    res.status(502).json({ error: 'Registry sync failed: ' + err.message });
   }
 });
 

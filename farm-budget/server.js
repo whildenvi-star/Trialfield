@@ -645,21 +645,33 @@ app.post('/api/fields/sync-registry', async (req, res) => {
 
     // Build lookup: lowercased name/alias → registry field
     const regLookup = {};
+    // Build ID lookup: registryFieldId → registry field (canonical — no name ambiguity)
+    const regById = {};
     regFields.forEach(rf => {
       regLookup[rf.name.toLowerCase()] = rf;
       (rf.aliases || []).forEach(a => { regLookup[a.toLowerCase()] = rf; });
+      regById[rf.id] = rf;
     });
 
     const results = { synced: [], unmatched: [], unchanged: [], splitWarnings: [] };
     let changed = false;
 
     store.fields.forEach(field => {
-      // Match by name first, then by registryFieldName for split fields
-      const match = regLookup[(field.name || '').toLowerCase()]
-                 || regLookup[(field.registryFieldName || '').toLowerCase()];
+      // Prefer canonical ID lookup (no name ambiguity).
+      // Fall back to name/alias matching for legacy records without a registryFieldId.
+      let match = field.registryFieldId ? regById[field.registryFieldId] : null;
+      if (!match) {
+        match = regLookup[(field.name || '').toLowerCase()]
+             || regLookup[(field.registryFieldName || '').toLowerCase()];
+      }
       if (!match) {
         results.unmatched.push(field.name);
         return;
+      }
+      // Store registryFieldId so future syncs use the canonical ID path
+      if (!field.registryFieldId && match.id) {
+        field.registryFieldId = match.id;
+        changed = true;
       }
 
       let fieldChanged = false;
@@ -697,12 +709,14 @@ app.post('/api/fields/sync-registry', async (req, res) => {
     const splitGroups = {};
     store.fields.forEach(f => {
       if (!f.splitGroupId) return;
-      if (!splitGroups[f.splitGroupId]) splitGroups[f.splitGroupId] = { fields: [], registryFieldName: f.registryFieldName };
+      if (!splitGroups[f.splitGroupId]) splitGroups[f.splitGroupId] = { fields: [], registryFieldName: f.registryFieldName, registryFieldId: f.registryFieldId };
       splitGroups[f.splitGroupId].fields.push(f);
     });
     Object.keys(splitGroups).forEach(sgId => {
       const group = splitGroups[sgId];
-      const regMatch = regLookup[(group.registryFieldName || '').toLowerCase()];
+      // Prefer canonical ID lookup for split groups too
+      const regMatch = (group.registryFieldId ? regById[group.registryFieldId] : null)
+                    || regLookup[(group.registryFieldName || '').toLowerCase()];
       if (!regMatch) return;
       const allocatedAcres = group.fields.reduce((sum, f) => sum + (f.acres || 0), 0);
 
