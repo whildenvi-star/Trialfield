@@ -50,24 +50,44 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Card-based CLU editor with bulk actions and validation, FSA acreage reporting PDF, insurance coverage matrix and payout simulator, claims Kanban with document upload and timeline, cross-module navigation (CLU→Policy→Claim), dashboard summary cards, APH auto-populate, yield sync, and file-claim flow. 8 phases, 15 plans, 27 requirements — all complete.
 
-## Current Milestone: v7.0 Public Deployment & Team Onboarding (In Progress)
+## Completed Milestone: v7.0 Public Deployment & Team Onboarding (Shipped: 2026-03-08)
 
-**Goal:** Deploy the entire 8-app farm operations platform to a public URL so 6-15 coworkers can access it with role-based permissions and email-invite onboarding. Infrastructure milestone — no new features.
+**Goal:** Deploy the entire 8-app farm operations platform to a public URL with PM2, Caddy, auto-HTTPS, and team onboarding.
 
-**Target features:**
-- Single VPS deployment with PM2 process management for all 8 apps
-- Caddy reverse proxy with auto-HTTPS and subdomain routing
-- Production PostgreSQL for grain-tickets and organic-cert
-- Production environment configuration and secret management
-- Email invite flow for coworker onboarding (already built, needs production wiring)
-- Daily backup scripts for JSON data files and PostgreSQL databases
-- Health check endpoints and production hardening
+**Delivered:** PM2 ecosystem config, Caddy reverse proxy with subdomain routing and embed path proxying, production PostgreSQL for grain-tickets and organic-cert, daily backup scripts, health checks, email invite flow. 5 phases, 8 plans — all complete.
 
 ## Completed Milestone: v8.0 ASCII Banner Strip & Design System (2026-03-08)
 
 **Goal:** Add an animated ASCII mycelial network banner strip as integrated design chrome across all portal module pages, unify the Glomalin design system with a canonical navy/cyan palette, and expand with additional ASCII animation scenes.
 
 **Delivered:** ASCIIBannerStrip canvas component with pure noise functions (~50fps, retina, no external deps), app shell integration (mobile responsive, a11y, user disable toggle), canonical tokens.ts with navy/cyan palette (37 files migrated from soil-* to glomalin-*), multi-scene engine (drone, seasonal, mycelium) with 200ms crossfade and easter egg scene cycling. 4 phases, 9 plans, 22 requirements — all complete.
+
+## Paused Milestone: v9.0 Mobile PWA + Field Operations Logger
+
+**Goal:** PWA with offline crop plan viewer and field pass logger for operators in the field.
+
+**Status:** Phases 44-45 complete (PWA infrastructure + crop plan viewer). Phases 46-48 paused pending v10.0 consolidation. Will resume after v10.0 — canonical field IDs and unified data stores make the mobile work significantly cleaner.
+
+## Current Milestone: v10.0 Platform Consolidation & Data Integrity
+
+**Goal:** Eliminate scattered data, duplicate stores, and manual re-entry across the 8-app ecosystem. Consolidate FSA/insurance to a single data store, establish canonical field and crop IDs, build automatic data pipelines, and unify the UX so the platform feels like one product.
+
+**Target features:**
+- Consolidate FSA/Insurance data to single Supabase store (eliminate portal vs fsa-acres duplication)
+- Automatic yield pipeline from grain-tickets to insurance and budget (eliminate triple manual entry)
+- Canonical field registry IDs across all 8 apps (eliminate string-name fuzzy matching)
+- Actionable farm dashboard showing what needs attention today
+- Canonical crop list shared across all apps
+- Grain marketing position view (contracted vs unpriced bushels)
+- Structured APH database for crop insurance
+- Fix iframe embed navigation (breadcrumbs, no duplicate headers)
+- Unified field activity timeline
+- Connect seed-inventory organic data to organic-cert
+- Prevented planting indemnity calculation
+- Unified design tokens across all Express apps
+- Single add-field workflow with auto-propagation
+- Settlement financial summary with contract-level P&L
+- Connect meristem-malt to grain-ticket settlement prices
 
 ## Requirements
 
@@ -140,8 +160,22 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 ### Active
 
-**v7.0 — Remaining:**
-- [ ] Health check endpoints on all Express apps (Phase 39)
+**v10.0 — Platform Consolidation & Data Integrity:**
+- [ ] Consolidate FSA/Insurance to single Supabase data store
+- [ ] Automatic yield pipeline (grain-tickets → insurance → budget)
+- [ ] Canonical field registry IDs across all apps
+- [ ] Actionable farm dashboard
+- [ ] Canonical crop list
+- [ ] Grain marketing position view
+- [ ] Structured APH database
+- [ ] Fix iframe embed navigation
+- [ ] Unified field activity timeline
+- [ ] Seed-inventory → organic-cert connection
+- [ ] Prevented planting calculation
+- [ ] Unified design tokens
+- [ ] Single add-field workflow
+- [ ] Settlement financial summary
+- [ ] Meristem-malt grain price connection
 
 ### Deferred
 
@@ -221,4 +255,4 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | localStorage for banner/scene prefs (not Supabase) | No schema changes; instant toggle; orthogonal controls | ✓ Good — simpler, no migration needed |
 
 ---
-*Last updated: 2026-03-08 after v8.0 milestone completion*
+*Last updated: 2026-03-24 after v10.0 milestone started (v9.0 paused)*
