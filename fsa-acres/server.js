@@ -141,6 +141,7 @@ app.get('/api/clu-records/:id', function (req, res) {
 });
 
 app.post('/api/clu-records', function (req, res) {
+  // req.body may include registryFieldId (farm-registry canonical ID) — accepted via Object.assign
   var rec = Object.assign({ id: generateId('clu') }, req.body);
   store.cluRecords.push(rec);
   saveData().then(function () { res.status(201).json(rec); });
@@ -164,6 +165,7 @@ app.put('/api/clu-records/bulk', function (req, res) {
 app.put('/api/clu-records/:id', function (req, res) {
   var idx = store.cluRecords.findIndex(function (r) { return r.id === req.params.id; });
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  // req.body may include registryFieldId (farm-registry canonical ID) — accepted via Object.assign
   Object.assign(store.cluRecords[idx], req.body);
   delete store.cluRecords[idx].id; // prevent id overwrite
   store.cluRecords[idx].id = req.params.id;
@@ -175,6 +177,71 @@ app.delete('/api/clu-records/:id', function (req, res) {
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   store.cluRecords.splice(idx, 1);
   saveData().then(function () { res.json({ ok: true }); });
+});
+
+// ===== Split CLU =====
+app.post('/api/clu-records/:id/split', function (req, res) {
+  var original = store.cluRecords.find(function (r) { return r.id === req.params.id; });
+  if (!original) return res.status(404).json({ error: 'Not found' });
+
+  var splitAcres = Number(req.body.splitAcres);
+  if (!splitAcres || splitAcres <= 0 || splitAcres >= (original.fsaAcres || 0)) {
+    return res.status(400).json({ error: 'Split acres must be between 0 and ' + original.fsaAcres });
+  }
+
+  // Find next CLU number for this tract
+  var tractClus = store.cluRecords.filter(function (r) {
+    return r.farmNumber === original.farmNumber && r.tractNumber === original.tractNumber;
+  });
+  var maxClu = 0;
+  tractClus.forEach(function (r) {
+    var n = parseInt(r.clu) || 0;
+    if (n > maxClu) maxClu = n;
+  });
+  var newCluNum = String(maxClu + 1);
+
+  // Reduce original acres
+  var remainingAcres = Math.round(((original.fsaAcres || 0) - splitAcres) * 100) / 100;
+  original.fsaAcres = remainingAcres;
+
+  // Create new CLU record — copy all fields except id, acres, clu number, and crop
+  var newRec = Object.assign({}, original, {
+    id: generateId('clu'),
+    clu: newCluNum,
+    fsaAcres: splitAcres,
+    crop: req.body.newCrop || '',
+    reported: false
+  });
+  store.cluRecords.push(newRec);
+
+  saveData().then(function () {
+    res.json({ original: original, newRecord: newRec });
+  });
+});
+
+// ===== Duplicate CLU =====
+app.post('/api/clu-records/:id/duplicate', function (req, res) {
+  var source = store.cluRecords.find(function (r) { return r.id === req.params.id; });
+  if (!source) return res.status(404).json({ error: 'Not found' });
+
+  // Find next CLU number for this tract
+  var tractClus = store.cluRecords.filter(function (r) {
+    return r.farmNumber === source.farmNumber && r.tractNumber === source.tractNumber;
+  });
+  var maxClu = 0;
+  tractClus.forEach(function (r) {
+    var n = parseInt(r.clu) || 0;
+    if (n > maxClu) maxClu = n;
+  });
+
+  var newRec = Object.assign({}, source, {
+    id: generateId('clu'),
+    clu: String(maxClu + 1),
+    reported: false
+  });
+  store.cluRecords.push(newRec);
+
+  saveData().then(function () { res.json(newRec); });
 });
 
 // ===== Rollups =====
@@ -359,6 +426,128 @@ app.get('/api/rollup/reporting-progress', function (req, res) {
   res.json(Calc.reportingProgress(store.cluRecords));
 });
 
+// ===== Cropping Intentions Report =====
+app.get('/api/cropping-intentions', async function (req, res) {
+  var budgetFields = await cachedFetch('http://localhost:3001/api/fields') || [];
+  var regFields = await cachedFetch('http://localhost:3005/api/fields?active=true') || [];
+  var enterprises = await cachedFetch('http://localhost:3001/api/enterprises') || [];
+
+  // Build enterprise lookup
+  var entMap = {};
+  enterprises.forEach(function (e) { entMap[e.id] = e; });
+
+  // Build budget lookup by normalized name
+  var budgetMap = {};
+  budgetFields.forEach(function (f) {
+    budgetMap[normName(f.name)] = f;
+    if (f.registryFieldName) budgetMap[normName(f.registryFieldName)] = f;
+  });
+
+  // Build registry alias lookup for fuzzy matching
+  var aliasMap = {};
+  regFields.forEach(function (rf) {
+    aliasMap[normName(rf.name)] = rf;
+    (rf.aliases || []).forEach(function (a) { aliasMap[normName(a)] = rf; });
+  });
+
+  function findBudgetField(fieldName) {
+    var norm = normName(fieldName);
+    if (budgetMap[norm]) return budgetMap[norm];
+    // Try via registry alias → registry name → budget
+    var rf = aliasMap[norm];
+    if (rf && budgetMap[normName(rf.name)]) return budgetMap[normName(rf.name)];
+    // Fuzzy word match
+    var best = null, bestScore = 0;
+    budgetFields.forEach(function (bf) {
+      var s = syncMatchScore(bf.name, [], fieldName);
+      if (bf.registryFieldName) s = Math.max(s, syncMatchScore(bf.registryFieldName, [], fieldName));
+      if (s > bestScore) { bestScore = s; best = bf; }
+    });
+    return bestScore >= 50 ? best : null;
+  }
+
+  var records = store.cluRecords;
+  if (req.query.farmNumber) {
+    records = records.filter(function (r) { return r.farmNumber === req.query.farmNumber; });
+  }
+
+  // Sort by farm → tract → unit → CLU
+  records = records.slice().sort(function (a, b) {
+    var cmp = (a.farmNumber || '').localeCompare(b.farmNumber || '');
+    if (cmp !== 0) return cmp;
+    cmp = (a.tractNumber || '').localeCompare(b.tractNumber || '');
+    if (cmp !== 0) return cmp;
+    cmp = (a.unitNumber || '').localeCompare(b.unitNumber || '');
+    if (cmp !== 0) return cmp;
+    return parseInt(a.clu || '0') - parseInt(b.clu || '0');
+  });
+
+  var rows = records.map(function (r) {
+    var bf = findBudgetField(r.fieldName);
+    var ent = bf && bf.enterpriseId ? entMap[bf.enterpriseId] : null;
+    return {
+      farmNumber: r.farmNumber || '',
+      tractNumber: r.tractNumber || '',
+      unitNumber: r.unitNumber || '',
+      clu: r.clu || '',
+      fieldName: r.fieldName || '',
+      landClass: r.landClass || '',
+      fsaCrop: r.crop || '',
+      fsaAcres: r.fsaAcres || 0,
+      organic: !!r.organic,
+      budgetCrop: bf ? (bf.crop || '') : '',
+      budgetAcres: bf ? (bf.acres || 0) : 0,
+      enterprise: ent ? ent.name : '',
+      enterpriseCategory: ent ? ent.category : '',
+      systemCode: bf ? (bf.systemCode || '') : '',
+      plantDate: r.grainPlantDate || '',
+      use: r.use || '',
+      matched: !!bf
+    };
+  });
+
+  res.json({
+    year: store.settings.year,
+    county: store.settings.county,
+    state: store.settings.state,
+    producerName: store.settings.producerName,
+    rows: rows
+  });
+});
+
+app.get('/api/export/intentions', async function (req, res) {
+  // Reuse the same logic via internal fetch
+  var url = 'http://localhost:' + PORT + '/api/cropping-intentions' +
+    (req.query.farmNumber ? '?farmNumber=' + encodeURIComponent(req.query.farmNumber) : '');
+  var data;
+  try {
+    var r = await fetch(url);
+    data = await r.json();
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to generate intentions data' });
+  }
+
+  var headers = ['Farm#', 'Tract', 'Unit', 'CLU', 'Field', 'Land Class',
+    'FSA Crop', 'FSA Acres', 'Organic', 'Budget Crop', 'Budget Acres',
+    'Enterprise', 'System Code', 'Plant Date', 'Use', 'Matched'];
+  var rows = data.rows.map(function (r) {
+    return [r.farmNumber, r.tractNumber, r.unitNumber, r.clu, r.fieldName, r.landClass,
+      r.fsaCrop, r.fsaAcres, r.organic ? 'Yes' : 'No', r.budgetCrop, r.budgetAcres,
+      r.enterprise, r.systemCode, r.plantDate, r.use, r.matched ? 'Yes' : 'No'];
+  });
+  var csv = [headers.join(',')].concat(rows.map(function (row) {
+    return row.map(function (v) {
+      var s = String(v == null ? '' : v);
+      if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0) return '"' + s.replace(/"/g, '""') + '"';
+      return s;
+    }).join(',');
+  })).join('\n');
+  var fn = 'cropping-intentions' + (req.query.farmNumber ? '-farm' + req.query.farmNumber : '') + '.csv';
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', 'attachment; filename="' + fn + '"');
+  res.send(csv);
+});
+
 // ===== Validation =====
 app.get('/api/validation', function (req, res) {
   res.json(Calc.validateRecords(store.cluRecords, store.pricing, store.insurancePolicies));
@@ -509,9 +698,9 @@ app.get('/api/budget/fields', async function (req, res) {
 // --- Grain ticket yield proxy (bridge to port 3000) ---
 app.get('/api/grain-yield', async function (req, res) {
   try {
-    var farmsResp = await fetch('http://localhost:3000/api/farms');
+    var farmsResp = await fetch('http://localhost:3007/api/farms');
     if (!farmsResp.ok) throw new Error('Grain tickets returned ' + farmsResp.status);
-    var ticketsResp = await fetch('http://localhost:3000/api/tickets');
+    var ticketsResp = await fetch('http://localhost:3007/api/tickets');
     var farms = await farmsResp.json();
     var tickets = ticketsResp.ok ? await ticketsResp.json() : [];
 
@@ -946,8 +1135,8 @@ app.get('/api/season/status', async function (req, res) {
     cachedFetch('http://localhost:3006/api/dashboard'),
     cachedFetch('http://localhost:3006/api/reconciliation'),
     cachedFetch('http://localhost:3005/api/fields?active=true'),
-    cachedFetch('http://localhost:3000/api/farms'),
-    cachedFetch('http://localhost:3000/api/stats')
+    cachedFetch('http://localhost:3007/api/farms'),
+    cachedFetch('http://localhost:3007/api/stats')
   ]);
 
   var budgetFields = results[0];
@@ -989,7 +1178,7 @@ app.get('/api/season/field-crosswalk', async function (req, res) {
   var results = await Promise.all([
     cachedFetch('http://localhost:3005/api/fields?active=true'),
     cachedFetch('http://localhost:3001/api/fields'),
-    cachedFetch('http://localhost:3000/api/farms')
+    cachedFetch('http://localhost:3007/api/farms')
   ]);
 
   var regFields    = results[0] || [];

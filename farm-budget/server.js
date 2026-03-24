@@ -448,7 +448,7 @@ app.put('/api/fields/:id', async (req, res) => {
     'yieldPerAcre', 'yieldUnit', 'cropInsurancePerAcre',
     'insuranceIncomePerAcre', 'govPaymentLabel', 'govPaymentsPerAcre',
     'auxPayments', 'tariffsPerAcre', 'geometry', 'harvestMoisture', 'buyerId', 'templateId',
-    'registryFieldName', 'splitGroupId'
+    'registryFieldName', 'splitGroupId', 'registryFieldId'
   ];
   updatable.forEach(k => {
     if (req.body[k] !== undefined) store.fields[idx][k] = req.body[k];
