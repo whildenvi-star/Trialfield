@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -47,9 +48,35 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
+
+// Cookie-setting BEFORE static files so initial page load sets the cookie
+if (process.env.EMBED_TOKEN) {
+  const cookieParser = require('cookie-parser');
+  app.use(cookieParser());
+  app.use((req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) {
+      res.cookie('embed_session', process.env.EMBED_TOKEN, {
+        httpOnly: true, sameSite: 'lax', secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+    next();
+  });
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/client', express.static(path.join(__dirname, 'client')));
+
+// API auth gate
+if (process.env.EMBED_TOKEN) {
+  app.use('/api', (req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) return next();
+    if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
+    res.status(403).json({ error: 'Forbidden' });
+  });
+}
 
 // --- In-memory data store ---
 let store = {
@@ -169,6 +196,35 @@ app.get('/api/fields/search', (req, res) => {
       totalRentDollars: f.totalRentDollars || 0
     }));
   res.json(matches);
+});
+
+// Autocomplete endpoint for field selection dropdowns — must be before :id route
+// Returns all active fields sorted by name, optionally filtered by ?q= param
+// Response cached 5 minutes (field list rarely changes)
+app.get('/api/fields/autocomplete', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  const q = (req.query.q || '').toLowerCase().trim();
+  let fields = store.fields.filter(f => f.active);
+
+  if (q) {
+    fields = fields.filter(f =>
+      f.name.toLowerCase().includes(q) ||
+      (f.aliases || []).some(a => a.toLowerCase().includes(q))
+    );
+  }
+
+  fields = fields
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .map(f => ({
+      id: f.id,
+      name: f.name,
+      aliases: f.aliases || [],
+      reportingAcres: f.reportingAcres,
+      organicAcres: f.organicAcres,
+      ownership: f.ownership
+    }));
+
+  res.json({ fields });
 });
 
 app.get('/api/fields/:id', (req, res) => {
