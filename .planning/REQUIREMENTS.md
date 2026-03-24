@@ -1,146 +1,110 @@
 # Requirements: Farm Operations Platform
 
-**Defined:** 2026-03-06
-**Core Value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
+**Defined:** 2026-03-24
+**Core Value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on — with zero tolerance for lost data or undetected discrepancies.
 
-## v7.0 Requirements
+## v10.0 Requirements
 
-Requirements for public deployment milestone. Each maps to roadmap phases.
+Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap phases.
 
-### Infrastructure
+### Data Consolidation
 
-- [x] **INFRA-01**: All 8 apps run under PM2 with auto-restart, defined in a single ecosystem config
-- [x] **INFRA-02**: Caddy reverse proxy routes subdomain traffic to correct app with auto-HTTPS
-- [x] **INFRA-03**: Production `.env` templates exist for every app with documented placeholder values
-- [x] **INFRA-04**: Deployment README provides step-by-step VPS setup (Node.js, PostgreSQL, Caddy, PM2, git clone, DNS)
-- [x] **INFRA-05**: grain-tickets port configurable via PORT env var (avoids conflict with portal on 3000)
-- [x] **INFRA-06**: Both Next.js apps (portal, organic-cert) build and start in production mode
+- [ ] **CONS-01**: Portal Supabase is the single data store for FSA CLU records — fsa-acres Express app reads/writes through portal API, not local JSON
+- [ ] **CONS-02**: Portal Supabase is the single data store for insurance policies and pricing — fsa-acres reads/writes through portal API
+- [ ] **CONS-03**: USDA RMA price scraper available in portal (migrated from fsa-acres) and updates insurance_pricing table
+- [ ] **CONS-04**: fsa-acres seasonal dashboard, reports, and GCS features continue working against consolidated data
+- [ ] **CONS-05**: One-time data migration script moves fsa-acres JSON records to Supabase with duplicate detection and verification
+- [ ] **CONS-06**: Every field record in every app has a registry_field_id that maps to farm-registry
+- [ ] **CONS-07**: Cross-module data joins use registry field ID, not string name matching
+- [ ] **CONS-08**: Backfill scripts populate registry_field_id in farm-budget, grain-tickets, portal clu_records, and fsa-acres
+- [ ] **CONS-09**: Canonical crop registry in farm-registry with crop ID, canonical name, and per-app name aliases
+- [ ] **CONS-10**: All apps fetch crop list from farm-registry instead of hardcoded local arrays
+- [ ] **CONS-11**: Cross-module crop aggregation uses canonical crop ID, not display name
 
-### Security
+### Data Pipelines
 
-- [x] **SEC-01**: All Express apps restrict CORS to portal domain only
-- [x] **SEC-02**: Daily backup scripts run for JSON data files (7-day retention) and PostgreSQL (pg_dump)
-- [x] **SEC-03**: Each Express app exposes a `/health` endpoint returning 200
-- [x] **SEC-04**: Production secrets documented (what to rotate, where they go)
+- [ ] **PIPE-01**: Grain-tickets automatically computes yield summary per farm/crop after ticket save
+- [ ] **PIPE-02**: Yield summary auto-pushes to portal insurance policies (updates actual yield, sets synced flag)
+- [ ] **PIPE-03**: Farm-budget dashboard shows actual yields from grain-tickets without manual entry
+- [ ] **PIPE-04**: Visual indicator in insurance and budget UIs shows "Yield synced from grain tickets" with timestamp
+- [ ] **PIPE-05**: Organic-cert compilation engine reads seed lot numbers and cert numbers from seed-inventory instead of farm-budget
+- [ ] **PIPE-06**: NOP C9.0 audit section auto-populated from seed-inventory delivery data (lot, cert, OMRI, supplier)
+- [ ] **PIPE-07**: Meristem-malt grain cost pulls actual settlement prices from grain-tickets
+- [ ] **PIPE-08**: Meristem-malt pricing table shows "synced from grain tickets" with manual override flag
 
-### Onboarding
+### UX & Navigation
 
-- [x] **ONB-01**: Admin can invite a coworker by email and they receive a signup link
-- [x] **ONB-02**: Invited user can set password, log in, and see dashboard with granted modules
-- [x] **ONB-03**: User can reset forgotten password via email link in production
+- [ ] **UXN-01**: Portal dashboard shows actionable items (overdue claims, unreported CLUs, unreconciled settlements, delivery shortfalls) instead of module cards
+- [ ] **UXN-02**: Each dashboard action item links directly to the relevant module with context (filter/highlight)
+- [ ] **UXN-03**: Dashboard works when 1-2 Express apps are offline (Promise.allSettled with graceful degradation)
+- [ ] **UXN-04**: Embedded Express apps hide their header bar when inside portal iframe
+- [ ] **UXN-05**: Portal shows breadcrumb bar above iframe embeds showing current navigation path
+- [ ] **UXN-06**: "Back to Dashboard" escape hatch always visible when inside an embed
+- [ ] **UXN-07**: All 8 apps use identical color tokens (bg, surface, border, accent, text) from shared platform-tokens.css
+- [ ] **UXN-08**: Day/night toggle produces consistent results across portal and all embedded apps
+- [ ] **UXN-09**: Switching between portal and any embedded app shows zero visual color jarring
 
-## v9.0 Requirements
+### Domain Features
 
-Requirements for Mobile PWA + Field Operations Logger milestone.
+- [ ] **DOM-01**: Grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop
+- [ ] **DOM-02**: Unpriced bushel dollar exposure calculated from live CBOT futures prices
+- [ ] **DOM-03**: Contract type support: cash, accumulator, HTA, options, min-price, basis
+- [ ] **DOM-04**: APH records table stores 4-10 years of actual yield per farm/unit/crop with source tracking
+- [ ] **DOM-05**: APH computed from yield history using simple average (excluding zero-yield disaster years)
+- [ ] **DOM-06**: Insurance guarantee auto-calculated from computed APH × coverage level
+- [ ] **DOM-07**: Unified field activity timeline shows all activities for a field in chronological order (budget planned passes, organic-cert confirmed ops, FieldOps machine data, grain-ticket deliveries)
+- [ ] **DOM-08**: Timeline entries color-coded by source with expandable details
+- [ ] **DOM-09**: Toggling prevented planting on a CLU/policy shows estimated PP indemnity using RMA coverage factors
+- [ ] **DOM-10**: PP indemnity appears in insurance PDF report
+- [ ] **DOM-11**: Settlement financial summary shows per-buyer per-crop revenue (delivered BU, price, deductions, net payment)
+- [ ] **DOM-12**: Settlement financial summary compares contract price vs actual settlement price with variance
 
-### PWA Infrastructure
+### Workflow Automation
 
-- [x] **PWA-01**: Service worker registered via @serwist/next with web app manifest (add-to-home-screen, Glomalin branding)
-- [x] **PWA-02**: Offline shell — portal loads and is navigable without network; static assets cached by service worker
-- [x] **PWA-03**: IndexedDB wrapper (via idb) providing read/write API for offline operation queue and cached crop plan data
+- [ ] **AUTO-01**: Adding a field in farm-registry auto-creates corresponding records in farm-budget, grain-tickets, and portal
+- [ ] **AUTO-02**: Downstream records have correct registry_field_id for future syncs
+- [ ] **AUTO-03**: Webhook failures don't block farm-registry save (async, logged, retry once)
 
-### Crop Plan Viewer
+## v11.0+ Requirements (Deferred)
 
-- [x] **CPV-01**: Portal API route that aggregates field + enterprise + input + seed + planned pass data from farm-budget and farm-registry with 60s TTL cache and graceful fallback
-- [x] **CPV-02**: Mobile-optimized field list with search/filter, big tap targets, grouped by crop/enterprise
-- [x] **CPV-03**: Field detail page showing crop, variety, population, planned inputs with rates, and planned pass checklist with pass status (planned vs confirmed)
-- [x] **CPV-04**: Crop plan data cached in IndexedDB on each successful sync, displayed from cache when offline; stale-data indicator shows last sync time
-
-### Field Pass Logger
-
-- [ ] **FPL-01**: Operator can confirm a planned pass (tap checkbox → date picker defaults today + operator selector → CONFIRMED status written to organic-cert FieldOperation table)
-- [ ] **FPL-02**: Operator can add an unplanned pass (pick field, operation type, date, operator, optional notes → new CONFIRMED FieldOperation row)
-- [ ] **FPL-03**: Operator selector populated from Supabase profiles with operator role or above
-- [ ] **FPL-04**: All portal-logged operations written to organic-cert FieldOperation table via portal API route with `plannedSource: "mobile-logger"` audit tag
-
-### Offline Sync Engine
-
-- [ ] **OSE-01**: Pass confirmations and additions queued to IndexedDB when offline; queue persists across browser sessions
-- [ ] **OSE-02**: Background Sync API replays queued operations to portal API automatically on reconnect
-- [ ] **OSE-03**: Conflict detection when a pass was already confirmed (by FieldOps API or another user) — skip with notification rather than duplicating
-- [ ] **OSE-04**: Sync status UI shows queued count, last sync timestamp, per-item error state, and manual force-sync button
-
-### Grain Tickets PWA Extension
-
-- [ ] **GTP-01**: Grain tickets offline entry — new ticket form available offline with IndexedDB queue and sync-on-reconnect (same pattern as field pass logger)
-- [ ] **GTP-02**: Dashboard read-only caching — budget, FSA, and insurance summary views served from IndexedDB cache when offline
-
-## Future Requirements
-
-### v9.0+ Candidates
-
-- **MON-01**: Uptime monitoring with email alerts when an app goes down
-- **CI-01**: Automated deployment pipeline (git push → build → restart)
-- **LOG-01**: Centralized logging across all 8 apps
-- **SCALE-01**: Migrate JSON-backed apps to PostgreSQL for multi-instance support
+### Future Enhancements
+- **FUT-01**: Delivery schedule calendar for grain contracts (delivery windows, bin assignments)
+- **FUT-02**: Basis history tracking per buyer over time
+- **FUT-03**: SCO/ECO insurance coverage types
+- **FUT-04**: Buffer zone spatial validation using shapefile geometry
+- **FUT-05**: NOP input compliance checking (prevent prohibited material application to organic fields)
+- **FUT-06**: Transaction certificate generation for organic grain sales
+- **FUT-07**: Soil test result tracking tied to fertility input decisions
+- **FUT-08**: Weather/GDD integration for agronomic decisions
+- **FUT-09**: QBO (QuickBooks Online) integration for actual expense tracking
+- **FUT-10**: Variable-rate prescription management with management zones
 
 ## Out of Scope
 
 | Feature | Reason |
 |---------|--------|
-| Docker/containerization | Adds complexity; PM2 on bare metal is simpler for 6-15 users |
-| CI/CD pipeline | Manual deploy is fine for now; automate in v9.0+ |
-| Load balancer / multi-instance | Single VPS handles 6-15 users; JSON apps can't multi-instance anyway |
-| CDN for static assets | Not needed at this scale |
-| Database migration (JSON to PostgreSQL) | Would require app rewrites; defer to future milestone |
-| Custom domain email (SMTP) | Supabase default mailer works for invite volume |
-| Green/earth-tone palette | Glomalin design system is navy/cyan — no organic color schemes |
-| External animation libraries | Canvas-only rendering with pure TypeScript noise functions |
-| Visible scene toggle UI | Scene switching is an easter egg, not a prominent UI feature |
-| Native mobile app (iOS/Android) | PWA covers the field crew use case |
-| GPS/location tracking of field passes | Not needed for NOP records |
-| Photo attachment on passes | Deferred (would need Supabase Storage scope) |
-| Push notifications | Deferred (requires VAPID setup + notification permission UX) |
-| Equipment/implement selection on mobile | Operators confirm pass type, not which tractor |
+| Rewrite Express apps to Next.js | Working apps — consolidation is data-level, not framework-level |
+| Multi-farm/multi-grower support | Single farm operation — complexity not justified |
+| Real-time collaboration/conflict resolution | 6-15 users, low concurrency — not needed |
+| USDA FSA online system API integration | No public API exists; Excel import is only option |
+| Insurance premium calculation engine | "Decision support" only — agent handles actual premium quotes |
+| Elevator-side APIs for settlement import | Elevator formats vary wildly; manual CSV/Excel import sufficient |
+| Native mobile app | PWA approach chosen (v9.0) — no app store needed |
+| Automated NOP violation detection | Inspector makes the call; we provide records |
 
 ## Traceability
 
-### v7.0
+Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 35 | Complete |
-| INFRA-03 | Phase 35 | Complete |
-| INFRA-05 | Phase 35 | Complete |
-| SEC-01 | Phase 35 | Complete |
-| INFRA-06 | Phase 35 | Complete |
-| INFRA-02 | Phase 36 | Complete |
-| INFRA-04 | Phase 36 | Complete |
-| SEC-02 | Phase 37 | Complete |
-| SEC-04 | Phase 37 | Complete |
-| ONB-01 | Phase 38 | Complete |
-| ONB-02 | Phase 38 | Complete |
-| ONB-03 | Phase 38 | Complete |
-| SEC-03 | Phase 39 | Complete |
-
-### v9.0
-
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| PWA-01 | Phase 44 | Complete |
-| PWA-02 | Phase 44 | Complete |
-| PWA-03 | Phase 44 | Complete |
-| CPV-01 | Phase 45 | Complete |
-| CPV-02 | Phase 45 | Complete |
-| CPV-03 | Phase 45 | Complete |
-| CPV-04 | Phase 45 | Complete |
-| FPL-01 | Phase 46 | Pending |
-| FPL-02 | Phase 46 | Pending |
-| FPL-03 | Phase 46 | Pending |
-| FPL-04 | Phase 46 | Pending |
-| OSE-01 | Phase 47 | Pending |
-| OSE-02 | Phase 47 | Pending |
-| OSE-03 | Phase 47 | Pending |
-| OSE-04 | Phase 47 | Pending |
-| GTP-01 | Phase 48 | Pending |
-| GTP-02 | Phase 48 | Pending |
+| (populated by roadmapper) | | |
 
 **Coverage:**
-- v7.0 requirements: 13 total (13 complete)
-- v9.0 requirements: 17 total (0 complete, 17 pending)
-- Unmapped: 0
+- v10.0 requirements: 42 total
+- Mapped to phases: 0
+- Unmapped: 42
 
 ---
-*Requirements defined: 2026-03-06*
-*v9.0 requirements added: 2026-03-15*
-*Last updated: 2026-03-15 after v9.0 roadmap creation*
+*Requirements defined: 2026-03-24*
+*Last updated: 2026-03-24 after initial definition*
