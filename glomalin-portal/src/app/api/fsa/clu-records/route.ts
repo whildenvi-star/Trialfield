@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
+import { isOrganicCrop } from '@/lib/fsa/calc'
 
 export async function GET(request: Request) {
   const guard = await requireModuleAccess('fsa-578')
@@ -9,7 +11,7 @@ export async function GET(request: Request) {
   // Parse year from query string, default to 2026
   const { searchParams } = new URL(request.url)
   const yearParam = searchParams.get('year')
-  const year = yearParam ? parseInt(yearParam, 10) : 2026
+  const year = yearParam ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
 
   if (isNaN(year)) {
     return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 })
@@ -56,6 +58,7 @@ const ALLOWED_FIELDS = new Set([
   'reported',
   'crop_year',
   'prevented_planting',
+  'registry_field_id', // farm-registry canonical field ID — links CLU to registry
 ])
 
 export async function POST(request: Request) {
@@ -90,7 +93,7 @@ export async function POST(request: Request) {
 
   // Defaults
   if (insert.irrigated == null) insert.irrigated = false
-  if (insert.organic == null) insert.organic = false
+  if (insert.organic == null) insert.organic = isOrganicCrop(insert.crop as string)
   if (insert.double_crop == null) insert.double_crop = false
   if (insert.cover_crop == null) insert.cover_crop = false
   if (insert.reported == null) insert.reported = false
