@@ -94,17 +94,57 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 
 ## Traceability
 
-Updated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (populated by roadmapper) | | |
+| CONS-06 | Phase 49 | Pending |
+| CONS-07 | Phase 49 | Pending |
+| CONS-08 | Phase 49 | Pending |
+| CONS-09 | Phase 50 | Pending |
+| CONS-10 | Phase 50 | Pending |
+| CONS-11 | Phase 50 | Pending |
+| CONS-01 | Phase 51 | Pending |
+| CONS-02 | Phase 51 | Pending |
+| CONS-03 | Phase 51 | Pending |
+| CONS-04 | Phase 51 | Pending |
+| CONS-05 | Phase 51 | Pending |
+| PIPE-01 | Phase 52 | Pending |
+| PIPE-02 | Phase 52 | Pending |
+| PIPE-03 | Phase 52 | Pending |
+| PIPE-04 | Phase 52 | Pending |
+| PIPE-05 | Phase 53 | Pending |
+| PIPE-06 | Phase 53 | Pending |
+| PIPE-07 | Phase 53 | Pending |
+| PIPE-08 | Phase 53 | Pending |
+| UXN-04 | Phase 54 | Pending |
+| UXN-05 | Phase 54 | Pending |
+| UXN-06 | Phase 54 | Pending |
+| UXN-07 | Phase 54 | Pending |
+| UXN-08 | Phase 54 | Pending |
+| UXN-09 | Phase 54 | Pending |
+| UXN-01 | Phase 55 | Pending |
+| UXN-02 | Phase 55 | Pending |
+| UXN-03 | Phase 55 | Pending |
+| DOM-04 | Phase 56 | Pending |
+| DOM-05 | Phase 56 | Pending |
+| DOM-06 | Phase 56 | Pending |
+| DOM-01 | Phase 57 | Pending |
+| DOM-02 | Phase 57 | Pending |
+| DOM-03 | Phase 57 | Pending |
+| DOM-07 | Phase 58 | Pending |
+| DOM-08 | Phase 58 | Pending |
+| DOM-09 | Phase 59 | Pending |
+| DOM-10 | Phase 59 | Pending |
+| DOM-11 | Phase 60 | Pending |
+| DOM-12 | Phase 60 | Pending |
+| AUTO-01 | Phase 61 | Pending |
+| AUTO-02 | Phase 61 | Pending |
+| AUTO-03 | Phase 61 | Pending |
 
 **Coverage:**
-- v10.0 requirements: 42 total
-- Mapped to phases: 0
-- Unmapped: 42
+- v10.0 requirements: 43 total
+- Mapped to phases: 43
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 — traceability populated after v10.0 roadmap creation*

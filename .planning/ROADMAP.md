@@ -11,7 +11,8 @@
 - ✅ **v6.0 FSA Acres, Insurance & Claims** — Phases 27-34 (shipped 2026-03-06)
 - ✅ **v7.0 Public Deployment & Team Onboarding** — Phases 35-39 (shipped 2026-03-08)
 - ✅ **v8.0 ASCII Banner Strip & Design System** — Phases 40-43 (shipped 2026-03-08) — [archive](milestones/v8.0-ROADMAP.md)
-- 📋 **v9.0 Mobile PWA + Field Operations Logger** — Phases 44-48 (planned)
+- 📋 **v9.0 Mobile PWA + Field Operations Logger** — Phases 44-48 (paused after 44-45)
+- 🚧 **v10.0 Platform Consolidation & Data Integrity** — Phases 49-61 (in progress)
 
 ## Phases
 
@@ -112,7 +113,8 @@
 
 </details>
 
-### v9.0 Mobile PWA + Field Operations Logger (Planned)
+<details>
+<summary>📋 v9.0 Mobile PWA + Field Operations Logger (Phases 44-48) — PAUSED after phase 45</summary>
 
 **Milestone Goal:** Turn Glomalin Portal into a Progressive Web App so field operators can view crop plans, confirm field passes offline, and push confirmed operations into organic-cert's 3-year field histories for NOP compliance.
 
@@ -121,6 +123,26 @@
 - [ ] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API
 - [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
 - [ ] **Phase 48: Grain Tickets PWA + Dashboard Caching** - Extend offline pattern to grain-tickets entry and dashboard read-only views
+
+</details>
+
+### 🚧 v10.0 Platform Consolidation & Data Integrity (In Progress)
+
+**Milestone Goal:** Eliminate scattered data, duplicate stores, and manual re-entry across the 8-app ecosystem. Consolidate FSA/insurance to a single data store, establish canonical field and crop IDs, build automatic data pipelines, and unify the UX so the platform feels like one product.
+
+- [ ] **Phase 49: Canonical Field IDs** - Add registry_field_id to all apps and build backfill scripts — the ID foundation everything else depends on
+- [ ] **Phase 50: Canonical Crop Registry** - Add crop ID system to farm-registry and switch all apps off hardcoded crop arrays
+- [ ] **Phase 51: FSA/Insurance Data Consolidation** - Migrate fsa-acres JSON to Supabase as single source of truth with RMA price scraper
+- [ ] **Phase 52: Yield Pipeline** - Auto-compute yield summaries in grain-tickets and push to insurance and budget without manual entry
+- [ ] **Phase 53: Seed-Inventory & Meristem-Malt Pipelines** - Wire organic-cert seed data from seed-inventory and meristem-malt grain cost from settlements
+- [ ] **Phase 54: Iframe Embed Navigation + Design Tokens** - Fix portal embed UX and unify color tokens across all 8 apps
+- [ ] **Phase 55: Actionable Dashboard** - Replace module cards with live actionable items showing what needs attention today
+- [ ] **Phase 56: Structured APH Database** - Build multi-year APH records table with computed APH and insurance guarantee auto-calculation
+- [ ] **Phase 57: Grain Marketing Position** - Show contracted vs unpriced bushels per crop with CBOT exposure calculation
+- [ ] **Phase 58: Field Activity Timeline** - Unified chronological timeline per field pulling from all 4 data sources
+- [ ] **Phase 59: Prevented Planting Calculator** - Toggle PP on a CLU and see estimated indemnity from RMA coverage factors in PDF
+- [ ] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance
+- [ ] **Phase 61: Auto Field Propagation** - Adding a field in farm-registry auto-creates downstream records in all apps
 
 ## Phase Details
 
@@ -199,8 +221,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 44-01-PLAN.md — @serwist/next setup, web app manifest, install prompt, service worker caching strategy
-- [ ] 44-02-PLAN.md — IndexedDB wrapper (idb) with typed stores for operation queue and crop plan cache
+- [x] 44-01-PLAN.md — @serwist/next setup, web app manifest, install prompt, service worker caching strategy
+- [x] 44-02-PLAN.md — IndexedDB wrapper (idb) with typed stores for operation queue and crop plan cache
 
 ### Phase 45: Crop Plan Viewer
 **Goal**: Field operators can see every field's crop plan and pass status on a mobile screen, and that data remains readable when they lose signal
@@ -214,8 +236,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 45-01-PLAN.md — Portal API route aggregating farm-budget data with TTL cache and graceful fallback
-- [ ] 45-02-PLAN.md — Mobile-first field list + detail pages with search, offline cache, and pass checklist
+- [x] 45-01-PLAN.md — Portal API route aggregating farm-budget data with TTL cache and graceful fallback
+- [x] 45-02-PLAN.md — Mobile-first field list + detail pages with search, offline cache, and pass checklist
 
 ### Phase 46: Field Pass Logger
 **Goal**: Operators can confirm planned passes and add unplanned passes from the field, with those confirmations writing into organic-cert's 3-year field history
@@ -259,6 +281,136 @@ Plans:
 Plans:
 - [ ] 48-01: Grain ticket offline entry with IndexedDB queue and sync-on-reconnect
 - [ ] 48-02: Dashboard read-only caching for budget, FSA, and insurance summary views
+
+### Phase 49: Canonical Field IDs
+**Goal**: Every field record in every app carries a registry_field_id that maps unambiguously to farm-registry — string-name fuzzy matching is eliminated across the platform
+**Depends on**: Nothing (this is the data foundation all other phases depend on)
+**Requirements**: CONS-06, CONS-07, CONS-08
+**Success Criteria** (what must be TRUE):
+  1. Every field record in farm-budget, grain-tickets, portal clu_records, and fsa-acres has a non-null registry_field_id after backfill scripts run
+  2. Running a backfill script against a fresh data set produces a coverage report showing matched vs unmatched fields, with zero silent failures
+  3. Any cross-module query that previously joined on field name string now joins on registry_field_id without breaking existing behavior
+**Plans**: TBD
+
+### Phase 50: Canonical Crop Registry
+**Goal**: A single authoritative crop list lives in farm-registry and all apps fetch from it — no app hardcodes its own crop array
+**Depends on**: Phase 49 (field IDs established; crop registry is the second foundation layer)
+**Requirements**: CONS-09, CONS-10, CONS-11
+**Success Criteria** (what must be TRUE):
+  1. farm-registry exposes a `/api/crops` endpoint returning crop records with canonical ID, canonical name, and per-app name aliases
+  2. farm-budget, grain-tickets, fsa-acres, and organic-cert fetch their crop dropdown options from farm-registry instead of local arrays
+  3. A cross-module crop aggregation (e.g., total bushels of "Organic SRWW" across grain-tickets) returns correct results using canonical crop ID even when apps use different display names
+**Plans**: TBD
+
+### Phase 51: FSA/Insurance Data Consolidation
+**Goal**: Portal Supabase is the single data store for FSA CLU records and insurance policies — fsa-acres Express app is a consumer, not an owner, and no data lives in two places
+**Depends on**: Phase 49 (registry_field_id backfill must exist so migrated records can carry canonical IDs)
+**Requirements**: CONS-01, CONS-02, CONS-03, CONS-04, CONS-05
+**Success Criteria** (what must be TRUE):
+  1. A one-time migration script moves all fsa-acres JSON records to Supabase, produces a row-count verification report, and detects duplicates before writing
+  2. The fsa-acres Express app reads and writes CLU records through the portal API — its local JSON file is no longer the source of truth and reads from it are removed
+  3. The USDA RMA price scraper runs in the portal and updates the insurance_pricing table — fsa-acres no longer maintains its own pricing data
+  4. All existing fsa-acres features (seasonal dashboard, reports, GCS enrollment) continue working correctly after the migration with no user-visible regression
+**Plans**: TBD
+
+### Phase 52: Yield Pipeline
+**Goal**: Actual grain yields flow automatically from grain-tickets into insurance policies and the farm-budget dashboard — triple manual entry is eliminated
+**Depends on**: Phase 51 (insurance_policies table must be the consolidated single store before the pipeline writes into it)
+**Requirements**: PIPE-01, PIPE-02, PIPE-03, PIPE-04
+**Success Criteria** (what must be TRUE):
+  1. Saving or editing a grain ticket triggers an automatic yield summary recompute per farm/crop — the user does not need to run any manual sync
+  2. The portal insurance policy view shows actual yield with a "Synced from grain tickets" badge and a timestamp indicating when the sync last ran
+  3. The farm-budget dashboard shows actual yields from grain-tickets without the user entering them a second time
+  4. When a yield sync has run, the indicator is visible in both insurance and budget UIs; when no sync has run, the field shows "No yield data yet"
+**Plans**: TBD
+
+### Phase 53: Seed-Inventory & Meristem-Malt Pipelines
+**Goal**: Organic-cert reads seed lot data from seed-inventory (eliminating double-entry) and meristem-malt pulls actual grain cost from settled prices in grain-tickets
+**Depends on**: Nothing (both pipelines are independent of the consolidation phases)
+**Requirements**: PIPE-05, PIPE-06, PIPE-07, PIPE-08
+**Success Criteria** (what must be TRUE):
+  1. The organic-cert compilation engine reads seed lot numbers and certification numbers from seed-inventory — a seed entry in farm-budget is no longer needed for NOP compliance
+  2. The NOP C9.0 audit section is auto-populated from seed-inventory delivery data including lot number, cert number, OMRI status, and supplier name
+  3. The meristem-malt pricing table shows grain cost pulled from actual grain-tickets settlement prices, with a "synced from grain tickets" indicator and a manual override flag visible to the user
+**Plans**: TBD
+
+### Phase 54: Iframe Embed Navigation + Design Tokens
+**Goal**: Embedded Express apps integrate cleanly into the portal (no duplicate headers, clear navigation context) and every app uses identical color tokens so there is no visual jarring when switching between them
+**Depends on**: Nothing (both are independent UX improvements)
+**Requirements**: UXN-04, UXN-05, UXN-06, UXN-07, UXN-08, UXN-09
+**Success Criteria** (what must be TRUE):
+  1. When an Express app loads inside a portal iframe, its own header bar is hidden — only the portal chrome and a breadcrumb bar are visible above the embedded content
+  2. A breadcrumb bar shows the current navigation path and a "Back to Dashboard" button is always visible when inside any embed
+  3. All 8 apps use identical color token values from a shared platform-tokens.css file — switching between portal and any embedded app shows no color jarring
+  4. Toggling day/night mode in the portal cascades consistently to all embedded apps so the theme is uniform across the entire UI
+**Plans**: TBD
+
+### Phase 55: Actionable Dashboard
+**Goal**: The portal dashboard shows what actually needs attention today — overdue claims, unreported CLUs, unreconciled settlements, delivery shortfalls — not just static module navigation cards
+**Depends on**: Phase 51 (consolidated FSA/insurance data required), Phase 52 (yield pipeline required for delivery shortfall detection)
+**Requirements**: UXN-01, UXN-02, UXN-03
+**Success Criteria** (what must be TRUE):
+  1. The dashboard displays actionable items for each relevant data source: overdue insurance claims, CLU records missing acreage, settlements with unmatched loads, and delivery shortfalls against forecast
+  2. Clicking any dashboard action item navigates directly to the relevant module with the relevant record highlighted or filtered — no extra navigation steps required
+  3. When 1-2 Express apps are offline, the dashboard degrades gracefully: items from the offline app show a "Unavailable" state rather than crashing or showing a blank dashboard
+**Plans**: TBD
+
+### Phase 56: Structured APH Database
+**Goal**: Insurance APH records exist as a structured multi-year table with computed APH and automatically derived insurance guarantees — not as manually maintained spreadsheet values
+**Depends on**: Phase 51 (insurance_policies table must be the consolidated store before APH records can attach to it)
+**Requirements**: DOM-04, DOM-05, DOM-06
+**Success Criteria** (what must be TRUE):
+  1. An APH records table stores 4-10 years of actual yield per farm/unit/crop, with source tracking indicating whether each year came from grain-tickets sync, manual entry, or import
+  2. The computed APH is displayed in the insurance UI as a simple average of non-zero years, with zero-yield disaster years visibly excluded from the calculation
+  3. The insurance coverage guarantee auto-updates in the UI when APH changes or the coverage level slider is adjusted — no manual recalculation required
+**Plans**: TBD
+
+### Phase 57: Grain Marketing Position
+**Goal**: Users can see contracted vs unpriced bushels per crop alongside dollar exposure from unpriced inventory — the grain marketing position is visible at a glance
+**Depends on**: Phase 50 (canonical crop IDs needed for cross-app crop aggregation)
+**Requirements**: DOM-01, DOM-02, DOM-03
+**Success Criteria** (what must be TRUE):
+  1. A grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop for the current season
+  2. The unpriced bushel exposure in dollars is calculated from live CBOT futures prices displayed alongside the position
+  3. Contracts can be entered with type: cash, accumulator, HTA, options, min-price, or basis — and the view aggregates correctly across all contract types
+**Plans**: TBD
+
+### Phase 58: Field Activity Timeline
+**Goal**: Every activity touching a field — planned operations, confirmed passes, FieldOps machine data, and grain deliveries — appears in a single chronological timeline view
+**Depends on**: Phase 49 (registry_field_id required to correlate activities across apps by canonical field)
+**Requirements**: DOM-07, DOM-08
+**Success Criteria** (what must be TRUE):
+  1. Selecting a field opens a unified timeline showing all activities in date order, drawing from farm-budget planned passes, organic-cert confirmed operations, FieldOps machine data, and grain-ticket delivery records
+  2. Each timeline entry is color-coded by source (budget / organic-cert / FieldOps / grain-tickets) and can be expanded to show full details for that entry
+**Plans**: TBD
+
+### Phase 59: Prevented Planting Calculator
+**Goal**: Farm manager can toggle prevented planting on a CLU/policy and immediately see the estimated PP indemnity — and that figure appears in the insurance PDF report
+**Depends on**: Phase 51 (FSA/insurance data must be consolidated and the USDA RMA price scraper must be in the portal before PP factors are available)
+**Requirements**: DOM-09, DOM-10
+**Success Criteria** (what must be TRUE):
+  1. Toggling "Prevented Planting" on a CLU record or insurance policy shows an estimated PP indemnity calculated using the RMA coverage factors loaded from the insurance_pricing table
+  2. The insurance PDF report includes the PP indemnity figure when PP has been toggled on, and omits it when PP is off — no manual editing of the report is needed
+**Plans**: TBD
+
+### Phase 60: Settlement Financial Summary
+**Goal**: The grain-tickets settlement view shows per-buyer per-crop revenue with contract vs actual price variance — the financial outcome of the season is readable without opening a spreadsheet
+**Depends on**: Nothing (settlement data is already in grain-tickets PostgreSQL)
+**Requirements**: DOM-11, DOM-12
+**Success Criteria** (what must be TRUE):
+  1. A settlement financial summary view shows for each buyer and crop: delivered bushels, price per bushel, deductions, and net payment received
+  2. Where a contract price exists, the summary shows contract price vs actual settlement price with a variance column — positive and negative variances are visually distinguished
+**Plans**: TBD
+
+### Phase 61: Auto Field Propagation
+**Goal**: Adding a new field in farm-registry automatically creates the corresponding field record in farm-budget, grain-tickets, and the portal — with the correct registry_field_id — so manual duplication across apps is eliminated
+**Depends on**: Phase 49 (registry_field_id schema must exist in downstream apps before propagation can write correct IDs)
+**Requirements**: AUTO-01, AUTO-02, AUTO-03
+**Success Criteria** (what must be TRUE):
+  1. After a farm manager adds a new field in farm-registry, the corresponding field appears in farm-budget's field list, grain-tickets' farm registry, and the portal's CLU records — without any additional manual steps
+  2. The auto-created downstream records carry the correct registry_field_id so they are immediately usable in cross-module joins and the field activity timeline
+  3. If a downstream app is offline when the field is added, farm-registry saves successfully, logs the failure, and retries the propagation once — the user is not blocked
+**Plans**: TBD
 
 ## Progress
 
@@ -307,8 +459,21 @@ Plans:
 | 41. App Shell Integration | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 42. Design Token Alignment & Palette Swap | v8.0 | 3/3 | Complete | 2026-03-07 |
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
-| 44. PWA Infrastructure | 2/2 | Complete    | 2026-03-17 | - |
-| 45. Crop Plan Viewer | 2/2 | Complete   | 2026-03-20 | - |
+| 44. PWA Infrastructure | v9.0 | 2/2 | Complete | 2026-03-17 |
+| 45. Crop Plan Viewer | v9.0 | 2/2 | Complete | 2026-03-20 |
 | 46. Field Pass Logger | v9.0 | 0/? | Not started | - |
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
+| 49. Canonical Field IDs | v10.0 | 0/? | Not started | - |
+| 50. Canonical Crop Registry | v10.0 | 0/? | Not started | - |
+| 51. FSA/Insurance Data Consolidation | v10.0 | 0/? | Not started | - |
+| 52. Yield Pipeline | v10.0 | 0/? | Not started | - |
+| 53. Seed-Inventory & Meristem-Malt Pipelines | v10.0 | 0/? | Not started | - |
+| 54. Iframe Embed Navigation + Design Tokens | v10.0 | 0/? | Not started | - |
+| 55. Actionable Dashboard | v10.0 | 0/? | Not started | - |
+| 56. Structured APH Database | v10.0 | 0/? | Not started | - |
+| 57. Grain Marketing Position | v10.0 | 0/? | Not started | - |
+| 58. Field Activity Timeline | v10.0 | 0/? | Not started | - |
+| 59. Prevented Planting Calculator | v10.0 | 0/? | Not started | - |
+| 60. Settlement Financial Summary | v10.0 | 0/? | Not started | - |
+| 61. Auto Field Propagation | v10.0 | 0/? | Not started | - |
