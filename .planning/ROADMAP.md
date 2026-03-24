@@ -516,7 +516,7 @@ Plans:
 | 46. Field Pass Logger | v9.0 | 0/? | Not started | - |
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
-| 49. Canonical Field IDs | 1/3 | In Progress|  | - |
+| 49. Canonical Field IDs | 2/3 | In Progress|  | - |
 | 50. Canonical Crop Registry | v10.0 | 0/? | Not started | - |
 | 51. FSA/Insurance Data Consolidation | v10.0 | 0/? | Not started | - |
 | 52. Yield Pipeline | v10.0 | 0/? | Not started | - |

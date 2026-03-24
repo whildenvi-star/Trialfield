@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 49 of 61 (Canonical Field IDs)
-Plan: 01 complete
-Status: In progress (plan 01/? complete)
-Last activity: 2026-03-24 — Phase 49 Plan 01 complete: registry field ID schema foundation across all 4 apps
+Plan: 02 complete
+Status: In progress (plan 02/? complete)
+Last activity: 2026-03-24 — Phase 49 Plan 02 complete: backfill scripts for all 4 apps (farm-budget, fsa-acres, grain-tickets, portal)
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -34,6 +34,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | v8.0 | 40-43 | 9 | 2026-03-08 |
 | v9.0 | 44-45 | 4 | PAUSED |
 | **Total** | **47** | **96** | |
+| Phase 49 P02 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -47,6 +48,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [49-01]: Migration numbered 004 not 003 — 003-field-observations.sql already existed
 - [49-01]: grain-tickets Farm.registryId is the existing canonical field ID linkage — no Prisma change needed
 - [49-01]: fsa-acres uses Object.assign without allowlist — registryFieldId accepted implicitly, documented with comments
+- [Phase 49-02]: Self-contained backfill scripts — normalize+alias matching logic duplicated across 4 scripts (not shared module) for independent runability
+- [Phase 49-02]: grain-tickets backfill script reads .env manually (no dotenv dep) to load DATABASE_URL for Prisma
 
 ### Pending Todos
 
@@ -61,6 +64,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-24
-Stopped at: Completed 49-01-PLAN.md — registry field ID schema foundation
+Stopped at: Completed 49-02-PLAN.md — backfill scripts for all 4 apps
 Resume file: —
-Next action: Execute phase 49 plan 02 (backfill scripts)
+Next action: Execute phase 49 plan 03 (registry field ID UI dropdowns)
