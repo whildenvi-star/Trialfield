@@ -42,7 +42,6 @@ var store = {
   farms: [],
   pricing: [],
   insurancePolicies: [],
-  gcsEnrollments: [],
   tillageCodes: Calc.TILLAGE_CODES
 };
 
@@ -604,46 +603,6 @@ app.get('/api/export/insurance', function (req, res) {
   res.setHeader('Content-Type', 'text/csv');
   res.setHeader('Content-Disposition', 'attachment; filename="insurance-summary.csv"');
   res.send(csv);
-});
-
-// ===== GCS Enrollments =====
-app.get('/api/gcs', function (req, res) {
-  var records = store.gcsEnrollments;
-  if (req.query.practiceCode) {
-    var pc = req.query.practiceCode;
-    records = records.filter(function (e) {
-      if (pc === '340') return e.cc340Acres > 0;
-      if (pc === '345') return e.rt345Acres > 0;
-      if (pc === '329') return e.nt329Acres > 0;
-      return true;
-    });
-  }
-  res.json(records);
-});
-
-app.get('/api/gcs/summary', function (req, res) {
-  res.json(Calc.gcsSummary(store.gcsEnrollments));
-});
-
-app.post('/api/gcs', function (req, res) {
-  var item = Object.assign({ id: generateId('gcs') }, req.body);
-  store.gcsEnrollments.push(item);
-  saveData().then(function () { res.status(201).json(item); });
-});
-
-app.put('/api/gcs/:id', function (req, res) {
-  var idx = store.gcsEnrollments.findIndex(function (e) { return e.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  Object.assign(store.gcsEnrollments[idx], req.body);
-  store.gcsEnrollments[idx].id = req.params.id;
-  saveData().then(function () { res.json(store.gcsEnrollments[idx]); });
-});
-
-app.delete('/api/gcs/:id', function (req, res) {
-  var idx = store.gcsEnrollments.findIndex(function (e) { return e.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  store.gcsEnrollments.splice(idx, 1);
-  saveData().then(function () { res.json({ ok: true }); });
 });
 
 // ===== Convenience endpoints =====
@@ -1321,8 +1280,7 @@ loadData();
 console.log('Loaded: ' + store.cluRecords.length + ' CLU records, ' +
   store.farms.length + ' farms, ' +
   store.pricing.length + ' pricing entries, ' +
-  store.insurancePolicies.length + ' insurance policies, ' +
-  store.gcsEnrollments.length + ' GCS enrollments');
+  store.insurancePolicies.length + ' insurance policies');
 
 app.listen(PORT, '0.0.0.0', function () {
   console.log('FSA Acres server running at http://localhost:' + PORT);

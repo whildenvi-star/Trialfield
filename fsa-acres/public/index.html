@@ -32,7 +32,6 @@
     <button class="tab-btn" data-tab="pricing">Pricing</button>
     <button class="tab-btn" data-tab="insurance">Insurance</button>
     <button class="tab-btn" data-tab="reports">Reports</button>
-    <button class="tab-btn" data-tab="gcs">GCS</button>
   </nav>
 </header>
 
@@ -332,41 +331,6 @@
     <div id="rpt-output" class="panel" style="min-height:200px"></div>
   </section>
 
-  <!-- ===== GCS TAB ===== -->
-  <section class="tab-content" id="tab-gcs">
-    <div id="gcs-summary" class="summary-bar"></div>
-
-    <div class="filters">
-      <select id="gcs-practice-filter">
-        <option value="">All Practices</option>
-        <option value="340">340 - Cover Crop</option>
-        <option value="345">345 - Reduced Tillage</option>
-        <option value="329">329 - No-Till</option>
-      </select>
-      <button class="btn-primary" id="gcs-add-btn">+ Add Enrollment</button>
-    </div>
-
-    <div class="table-wrap">
-      <table id="gcs-table">
-        <thead>
-          <tr>
-            <th data-sort="farmNumber">Farm#</th>
-            <th data-sort="tractNumber">Tract</th>
-            <th data-sort="fieldId">Field ID</th>
-            <th data-sort="commodity">Commodity</th>
-            <th class="number" data-sort="cc340Acres">340 CC Ac</th>
-            <th class="number" data-sort="rt345Acres">345 RT Ac</th>
-            <th class="number" data-sort="nt329Acres">329 NT Ac</th>
-            <th class="number" data-sort="defaultYield">Default Yield</th>
-            <th>Irrigation</th>
-            <th>Tillage</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="gcs-tbody"></tbody>
-      </table>
-    </div>
-  </section>
 </main>
 
 <!-- ===== SLIDE-IN EDITOR ===== -->
@@ -595,7 +559,6 @@
 <script src="pricing.js"></script>
 <script src="insurance.js"></script>
 <script src="reports.js"></script>
-<script src="gcs.js"></script>
 <!-- Theme toggle -->
 <script>
 (function () {
