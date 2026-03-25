@@ -2,6 +2,9 @@
 export interface QueuedOperation {
   id: string;                    // crypto.randomUUID()
   type: 'confirm-pass' | 'add-pass';
+  fieldId: string;               // farm-registry field ID (required for replay)
+  passId?: string;               // budget implement ID for confirm-pass replay
+  passType?: string;             // operation type string for confirm-pass replay
   fieldOperationId?: string;     // existing ID for confirm-pass
   fieldEnterpriseId?: string;    // for add-pass
   operationType?: string;        // FieldOpType value (TILLAGE, CULTIVATION, etc.)
@@ -65,5 +68,9 @@ export interface OfflineDB {
     key: number;
     value: PendingObservation;
     indexes: { 'by-synced': number };
+  };
+  'sync-config': {
+    key: string;
+    value: { key: string; value: string };
   };
 }
