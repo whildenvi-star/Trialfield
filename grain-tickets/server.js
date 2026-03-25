@@ -525,8 +525,8 @@ async function computeYieldSummaries(cropYear) {
 }
 
 // pushYieldUpdates: called after every ticket save/edit/delete.
-// Recomputes yield summaries and pushes to consumers (Plan 02 implements actual push logic).
-// Fire-and-forget — never blocks the ticket response.
+// Recomputes yield summaries and pushes to portal insurance_policies and farm-budget.
+// Fire-and-forget — never blocks the ticket response. Failures are logged but not thrown.
 async function pushYieldUpdates(cropYear) {
   const { summaries, excludedTickets } = await computeYieldSummaries(cropYear);
   console.log(
@@ -534,7 +534,37 @@ async function pushYieldUpdates(cropYear) {
     (excludedTickets.noFieldId > 0 ? `, ${excludedTickets.noFieldId} excluded (no field ID)` : '') +
     (excludedTickets.noCropId > 0 ? `, ${excludedTickets.noCropId} excluded (no crop ID)` : '')
   );
-  // Plan 02 will add: push to portal insurance and farm-budget here
+
+  const token = process.env.EMBED_TOKEN;
+  if (!token) {
+    console.warn('pushYieldUpdates: EMBED_TOKEN not set — skipping push to portal and farm-budget');
+    return;
+  }
+
+  const portalUrl = process.env.PORTAL_ORIGIN || 'http://localhost:3010';
+  const budgetUrl = process.env.BUDGET_API_URL || 'http://localhost:3001';
+  const payload = JSON.stringify({ summaries, cropYear });
+  const headers = { 'Content-Type': 'application/json', 'x-ecosystem-token': token };
+
+  // Push to both endpoints in parallel — independent failures, fire-and-forget
+  const [portalResult, budgetResult] = await Promise.allSettled([
+    fetch(portalUrl + '/api/insurance/yield-push', {
+      method: 'POST',
+      headers,
+      body: payload,
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.ok ? `ok (${r.status})` : `http-${r.status}`),
+    fetch(budgetUrl + '/api/yield-from-grain', {
+      method: 'POST',
+      headers,
+      body: payload,
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.ok ? `ok (${r.status})` : `http-${r.status}`)
+  ]);
+
+  const portalStatus = portalResult.status === 'fulfilled' ? portalResult.value : `err: ${portalResult.reason?.message || portalResult.reason}`;
+  const budgetStatus = budgetResult.status === 'fulfilled' ? budgetResult.value : `err: ${budgetResult.reason?.message || budgetResult.reason}`;
+  console.log(`Yield push: portal=${portalStatus}, budget=${budgetStatus}`);
 }
 
 // --- Validation ---

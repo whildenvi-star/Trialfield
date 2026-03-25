@@ -243,6 +243,49 @@ app.put('/api/settings', async (req, res) => {
   res.json(store.settings);
 });
 
+// --- Grain Yield Overlay (Phase 52) ---
+// In-memory cache for yield data pushed from grain-tickets.
+// Stored as a lookup map keyed by "registryFieldId|registryCropId".
+let _grainYields = { data: null, updatedAt: null };
+
+// POST /api/yield-from-grain — receives bulk yield summaries from grain-tickets
+// Authenticated by ecosystem token (server-to-server push, not a user action).
+app.post('/api/yield-from-grain', (req, res) => {
+  const token = req.headers['x-ecosystem-token'];
+  const expected = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
+  if (!expected || token !== expected) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const { summaries, cropYear } = req.body;
+  if (!Array.isArray(summaries)) {
+    return res.status(400).json({ error: 'summaries array is required' });
+  }
+
+  // Build lookup map keyed by "registryFieldId|registryCropId"
+  const map = {};
+  for (const s of summaries) {
+    if (s.registryFieldId && s.registryCropId) {
+      const key = s.registryFieldId + '|' + s.registryCropId;
+      map[key] = {
+        yieldPerAcre: s.yieldPerAcre,
+        totalNetBU: s.totalNetBU,
+        ticketCount: s.ticketCount,
+        cropYear: cropYear,
+        syncedAt: new Date().toISOString()
+      };
+    }
+  }
+
+  _grainYields = { data: map, updatedAt: new Date().toISOString() };
+  res.json({ ok: true, count: summaries.length });
+});
+
+// GET /api/yield-from-grain — client fetches cached grain yield data for dashboard overlay
+app.get('/api/yield-from-grain', (req, res) => {
+  res.json({ yields: _grainYields.data, updatedAt: _grainYields.updatedAt });
+});
+
 // --- Dashboard ---
 app.get('/api/dashboard', (req, res) => {
   const yieldMode = req.query.yieldMode === 'actual' ? 'actual' : 'projected';
