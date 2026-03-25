@@ -306,9 +306,9 @@ Plans:
   3. A cross-module crop aggregation (e.g., total bushels of "Organic SRWW" across grain-tickets) returns correct results using canonical crop ID even when apps use different display names
 **Plans**: 3 plans
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 50-01-PLAN.md — Crop schema + CRUD API in farm-registry
+- [ ] 50-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
+- [ ] 50-03-PLAN.md — Consumer switchover (delete local crop arrays, fetch from registry)
 
 ### Phase 51: FSA/Insurance Data Consolidation
 **Goal**: Portal Supabase is the single data store for FSA CLU records and insurance policies — fsa-acres Express app is a consumer, not an owner, and no data lives in two places
