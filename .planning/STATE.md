@@ -12,11 +12,11 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 Phase: 52 of 61 (Yield Pipeline)
 Plan: 03 complete
 Status: Complete (3/3 plans complete)
-Last activity: 2026-03-25 — Phase 52 Plan 03 complete: SC-4 gap closure — empty-state wording in insurance-workspace and farm-budget dashboard (PIPE-04)
+Last activity: 2026-03-25 — Phase 47 Plan 02 complete: conflict detection, SyncStatusPanel bottom sheet, and pending-sync UI in field detail page (OSE-03, OSE-04)
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
-**v9.0 status:** Phase 44-46 complete, Phase 47 Plan 01 complete (offline sync engine shipped 2026-03-25), 47-02 and 48 paused — resume after v10.0
+**v9.0 status:** Phase 44-46 complete, Phase 47 Plans 01-02 complete (conflict detection + SyncStatusPanel + pending-sync UI 2026-03-25), Phase 48 paused — resume after v10.0
 **v10.0 status:** Roadmap created — 13 phases (49-61), ready to plan phase 49
 
 ## Performance Metrics
@@ -50,6 +50,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 52 P02 | 16 | 2 tasks | 6 files |
 | Phase 52 P03 | 5 | 1 tasks | 2 files |
 | Phase 47 P01 | 4 | 2 tasks | 5 files |
+| Phase 47 P02 | 6 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 52-02]: GT badge uses CSS group-hover tooltip — enables formatted multi-line timestamp display
 - [Phase 47]: SW uses raw IndexedDB API for Background Sync replay — idb library not available in SW bundle context
 - [Phase 47]: Network errors (TypeError, AbortError) queued silently; HTTP errors re-thrown — only true offline failures are intercepted
+- [Phase 47-02]: getLastSyncTimestamp reads from sync-config IDB store — same store used by setSyncToken, no schema change needed
+- [Phase 47-02]: pending-sync detection uses fieldOperationId.startsWith('pending-') — set by confirmPass when offline, no separate tracking needed
+- [Phase 47-02]: writeLastSyncTimestamp fires when synced > 0 OR skipped.length > 0 — conflicts count as sync activity
 
 ### Pending Todos
 
@@ -104,13 +108,13 @@ None active.
 
 ### Blockers/Concerns
 
-- v9.0 phases 47-48 paused pending v10.0 completion (by choice, not dependency) — phase 46 now complete
+- v9.0 phase 48 paused pending v10.0 completion (by choice, not dependency) — phases 44-47 now complete
 - Phase 51 (FSA/Insurance consolidation) is the riskiest — migrating live data between stores
 - Phase 49 touches all 8 apps — backfill scripts need careful field name matching before writing IDs
 
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 52-03-PLAN.md — PIPE-04 gap closure complete. SC-4 closed in insurance-workspace and farm-budget dashboard. Phase 52 complete.
+Stopped at: Completed 47-02-PLAN.md — conflict detection, SyncStatusPanel, pending-sync badges, sync icon, cancel action, and last-sync timestamp complete. Phase 47 (OSE-03, OSE-04) done.
 Resume file: —
 Next action: Phase 53 (PIPE-05..08 combined)

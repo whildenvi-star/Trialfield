@@ -121,7 +121,7 @@
 - [x] **Phase 44: PWA Infrastructure** - Service worker, web app manifest, install prompt, offline shell, IndexedDB wrapper (completed 2026-03-17)
 - [x] **Phase 45: Crop Plan Viewer** - Mobile-first field list and detail pages aggregating data from farm-budget and farm-registry, with offline caching (completed 2026-03-20)
 - [x] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API (completed 2026-03-25)
-- [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
+- [x] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
 - [ ] **Phase 48: Grain Tickets PWA + Dashboard Caching** - Extend offline pattern to grain-tickets entry and dashboard read-only views
 
 </details>
@@ -267,8 +267,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 47-01-PLAN.md — Sync engine module, Background Sync handler in SW, queue-on-fail wrappers in crop-plan-sync.ts
-- [ ] 47-02-PLAN.md — Conflict detection in replay, SyncStatusPanel bottom sheet, pending-sync badges and sync icon in field detail page
+- [x] 47-01-PLAN.md — Sync engine module, Background Sync handler in SW, queue-on-fail wrappers in crop-plan-sync.ts
+- [x] 47-02-PLAN.md — Conflict detection in replay, SyncStatusPanel bottom sheet, pending-sync badges and sync icon in field detail page
 
 ### Phase 48: Grain Tickets PWA + Dashboard Caching
 **Goal**: The offline capability extends to grain ticket entry and read-only dashboard views, so office staff and operators both benefit from the PWA infrastructure
@@ -519,7 +519,7 @@ Plans:
 | 44. PWA Infrastructure | v9.0 | 2/2 | Complete | 2026-03-17 |
 | 45. Crop Plan Viewer | v9.0 | 2/2 | Complete | 2026-03-20 |
 | 46. Field Pass Logger | 3/3 | Complete    | 2026-03-25 | - |
-| 47. Offline Sync Engine | 1/2 | In Progress|  | - |
+| 47. Offline Sync Engine | 2/2 | Complete | 2026-03-25 | OSE-01..04 |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
 | 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Canonical Crop Registry | 3/3 | Complete    | 2026-03-25 | - |
