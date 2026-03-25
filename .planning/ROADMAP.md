@@ -519,7 +519,7 @@ Plans:
 | 45. Crop Plan Viewer | v9.0 | 2/2 | Complete | 2026-03-20 |
 | 46. Field Pass Logger | 3/3 | Complete    | 2026-03-25 | - |
 | 47. Offline Sync Engine | 2/2 | Complete    | 2026-03-25 | OSE-01..04 |
-| 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
+| 48. Grain Tickets PWA + Dashboard Caching | 1/2 | In Progress|  | - |
 | 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Canonical Crop Registry | 3/3 | Complete    | 2026-03-25 | - |
 | 51. FSA/Insurance Data Consolidation | 3/3 | Complete   | 2026-03-25 | - |

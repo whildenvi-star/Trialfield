@@ -16,7 +16,7 @@ Last activity: 2026-03-25 — Phase 53 Plan 04 complete: PIPE-06 OMRI gap closed
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
-**v9.0 status:** Phase 44-46 complete, Phase 47 Plans 01-02 complete (conflict detection + SyncStatusPanel + pending-sync UI 2026-03-25), Phase 48 paused — resume after v10.0
+**v9.0 status:** Phase 44-48 complete — mobile PWA + field operations logger milestone done. Phase 48 Plan 01 (grain-tickets offline entry) and Plan 02 (dashboard caching) both complete 2026-03-25.
 **v10.0 status:** Roadmap created — 13 phases (49-61), ready to plan phase 49
 
 ## Performance Metrics
@@ -55,6 +55,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 53 P02 | 7 | 2 tasks | 6 files |
 | Phase 53 P03 | 8 | 2 tasks | 4 files |
 | Phase 53 P04 | 3 | 2 tasks | 4 files |
+| Phase 48 P02 | 25 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 53-03]: SeedCompliance rendered in landscape orientation — 9-column table fits at 8pt font; omriListed defaults false until compile pipeline populates it
 - [Phase 53-04]: omriListed in SeedLot upsert create block for all sources; update block only for seed-inventory — same guard as certNumber/lotNumber to preserve user edits
 - [Phase 53-04]: uniqueSeeds Map type must explicitly carry omriListed field — Prisma client type checks upsert create/update shapes strictly, implicit fields cause TS2339
+- [Phase 48-02]: Dashboard API route (/api/dashboard/summary) created so SW can cache a single cacheable JSON endpoint rather than intercepting Supabase SSR calls
+- [Phase 48-02]: SW timestamp companion pattern: store {url}__timestamp alongside cached responses for staleness checks without a separate IDB store
 
 ### Pending Todos
 
@@ -121,13 +124,13 @@ None active.
 
 ### Blockers/Concerns
 
-- v9.0 phase 48 paused pending v10.0 completion (by choice, not dependency) — phases 44-47 now complete
+- v9.0 now fully complete (phases 44-48 all done) — mobile PWA milestone shipped
 - Phase 51 (FSA/Insurance consolidation) is the riskiest — migrating live data between stores
 - Phase 49 touches all 8 apps — backfill scripts need careful field name matching before writing IDs
 
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 53-04-PLAN.md — PIPE-06 OMRI gap closure: omriListed in SeedLot schema, compile commit, report assembler, and 10-column C9.0 PDF. Phase 53 complete (4/4 plans).
+Stopped at: Completed 48-02-PLAN.md — dashboard caching via SW stale-while-revalidate, OfflineSummaryCards client component with offline/staleness indicators, /api/dashboard/summary endpoint. Phase 48 complete (2/2 plans). v9.0 milestone fully done.
 Resume file: —
 Next action: Phase 54 (UXN-04..09 — unified UX/navigation improvements)
