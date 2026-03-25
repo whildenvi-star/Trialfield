@@ -134,7 +134,7 @@
 - [x] **Phase 50: Canonical Crop Registry** - Add crop ID system to farm-registry and switch all apps off hardcoded crop arrays (completed 2026-03-25)
 - [x] **Phase 51: FSA/Insurance Data Consolidation** - Migrate fsa-acres JSON to Supabase as single source of truth with RMA price scraper (completed 2026-03-25)
 - [x] **Phase 52: Yield Pipeline** - Auto-compute yield summaries in grain-tickets and push to insurance and budget without manual entry (completed 2026-03-25)
-- [ ] **Phase 53: Seed-Inventory & Meristem-Malt Pipelines** - Wire organic-cert seed data from seed-inventory and meristem-malt grain cost from settlements
+- [x] **Phase 53: Seed-Inventory & Meristem-Malt Pipelines** - Wire organic-cert seed data from seed-inventory and meristem-malt grain cost from settlements (completed 2026-03-25)
 - [ ] **Phase 54: Iframe Embed Navigation + Design Tokens** - Fix portal embed UX and unify color tokens across all 8 apps
 - [ ] **Phase 55: Actionable Dashboard** - Replace module cards with live actionable items showing what needs attention today
 - [ ] **Phase 56: Structured APH Database** - Build multi-year APH records table with computed APH and insurance guarantee auto-calculation
@@ -523,7 +523,7 @@ Plans:
 | 50. Canonical Crop Registry | 3/3 | Complete    | 2026-03-25 | - |
 | 51. FSA/Insurance Data Consolidation | 3/3 | Complete   | 2026-03-25 | - |
 | 52. Yield Pipeline | 3/3 | Complete    | 2026-03-25 | - |
-| 53. Seed-Inventory & Meristem-Malt Pipelines | 2/3 | In Progress|  | - |
+| 53. Seed-Inventory & Meristem-Malt Pipelines | 3/3 | Complete   | 2026-03-25 | - |
 | 54. Iframe Embed Navigation + Design Tokens | v10.0 | 0/? | Not started | - |
 | 55. Actionable Dashboard | v10.0 | 0/? | Not started | - |
 | 56. Structured APH Database | v10.0 | 0/? | Not started | - |

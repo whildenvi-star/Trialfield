@@ -28,7 +28,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 - [x] **PIPE-03**: Farm-budget dashboard shows actual yields from grain-tickets without manual entry
 - [x] **PIPE-04**: Visual indicator in insurance and budget UIs shows "Yield synced from grain tickets" with timestamp
 - [x] **PIPE-05**: Organic-cert compilation engine reads seed lot numbers and cert numbers from seed-inventory instead of farm-budget
-- [ ] **PIPE-06**: NOP C9.0 audit section auto-populated from seed-inventory delivery data (lot, cert, OMRI, supplier)
+- [x] **PIPE-06**: NOP C9.0 audit section auto-populated from seed-inventory delivery data (lot, cert, OMRI, supplier)
 - [x] **PIPE-07**: Meristem-malt grain cost pulls actual settlement prices from grain-tickets
 - [x] **PIPE-08**: Meristem-malt pricing table shows "synced from grain tickets" with manual override flag
 
@@ -112,7 +112,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 | PIPE-03 | Phase 52 | Complete |
 | PIPE-04 | Phase 52 | Complete |
 | PIPE-05 | Phase 53 | Complete |
-| PIPE-06 | Phase 53 | Pending |
+| PIPE-06 | Phase 53 | Complete |
 | PIPE-07 | Phase 53 | Complete |
 | PIPE-08 | Phase 53 | Complete |
 | UXN-04 | Phase 54 | Pending |
