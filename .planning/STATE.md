@@ -16,7 +16,7 @@ Last activity: 2026-03-25 — Phase 52 Plan 01 complete: yield computation engin
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
-**v9.0 status:** Phases 44-45 complete, 46-48 paused — resume after v10.0
+**v9.0 status:** Phases 44-46 complete (46 gap closed 2026-03-25), 47-48 paused — resume after v10.0
 **v10.0 status:** Roadmap created — 13 phases (49-61), ready to plan phase 49
 
 ## Performance Metrics
@@ -46,6 +46,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 46-field-pass-logger P02 | 4 | 1 task | 2 files |
 | Phase 46-field-pass-logger P02 | 5 | 2 tasks | 2 files |
 | Phase 52 P01 | 5 | 2 tasks | 3 files |
+| Phase 46-field-pass-logger P03 | 3 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 46-02]: tokenRef stores auth token — useRef prevents stale closure in 5s setTimeout confirm callbacks
 - [Phase 52-01]: Weight basis for yield is netWeight (net lbs after buyer deductions) — already on tickets, consistent across buyers
 - [Phase 52-01]: Acre denominator for yieldPerAcre uses Farm.acres in grain-tickets; Plan 02 uses insurance planted_acres when pushing to portal
+- [Phase 46-03]: Pre-existing TypeScript errors in enterprise-grid.tsx are out of scope (not caused by this change, different file)
 
 ### Pending Todos
 
@@ -95,13 +97,13 @@ None active.
 
 ### Blockers/Concerns
 
-- v9.0 phases 46-48 blocked on v10.0 completion (by choice, not dependency)
+- v9.0 phases 47-48 paused pending v10.0 completion (by choice, not dependency) — phase 46 now complete
 - Phase 51 (FSA/Insurance consolidation) is the riskiest — migrating live data between stores
 - Phase 49 touches all 8 apps — backfill scripts need careful field name matching before writing IDs
 
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 52-01-PLAN.md — PIPE-01 complete. computeYieldSummaries, GET /api/yield-summaries, pushYieldUpdates, migrate-52.ts done.
+Stopped at: Completed 46-03-PLAN.md — FPL-01, FPL-02, FPL-04 complete. plannedSource and budgetImplementId now persisted in organic-cert POST handler. Phase 46 gap closed.
 Resume file: —
 Next action: Phase 52 Plan 02 — yield push pipeline (push to portal insurance_policies and farm-budget)
