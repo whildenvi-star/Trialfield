@@ -408,6 +408,8 @@
   // ===== Sync from Macro Roll Up =====
   var syncData = [];
 
+  var syncStats = null;
+
   util.$('fsa-sync-macro-btn').addEventListener('click', function () {
     util.$('fsa-sync-macro-btn').disabled = true;
     util.$('fsa-sync-macro-btn').textContent = 'Loading...';
@@ -419,11 +421,19 @@
         return;
       }
       syncData = data.proposals || [];
+      syncStats = data.stats || null;
       if (syncData.length === 0) {
-        showToast('No tillable CLUs matched any budget fields — tag CLUs as Tillable first', 'info');
+        var hint = '';
+        if (syncStats) {
+          var parts = [];
+          if (syncStats.nonTillableSkipped) parts.push(syncStats.nonTillableSkipped + ' non-tillable skipped');
+          if (syncStats.reportedSkipped) parts.push(syncStats.reportedSkipped + ' reported skipped');
+          if (parts.length) hint = ' (' + parts.join(', ') + ')';
+        }
+        showToast('No tillable unreported CLUs need crop updates' + hint, 'info');
         return;
       }
-      openSyncModal(syncData);
+      openSyncModal(syncData, syncStats);
     }).catch(function () {
       util.$('fsa-sync-macro-btn').disabled = false;
       util.$('fsa-sync-macro-btn').textContent = 'Sync from Macro';
@@ -508,9 +518,16 @@
     return 'sync-score-low';
   }
 
-  function openSyncModal(proposals) {
+  function openSyncModal(proposals, stats) {
     var overlay = util.$('sync-overlay');
-    util.$('sync-subtitle').textContent = proposals.length + ' match' + (proposals.length === 1 ? '' : 'es') + ' found — review and confirm';
+    var subtitle = proposals.length + ' match' + (proposals.length === 1 ? '' : 'es') + ' found — review and confirm';
+    if (stats) {
+      var skipParts = [];
+      if (stats.reportedSkipped) skipParts.push(stats.reportedSkipped + ' reported');
+      if (stats.nonTillableSkipped) skipParts.push(stats.nonTillableSkipped + ' non-tillable');
+      if (skipParts.length) subtitle += ' | Skipped: ' + skipParts.join(', ');
+    }
+    util.$('sync-subtitle').textContent = subtitle;
 
     var html = '<table class="sync-table"><thead><tr>' +
       '<th><input type="checkbox" id="sync-select-all" checked></th>' +

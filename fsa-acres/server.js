@@ -1229,6 +1229,7 @@ app.get('/api/sync-crops/preview', async function (req, res) {
 
       cm.item.records.forEach(function (clu) {
         if (clu.landClass !== 'Tillable') return;
+        if (clu.reported) return;
         if (normName(clu.crop) === normName(budgetCrop)) return;
         proposals.push({
           cluId: clu.id,
@@ -1256,6 +1257,7 @@ app.get('/api/sync-crops/preview', async function (req, res) {
       if (!cm) return;
       cm.item.records.forEach(function (clu) {
         if (clu.landClass !== 'Tillable') return;
+        if (clu.reported) return;
         if (normName(clu.crop) === normName(bf.crop)) return;
         if (proposals.some(function (p) { return p.cluId === clu.id; })) return;
         proposals.push({
@@ -1278,7 +1280,29 @@ app.get('/api/sync-crops/preview', async function (req, res) {
       return a.fieldName.localeCompare(b.fieldName);
     });
 
-    res.json({ proposals: proposals });
+    // Count skipped CLUs for user feedback
+    var tillableCount = 0;
+    var reportedCount = 0;
+    var nonTillableCount = 0;
+    cluRecords.forEach(function (r) {
+      if (r.landClass === 'Tillable') {
+        tillableCount++;
+        if (r.reported) reportedCount++;
+      } else {
+        nonTillableCount++;
+      }
+    });
+
+    res.json({
+      proposals: proposals,
+      stats: {
+        totalClu: cluRecords.length,
+        tillable: tillableCount,
+        reportedSkipped: reportedCount,
+        nonTillableSkipped: nonTillableCount,
+        budgetFields: budgetFields.length
+      }
+    });
   } catch (err) {
     res.status(502).json({ error: 'Farm Budget unavailable — is port 3001 running?' });
   }
