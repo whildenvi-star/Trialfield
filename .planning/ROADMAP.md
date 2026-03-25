@@ -122,7 +122,7 @@
 - [x] **Phase 45: Crop Plan Viewer** - Mobile-first field list and detail pages aggregating data from farm-budget and farm-registry, with offline caching (completed 2026-03-20)
 - [x] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API (completed 2026-03-25)
 - [x] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
-- [ ] **Phase 48: Grain Tickets PWA + Dashboard Caching** - Extend offline pattern to grain-tickets entry and dashboard read-only views
+- [x] **Phase 48: Grain Tickets PWA + Dashboard Caching** - Extend offline pattern to grain-tickets entry and dashboard read-only views (completed 2026-03-25)
 
 </details>
 
@@ -519,7 +519,7 @@ Plans:
 | 45. Crop Plan Viewer | v9.0 | 2/2 | Complete | 2026-03-20 |
 | 46. Field Pass Logger | 3/3 | Complete    | 2026-03-25 | - |
 | 47. Offline Sync Engine | 2/2 | Complete    | 2026-03-25 | OSE-01..04 |
-| 48. Grain Tickets PWA + Dashboard Caching | 1/2 | In Progress|  | - |
+| 48. Grain Tickets PWA + Dashboard Caching | 2/2 | Complete   | 2026-03-25 | - |
 | 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Canonical Crop Registry | 3/3 | Complete    | 2026-03-25 | - |
 | 51. FSA/Insurance Data Consolidation | 3/3 | Complete   | 2026-03-25 | - |
