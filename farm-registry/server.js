@@ -81,7 +81,8 @@ if (process.env.EMBED_TOKEN) {
 // --- In-memory data store ---
 let store = {
   growers: [],
-  fields: []
+  fields: [],
+  crops: []
 };
 
 function loadData() {
@@ -487,6 +488,133 @@ app.post('/api/fields/backfill-rent', async (req, res) => {
   res.json(results);
 });
 
+// --- Crops ---
+
+// Helper: generate next crop_NNN id
+function nextCropId() {
+  const nums = (store.crops || [])
+    .map(c => {
+      const m = (c.id || '').match(/^crop_(\d+)$/);
+      return m ? parseInt(m[1], 10) : 0;
+    });
+  const max = nums.length ? Math.max(...nums) : 0;
+  return 'crop_' + String(max + 1).padStart(3, '0');
+}
+
+// GET /api/crops — all active crops; optional ?q= search
+app.get('/api/crops', (req, res) => {
+  let crops = (store.crops || []).filter(c => c.active !== false);
+  const q = (req.query.q || '').toLowerCase().trim();
+  if (q) {
+    crops = crops.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.aliases || []).some(a => a.toLowerCase().includes(q)) ||
+      (c.category || '').toLowerCase().includes(q)
+    );
+  }
+  res.json(crops);
+});
+
+// GET /api/crops/autocomplete — lightweight list for dropdowns
+// Must be BEFORE /api/crops/:id to prevent Express param shadowing
+app.get('/api/crops/autocomplete', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=300');
+  const q = (req.query.q || '').toLowerCase().trim();
+  let crops = (store.crops || []).filter(c => c.active !== false);
+  if (q) {
+    crops = crops.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.aliases || []).some(a => a.toLowerCase().includes(q))
+    );
+  }
+  const result = crops
+    .sort((a, b) => a.category.localeCompare(b.category) || a.name.localeCompare(b.name))
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      category: c.category,
+      organic: c.organic,
+      unit: c.unit,
+      color: c.color,
+      aliases: c.aliases || []
+    }));
+  res.json({ crops: result });
+});
+
+// GET /api/crops/:id — single crop by ID
+app.get('/api/crops/:id', (req, res) => {
+  const crop = (store.crops || []).find(c => c.id === req.params.id);
+  if (!crop) return res.status(404).json({ error: 'Crop not found' });
+  res.json(crop);
+});
+
+// POST /api/crops — create new crop
+app.post('/api/crops', async (req, res) => {
+  if (!req.body.name || !String(req.body.name).trim()) {
+    return res.status(400).json({ error: 'name is required' });
+  }
+  const name = String(req.body.name).trim();
+
+  // Check for duplicate (same name + same organic flag)
+  const organic = req.body.organic === true || req.body.organic === 'true';
+  const duplicate = (store.crops || []).find(
+    c => c.active !== false && c.name.toLowerCase() === name.toLowerCase() && c.organic === organic
+  );
+  if (duplicate) {
+    return res.status(409).json({ error: 'A crop with that name and organic flag already exists', existing: duplicate.id });
+  }
+
+  if (!store.crops) store.crops = [];
+  const crop = Object.assign({
+    id: nextCropId(),
+    category: 'Other',
+    organic: false,
+    bushelWeight: null,
+    unit: 'Bu',
+    color: '#455a64',
+    aliases: [name],
+    rmaCropCode: null,
+    active: true
+  }, req.body, { name });
+
+  // Ensure name is always in aliases
+  if (!crop.aliases.includes(name)) crop.aliases.unshift(name);
+
+  store.crops.push(crop);
+  await saveData();
+  res.status(201).json(crop);
+});
+
+// PUT /api/crops/:id — update crop
+app.put('/api/crops/:id', async (req, res) => {
+  if (!store.crops) store.crops = [];
+  const idx = store.crops.findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Crop not found' });
+
+  const updatable = ['name', 'category', 'organic', 'bushelWeight', 'unit', 'color', 'aliases', 'rmaCropCode', 'active'];
+  updatable.forEach(k => {
+    if (req.body[k] !== undefined) store.crops[idx][k] = req.body[k];
+  });
+
+  try {
+    await saveData();
+    res.json(store.crops[idx]);
+  } catch (err) {
+    console.error('saveData error:', err);
+    res.status(500).json({ error: 'Save failed — please try again' });
+  }
+});
+
+// DELETE /api/crops/:id — soft-delete (sets active: false)
+app.delete('/api/crops/:id', async (req, res) => {
+  if (!store.crops) store.crops = [];
+  const idx = store.crops.findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Crop not found' });
+  store.crops[idx].active = false;
+  await saveData();
+  res.sendStatus(204);
+});
+
 // --- FSA proxy (avoid CORS issues) ---
 // perf: TTL cache with stale fallback — avoids hitting fsa-acres on every page load
 let fsaCache = { data: null, ts: 0 };
@@ -512,7 +640,7 @@ app.get('/api/fsa/clu-records', async (req, res) => {
 
 // --- Start ---
 loadData();
-console.log(`Loaded: ${store.fields.length} fields, ${store.growers.length} growers`);
+console.log(`Loaded: ${store.fields.length} fields, ${store.growers.length} growers, ${(store.crops || []).length} crops`);
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Farm Registry running at http://localhost:${PORT}`);
