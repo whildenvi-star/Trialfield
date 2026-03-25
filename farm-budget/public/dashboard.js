@@ -5,6 +5,37 @@
   var charts = {};
   var yieldMode = 'projected';
 
+  // --- Grain Yield Overlay (Phase 52) ---
+  // Cached grain-ticket yield data fetched from /api/yield-from-grain on each dashboard load.
+  // Map keyed by "registryFieldId|registryCropId" (same key as grain-tickets uses).
+  // Falls back to {} if fetch fails — dashboard renders budget estimates unchanged.
+  var grainYields = {};
+
+  // fetchGrainYields: loads cached yield summaries from farm-budget server memory.
+  // The server caches data pushed from grain-tickets — no direct grain-tickets dependency here.
+  function fetchGrainYields() {
+    return fetch('/api/yield-from-grain').then(function (r) {
+      if (!r.ok) return {};
+      return r.json().then(function (d) { return d.yields || {}; });
+    }).catch(function () { return {}; });
+  }
+
+  // findGrainYieldForCrop: looks up grain yield for a crop name string.
+  // Matches on cropName (case-insensitive) across all keys in the yields map.
+  // Returns { yieldPerAcre, ticketCount, syncedAt } or null if no match.
+  function findGrainYieldForCrop(cropName) {
+    if (!cropName || !grainYields || typeof grainYields !== 'object') return null;
+    var normCrop = (cropName || '').toLowerCase().trim();
+    var keys = Object.keys(grainYields);
+    for (var i = 0; i < keys.length; i++) {
+      var entry = grainYields[keys[i]];
+      if (entry && (entry.cropName || '').toLowerCase().trim() === normCrop) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
   // --- Chart.js setup ---
   var DARK_COLORS = {
     primary: '#4af626', success: '#4af626', blue: '#4a9eff', orange: '#ff6e40',
@@ -133,7 +164,14 @@
     var endpoint = yieldMode === 'actual'
       ? '/api/dashboard-with-actuals?yieldMode=actual'
       : '/api/dashboard?yieldMode=projected';
-    api.get(endpoint).then(function (data) {
+
+    // Fetch dashboard data and grain yields in parallel — grain yield fetch is best-effort
+    Promise.all([
+      api.get(endpoint),
+      fetchGrainYields()
+    ]).then(function (results) {
+      var data = results[0];
+      grainYields = results[1] || {};
       var mode = data.yieldMode || 'projected';
       renderCropTable('dash-conv-tbody', 'dash-conv-info', 'chart-conv-acres', 'convAcres', data.conventional, mode);
       renderCropTable('dash-org-tbody', 'dash-org-info', 'chart-org-acres', 'orgAcres', data.organic, mode);
@@ -141,6 +179,9 @@
       renderSummaryCharts(data);
       renderProductionByType(data);
       updateYieldHeaders(mode);
+    }).catch(function (err) {
+      // If dashboard fetch fails, still render with empty grain yields
+      console.error('loadDashboard error:', err);
     });
   }
 
@@ -187,10 +228,28 @@
             ' fields have actual yield data">(' + row.actualCount + '/' + row.totalCount + ')</span>';
         }
 
+        // Grain-ticket actual yield overlay — takes priority over budget yield when present
+        // Matches by crop name (case-insensitive) across all cached grain yield entries
+        var grainMatch = findGrainYieldForCrop(row.crop);
+        var actualYieldText = '';
+        if (grainMatch && grainMatch.yieldPerAcre > 0) {
+          var actualYield = grainMatch.yieldPerAcre;
+          var budgetYield = row.avgYield || 0;
+          var variance = actualYield - budgetYield;
+          var varSign = variance >= 0 ? '+' : '';
+          var varCls = variance >= 0 ? 'color:#4af626' : 'color:#ff6e40';
+          actualYieldText = ' <span style="font-size:0.78em;opacity:0.9;" title="Measured yield from grain tickets (' + grainMatch.ticketCount + ' tickets)">' +
+            '<span style="color:#4af626;font-size:0.8em;vertical-align:middle;margin-right:2px;">GT</span>' +
+            'Actual ' + util.formatNum(actualYield, 1) + ' ' + util.escHtml(row.unit) + '/ac ' +
+            'vs Budget ' + util.formatNum(budgetYield, 1) + ' ' +
+            '<span style="' + varCls + '">(' + varSign + util.formatNum(variance, 1) + ')</span>' +
+            '</span>';
+        }
+
         html += '<tr class="dash-clickable-row" data-enterprise-idx="' + entIdx + '">' +
           '<td>' + util.escHtml(row.crop) + '</td>' +
           '<td class="number">' + util.formatNum(row.acres, 1) + '</td>' +
-          '<td class="number">' + yieldText + '</td>' +
+          '<td class="number">' + yieldText + actualYieldText + '</td>' +
           '<td class="number ' + profitCls + '">' + util.formatMoney(row.profitPerAcre) + '</td>' +
           '<td class="number ' + copCls + '">' + util.formatMoney(row.cop) + '/' + util.escHtml(row.unit) + '</td>' +
           '</tr>';

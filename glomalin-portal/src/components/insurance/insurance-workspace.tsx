@@ -402,16 +402,37 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
                     {/* Actual bu/ac */}
                     <td className="px-4 py-3 text-right text-glomalin-text">
                       {policy.actual > 0 ? (
-                        <span>
-                          {policy.actual.toFixed(1)}
+                        <span className="inline-flex items-center justify-end gap-1.5">
+                          <span>{policy.actual.toFixed(1)}</span>
                           {policy.actual_synced_from_grain && (
-                            <span className="ml-1 text-xs text-glomalin-muted" title="Synced from grain tickets">
-                              (GT)
+                            <span
+                              className="relative group"
+                            >
+                              <span className="inline-block bg-green-800/50 text-green-300 text-xs px-1.5 py-0.5 rounded font-mono cursor-default select-none">
+                                GT
+                              </span>
+                              {/* Tooltip — visible on hover via group-hover */}
+                              <span className="absolute right-0 top-full mt-1 z-10 hidden group-hover:block whitespace-nowrap bg-glomalin-surface border border-glomalin-border text-glomalin-muted text-xs rounded px-2 py-1 shadow-lg font-mono pointer-events-none">
+                                Synced from grain tickets
+                                {policy.yield_synced_at && (
+                                  <span className="block text-glomalin-text mt-0.5">
+                                    {new Date(policy.yield_synced_at).toLocaleString('en-US', {
+                                      month: 'short', day: 'numeric', year: 'numeric',
+                                      hour: 'numeric', minute: '2-digit'
+                                    })}
+                                  </span>
+                                )}
+                              </span>
                             </span>
                           )}
                         </span>
                       ) : (
-                        <span className="text-glomalin-muted">—</span>
+                        <span
+                          className="text-glomalin-muted"
+                          title="No grain tickets recorded for this field/crop yet"
+                        >
+                          —
+                        </span>
                       )}
                     </td>
 

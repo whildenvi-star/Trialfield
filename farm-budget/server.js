@@ -271,6 +271,8 @@ app.post('/api/yield-from-grain', (req, res) => {
         yieldPerAcre: s.yieldPerAcre,
         totalNetBU: s.totalNetBU,
         ticketCount: s.ticketCount,
+        cropName: s.cropName,
+        farmName: s.farmName,
         cropYear: cropYear,
         syncedAt: new Date().toISOString()
       };
