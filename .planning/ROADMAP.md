@@ -321,9 +321,13 @@ Plans:
   4. All existing fsa-acres features (seasonal dashboard, reports, GCS enrollment) continue working correctly after the migration with no user-visible regression
 **Plans**: 3 plans
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 51-01-PLAN.md — Migration script with dedup + verification, GCS removal
+- [ ] 51-02-PLAN.md — Rewire fsa-acres server to Supabase (CLU + insurance + pricing)
+- [ ] 51-03-PLAN.md — RMA price scraper in portal with staleness badge
+
+
+
+
 
 ### Phase 52: Yield Pipeline
 **Goal**: Actual grain yields flow automatically from grain-tickets into insurance policies and the farm-budget dashboard — triple manual entry is eliminated
