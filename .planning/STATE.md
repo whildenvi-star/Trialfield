@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 53 of 61 (Seed Inventory & Meristem-Malt Pipelines)
-Plan: 03 complete
-Status: Complete (3/3 plans complete)
-Last activity: 2026-03-25 — Phase 53 Plan 03 complete: NOP C9.0 Seed Sources PDF section — SeedLotRecord, report assembler seed lot query, SeedCompliance component, inspection-report wiring (PIPE-06 done). Phase 53 complete.
+Plan: 04 complete
+Status: Complete (4/4 plans complete)
+Last activity: 2026-03-25 — Phase 53 Plan 04 complete: PIPE-06 OMRI gap closed — omriListed threaded end-to-end through Prisma SeedLot schema, compile commit upsert, report assembler DB read, and 10-column C9.0 PDF OMRI? column.
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -54,6 +54,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 53 P01 | 6 | 2 tasks | 5 files |
 | Phase 53 P02 | 7 | 2 tasks | 6 files |
 | Phase 53 P03 | 8 | 2 tasks | 4 files |
+| Phase 53 P04 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 53]: Crop name mapping (hybrid barley -> barley, srww/hrw -> wheat) handled at sync time without canonical crop registry ID
 - [Phase 53]: Manual override auto-set when user edits price cell — implicit lock, no extra UX step
 - [Phase 53-03]: SeedCompliance rendered in landscape orientation — 9-column table fits at 8pt font; omriListed defaults false until compile pipeline populates it
+- [Phase 53-04]: omriListed in SeedLot upsert create block for all sources; update block only for seed-inventory — same guard as certNumber/lotNumber to preserve user edits
+- [Phase 53-04]: uniqueSeeds Map type must explicitly carry omriListed field — Prisma client type checks upsert create/update shapes strictly, implicit fields cause TS2339
 
 ### Pending Todos
 
@@ -125,6 +128,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 53-03-PLAN.md — SeedCompliance PDF section + inspection-report wiring (PIPE-06 done). Phase 53 complete.
+Stopped at: Completed 53-04-PLAN.md — PIPE-06 OMRI gap closure: omriListed in SeedLot schema, compile commit, report assembler, and 10-column C9.0 PDF. Phase 53 complete (4/4 plans).
 Resume file: —
 Next action: Phase 54 (UXN-04..09 — unified UX/navigation improvements)
