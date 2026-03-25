@@ -156,7 +156,7 @@
   3. grain-tickets starts on a configurable PORT (not hardcoded 3000) so it coexists with the portal
   4. Both Next.js apps (glomalin-portal, organic-cert) run via `next start` in production mode (not `next dev`)
   5. Express apps reject cross-origin requests from any domain other than the portal origin
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [x] 35-01-PLAN.md — PM2 ecosystem config, grain-tickets port fix, Next.js production builds
 - [x] 35-02-PLAN.md — CORS lockdown on Express apps, .env.example templates for all 8 apps
@@ -169,7 +169,7 @@ Plans:
   1. User can open `portal.farm-domain.com` in a browser and see the Glomalin Portal landing page over HTTPS
   2. Each app is reachable at its own subdomain (e.g., `tickets.farm-domain.com`, `budget.farm-domain.com`) with a valid TLS certificate
   3. A deployment README exists with step-by-step instructions covering DNS, Caddy, PM2, Node.js, PostgreSQL, and git clone — enough for someone to rebuild the VPS from scratch
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [x] 36-01-PLAN.md — Caddyfile with subdomain-to-port routing and auto-HTTPS for all 8 apps
 - [x] 36-02-PLAN.md — DEPLOY.md step-by-step VPS setup guide (DNS, Node.js, PostgreSQL, Caddy, PM2)
@@ -194,7 +194,7 @@ Plans:
   1. Admin clicks "Invite" in the admin panel, enters a coworker email, and the coworker receives an email with a signup link pointing to the production domain
   2. Invited user clicks the link, sets a password, and lands on the dashboard showing only their granted modules
   3. User can click "Forgot password" on the login page, receive a reset email, set a new password, and log back in
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [x] 38-01-PLAN.md — Production-aware invite, callback, and password reset flows
 - [x] 38-02-PLAN.md — End-to-end onboarding verification checkpoint
@@ -218,7 +218,7 @@ Plans:
   1. On a mobile browser, the portal shows an "Add to Home Screen" install prompt and installs with the Glomalin icon and name
   2. With network disabled after first visit, the portal shell (navigation, layout, chrome) loads and renders without a blank screen or browser error
   3. An IndexedDB wrapper is importable from `lib/offline/db.ts` and passes read/write tests for both the operation queue and crop plan cache stores
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 44-01-PLAN.md — @serwist/next setup, web app manifest, install prompt, service worker caching strategy
@@ -233,7 +233,7 @@ Plans:
   2. Tapping a field shows the crop detail — variety, population, planned inputs with rates, and a pass checklist showing which passes are planned vs confirmed
   3. After a successful online sync, the crop plan data persists in IndexedDB and the same field list and detail pages render correctly with network disabled
   4. A "Last synced" badge is visible on the field list showing the timestamp of the most recent successful data fetch
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 45-01-PLAN.md — Portal API route aggregating farm-budget data with TTL cache and graceful fallback
@@ -248,11 +248,12 @@ Plans:
   2. Operator can add an unplanned pass by tapping a floating action button, selecting field + operation type + date + operator, and seeing it appear in the pass list
   3. A confirmed or added pass appears in organic-cert's FieldOperation table within seconds, tagged with `plannedSource: "mobile-logger"`, and is visible in the existing organic-cert field history views
   4. The operator selector shows only users with operator role or above from Supabase profiles
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 46-01-PLAN.md — Portal API routes for pass confirmation, addition, and edit proxying to organic-cert
 - [ ] 46-02-PLAN.md — Confirm-pass UI (tap + undo toast), add-unplanned-pass FAB, edit sheet, operator selector
+- [ ] 46-03-PLAN.md — Gap closure: persist plannedSource and budgetImplementId in organic-cert POST handler
 
 ### Phase 47: Offline Sync Engine
 **Goal**: Pass confirmations made without signal are reliably delivered to organic-cert when connectivity returns — operators never lose work due to rural coverage gaps
@@ -263,7 +264,7 @@ Plans:
   2. When the device reconnects, the queued operations replay automatically (Background Sync API) and the "pending sync" indicator resolves without operator action
   3. If a queued pass was already confirmed by the FieldOps API or another user, the sync skips it silently and shows a "Already confirmed — skipped" notification rather than creating a duplicate
   4. The sync status panel shows queued operation count, last successful sync timestamp, any per-item errors, and a manual "Sync now" button that triggers immediate replay
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 47-01: IndexedDB operation queue with Background Sync API registration and replay handler
@@ -276,7 +277,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Office staff can enter a new grain ticket in the grain-tickets module with network disabled — the entry queues locally and syncs when connectivity returns, appearing in the ticket list without manual intervention
   2. Budget, FSA, and insurance summary dashboard views load from IndexedDB cache when offline, showing the data from the last successful sync rather than an error or blank screen
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 48-01: Grain ticket offline entry with IndexedDB queue and sync-on-reconnect
@@ -338,7 +339,7 @@ Plans:
   2. The portal insurance policy view shows actual yield with a "Synced from grain tickets" badge and a timestamp indicating when the sync last ran
   3. The farm-budget dashboard shows actual yields from grain-tickets without the user entering them a second time
   4. When a yield sync has run, the indicator is visible in both insurance and budget UIs; when no sync has run, the field shows "No yield data yet"
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 52-01-PLAN.md — Yield computation engine in grain-tickets + Supabase migration for insurance_policies registry columns
 - [ ] 52-02-PLAN.md — Yield push pipeline to portal insurance + farm-budget + UI indicators (GT badge, variance display)
