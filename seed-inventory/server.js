@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
@@ -13,6 +14,14 @@ const PORT = process.env.PORT || 3006;
 const DATA_FILE = path.join(__dirname, 'data', 'data.json');
 const PHOTO_DIR = path.join(__dirname, 'data', 'photos');
 const MAX_BACKUPS = 5;
+const FARM_BUDGET_URL = process.env.FARM_BUDGET_URL || 'http://localhost:3001';
+const FARM_BUDGET_TOKEN = process.env.FARM_BUDGET_TOKEN || process.env.EMBED_TOKEN || '';
+
+// Build a farm-budget URL with embed token for server-to-server calls
+function budgetUrl(apiPath) {
+  var sep = apiPath.includes('?') ? '&' : '?';
+  return FARM_BUDGET_URL + apiPath + (FARM_BUDGET_TOKEN ? sep + 'token=' + FARM_BUDGET_TOKEN : '');
+}
 
 // Health check — before CORS/middleware for fast, dependency-free response
 app.get('/health', (req, res) => res.json({ status: 'ok', app: 'seed-inventory', uptime: process.uptime() }));
@@ -53,9 +62,42 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Cookie-setting BEFORE static files so initial page load sets the cookie
+if (process.env.EMBED_TOKEN) {
+  const cookieParser = require('cookie-parser');
+  app.use(cookieParser());
+  app.use((req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) {
+      res.cookie('embed_session', process.env.EMBED_TOKEN, {
+        httpOnly: true, sameSite: 'lax', secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+    next();
+  });
+}
+
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, etag: false }));
 app.use('/photos', express.static(PHOTO_DIR));
+
+// API auth gate
+if (process.env.EMBED_TOKEN) {
+  app.use('/api', (req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) return next();
+    if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
+    res.status(403).json({ error: 'Forbidden' });
+  });
+}
+
+// Prevent browsers from caching API responses — stale data on reconciliation is dangerous
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.set('Pragma', 'no-cache');
+  next();
+});
 
 // ─── In-memory data store ───────────────────────────────────────────
 let store = {
@@ -362,8 +404,8 @@ app.delete('/api/forecasts/:id', async function (req, res) {
 
 app.post('/api/forecasts/pull-from-budget', async function (req, res) {
   try {
-    var budgetUrl = 'http://localhost:3001/api/forecast';
-    var response = await fetch(budgetUrl);
+    var pullUrl = budgetUrl('/api/forecast');
+    var response = await fetch(pullUrl);
     if (!response.ok) throw new Error('Farm Budget returned ' + response.status);
     var data = await response.json();
     var cropYear = store.settings.cropYear || 2026;
@@ -464,6 +506,90 @@ app.post('/api/forecasts/pull-from-budget', async function (req, res) {
   }
 });
 
+// Live sync webhook — called by farm-budget after every save.
+// Runs the same pull-from-budget logic but returns quickly.
+let _syncInProgress = false;
+app.post('/api/forecasts/sync-webhook', async function (req, res) {
+  // Respond immediately so farm-budget isn't blocked
+  res.json({ ok: true, queued: true });
+
+  // Skip if a sync is already running (prevents pile-up)
+  if (_syncInProgress) return;
+  _syncInProgress = true;
+
+  try {
+    var syncUrl = budgetUrl('/api/forecast');
+    var response = await fetch(syncUrl);
+    if (!response.ok) { _syncInProgress = false; return; }
+    var data = await response.json();
+    var cropYear = store.settings.cropYear || 2026;
+
+    var categoryMap = { 'Seed': 'SEED', 'Fertilizer': 'INPUT', 'Chemical': 'INPUT', 'Biological': 'INPUT', 'Other': 'INPUT' };
+    var inputCategoryMap = { 'Fertilizer': 'FERTILIZER', 'Chemical': 'CHEMICAL', 'Biological': 'BIOLOGICAL', 'Other': 'OTHER' };
+
+    var categories = data.categories || [];
+    for (var ci = 0; ci < categories.length; ci++) {
+      var cat = categories[ci];
+      var products = cat.products || [];
+      for (var pi = 0; pi < products.length; pi++) {
+        var bp = products[pi];
+        var type = categoryMap[cat.name] || 'INPUT';
+        var fields = bp.fields || [];
+        if (fields.length === 0) continue;
+
+        var product = findOrCreateProduct(bp, type, cat.name, inputCategoryMap);
+
+        for (var fi = 0; fi < fields.length; fi++) {
+          var f = fields[fi];
+          var season = (f.season || '').toLowerCase() || 'spring';
+          if (season !== 'spring' && season !== 'fall') season = 'full-year';
+
+          var existing = store.forecasts.find(function (fc) {
+            return fc.productId === product.id &&
+              fc.linkedFieldName === f.fieldName &&
+              String(fc.cropYear) === String(cropYear);
+          });
+
+          if (existing) {
+            existing.linkedAcres = f.acres || 0;
+            existing.ratePerAcre = f.rate || 0;
+            existing.projectedQuantity = f.qty || 0;
+            existing.season = season;
+            existing.unit = bp.unit || 'units';
+            existing.rateUnit = (f.rate ? bp.unit + '/ac' : '');
+            existing.notes = 'Synced from Farm Budget';
+            existing.updatedAt = new Date().toISOString();
+          } else {
+            store.forecasts.push({
+              id: generateId('fct'),
+              productId: product.id,
+              cropYear: cropYear,
+              season: season,
+              linkedFieldName: f.fieldName || '',
+              linkedFieldId: '',
+              linkedAcres: f.acres || 0,
+              ratePerAcre: f.rate || 0,
+              rateUnit: (f.rate ? bp.unit + '/ac' : ''),
+              projectedQuantity: f.qty || 0,
+              unit: bp.unit || 'units',
+              notes: 'Synced from Farm Budget',
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            });
+          }
+        }
+      }
+    }
+
+    await saveData();
+    console.log('[live-sync] Forecasts synced from farm-budget (' + new Date().toISOString() + ')');
+  } catch (err) {
+    console.error('[live-sync] Sync failed:', err.message);
+  } finally {
+    _syncInProgress = false;
+  }
+});
+
 function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
   var name = bp.productName || '';
   var match;
@@ -485,16 +611,24 @@ function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
         productName: '',
         inputCategory: '',
         unitType: (bp.unit || 'units').toLowerCase(),
+        purchaseUnit: (bp.purchaseUnit || bp.unit || 'units').toLowerCase(),
+        conversionRate: bp.conversionRate || 1,
         packSize: 0,
         packType: '',
         organicCertNumber: '',
         omriListed: false,
+        organicGround: !!bp.organicGround,
         notes: 'Auto-created from Farm Budget sync',
         active: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
       store.products.push(match);
+    } else {
+      // Update organicGround + unit info from budget on every sync
+      match.organicGround = !!bp.organicGround;
+      if (bp.purchaseUnit) match.purchaseUnit = bp.purchaseUnit.toLowerCase();
+      if (bp.conversionRate) match.conversionRate = bp.conversionRate;
     }
   } else {
     // Match input by product name (case-insensitive)
@@ -506,23 +640,31 @@ function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
       match = {
         id: generateId('prod'),
         type: 'INPUT',
-        brand: bp.supplierName || '',
+        brand: '',
         supplier: bp.supplierName || '',
         crop: '',
         variety: '',
         productName: name,
         inputCategory: inputCategoryMap[categoryName] || 'OTHER',
         unitType: (bp.unit || 'units').toLowerCase(),
+        purchaseUnit: (bp.purchaseUnit || bp.unit || 'units').toLowerCase(),
+        conversionRate: bp.conversionRate || 1,
         packSize: 0,
         packType: '',
         organicCertNumber: '',
         omriListed: false,
+        organicGround: !!bp.organicGround,
         notes: 'Auto-created from Farm Budget sync',
         active: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
       store.products.push(match);
+    } else {
+      // Update organicGround + unit info from budget on every sync
+      match.organicGround = !!bp.organicGround;
+      if (bp.purchaseUnit) match.purchaseUnit = bp.purchaseUnit.toLowerCase();
+      if (bp.conversionRate) match.conversionRate = bp.conversionRate;
     }
   }
 
@@ -542,9 +684,9 @@ app.get('/api/budget/catalog', async function (req, res) {
 
   try {
     var results = await Promise.allSettled([
-      fetch('http://localhost:3001/api/products').then(function (r) { return r.json(); }),
-      fetch('http://localhost:3001/api/seeds').then(function (r) { return r.json(); }),
-      fetch('http://localhost:3001/api/suppliers').then(function (r) { return r.json(); })
+      fetch(budgetUrl('/api/products')).then(function (r) { return r.json(); }),
+      fetch(budgetUrl('/api/seeds')).then(function (r) { return r.json(); }),
+      fetch(budgetUrl('/api/suppliers')).then(function (r) { return r.json(); })
     ]);
 
     if (results[0].status === 'rejected' && results[1].status === 'rejected') {
@@ -676,7 +818,7 @@ app.post('/api/budget/assign-supplier', async function (req, res) {
       budgetSupplierId = mapping.budgetSupplierId;
     } else {
       // Fetch existing farm-budget suppliers to find a name match
-      var budgetSuppliers = await fetch('http://localhost:3001/api/suppliers').then(function (r) { return r.json(); });
+      var budgetSuppliers = await fetch(budgetUrl('/api/suppliers')).then(function (r) { return r.json(); });
       var existing = budgetSuppliers.find(function (s) {
         return s.name.toLowerCase() === localSupplier.name.toLowerCase();
       });
@@ -685,7 +827,7 @@ app.post('/api/budget/assign-supplier', async function (req, res) {
         budgetSupplierId = existing.id;
       } else {
         // Create the supplier in farm-budget
-        var created = await fetch('http://localhost:3001/api/suppliers', {
+        var created = await fetch(budgetUrl('/api/suppliers'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -709,8 +851,8 @@ app.post('/api/budget/assign-supplier', async function (req, res) {
 
     // Now update the product/seed in farm-budget with the supplierId
     var updateUrl = budgetProductType === 'seed'
-      ? 'http://localhost:3001/api/seeds/' + budgetProductId
-      : 'http://localhost:3001/api/products/' + budgetProductId;
+      ? budgetUrl('/api/seeds/' + budgetProductId)
+      : budgetUrl('/api/products/' + budgetProductId);
 
     await fetch(updateUrl, {
       method: 'PUT',
@@ -730,7 +872,7 @@ app.post('/api/budget/assign-supplier', async function (req, res) {
 // Bulk sync all local suppliers to farm-budget
 app.post('/api/budget/sync-suppliers', async function (req, res) {
   try {
-    var budgetSuppliers = await fetch('http://localhost:3001/api/suppliers').then(function (r) { return r.json(); });
+    var budgetSuppliers = await fetch(budgetUrl('/api/suppliers')).then(function (r) { return r.json(); });
     var created = 0;
     var alreadyMapped = 0;
 
@@ -751,7 +893,7 @@ app.post('/api/budget/sync-suppliers', async function (req, res) {
       if (nameMatch) {
         budgetSupplierId = nameMatch.id;
       } else {
-        var newSup = await fetch('http://localhost:3001/api/suppliers', {
+        var newSup = await fetch(budgetUrl('/api/suppliers'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -899,6 +1041,8 @@ app.post('/api/receipts', async function (req, res) {
     orderId: req.body.orderId || '',
     productId: req.body.productId || '',
     supplierId: req.body.supplierId || '',
+    farmId: req.body.farmId || '',
+    farmName: req.body.farmName || '',
     dateReceived: req.body.dateReceived || new Date().toISOString().split('T')[0],
     quantityReceived: parseFloat(req.body.quantityReceived) || 0,
     unit: req.body.unit || 'units',
@@ -955,6 +1099,8 @@ app.post('/api/receipts/batch', async function (req, res) {
       orderId: item.orderId || '',
       productId: item.productId || '',
       supplierId: shared.supplierId || '',
+      farmId: shared.farmId || '',
+      farmName: shared.farmName || '',
       dateReceived: shared.dateReceived || new Date().toISOString().split('T')[0],
       quantityReceived: parseFloat(item.quantityReceived) || 0,
       unit: item.unit || 'units',
@@ -1037,13 +1183,35 @@ app.delete('/api/returns/:id', async function (req, res) {
 
 // ─── Reconciliation (computed view) ─────────────────────────────────
 
-app.get('/api/reconciliation', function (req, res) {
+app.get('/api/reconciliation', async function (req, res) {
   var cropYear = req.query.cropYear || String(store.settings.cropYear);
   var typeFilter = req.query.type;
+  var organicOnly = req.query.organic === 'true';
+
+  // Fetch conversion rates from farm-budget for inputs missing local conversionRate
+  var budgetConv = {};
+  try {
+    var bpResp = await fetch(budgetUrl('/api/products'));
+    if (bpResp.ok) {
+      var bpProducts = await bpResp.json();
+      bpProducts.forEach(function (bp) {
+        var key = (bp.name || '').trim().toLowerCase();
+        if (key && bp.conversionRate) {
+          budgetConv[key] = {
+            conversionRate: bp.conversionRate,
+            purchaseUnit: bp.purchaseUnit || bp.unit || ''
+          };
+        }
+      });
+    }
+  } catch (e) {
+    // farm-budget unavailable — fall back to local product data
+  }
 
   var products = store.products.filter(function (p) {
     if (p.active === false) return false;
     if (typeFilter && p.type !== typeFilter) return false;
+    if (organicOnly && !p.organicGround) return false;
     return true;
   });
 
@@ -1062,7 +1230,26 @@ app.get('/api/reconciliation', function (req, res) {
       return ret.productId === p.id && (!ret.orderId || orderIds.indexOf(ret.orderId) !== -1);
     });
 
-    var forecast = forecasts.reduce(function (s, f) { return s + (f.projectedQuantity || 0); }, 0);
+    // Use local conversionRate if set, otherwise look up from farm-budget
+    var convRate = p.conversionRate;
+    var purchaseUnit = p.purchaseUnit || p.unitType || '';
+    if (!convRate || convRate === 1) {
+      var lookupKey = (p.type === 'INPUT' ? (p.productName || '') : (p.variety || '')).trim().toLowerCase();
+      var budgetMatch = budgetConv[lookupKey];
+      if (budgetMatch) {
+        convRate = budgetMatch.conversionRate;
+        purchaseUnit = budgetMatch.purchaseUnit || purchaseUnit;
+        // Backfill the product so future lookups don't need farm-budget
+        p.conversionRate = convRate;
+        p.purchaseUnit = purchaseUnit;
+      }
+    }
+    convRate = convRate || 1;
+
+    // Convert forecast from application units to billed (purchase) units
+    var forecastApp = forecasts.reduce(function (s, f) { return s + (f.projectedQuantity || 0); }, 0);
+    var forecast = convRate > 0 ? Math.round(forecastApp / convRate * 100) / 100 : forecastApp;
+
     var totalOrdered = orders.reduce(function (s, o) { return s + (o.quantityOrdered || 0); }, 0);
     var totalDelivered = receipts.reduce(function (s, r) { return s + (r.quantityReceived || 0); }, 0);
     var totalReturned = returns.reduce(function (s, r) { return s + (r.quantityReturned || 0); }, 0);
@@ -1075,7 +1262,8 @@ app.get('/api/reconciliation', function (req, res) {
       crop: p.crop || '',
       variety: p.variety || '',
       productName: p.productName || '',
-      unit: p.unitType || '',
+      organicGround: !!p.organicGround,
+      unit: purchaseUnit,
       forecast: forecast,
       totalOrdered: totalOrdered,
       totalDelivered: totalDelivered,
@@ -1088,9 +1276,86 @@ app.get('/api/reconciliation', function (req, res) {
     };
   });
 
+  // Backfill: save any updated conversionRate/purchaseUnit to disk
+  if (Object.keys(budgetConv).length > 0) saveData().catch(function () {});
+
   // Only return products that have at least some activity
   var active = result.filter(function (r) {
     return r.forecast > 0 || r.totalOrdered > 0 || r.totalDelivered > 0;
+  });
+
+  res.json(active);
+});
+
+// ─── Organic Ground Summary ─────────────────────────────────────────
+// Returns order + delivery details for products designated as organic ground
+app.get('/api/organic-ground/summary', function (req, res) {
+  var cropYear = req.query.cropYear || String(store.settings.cropYear);
+
+  // Filter to organic-ground products only
+  var ogProducts = store.products.filter(function (p) {
+    return p.active !== false && !!p.organicGround;
+  });
+
+  // Build supplier lookup
+  var supplierMap = {};
+  (store.suppliers || []).forEach(function (s) { supplierMap[s.id] = s.name; });
+
+  var result = ogProducts.map(function (p) {
+    var forecasts = store.forecasts.filter(function (f) {
+      return f.productId === p.id && String(f.cropYear) === cropYear;
+    });
+    var orders = store.orders.filter(function (o) {
+      return o.productId === p.id && String(o.cropYear) === cropYear;
+    });
+    var orderIds = orders.map(function (o) { return o.id; });
+    var receipts = store.receipts.filter(function (r) {
+      return r.productId === p.id && (!r.orderId || orderIds.indexOf(r.orderId) !== -1);
+    });
+
+    var convRate = p.conversionRate || 1;
+    var purchaseUnit = p.purchaseUnit || p.unitType || '';
+    var forecastApp = forecasts.reduce(function (s, f) { return s + (f.projectedQuantity || 0); }, 0);
+    var forecastQty = convRate > 0 ? Math.round(forecastApp / convRate * 100) / 100 : forecastApp;
+    var orderedQty = orders.reduce(function (s, o) { return s + (o.quantityOrdered || 0); }, 0);
+    var deliveredQty = receipts.reduce(function (s, r) { return s + (r.quantityReceived || 0); }, 0);
+
+    return {
+      productId: p.id,
+      name: p.type === 'SEED' ? (p.variety || p.productName) : (p.productName || p.variety),
+      type: p.type,
+      crop: p.crop || '',
+      variety: p.variety || '',
+      brand: p.brand || '',
+      unit: purchaseUnit,
+      forecastQty: forecastQty,
+      orderedQty: orderedQty,
+      deliveredQty: deliveredQty,
+      orders: orders.map(function (o) {
+        return {
+          orderId: o.id,
+          supplier: supplierMap[o.supplierId] || '',
+          qty: o.quantityOrdered || 0,
+          invoiceNumber: o.invoiceNumber || '',
+          paymentStatus: o.paymentStatus || '',
+          dueDate: o.dueDate || ''
+        };
+      }),
+      receipts: receipts.map(function (r) {
+        return {
+          receiptId: r.id,
+          dateReceived: r.dateReceived || '',
+          qty: r.quantityReceived || 0,
+          lotNumber: r.lotNumber || '',
+          ticketNumber: r.ticketNumber || ''
+        };
+      })
+    };
+  });
+
+  // Only return items with some activity or forecast
+  var active = result.filter(function (r) {
+    return r.forecastQty > 0 || r.orderedQty > 0 || r.deliveredQty > 0;
   });
 
   res.json(active);
@@ -1319,6 +1584,8 @@ app.post('/api/verify/confirm', async function (req, res) {
       orderId: item.orderId || '',
       productId: item.productId || '',
       supplierId: shared.supplierId || '',
+      farmId: shared.farmId || '',
+      farmName: shared.farmName || '',
       dateReceived: shared.dateReceived || new Date().toISOString().split('T')[0],
       quantityReceived: parseFloat(item.quantityReceived) || 0,
       unit: item.unit || 'units',
@@ -1353,10 +1620,41 @@ app.put('/api/settings', async function (req, res) {
   res.json(store.settings);
 });
 
+// ─── Farm Registry proxy (for delivery farm autocomplete) ───────────
+var FARM_REGISTRY_URL = process.env.FARM_REGISTRY_URL || 'http://localhost:3005';
+
+app.get('/api/farms/search', async function (req, res) {
+  try {
+    var q = req.query.q || '';
+    var url = FARM_REGISTRY_URL + '/api/fields/search?q=' + encodeURIComponent(q);
+    var response = await fetch(url);
+    if (!response.ok) throw new Error('Farm registry returned ' + response.status);
+    var fields = await response.json();
+    res.json(fields);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
+app.get('/api/farms', async function (req, res) {
+  try {
+    var url = FARM_REGISTRY_URL + '/api/fields?active=true';
+    var response = await fetch(url);
+    if (!response.ok) throw new Error('Farm registry returned ' + response.status);
+    var fields = await response.json();
+    res.json(fields);
+  } catch (err) {
+    res.json([]);
+  }
+});
+
 // ─── Organic-cert integration endpoints ─────────────────────────────
 
 app.get('/api/organic/seed-lots', function (req, res) {
   var seedProducts = store.products.filter(function (p) { return p.type === 'SEED' && p.active !== false; });
+  // Build supplier lookup: id -> name
+  var supplierMap = {};
+  store.suppliers.forEach(function (s) { supplierMap[s.id] = s.name; });
   var lots = [];
   seedProducts.forEach(function (p) {
     var productReceipts = store.receipts.filter(function (r) { return r.productId === p.id; });
@@ -1366,8 +1664,12 @@ app.get('/api/organic/seed-lots', function (req, res) {
         crop: p.crop,
         variety: p.variety,
         brand: p.brand,
+        productName: p.productName || '',
         supplier: p.supplier,
+        supplierName: supplierMap[p.supplier] || p.supplier || '',
         organicCertNumber: p.organicCertNumber,
+        omriListed: p.omriListed || false,
+        organicGround: !!p.organicGround,
         lotNumber: r.lotNumber,
         quantity: r.quantityReceived,
         unit: r.unit,
