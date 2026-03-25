@@ -21,6 +21,7 @@ interface CluCardProps {
 
 type DraftFields = {
   crop: string
+  registry_crop_id: string  // canonical crop ID from farm-registry
   use: string
   grain_plant_date: string
   organic: boolean
@@ -55,6 +56,7 @@ export function CluCard({
   const [deleting, setDeleting] = useState(false)
   const [draft, setDraft] = useState<DraftFields>({
     crop: record.crop ?? '',
+    registry_crop_id: record.registry_crop_id ?? '',
     use: record.use ?? '',
     grain_plant_date: record.grain_plant_date ?? '',
     organic: record.organic,
@@ -155,6 +157,7 @@ export function CluCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           crop: draft.crop.trim() || null,
+          registry_crop_id: draft.registry_crop_id.trim() || null,
           use: draft.use.trim() || null,
           grain_plant_date: draft.grain_plant_date.trim() || null,
           organic: draft.organic,
@@ -389,7 +392,12 @@ export function CluCard({
             </label>
             <CropTypeahead
               value={draft.crop}
-              onChange={(v) => setDraft((d) => ({ ...d, crop: v }))}
+              onChange={(v, registryCropId) => setDraft((d) => ({
+                ...d,
+                crop: v,
+                // Store canonical crop ID when selected via typeahead
+                ...(registryCropId !== undefined && { registry_crop_id: registryCropId }),
+              }))}
             />
             {fieldErrors.crop && (
               <p className="font-mono text-xs text-red-400 mt-1">{fieldErrors.crop}</p>

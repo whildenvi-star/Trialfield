@@ -24,6 +24,7 @@ export interface CluRecord {
   farm_name: string | null
   fsa_acres: number
   crop: string | null
+  registry_crop_id: string | null  // canonical crop ID from farm-registry
   irrigated: boolean
   organic: boolean
   double_crop: boolean

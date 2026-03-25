@@ -684,6 +684,25 @@ app.get('/api/registry/field-names', async function (req, res) {
   }
 });
 
+// --- Registry proxy: crop list for CLU crop selection dropdown ---
+// Cached 60s in-memory to avoid hammering farm-registry on every page load
+var _fsaRegistryCropsCache = null;
+var _fsaRegistryCropsCacheExpiry = 0;
+app.get('/api/registry/crops', async function (req, res) {
+  try {
+    var now = Date.now();
+    if (!_fsaRegistryCropsCache || now > _fsaRegistryCropsCacheExpiry) {
+      var resp = await fetch('http://localhost:3005/api/crops');
+      if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+      _fsaRegistryCropsCache = await resp.json();
+      _fsaRegistryCropsCacheExpiry = now + 60 * 1000; // 60s cache
+    }
+    res.json(_fsaRegistryCropsCache);
+  } catch (err) {
+    res.status(502).json({ error: 'Registry crops unavailable: ' + err.message });
+  }
+});
+
 // --- Registry proxy (full field objects for dropdown — includes id, name, aliases) ---
 app.get('/api/registry/fields-autocomplete', async function (req, res) {
   try {

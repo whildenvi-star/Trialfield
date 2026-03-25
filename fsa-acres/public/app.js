@@ -188,6 +188,12 @@
       if (el) data[f] = el.value === 'true';
     });
 
+    // Include canonical crop ID from registry if a crop was selected via autocomplete
+    var hiddenCropIdEl = util.$('ed-registryCropId');
+    if (hiddenCropIdEl && hiddenCropIdEl.value) {
+      data.registryCropId = hiddenCropIdEl.value;
+    }
+
     var promise;
     if (editorState.isNew) {
       promise = api.post('/api/clu-records', data);
@@ -370,9 +376,156 @@
     });
   })();
 
+  // ===== Crop Autocomplete for CLU editor (registry-backed, stores registryCropId) =====
+  var _fsaRegistryCrops = null; // cached array of { id, name, category, organic }
+
+  function loadRegistryCrops() {
+    api.get('/api/registry/crops')
+      .then(function (crops) { _fsaRegistryCrops = crops || []; })
+      .catch(function () { _fsaRegistryCrops = []; });
+  }
+
+  (function initCropAutocomplete() {
+    var cropInput = util.$('ed-crop');
+    if (!cropInput) return;
+
+    // Add hidden input for registryCropId alongside the text input
+    var hiddenCropId = document.createElement('input');
+    hiddenCropId.type = 'hidden';
+    hiddenCropId.id = 'ed-registryCropId';
+    cropInput.parentNode.appendChild(hiddenCropId);
+
+    // Create dropdown
+    var cropDropdown = document.createElement('div');
+    cropDropdown.className = 'ac-dropdown';
+    cropDropdown.id = 'ac-crop-dropdown';
+    cropDropdown.style.display = 'none';
+    var wrapper = cropInput.parentNode;
+    if (getComputedStyle(wrapper).position === 'static') wrapper.style.position = 'relative';
+    wrapper.appendChild(cropDropdown);
+
+    var activeIdx = -1;
+    var currentCropMatches = [];
+
+    function renderCropDropdown(matches) {
+      currentCropMatches = matches;
+      if (!matches.length) { cropDropdown.style.display = 'none'; return; }
+      activeIdx = -1;
+      // Group by category
+      var grouped = {};
+      var groupOrder = [];
+      matches.forEach(function (c) {
+        var cat = c.category || 'Other';
+        if (!grouped[cat]) { grouped[cat] = []; groupOrder.push(cat); }
+        grouped[cat].push(c);
+      });
+      var html = '';
+      var itemIdx = 0;
+      groupOrder.forEach(function (cat) {
+        html += '<div class="ac-group-header">' + util.esc(cat) + '</div>';
+        grouped[cat].forEach(function (c) {
+          var displayName = c.organic ? 'Organic ' + c.name : c.name;
+          html += '<div class="ac-item" data-idx="' + itemIdx + '">' + util.esc(displayName) + '</div>';
+          itemIdx++;
+        });
+      });
+      cropDropdown.innerHTML = html;
+      cropDropdown.style.display = '';
+    }
+
+    function selectCropItem(crop) {
+      cropInput.value = crop.name;
+      if (hiddenCropId) hiddenCropId.value = crop.id || '';
+      cropDropdown.style.display = 'none';
+      currentCropMatches = [];
+    }
+
+    cropInput.addEventListener('input', function () {
+      if (hiddenCropId) hiddenCropId.value = ''; // clear on free-type
+      var crops = _fsaRegistryCrops || [];
+      var q = cropInput.value.trim().toLowerCase();
+      if (!q) {
+        // Show all on empty input (first 15)
+        renderCropDropdown(crops.slice(0, 15));
+        return;
+      }
+      var matches = crops.filter(function (c) {
+        return c.name.toLowerCase().indexOf(q) !== -1 ||
+          (c.organic && ('organic ' + c.name).toLowerCase().indexOf(q) !== -1);
+      });
+      renderCropDropdown(matches.slice(0, 15));
+    });
+
+    cropInput.addEventListener('focus', function () {
+      if (_fsaRegistryCrops === null) {
+        loadRegistryCrops();
+      }
+      cropInput.dispatchEvent(new Event('input'));
+    });
+
+    cropInput.addEventListener('keydown', function (e) {
+      var items = cropDropdown.querySelectorAll('.ac-item');
+      if (!items.length || cropDropdown.style.display === 'none') return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeIdx = (activeIdx + 1) % currentCropMatches.length;
+        items.forEach(function (el, i) { el.classList.toggle('ac-active', i === activeIdx); });
+        if (items[activeIdx]) items[activeIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeIdx = activeIdx <= 0 ? currentCropMatches.length - 1 : activeIdx - 1;
+        items.forEach(function (el, i) { el.classList.toggle('ac-active', i === activeIdx); });
+        if (items[activeIdx]) items[activeIdx].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (activeIdx >= 0 && currentCropMatches[activeIdx]) selectCropItem(currentCropMatches[activeIdx]);
+      } else if (e.key === 'Escape') {
+        cropDropdown.style.display = 'none';
+        currentCropMatches = [];
+      }
+    });
+
+    cropDropdown.addEventListener('click', function (e) {
+      var item = e.target.closest('.ac-item');
+      if (item) {
+        var idx = parseInt(item.getAttribute('data-idx'), 10);
+        if (currentCropMatches[idx]) selectCropItem(currentCropMatches[idx]);
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!wrapper.contains(e.target)) {
+        cropDropdown.style.display = 'none';
+        currentCropMatches = [];
+      }
+    });
+  })();
+
+  // ===== Include registryCropId in save data =====
+  // Patch the save handler to include the hidden registryCropId field
+  var origSaveHandler = null; // patched below by wrapping editor-save click
+  (function patchSaveWithRegistryCropId() {
+    var saveBtn = util.$('editor-save');
+    if (!saveBtn) return;
+    // Add registryCropId to data before save by intercepting the data collection phase
+    // We use a MutationObserver-free approach: re-read from hidden input at save time.
+    // This is handled by adding 'registryCropId' as a special field in the save listener.
+    var origSave = saveBtn.onclick;
+    // We can't easily patch the existing addEventListener callback, so we hook into
+    // the existing 'fields' array logic by using a data-prep event that fires before POST.
+    // Instead, we patch by registering a second click handler that modifies the pending API call.
+    // Simplest approach: modify the data object via a captured hidden input read at the
+    // POST interception point — but since that's in a closure, we use a global sentinel.
+    window._fsaRegistryCropId = function () {
+      var hiddenEl = util.$('ed-registryCropId');
+      return hiddenEl ? hiddenEl.value : '';
+    };
+  })();
+
   // ===== Init =====
   loadRefData();
   loadRegistryFields();
+  loadRegistryCrops();
 
   // Fire initial tab-activate — restore from hash or default to season
   setTimeout(function () {
