@@ -343,6 +343,7 @@ Plans:
 Plans:
 - [ ] 52-01-PLAN.md — Yield computation engine in grain-tickets + Supabase migration for insurance_policies registry columns
 - [ ] 52-02-PLAN.md — Yield push pipeline to portal insurance + farm-budget + UI indicators (GT badge, variance display)
+- [ ] 52-03-PLAN.md — Gap closure: SC-4 empty-state wording fix in insurance and budget UIs
 
 ### Phase 53: Seed-Inventory & Meristem-Malt Pipelines
 **Goal**: Organic-cert reads seed lot data from seed-inventory (eliminating double-entry) and meristem-malt pulls actual grain cost from settled prices in grain-tickets
