@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MODULES } from '@/lib/modules'
-import { SummaryCards } from '@/components/dashboard/summary-cards'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
+import { OfflineSummaryCards } from '@/components/dashboard/offline-summary-cards'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -29,11 +30,12 @@ export default async function DashboardPage() {
       .map((row) => row.module)
   )
 
-  // Fetch summary data for the three FSA/Insurance/Claims modules in parallel.
-  // Use Promise.allSettled so a single table query failure does not crash the dashboard.
+  // Pre-fetch summary data server-side for the initial SSR render.
+  // The OfflineSummaryCards client component takes over after hydration and will
+  // re-fetch fresh data, handle offline state, and cache via the service worker.
   const results = await Promise.allSettled([
-    supabase.from('clu_records').select('id, reported').eq('crop_year', 2026),
-    supabase.from('insurance_policies').select('id').eq('policy_year', 2026).eq('claim_alert', 'potential'),
+    supabase.from('clu_records').select('id, reported').eq('crop_year', CURRENT_CROP_YEAR),
+    supabase.from('insurance_policies').select('id').eq('policy_year', CURRENT_CROP_YEAR).eq('claim_alert', 'potential'),
     supabase.from('claims').select('id').neq('stage', 'closed'),
   ])
 
@@ -61,6 +63,18 @@ export default async function DashboardPage() {
       ? { openCount: claimsResult.value.data.length }
       : null
 
+  // Build initial summary for the offline-aware client component.
+  // cachedAt is set to now since this is a fresh server-side render.
+  const initialSummary =
+    fsaSummary !== null || insuranceSummary !== null || claimsSummary !== null
+      ? {
+          fsa: fsaSummary,
+          insurance: insuranceSummary,
+          claims: claimsSummary,
+          cachedAt: Date.now(),
+        }
+      : null
+
   return (
     <div>
       <h1 className="text-2xl font-bold font-mono text-glomalin-text tracking-wide">
@@ -70,12 +84,10 @@ export default async function DashboardPage() {
         Farm Modules
       </p>
 
-      {/* Summary cards: FSA reporting progress, Insurance alerts, Claims pipeline */}
-      <SummaryCards
-        fsa={fsaSummary}
-        insurance={insuranceSummary}
-        claims={claimsSummary}
-      />
+      {/* Offline-aware summary cards: FSA reporting progress, Insurance alerts, Claims pipeline.
+          Shows cached data when offline with "Last updated X ago" staleness indicators.
+          Auto-refreshes in background when connectivity returns. */}
+      <OfflineSummaryCards initial={initialSummary} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {MODULES.filter((mod) => grantedModules.has(mod.id)).map((mod) => (
