@@ -327,9 +327,6 @@ Plans:
 - [ ] 51-03-PLAN.md — RMA price scraper in portal with staleness badge
 
 
-
-
-
 ### Phase 52: Yield Pipeline
 **Goal**: Actual grain yields flow automatically from grain-tickets into insurance policies and the farm-budget dashboard — triple manual entry is eliminated
 **Depends on**: Phase 51 (insurance_policies table must be the consolidated single store before the pipeline writes into it)
@@ -355,9 +352,10 @@ Plans:
   3. The meristem-malt pricing table shows grain cost pulled from actual grain-tickets settlement prices, with a "synced from grain tickets" indicator and a manual override flag visible to the user
 **Plans**: 3 plans
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 53-01-PLAN.md — Seed-inventory pipeline into organic-cert seed compilation (PIPE-05)
+- [ ] 53-02-PLAN.md — Meristem-malt grain cost sync from grain-tickets settlements (PIPE-07, PIPE-08)
+- [ ] 53-03-PLAN.md — NOP C9.0 Seed Compliance PDF section auto-populated from seed-inventory (PIPE-06)
+
 
 ### Phase 54: Iframe Embed Navigation + Design Tokens
 **Goal**: Embedded Express apps integrate cleanly into the portal (no duplicate headers, clear navigation context) and every app uses identical color tokens so there is no visual jarring when switching between them
