@@ -251,8 +251,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 46-01: Portal API route handler for FieldOperation writes to organic-cert with mobile-logger audit tag
-- [ ] 46-02: Confirm-pass UI (tap + date picker + operator selector) and add-unplanned-pass flow
+- [ ] 46-01-PLAN.md — Portal API routes for pass confirmation, addition, and edit proxying to organic-cert
+- [ ] 46-02-PLAN.md — Confirm-pass UI (tap + undo toast), add-unplanned-pass FAB, edit sheet, operator selector
 
 ### Phase 47: Offline Sync Engine
 **Goal**: Pass confirmations made without signal are reliably delivered to organic-cert when connectivity returns — operators never lose work due to rural coverage gaps
