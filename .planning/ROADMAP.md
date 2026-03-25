@@ -120,7 +120,7 @@
 
 - [x] **Phase 44: PWA Infrastructure** - Service worker, web app manifest, install prompt, offline shell, IndexedDB wrapper (completed 2026-03-17)
 - [x] **Phase 45: Crop Plan Viewer** - Mobile-first field list and detail pages aggregating data from farm-budget and farm-registry, with offline caching (completed 2026-03-20)
-- [ ] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API
+- [x] **Phase 46: Field Pass Logger** - Confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table via portal API (completed 2026-03-25)
 - [ ] **Phase 47: Offline Sync Engine** - IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
 - [ ] **Phase 48: Grain Tickets PWA + Dashboard Caching** - Extend offline pattern to grain-tickets entry and dashboard read-only views
 
@@ -517,7 +517,7 @@ Plans:
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 44. PWA Infrastructure | v9.0 | 2/2 | Complete | 2026-03-17 |
 | 45. Crop Plan Viewer | v9.0 | 2/2 | Complete | 2026-03-20 |
-| 46. Field Pass Logger | 1/2 | In Progress|  | - |
+| 46. Field Pass Logger | 2/2 | Complete   | 2026-03-25 | - |
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
 | 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
