@@ -754,6 +754,25 @@ app.post('/api/fields/sync-registry', async (req, res) => {
   }
 });
 
+// --- Proxy: registry crop list (avoids CORS when called from browser) ---
+// Cached 60s in-memory to avoid hammering farm-registry on every page load
+let _registryCropsCache = null;
+let _registryCropsCacheExpiry = 0;
+app.get('/api/registry/crops', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (!_registryCropsCache || now > _registryCropsCacheExpiry) {
+      const resp = await fetch(registryUrl('/api/crops'));
+      if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+      _registryCropsCache = await resp.json();
+      _registryCropsCacheExpiry = now + 60 * 1000; // 60s cache
+    }
+    res.json(_registryCropsCache);
+  } catch (err) {
+    res.status(502).json({ error: 'Registry crops unavailable: ' + err.message });
+  }
+});
+
 // --- Proxy: search registry fields (avoids CORS when called from browser) ---
 app.get('/api/registry/search', async (req, res) => {
   try {

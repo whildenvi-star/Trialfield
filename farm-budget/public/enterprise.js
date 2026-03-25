@@ -80,7 +80,13 @@
 
   function loadEnterprise(entId) {
     isLoading = true;
-    api.get('/api/fields?enterpriseId=' + entId).then(function (fields) {
+    // Auto-sync acres & rent from farm registry, then load fields
+    api.post('/api/fields/sync-registry', {}).then(function () {
+      return api.get('/api/fields?enterpriseId=' + entId);
+    }).catch(function () {
+      // Registry unavailable — load fields with current data
+      return api.get('/api/fields?enterpriseId=' + entId);
+    }).then(function (fields) {
       fieldsData = fields;
       isLoading = false;
       renderSummaryBar(fields);
@@ -141,13 +147,15 @@
       '<div class="field-card-header">' +
         '<h4>' + util.escHtml(f.name) + foBadge + progBadge + '</h4>' +
         (function () {
-          var cc = typeof CropColors !== 'undefined' ? CropColors.getCropColor(f.crop) : '#283828';
+          // Use registryCropId for color lookup when available (canonical cross-module ID)
+          var cc = typeof CropColors !== 'undefined' ? CropColors.getCropColor(f.crop, f.registryCropId) : '#283828';
           var tc = typeof CropColors !== 'undefined' ? CropColors.textColorFor(cc) : 'var(--text-light)';
-          return '<span class="field-crop-badge" style="background:' + cc + ';color:' + tc + '">' + util.escHtml(f.crop) + '</span>';
+          return '<span class="field-crop-badge" style="background:' + cc + ';color:' + tc + '" data-registry-crop-id="' + (f.registryCropId || '') + '">' + util.escHtml(f.crop) + '</span>';
         })() +
       '</div>' +
       '<div class="field-card-metrics">' +
         '<div class="metric"><span class="metric-label">Acres</span><span class="metric-value">' + util.formatNum((f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0, 1) + '</span></div>' +
+        '<div class="metric"><span class="metric-label">Variety</span><span class="metric-value" style="font-size:0.8rem">' + util.escHtml(f.seeds && f.seeds.length > 1 ? f.seeds.length + ' varieties' : (f.seed ? f.seed.variety || '--' : '--')) + '</span></div>' +
         '<div class="metric"><span class="metric-label">Expense/AC</span><span class="metric-value">' + util.formatMoney(b.expPerAcre) + '</span></div>' +
         '<div class="metric"><span class="metric-label">Income/AC</span><span class="metric-value">' + util.formatMoney(b.cropIncomePerAcre) + '</span></div>' +
         '<div class="metric"><span class="metric-label">Profit/AC</span><span class="metric-value ' + profitColor + '">' + util.formatMoney(profitPerAcre) + '</span></div>' +
@@ -232,7 +240,7 @@
         if (!confirm('Delete "' + field.name + '"? This cannot be undone.')) return;
         fetch('/api/fields/' + fid, { method: 'DELETE' })
           .then(function (r) { return r.json(); })
-          .then(function () { loadEnterprise(currentEntIdx); });
+          .then(function () { loadEnterprise(currentEntId); });
       });
     });
   }
@@ -327,10 +335,11 @@
     var rows = [
       { label: 'Acres', key: 'effectiveAcres', src: 'budget', num: true, dec: 1 },
       { type: 'header', label: 'EXPENSES' },
-      { label: 'Rent / AC', key: 'rentPerAcre', src: 'budget', num: true, money: true },
+      { label: 'Rent / AC', key: 'rentPerCropAcre', src: 'budget', num: true, money: true },
       { label: 'Rent Total', key: 'rentTotal', src: 'budget', num: true, money: true, subtotal: true },
       { label: 'Spring Fert / AC', key: 'springFertPerAcre', src: 'budget', num: true, money: true },
       { label: 'Fall Fert / AC', key: 'fallFertPerAcre', src: 'budget', num: true, money: true },
+      { label: 'Other Inputs / AC', key: 'unassignedFertPerAcre', src: 'budget', num: true, money: true },
       { label: 'Total Fert / AC', key: 'totalFertPerAcre', src: 'budget', num: true, money: true },
       { label: 'Fert Total', key: 'totalFertCost', src: 'budget', num: true, money: true, subtotal: true },
       { label: 'Seed / AC', key: 'seedCostPerAcre', src: 'budget', num: true, money: true },
@@ -487,17 +496,23 @@
       // Land & Rent
       html += '<div class="mod-card mod-land">';
       html += '<div class="mod-header">Land & Rent</div>';
-      html += '<div class="mod-row"><span>Rent/AC</span><span>' + util.formatMoney(b.rentPerAcre) + '</span></div>';
+      html += '<div class="mod-row"><span>Rent/AC</span><span>' + util.formatMoney(b.rentPerCropAcre) + '</span></div>';
       html += '<div class="mod-row"><span>Rent Total</span><span>' + util.formatMoney(b.rentTotal) + '</span></div>';
       html += '</div>';
 
-      // Seed
+      // Seed (supports multi-variety)
       html += '<div class="mod-card mod-seed">';
       html += '<div class="mod-header">Seed</div>';
-      var seedVar = f.seed ? f.seed.variety || '--' : '--';
-      var seedPop = f.seed ? util.formatNum(f.seed.population, 0) : '--';
-      html += '<div class="mod-row"><span>Variety</span><span class="mod-val-sm">' + util.escHtml(seedVar) + '</span></div>';
-      html += '<div class="mod-row"><span>Pop</span><span>' + seedPop + '</span></div>';
+      var seedEntries = f.seeds && f.seeds.length > 0 ? f.seeds : (f.seed ? [f.seed] : []);
+      if (seedEntries.length === 0) {
+        html += '<div class="mod-row"><span>Variety</span><span>--</span></div>';
+      } else {
+        seedEntries.forEach(function (se) {
+          var label = se.variety || '--';
+          if (se.acres > 0) label += ' (' + util.formatNum(se.acres, 1) + 'ac)';
+          html += '<div class="mod-row"><span class="mod-val-sm">' + util.escHtml(label) + '</span><span>' + util.formatNum(se.population || 0, 0) + ' pop</span></div>';
+        });
+      }
       html += '<div class="mod-row"><span>Cost/AC</span><span>' + util.formatMoney(b.seedCostPerAcre) + '</span></div>';
       html += '<div class="mod-row mod-total"><span>Total</span><span>' + util.formatMoney(b.seedTotal) + '</span></div>';
       html += '</div>';
@@ -507,6 +522,9 @@
       html += '<div class="mod-header">Fertilizer</div>';
       html += '<div class="mod-row"><span>Spring/AC</span><span>' + util.formatMoney(b.springFertPerAcre) + '</span></div>';
       html += '<div class="mod-row"><span>Fall/AC</span><span>' + util.formatMoney(b.fallFertPerAcre) + '</span></div>';
+      if (b.unassignedFertPerAcre > 0) {
+        html += '<div class="mod-row"><span>Other/AC</span><span>' + util.formatMoney(b.unassignedFertPerAcre) + '</span></div>';
+      }
       html += '<div class="mod-row mod-total"><span>Total/AC</span><span>' + util.formatMoney(b.totalFertPerAcre) + '</span></div>';
       html += '</div>';
 
@@ -520,8 +538,8 @@
           '<span>' + util.escHtml(md.implementName) + ' ' + md.passes + '×' + hireTag + '</span>' +
           '<span>' + util.formatMoney(md.costPerAcre) + '</span></div>';
       });
-      html += '<div class="mod-row mod-total"><span>Total/AC</span><span>' + util.formatMoney(b.machineryPerAcre) + '</span></div>';
-      html += '<div class="mod-row mod-row-sm" style="opacity:0.7"><span>Fuel</span><span>' + b.fuelGallonsPerAcre + ' gal · ' + util.formatMoney(b.fuelPerAcre) + '</span></div>';
+      html += '<div class="mod-row"><span>Fuel</span><span>' + util.formatNum(b.fuelGallonsPerAcre, 1) + ' gal · ' + util.formatMoney(b.fuelPerAcre) + '/AC</span></div>';
+      html += '<div class="mod-row mod-total"><span>Total/AC</span><span>' + util.formatMoney((b.machineryPerAcre || 0) + (b.fuelPerAcre || 0)) + '</span></div>';
       html += '</div>';
 
       // Labor & Overhead

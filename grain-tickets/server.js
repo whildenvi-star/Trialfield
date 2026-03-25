@@ -340,6 +340,7 @@ function dbTicketToJson(dbTicket) {
     moisture: dbTicket.moisture,
     fm: dbTicket.fm || 0,
     crop: dbTicket.crop,
+    registryCropId: dbTicket.registryCropId || null,  // canonical crop ID from farm-registry
     ticketNo: dbTicket.ticketNo || '',
     notes: dbTicket.notes || '',
     hbtBinNo: dbTicket.hbtBinNo || null,
@@ -387,6 +388,31 @@ async function computeFarmSummaries() {
   const jsonTickets = dbTickets.map(dbTicketToJson);
   const jsonFarms = dbFarms.map(dbFarmToJson);
   return Calc.computeFarmSummaries(jsonTickets, jsonFarms, cropConfig);
+}
+
+// --- Helper: compute crop aggregation by canonical registryCropId (CONS-11) ---
+// Groups ticket totals by registryCropId for cross-module crop aggregation.
+// Falls back to grouping by crop name string for tickets without registryCropId.
+async function computeCropSummariesByRegistryId() {
+  const dbTickets = await prisma.ticket.findMany({ select: {
+    crop: true, registryCropId: true, netWeight: true, moisture: true, fm: true, cropYear: true
+  }});
+  const cropConfig = await buildCropConfigObject();
+
+  const byId = {}; // registryCropId (or '__name__:cropName') → { registryCropId, cropName, totalNetLbs, ticketCount }
+  dbTickets.forEach(t => {
+    const json = { crop: t.crop, netWeight: t.netWeight, moisture: t.moisture, fm: t.fm };
+    const computed = Calc.computeTicket(json, cropConfig);
+    const key = t.registryCropId ? t.registryCropId : '__name__:' + (t.crop || '').trim().toLowerCase();
+    if (!byId[key]) {
+      byId[key] = { registryCropId: t.registryCropId || null, cropName: t.crop, totalNetLbs: 0, totalNetBU: 0, ticketCount: 0 };
+    }
+    byId[key].totalNetLbs += t.netWeight;
+    byId[key].totalNetBU += computed.netBU || 0;
+    byId[key].ticketCount++;
+  });
+
+  return Object.values(byId).sort((a, b) => (a.cropName || '').localeCompare(b.cropName || ''));
 }
 
 // --- Validation ---
@@ -537,7 +563,8 @@ app.post('/api/tickets', async (req, res) => {
         notes: (notes || '').trim() || null,
         buyerId: buyerId,
         grainBinId: grainBinId,
-        destination: null  // New tickets use FK (buyerId/grainBinId), not free-text
+        destination: null,  // New tickets use FK (buyerId/grainBinId), not free-text
+        registryCropId: req.body.registryCropId || null  // canonical crop ID from farm-registry
       }
     });
     res.status(201).json(enrichTicket(dbTicketToJson(ticket), cropConfig));
@@ -581,6 +608,10 @@ app.put('/api/tickets/:id', async (req, res) => {
     }
     if (req.body.grainBinId !== undefined) {
       updateData.grainBinId = req.body.grainBinId ? parseInt(req.body.grainBinId, 10) || null : null;
+    }
+    // Persist canonical crop ID from farm-registry when provided
+    if (req.body.registryCropId !== undefined) {
+      updateData.registryCropId = req.body.registryCropId || null;
     }
 
     const ticket = await prisma.ticket.update({ where: { id }, data: updateData });
@@ -696,6 +727,18 @@ app.get('/api/export/farms', async (req, res) => {
     res.send(csv);
   } catch (e) {
     console.error('GET /api/export/farms error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- Crop aggregation by canonical registry ID (CONS-11) ---
+// Used for cross-module crop summaries — groups by registryCropId, not crop name string.
+app.get('/api/summary/by-crop', async (req, res) => {
+  try {
+    const summary = await computeCropSummariesByRegistryId();
+    res.json(summary);
+  } catch (e) {
+    console.error('GET /api/summary/by-crop error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -981,9 +1024,28 @@ app.get('/api/farm-names', async (req, res) => {
   }
 });
 
+// --- Proxy: registry crop list (avoids CORS when called from browser) ---
+// Cached 60s in-memory to avoid hammering farm-registry on every page load
+const REGISTRY_URL = process.env.FARM_REGISTRY_URL || 'http://localhost:3005';
+let _gtRegistryCropsCache = null;
+let _gtRegistryCropsCacheExpiry = 0;
+app.get('/api/registry/crops', async (req, res) => {
+  try {
+    const now = Date.now();
+    if (!_gtRegistryCropsCache || now > _gtRegistryCropsCacheExpiry) {
+      const resp = await fetch(`${REGISTRY_URL}/api/crops`);
+      if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+      _gtRegistryCropsCache = await resp.json();
+      _gtRegistryCropsCacheExpiry = now + 60 * 1000; // 60s cache
+    }
+    res.json(_gtRegistryCropsCache);
+  } catch (err) {
+    res.status(502).json({ error: 'Registry crops unavailable: ' + err.message });
+  }
+});
+
 // --- Sync Farm acres from Farm Registry ---
 // Uses Farm.registryId for canonical ID lookup when available; falls back to name matching.
-const REGISTRY_URL = process.env.FARM_REGISTRY_URL || 'http://localhost:3005';
 app.post('/api/farms/sync-registry', async (req, res) => {
   try {
     const resp = await fetch(`${REGISTRY_URL}/api/fields?active=true`);

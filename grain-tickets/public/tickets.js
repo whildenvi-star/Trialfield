@@ -11,15 +11,346 @@
   var listLoaded = false;
 
   // --- Populate dropdowns when ref data loads ---
-  window.addEventListener('ref-data-loaded', function () {
-    var cropSelect = document.getElementById('entry-crop');
-    var crops = Object.keys(refData.cropConfig).sort();
-    crops.forEach(function (c) {
-      var opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c.trim();
-      cropSelect.appendChild(opt);
+
+  // Build crop autocomplete from farm-registry /api/registry/crops
+  // Cache fetched crops for the session
+  var _registryCrops = null; // Array of { id, name, category, organic }
+
+  function fetchRegistryCrops(callback) {
+    if (_registryCrops) { callback(_registryCrops); return; }
+    fetch('/api/registry/crops')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (crops) {
+        if (crops && crops.length > 0) {
+          _registryCrops = crops;
+        } else {
+          // Registry returned empty — use empty list (no local fallback per user decision)
+          _registryCrops = [];
+        }
+        callback(_registryCrops);
+      })
+      .catch(function () {
+        _registryCrops = [];
+        callback(_registryCrops);
+      });
+  }
+
+  function attachCropAutocomplete(inputEl) {
+    var allCrops = []; // { name, cropType (category), registryCropId }
+    var dropdown = null;
+    var selectedIdx = -1;
+    var selectableItems = [];
+
+    function buildCropList(registryCrops) {
+      allCrops = [];
+      if (registryCrops && registryCrops.length > 0) {
+        registryCrops.forEach(function (c) {
+          allCrops.push({ name: c.name, cropType: c.category || 'Other', registryCropId: c.id });
+        });
+      }
+    }
+
+    // Create dropdown container
+    dropdown = document.createElement('div');
+    dropdown.className = 'crop-ac-dropdown';
+    dropdown.style.display = 'none';
+    var wrapper = inputEl.parentNode;
+    if (getComputedStyle(wrapper).position === 'static') {
+      wrapper.style.position = 'relative';
+    }
+    wrapper.appendChild(dropdown);
+
+    // Pre-fetch registry crops so dropdown is ready when user focuses the input
+    fetchRegistryCrops(function () { /* crops loaded into _registryCrops */ });
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function filterAndRender(query) {
+      buildCropList(_registryCrops || []);
+      var q = (query || '').toLowerCase();
+      var matched = allCrops.filter(function (c) {
+        return !q || c.name.toLowerCase().indexOf(q) !== -1;
+      });
+
+      if (matched.length === 0) {
+        dropdown.innerHTML = '<div class="crop-ac-empty">No matching crops</div>';
+        dropdown.style.display = 'block';
+        selectableItems = [];
+        selectedIdx = -1;
+        positionDropdown();
+        return;
+      }
+
+      // Group by cropType
+      var groups = {};
+      var groupOrder = [];
+      matched.forEach(function (c) {
+        var key = c.cropType || 'Other';
+        if (!groups[key]) {
+          groups[key] = [];
+          groupOrder.push(key);
+        }
+        groups[key].push(c);
+      });
+
+      var html = '';
+      selectableItems = [];
+      groupOrder.forEach(function (gName) {
+        html += '<div class="crop-ac-group">' + escapeHtml(gName) + '</div>';
+        groups[gName].forEach(function (c) {
+          var idx = selectableItems.length;
+          html += '<div class="crop-ac-item" data-idx="' + idx + '">' + escapeHtml(c.name) + '</div>';
+          selectableItems.push(c);
+        });
+      });
+
+      dropdown.innerHTML = html;
+      dropdown.style.display = 'block';
+      selectedIdx = -1;
+      positionDropdown();
+    }
+
+    function positionDropdown() {
+      var rect = inputEl.getBoundingClientRect();
+      var wrapRect = wrapper.getBoundingClientRect();
+      dropdown.style.left = (rect.left - wrapRect.left) + 'px';
+      dropdown.style.top = (rect.bottom - wrapRect.top) + 'px';
+      dropdown.style.width = rect.width + 'px';
+    }
+
+    function highlightItem(idx) {
+      var items = dropdown.querySelectorAll('.crop-ac-item');
+      items.forEach(function (el, i) {
+        el.classList.toggle('highlighted', i === idx);
+      });
+      selectedIdx = idx;
+      // Scroll highlighted item into view
+      if (idx >= 0 && items[idx]) {
+        items[idx].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function selectItem(idx) {
+      if (idx >= 0 && idx < selectableItems.length) {
+        inputEl.value = selectableItems[idx].name;
+        // Store registryCropId on the input element for form submission
+        inputEl.dataset.registryCropId = selectableItems[idx].registryCropId || '';
+        dropdown.style.display = 'none';
+        updatePreview();
+      }
+    }
+
+    function closeDropdown() {
+      dropdown.style.display = 'none';
+      selectedIdx = -1;
+    }
+
+    // Show all crops on focus/click
+    inputEl.addEventListener('focus', function () {
+      filterAndRender(inputEl.value);
     });
+    inputEl.addEventListener('click', function () {
+      if (dropdown.style.display === 'none') {
+        filterAndRender(inputEl.value);
+      }
+    });
+
+    inputEl.addEventListener('input', function () {
+      filterAndRender(inputEl.value);
+    });
+
+    inputEl.addEventListener('keydown', function (e) {
+      if (dropdown.style.display === 'none') return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        highlightItem(Math.min(selectedIdx + 1, selectableItems.length - 1));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        highlightItem(Math.max(selectedIdx - 1, 0));
+      } else if (e.key === 'Enter') {
+        if (selectedIdx >= 0) {
+          e.preventDefault();
+          selectItem(selectedIdx);
+        }
+      } else if (e.key === 'Escape') {
+        closeDropdown();
+      } else if (e.key === 'Tab') {
+        closeDropdown();
+      }
+    });
+
+    dropdown.addEventListener('click', function (e) {
+      var item = e.target.closest('.crop-ac-item');
+      if (!item) return;
+      selectItem(parseInt(item.getAttribute('data-idx')));
+    });
+
+    dropdown.addEventListener('mouseover', function (e) {
+      var item = e.target.closest('.crop-ac-item');
+      if (!item) return;
+      highlightItem(parseInt(item.getAttribute('data-idx')));
+    });
+
+    // Close on outside click
+    document.addEventListener('click', function (e) {
+      if (!wrapper.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+  }
+
+  // Attach a simple flat-list autocomplete to a text input for filters
+  function attachFilterAutocomplete(inputEl, getItems, onSelect) {
+    var dropdown = document.createElement('div');
+    dropdown.className = 'crop-ac-dropdown';
+    dropdown.style.display = 'none';
+    var wrapper = inputEl.parentNode;
+    if (getComputedStyle(wrapper).position === 'static') {
+      wrapper.style.position = 'relative';
+    }
+    wrapper.appendChild(dropdown);
+
+    var selectedIdx = -1;
+    var currentItems = [];
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function filterAndRender(query) {
+      var items = getItems();
+      var q = (query || '').toLowerCase();
+      currentItems = items.filter(function (item) {
+        return !q || item.label.toLowerCase().indexOf(q) !== -1;
+      });
+
+      if (currentItems.length === 0) {
+        dropdown.innerHTML = '<div class="crop-ac-empty">No matches</div>';
+        dropdown.style.display = 'block';
+        selectedIdx = -1;
+        positionDropdown();
+        return;
+      }
+
+      var html = '';
+      currentItems.forEach(function (item, i) {
+        var detail = item.detail ? '<span class="crop-ac-detail">' + escapeHtml(item.detail) + '</span>' : '';
+        html += '<div class="crop-ac-item" data-idx="' + i + '">' + escapeHtml(item.label) + detail + '</div>';
+      });
+      dropdown.innerHTML = html;
+      dropdown.style.display = 'block';
+      selectedIdx = -1;
+      positionDropdown();
+    }
+
+    function positionDropdown() {
+      var rect = inputEl.getBoundingClientRect();
+      var wrapRect = wrapper.getBoundingClientRect();
+      dropdown.style.left = (rect.left - wrapRect.left) + 'px';
+      dropdown.style.top = (rect.bottom - wrapRect.top) + 'px';
+      dropdown.style.width = Math.max(rect.width, 220) + 'px';
+    }
+
+    function highlightItem(idx) {
+      var items = dropdown.querySelectorAll('.crop-ac-item');
+      items.forEach(function (el, i) { el.classList.toggle('highlighted', i === idx); });
+      selectedIdx = idx;
+      if (idx >= 0 && items[idx]) items[idx].scrollIntoView({ block: 'nearest' });
+    }
+
+    function selectItem(idx) {
+      if (idx >= 0 && idx < currentItems.length) {
+        inputEl.value = currentItems[idx].label;
+        dropdown.style.display = 'none';
+        if (onSelect) onSelect(currentItems[idx]);
+        applyFilters();
+      }
+    }
+
+    function closeDropdown() { dropdown.style.display = 'none'; selectedIdx = -1; }
+
+    inputEl.addEventListener('focus', function () { filterAndRender(inputEl.value); });
+    inputEl.addEventListener('click', function () {
+      if (dropdown.style.display === 'none') filterAndRender(inputEl.value);
+    });
+    inputEl.addEventListener('input', function () { filterAndRender(inputEl.value); });
+    inputEl.addEventListener('keydown', function (e) {
+      if (dropdown.style.display === 'none') return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); highlightItem(Math.min(selectedIdx + 1, currentItems.length - 1)); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); highlightItem(Math.max(selectedIdx - 1, 0)); }
+      else if (e.key === 'Enter') { if (selectedIdx >= 0) { e.preventDefault(); selectItem(selectedIdx); } }
+      else if (e.key === 'Escape') { closeDropdown(); }
+      else if (e.key === 'Tab') { closeDropdown(); }
+    });
+    dropdown.addEventListener('click', function (e) {
+      var item = e.target.closest('.crop-ac-item');
+      if (item) selectItem(parseInt(item.getAttribute('data-idx')));
+    });
+    dropdown.addEventListener('mouseover', function (e) {
+      var item = e.target.closest('.crop-ac-item');
+      if (item) highlightItem(parseInt(item.getAttribute('data-idx')));
+    });
+    document.addEventListener('click', function (e) {
+      if (!wrapper.contains(e.target)) closeDropdown();
+    });
+  }
+
+  // Farm autocomplete data source — Farm Registry fields (with local fallback)
+  var registryFields = null; // cached after first load
+  function getFarmItems() {
+    // Use cached Farm Registry fields if available
+    if (registryFields) {
+      return registryFields.map(function (f) {
+        return {
+          label: f.name,
+          detail: f.reportingAcres ? f.reportingAcres + ' ac' : ''
+        };
+      });
+    }
+    // Fallback to local farm names from ticket data
+    return (refData.farmNames || []).map(function (n) {
+      return { label: n, detail: '' };
+    });
+  }
+
+  // Load Farm Registry fields for autocomplete
+  function loadRegistryFields() {
+    if (typeof FarmRegistry !== 'undefined') {
+      FarmRegistry.getFields().then(function (fields) {
+        registryFields = fields;
+      }).catch(function () {
+        registryFields = null; // stay on fallback
+      });
+    }
+  }
+
+  // Crop filter data source — grouped from macro
+  function getCropFilterItems() {
+    var cropTypes = refData.cropTypes || [];
+    var items = [];
+    if (cropTypes.length > 0) {
+      cropTypes.forEach(function (ct) {
+        (ct.subCrops || []).forEach(function (sc) {
+          items.push({ label: sc.name, detail: ct.name });
+        });
+      });
+    } else {
+      Object.keys(refData.cropConfig).sort().forEach(function (c) {
+        items.push({ label: c, detail: '' });
+      });
+    }
+    return items;
+  }
+
+  window.addEventListener('ref-data-loaded', function () {
+    // --- Entry form autocompletes ---
+    attachCropAutocomplete(document.getElementById('entry-crop'));
 
     var farmList = document.getElementById('farm-list');
     refData.farmNames.forEach(function (f) {
@@ -28,22 +359,10 @@
       farmList.appendChild(opt);
     });
 
-    // Also populate filter dropdowns
-    var filterFarm = document.getElementById('filter-farm');
-    refData.farmNames.forEach(function (f) {
-      var opt = document.createElement('option');
-      opt.value = f;
-      opt.textContent = f.trim();
-      filterFarm.appendChild(opt);
-    });
-
-    var filterCrop = document.getElementById('filter-crop');
-    crops.forEach(function (c) {
-      var opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c.trim();
-      filterCrop.appendChild(opt);
-    });
+    // --- Filter autocompletes (farm from Registry, crop from macro) ---
+    loadRegistryFields();
+    attachFilterAutocomplete(document.getElementById('filter-farm'), getFarmItems);
+    attachFilterAutocomplete(document.getElementById('filter-crop'), getCropFilterItems);
 
     // --- Populate destination dropdown (buyers + grain bins) ---
     var destSelect = document.getElementById('entry-destination');
@@ -104,17 +423,34 @@
       });
     }
 
-    // --- Farm Registry autocomplete (enhances the datalist fallback) ---
+    // --- Farm Registry autocomplete on entry form ---
     if (typeof FarmRegistry !== 'undefined') {
       var farmInput = document.getElementById('entry-farm');
-      // Remove datalist binding so FarmRegistry dropdown takes over
       farmInput.removeAttribute('list');
       FarmRegistry.autocomplete(farmInput, {
         onSelect: function (field) {
           console.log('[FarmRegistry] Selected:', field.name, field.reportingAcres + ' ac');
         }
       });
-      console.log('[FarmRegistry] Autocomplete attached to farm entry');
+      // Patch FarmRegistry dropdown highlight colors for dark theme
+      var frDropdown = farmInput.parentNode.querySelector('.fr-autocomplete-dropdown');
+      if (frDropdown) {
+        frDropdown.addEventListener('mouseover', function (e) {
+          var item = e.target.closest('.fr-ac-item');
+          if (!item) return;
+          frDropdown.querySelectorAll('.fr-ac-item').forEach(function (el) {
+            el.style.background = '';
+          });
+          item.style.background = '';
+          item.classList.add('fr-highlighted');
+        });
+        frDropdown.addEventListener('mouseleave', function () {
+          frDropdown.querySelectorAll('.fr-ac-item').forEach(function (el) {
+            el.style.background = '';
+            el.classList.remove('fr-highlighted');
+          });
+        });
+      }
     }
   });
 
@@ -163,6 +499,7 @@
     var destType = destParts[0]; // "buyer" or "bin"
     var destId = destParts[1] ? parseInt(destParts[1], 10) : null;
 
+    var cropInput = form.crop;
     var body = {
       date: form.date.value,
       farm: form.farm.value,
@@ -176,6 +513,10 @@
       grainBinId: destType === 'bin' ? destId : null
       // cropYear is derived server-side from date — not sent from client
     };
+    // Include registryCropId if set by autocomplete selection
+    if (cropInput.dataset && cropInput.dataset.registryCropId) {
+      body.registryCropId = cropInput.dataset.registryCropId;
+    }
 
     // Pre-submit validation
     if (!body.crop) {
@@ -270,8 +611,8 @@
     var dateTo = document.getElementById('filter-date-to').value;
 
     filteredTickets = allTickets.filter(function (t) {
-      if (farm && t.farm !== farm) return false;
-      if (crop && t.crop !== crop) return false;
+      if (farm && (t.farm || '').toLowerCase().indexOf(farm.toLowerCase()) === -1) return false;
+      if (crop && (t.crop || '').toLowerCase().indexOf(crop.toLowerCase()) === -1) return false;
       if (dateFrom && t.date < dateFrom) return false;
       if (dateTo && t.date > dateTo) return false;
       if (destFilter) {
@@ -391,7 +732,7 @@
       html += '<td class="number">' + util.formatNum(c.discount, 2) + '</td>';
       html += '<td class="number">' + util.formatNum(c.testWeight, 0) + '</td>';
       html += '<td class="number">' + util.formatNum(c.moistureShrink, 0) + '</td>';
-      html += '<td><button class="btn-danger" onclick="deleteTicket(\'' + t.id + '\')">Del</button></td>';
+      html += '<td><button class="btn-edit" onclick="openEditModal(\'' + t.id + '\')">Edit</button> <button class="btn-danger" onclick="deleteTicket(\'' + t.id + '\')">Del</button></td>';
       html += '</tr>';
     });
     tbody.innerHTML = html;
@@ -563,6 +904,123 @@
       document.getElementById('select-all-tickets').checked = false;
       applyFilters();
       util.showToast('Deleted ' + result.deleted + ' ticket(s)');
+    });
+  });
+
+  // --- Edit Ticket Modal ---
+  var editModal = document.getElementById('edit-modal');
+  var editForm = document.getElementById('edit-ticket-form');
+
+  function populateEditDestinations() {
+    var sel = document.getElementById('edit-destination');
+    // Clear all but the first "-- None --" option
+    while (sel.options.length > 1) sel.remove(1);
+
+    if (!refData.destinations || !refData.destinations.length) return;
+
+    var bins = refData.destinations.filter(function (d) { return d.type === 'bin'; });
+    var buyers = refData.destinations.filter(function (d) { return d.type === 'buyer'; });
+
+    if (bins.length) {
+      var binGroup = document.createElement('optgroup');
+      binGroup.label = 'Grain Bins';
+      bins.forEach(function (b) {
+        var opt = document.createElement('option');
+        opt.value = 'bin:' + b.id;
+        opt.textContent = '[BIN] ' + b.name;
+        binGroup.appendChild(opt);
+      });
+      sel.appendChild(binGroup);
+    }
+    if (buyers.length) {
+      var buyerGroup = document.createElement('optgroup');
+      buyerGroup.label = 'Buyers';
+      buyers.forEach(function (b) {
+        var opt = document.createElement('option');
+        opt.value = 'buyer:' + b.id;
+        opt.textContent = (b.shortCode ? b.shortCode + ' \u2014 ' : '') + b.name;
+        buyerGroup.appendChild(opt);
+      });
+      sel.appendChild(buyerGroup);
+    }
+  }
+
+  window.openEditModal = function (id) {
+    var ticket = allTickets.find(function (t) { return String(t.id) === String(id); });
+    if (!ticket) return;
+
+    populateEditDestinations();
+
+    document.getElementById('edit-id').value = ticket.id;
+    document.getElementById('edit-date').value = ticket.date || '';
+    document.getElementById('edit-farm').value = ticket.farm || '';
+    document.getElementById('edit-crop').value = ticket.crop || '';
+    document.getElementById('edit-ticketNo').value = ticket.ticketNo || '';
+    document.getElementById('edit-netWeight').value = ticket.netWeight != null ? ticket.netWeight : '';
+    document.getElementById('edit-moisture').value = ticket.moisture != null ? ticket.moisture : '';
+    document.getElementById('edit-fm').value = ticket.fm != null ? ticket.fm : '';
+    document.getElementById('edit-notes').value = ticket.notes || '';
+
+    // Set destination select value
+    var destVal = '';
+    if (ticket.buyerId) destVal = 'buyer:' + ticket.buyerId;
+    else if (ticket.grainBinId) destVal = 'bin:' + ticket.grainBinId;
+    document.getElementById('edit-destination').value = destVal;
+
+    editModal.classList.remove('hidden');
+  };
+
+  function closeEditModal() {
+    editModal.classList.add('hidden');
+  }
+
+  document.getElementById('edit-modal-close').addEventListener('click', closeEditModal);
+  document.getElementById('edit-cancel-btn').addEventListener('click', closeEditModal);
+  editModal.addEventListener('click', function (e) {
+    if (e.target === editModal) closeEditModal();
+  });
+
+  editForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var id = document.getElementById('edit-id').value;
+
+    var editCropInput = document.getElementById('edit-crop');
+    var body = {
+      date: document.getElementById('edit-date').value,
+      farm: document.getElementById('edit-farm').value,
+      crop: editCropInput.value,
+      ticketNo: document.getElementById('edit-ticketNo').value,
+      netWeight: document.getElementById('edit-netWeight').value,
+      moisture: document.getElementById('edit-moisture').value,
+      fm: document.getElementById('edit-fm').value,
+      notes: document.getElementById('edit-notes').value
+    };
+    // Include registryCropId if set by autocomplete selection
+    if (editCropInput.dataset && editCropInput.dataset.registryCropId) {
+      body.registryCropId = editCropInput.dataset.registryCropId;
+    }
+
+    // Parse destination select
+    var destVal = document.getElementById('edit-destination').value;
+    if (destVal.indexOf('buyer:') === 0) {
+      body.buyerId = destVal.replace('buyer:', '');
+      body.grainBinId = null;
+    } else if (destVal.indexOf('bin:') === 0) {
+      body.grainBinId = destVal.replace('bin:', '');
+      body.buyerId = null;
+    } else {
+      body.buyerId = null;
+      body.grainBinId = null;
+    }
+
+    api.put('/api/tickets/' + id, body).then(function (updated) {
+      var idx = allTickets.findIndex(function (t) { return String(t.id) === String(id); });
+      if (idx !== -1) allTickets[idx] = updated;
+      applyFilters();
+      closeEditModal();
+      util.showToast('Ticket updated');
+    }).catch(function (err) {
+      alert('Error saving: ' + (err.message || 'Unknown error'));
     });
   });
 
