@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 50: Canonical Crop Registry
+**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 51: FSA/Insurance Data Consolidation
 
 ## Current Position
 
-Phase: 50 of 61 (Canonical Crop Registry)
+Phase: 51 of 61 (FSA/Insurance Data Consolidation)
 Plan: 03 complete
-Status: Complete (all 3/3 plans complete — phase 50 done)
-Last activity: 2026-03-25 — Phase 50 Plan 03 complete: consumer switchover — all 5 apps now fetch crop list from farm-registry
+Status: In Progress (3/3 plans complete — phase 51 nearly done, pending final verification)
+Last activity: 2026-03-25 — Phase 51 Plan 03 complete: RMA scraper + staleness badge in insurance UI
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -39,6 +39,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 50-canonical-crop-registry P01 | 2 | 2 tasks | 2 files |
 | Phase 50-canonical-crop-registry P02 | 5 | 2 tasks | 6 files |
 | Phase 50 P03 | 12 | 3 tasks | 14 files |
+| Phase 51 P03 | 15 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 50-02]: grain-tickets Ticket.registryCropId updated in bulk by crop name string match via updateMany
 - [Phase Phase 50-03]: farm-budget crop dropdown is in field-editor.js not enterprise.js — both files modified to ensure registry references
 - [Phase Phase 50-03]: FSA land-use categories (Idle/Fallow/CRP/Cover Crop) kept as FSA_LAND_USE_CATEGORIES local constant — not registry crops, merged at point of use
+- [Phase 51-03]: Scraper scope from clu_records.crop — adapts to planted crops automatically
+- [Phase 51-03]: manual_override pricing rows never overwritten by scraper
+- [Phase 51-03]: Daily cron deferred — manual Refresh Prices button is the priority for CONS-03
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 50-03-PLAN.md — consumer switchover complete, phase 50 done
+Stopped at: Completed 51-03-PLAN.md — RMA scraper and staleness badge in insurance UI (CONS-03 done)
 Resume file: —
-Next action: Execute phase 51 (FSA/Insurance consolidation)
+Next action: Continue phase 51 — verify all 3 plans complete, then move to phase 52
