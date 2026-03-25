@@ -264,11 +264,11 @@ Plans:
   2. When the device reconnects, the queued operations replay automatically (Background Sync API) and the "pending sync" indicator resolves without operator action
   3. If a queued pass was already confirmed by the FieldOps API or another user, the sync skips it silently and shows a "Already confirmed — skipped" notification rather than creating a duplicate
   4. The sync status panel shows queued operation count, last successful sync timestamp, any per-item errors, and a manual "Sync now" button that triggers immediate replay
-**Plans**: 3 plans
+**Plans**: 2 plans
 
 Plans:
-- [ ] 47-01: IndexedDB operation queue with Background Sync API registration and replay handler
-- [ ] 47-02: Conflict detection logic and sync status UI (queued count, last sync, error state, force-sync button)
+- [ ] 47-01-PLAN.md — Sync engine module, Background Sync handler in SW, queue-on-fail wrappers in crop-plan-sync.ts
+- [ ] 47-02-PLAN.md — Conflict detection in replay, SyncStatusPanel bottom sheet, pending-sync badges and sync icon in field detail page
 
 ### Phase 48: Grain Tickets PWA + Dashboard Caching
 **Goal**: The offline capability extends to grain ticket entry and read-only dashboard views, so office staff and operators both benefit from the PWA infrastructure
