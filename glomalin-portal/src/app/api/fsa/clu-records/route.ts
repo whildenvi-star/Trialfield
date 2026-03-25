@@ -59,6 +59,7 @@ const ALLOWED_FIELDS = new Set([
   'crop_year',
   'prevented_planting',
   'registry_field_id', // farm-registry canonical field ID — links CLU to registry
+  'registry_crop_id', // farm-registry canonical crop ID — links CLU to crop registry
 ])
 
 export async function POST(request: Request) {
