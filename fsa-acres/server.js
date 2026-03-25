@@ -6,13 +6,31 @@ var fs = require('fs');
 var path = require('path');
 var https = require('https');
 var Calc = require('./public/calc.js');
-
 var cors = require('cors');
+var { createClient } = require('@supabase/supabase-js');
 
 var app = express();
 var PORT = process.env.PORT || 3002;
-var DATA_FILE = path.join(__dirname, 'data', 'data.json');
-var MAX_BACKUPS = 5;
+var SETTINGS_FILE = path.join(__dirname, 'data', 'settings.json');
+
+// ── Supabase client ───────────────────────────────────────────────────────────
+var SUPABASE_URL = process.env.SUPABASE_URL;
+var SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error('ERROR: Missing required environment variables.');
+  console.error('  SUPABASE_URL:', SUPABASE_URL ? 'set' : 'MISSING');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY:', SUPABASE_SERVICE_ROLE_KEY ? 'set' : 'MISSING');
+  console.error('');
+  console.error('Create fsa-acres/.env with:');
+  console.error('  SUPABASE_URL=https://your-project.supabase.co');
+  console.error('  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key');
+  process.exit(1);
+}
+
+var supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false }
+});
 
 // Health check — before CORS/middleware for fast, dependency-free response
 app.get('/health', function (req, res) { res.json({ status: 'ok', app: 'fsa-acres', uptime: process.uptime() }); });
@@ -28,61 +46,251 @@ app.use(express.static(path.join(__dirname, 'public')));
 // perf: Cache-Control on GET API responses — allows browser to skip refetch for short TTL
 app.use('/api', function (req, res, next) {
   if (req.method === 'GET') {
-    // Rollup/reference data: 60s cache; live data: 10s
     var isRollup = req.path.indexOf('/rollup') === 0 || req.path.indexOf('/settings') === 0;
     res.set('Cache-Control', isRollup ? 'public, max-age=60' : 'public, max-age=10');
   }
   next();
 });
 
-// --- In-memory data store ---
-var store = {
-  settings: { year: 2026, county: 'Rock', state: 'WI', producerName: '' },
-  cluRecords: [],
-  farms: [],
-  pricing: [],
-  insurancePolicies: [],
-  tillageCodes: Calc.TILLAGE_CODES
-};
+// ── Tillage codes (static reference data) ────────────────────────────────────
+var TILLAGE_CODES = Calc.TILLAGE_CODES;
 
-function loadData() {
-  if (fs.existsSync(DATA_FILE)) {
-    store = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-    if (!store.tillageCodes) store.tillageCodes = Calc.TILLAGE_CODES;
+// ── Settings (app config — stored locally, not farm data) ────────────────────
+var DEFAULT_SETTINGS = { year: 2026, county: 'Rock', state: 'WI', producerName: '' };
+
+function loadSettings() {
+  try {
+    if (fs.existsSync(SETTINGS_FILE)) {
+      return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')));
+    }
+  } catch (e) {
+    console.warn('Could not read settings.json, using defaults:', e.message);
+  }
+  return Object.assign({}, DEFAULT_SETTINGS);
+}
+
+function saveSettings(settings) {
+  try {
+    var dir = path.dirname(SETTINGS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
+  } catch (e) {
+    console.error('Could not save settings.json:', e.message);
   }
 }
 
-// Write lock
-var writeQueue = Promise.resolve();
-function withLock(fn) {
-  var p = writeQueue.then(fn, fn);
-  writeQueue = p.catch(function () {});
-  return p;
+var appSettings = loadSettings();
+
+// ── In-memory CLU cache (10s TTL — prevents N+1 Supabase calls on dashboard) ──
+var cluCache = { data: null, ts: 0 };
+var CLU_CACHE_TTL = 10 * 1000; // 10s
+
+function invalidateCluCache() {
+  cluCache.data = null;
+  cluCache.ts = 0;
 }
 
-// Async file helpers — avoid blocking event loop during writes
-var fsp = fs.promises;
+// ── Column mapping helpers ────────────────────────────────────────────────────
 
-function saveData() {
-  return withLock(async function () {
-    // Rotate backups (async to avoid blocking event loop)
-    for (var i = MAX_BACKUPS; i > 1; i--) {
-      var from = DATA_FILE + '.bak.' + (i - 1);
-      var to = DATA_FILE + '.bak.' + i;
-      try { await fsp.rename(from, to); } catch (e) { /* backup slot empty */ }
-    }
-    try { await fsp.copyFile(DATA_FILE, DATA_FILE + '.bak.1'); } catch (e) { /* first save */ }
-    var tmp = DATA_FILE + '.tmp';
-    await fsp.writeFile(tmp, JSON.stringify(store, null, 2));
-    await fsp.rename(tmp, DATA_FILE);
-  });
+// Map Supabase snake_case row → camelCase for API responses (frontend compatibility)
+function mapToClient(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    legacy_id: row.legacy_id || null,
+    cropYear: row.crop_year || null,
+    farmNumber: row.farm_number || '',
+    tractNumber: row.tract_number || '',
+    clu: row.clu || '',
+    fieldName: row.field_name || '',
+    farmName: row.farm_name || '',
+    fsaAcres: row.fsa_acres || 0,
+    crop: row.crop || '',
+    irrigated: Boolean(row.irrigated),
+    organic: Boolean(row.organic),
+    doubleCrop: Boolean(row.double_crop),
+    coverCrop: Boolean(row.cover_crop),
+    grainPlantDate: row.grain_plant_date || '',
+    use: row.use || '',
+    reported: Boolean(row.reported),
+    lineNumber: row.line_number || '',
+    policyNumber: row.policy_number || '',
+    unitNumber: row.unit_number || '',
+    aph: row.aph || 0,
+    registryFieldId: row.registry_field_id || null,
+    registryCropId: row.registry_crop_id || null,
+    landClass: row.land_class || '',
+    // Conservation practice tracking fields (individual columns, not JSONB)
+    tillage2024: row.tillage_2024 || '',
+    tillage2025: row.tillage_2025 || '',
+    cc2024: row.cc_2024 || '',
+    cc2025: row.cc_2025 || '',
+    ntAdoption2024: row.nt_adoption_2024 || '',
+    ntAdoption2025: row.nt_adoption_2025 || '',
+    ccAdoption2024: row.cc_adoption_2024 || '',
+    ccAdoption2025: row.cc_adoption_2025 || '',
+    // Carry through any extra fields not explicitly mapped
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
 }
 
-function generateId(prefix) {
-  return (prefix || 'x') + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+// Map camelCase request body → snake_case for Supabase writes
+function mapCluToDb(body) {
+  var db = {};
+  if (body.farmNumber !== undefined) db.farm_number = body.farmNumber;
+  if (body.tractNumber !== undefined) db.tract_number = body.tractNumber;
+  if (body.clu !== undefined) db.clu = String(body.clu);
+  if (body.fieldName !== undefined) db.field_name = body.fieldName || null;
+  if (body.farmName !== undefined) db.farm_name = body.farmName || null;
+  if (body.fsaAcres !== undefined) db.fsa_acres = Number(body.fsaAcres) || 0;
+  if (body.crop !== undefined) db.crop = body.crop || null;
+  if (body.irrigated !== undefined) db.irrigated = Boolean(body.irrigated);
+  if (body.organic !== undefined) db.organic = Boolean(body.organic);
+  if (body.doubleCrop !== undefined) db.double_crop = Boolean(body.doubleCrop);
+  if (body.coverCrop !== undefined) db.cover_crop = Boolean(body.coverCrop);
+  if (body.grainPlantDate !== undefined) db.grain_plant_date = body.grainPlantDate || null;
+  if (body.use !== undefined) db.use = body.use || null;
+  if (body.reported !== undefined) db.reported = Boolean(body.reported);
+  if (body.lineNumber !== undefined) db.line_number = body.lineNumber || null;
+  if (body.policyNumber !== undefined) db.policy_number = body.policyNumber || null;
+  if (body.unitNumber !== undefined) db.unit_number = body.unitNumber || null;
+  if (body.aph !== undefined) db.aph = Number(body.aph) > 0 ? Number(body.aph) : null;
+  if (body.registryFieldId !== undefined) db.registry_field_id = body.registryFieldId || null;
+  if (body.registryCropId !== undefined) db.registry_crop_id = body.registryCropId || null;
+  if (body.landClass !== undefined) db.land_class = body.landClass || null;
+  if (body.cropYear !== undefined) db.crop_year = Number(body.cropYear) || null;
+  // Conservation practice fields
+  if (body.tillage2024 !== undefined) db.tillage_2024 = body.tillage2024 || null;
+  if (body.tillage2025 !== undefined) db.tillage_2025 = body.tillage2025 || null;
+  if (body.cc2024 !== undefined) db.cc_2024 = body.cc2024 || null;
+  if (body.cc2025 !== undefined) db.cc_2025 = body.cc2025 || null;
+  if (body.ntAdoption2024 !== undefined) db.nt_adoption_2024 = body.ntAdoption2024 || null;
+  if (body.ntAdoption2025 !== undefined) db.nt_adoption_2025 = body.ntAdoption2025 || null;
+  if (body.ccAdoption2024 !== undefined) db.cc_adoption_2024 = body.ccAdoption2024 || null;
+  if (body.ccAdoption2025 !== undefined) db.cc_adoption_2025 = body.ccAdoption2025 || null;
+  return db;
 }
 
-// --- Cross-app fetch with TTL cache + timeout (perf: avoid redundant calls & hangs) ---
+// Map insurance camelCase → snake_case for Supabase writes
+function mapInsuranceToDb(body) {
+  var db = {};
+  if (body.farmName !== undefined) db.farm_name = body.farmName || null;
+  if (body.farmNumber !== undefined) db.farm_number = body.farmNumber || null;
+  if (body.lineNumber !== undefined) db.line_number = body.lineNumber || null;
+  if (body.policyNumber !== undefined) db.policy_number = body.policyNumber || null;
+  if (body.crop !== undefined) db.crop = body.crop || null;
+  if (body.policyYear !== undefined) db.policy_year = Number(body.policyYear) || null;
+  if (body.plantedAcres !== undefined) db.planted_acres = Number(body.plantedAcres) || 0;
+  if (body.fsaAcresManual !== undefined) db.fsa_acres_manual = Number(body.fsaAcresManual) > 0 ? Number(body.fsaAcresManual) : null;
+  if (body.guarantee !== undefined) db.guarantee = Number(body.guarantee) || 0;
+  if (body.actual !== undefined) db.actual = Number(body.actual) || 0;
+  if (body.claimStatus !== undefined) db.claim_status = body.claimStatus || null;
+  if (body.notes !== undefined) db.notes = body.notes || null;
+  if (body.coverageLevel !== undefined) db.coverage_level = Number(body.coverageLevel) || null;
+  if (body.unitType !== undefined) db.unit_type = body.unitType || null;
+  if (body.premiumPerAcre !== undefined) db.premium_per_acre = Number(body.premiumPerAcre) > 0 ? Number(body.premiumPerAcre) : null;
+  if (body.agentName !== undefined) db.agent_name = body.agentName || null;
+  if (body.preventedPlanting !== undefined) db.prevented_planting = Boolean(body.preventedPlanting);
+  if (body.preventedPlantingAcres !== undefined) db.prevented_planting_acres = Number(body.preventedPlantingAcres) > 0 ? Number(body.preventedPlantingAcres) : null;
+  if (body.claimFiledDate !== undefined) db.claim_filed_date = body.claimFiledDate || null;
+  if (body.claimPaidDate !== undefined) db.claim_paid_date = body.claimPaidDate || null;
+  if (body.claimPaidAmount !== undefined) db.claim_paid_amount = Number(body.claimPaidAmount) > 0 ? Number(body.claimPaidAmount) : null;
+  if (body.claimNumber !== undefined) db.claim_number = body.claimNumber || null;
+  if (body.adjusterName !== undefined) db.adjuster_name = body.adjusterName || null;
+  if (body.adjusterPhone !== undefined) db.adjuster_phone = body.adjusterPhone || null;
+  if (body.lossType !== undefined) db.loss_type = body.lossType || null;
+  return db;
+}
+
+// Map Supabase insurance row → camelCase for API responses
+function mapInsuranceToClient(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    legacy_id: row.legacy_id || null,
+    farmName: row.farm_name || '',
+    farmNumber: row.farm_number || '',
+    lineNumber: row.line_number || '',
+    policyNumber: row.policy_number || '',
+    crop: row.crop || '',
+    policyYear: row.policy_year || null,
+    plantedAcres: row.planted_acres || 0,
+    fsaAcresManual: row.fsa_acres_manual || 0,
+    guarantee: row.guarantee || 0,
+    actual: row.actual || 0,
+    claimStatus: row.claim_status || 'none',
+    notes: row.notes || '',
+    coverageLevel: row.coverage_level || 0,
+    unitType: row.unit_type || '',
+    premiumPerAcre: row.premium_per_acre || 0,
+    agentName: row.agent_name || '',
+    preventedPlanting: Boolean(row.prevented_planting),
+    preventedPlantingAcres: row.prevented_planting_acres || 0,
+    claimFiledDate: row.claim_filed_date || '',
+    claimPaidDate: row.claim_paid_date || '',
+    claimPaidAmount: row.claim_paid_amount || 0,
+    claimNumber: row.claim_number || '',
+    adjusterName: row.adjuster_name || '',
+    adjusterPhone: row.adjuster_phone || '',
+    lossType: row.loss_type || '',
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
+// Map Supabase pricing row → camelCase for API responses
+function mapPricingToClient(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    legacy_id: row.legacy_id || null,
+    crop: row.crop || '',
+    year: row.year || null,
+    springPrice: row.spring_price || 0,
+    fallPrice: row.fall_price || 0,
+    manualOverride: Boolean(row.manual_override),
+    lastScraped: row.last_scraped || null
+  };
+}
+
+// ── Supabase fetch helpers ────────────────────────────────────────────────────
+
+// Fetch all CLU records from Supabase, with 10s in-memory cache
+async function getCluRecords() {
+  var now = Date.now();
+  if (cluCache.data && (now - cluCache.ts) < CLU_CACHE_TTL) {
+    return cluCache.data;
+  }
+  var { data, error } = await supabase.from('clu_records').select('*');
+  if (error) throw Object.assign(new Error(error.message), { supabaseError: true });
+  var mapped = (data || []).map(mapToClient);
+  cluCache.data = mapped;
+  cluCache.ts = now;
+  return mapped;
+}
+
+// Fetch all insurance policies from Supabase
+async function getInsurancePolicies() {
+  var { data, error } = await supabase.from('insurance_policies').select('*');
+  if (error) throw Object.assign(new Error(error.message), { supabaseError: true });
+  return (data || []).map(mapInsuranceToClient);
+}
+
+// Fetch all pricing from Supabase
+async function getPricing() {
+  var { data, error } = await supabase.from('insurance_pricing').select('*');
+  if (error) throw Object.assign(new Error(error.message), { supabaseError: true });
+  return (data || []).map(mapPricingToClient);
+}
+
+// Standard 503 response for Supabase unavailability
+function handleDbError(res, err) {
+  console.error('Supabase error:', err.message);
+  res.status(503).json({ error: 'Data store unavailable', detail: err.message });
+}
+
+// ── Cross-app fetch with TTL cache + timeout ──────────────────────────────────
 var fetchCache = {};
 var FETCH_CACHE_TTL = 60 * 1000; // 60s cache for cross-app data
 var FETCH_TIMEOUT = 5000; // 5s timeout prevents hangs when peer apps are down
@@ -103,7 +311,6 @@ function cachedFetch(url, ttlMs) {
     })
     .catch(function (err) {
       clearTimeout(timer);
-      // Return stale cache if available, otherwise null
       if (fetchCache[url]) return fetchCache[url].data;
       return null;
     });
@@ -111,199 +318,284 @@ function cachedFetch(url, ttlMs) {
 
 // ===== Settings =====
 app.get('/api/settings', function (req, res) {
-  res.json(store.settings);
+  res.json(appSettings);
 });
 
 app.put('/api/settings', function (req, res) {
   var allowed = ['year', 'county', 'state', 'producerName'];
   allowed.forEach(function (k) {
-    if (req.body[k] !== undefined) store.settings[k] = req.body[k];
+    if (req.body[k] !== undefined) appSettings[k] = req.body[k];
   });
-  saveData().then(function () { res.json(store.settings); });
+  saveSettings(appSettings);
+  res.json(appSettings);
 });
 
 // ===== CLU Records =====
-app.get('/api/clu-records', function (req, res) {
-  var records = store.cluRecords;
-  if (req.query.farmNumber) records = records.filter(function (r) { return r.farmNumber === req.query.farmNumber; });
-  if (req.query.crop) records = records.filter(function (r) { return r.crop === req.query.crop; });
-  if (req.query.fieldName) records = records.filter(function (r) { return r.fieldName === req.query.fieldName; });
-  if (req.query.reported === 'true') records = records.filter(function (r) { return r.reported; });
-  if (req.query.reported === 'false') records = records.filter(function (r) { return !r.reported; });
-  res.json(records);
+app.get('/api/clu-records', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    if (req.query.farmNumber) records = records.filter(function (r) { return r.farmNumber === req.query.farmNumber; });
+    if (req.query.crop) records = records.filter(function (r) { return r.crop === req.query.crop; });
+    if (req.query.fieldName) records = records.filter(function (r) { return r.fieldName === req.query.fieldName; });
+    if (req.query.reported === 'true') records = records.filter(function (r) { return r.reported; });
+    if (req.query.reported === 'false') records = records.filter(function (r) { return !r.reported; });
+    res.json(records);
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
-app.get('/api/clu-records/:id', function (req, res) {
-  var rec = store.cluRecords.find(function (r) { return r.id === req.params.id; });
-  if (!rec) return res.status(404).json({ error: 'Not found' });
-  res.json(rec);
+app.get('/api/clu-records/:id', async function (req, res) {
+  try {
+    var { data, error } = await supabase.from('clu_records').select('*').eq('id', req.params.id).single();
+    if (error || !data) return res.status(404).json({ error: 'Not found' });
+    res.json(mapToClient(data));
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
-app.post('/api/clu-records', function (req, res) {
-  // req.body may include registryFieldId (farm-registry canonical ID) — accepted via Object.assign
-  var rec = Object.assign({ id: generateId('clu') }, req.body);
-  store.cluRecords.push(rec);
-  saveData().then(function () { res.status(201).json(rec); });
+app.post('/api/clu-records', async function (req, res) {
+  try {
+    var dbRecord = mapCluToDb(req.body);
+    // Set crop_year default from settings if not provided
+    if (!dbRecord.crop_year) dbRecord.crop_year = appSettings.year || 2026;
+    var { data, error } = await supabase.from('clu_records').insert(dbRecord).select().single();
+    if (error) throw new Error(error.message);
+    invalidateCluCache();
+    res.status(201).json(mapToClient(data));
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
 // Bulk update (mark reported) — must be before :id route
-app.put('/api/clu-records/bulk', function (req, res) {
-  var ids = req.body.ids || [];
-  var updates = req.body.updates || {};
-  var updated = 0;
-  ids.forEach(function (id) {
-    var rec = store.cluRecords.find(function (r) { return r.id === id; });
-    if (rec) {
-      Object.assign(rec, updates);
-      updated++;
-    }
-  });
-  saveData().then(function () { res.json({ ok: true, updated: updated }); });
+app.put('/api/clu-records/bulk', async function (req, res) {
+  try {
+    var ids = req.body.ids || [];
+    var updates = req.body.updates || {};
+    if (!ids.length) return res.json({ ok: true, updated: 0 });
+
+    var dbUpdates = mapCluToDb(updates);
+    if (!Object.keys(dbUpdates).length) return res.json({ ok: true, updated: 0 });
+
+    var { data, error } = await supabase.from('clu_records').update(dbUpdates).in('id', ids).select();
+    if (error) throw new Error(error.message);
+    invalidateCluCache();
+    res.json({ ok: true, updated: (data || []).length });
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
-app.put('/api/clu-records/:id', function (req, res) {
-  var idx = store.cluRecords.findIndex(function (r) { return r.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  // req.body may include registryFieldId (farm-registry canonical ID) — accepted via Object.assign
-  Object.assign(store.cluRecords[idx], req.body);
-  delete store.cluRecords[idx].id; // prevent id overwrite
-  store.cluRecords[idx].id = req.params.id;
-  saveData().then(function () { res.json(store.cluRecords[idx]); });
+app.put('/api/clu-records/:id', async function (req, res) {
+  try {
+    var dbUpdates = mapCluToDb(req.body);
+    // Never allow id to be overwritten
+    delete dbUpdates.id;
+    var { data, error } = await supabase.from('clu_records').update(dbUpdates).eq('id', req.params.id).select().single();
+    if (error || !data) return res.status(404).json({ error: 'Not found' });
+    invalidateCluCache();
+    res.json(mapToClient(data));
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
-app.delete('/api/clu-records/:id', function (req, res) {
-  var idx = store.cluRecords.findIndex(function (r) { return r.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  store.cluRecords.splice(idx, 1);
-  saveData().then(function () { res.json({ ok: true }); });
+app.delete('/api/clu-records/:id', async function (req, res) {
+  try {
+    var { error } = await supabase.from('clu_records').delete().eq('id', req.params.id);
+    if (error) throw new Error(error.message);
+    invalidateCluCache();
+    res.json({ ok: true });
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
 // ===== Split CLU =====
-app.post('/api/clu-records/:id/split', function (req, res) {
-  var original = store.cluRecords.find(function (r) { return r.id === req.params.id; });
-  if (!original) return res.status(404).json({ error: 'Not found' });
+app.post('/api/clu-records/:id/split', async function (req, res) {
+  try {
+    var { data: origRow, error: fetchErr } = await supabase.from('clu_records').select('*').eq('id', req.params.id).single();
+    if (fetchErr || !origRow) return res.status(404).json({ error: 'Not found' });
+    var original = mapToClient(origRow);
 
-  var splitAcres = Number(req.body.splitAcres);
-  if (!splitAcres || splitAcres <= 0 || splitAcres >= (original.fsaAcres || 0)) {
-    return res.status(400).json({ error: 'Split acres must be between 0 and ' + original.fsaAcres });
+    var splitAcres = Number(req.body.splitAcres);
+    if (!splitAcres || splitAcres <= 0 || splitAcres >= (original.fsaAcres || 0)) {
+      return res.status(400).json({ error: 'Split acres must be between 0 and ' + original.fsaAcres });
+    }
+
+    // Find next CLU number for this tract (query Supabase for max CLU)
+    var { data: tractRows } = await supabase.from('clu_records').select('clu')
+      .eq('farm_number', original.farmNumber)
+      .eq('tract_number', original.tractNumber);
+    var maxClu = 0;
+    (tractRows || []).forEach(function (r) {
+      var n = parseInt(r.clu) || 0;
+      if (n > maxClu) maxClu = n;
+    });
+    var newCluNum = String(maxClu + 1);
+
+    // Reduce original acres
+    var remainingAcres = Math.round(((original.fsaAcres || 0) - splitAcres) * 100) / 100;
+
+    // Update original record
+    var { data: updatedOrig, error: updateErr } = await supabase.from('clu_records')
+      .update({ fsa_acres: remainingAcres })
+      .eq('id', req.params.id)
+      .select().single();
+    if (updateErr) throw new Error(updateErr.message);
+
+    // Insert new CLU record (copy all fields except id, clu number, acres, crop, reported)
+    var newDbRecord = mapCluToDb(original);
+    delete newDbRecord.id;
+    newDbRecord.clu = newCluNum;
+    newDbRecord.fsa_acres = splitAcres;
+    newDbRecord.crop = req.body.newCrop || null;
+    newDbRecord.reported = false;
+
+    var { data: newRow, error: insertErr } = await supabase.from('clu_records').insert(newDbRecord).select().single();
+    if (insertErr) throw new Error(insertErr.message);
+
+    invalidateCluCache();
+    res.json({ original: mapToClient(updatedOrig), newRecord: mapToClient(newRow) });
+  } catch (err) {
+    handleDbError(res, err);
   }
-
-  // Find next CLU number for this tract
-  var tractClus = store.cluRecords.filter(function (r) {
-    return r.farmNumber === original.farmNumber && r.tractNumber === original.tractNumber;
-  });
-  var maxClu = 0;
-  tractClus.forEach(function (r) {
-    var n = parseInt(r.clu) || 0;
-    if (n > maxClu) maxClu = n;
-  });
-  var newCluNum = String(maxClu + 1);
-
-  // Reduce original acres
-  var remainingAcres = Math.round(((original.fsaAcres || 0) - splitAcres) * 100) / 100;
-  original.fsaAcres = remainingAcres;
-
-  // Create new CLU record — copy all fields except id, acres, clu number, and crop
-  var newRec = Object.assign({}, original, {
-    id: generateId('clu'),
-    clu: newCluNum,
-    fsaAcres: splitAcres,
-    crop: req.body.newCrop || '',
-    reported: false
-  });
-  store.cluRecords.push(newRec);
-
-  saveData().then(function () {
-    res.json({ original: original, newRecord: newRec });
-  });
 });
 
 // ===== Duplicate CLU =====
-app.post('/api/clu-records/:id/duplicate', function (req, res) {
-  var source = store.cluRecords.find(function (r) { return r.id === req.params.id; });
-  if (!source) return res.status(404).json({ error: 'Not found' });
+app.post('/api/clu-records/:id/duplicate', async function (req, res) {
+  try {
+    var { data: sourceRow, error: fetchErr } = await supabase.from('clu_records').select('*').eq('id', req.params.id).single();
+    if (fetchErr || !sourceRow) return res.status(404).json({ error: 'Not found' });
+    var source = mapToClient(sourceRow);
 
-  // Find next CLU number for this tract
-  var tractClus = store.cluRecords.filter(function (r) {
-    return r.farmNumber === source.farmNumber && r.tractNumber === source.tractNumber;
-  });
-  var maxClu = 0;
-  tractClus.forEach(function (r) {
-    var n = parseInt(r.clu) || 0;
-    if (n > maxClu) maxClu = n;
-  });
+    // Find next CLU number for this tract
+    var { data: tractRows } = await supabase.from('clu_records').select('clu')
+      .eq('farm_number', source.farmNumber)
+      .eq('tract_number', source.tractNumber);
+    var maxClu = 0;
+    (tractRows || []).forEach(function (r) {
+      var n = parseInt(r.clu) || 0;
+      if (n > maxClu) maxClu = n;
+    });
 
-  var newRec = Object.assign({}, source, {
-    id: generateId('clu'),
-    clu: String(maxClu + 1),
-    reported: false
-  });
-  store.cluRecords.push(newRec);
+    var newDbRecord = mapCluToDb(source);
+    delete newDbRecord.id;
+    newDbRecord.clu = String(maxClu + 1);
+    newDbRecord.reported = false;
 
-  saveData().then(function () { res.json(newRec); });
+    var { data: newRow, error: insertErr } = await supabase.from('clu_records').insert(newDbRecord).select().single();
+    if (insertErr) throw new Error(insertErr.message);
+
+    invalidateCluCache();
+    res.json(mapToClient(newRow));
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
 // ===== Rollups =====
-app.get('/api/rollup/by-farm', function (req, res) {
-  res.json(Calc.rollupByFarm(store.cluRecords));
+app.get('/api/rollup/by-farm', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    res.json(Calc.rollupByFarm(records));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/rollup/by-crop', function (req, res) {
-  res.json(Calc.rollupByCrop(store.cluRecords));
+app.get('/api/rollup/by-crop', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    res.json(Calc.rollupByCrop(records));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/rollup/by-field', function (req, res) {
-  res.json(Calc.rollupByField(store.cluRecords, req.query.farmNumber || null));
+app.get('/api/rollup/by-field', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    res.json(Calc.rollupByField(records, req.query.farmNumber || null));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/rollup/by-tract', function (req, res) {
-  res.json(Calc.rollupByTract(store.cluRecords, req.query.farmNumber || null));
+app.get('/api/rollup/by-tract', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    res.json(Calc.rollupByTract(records, req.query.farmNumber || null));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/rollup/tillage-summary', function (req, res) {
-  var year = Number(req.query.year) || 2025;
-  res.json(Calc.tillageSummary(store.cluRecords, year));
+app.get('/api/rollup/tillage-summary', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    var year = Number(req.query.year) || 2025;
+    res.json(Calc.tillageSummary(records, year));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/rollup/cover-crop-summary', function (req, res) {
-  var year = Number(req.query.year) || 2025;
-  res.json(Calc.coverCropSummary(store.cluRecords, year));
+app.get('/api/rollup/cover-crop-summary', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    var year = Number(req.query.year) || 2025;
+    res.json(Calc.coverCropSummary(records, year));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/rollup/summary-metrics', function (req, res) {
-  res.json(Calc.summaryMetrics(store.cluRecords));
+app.get('/api/rollup/summary-metrics', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    res.json(Calc.summaryMetrics(records));
+  } catch (err) { handleDbError(res, err); }
 });
 
 // ===== Pricing =====
-app.get('/api/pricing', function (req, res) {
-  res.json(store.pricing);
+app.get('/api/pricing', async function (req, res) {
+  try {
+    var pricing = await getPricing();
+    res.json(pricing);
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.put('/api/pricing/:id', function (req, res) {
-  var idx = store.pricing.findIndex(function (p) { return p.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  var allowed = ['crop', 'springPrice', 'fallPrice', 'manualOverride'];
-  allowed.forEach(function (k) {
-    if (req.body[k] !== undefined) store.pricing[idx][k] = req.body[k];
-  });
-  saveData().then(function () { res.json(store.pricing[idx]); });
+app.put('/api/pricing/:id', async function (req, res) {
+  try {
+    var allowed = { crop: req.body.crop, springPrice: req.body.springPrice, fallPrice: req.body.fallPrice, manualOverride: req.body.manualOverride };
+    var dbUpdates = {};
+    if (allowed.crop !== undefined) dbUpdates.crop = allowed.crop;
+    if (allowed.springPrice !== undefined) dbUpdates.spring_price = Number(allowed.springPrice) || 0;
+    if (allowed.fallPrice !== undefined) dbUpdates.fall_price = Number(allowed.fallPrice) || 0;
+    if (allowed.manualOverride !== undefined) dbUpdates.manual_override = Boolean(allowed.manualOverride);
+
+    var { data, error } = await supabase.from('insurance_pricing').update(dbUpdates).eq('id', req.params.id).select().single();
+    if (error || !data) return res.status(404).json({ error: 'Not found' });
+    res.json(mapPricingToClient(data));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.post('/api/pricing', function (req, res) {
-  var item = Object.assign({ id: generateId('pr') }, req.body);
-  store.pricing.push(item);
-  saveData().then(function () { res.status(201).json(item); });
+app.post('/api/pricing', async function (req, res) {
+  try {
+    var dbRecord = {
+      crop: req.body.crop || '',
+      spring_price: Number(req.body.springPrice) || 0,
+      fall_price: Number(req.body.fallPrice) || 0,
+      manual_override: Boolean(req.body.manualOverride),
+      year: Number(req.body.year) || appSettings.year || 2026
+    };
+    var { data, error } = await supabase.from('insurance_pricing').insert(dbRecord).select().single();
+    if (error) throw new Error(error.message);
+    res.status(201).json(mapPricingToClient(data));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.delete('/api/pricing/:id', function (req, res) {
-  var idx = store.pricing.findIndex(function (p) { return p.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  store.pricing.splice(idx, 1);
-  saveData().then(function () { res.json({ ok: true }); });
+app.delete('/api/pricing/:id', async function (req, res) {
+  try {
+    var { error } = await supabase.from('insurance_pricing').delete().eq('id', req.params.id);
+    if (error) throw new Error(error.message);
+    res.json({ ok: true });
+  } catch (err) { handleDbError(res, err); }
 });
 
 // Scrape prices from USDA RMA Price Discovery API
-app.post('/api/pricing/scrape', function (req, res) {
+app.post('/api/pricing/scrape', async function (req, res) {
   var today = new Date();
   var dateStr = (today.getMonth() + 1) + '/' + today.getDate() + '/' + today.getFullYear();
   var url = 'https://public-rma.fpac.usda.gov/apps/PriceDiscovery/Services/RevenuePriceDataService.svc/RevenuePrices?discoveryPeriodDate=' + encodeURIComponent(dateStr);
@@ -311,13 +603,23 @@ app.post('/api/pricing/scrape', function (req, res) {
   https.get(url, function (resp) {
     var body = '';
     resp.on('data', function (chunk) { body += chunk; });
-    resp.on('end', function () {
+    resp.on('end', async function () {
       try {
         var data = JSON.parse(body);
         var items = data.d || data;
         if (!Array.isArray(items)) { return res.json({ ok: true, updated: 0, message: 'No price data returned from RMA' }); }
 
+        // Fetch current pricing from Supabase
+        var pricing;
+        try {
+          pricing = await getPricing();
+        } catch (e) {
+          return res.status(503).json({ ok: false, error: 'Data store unavailable', message: e.message });
+        }
+
         var updated = 0;
+        var updates = [];
+
         items.forEach(function (item) {
           var cropName = (item.CommodityName || '').trim();
           if (!cropName) return;
@@ -325,23 +627,33 @@ app.post('/api/pricing/scrape', function (req, res) {
           var projected = parseFloat(item.ProjectedPrice) || 0;
           var harvest = parseFloat(item.HarvestPrice) || 0;
 
-          // Find matching crop in our pricing (case-insensitive)
           var lc = cropName.toLowerCase();
-          var match = store.pricing.find(function (p) {
+          var match = pricing.find(function (p) {
             return p.crop.toLowerCase() === lc;
           });
 
           if (match && !match.manualOverride) {
-            if (projected > 0) match.springPrice = projected;
-            if (harvest > 0) match.fallPrice = harvest;
-            match.lastScraped = new Date().toISOString();
+            var dbUpdates = { last_scraped: new Date().toISOString() };
+            if (projected > 0) dbUpdates.spring_price = projected;
+            if (harvest > 0) dbUpdates.fall_price = harvest;
+            updates.push({ id: match.id, updates: dbUpdates });
             updated++;
           }
         });
 
-        saveData().then(function () {
-          res.json({ ok: true, updated: updated, total: items.length, message: updated + ' prices updated from USDA RMA' });
-        });
+        // Apply updates to Supabase
+        if (updates.length > 0) {
+          var updatePromises = updates.map(function (u) {
+            return supabase.from('insurance_pricing').update(u.updates).eq('id', u.id);
+          });
+          var results = await Promise.all(updatePromises);
+          var failed = results.filter(function (r) { return r.error; });
+          if (failed.length > 0) {
+            console.error('Pricing scrape: some updates failed:', failed.map(function (r) { return r.error.message; }));
+          }
+        }
+
+        res.json({ ok: true, updated: updated, total: items.length, message: updated + ' prices updated from USDA RMA' });
       } catch (e) {
         res.json({ ok: false, error: 'Failed to parse RMA response', message: e.message });
       }
@@ -352,170 +664,193 @@ app.post('/api/pricing/scrape', function (req, res) {
 });
 
 // ===== Insurance =====
-app.get('/api/insurance', function (req, res) {
-  var enriched = store.insurancePolicies.map(function (p) {
-    var computed = Calc.computeInsurancePolicy(p, store.cluRecords, store.pricing);
-    return Object.assign({}, p, { _computed: computed });
-  });
-  res.json(enriched);
+app.get('/api/insurance', async function (req, res) {
+  try {
+    var [policies, cluRecords, pricing] = await Promise.all([getInsurancePolicies(), getCluRecords(), getPricing()]);
+    var enriched = policies.map(function (p) {
+      var computed = Calc.computeInsurancePolicy(p, cluRecords, pricing);
+      return Object.assign({}, p, { _computed: computed });
+    });
+    res.json(enriched);
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/insurance/:id', function (req, res) {
-  var pol = store.insurancePolicies.find(function (p) { return p.id === req.params.id; });
-  if (!pol) return res.status(404).json({ error: 'Not found' });
-  var computed = Calc.computeInsurancePolicy(pol, store.cluRecords, store.pricing);
-  res.json(Object.assign({}, pol, { _computed: computed }));
+app.get('/api/insurance/:id', async function (req, res) {
+  try {
+    var { data, error } = await supabase.from('insurance_policies').select('*').eq('id', req.params.id).single();
+    if (error || !data) return res.status(404).json({ error: 'Not found' });
+    var pol = mapInsuranceToClient(data);
+    var [cluRecords, pricing] = await Promise.all([getCluRecords(), getPricing()]);
+    var computed = Calc.computeInsurancePolicy(pol, cluRecords, pricing);
+    res.json(Object.assign({}, pol, { _computed: computed }));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.post('/api/insurance', function (req, res) {
-  var item = Object.assign({ id: generateId('ins') }, req.body);
-  store.insurancePolicies.push(item);
-  saveData().then(function () { res.status(201).json(item); });
+app.post('/api/insurance', async function (req, res) {
+  try {
+    var dbRecord = mapInsuranceToDb(req.body);
+    if (!dbRecord.policy_year) dbRecord.policy_year = appSettings.year || 2026;
+    var { data, error } = await supabase.from('insurance_policies').insert(dbRecord).select().single();
+    if (error) throw new Error(error.message);
+    res.status(201).json(mapInsuranceToClient(data));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.put('/api/insurance/:id', function (req, res) {
-  var idx = store.insurancePolicies.findIndex(function (p) { return p.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  var allowed = ['farmName', 'farmNumber', 'lineNumber', 'crop', 'plantedAcres', 'fsaAcresManual',
-    'guarantee', 'actual', 'claimStatus', 'notes',
-    'policyNumber', 'coverageLevel', 'unitType', 'premiumPerAcre',
-    'agentName', 'policyYear', 'claimFiledDate', 'claimPaidDate', 'claimPaidAmount',
-    'claimNumber', 'adjusterName', 'adjusterPhone', 'lossType',
-    'preventedPlanting', 'preventedPlantingAcres'];
-  allowed.forEach(function (k) {
-    if (req.body[k] !== undefined) store.insurancePolicies[idx][k] = req.body[k];
-  });
-  saveData().then(function () {
-    var computed = Calc.computeInsurancePolicy(store.insurancePolicies[idx], store.cluRecords, store.pricing);
-    res.json(Object.assign({}, store.insurancePolicies[idx], { _computed: computed }));
-  });
+app.put('/api/insurance/:id', async function (req, res) {
+  try {
+    var allowed = ['farmName', 'farmNumber', 'lineNumber', 'crop', 'plantedAcres', 'fsaAcresManual',
+      'guarantee', 'actual', 'claimStatus', 'notes',
+      'policyNumber', 'coverageLevel', 'unitType', 'premiumPerAcre',
+      'agentName', 'policyYear', 'claimFiledDate', 'claimPaidDate', 'claimPaidAmount',
+      'claimNumber', 'adjusterName', 'adjusterPhone', 'lossType',
+      'preventedPlanting', 'preventedPlantingAcres'];
+    var subset = {};
+    allowed.forEach(function (k) { if (req.body[k] !== undefined) subset[k] = req.body[k]; });
+    var dbUpdates = mapInsuranceToDb(subset);
+    if (!Object.keys(dbUpdates).length) return res.status(400).json({ error: 'No valid fields to update' });
+
+    var { data, error } = await supabase.from('insurance_policies').update(dbUpdates).eq('id', req.params.id).select().single();
+    if (error || !data) return res.status(404).json({ error: 'Not found' });
+    var pol = mapInsuranceToClient(data);
+    var [cluRecords, pricing] = await Promise.all([getCluRecords(), getPricing()]);
+    var computed = Calc.computeInsurancePolicy(pol, cluRecords, pricing);
+    res.json(Object.assign({}, pol, { _computed: computed }));
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.delete('/api/insurance/:id', function (req, res) {
-  var idx = store.insurancePolicies.findIndex(function (p) { return p.id === req.params.id; });
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  store.insurancePolicies.splice(idx, 1);
-  saveData().then(function () { res.json({ ok: true }); });
+app.delete('/api/insurance/:id', async function (req, res) {
+  try {
+    var { error } = await supabase.from('insurance_policies').delete().eq('id', req.params.id);
+    if (error) throw new Error(error.message);
+    res.json({ ok: true });
+  } catch (err) { handleDbError(res, err); }
 });
 
 // ===== CLU APH Lookup =====
-app.get('/api/clu-aph', function (req, res) {
-  var crop = (req.query.crop || '').toLowerCase().trim();
-  var farmNumber = (req.query.farmNumber || '').trim();
-  if (!crop) return res.json({ avgAph: 0, count: 0, totalRecords: 0 });
+app.get('/api/clu-aph', async function (req, res) {
+  try {
+    var crop = (req.query.crop || '').toLowerCase().trim();
+    var farmNumber = (req.query.farmNumber || '').trim();
+    if (!crop) return res.json({ avgAph: 0, count: 0, totalRecords: 0 });
 
-  var matching = [];
-  var total = 0;
-  store.cluRecords.forEach(function (r) {
-    if (!r.crop || r.crop.toLowerCase().trim() !== crop) return;
-    if (farmNumber && r.farmNumber !== farmNumber) return;
-    total++;
-    if ((r.aph || 0) > 0) matching.push(r);
-  });
+    var records = await getCluRecords();
+    var matching = [];
+    var total = 0;
+    records.forEach(function (r) {
+      if (!r.crop || r.crop.toLowerCase().trim() !== crop) return;
+      if (farmNumber && r.farmNumber !== farmNumber) return;
+      total++;
+      if ((r.aph || 0) > 0) matching.push(r);
+    });
 
-  var sum = 0;
-  matching.forEach(function (r) { sum += r.aph; });
-  var avgAph = matching.length > 0 ? Math.round((sum / matching.length) * 100) / 100 : 0;
+    var sum = 0;
+    matching.forEach(function (r) { sum += r.aph; });
+    var avgAph = matching.length > 0 ? Math.round((sum / matching.length) * 100) / 100 : 0;
 
-  res.json({ avgAph: avgAph, count: matching.length, totalRecords: total });
+    res.json({ avgAph: avgAph, count: matching.length, totalRecords: total });
+  } catch (err) { handleDbError(res, err); }
 });
 
 // ===== Reporting Progress =====
-app.get('/api/rollup/reporting-progress', function (req, res) {
-  res.json(Calc.reportingProgress(store.cluRecords));
+app.get('/api/rollup/reporting-progress', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    res.json(Calc.reportingProgress(records));
+  } catch (err) { handleDbError(res, err); }
 });
 
 // ===== Cropping Intentions Report =====
 app.get('/api/cropping-intentions', async function (req, res) {
-  var budgetFields = await cachedFetch('http://localhost:3001/api/fields') || [];
-  var regFields = await cachedFetch('http://localhost:3005/api/fields?active=true') || [];
-  var enterprises = await cachedFetch('http://localhost:3001/api/enterprises') || [];
+  try {
+    var [budgetFields, regFields, enterprises, cluRecords] = await Promise.all([
+      cachedFetch('http://localhost:3001/api/fields').then(function (d) { return d || []; }),
+      cachedFetch('http://localhost:3005/api/fields?active=true').then(function (d) { return d || []; }),
+      cachedFetch('http://localhost:3001/api/enterprises').then(function (d) { return d || []; }),
+      getCluRecords()
+    ]);
 
-  // Build enterprise lookup
-  var entMap = {};
-  enterprises.forEach(function (e) { entMap[e.id] = e; });
+    // Build enterprise lookup
+    var entMap = {};
+    enterprises.forEach(function (e) { entMap[e.id] = e; });
 
-  // Build budget lookup by normalized name
-  var budgetMap = {};
-  budgetFields.forEach(function (f) {
-    budgetMap[normName(f.name)] = f;
-    if (f.registryFieldName) budgetMap[normName(f.registryFieldName)] = f;
-  });
-
-  // Build registry alias lookup for fuzzy matching
-  var aliasMap = {};
-  regFields.forEach(function (rf) {
-    aliasMap[normName(rf.name)] = rf;
-    (rf.aliases || []).forEach(function (a) { aliasMap[normName(a)] = rf; });
-  });
-
-  function findBudgetField(fieldName) {
-    var norm = normName(fieldName);
-    if (budgetMap[norm]) return budgetMap[norm];
-    // Try via registry alias → registry name → budget
-    var rf = aliasMap[norm];
-    if (rf && budgetMap[normName(rf.name)]) return budgetMap[normName(rf.name)];
-    // Fuzzy word match
-    var best = null, bestScore = 0;
-    budgetFields.forEach(function (bf) {
-      var s = syncMatchScore(bf.name, [], fieldName);
-      if (bf.registryFieldName) s = Math.max(s, syncMatchScore(bf.registryFieldName, [], fieldName));
-      if (s > bestScore) { bestScore = s; best = bf; }
+    // Build budget lookup by normalized name
+    var budgetMap = {};
+    budgetFields.forEach(function (f) {
+      budgetMap[normName(f.name)] = f;
+      if (f.registryFieldName) budgetMap[normName(f.registryFieldName)] = f;
     });
-    return bestScore >= 50 ? best : null;
-  }
 
-  var records = store.cluRecords;
-  if (req.query.farmNumber) {
-    records = records.filter(function (r) { return r.farmNumber === req.query.farmNumber; });
-  }
+    // Build registry alias lookup for fuzzy matching
+    var aliasMap = {};
+    regFields.forEach(function (rf) {
+      aliasMap[normName(rf.name)] = rf;
+      (rf.aliases || []).forEach(function (a) { aliasMap[normName(a)] = rf; });
+    });
 
-  // Sort by farm → tract → unit → CLU
-  records = records.slice().sort(function (a, b) {
-    var cmp = (a.farmNumber || '').localeCompare(b.farmNumber || '');
-    if (cmp !== 0) return cmp;
-    cmp = (a.tractNumber || '').localeCompare(b.tractNumber || '');
-    if (cmp !== 0) return cmp;
-    cmp = (a.unitNumber || '').localeCompare(b.unitNumber || '');
-    if (cmp !== 0) return cmp;
-    return parseInt(a.clu || '0') - parseInt(b.clu || '0');
-  });
+    function findBudgetField(fieldName) {
+      var norm = normName(fieldName);
+      if (budgetMap[norm]) return budgetMap[norm];
+      var rf = aliasMap[norm];
+      if (rf && budgetMap[normName(rf.name)]) return budgetMap[normName(rf.name)];
+      var best = null, bestScore = 0;
+      budgetFields.forEach(function (bf) {
+        var s = syncMatchScore(bf.name, [], fieldName);
+        if (bf.registryFieldName) s = Math.max(s, syncMatchScore(bf.registryFieldName, [], fieldName));
+        if (s > bestScore) { bestScore = s; best = bf; }
+      });
+      return bestScore >= 50 ? best : null;
+    }
 
-  var rows = records.map(function (r) {
-    var bf = findBudgetField(r.fieldName);
-    var ent = bf && bf.enterpriseId ? entMap[bf.enterpriseId] : null;
-    return {
-      farmNumber: r.farmNumber || '',
-      tractNumber: r.tractNumber || '',
-      unitNumber: r.unitNumber || '',
-      clu: r.clu || '',
-      fieldName: r.fieldName || '',
-      landClass: r.landClass || '',
-      fsaCrop: r.crop || '',
-      fsaAcres: r.fsaAcres || 0,
-      organic: !!r.organic,
-      budgetCrop: bf ? (bf.crop || '') : '',
-      budgetAcres: bf ? (bf.acres || 0) : 0,
-      enterprise: ent ? ent.name : '',
-      enterpriseCategory: ent ? ent.category : '',
-      systemCode: bf ? (bf.systemCode || '') : '',
-      plantDate: r.grainPlantDate || '',
-      use: r.use || '',
-      matched: !!bf
-    };
-  });
+    var records = cluRecords;
+    if (req.query.farmNumber) {
+      records = records.filter(function (r) { return r.farmNumber === req.query.farmNumber; });
+    }
 
-  res.json({
-    year: store.settings.year,
-    county: store.settings.county,
-    state: store.settings.state,
-    producerName: store.settings.producerName,
-    rows: rows
-  });
+    records = records.slice().sort(function (a, b) {
+      var cmp = (a.farmNumber || '').localeCompare(b.farmNumber || '');
+      if (cmp !== 0) return cmp;
+      cmp = (a.tractNumber || '').localeCompare(b.tractNumber || '');
+      if (cmp !== 0) return cmp;
+      cmp = (a.unitNumber || '').localeCompare(b.unitNumber || '');
+      if (cmp !== 0) return cmp;
+      return parseInt(a.clu || '0') - parseInt(b.clu || '0');
+    });
+
+    var rows = records.map(function (r) {
+      var bf = findBudgetField(r.fieldName);
+      var ent = bf && bf.enterpriseId ? entMap[bf.enterpriseId] : null;
+      return {
+        farmNumber: r.farmNumber || '',
+        tractNumber: r.tractNumber || '',
+        unitNumber: r.unitNumber || '',
+        clu: r.clu || '',
+        fieldName: r.fieldName || '',
+        landClass: r.landClass || '',
+        fsaCrop: r.crop || '',
+        fsaAcres: r.fsaAcres || 0,
+        organic: !!r.organic,
+        budgetCrop: bf ? (bf.crop || '') : '',
+        budgetAcres: bf ? (bf.acres || 0) : 0,
+        enterprise: ent ? ent.name : '',
+        enterpriseCategory: ent ? ent.category : '',
+        systemCode: bf ? (bf.systemCode || '') : '',
+        plantDate: r.grainPlantDate || '',
+        use: r.use || '',
+        matched: !!bf
+      };
+    });
+
+    res.json({
+      year: appSettings.year,
+      county: appSettings.county,
+      state: appSettings.state,
+      producerName: appSettings.producerName,
+      rows: rows
+    });
+  } catch (err) { handleDbError(res, err); }
 });
 
 app.get('/api/export/intentions', async function (req, res) {
-  // Reuse the same logic via internal fetch
   var url = 'http://localhost:' + PORT + '/api/cropping-intentions' +
     (req.query.farmNumber ? '?farmNumber=' + encodeURIComponent(req.query.farmNumber) : '');
   var data;
@@ -548,83 +883,108 @@ app.get('/api/export/intentions', async function (req, res) {
 });
 
 // ===== Validation =====
-app.get('/api/validation', function (req, res) {
-  res.json(Calc.validateRecords(store.cluRecords, store.pricing, store.insurancePolicies));
+app.get('/api/validation', async function (req, res) {
+  try {
+    var [cluRecords, pricing, policies] = await Promise.all([getCluRecords(), getPricing(), getInsurancePolicies()]);
+    res.json(Calc.validateRecords(cluRecords, pricing, policies));
+  } catch (err) { handleDbError(res, err); }
 });
 
 // ===== CSV Export =====
-app.get('/api/export/fsa', function (req, res) {
-  var records = store.cluRecords;
-  if (req.query.farmNumber) {
-    records = records.filter(function (r) { return r.farmNumber === req.query.farmNumber; });
-  }
-  var headers = ['Farm#', 'Tract', 'CLU', 'Field', 'Land Class', 'Crop', 'FSA Acres', 'Irrigated', 'Organic',
-    'Plant Date', 'Use', 'Reported', 'Tillage 2025', 'Cover Crop 2025', 'Unit#', 'APH'];
-  var rows = records.map(function (r) {
-    return [r.farmNumber, r.tractNumber, r.clu, r.fieldName, r.landClass || '', r.crop, r.fsaAcres,
-      r.irrigated ? 'Yes' : 'No', r.organic ? 'Yes' : 'No',
-      r.grainPlantDate || '', r.use || '', r.reported ? 'Yes' : 'No',
-      r.tillage2025 || '', r.cc2025 || '', r.unitNumber || '', r.aph || ''];
-  });
-  var csv = [headers.join(',')].concat(rows.map(function (row) {
-    return row.map(function (v) {
-      var s = String(v == null ? '' : v);
-      if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0) return '"' + s.replace(/"/g, '""') + '"';
-      return s;
-    }).join(',');
-  })).join('\n');
-  var fn = 'fsa-acreage' + (req.query.farmNumber ? '-farm' + req.query.farmNumber : '') + '.csv';
-  res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', 'attachment; filename="' + fn + '"');
-  res.send(csv);
+app.get('/api/export/fsa', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    if (req.query.farmNumber) {
+      records = records.filter(function (r) { return r.farmNumber === req.query.farmNumber; });
+    }
+    var headers = ['Farm#', 'Tract', 'CLU', 'Field', 'Land Class', 'Crop', 'FSA Acres', 'Irrigated', 'Organic',
+      'Plant Date', 'Use', 'Reported', 'Tillage 2025', 'Cover Crop 2025', 'Unit#', 'APH'];
+    var rows = records.map(function (r) {
+      return [r.farmNumber, r.tractNumber, r.clu, r.fieldName, r.landClass || '', r.crop, r.fsaAcres,
+        r.irrigated ? 'Yes' : 'No', r.organic ? 'Yes' : 'No',
+        r.grainPlantDate || '', r.use || '', r.reported ? 'Yes' : 'No',
+        r.tillage2025 || '', r.cc2025 || '', r.unitNumber || '', r.aph || ''];
+    });
+    var csv = [headers.join(',')].concat(rows.map(function (row) {
+      return row.map(function (v) {
+        var s = String(v == null ? '' : v);
+        if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      }).join(',');
+    })).join('\n');
+    var fn = 'fsa-acreage' + (req.query.farmNumber ? '-farm' + req.query.farmNumber : '') + '.csv';
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + fn + '"');
+    res.send(csv);
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/export/insurance', function (req, res) {
-  var headers = ['Policy#', 'Line', 'Farm#', 'Farm Name', 'Crop', 'Planted Acres', 'Coverage%',
-    'Unit Type', 'APH Guarantee', 'Actual Yield', 'Shortfall', 'Spring Price', 'Fall Price',
-    'Highest Price', '$ Guarantee', 'Indemnity', 'Premium/Ac', 'Total Premium', 'Status', 'Notes'];
-  var rows = store.insurancePolicies.map(function (p) {
-    var c = Calc.computeInsurancePolicy(p, store.cluRecords, store.pricing);
-    return [p.policyNumber || '', p.lineNumber || '', p.farmNumber || '', p.farmName || '',
-      p.crop || '', p.plantedAcres || 0, p.coverageLevel || '', p.unitType || '',
-      p.guarantee || 0, p.actual || 0, c.shortfall || 0,
-      c.springPrice || 0, c.fallPrice || 0, c.highestPrice || 0,
-      c.dollarGuarantee || 0, c.indemnity || 0,
-      p.premiumPerAcre || 0, (p.premiumPerAcre || 0) * (p.plantedAcres || 0),
-      c.claimStatus || 'none', p.notes || ''];
-  });
-  var csv = [headers.join(',')].concat(rows.map(function (row) {
-    return row.map(function (v) {
-      var s = String(v == null ? '' : v);
-      if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0) return '"' + s.replace(/"/g, '""') + '"';
-      return s;
-    }).join(',');
-  })).join('\n');
-  res.setHeader('Content-Type', 'text/csv');
-  res.setHeader('Content-Disposition', 'attachment; filename="insurance-summary.csv"');
-  res.send(csv);
+app.get('/api/export/insurance', async function (req, res) {
+  try {
+    var [policies, cluRecords, pricing] = await Promise.all([getInsurancePolicies(), getCluRecords(), getPricing()]);
+    var headers = ['Policy#', 'Line', 'Farm#', 'Farm Name', 'Crop', 'Planted Acres', 'Coverage%',
+      'Unit Type', 'APH Guarantee', 'Actual Yield', 'Shortfall', 'Spring Price', 'Fall Price',
+      'Highest Price', '$ Guarantee', 'Indemnity', 'Premium/Ac', 'Total Premium', 'Status', 'Notes'];
+    var rows = policies.map(function (p) {
+      var c = Calc.computeInsurancePolicy(p, cluRecords, pricing);
+      return [p.policyNumber || '', p.lineNumber || '', p.farmNumber || '', p.farmName || '',
+        p.crop || '', p.plantedAcres || 0, p.coverageLevel || '', p.unitType || '',
+        p.guarantee || 0, p.actual || 0, c.shortfall || 0,
+        c.springPrice || 0, c.fallPrice || 0, c.highestPrice || 0,
+        c.dollarGuarantee || 0, c.indemnity || 0,
+        p.premiumPerAcre || 0, (p.premiumPerAcre || 0) * (p.plantedAcres || 0),
+        c.claimStatus || 'none', p.notes || ''];
+    });
+    var csv = [headers.join(',')].concat(rows.map(function (row) {
+      return row.map(function (v) {
+        var s = String(v == null ? '' : v);
+        if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      }).join(',');
+    })).join('\n');
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="insurance-summary.csv"');
+    res.send(csv);
+  } catch (err) { handleDbError(res, err); }
 });
 
 // ===== Convenience endpoints =====
-app.get('/api/farm-numbers', function (req, res) {
-  var nums = store.farms.map(function (f) { return { farmNumber: f.farmNumber, farmName: f.farmName }; });
-  res.json(nums.sort(function (a, b) { return a.farmNumber.localeCompare(b.farmNumber); }));
+app.get('/api/farm-numbers', async function (req, res) {
+  try {
+    // Fetch distinct farm_number + farm_name from Supabase
+    var { data, error } = await supabase.from('clu_records').select('farm_number, farm_name');
+    if (error) throw new Error(error.message);
+    var seen = {};
+    (data || []).forEach(function (r) {
+      if (r.farm_number && !seen[r.farm_number]) {
+        seen[r.farm_number] = { farmNumber: r.farm_number, farmName: r.farm_name || '' };
+      }
+    });
+    var nums = Object.values(seen).sort(function (a, b) { return a.farmNumber.localeCompare(b.farmNumber); });
+    res.json(nums);
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/field-names', function (req, res) {
-  var names = {};
-  store.cluRecords.forEach(function (r) { if (r.fieldName) names[r.fieldName] = 1; });
-  res.json(Object.keys(names).sort());
+app.get('/api/field-names', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    var names = {};
+    records.forEach(function (r) { if (r.fieldName) names[r.fieldName] = 1; });
+    res.json(Object.keys(names).sort());
+  } catch (err) { handleDbError(res, err); }
 });
 
-app.get('/api/crop-names', function (req, res) {
-  var names = {};
-  store.cluRecords.forEach(function (r) { if (r.crop) names[r.crop] = 1; });
-  res.json(Object.keys(names).sort());
+app.get('/api/crop-names', async function (req, res) {
+  try {
+    var records = await getCluRecords();
+    var names = {};
+    records.forEach(function (r) { if (r.crop) names[r.crop] = 1; });
+    res.json(Object.keys(names).sort());
+  } catch (err) { handleDbError(res, err); }
 });
 
 app.get('/api/tillage-codes', function (req, res) {
-  res.json(store.tillageCodes || Calc.TILLAGE_CODES);
+  res.json(TILLAGE_CODES);
 });
 
 // --- Registry proxy (field names for autocomplete — legacy, returns names only) ---
@@ -644,7 +1004,6 @@ app.get('/api/registry/field-names', async function (req, res) {
 });
 
 // --- Registry proxy: crop list for CLU crop selection dropdown ---
-// Cached 60s in-memory to avoid hammering farm-registry on every page load
 var _fsaRegistryCropsCache = null;
 var _fsaRegistryCropsCacheExpiry = 0;
 app.get('/api/registry/crops', async function (req, res) {
@@ -654,7 +1013,7 @@ app.get('/api/registry/crops', async function (req, res) {
       var resp = await fetch('http://localhost:3005/api/crops');
       if (!resp.ok) throw new Error('Registry returned ' + resp.status);
       _fsaRegistryCropsCache = await resp.json();
-      _fsaRegistryCropsCacheExpiry = now + 60 * 1000; // 60s cache
+      _fsaRegistryCropsCacheExpiry = now + 60 * 1000;
     }
     res.json(_fsaRegistryCropsCache);
   } catch (err) {
@@ -670,7 +1029,6 @@ app.get('/api/registry/fields-autocomplete', async function (req, res) {
     var resp = await fetch(url);
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);
     var data = await resp.json();
-    // data.fields is an array of { id, name, aliases, reportingAcres, organicAcres, ownership }
     res.json(data.fields || []);
   } catch (err) {
     res.status(502).json({ error: 'Farm registry unavailable' });
@@ -688,7 +1046,7 @@ app.get('/api/budget/fields', async function (req, res) {
   }
 });
 
-// --- Grain ticket yield proxy (bridge to port 3000) ---
+// --- Grain ticket yield proxy (bridge to port 3007) ---
 app.get('/api/grain-yield', async function (req, res) {
   try {
     var farmsResp = await fetch('http://localhost:3007/api/farms');
@@ -697,7 +1055,6 @@ app.get('/api/grain-yield', async function (req, res) {
     var farms = await farmsResp.json();
     var tickets = ticketsResp.ok ? await ticketsResp.json() : [];
 
-    // Count tickets per farm (lowercase match)
     var counts = {};
     tickets.forEach(function (t) {
       var key = (t.farm || '').trim().toLowerCase();
@@ -759,12 +1116,14 @@ function syncBestMatch(canonical, aliases, candidates, nameKey) {
 // ===== Enterprise-level crop comparison: Budget acres vs FSA acres by crop =====
 app.get('/api/sync-crops/enterprise-preview', async function (req, res) {
   try {
-    var dash = await cachedFetch('http://localhost:3001/api/dashboard');
+    var [dash, cluRecords] = await Promise.all([
+      cachedFetch('http://localhost:3001/api/dashboard'),
+      getCluRecords()
+    ]);
     if (!dash) {
       return res.status(502).json({ error: 'Farm budget unavailable — is port 3001 running?' });
     }
 
-    // Build budget-side crop totals from enterpriseSummaries[].cropRows[]
     var budgetMap = {};
     var enterpriseSummaries = dash.enterpriseSummaries || [];
     enterpriseSummaries.forEach(function (es) {
@@ -783,21 +1142,14 @@ app.get('/api/sync-crops/enterprise-preview', async function (req, res) {
       });
     });
 
-    // Non-crop land class values to exclude from FSA side
     var NON_CROP_CLASSES = ['Grass/GLS', 'CRP', 'Hay/Forage', 'Idle', 'NC'];
-    // Non-crop crop names to exclude (lowercased, trimmed)
     var NON_CROP_NAMES = ['', 'nc', 'gls', 'crp', 'idle', 'mixed forage / hay', 'alfalfa', 'grass', 'intermediate wheatgrass'];
 
-    // Build FSA-side filtered crop totals from store.cluRecords
     var fsaMap = {};
-    store.cluRecords.forEach(function (r) {
-      // Filter: exclude reported CLUs
+    cluRecords.forEach(function (r) {
       if (r.reported === true) return;
-      // Filter: exclude non-crop land classes
       if (NON_CROP_CLASSES.indexOf(r.landClass) !== -1) return;
-      // Filter: exclude forage use
       if (r.use === 'forage') return;
-      // Filter: exclude non-crop crop names
       var cropLower = (r.crop || '').toLowerCase().trim();
       if (NON_CROP_NAMES.indexOf(cropLower) !== -1) return;
 
@@ -809,12 +1161,10 @@ app.get('/api/sync-crops/enterprise-preview', async function (req, res) {
       fsaMap[key].cluCount++;
     });
 
-    // Collect all unique normalized keys from both sides
     var allKeys = {};
     Object.keys(budgetMap).forEach(function (k) { allKeys[k] = true; });
     Object.keys(fsaMap).forEach(function (k) { allKeys[k] = true; });
 
-    // Merge into comparison rows
     var rows = Object.keys(allKeys).map(function (key) {
       var bSide = budgetMap[key] || { displayName: fsaMap[key] ? fsaMap[key].displayName : key, budgetAcres: 0, enterprises: [] };
       var fSide = fsaMap[key] || { displayName: budgetMap[key] ? budgetMap[key].displayName : key, fsaAcres: 0, cluCount: 0 };
@@ -832,10 +1182,8 @@ app.get('/api/sync-crops/enterprise-preview', async function (req, res) {
       };
     });
 
-    // Sort by budgetAcres descending
     rows.sort(function (a, b) { return b.budgetAcres - a.budgetAcres; });
 
-    // Grand totals
     var budgetGrandTotal = (dash.grandTotals && dash.grandTotals.acres != null)
       ? Math.round(dash.grandTotals.acres * 100) / 100
       : Math.round(rows.reduce(function (s, r) { return s + r.budgetAcres; }, 0) * 100) / 100;
@@ -849,16 +1197,15 @@ app.get('/api/sync-crops/enterprise-preview', async function (req, res) {
 
 app.get('/api/sync-crops/preview', async function (req, res) {
   try {
-    var budgetResp = await fetch('http://localhost:3001/api/fields');
-    if (!budgetResp.ok) throw new Error('Budget returned ' + budgetResp.status);
-    var budgetFields = await budgetResp.json();
+    var [budgetFields, regResp, cluRecords] = await Promise.all([
+      fetch('http://localhost:3001/api/fields').then(function (r) { return r.ok ? r.json() : []; }),
+      fetch('http://localhost:3005/api/fields?active=true').then(function (r) { return r.ok ? r.json() : []; }),
+      getCluRecords()
+    ]);
+    var regFields = regResp || [];
 
-    var regResp = await fetch('http://localhost:3005/api/fields?active=true');
-    var regFields = regResp.ok ? await regResp.json() : [];
-
-    // Build CLU field groups: group CLU records by normalized fieldName
     var cluByField = {};
-    store.cluRecords.forEach(function (r) {
+    cluRecords.forEach(function (r) {
       var fn = (r.fieldName || '').trim();
       if (!fn) return;
       var key = normName(fn);
@@ -869,28 +1216,20 @@ app.get('/api/sync-crops/preview', async function (req, res) {
 
     var proposals = [];
 
-    // Strategy: anchor on registry fields, match to budget + CLU
     regFields.forEach(function (rf) {
       var aliases = rf.aliases || [];
-
-      // Find matching budget field
       var bm = syncBestMatch(rf.name, aliases, budgetFields, 'name');
-      if (!bm || !bm.item.crop) return; // no budget match or no crop assigned
+      if (!bm || !bm.item.crop) return;
 
-      // Find matching CLU field group
       var cm = syncBestMatch(rf.name, aliases, cluFields, 'name');
-      if (!cm) return; // no CLU match
+      if (!cm) return;
 
       var budgetCrop = bm.item.crop;
-      var combinedScore = Math.min(bm.score, cm.score); // weakest link
+      var combinedScore = Math.min(bm.score, cm.score);
 
-      // For each CLU record in this field group
       cm.item.records.forEach(function (clu) {
-        // Only sync Tillable CLUs
         if (clu.landClass !== 'Tillable') return;
-        // Skip if crop already matches
         if (normName(clu.crop) === normName(budgetCrop)) return;
-
         proposals.push({
           cluId: clu.id,
           fieldName: clu.fieldName,
@@ -906,7 +1245,6 @@ app.get('/api/sync-crops/preview', async function (req, res) {
       });
     });
 
-    // Also check budget fields not in registry (direct CLU name match)
     var matchedBudget = {};
     regFields.forEach(function (rf) {
       var bm = syncBestMatch(rf.name, rf.aliases || [], budgetFields, 'name');
@@ -914,13 +1252,11 @@ app.get('/api/sync-crops/preview', async function (req, res) {
     });
     budgetFields.forEach(function (bf) {
       if (matchedBudget[normName(bf.name)] || !bf.crop) return;
-      // Try direct match against CLU field names
       var cm = syncBestMatch(bf.name, [], cluFields, 'name');
       if (!cm) return;
       cm.item.records.forEach(function (clu) {
         if (clu.landClass !== 'Tillable') return;
         if (normName(clu.crop) === normName(bf.crop)) return;
-        // Avoid duplicates
         if (proposals.some(function (p) { return p.cluId === clu.id; })) return;
         proposals.push({
           cluId: clu.id,
@@ -937,7 +1273,6 @@ app.get('/api/sync-crops/preview', async function (req, res) {
       });
     });
 
-    // Sort by match score descending, then field name
     proposals.sort(function (a, b) {
       if (b.matchScore !== a.matchScore) return b.matchScore - a.matchScore;
       return a.fieldName.localeCompare(b.fieldName);
@@ -949,28 +1284,31 @@ app.get('/api/sync-crops/preview', async function (req, res) {
   }
 });
 
-app.post('/api/sync-crops/apply', function (req, res) {
-  var updates = req.body.updates;
-  if (!Array.isArray(updates)) return res.status(400).json({ error: 'updates array required' });
+app.post('/api/sync-crops/apply', async function (req, res) {
+  try {
+    var updates = req.body.updates;
+    if (!Array.isArray(updates)) return res.status(400).json({ error: 'updates array required' });
 
-  var count = 0;
-  updates.forEach(function (u) {
-    var rec = store.cluRecords.find(function (r) { return r.id === u.cluId; });
-    if (rec && u.crop) {
-      rec.crop = u.crop;
-      count++;
-    }
-  });
+    var count = 0;
+    var updatePromises = updates
+      .filter(function (u) { return u.cluId && u.crop; })
+      .map(function (u) {
+        count++;
+        return supabase.from('clu_records').update({ crop: u.crop }).eq('id', u.cluId);
+      });
 
-  saveData().then(function () {
+    await Promise.all(updatePromises);
+    invalidateCluCache();
     res.json({ updated: count });
-  });
+  } catch (err) {
+    handleDbError(res, err);
+  }
 });
 
 // ===== Season Dashboard — cross-app aggregation =====
 
-function buildSeasonalStatus(store, budgetFields, budgetDash, seedDash, seedRecon, regFields, gtFarms) {
-  var year = store.settings.year || 2026;
+function buildSeasonalStatus(settings, cluRecords, insurancePolicies, budgetFields, budgetDash, seedDash, seedRecon, regFields, gtFarms) {
+  var year = settings.year || 2026;
 
   // -- Early Season --
   var early = { flags: [] };
@@ -1014,27 +1352,27 @@ function buildSeasonalStatus(store, budgetFields, budgetDash, seedDash, seedReco
   } else {
     planting.totalBudgetFields = null;
   }
-  var cluWithPlant = store.cluRecords.filter(function (r) {
+  var cluWithPlant = cluRecords.filter(function (r) {
     var d = r.grainPlantDate || '';
     return d && d !== '' && d !== 'TBD' && d !== '0';
   });
   planting.cluWithPlantDate = cluWithPlant.length;
-  planting.cluTotal = store.cluRecords.length;
+  planting.cluTotal = cluRecords.length;
   if (budgetFields && planting.fieldsWithCrop < budgetFields.length) {
     planting.flags.push({ type: 'warn', msg: (budgetFields.length - planting.fieldsWithCrop) + ' budget fields have no crop assigned' });
   }
 
   // -- Mid-Season --
   var mid = { flags: [] };
-  var reported = store.cluRecords.filter(function (r) { return r.reported; });
+  var reported = cluRecords.filter(function (r) { return r.reported; });
   mid.cluReported = reported.length;
-  mid.cluTotal = store.cluRecords.length;
+  mid.cluTotal = cluRecords.length;
   mid.reportingPct = mid.cluTotal > 0 ? Math.round((mid.cluReported / mid.cluTotal) * 100) : 0;
-  mid.insurancePolicyCount = store.insurancePolicies.length;
-  var policiesWithActual = store.insurancePolicies.filter(function (p) { return p.actual && p.actual > 0; });
-  mid.policiesMissingActual = store.insurancePolicies.length - policiesWithActual.length;
+  mid.insurancePolicyCount = insurancePolicies.length;
+  var policiesWithActual = insurancePolicies.filter(function (p) { return p.actual && p.actual > 0; });
+  mid.policiesMissingActual = insurancePolicies.length - policiesWithActual.length;
   var insCrops = {};
-  store.insurancePolicies.forEach(function (p) { if (p.crop) insCrops[normName(p.crop)] = true; });
+  insurancePolicies.forEach(function (p) { if (p.crop) insCrops[normName(p.crop)] = true; });
   mid.cropsInsured = Object.keys(insCrops).length;
   if (mid.cluReported < mid.cluTotal) {
     var unreported = mid.cluTotal - mid.cluReported;
@@ -1063,10 +1401,9 @@ function buildSeasonalStatus(store, budgetFields, budgetDash, seedDash, seedReco
       .sort(function (a, b) { return b.totalBU - a.totalBU; })
       .slice(0, 8);
 
-    // Insurance yield sync status
     var synced = 0;
     var pending = 0;
-    store.insurancePolicies.forEach(function (p) {
+    insurancePolicies.forEach(function (p) {
       if (!p.crop) return;
       var hasYield = p.actual && p.actual > 0;
       if (hasYield) synced++;
@@ -1088,7 +1425,7 @@ function buildSeasonalStatus(store, budgetFields, budgetDash, seedDash, seedReco
   post.claimsFiled = 0;
   post.claimsPaid = 0;
   post.claimsDenied = 0;
-  store.insurancePolicies.forEach(function (p) {
+  insurancePolicies.forEach(function (p) {
     var s = p.claimStatus || 'none';
     if (s === 'potential') post.claimsPotential++;
     else if (s === 'filed') post.claimsFiled++;
@@ -1105,7 +1442,6 @@ function buildSeasonalStatus(store, budgetFields, budgetDash, seedDash, seedReco
     fsaAcres: true
   };
 
-  // -- Registry field count --
   var registryFieldCount = regFields ? regFields.length : null;
 
   return {
@@ -1121,166 +1457,152 @@ function buildSeasonalStatus(store, budgetFields, budgetDash, seedDash, seedReco
 }
 
 app.get('/api/season/status', async function (req, res) {
-  // perf: use cachedFetch with TTL + timeout; deduplicate grain-tickets calls (was 8 fetches, now 6)
-  var results = await Promise.all([
-    cachedFetch('http://localhost:3001/api/fields'),
-    cachedFetch('http://localhost:3001/api/dashboard'),
-    cachedFetch('http://localhost:3006/api/dashboard'),
-    cachedFetch('http://localhost:3006/api/reconciliation'),
-    cachedFetch('http://localhost:3005/api/fields?active=true'),
-    cachedFetch('http://localhost:3007/api/farms'),
-    cachedFetch('http://localhost:3007/api/stats')
-  ]);
+  try {
+    var [cluRecords, insurancePolicies, crossAppResults] = await Promise.all([
+      getCluRecords(),
+      getInsurancePolicies(),
+      Promise.all([
+        cachedFetch('http://localhost:3001/api/fields'),
+        cachedFetch('http://localhost:3001/api/dashboard'),
+        cachedFetch('http://localhost:3006/api/dashboard'),
+        cachedFetch('http://localhost:3006/api/reconciliation'),
+        cachedFetch('http://localhost:3005/api/fields?active=true'),
+        cachedFetch('http://localhost:3007/api/farms'),
+        cachedFetch('http://localhost:3007/api/stats')
+      ])
+    ]);
 
-  var budgetFields = results[0];
-  var budgetDash   = results[1];
-  var seedDash     = results[2];
-  var seedRecon    = results[3];
-  var regFields    = results[4];
-  var gtFarms      = results[5];
-  var gtStats      = results[6];
-  // perf: removed separate /api/tickets fetch — ticket count now from /api/stats
-  var gtTickets    = null;
+    var budgetFields = crossAppResults[0];
+    var budgetDash   = crossAppResults[1];
+    var seedDash     = crossAppResults[2];
+    var seedRecon    = crossAppResults[3];
+    var regFields    = crossAppResults[4];
+    var gtFarms      = crossAppResults[5];
+    var gtStats      = crossAppResults[6];
 
-  // Enrich farm data with ticket counts (same as grain-yield proxy)
-  if (gtFarms && gtTickets) {
-    var counts = {};
-    gtTickets.forEach(function (t) {
-      var key = (t.farm || '').trim().toLowerCase();
-      counts[key] = (counts[key] || 0) + 1;
-    });
-    gtFarms.forEach(function (f) {
-      var key = (f.farm || '').trim().toLowerCase();
-      f.ticketCount = counts[key] || 0;
-    });
-  }
-
-  var season = buildSeasonalStatus(store, budgetFields, budgetDash, seedDash, seedRecon, regFields, gtFarms);
-  // perf: get ticket count from stats (avoids separate /api/tickets fetch)
-  if (gtStats) {
-    season.harvest.grainTicketCount = gtStats.totalTickets || 0;
-    season.harvest.avgMoisture = gtStats.avgMoisture;
-    season.harvest.dailyIntake = gtStats.dailyIntake;
-    season.harvest.cropDetails = gtStats.cropSummary;
-  }
-  res.json(season);
+    var season = buildSeasonalStatus(appSettings, cluRecords, insurancePolicies, budgetFields, budgetDash, seedDash, seedRecon, regFields, gtFarms);
+    if (gtStats) {
+      season.harvest.grainTicketCount = gtStats.totalTickets || 0;
+      season.harvest.avgMoisture = gtStats.avgMoisture;
+      season.harvest.dailyIntake = gtStats.dailyIntake;
+      season.harvest.cropDetails = gtStats.cropSummary;
+    }
+    res.json(season);
+  } catch (err) { handleDbError(res, err); }
 });
 
 app.get('/api/season/field-crosswalk', async function (req, res) {
-  // perf: use cachedFetch with TTL + timeout (reuses cache from /api/season/status)
-  var results = await Promise.all([
-    cachedFetch('http://localhost:3005/api/fields?active=true'),
-    cachedFetch('http://localhost:3001/api/fields'),
-    cachedFetch('http://localhost:3007/api/farms')
-  ]);
+  try {
+    var [cluRecords, crossAppResults] = await Promise.all([
+      getCluRecords(),
+      Promise.all([
+        cachedFetch('http://localhost:3005/api/fields?active=true'),
+        cachedFetch('http://localhost:3001/api/fields'),
+        cachedFetch('http://localhost:3007/api/farms')
+      ])
+    ]);
 
-  var regFields    = results[0] || [];
-  var budgetFields = results[1] || [];
-  var gtFarms      = results[2] || [];
+    var regFields    = crossAppResults[0] || [];
+    var budgetFields = crossAppResults[1] || [];
+    var gtFarms      = crossAppResults[2] || [];
 
-  // Extract unique CLU field names
-  var cluFieldMap = {};
-  store.cluRecords.forEach(function (r) {
-    var fn = (r.fieldName || '').trim();
-    if (!fn) return;
-    var key = normName(fn);
-    if (!cluFieldMap[key]) cluFieldMap[key] = { name: fn, acres: 0, count: 0 };
-    cluFieldMap[key].acres += (parseFloat(r.fsaAcres) || 0);
-    cluFieldMap[key].count++;
-  });
-  var cluFields = Object.keys(cluFieldMap).map(function (k) { return cluFieldMap[k]; });
-
-  // Fuzzy match helper
-  function matchScore(canonical, aliases, candidate) {
-    var normCan = normName(canonical);
-    var normCand = normName(candidate);
-    if (normCan === normCand) return 100;
-    for (var i = 0; i < (aliases || []).length; i++) {
-      if (normName(aliases[i]) === normCand) return 95;
-    }
-    if (normCan.length > 2 && normCand.length > 2) {
-      if (normCan.indexOf(normCand) !== -1 || normCand.indexOf(normCan) !== -1) return 70;
-    }
-    var canWords = normCan.split(' ').filter(function (w) { return w.length > 2; });
-    var candWords = normCand.split(' ').filter(function (w) { return w.length > 2; });
-    var overlap = canWords.filter(function (w) { return candWords.indexOf(w) !== -1; });
-    if (overlap.length > 0 && canWords.length > 0) return 30 + Math.round((overlap.length / canWords.length) * 40);
-    return 0;
-  }
-
-  function bestMatch(canonical, aliases, candidates, nameKey) {
-    var best = null;
-    var bestScore = 0;
-    candidates.forEach(function (c) {
-      var s = matchScore(canonical, aliases, c[nameKey] || '');
-      if (s > bestScore) { bestScore = s; best = c; }
+    var cluFieldMap = {};
+    cluRecords.forEach(function (r) {
+      var fn = (r.fieldName || '').trim();
+      if (!fn) return;
+      var key = normName(fn);
+      if (!cluFieldMap[key]) cluFieldMap[key] = { name: fn, acres: 0, count: 0 };
+      cluFieldMap[key].acres += (parseFloat(r.fsaAcres) || 0);
+      cluFieldMap[key].count++;
     });
-    return bestScore >= 30 ? { item: best, score: bestScore } : null;
-  }
+    var cluFields = Object.keys(cluFieldMap).map(function (k) { return cluFieldMap[k]; });
 
-  // Build crosswalk anchored on registry fields
-  var crosswalk = [];
-  var matchedBudget = {};
-  var matchedClu = {};
-  var matchedGt = {};
+    function matchScore(canonical, aliases, candidate) {
+      var normCan = normName(canonical);
+      var normCand = normName(candidate);
+      if (normCan === normCand) return 100;
+      for (var i = 0; i < (aliases || []).length; i++) {
+        if (normName(aliases[i]) === normCand) return 95;
+      }
+      if (normCan.length > 2 && normCand.length > 2) {
+        if (normCan.indexOf(normCand) !== -1 || normCand.indexOf(normCan) !== -1) return 70;
+      }
+      var canWords = normCan.split(' ').filter(function (w) { return w.length > 2; });
+      var candWords = normCand.split(' ').filter(function (w) { return w.length > 2; });
+      var overlap = canWords.filter(function (w) { return candWords.indexOf(w) !== -1; });
+      if (overlap.length > 0 && canWords.length > 0) return 30 + Math.round((overlap.length / canWords.length) * 40);
+      return 0;
+    }
 
-  regFields.forEach(function (rf) {
-    var aliases = rf.aliases || [];
-    var row = {
-      canonical: rf.name,
-      registryId: rf.id,
-      registryAcres: rf.reportingAcres || 0,
-      budget: null,
-      fsa: null,
-      grainTicket: null,
-      issues: []
+    function bestMatch(canonical, aliases, candidates, nameKey) {
+      var best = null;
+      var bestScore = 0;
+      candidates.forEach(function (c) {
+        var s = matchScore(canonical, aliases, c[nameKey] || '');
+        if (s > bestScore) { bestScore = s; best = c; }
+      });
+      return bestScore >= 30 ? { item: best, score: bestScore } : null;
+    }
+
+    var crosswalk = [];
+    var matchedBudget = {};
+    var matchedClu = {};
+    var matchedGt = {};
+
+    regFields.forEach(function (rf) {
+      var aliases = rf.aliases || [];
+      var row = {
+        canonical: rf.name,
+        registryId: rf.id,
+        registryAcres: rf.reportingAcres || 0,
+        budget: null,
+        fsa: null,
+        grainTicket: null,
+        issues: []
+      };
+
+      var bm = bestMatch(rf.name, aliases, budgetFields, 'name');
+      if (bm) {
+        row.budget = { name: bm.item.name, crop: bm.item.crop, acres: bm.item.acres, score: bm.score };
+        matchedBudget[normName(bm.item.name)] = true;
+      }
+
+      var cm = bestMatch(rf.name, aliases, cluFields, 'name');
+      if (cm) {
+        row.fsa = { name: cm.item.name, acres: Math.round(cm.item.acres * 100) / 100, records: cm.item.count, score: cm.score };
+        matchedClu[normName(cm.item.name)] = true;
+      }
+
+      var gm = bestMatch(rf.name, aliases, gtFarms, 'farm');
+      if (gm) {
+        row.grainTicket = { name: gm.item.farm, crop: gm.item.crop, acres: gm.item.acres, score: gm.score };
+        matchedGt[normName(gm.item.farm)] = true;
+      }
+
+      if (!row.budget) row.issues.push('No budget field match');
+      if (!row.fsa) row.issues.push('No FSA CLU match');
+      if (!row.grainTicket) row.issues.push('No grain ticket match');
+
+      crosswalk.push(row);
+    });
+
+    var unmatchedBudget = budgetFields.filter(function (f) { return !matchedBudget[normName(f.name)]; });
+    var unmatchedGt = gtFarms.filter(function (f) { return !matchedGt[normName(f.farm)]; });
+
+    var summary = {
+      registryFields: regFields.length,
+      unmatchedBudget: unmatchedBudget.length,
+      unmatchedGrainTicket: unmatchedGt.length
     };
 
-    var bm = bestMatch(rf.name, aliases, budgetFields, 'name');
-    if (bm) {
-      row.budget = { name: bm.item.name, crop: bm.item.crop, acres: bm.item.acres, score: bm.score };
-      matchedBudget[normName(bm.item.name)] = true;
-    }
-
-    var cm = bestMatch(rf.name, aliases, cluFields, 'name');
-    if (cm) {
-      row.fsa = { name: cm.item.name, acres: Math.round(cm.item.acres * 100) / 100, records: cm.item.count, score: cm.score };
-      matchedClu[normName(cm.item.name)] = true;
-    }
-
-    var gm = bestMatch(rf.name, aliases, gtFarms, 'farm');
-    if (gm) {
-      row.grainTicket = { name: gm.item.farm, crop: gm.item.crop, acres: gm.item.acres, score: gm.score };
-      matchedGt[normName(gm.item.farm)] = true;
-    }
-
-    // Flag issues
-    if (!row.budget) row.issues.push('No budget field match');
-    if (!row.fsa) row.issues.push('No FSA CLU match');
-    if (!row.grainTicket) row.issues.push('No grain ticket match');
-
-    crosswalk.push(row);
-  });
-
-  // Add unmatched entries from other sources
-  var unmatchedBudget = budgetFields.filter(function (f) { return !matchedBudget[normName(f.name)]; });
-  var unmatchedGt = gtFarms.filter(function (f) { return !matchedGt[normName(f.farm)]; });
-
-  var summary = {
-    registryFields: regFields.length,
-    unmatchedBudget: unmatchedBudget.length,
-    unmatchedGrainTicket: unmatchedGt.length
-  };
-
-  res.json({ crosswalk: crosswalk, unmatched: { budget: unmatchedBudget.slice(0, 20), grainTicket: unmatchedGt.slice(0, 20) }, summary: summary });
+    res.json({ crosswalk: crosswalk, unmatched: { budget: unmatchedBudget.slice(0, 20), grainTicket: unmatchedGt.slice(0, 20) }, summary: summary });
+  } catch (err) { handleDbError(res, err); }
 });
 
 // ===== Start =====
-loadData();
-console.log('Loaded: ' + store.cluRecords.length + ' CLU records, ' +
-  store.farms.length + ' farms, ' +
-  store.pricing.length + ' pricing entries, ' +
-  store.insurancePolicies.length + ' insurance policies');
+console.log('FSA Acres server starting — using Supabase for CLU records, insurance policies, and pricing');
+console.log('Settings loaded from:', fs.existsSync(SETTINGS_FILE) ? SETTINGS_FILE : 'defaults');
+console.log('Settings:', JSON.stringify(appSettings));
 
 app.listen(PORT, '0.0.0.0', function () {
   console.log('FSA Acres server running at http://localhost:' + PORT);
