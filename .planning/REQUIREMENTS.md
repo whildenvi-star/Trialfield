@@ -9,10 +9,10 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 
 ### Data Consolidation
 
-- [ ] **CONS-01**: Portal Supabase is the single data store for FSA CLU records — fsa-acres Express app reads/writes through portal API, not local JSON
-- [ ] **CONS-02**: Portal Supabase is the single data store for insurance policies and pricing — fsa-acres reads/writes through portal API
+- [x] **CONS-01**: Portal Supabase is the single data store for FSA CLU records — fsa-acres Express app reads/writes through portal API, not local JSON
+- [x] **CONS-02**: Portal Supabase is the single data store for insurance policies and pricing — fsa-acres reads/writes through portal API
 - [x] **CONS-03**: USDA RMA price scraper available in portal (migrated from fsa-acres) and updates insurance_pricing table
-- [ ] **CONS-04**: fsa-acres seasonal dashboard, reports, and GCS features continue working against consolidated data
+- [x] **CONS-04**: fsa-acres seasonal dashboard, reports, and GCS features continue working against consolidated data
 - [x] **CONS-05**: One-time data migration script moves fsa-acres JSON records to Supabase with duplicate detection and verification
 - [x] **CONS-06**: Every field record in every app has a registry_field_id that maps to farm-registry
 - [x] **CONS-07**: Cross-module data joins use registry field ID, not string name matching
@@ -102,10 +102,10 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 | CONS-09 | Phase 50 | Complete |
 | CONS-10 | Phase 50 | Complete |
 | CONS-11 | Phase 50 | Complete |
-| CONS-01 | Phase 51 | Pending |
-| CONS-02 | Phase 51 | Pending |
+| CONS-01 | Phase 51 | Complete |
+| CONS-02 | Phase 51 | Complete |
 | CONS-03 | Phase 51 | Complete |
-| CONS-04 | Phase 51 | Pending |
+| CONS-04 | Phase 51 | Complete |
 | CONS-05 | Phase 51 | Complete |
 | PIPE-01 | Phase 52 | Pending |
 | PIPE-02 | Phase 52 | Pending |

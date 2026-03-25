@@ -132,7 +132,7 @@
 
 - [x] **Phase 49: Canonical Field IDs** - Add registry_field_id to all apps and build backfill scripts — the ID foundation everything else depends on (completed 2026-03-24)
 - [x] **Phase 50: Canonical Crop Registry** - Add crop ID system to farm-registry and switch all apps off hardcoded crop arrays (completed 2026-03-25)
-- [ ] **Phase 51: FSA/Insurance Data Consolidation** - Migrate fsa-acres JSON to Supabase as single source of truth with RMA price scraper
+- [x] **Phase 51: FSA/Insurance Data Consolidation** - Migrate fsa-acres JSON to Supabase as single source of truth with RMA price scraper (completed 2026-03-25)
 - [ ] **Phase 52: Yield Pipeline** - Auto-compute yield summaries in grain-tickets and push to insurance and budget without manual entry
 - [ ] **Phase 53: Seed-Inventory & Meristem-Malt Pipelines** - Wire organic-cert seed data from seed-inventory and meristem-malt grain cost from settlements
 - [ ] **Phase 54: Iframe Embed Navigation + Design Tokens** - Fix portal embed UX and unify color tokens across all 8 apps
@@ -522,7 +522,7 @@ Plans:
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
 | 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
 | 50. Canonical Crop Registry | 3/3 | Complete    | 2026-03-25 | - |
-| 51. FSA/Insurance Data Consolidation | 2/3 | In Progress|  | - |
+| 51. FSA/Insurance Data Consolidation | 3/3 | Complete   | 2026-03-25 | - |
 | 52. Yield Pipeline | v10.0 | 0/? | Not started | - |
 | 53. Seed-Inventory & Meristem-Malt Pipelines | v10.0 | 0/? | Not started | - |
 | 54. Iframe Embed Navigation + Design Tokens | v10.0 | 0/? | Not started | - |

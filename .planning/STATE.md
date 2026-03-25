@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 51 of 61 (FSA/Insurance Data Consolidation)
-Plan: 01 complete
-Status: In Progress (1/3 plans complete)
-Last activity: 2026-03-25 — Phase 51 Plan 01 complete: FSA migration script + GCS removal
+Plan: 02 complete
+Status: In Progress (2/3 plans complete)
+Last activity: 2026-03-25 — Phase 51 Plan 02 complete: fsa-acres Supabase rewire (CONS-01, CONS-02, CONS-04)
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -41,6 +41,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 50 P03 | 12 | 3 tasks | 14 files |
 | Phase 51 P01 | 4 | 2 tasks | 4 files |
 | Phase 51 P03 | 15 | 2 tasks | 4 files |
+| Phase 51-fsa-insurance-data-consolidation P02 | 20 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 51-03]: Scraper scope from clu_records.crop — adapts to planted crops automatically
 - [Phase 51-03]: manual_override pricing rows never overwritten by scraper
 - [Phase 51-03]: Daily cron deferred — manual Refresh Prices button is the priority for CONS-03
+- [Phase 51-02]: data/settings.json stores app settings locally (not in Supabase) — settings are app config not farm data
+- [Phase 51-02]: Conservation practice fields mapped as individual Supabase columns — confirmed by migration script schema, no JSONB needed
+- [Phase 51-02]: fsa-acres .gitignore created — node_modules must not be committed (Rule 2 auto-fix)
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 51-01-PLAN.md — FSA migration script + GCS removal (CONS-05)
+Stopped at: Completed 51-02-PLAN.md — fsa-acres Supabase rewire (CONS-01, CONS-02, CONS-04)
 Resume file: —
-Next action: Execute phase 51 Plan 02 (fsa-acres Supabase rewire)
+Next action: Execute phase 51 Plan 03 (RMA price scraper portal integration)
