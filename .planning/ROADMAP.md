@@ -277,11 +277,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Office staff can enter a new grain ticket in the grain-tickets module with network disabled — the entry queues locally and syncs when connectivity returns, appearing in the ticket list without manual intervention
   2. Budget, FSA, and insurance summary dashboard views load from IndexedDB cache when offline, showing the data from the last successful sync rather than an error or blank screen
-**Plans**: 4 plans
+**Plans**: 2 plans
 
 Plans:
-- [ ] 48-01: Grain ticket offline entry with IndexedDB queue and sync-on-reconnect
-- [ ] 48-02: Dashboard read-only caching for budget, FSA, and insurance summary views
+- [ ] 48-01-PLAN.md — Grain ticket offline entry with IndexedDB queue, Background Sync, conflict resolution UI
+- [ ] 48-02-PLAN.md — Portal dashboard read-only caching with staleness indicators and background refresh
 
 ### Phase 49: Canonical Field IDs
 **Goal**: Every field record in every app carries a registry_field_id that maps unambiguously to farm-registry — string-name fuzzy matching is eliminated across the platform
