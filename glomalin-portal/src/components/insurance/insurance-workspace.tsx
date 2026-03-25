@@ -429,7 +429,7 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
                       ) : (
                         <span
                           className="text-glomalin-muted"
-                          title="No grain tickets recorded for this field/crop yet"
+                          title="No yield data yet"
                         >
                           —
                         </span>

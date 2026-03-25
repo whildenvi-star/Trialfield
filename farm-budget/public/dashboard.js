@@ -244,6 +244,8 @@
             'vs Budget ' + util.formatNum(budgetYield, 1) + ' ' +
             '<span style="' + varCls + '">(' + varSign + util.formatNum(variance, 1) + ')</span>' +
             '</span>';
+        } else {
+          actualYieldText = ' <span style="font-size:0.7em;opacity:0.5;font-style:italic;" title="No yield data yet">(no GT data)</span>';
         }
 
         html += '<tr class="dash-clickable-row" data-enterprise-idx="' + entIdx + '">' +
