@@ -338,11 +338,10 @@ Plans:
   2. The portal insurance policy view shows actual yield with a "Synced from grain tickets" badge and a timestamp indicating when the sync last ran
   3. The farm-budget dashboard shows actual yields from grain-tickets without the user entering them a second time
   4. When a yield sync has run, the indicator is visible in both insurance and budget UIs; when no sync has run, the field shows "No yield data yet"
-**Plans**: 3 plans
+**Plans**: 2 plans
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 52-01-PLAN.md — Yield computation engine in grain-tickets + Supabase migration for insurance_policies registry columns
+- [ ] 52-02-PLAN.md — Yield push pipeline to portal insurance + farm-budget + UI indicators (GT badge, variance display)
 
 ### Phase 53: Seed-Inventory & Meristem-Malt Pipelines
 **Goal**: Organic-cert reads seed lot data from seed-inventory (eliminating double-entry) and meristem-malt pulls actual grain cost from settled prices in grain-tickets
