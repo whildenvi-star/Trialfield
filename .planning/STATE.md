@@ -16,7 +16,7 @@ Last activity: 2026-03-25 — Phase 52 Plan 03 complete: SC-4 gap closure — em
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
-**v9.0 status:** Phases 44-46 complete (46 gap closed 2026-03-25), 47-48 paused — resume after v10.0
+**v9.0 status:** Phase 44-46 complete, Phase 47 Plan 01 complete (offline sync engine shipped 2026-03-25), 47-02 and 48 paused — resume after v10.0
 **v10.0 status:** Roadmap created — 13 phases (49-61), ready to plan phase 49
 
 ## Performance Metrics
@@ -49,6 +49,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 46-field-pass-logger P03 | 3 | 1 tasks | 1 files |
 | Phase 52 P02 | 16 | 2 tasks | 6 files |
 | Phase 52 P03 | 5 | 1 tasks | 2 files |
+| Phase 47 P01 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 46-03]: Pre-existing TypeScript errors in enterprise-grid.tsx are out of scope (not caused by this change, different file)
 - [Phase 52-02]: Crop-name matching used in farm-budget dashboard — cropRows aggregated by crop name with no registryCropId at render time
 - [Phase 52-02]: GT badge uses CSS group-hover tooltip — enables formatted multi-line timestamp display
+- [Phase 47]: SW uses raw IndexedDB API for Background Sync replay — idb library not available in SW bundle context
+- [Phase 47]: Network errors (TypeError, AbortError) queued silently; HTTP errors re-thrown — only true offline failures are intercepted
 
 ### Pending Todos
 
