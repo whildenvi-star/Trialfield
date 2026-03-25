@@ -234,3 +234,147 @@ self.addEventListener('sync', (event: SyncEvent) => {
     event.waitUntil(handlePassSync())
   }
 })
+
+// ─── Dashboard response caching: stale-while-revalidate ───────────────────────
+//
+// Caches dashboard summary API responses so the portal shows useful data when
+// offline instead of blank screens or errors.  Uses a named cache separate from
+// the serwist precache/runtime caches so it can be managed independently.
+//
+// Cached URL patterns (matched by path segment anywhere in the URL):
+//   - /api/dashboard/summary  — portal's own dashboard summary endpoint
+//   - /api/insurance/policies — portal insurance policies endpoint
+//   - /api/fsa/clu-records    — portal FSA CLU records endpoint
+//   - /api/dashboard          — farm-budget Express app (cross-origin, port 3001)
+//   - /api/forecast           — farm-budget Express app (cross-origin, port 3001)
+//   - /api/summary            — fsa-acres Express app (cross-origin, port 3002)
+//
+// Staleness tracking: a companion entry keyed as `{url}__timestamp` is stored in
+// the same cache with a JSON body `{ cachedAt: <epoch ms> }`.  The dashboard page
+// reads these entries on mount to display "Last updated X ago" indicators.
+
+const DASHBOARD_CACHE_NAME = 'dashboard-cache'
+const DASHBOARD_CACHE_MAX_AGE_MS = 48 * 60 * 60 * 1000 // 48 hours
+
+/** Path segments that identify a cacheable dashboard API URL */
+const DASHBOARD_URL_PATTERNS = [
+  '/api/dashboard/summary',
+  '/api/insurance/policies',
+  '/api/fsa/clu-records',
+  '/api/dashboard',
+  '/api/forecast',
+  '/api/summary',
+]
+
+/** Returns true if the request URL matches a dashboard API pattern */
+function isDashboardRequest(url: string): boolean {
+  return DASHBOARD_URL_PATTERNS.some((pattern) => url.includes(pattern))
+}
+
+/** Store a response clone + timestamp companion entry in the dashboard cache */
+async function storeDashboardResponse(request: Request, response: Response): Promise<void> {
+  const cache = await caches.open(DASHBOARD_CACHE_NAME)
+  // Store the response clone
+  await cache.put(request, response.clone())
+  // Store the timestamp companion entry
+  const tsBody = JSON.stringify({ cachedAt: Date.now() })
+  const tsResponse = new Response(tsBody, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+  await cache.put(request.url + '__timestamp', tsResponse)
+}
+
+/** Stale-while-revalidate handler for dashboard requests */
+async function handleDashboardFetch(event: FetchEvent): Promise<Response> {
+  const cache = await caches.open(DASHBOARD_CACHE_NAME)
+  const cached = await cache.match(event.request)
+
+  // Fire background network request regardless of cache state
+  const networkPromise = fetch(event.request.clone()).then(async (networkResponse) => {
+    if (networkResponse.ok) {
+      await storeDashboardResponse(event.request.clone(), networkResponse)
+    }
+    return networkResponse
+  }).catch(() => null)
+
+  if (cached) {
+    // Return cached immediately; background request updates the cache
+    event.waitUntil(networkPromise)
+    return cached
+  }
+
+  // Not cached — wait for network
+  const networkResponse = await networkPromise
+  if (networkResponse && networkResponse.ok) {
+    return networkResponse
+  }
+
+  // Nothing in cache AND network failed — return offline sentinel
+  return new Response(
+    JSON.stringify({ offline: true, error: 'No cached data available' }),
+    {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }
+  )
+}
+
+// Hook into serwist's fetch lifecycle via a raw addEventListener.
+// Serwist processes precached/runtime routes first; this intercepts only the
+// dashboard API patterns before the default handler returns a network error.
+self.addEventListener('fetch', (event: FetchEvent) => {
+  const url = event.request.url
+  if (event.request.method !== 'GET') return
+  if (!isDashboardRequest(url)) return
+  event.respondWith(handleDashboardFetch(event))
+})
+
+// ─── Dashboard cache cleanup on activate ──────────────────────────────────────
+// Runs after every SW activation. Deletes entries older than 48 hours from
+// dashboard-cache to prevent unbounded cache growth.
+self.addEventListener('activate', (event: ExtendableEvent) => {
+  event.waitUntil(
+    (async () => {
+      const cache = await caches.open(DASHBOARD_CACHE_NAME)
+      const keys = await cache.keys()
+      const now = Date.now()
+      for (const request of keys) {
+        // Skip timestamp companion entries during age check — they are pruned
+        // implicitly when their paired response entry is deleted
+        if (request.url.endsWith('__timestamp')) continue
+        const tsResponse = await cache.match(request.url + '__timestamp')
+        if (!tsResponse) {
+          // No timestamp means we cannot determine age — leave it
+          continue
+        }
+        try {
+          const tsData = await tsResponse.json() as { cachedAt?: number }
+          if (tsData.cachedAt && now - tsData.cachedAt > DASHBOARD_CACHE_MAX_AGE_MS) {
+            await cache.delete(request)
+            await cache.delete(request.url + '__timestamp')
+          }
+        } catch {
+          // Malformed timestamp entry — delete both
+          await cache.delete(request)
+          await cache.delete(request.url + '__timestamp')
+        }
+      }
+    })()
+  )
+})
+
+// ─── Message handler: clear dashboard cache ───────────────────────────────────
+// Allows the dashboard page to programmatically clear the cache (e.g., on
+// explicit user action or after a forced refresh).
+self.addEventListener('message', (event: ExtendableMessageEvent) => {
+  if (event.data?.type === 'clear-dashboard-cache') {
+    event.waitUntil(
+      (async () => {
+        await caches.delete(DASHBOARD_CACHE_NAME)
+        if (event.source) {
+          (event.source as WindowClient).postMessage({ type: 'dashboard-cache-cleared' })
+        }
+      })()
+    )
+  }
+})
