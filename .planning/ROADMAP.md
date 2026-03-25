@@ -369,9 +369,10 @@ Plans:
   4. Toggling day/night mode in the portal cascades consistently to all embedded apps so the theme is uniform across the entire UI
 **Plans**: 4 plans
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 54-01-PLAN.md — Unify color tokens into platform-tokens.css across all 8 apps (UXN-07, UXN-09)
+- [ ] 54-02-PLAN.md — Breadcrumb bar component + embed frame navigation (UXN-04, UXN-05, UXN-06)
+- [ ] 54-03-PLAN.md — Day/night theme cascade to all embeds including cross-origin (UXN-08)
+- [ ] 54-04-PLAN.md — Header-hiding audit + visual verification checkpoint (UXN-04, UXN-09)
 
 ### Phase 55: Actionable Dashboard
 **Goal**: The portal dashboard shows what actually needs attention today — overdue claims, unreported CLUs, unreconciled settlements, delivery shortfalls — not just static module navigation cards
