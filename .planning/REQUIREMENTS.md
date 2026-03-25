@@ -23,7 +23,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 
 ### Data Pipelines
 
-- [ ] **PIPE-01**: Grain-tickets automatically computes yield summary per farm/crop after ticket save
+- [x] **PIPE-01**: Grain-tickets automatically computes yield summary per farm/crop after ticket save
 - [ ] **PIPE-02**: Yield summary auto-pushes to portal insurance policies (updates actual yield, sets synced flag)
 - [ ] **PIPE-03**: Farm-budget dashboard shows actual yields from grain-tickets without manual entry
 - [ ] **PIPE-04**: Visual indicator in insurance and budget UIs shows "Yield synced from grain tickets" with timestamp
@@ -107,7 +107,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 | CONS-03 | Phase 51 | Complete |
 | CONS-04 | Phase 51 | Complete |
 | CONS-05 | Phase 51 | Complete |
-| PIPE-01 | Phase 52 | Pending |
+| PIPE-01 | Phase 52 | Complete |
 | PIPE-02 | Phase 52 | Pending |
 | PIPE-03 | Phase 52 | Pending |
 | PIPE-04 | Phase 52 | Pending |

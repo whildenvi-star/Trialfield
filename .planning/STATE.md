@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 51: FSA/Insurance Data Consolidation
+**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 52: Yield Pipeline
 
 ## Current Position
 
-Phase: 51 of 61 (FSA/Insurance Data Consolidation)
-Plan: 02 complete
-Status: In Progress (2/3 plans complete)
-Last activity: 2026-03-25 — Phase 51 Plan 02 complete: fsa-acres Supabase rewire (CONS-01, CONS-02, CONS-04)
+Phase: 52 of 61 (Yield Pipeline)
+Plan: 01 complete
+Status: In Progress (1/3 plans complete)
+Last activity: 2026-03-25 — Phase 52 Plan 01 complete: yield computation engine + Supabase registry migration (PIPE-01)
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -45,6 +45,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 46 P01 | 3 | 2 tasks | 6 files |
 | Phase 46-field-pass-logger P02 | 4 | 1 task | 2 files |
 | Phase 46-field-pass-logger P02 | 5 | 2 tasks | 2 files |
+| Phase 52 P01 | 5 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 46-02]: Inline undo toast/bottom sheets with no external UI libs — consistent with Phase 45 pattern, inline CSS transitions
 - [Phase 46-02]: Flush-before-start for pending confirmations — tap second pass while toast showing commits first immediately then starts new
 - [Phase 46-02]: tokenRef stores auth token — useRef prevents stale closure in 5s setTimeout confirm callbacks
+- [Phase 52-01]: Weight basis for yield is netWeight (net lbs after buyer deductions) — already on tickets, consistent across buyers
+- [Phase 52-01]: Acre denominator for yieldPerAcre uses Farm.acres in grain-tickets; Plan 02 uses insurance planted_acres when pushing to portal
 
 ### Pending Todos
 
@@ -99,6 +102,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 46-02-PLAN.md (human-verify approved) — FPL-01..FPL-04 complete. Phase 46 Plan 02 fully done.
+Stopped at: Completed 52-01-PLAN.md — PIPE-01 complete. computeYieldSummaries, GET /api/yield-summaries, pushYieldUpdates, migrate-52.ts done.
 Resume file: —
-Next action: Continue phase 46 (Plan 03+) or resume v10.0 consolidation work
+Next action: Phase 52 Plan 02 — yield push pipeline (push to portal insurance_policies and farm-budget)
