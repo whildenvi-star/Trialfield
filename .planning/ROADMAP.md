@@ -131,7 +131,7 @@
 **Milestone Goal:** Eliminate scattered data, duplicate stores, and manual re-entry across the 8-app ecosystem. Consolidate FSA/insurance to a single data store, establish canonical field and crop IDs, build automatic data pipelines, and unify the UX so the platform feels like one product.
 
 - [x] **Phase 49: Canonical Field IDs** - Add registry_field_id to all apps and build backfill scripts — the ID foundation everything else depends on (completed 2026-03-24)
-- [ ] **Phase 50: Canonical Crop Registry** - Add crop ID system to farm-registry and switch all apps off hardcoded crop arrays
+- [x] **Phase 50: Canonical Crop Registry** - Add crop ID system to farm-registry and switch all apps off hardcoded crop arrays (completed 2026-03-25)
 - [ ] **Phase 51: FSA/Insurance Data Consolidation** - Migrate fsa-acres JSON to Supabase as single source of truth with RMA price scraper
 - [ ] **Phase 52: Yield Pipeline** - Auto-compute yield summaries in grain-tickets and push to insurance and budget without manual entry
 - [ ] **Phase 53: Seed-Inventory & Meristem-Malt Pipelines** - Wire organic-cert seed data from seed-inventory and meristem-malt grain cost from settlements
@@ -517,7 +517,7 @@ Plans:
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
 | 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
-| 50. Canonical Crop Registry | 2/3 | In Progress|  | - |
+| 50. Canonical Crop Registry | 3/3 | Complete   | 2026-03-25 | - |
 | 51. FSA/Insurance Data Consolidation | v10.0 | 0/? | Not started | - |
 | 52. Yield Pipeline | v10.0 | 0/? | Not started | - |
 | 53. Seed-Inventory & Meristem-Malt Pipelines | v10.0 | 0/? | Not started | - |

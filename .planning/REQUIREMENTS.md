@@ -18,7 +18,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 - [x] **CONS-07**: Cross-module data joins use registry field ID, not string name matching
 - [x] **CONS-08**: Backfill scripts populate registry_field_id in farm-budget, grain-tickets, portal clu_records, and fsa-acres
 - [x] **CONS-09**: Canonical crop registry in farm-registry with crop ID, canonical name, and per-app name aliases
-- [ ] **CONS-10**: All apps fetch crop list from farm-registry instead of hardcoded local arrays
+- [x] **CONS-10**: All apps fetch crop list from farm-registry instead of hardcoded local arrays
 - [x] **CONS-11**: Cross-module crop aggregation uses canonical crop ID, not display name
 
 ### Data Pipelines
@@ -100,7 +100,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 | CONS-07 | Phase 49 | Complete |
 | CONS-08 | Phase 49 | Complete |
 | CONS-09 | Phase 50 | Complete |
-| CONS-10 | Phase 50 | Pending |
+| CONS-10 | Phase 50 | Complete |
 | CONS-11 | Phase 50 | Complete |
 | CONS-01 | Phase 51 | Pending |
 | CONS-02 | Phase 51 | Pending |
