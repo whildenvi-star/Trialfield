@@ -42,6 +42,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 51 P01 | 4 | 2 tasks | 4 files |
 | Phase 51 P03 | 15 | 2 tasks | 4 files |
 | Phase 51-fsa-insurance-data-consolidation P02 | 20 | 2 tasks | 5 files |
+| Phase 46 P01 | 3 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 51-02]: data/settings.json stores app settings locally (not in Supabase) — settings are app config not farm data
 - [Phase 51-02]: Conservation practice fields mapped as individual Supabase columns — confirmed by migration script schema, no JSONB needed
 - [Phase 51-02]: fsa-acres .gitignore created — node_modules must not be committed (Rule 2 auto-fix)
+- [Phase 46]: resolveFieldEnterpriseId uses two cert calls (fields + enterprises) — acceptable for 56 fields, no caching needed
+- [Phase 46]: crop-plans/[fieldId] graceful degradation — planned-only fallback when organic-cert unavailable to support offline mobile use
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 51-02-PLAN.md — fsa-acres Supabase rewire (CONS-01, CONS-02, CONS-04)
+Stopped at: Completed 46-01-PLAN.md — field pass logger portal API routes (FPL-01..FPL-04)
 Resume file: —
-Next action: Execute phase 51 Plan 03 (RMA price scraper portal integration)
+Next action: Execute phase 46 Plan 02 (field pass logger mobile UI)
