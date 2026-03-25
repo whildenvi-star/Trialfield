@@ -1,4 +1,5 @@
-import { cropPlanCache } from './db'
+import { cropPlanCache, offlineQueue } from './db'
+import { requestBackgroundSync, setSyncToken } from './sync-engine'
 import type { CachedCropPlan } from './types'
 
 /** Shape returned by /api/mobile/crop-plans for each field in the list */
@@ -110,6 +111,7 @@ export async function getLastSyncTime(): Promise<string | null> {
 /**
  * Confirm a planned pass — POST /api/mobile/passes/confirm
  * Returns the created FieldOperation ID.
+ * On network/offline error, queues the operation in IndexedDB and returns { queued: true }.
  */
 export async function confirmPass(
   token: string,
@@ -118,27 +120,47 @@ export async function confirmPass(
   passType: string,
   operationDate?: string,
   operatorCertUserId?: string
-): Promise<{ fieldOperationId: string }> {
-  const res = await fetch('/api/mobile/passes/confirm', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ fieldId, passId, passType, operationDate, operatorCertUserId }),
-  })
+): Promise<{ fieldOperationId: string; queued?: boolean }> {
+  try {
+    const res = await fetch('/api/mobile/passes/confirm', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fieldId, passId, passType, operationDate, operatorCertUserId }),
+    })
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Failed to confirm pass: ${res.status}`)
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error((body as { error?: string }).error ?? `Failed to confirm pass: ${res.status}`)
+    }
+
+    return res.json()
+  } catch (err: unknown) {
+    // Only queue on network/offline errors — re-throw HTTP errors
+    if (err instanceof TypeError || (err instanceof DOMException && err.name === 'AbortError')) {
+      await offlineQueue.add({
+        type: 'confirm-pass',
+        fieldId,
+        passId,
+        passType,
+        operationDate: operationDate ?? new Date().toISOString().slice(0, 10),
+        operatorId: operatorCertUserId ?? '',
+        operatorName: '',
+      })
+      await setSyncToken(token)
+      requestBackgroundSync()
+      return { fieldOperationId: 'pending-' + crypto.randomUUID(), queued: true }
+    }
+    throw err
   }
-
-  return res.json()
 }
 
 /**
  * Add an unplanned pass — POST /api/mobile/passes/add
  * Returns the created FieldOperation ID and the new pass object.
+ * On network/offline error, queues the operation in IndexedDB and returns { queued: true }.
  */
 export async function addPass(
   token: string,
@@ -147,22 +169,52 @@ export async function addPass(
   operationDate?: string,
   notes?: string,
   operatorCertUserId?: string
-): Promise<{ fieldOperationId: string; pass: object }> {
-  const res = await fetch('/api/mobile/passes/add', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ fieldId, operationType, operationDate, notes, operatorCertUserId }),
-  })
+): Promise<{ fieldOperationId: string; pass: object; queued?: boolean }> {
+  try {
+    const res = await fetch('/api/mobile/passes/add', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fieldId, operationType, operationDate, notes, operatorCertUserId }),
+    })
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    throw new Error((body as { error?: string }).error ?? `Failed to add pass: ${res.status}`)
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      throw new Error((body as { error?: string }).error ?? `Failed to add pass: ${res.status}`)
+    }
+
+    return res.json()
+  } catch (err: unknown) {
+    // Only queue on network/offline errors — re-throw HTTP errors
+    if (err instanceof TypeError || (err instanceof DOMException && err.name === 'AbortError')) {
+      const resolvedDate = operationDate ?? new Date().toISOString().slice(0, 10)
+      await offlineQueue.add({
+        type: 'add-pass',
+        fieldId,
+        operationType,
+        operationDate: resolvedDate,
+        description: notes,
+        operatorId: operatorCertUserId ?? '',
+        operatorName: '',
+      })
+      await setSyncToken(token)
+      requestBackgroundSync()
+      return {
+        fieldOperationId: 'pending-' + crypto.randomUUID(),
+        pass: {
+          id: 'pending',
+          type: operationType,
+          status: 'CONFIRMED',
+          operationDate: resolvedDate,
+          operatorName: '',
+        },
+        queued: true,
+      }
+    }
+    throw err
   }
-
-  return res.json()
 }
 
 /**
