@@ -1829,6 +1829,10 @@ body.light .audit-badge.warn { background: #c08800; }
 .prev-item .val-total { color: var(--text-light); font-weight: 500; font-size: 0.68rem; }
 .prev-item.highlight .val { color: var(--primary); font-weight: 700; text-shadow: var(--glow); }
 .prev-item.highlight .val-total { color: var(--primary); font-weight: 600; font-size: 0.75rem; }
+.prev-item.profit-neg .val,
+.prev-item.profit-neg .val-total { color: var(--danger) !important; text-shadow: none; }
+.prev-item.profit-pos .val,
+.prev-item.profit-pos .val-total { color: var(--success) !important; }
 .prev-group-subtotal {
   border-top: 1px solid var(--border);
   margin-top: 0.1rem;
@@ -2323,7 +2327,9 @@ body.light .audit-badge.warn { background: #c08800; }
   .number { color: #111 !important; }
   /* Preserve profit coloring in print */
   .profit-neg { color: #cc0000 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .profit-neg .val, .profit-neg .val-total { color: #cc0000 !important; }
   .profit-pos { color: #1a6b10 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .profit-pos .val, .profit-pos .val-total { color: #1a6b10 !important; }
 }
 
 /* ============================================================

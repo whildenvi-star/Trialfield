@@ -2,10 +2,11 @@
   'use strict';
 
   // --- API helper ---
+  var B = window.__BASE || '';
   function api(method, url, body) {
     var opts = { method: method, headers: { 'Content-Type': 'application/json' } };
     if (body) opts.body = JSON.stringify(body);
-    return fetch(url, opts).then(function (r) { return r.json(); });
+    return fetch(B + url, opts).then(function (r) { return r.json(); });
   }
 
   // --- State ---
@@ -17,7 +18,7 @@
 
   // --- Load fields ---
   function loadFields() {
-    api('GET', '/api/fields').then(function (data) {
+    api('GET', '/api/fields?_t=' + Date.now()).then(function (data) {
       allFields = data;
       renderStats();
       applyFilters();

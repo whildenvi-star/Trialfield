@@ -121,12 +121,20 @@ function generateId(prefix) {
   return (prefix || 'x') + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
 }
 
-// perf: Cache-Control on GET API responses — allows browser to skip refetch for short TTL
+// perf: Cache-Control on GET API responses
 app.use('/api', (req, res, next) => {
   if (req.method === 'GET') {
-    // Fields/growers rarely change — 60s cache; search results shorter
+    // Autocomplete/search results are safe to cache briefly
+    const isAutocomplete = req.path.includes('/autocomplete');
     const isSearch = req.path.includes('/search');
-    res.set('Cache-Control', isSearch ? 'public, max-age=10' : 'public, max-age=60');
+    if (isAutocomplete) {
+      res.set('Cache-Control', 'public, max-age=300');
+    } else if (isSearch) {
+      res.set('Cache-Control', 'public, max-age=10');
+    } else {
+      // Mutable data (fields, growers, crops) — always revalidate
+      res.set('Cache-Control', 'no-cache');
+    }
   }
   next();
 });
