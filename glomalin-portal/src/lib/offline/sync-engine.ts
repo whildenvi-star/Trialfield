@@ -5,6 +5,8 @@
  * replayOperation:       fire a single queued op against the appropriate API endpoint
  * requestBackgroundSync: register a Background Sync event (best-effort, silent fallback)
  * setSyncToken:          persist auth token to IndexedDB for service worker access
+ * getLastSyncTimestamp:  read the last successful sync ISO timestamp from IndexedDB
+ * getQueueSummary:       return pending + failed ops and last sync timestamp
  */
 
 import { offlineQueue, getDb } from './db'
@@ -75,6 +77,61 @@ export async function setSyncToken(token: string): Promise<void> {
     await db.put('sync-config', { key: 'auth-token', value: token })
   } catch {
     // Non-fatal — sync will fail with auth error and fall back to manual retry
+  }
+}
+
+// ─── Sync timestamp helpers ───────────────────────────────────────────────────
+
+/**
+ * Write the current ISO timestamp to IndexedDB as 'last-sync' after a
+ * successful processQueue run.
+ */
+async function writeLastSyncTimestamp(): Promise<void> {
+  try {
+    const db = await getDb()
+    await db.put('sync-config', { key: 'last-sync', value: new Date().toISOString() })
+  } catch {
+    // Non-fatal
+  }
+}
+
+/**
+ * Read the last successful sync ISO timestamp from IndexedDB.
+ * Returns null if sync has never completed successfully.
+ */
+export async function getLastSyncTimestamp(): Promise<string | null> {
+  try {
+    const db = await getDb()
+    const record = await db.get('sync-config', 'last-sync')
+    return record?.value ?? null
+  } catch {
+    return null
+  }
+}
+
+// ─── Queue summary ────────────────────────────────────────────────────────────
+
+export interface QueueSummary {
+  pending: QueuedOperation[]
+  failed: QueuedOperation[]
+  total: number
+  lastSync: string | null
+}
+
+/**
+ * Return a summary of the current queue state: pending ops, failed ops,
+ * total count, and the last successful sync timestamp.
+ */
+export async function getQueueSummary(): Promise<QueueSummary> {
+  const all = await offlineQueue.getAll()
+  const pending = all.filter((op) => op.status === 'pending')
+  const failed = all.filter((op) => op.status === 'failed')
+  const lastSync = await getLastSyncTimestamp()
+  return {
+    pending,
+    failed,
+    total: all.length,
+    lastSync,
   }
 }
 
@@ -340,6 +397,11 @@ export async function processQueue(
       errorMessage: replay.errorMessage ?? `HTTP ${httpStatus}`,
       httpStatus,
     })
+  }
+
+  // Write last-sync timestamp if at least one item was synced or skipped
+  if (result.synced > 0 || result.skipped.length > 0) {
+    await writeLastSyncTimestamp()
   }
 
   return result
