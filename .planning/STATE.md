@@ -51,6 +51,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 52 P03 | 5 | 1 tasks | 2 files |
 | Phase 47 P01 | 4 | 2 tasks | 5 files |
 | Phase 47 P02 | 6 | 2 tasks | 3 files |
+| Phase 53 P01 | 6 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -101,6 +102,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 47-02]: getLastSyncTimestamp reads from sync-config IDB store — same store used by setSyncToken, no schema change needed
 - [Phase 47-02]: pending-sync detection uses fieldOperationId.startsWith('pending-') — set by confirmPass when offline, no separate tracking needed
 - [Phase 47-02]: writeLastSyncTimestamp fires when synced > 0 OR skipped.length > 0 — conflicts count as sync activity
+- [Phase 53-01]: seed-inventory is primary NOP compliance source for seed lots; farm-budget seed catalog is fallback only — eliminates double-entry
+- [Phase 53-01]: organic-cert is a nested git repo — commits to organic-cert files must be made inside that directory
+- [Phase 53-01]: SeedLot certNumber/lotNumber only overwritten on update when sourceApp=seed-inventory — preserves user edits from the UI
 
 ### Pending Todos
 
@@ -115,6 +119,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 47-02-PLAN.md — conflict detection, SyncStatusPanel, pending-sync badges, sync icon, cancel action, and last-sync timestamp complete. Phase 47 (OSE-03, OSE-04) done.
+Stopped at: Completed 53-01-PLAN.md — seed-inventory pipeline: enhanced /api/organic/seed-lots, getSeedLots client, mapSeeds rewired with seed-inventory as primary NOP compliance source (PIPE-05 done).
 Resume file: —
-Next action: Phase 53 (PIPE-05..08 combined)
+Next action: Phase 53 Plan 02 (meristem-malt pipeline)

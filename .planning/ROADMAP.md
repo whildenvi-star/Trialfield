@@ -523,7 +523,7 @@ Plans:
 | 50. Canonical Crop Registry | 3/3 | Complete    | 2026-03-25 | - |
 | 51. FSA/Insurance Data Consolidation | 3/3 | Complete   | 2026-03-25 | - |
 | 52. Yield Pipeline | 3/3 | Complete    | 2026-03-25 | - |
-| 53. Seed-Inventory & Meristem-Malt Pipelines | v10.0 | 0/? | Not started | - |
+| 53. Seed-Inventory & Meristem-Malt Pipelines | 1/3 | In Progress|  | - |
 | 54. Iframe Embed Navigation + Design Tokens | v10.0 | 0/? | Not started | - |
 | 55. Actionable Dashboard | v10.0 | 0/? | Not started | - |
 | 56. Structured APH Database | v10.0 | 0/? | Not started | - |
