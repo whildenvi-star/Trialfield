@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/browser'
 import OfflineBanner from '@/components/pwa/offline-banner'
+import SyncStatusPanel from '@/components/pwa/sync-status-panel'
 import {
   syncCropPlanDetail,
   getCachedCropPlan,
@@ -13,8 +14,29 @@ import {
   editPass,
   fetchOperators,
 } from '@/lib/offline/crop-plan-sync'
+import { offlineQueue } from '@/lib/offline/db'
+import { getLastSyncTimestamp } from '@/lib/offline/sync-engine'
 import type { CachedCropPlan } from '@/lib/offline/types'
 import type { OperatorRecord } from '@/lib/offline/crop-plan-sync'
+import type { SyncResult } from '@/lib/offline/sync-engine'
+
+// ─── relative time helper ─────────────────────────────────────────────────────
+
+function relativeTime(isoString: string): string {
+  const now = Date.now()
+  const then = new Date(isoString).getTime()
+  const diffMs = now - then
+  if (diffMs < 0) return 'just now'
+  const diffSec = Math.floor(diffMs / 1000)
+  if (diffSec < 60) return 'just now'
+  const diffMin = Math.floor(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.floor(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDay = Math.floor(diffHr / 24)
+  if (diffDay === 1) return 'yesterday'
+  return `${diffDay}d ago`
+}
 
 // ─── agronomic sort order ──────────────────────────────────────────────────────
 
@@ -124,6 +146,49 @@ function CheckCircleIcon() {
     >
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
       <path d="M22 4 12 14.01l-3-3" />
+    </svg>
+  )
+}
+
+function SyncIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+      <path d="M16 16h5v5" />
+    </svg>
+  )
+}
+
+function ClockBadgeIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ display: 'inline-block', verticalAlign: 'middle' }}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
     </svg>
   )
 }
@@ -347,6 +412,11 @@ export default function CropPlanDetailPage() {
   // Edit-pass form
   const [editDate, setEditDate] = useState('')
   const [editOperatorCertId, setEditOperatorCertId] = useState('')
+
+  // Sync panel
+  const [showSyncPanel, setShowSyncPanel] = useState(false)
+  const [pendingQueueCount, setPendingQueueCount] = useState(0)
+  const [lastSyncTimestamp, setLastSyncTimestamp] = useState<string | null>(null)
   const [editOperatorName, setEditOperatorName] = useState('')
   const [editSubmitting, setEditSubmitting] = useState(false)
 
@@ -356,6 +426,94 @@ export default function CropPlanDetailPage() {
     setToastError(msg)
     setTimeout(() => setToastError(null), 4000)
   }, [])
+
+  // ── refresh queue state (count + pending IDs + last sync timestamp) ──────────
+
+  const refreshQueueState = useCallback(async () => {
+    try {
+      const ops = await offlineQueue.getPending()
+      setPendingQueueCount(ops.length)
+      const ts = await getLastSyncTimestamp()
+      setLastSyncTimestamp(ts)
+    } catch {
+      // IndexedDB unavailable — ignore
+    }
+  }, [])
+
+  // Poll queue state every 10s to keep badge current
+  useEffect(() => {
+    refreshQueueState()
+
+    const intervalId = setInterval(() => {
+      refreshQueueState()
+    }, 10000)
+
+    return () => clearInterval(intervalId)
+  }, [refreshQueueState])
+
+  // Listen for online event — re-fetch field data after Background Sync fires
+  useEffect(() => {
+    if (!fieldId) return
+
+    async function handleOnline() {
+      // Wait 2s for Background Sync to fire, then re-fetch
+      await new Promise((r) => setTimeout(r, 2000))
+      await refreshQueueState()
+      if (!tokenRef.current) return
+      try {
+        const refreshedPlan = await syncCropPlanDetail(tokenRef.current, fieldId)
+        if (refreshedPlan) {
+          setPlan(refreshedPlan)
+          setPasses(
+            refreshedPlan.passes.map((p) => ({
+              id: p.id,
+              type: p.type,
+              passNumber: p.passNumber,
+              status: p.status,
+              operationDate: p.operationDate,
+              operatorName: p.operatorName,
+              isUnplanned: (p as PassState).isUnplanned,
+              fieldOperationId: (p as PassState).fieldOperationId,
+              fieldEnterpriseId: (p as PassState).fieldEnterpriseId,
+            }))
+          )
+        }
+      } catch {
+        // Silently ignore — page still shows cached data
+      }
+    }
+
+    window.addEventListener('online', handleOnline)
+    return () => window.removeEventListener('online', handleOnline)
+  }, [fieldId, refreshQueueState])
+
+  // ── handle sync complete from SyncStatusPanel ─────────────────────────────
+
+  const handleSyncComplete = useCallback(async (_result: SyncResult) => {
+    await refreshQueueState()
+    if (!tokenRef.current || !fieldId) return
+    try {
+      const refreshedPlan = await syncCropPlanDetail(tokenRef.current, fieldId)
+      if (refreshedPlan) {
+        setPlan(refreshedPlan)
+        setPasses(
+          refreshedPlan.passes.map((p) => ({
+            id: p.id,
+            type: p.type,
+            passNumber: p.passNumber,
+            status: p.status,
+            operationDate: p.operationDate,
+            operatorName: p.operatorName,
+            isUnplanned: (p as PassState).isUnplanned,
+            fieldOperationId: (p as PassState).fieldOperationId,
+            fieldEnterpriseId: (p as PassState).fieldEnterpriseId,
+          }))
+        )
+      }
+    } catch {
+      // Silently ignore
+    }
+  }, [fieldId, refreshQueueState])
 
   // ── commit pending confirmation immediately (before starting a new one) ──────
 
@@ -371,7 +529,7 @@ export default function CropPlanDetailPage() {
 
     if (!tokenRef.current) return
     try {
-      await confirmPass(
+      const result = await confirmPass(
         tokenRef.current,
         fieldId,
         pending.passId,
@@ -379,12 +537,22 @@ export default function CropPlanDetailPage() {
         pending.operationDate,
         pending.operatorCertUserId
       )
+      if (result.queued && result.fieldOperationId) {
+        setPasses((prev) =>
+          prev.map((p) =>
+            p.id === pending.passId
+              ? { ...p, fieldOperationId: result.fieldOperationId }
+              : p
+          )
+        )
+        await refreshQueueState()
+      }
     } catch {
       // Revert on failure
       setPasses(pending.prevPasses)
       showError('Failed to confirm pass')
     }
-  }, [fieldId, showError])
+  }, [fieldId, showError, refreshQueueState])
 
   // ── load plan + operators ───────────────────────────────────────────────────
 
@@ -532,7 +700,7 @@ export default function CropPlanDetailPage() {
 
       if (!pending || !tokenRef.current) return
       try {
-        await confirmPass(
+        const result = await confirmPass(
           tokenRef.current,
           fieldId,
           pending.passId,
@@ -540,12 +708,52 @@ export default function CropPlanDetailPage() {
           pending.operationDate,
           pending.operatorCertUserId
         )
+        // If queued offline, update the pass with the pending fieldOperationId
+        if (result.queued && result.fieldOperationId) {
+          setPasses((prev) =>
+            prev.map((p) =>
+              p.id === pending.passId
+                ? { ...p, fieldOperationId: result.fieldOperationId }
+                : p
+            )
+          )
+          await refreshQueueState()
+        }
       } catch {
         setPasses(pending.prevPasses)
         showError('Failed to confirm pass')
       }
     }, 5000)
   }
+
+  // ── cancel pending-sync confirmation ────────────────────────────────────────
+
+  const handleCancelPendingPass = useCallback(async (pass: PassState) => {
+    // Find the matching queued operation for this pass and remove it
+    try {
+      const ops = await offlineQueue.getPending()
+      const matchingOp = ops.find(
+        (op) =>
+          op.fieldId === fieldId &&
+          (op.passId === pass.id || op.fieldOperationId === pass.fieldOperationId)
+      )
+      if (matchingOp) {
+        await offlineQueue.delete(matchingOp.id)
+      }
+    } catch {
+      // Ignore IDB errors
+    }
+
+    // Revert the pass back to PLANNED in local state
+    setPasses((prev) =>
+      prev.map((p) =>
+        p.id === pass.id
+          ? { ...p, status: 'PLANNED', operationDate: undefined, operatorName: undefined, fieldOperationId: undefined }
+          : p
+      )
+    )
+    await refreshQueueState()
+  }, [fieldId, refreshQueueState])
 
   // ── undo handler ────────────────────────────────────────────────────────────
 
@@ -742,21 +950,71 @@ export default function CropPlanDetailPage() {
 
   return (
     <div style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)' }}>
-      {/* Back navigation */}
-      <Link
-        href="/crop-plans"
-        className="mb-4 flex min-h-[48px] min-w-[48px] items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeftIcon />
-        Back
-      </Link>
+      {/* Back navigation + sync icon */}
+      <div className="mb-4 flex items-center justify-between">
+        <Link
+          href="/crop-plans"
+          className="flex min-h-[48px] min-w-[48px] items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeftIcon />
+          Back
+        </Link>
 
-      {/* Page title */}
+        {/* Sync icon with queue count badge */}
+        <button
+          onClick={() => {
+            setShowSyncPanel(true)
+          }}
+          aria-label={pendingQueueCount > 0 ? `${pendingQueueCount} pending sync` : 'Sync status'}
+          style={{
+            position: 'relative',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: pendingQueueCount > 0 ? '#C8860A' : '#6a5a4a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: '44px',
+            minHeight: '44px',
+          }}
+        >
+          <SyncIcon />
+          {pendingQueueCount > 0 && (
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                top: '4px',
+                right: '4px',
+                minWidth: '16px',
+                height: '16px',
+                borderRadius: '8px',
+                backgroundColor: '#C8860A',
+                color: '#080604',
+                fontSize: '10px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0 3px',
+              }}
+            >
+              {pendingQueueCount > 99 ? '99+' : pendingQueueCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Page title + last updated timestamp */}
       <div className="mb-4">
         <h1 className="text-xl font-bold">{plan.fieldName}</h1>
         <p className="text-sm text-muted-foreground">
           {plan.enterprise}
           {plan.acres > 0 ? ` · ${plan.acres} ac` : ''}
+        </p>
+        <p style={{ fontSize: '12px', color: '#6a5a4a', marginTop: '4px' }}>
+          Last updated: {lastSyncTimestamp ? relativeTime(lastSyncTimestamp) : 'never'}
         </p>
       </div>
 
@@ -861,16 +1119,20 @@ export default function CropPlanDetailPage() {
           <div className="divide-y rounded-lg border bg-card">
             {sortedPasses.map((pass, i) => {
               const isConfirmed = pass.status === 'CONFIRMED'
+              // A pass is "pending sync" if its fieldOperationId starts with 'pending-'
+              const isPendingSync = isConfirmed && pass.fieldOperationId?.startsWith('pending-')
+              // Non-pending confirmed passes are editable
+              const isEditable = isConfirmed && !isPendingSync
               return (
                 <div
                   key={pass.id ?? i}
                   className="flex min-h-[64px] items-center gap-3 p-4"
-                  style={{ cursor: isConfirmed ? 'pointer' : 'default' }}
-                  onClick={() => isConfirmed && handleEditTap(pass)}
-                  role={isConfirmed ? 'button' : undefined}
-                  tabIndex={isConfirmed ? 0 : undefined}
+                  style={{ cursor: isEditable ? 'pointer' : 'default' }}
+                  onClick={() => isEditable && handleEditTap(pass)}
+                  role={isEditable ? 'button' : undefined}
+                  tabIndex={isEditable ? 0 : undefined}
                   onKeyDown={
-                    isConfirmed
+                    isEditable
                       ? (e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault()
@@ -880,7 +1142,7 @@ export default function CropPlanDetailPage() {
                       : undefined
                   }
                   aria-label={
-                    isConfirmed
+                    isEditable
                       ? `${pass.type} pass confirmed — tap to edit`
                       : undefined
                   }
@@ -896,7 +1158,7 @@ export default function CropPlanDetailPage() {
                     disabled={isConfirmed}
                     className="flex min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-full"
                     style={{
-                      color: isConfirmed ? '#7A9E7E' : '#6a5a4a',
+                      color: isConfirmed ? (isPendingSync ? '#C8860A' : '#7A9E7E') : '#6a5a4a',
                       cursor: isConfirmed ? 'default' : 'pointer',
                     }}
                     aria-label={isConfirmed ? `${pass.type} confirmed` : `Confirm ${pass.type} pass`}
@@ -914,6 +1176,15 @@ export default function CropPlanDetailPage() {
                           Unplanned
                         </span>
                       )}
+                      {isPendingSync && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+                          style={{ backgroundColor: 'rgba(200,134,10,0.15)', color: '#C8860A' }}
+                        >
+                          <ClockBadgeIcon />
+                          Pending sync
+                        </span>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Pass #{pass.passNumber ?? i + 1}
@@ -927,9 +1198,40 @@ export default function CropPlanDetailPage() {
                     )}
                   </div>
 
-                  {/* Status badge */}
-                  <div className="ml-2 shrink-0">
-                    {isConfirmed ? (
+                  {/* Status badge / cancel pending */}
+                  <div className="ml-2 flex shrink-0 items-center gap-2">
+                    {isPendingSync ? (
+                      <>
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
+                          style={{ backgroundColor: 'rgba(200,134,10,0.15)', color: '#C8860A' }}
+                        >
+                          <CheckIcon />
+                          Confirmed
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleCancelPendingPass(pass)
+                          }}
+                          aria-label={`Cancel pending sync for ${pass.type} pass`}
+                          title="Cancel pending sync"
+                          style={{
+                            color: '#6a5a4a',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            minWidth: '32px',
+                            minHeight: '32px',
+                          }}
+                        >
+                          <XIcon />
+                        </button>
+                      </>
+                    ) : isConfirmed ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-800">
                         <CheckIcon />
                         Confirmed
@@ -1238,6 +1540,14 @@ export default function CropPlanDetailPage() {
           </form>
         )}
       </BottomSheet>
+
+      {/* ── Sync Status Panel ─────────────────────────────────────────────────── */}
+      <SyncStatusPanel
+        open={showSyncPanel}
+        onClose={() => setShowSyncPanel(false)}
+        getToken={async () => tokenRef.current}
+        onSyncComplete={handleSyncComplete}
+      />
     </div>
   )
 }
