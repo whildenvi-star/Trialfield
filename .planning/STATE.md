@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 50 of 61 (Canonical Crop Registry)
-Plan: 01 complete
-Status: In progress (plan 01/3 complete)
-Last activity: 2026-03-25 — Phase 50 Plan 01 complete: canonical crop registry with 38 records and CRUD API
+Plan: 02 complete
+Status: In progress (plan 02/3 complete)
+Last activity: 2026-03-25 — Phase 50 Plan 02 complete: 4 crop ID backfill scripts across all apps
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -37,6 +37,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 49 P02 | 3 | 2 tasks | 4 files |
 | Phase 49-canonical-field-ids P03 | 7 | 2 tasks | 9 files |
 | Phase 50-canonical-crop-registry P01 | 2 | 2 tasks | 2 files |
+| Phase 50-canonical-crop-registry P02 | 5 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -57,6 +58,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 50-01]: Organic flag is boolean attribute on crop record (not baked into name) — "Yellow Corn" with organic=true, not "ORG Yellow Corn"
 - [Phase 50-01]: Seed Beans and Natto Beans kept as separate records from Soybeans — fundamentally different markets, not just organic premium
 - [Phase 50-01]: 38 crop records across 13 categories covering all platform crops; FSA land-use categories excluded
+- [Phase 50-02]: farm-budget enterprises use cropTypeNames (category names), not individual crop strings — backfill targets fields[].crop and cropTypes[].subCrops[].name instead
+- [Phase 50-02]: fsa-acres non-crop FSA categories (NC, idle, gls, MIXED FORAGE/HAY) flagged as expected-unmatched, not errors
+- [Phase 50-02]: grain-tickets Ticket.registryCropId updated in bulk by crop name string match via updateMany
 
 ### Pending Todos
 
@@ -71,6 +75,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 50-01-PLAN.md — canonical crop registry with 38 records and CRUD API
+Stopped at: Completed 50-02-PLAN.md — 4 crop ID backfill scripts across farm-budget, fsa-acres, grain-tickets, glomalin-portal
 Resume file: —
-Next action: Execute phase 50 plan 02 (backfill scripts)
+Next action: Execute phase 50 plan 03 (consumer switchover)
