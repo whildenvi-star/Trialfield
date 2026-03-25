@@ -7,6 +7,7 @@ import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
 import { PolicyDrawer } from './policy-drawer'
 import { CoverageMatrix } from './coverage-matrix'
 import { PayoutSimulator } from './payout-simulator'
+import { PricingStalenessBadge } from './pricing-staleness-badge'
 
 // SSR-guarded PDF button — @react-pdf/renderer cannot run on the server
 const InsurancePdfButton = dynamic(
@@ -39,9 +40,10 @@ interface PolicyFormData {
 interface InsuranceWorkspaceProps {
   initialPolicies: InsurancePolicy[]
   initialPricing: PricingEntry[]
+  lastScraped: string | null
 }
 
-export function InsuranceWorkspace({ initialPolicies, initialPricing }: InsuranceWorkspaceProps) {
+export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScraped }: InsuranceWorkspaceProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [policies, setPolicies] = useState<InsurancePolicy[]>(initialPolicies)
@@ -275,6 +277,11 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing }: Insuranc
             Add Policy
           </button>
         </div>
+      </div>
+
+      {/* Pricing staleness indicator + refresh button */}
+      <div className="mb-6">
+        <PricingStalenessBadge lastScraped={lastScraped} />
       </div>
 
       {/* Stat cards */}
