@@ -156,7 +156,7 @@
   3. grain-tickets starts on a configurable PORT (not hardcoded 3000) so it coexists with the portal
   4. Both Next.js apps (glomalin-portal, organic-cert) run via `next start` in production mode (not `next dev`)
   5. Express apps reject cross-origin requests from any domain other than the portal origin
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [x] 35-01-PLAN.md — PM2 ecosystem config, grain-tickets port fix, Next.js production builds
 - [x] 35-02-PLAN.md — CORS lockdown on Express apps, .env.example templates for all 8 apps
@@ -169,7 +169,7 @@ Plans:
   1. User can open `portal.farm-domain.com` in a browser and see the Glomalin Portal landing page over HTTPS
   2. Each app is reachable at its own subdomain (e.g., `tickets.farm-domain.com`, `budget.farm-domain.com`) with a valid TLS certificate
   3. A deployment README exists with step-by-step instructions covering DNS, Caddy, PM2, Node.js, PostgreSQL, and git clone — enough for someone to rebuild the VPS from scratch
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [x] 36-01-PLAN.md — Caddyfile with subdomain-to-port routing and auto-HTTPS for all 8 apps
 - [x] 36-02-PLAN.md — DEPLOY.md step-by-step VPS setup guide (DNS, Node.js, PostgreSQL, Caddy, PM2)
@@ -194,7 +194,7 @@ Plans:
   1. Admin clicks "Invite" in the admin panel, enters a coworker email, and the coworker receives an email with a signup link pointing to the production domain
   2. Invited user clicks the link, sets a password, and lands on the dashboard showing only their granted modules
   3. User can click "Forgot password" on the login page, receive a reset email, set a new password, and log back in
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [x] 38-01-PLAN.md — Production-aware invite, callback, and password reset flows
 - [x] 38-02-PLAN.md — End-to-end onboarding verification checkpoint
@@ -218,7 +218,7 @@ Plans:
   1. On a mobile browser, the portal shows an "Add to Home Screen" install prompt and installs with the Glomalin icon and name
   2. With network disabled after first visit, the portal shell (navigation, layout, chrome) loads and renders without a blank screen or browser error
   3. An IndexedDB wrapper is importable from `lib/offline/db.ts` and passes read/write tests for both the operation queue and crop plan cache stores
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 44-01-PLAN.md — @serwist/next setup, web app manifest, install prompt, service worker caching strategy
@@ -233,7 +233,7 @@ Plans:
   2. Tapping a field shows the crop detail — variety, population, planned inputs with rates, and a pass checklist showing which passes are planned vs confirmed
   3. After a successful online sync, the crop plan data persists in IndexedDB and the same field list and detail pages render correctly with network disabled
   4. A "Last synced" badge is visible on the field list showing the timestamp of the most recent successful data fetch
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [x] 45-01-PLAN.md — Portal API route aggregating farm-budget data with TTL cache and graceful fallback
@@ -248,7 +248,7 @@ Plans:
   2. Operator can add an unplanned pass by tapping a floating action button, selecting field + operation type + date + operator, and seeing it appear in the pass list
   3. A confirmed or added pass appears in organic-cert's FieldOperation table within seconds, tagged with `plannedSource: "mobile-logger"`, and is visible in the existing organic-cert field history views
   4. The operator selector shows only users with operator role or above from Supabase profiles
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [ ] 46-01-PLAN.md — Portal API routes for pass confirmation, addition, and edit proxying to organic-cert
@@ -277,7 +277,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Office staff can enter a new grain ticket in the grain-tickets module with network disabled — the entry queues locally and syncs when connectivity returns, appearing in the ticket list without manual intervention
   2. Budget, FSA, and insurance summary dashboard views load from IndexedDB cache when offline, showing the data from the last successful sync rather than an error or blank screen
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
 - [ ] 48-01: Grain ticket offline entry with IndexedDB queue and sync-on-reconnect
@@ -291,7 +291,7 @@ Plans:
   1. Every field record in farm-budget, grain-tickets, portal clu_records, and fsa-acres has a non-null registry_field_id after backfill scripts run
   2. Running a backfill script against a fresh data set produces a coverage report showing matched vs unmatched fields, with zero silent failures
   3. Any cross-module query that previously joined on field name string now joins on registry_field_id without breaking existing behavior
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -305,7 +305,7 @@ Plans:
   1. farm-registry exposes a `/api/crops` endpoint returning crop records with canonical ID, canonical name, and per-app name aliases
   2. farm-budget, grain-tickets, fsa-acres, and organic-cert fetch their crop dropdown options from farm-registry instead of local arrays
   3. A cross-module crop aggregation (e.g., total bushels of "Organic SRWW" across grain-tickets) returns correct results using canonical crop ID even when apps use different display names
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 50-01-PLAN.md — Crop schema + CRUD API in farm-registry
 - [ ] 50-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -320,7 +320,7 @@ Plans:
   2. The fsa-acres Express app reads and writes CLU records through the portal API — its local JSON file is no longer the source of truth and reads from it are removed
   3. The USDA RMA price scraper runs in the portal and updates the insurance_pricing table — fsa-acres no longer maintains its own pricing data
   4. All existing fsa-acres features (seasonal dashboard, reports, GCS enrollment) continue working correctly after the migration with no user-visible regression
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 51-01-PLAN.md — Migration script with dedup + verification, GCS removal
 - [ ] 51-02-PLAN.md — Rewire fsa-acres server to Supabase (CLU + insurance + pricing)
@@ -336,7 +336,7 @@ Plans:
   2. The portal insurance policy view shows actual yield with a "Synced from grain tickets" badge and a timestamp indicating when the sync last ran
   3. The farm-budget dashboard shows actual yields from grain-tickets without the user entering them a second time
   4. When a yield sync has run, the indicator is visible in both insurance and budget UIs; when no sync has run, the field shows "No yield data yet"
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 52-01-PLAN.md — Yield computation engine in grain-tickets + Supabase migration for insurance_policies registry columns
 - [ ] 52-02-PLAN.md — Yield push pipeline to portal insurance + farm-budget + UI indicators (GT badge, variance display)
@@ -350,11 +350,12 @@ Plans:
   1. The organic-cert compilation engine reads seed lot numbers and certification numbers from seed-inventory — a seed entry in farm-budget is no longer needed for NOP compliance
   2. The NOP C9.0 audit section is auto-populated from seed-inventory delivery data including lot number, cert number, OMRI status, and supplier name
   3. The meristem-malt pricing table shows grain cost pulled from actual grain-tickets settlement prices, with a "synced from grain tickets" indicator and a manual override flag visible to the user
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 53-01-PLAN.md — Seed-inventory pipeline into organic-cert seed compilation (PIPE-05)
 - [ ] 53-02-PLAN.md — Meristem-malt grain cost sync from grain-tickets settlements (PIPE-07, PIPE-08)
 - [ ] 53-03-PLAN.md — NOP C9.0 Seed Compliance PDF section auto-populated from seed-inventory (PIPE-06)
+- [ ] 53-04-PLAN.md — Gap closure: OMRI status threaded through schema, compile, assembler, and PDF (PIPE-06)
 
 
 ### Phase 54: Iframe Embed Navigation + Design Tokens
@@ -366,7 +367,7 @@ Plans:
   2. A breadcrumb bar shows the current navigation path and a "Back to Dashboard" button is always visible when inside any embed
   3. All 8 apps use identical color token values from a shared platform-tokens.css file — switching between portal and any embedded app shows no color jarring
   4. Toggling day/night mode in the portal cascades consistently to all embedded apps so the theme is uniform across the entire UI
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -380,7 +381,7 @@ Plans:
   1. The dashboard displays actionable items for each relevant data source: overdue insurance claims, CLU records missing acreage, settlements with unmatched loads, and delivery shortfalls against forecast
   2. Clicking any dashboard action item navigates directly to the relevant module with the relevant record highlighted or filtered — no extra navigation steps required
   3. When 1-2 Express apps are offline, the dashboard degrades gracefully: items from the offline app show a "Unavailable" state rather than crashing or showing a blank dashboard
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -394,7 +395,7 @@ Plans:
   1. An APH records table stores 4-10 years of actual yield per farm/unit/crop, with source tracking indicating whether each year came from grain-tickets sync, manual entry, or import
   2. The computed APH is displayed in the insurance UI as a simple average of non-zero years, with zero-yield disaster years visibly excluded from the calculation
   3. The insurance coverage guarantee auto-updates in the UI when APH changes or the coverage level slider is adjusted — no manual recalculation required
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -408,7 +409,7 @@ Plans:
   1. A grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop for the current season
   2. The unpriced bushel exposure in dollars is calculated from live CBOT futures prices displayed alongside the position
   3. Contracts can be entered with type: cash, accumulator, HTA, options, min-price, or basis — and the view aggregates correctly across all contract types
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -421,7 +422,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Selecting a field opens a unified timeline showing all activities in date order, drawing from farm-budget planned passes, organic-cert confirmed operations, FieldOps machine data, and grain-ticket delivery records
   2. Each timeline entry is color-coded by source (budget / organic-cert / FieldOps / grain-tickets) and can be expanded to show full details for that entry
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -434,7 +435,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Toggling "Prevented Planting" on a CLU record or insurance policy shows an estimated PP indemnity calculated using the RMA coverage factors loaded from the insurance_pricing table
   2. The insurance PDF report includes the PP indemnity figure when PP has been toggled on, and omits it when PP is off — no manual editing of the report is needed
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -447,7 +448,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. A settlement financial summary view shows for each buyer and crop: delivered bushels, price per bushel, deductions, and net payment received
   2. Where a contract price exists, the summary shows contract price vs actual settlement price with a variance column — positive and negative variances are visually distinguished
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
@@ -461,7 +462,7 @@ Plans:
   1. After a farm manager adds a new field in farm-registry, the corresponding field appears in farm-budget's field list, grain-tickets' farm registry, and the portal's CLU records — without any additional manual steps
   2. The auto-created downstream records carry the correct registry_field_id so they are immediately usable in cross-module joins and the field activity timeline
   3. If a downstream app is offline when the field is added, farm-registry saves successfully, logs the failure, and retries the propagation once — the user is not blocked
-**Plans**: 3 plans
+**Plans**: 4 plans
 Plans:
 - [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
 - [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
