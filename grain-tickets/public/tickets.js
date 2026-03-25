@@ -23,6 +23,8 @@
       .then(function (crops) {
         if (crops && crops.length > 0) {
           _registryCrops = crops;
+          // Cache for offline use
+          if (window.ticketQueue) window.ticketQueue.cacheRef('registryCrops', crops);
         } else {
           // Registry returned empty — use empty list (no local fallback per user decision)
           _registryCrops = [];
@@ -30,8 +32,16 @@
         callback(_registryCrops);
       })
       .catch(function () {
-        _registryCrops = [];
-        callback(_registryCrops);
+        // Try IDB cache before giving up
+        if (window.ticketQueue) {
+          window.ticketQueue.getRef('registryCrops').then(function (cached) {
+            _registryCrops = cached || [];
+            callback(_registryCrops);
+          });
+        } else {
+          _registryCrops = [];
+          callback(_registryCrops);
+        }
       });
   }
 
@@ -548,6 +558,24 @@
       setPreview({});
       listLoaded = false; // Force reload on next tab switch
     }).catch(function (err) {
+      // Network failure (TypeError) — queue for offline sync
+      if (err instanceof TypeError || (err.message && err.message.indexOf('Failed to fetch') !== -1) || (err.message && err.message.indexOf('NetworkError') !== -1)) {
+        if (window.ticketQueue) {
+          window.ticketQueue.add(body).then(function () {
+            window.ticketQueue.requestSync();
+            util.showToast('Ticket queued \u2014 will sync when online', 4000, 'warning');
+            form.reset();
+            document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('entry-destination').value = destVal;
+            setPreview({});
+            listLoaded = false;
+          });
+        } else {
+          util.showToast('Network error \u2014 offline queuing unavailable', 5000, 'warning');
+        }
+        return;
+      }
+
       if (err.status === 409) {
         util.showToast(err.data ? err.data.message : 'Duplicate ticket number', 5000, 'warning');
       } else if (err.status === 400 && err.data && err.data.messages) {
@@ -568,11 +596,27 @@
     }
   });
 
+  // Pending tickets from IDB queue (shown in list alongside API tickets)
+  var pendingTickets = [];
+
+  function loadPendingTickets() {
+    if (!window.ticketQueue) { pendingTickets = []; return Promise.resolve(); }
+    return window.ticketQueue.getAll().then(function (entries) {
+      pendingTickets = entries;
+    }).catch(function () {
+      pendingTickets = [];
+    });
+  }
+
   function loadTickets() {
-    api.get('/api/tickets').then(function (data) {
+    var apiPromise = api.get('/api/tickets').then(function (data) {
       allTickets = data;
       listLoaded = true;
+    });
 
+    var pendingPromise = loadPendingTickets();
+
+    Promise.all([apiPromise, pendingPromise]).then(function () {
       // Populate crop year filter from available ticket data
       var yearSelect = document.getElementById('filter-crop-year');
       var currentYear = yearSelect.value; // Preserve current selection
@@ -592,6 +636,9 @@
       if (currentYear) yearSelect.value = currentYear;
 
       applyFilters();
+    }).catch(function () {
+      // API may be unavailable when offline — still show pending tickets
+      loadPendingTickets().then(function () { applyFilters(); });
     });
   }
 
@@ -671,6 +718,27 @@
     });
   });
 
+  // Escape HTML for safe rendering
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = String(str || '');
+    return div.innerHTML;
+  }
+
+  // Resolve destination name from refData.destinations
+  function resolveDestName(t) {
+    if (t.buyerId && refData.destinations) {
+      var buyer = refData.destinations.find(function (d) { return d.type === 'buyer' && d.id === t.buyerId; });
+      return buyer ? (buyer.shortCode || buyer.name) : 'Buyer #' + t.buyerId;
+    } else if (t.grainBinId && refData.destinations) {
+      var bin = refData.destinations.find(function (d) { return d.type === 'bin' && d.id === t.grainBinId; });
+      return bin ? '[BIN] ' + bin.name : 'Bin #' + t.grainBinId;
+    } else if (t.destination) {
+      return t.destination; // legacy free-text for old tickets
+    }
+    return '';
+  }
+
   function renderTable() {
     var tbody = document.getElementById('ticket-tbody');
     var start = currentPage * PAGE_SIZE;
@@ -678,7 +746,8 @@
     var totalPages = Math.max(1, Math.ceil(filteredTickets.length / PAGE_SIZE));
 
     var totalBU = filteredTickets.reduce(function (sum, t) { return sum + (t._computed ? t._computed.netBU : 0); }, 0);
-    document.getElementById('ticket-count').textContent = filteredTickets.length + ' tickets';
+    var pendingCount = pendingTickets.length;
+    document.getElementById('ticket-count').textContent = filteredTickets.length + ' tickets' + (pendingCount > 0 ? ' + ' + pendingCount + ' pending' : '');
     document.getElementById('ticket-total-bu').textContent = 'Total Net BU: ' + util.formatNum(totalBU, 2);
 
     // Summary stats
@@ -694,29 +763,85 @@
     document.getElementById('stat-avg-bu').textContent = count > 0 ? util.formatNum(totalBU / count, 2) : '--';
 
     var html = '';
+
+    // --- Render pending/conflict tickets first (page 1 only) ---
+    if (currentPage === 0 && pendingTickets.length > 0) {
+      // Sort: conflicts first, then pending by createdAt desc
+      var conflicts = pendingTickets.filter(function (e) { return e.status === 'conflict'; });
+      var pending = pendingTickets.filter(function (e) { return e.status === 'pending' || e.status === 'failed'; });
+      var allPending = conflicts.concat(pending).sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+
+      allPending.forEach(function (entry) {
+        var b = entry.body || {};
+        var isConflict = entry.status === 'conflict';
+        var isFailed = entry.status === 'failed';
+        var rowClass = isConflict ? 'conflict-row' : 'pending-row';
+        var statusBadge = '';
+        if (isConflict) {
+          statusBadge = '<span class="conflict-badge" onclick="toggleConflictPanel(\'' + escapeHtml(entry.id) + '\')">Duplicate \u2014 tap to resolve</span>';
+        } else if (isFailed) {
+          statusBadge = '<span class="pending-sync-badge" style="border-color:var(--danger);color:var(--danger)">Failed \u2014 tap to retry</span>';
+        } else {
+          statusBadge = '<span class="pending-sync-badge">\u23F3 Pending sync</span>';
+        }
+
+        var destName = '';
+        if (b.buyerId && refData.destinations) {
+          var buyerDest = refData.destinations.find(function (d) { return d.type === 'buyer' && d.id === parseInt(b.buyerId); });
+          destName = buyerDest ? (buyerDest.shortCode || buyerDest.name) : 'Buyer #' + b.buyerId;
+        } else if (b.grainBinId && refData.destinations) {
+          var binDest = refData.destinations.find(function (d) { return d.type === 'bin' && d.id === parseInt(b.grainBinId); });
+          destName = binDest ? '[BIN] ' + binDest.name : 'Bin #' + b.grainBinId;
+        }
+
+        var ticketLabel = b.ticketNo ? escapeHtml(b.ticketNo) : '<em style="color:var(--text-light)">no #</em>';
+
+        html += '<tr class="' + rowClass + '" data-pending-id="' + escapeHtml(entry.id) + '">';
+        html += '<td></td>'; // no checkbox for pending
+        html += '<td>' + escapeHtml(b.date || '') + '</td>';
+        html += '<td>' + escapeHtml(b.farm || '') + '</td>';
+        html += '<td class="number">' + util.formatNum(b.netWeight, 0) + '</td>';
+        html += '<td class="number">' + util.formatNum(b.moisture, 1) + '</td>';
+        html += '<td>' + escapeHtml(b.crop || '') + '</td>';
+        html += '<td>' + ticketLabel + '</td>';
+        html += '<td>' + statusBadge + '</td>';
+        html += '<td>' + escapeHtml(b.notes || '') + '</td>';
+        html += '<td>' + escapeHtml(destName) + '</td>';
+        html += '<td class="number">' + util.formatNum(b.fm, 2) + '</td>';
+        html += '<td colspan="4" style="color:var(--text-light);font-size:0.75rem">not yet synced</td>';
+        html += '<td>';
+        if (!isConflict) {
+          html += '<button class="btn-edit" onclick="openPendingEditModal(\'' + escapeHtml(entry.id) + '\')">Edit</button> ';
+          html += '<button class="btn-danger" onclick="deletePendingTicket(\'' + escapeHtml(entry.id) + '\')">Del</button>';
+          if (isFailed) {
+            html += ' <button class="btn-sm" onclick="retryPendingTicket(\'' + escapeHtml(entry.id) + '\')" style="color:var(--amber);border-color:var(--amber)">Retry</button>';
+          }
+        }
+        html += '</td>';
+        html += '</tr>';
+
+        // Conflict panel row (initially hidden)
+        if (isConflict) {
+          html += '<tr class="conflict-panel-row" id="conflict-panel-' + escapeHtml(entry.id) + '" style="display:none"><td colspan="17">';
+          html += renderConflictPanel(entry);
+          html += '</td></tr>';
+        }
+      });
+    }
+
+    // --- Render normal API tickets ---
     page.forEach(function (t) {
       var c = t._computed || {};
+      var destName = resolveDestName(t);
 
-      // Resolve destination name from refData.destinations
-      var destName = '';
-      if (t.buyerId && refData.destinations) {
-        var buyer = refData.destinations.find(function (d) { return d.type === 'buyer' && d.id === t.buyerId; });
-        destName = buyer ? (buyer.shortCode || buyer.name) : 'Buyer #' + t.buyerId;
-      } else if (t.grainBinId && refData.destinations) {
-        var bin = refData.destinations.find(function (d) { return d.type === 'bin' && d.id === t.grainBinId; });
-        destName = bin ? '[BIN] ' + bin.name : 'Bin #' + t.grainBinId;
-      } else if (t.destination) {
-        destName = t.destination; // legacy free-text for old tickets
-      }
-
-      html += '<tr data-id="' + t.id + '">';
-      html += '<td><input type="checkbox" class="ticket-checkbox" data-id="' + t.id + '"></td>';
-      html += '<td class="editable" data-field="date">' + (t.date || '') + '</td>';
-      html += '<td class="editable" data-field="farm">' + (t.farm || '') + '</td>';
+      html += '<tr data-id="' + escapeHtml(String(t.id)) + '">';
+      html += '<td><input type="checkbox" class="ticket-checkbox" data-id="' + escapeHtml(String(t.id)) + '"></td>';
+      html += '<td class="editable" data-field="date">' + escapeHtml(t.date || '') + '</td>';
+      html += '<td class="editable" data-field="farm">' + escapeHtml(t.farm || '') + '</td>';
       html += '<td class="editable number" data-field="netWeight">' + util.formatNum(t.netWeight, 0) + '</td>';
       html += '<td class="editable number" data-field="moisture">' + util.formatNum(t.moisture, 1) + '</td>';
-      html += '<td class="editable" data-field="crop">' + (t.crop || '').trim() + '</td>';
-      html += '<td class="editable" data-field="ticketNo">' + (t.ticketNo || '') + '</td>';
+      html += '<td class="editable" data-field="crop">' + escapeHtml((t.crop || '').trim()) + '</td>';
+      html += '<td class="editable" data-field="ticketNo">' + escapeHtml(t.ticketNo || '') + '</td>';
 
       // Reconciliation status badge
       var reconStatus = (t._reconciliation && t._reconciliation.status) ? t._reconciliation.status : 'unreconciled';
@@ -724,15 +849,15 @@
       var reconLabel = reconLabels[reconStatus] || 'Unreconciled';
       html += '<td><span class="badge badge-' + reconStatus + '">' + reconLabel + '</span></td>';
 
-      html += '<td class="editable" data-field="notes">' + (t.notes || '') + '</td>';
-      html += '<td>' + destName + '</td>';
+      html += '<td class="editable" data-field="notes">' + escapeHtml(t.notes || '') + '</td>';
+      html += '<td>' + escapeHtml(destName) + '</td>';
       html += '<td class="editable number" data-field="fm">' + util.formatNum(t.fm, 2) + '</td>';
       html += '<td class="number">' + util.formatNum(c.grossBU, 2) + '</td>';
       html += '<td class="number" style="font-weight:600">' + util.formatNum(c.netBU, 2) + '</td>';
       html += '<td class="number">' + util.formatNum(c.discount, 2) + '</td>';
       html += '<td class="number">' + util.formatNum(c.testWeight, 0) + '</td>';
       html += '<td class="number">' + util.formatNum(c.moistureShrink, 0) + '</td>';
-      html += '<td><button class="btn-edit" onclick="openEditModal(\'' + t.id + '\')">Edit</button> <button class="btn-danger" onclick="deleteTicket(\'' + t.id + '\')">Del</button></td>';
+      html += '<td><button class="btn-edit" onclick="openEditModal(\'' + escapeHtml(String(t.id)) + '\')">Edit</button> <button class="btn-danger" onclick="deleteTicket(\'' + escapeHtml(String(t.id)) + '\')">Del</button></td>';
       html += '</tr>';
     });
     tbody.innerHTML = html;
@@ -742,6 +867,139 @@
     document.getElementById('page-prev').disabled = currentPage === 0;
     document.getElementById('page-next').disabled = currentPage >= totalPages - 1;
   }
+
+  // --- Conflict resolution panel HTML ---
+  function renderConflictPanel(entry) {
+    var b = entry.body || {};
+    var cd = entry.conflictData || {};
+    var id = entry.id;
+
+    function fieldRow(label, yourVal, existingVal) {
+      return '<div class="conflict-field"><span class="conflict-field-name">' + escapeHtml(label) + '</span>' +
+        '<span>' + escapeHtml(String(yourVal || '--')) + '</span></div>';
+    }
+
+    var yourFields = fieldRow('Date', b.date) +
+      fieldRow('Farm', b.farm) +
+      fieldRow('Ticket #', b.ticketNo) +
+      fieldRow('Crop', b.crop) +
+      fieldRow('Net Wt', b.netWeight ? util.formatNum(b.netWeight, 0) + ' lbs' : '');
+
+    var existingMsg = cd.message || (cd.error || 'Already exists on server');
+
+    var html = '<div class="conflict-panel">';
+    html += '<div class="conflict-panel-inner">';
+    html += '<div class="yours"><div class="conflict-panel-label">Your entry</div>' + yourFields + '</div>';
+    html += '<div class="existing"><div class="conflict-panel-label">Existing ticket</div>';
+    html += '<div style="font-size:0.8rem;color:var(--text-light);padding:0.25rem 0">' + escapeHtml(existingMsg) + '</div>';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="conflict-actions">';
+    html += '<button class="btn-conflict-resolve" onclick="resolveConflictKeepMine(\'' + escapeHtml(id) + '\')">Keep mine (new ticket #)</button>';
+    html += '<button class="btn-conflict-discard" onclick="resolveConflictDiscard(\'' + escapeHtml(id) + '\')">Keep existing</button>';
+    html += '<button class="btn-conflict-resolve" onclick="openPendingEditModal(\'' + escapeHtml(id) + '\')">Edit &amp; retry</button>';
+    html += '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  // --- Conflict panel toggle ---
+  window.toggleConflictPanel = function (id) {
+    var row = document.getElementById('conflict-panel-' + id);
+    if (!row) return;
+    row.style.display = (row.style.display === 'none' || !row.style.display) ? '' : 'none';
+  };
+
+  // --- Pending ticket actions ---
+
+  window.deletePendingTicket = function (id) {
+    if (!confirm('Remove this pending ticket from the queue?')) return;
+    if (window.ticketQueue) {
+      window.ticketQueue.delete(id).then(function () {
+        util.showToast('Pending ticket removed');
+        loadPendingTickets().then(function () { renderTable(); });
+      });
+    }
+  };
+
+  window.retryPendingTicket = function (id) {
+    if (!window.ticketQueue) return;
+    // Reset status back to pending and trigger sync
+    window.ticketQueue.update(id, { status: 'pending', retryCount: 0, errorMessage: null }).then(function () {
+      window.ticketQueue.requestSync();
+      util.showToast('Retrying sync...', 3000);
+    });
+  };
+
+  window.resolveConflictKeepMine = function (id) {
+    if (!window.ticketQueue) return;
+    var newNo = prompt('Enter a new ticket number (different from the existing one):');
+    if (!newNo || !newNo.trim()) return;
+    window.ticketQueue.getAll().then(function (entries) {
+      var entry = entries.find(function (e) { return e.id === id; });
+      if (!entry) return;
+      var updatedBody = Object.assign({}, entry.body, { ticketNo: newNo.trim() });
+      window.ticketQueue.update(id, { body: updatedBody, status: 'pending', retryCount: 0, conflictData: null }).then(function () {
+        window.ticketQueue.requestSync();
+        util.showToast('Queued with new ticket # \u2014 syncing...', 3000);
+        loadPendingTickets().then(function () { renderTable(); });
+      });
+    });
+  };
+
+  window.resolveConflictDiscard = function (id) {
+    if (!confirm('Discard your entry and keep the existing ticket?')) return;
+    if (window.ticketQueue) {
+      window.ticketQueue.delete(id).then(function () {
+        util.showToast('Conflict resolved \u2014 existing ticket kept');
+        loadPendingTickets().then(function () { renderTable(); });
+      });
+    }
+  };
+
+  // --- Pending ticket edit modal ---
+
+  window.openPendingEditModal = function (id) {
+    if (!window.ticketQueue) return;
+    window.ticketQueue.getAll().then(function (entries) {
+      var entry = entries.find(function (e) { return e.id === id; });
+      if (!entry) return;
+      var b = entry.body || {};
+
+      populateEditDestinations();
+
+      // Add a notice to the modal
+      var modal = document.getElementById('edit-modal');
+      var modalCard = modal.querySelector('.modal-card');
+
+      var existingNotice = modalCard.querySelector('.pending-modal-notice');
+      if (!existingNotice) {
+        var notice = document.createElement('div');
+        notice.className = 'pending-modal-notice';
+        notice.textContent = 'Editing queued ticket \u2014 changes saved locally until synced';
+        modalCard.insertBefore(notice, modalCard.querySelector('form'));
+      }
+
+      // Store pending ID for save handler
+      document.getElementById('edit-id').value = id;
+      document.getElementById('edit-id').setAttribute('data-pending', 'true');
+      document.getElementById('edit-date').value = b.date || '';
+      document.getElementById('edit-farm').value = b.farm || '';
+      document.getElementById('edit-crop').value = b.crop || '';
+      document.getElementById('edit-ticketNo').value = b.ticketNo || '';
+      document.getElementById('edit-netWeight').value = b.netWeight != null ? b.netWeight : '';
+      document.getElementById('edit-moisture').value = b.moisture != null ? b.moisture : '';
+      document.getElementById('edit-fm').value = b.fm != null ? b.fm : '';
+      document.getElementById('edit-notes').value = b.notes || '';
+
+      var destVal = '';
+      if (b.buyerId) destVal = 'buyer:' + b.buyerId;
+      else if (b.grainBinId) destVal = 'bin:' + b.grainBinId;
+      document.getElementById('edit-destination').value = destVal;
+
+      modal.classList.remove('hidden');
+    });
+  };
 
   // Pagination buttons
   document.getElementById('page-prev').addEventListener('click', function () {
@@ -972,6 +1230,11 @@
 
   function closeEditModal() {
     editModal.classList.add('hidden');
+    // Clean up pending-specific state
+    var idField = document.getElementById('edit-id');
+    idField.removeAttribute('data-pending');
+    var notice = editModal.querySelector('.pending-modal-notice');
+    if (notice) notice.parentNode.removeChild(notice);
   }
 
   document.getElementById('edit-modal-close').addEventListener('click', closeEditModal);
@@ -982,7 +1245,9 @@
 
   editForm.addEventListener('submit', function (e) {
     e.preventDefault();
-    var id = document.getElementById('edit-id').value;
+    var idField = document.getElementById('edit-id');
+    var id = idField.value;
+    var isPending = idField.getAttribute('data-pending') === 'true';
 
     var editCropInput = document.getElementById('edit-crop');
     var body = {
@@ -1013,15 +1278,49 @@
       body.grainBinId = null;
     }
 
-    api.put('/api/tickets/' + id, body).then(function (updated) {
-      var idx = allTickets.findIndex(function (t) { return String(t.id) === String(id); });
-      if (idx !== -1) allTickets[idx] = updated;
-      applyFilters();
-      closeEditModal();
-      util.showToast('Ticket updated');
-    }).catch(function (err) {
-      alert('Error saving: ' + (err.message || 'Unknown error'));
-    });
+    if (isPending && window.ticketQueue) {
+      // Save edits back to IDB queue (re-enable sync if it was failed/conflict)
+      window.ticketQueue.update(id, { body: body, status: 'pending', retryCount: 0, conflictData: null }).then(function () {
+        window.ticketQueue.requestSync();
+        loadPendingTickets().then(function () {
+          applyFilters();
+          closeEditModal();
+          util.showToast('Pending ticket updated \u2014 syncing...');
+        });
+      });
+    } else {
+      api.put('/api/tickets/' + id, body).then(function (updated) {
+        var idx = allTickets.findIndex(function (t) { return String(t.id) === String(id); });
+        if (idx !== -1) allTickets[idx] = updated;
+        applyFilters();
+        closeEditModal();
+        util.showToast('Ticket updated');
+      }).catch(function (err) {
+        alert('Error saving: ' + (err.message || 'Unknown error'));
+      });
+    }
+  });
+
+
+  // --- Sync completion: refresh list when tickets sync ---
+  window.addEventListener('tickets-synced', function () {
+    listLoaded = false;
+    // Only auto-reload if currently on the list tab
+    var listTab = document.getElementById('tab-list');
+    if (listTab && listTab.classList.contains('active')) {
+      loadTickets();
+    }
+  });
+
+  // --- Online event: trigger sync if pending tickets exist ---
+  window.addEventListener('app-online', function () {
+    if (window.ticketQueue) {
+      window.ticketQueue.getPending().then(function (pending) {
+        if (pending.length > 0) {
+          window.ticketQueue.requestSync();
+        }
+      });
+    }
   });
 
 })();
