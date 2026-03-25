@@ -8,34 +8,36 @@ datasource db {
 }
 
 model Ticket {
-  id          Int      @id @default(autoincrement())
-  legacyId    String?  // Preserves "t_000001" string IDs from JSON for Phase 10 migration matching
-  date        DateTime
-  cropYear    Int      // 2025, 2026 — derived from date during Phase 10 migration
-  farm        String   // Farm name (string, matched to Farm.name)
-  netWeight   Float    // Pounds — raw scale weight
-  moisture    Float    // Moisture percentage
-  fm          Float    @default(0) // Foreign matter percentage
-  crop        String   // Crop name (matched to CropConfig.cropName)
-  ticketNo    String?  // NOT unique — 14 known duplicates in existing data
-  hbtBinNo    String?  // Hughes Blue Ticket bin number — extracted from notes in Phase 10
-  truckId     String?  // Truck identifier — extracted from notes in Phase 10
-  destination String?  // Free-text destination — replaced by buyerId FK in Phase 11
-  notes       String?  // Original notes text preserved after field extraction
-  buyerId     Int?     // FK to Buyer — null until Phase 11 wires buyer selection
-  buyer       Buyer?   @relation(fields: [buyerId], references: [id], onDelete: SetNull)
-  grainBinId  Int?     // FK to GrainBin — null unless destination is a bin
-  grainBin    GrainBin? @relation(fields: [grainBinId], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  legacyId        String?  // Preserves "t_000001" string IDs from JSON for Phase 10 migration matching
+  date            DateTime
+  cropYear        Int      // 2025, 2026 — derived from date during Phase 10 migration
+  farm            String   // Farm name (string, matched to Farm.name)
+  netWeight       Float    // Pounds — raw scale weight
+  moisture        Float    // Moisture percentage
+  fm              Float    @default(0) // Foreign matter percentage
+  crop            String   // Crop name (matched to CropConfig.cropName)
+  registryCropId  String?  // farm-registry canonical crop ID (e.g., crop_009) — backfilled by Phase 50
+  ticketNo        String?  // NOT unique — 14 known duplicates in existing data
+  hbtBinNo        String?  // Hughes Blue Ticket bin number — extracted from notes in Phase 10
+  truckId         String?  // Truck identifier — extracted from notes in Phase 10
+  destination     String?  // Free-text destination — replaced by buyerId FK in Phase 11
+  notes           String?  // Original notes text preserved after field extraction
+  buyerId         Int?     // FK to Buyer — null until Phase 11 wires buyer selection
+  buyer           Buyer?   @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+  grainBinId      Int?     // FK to GrainBin — null unless destination is a bin
+  grainBin        GrainBin? @relation(fields: [grainBinId], references: [id], onDelete: SetNull)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   settlementLines SettlementLine[] // Matched settlement lines — populated in Phase 13
 
-  @@index([ticketNo])       // Non-unique: 14 duplicate ticket numbers exist in data
-  @@index([farm, cropYear]) // Farm summary queries
-  @@index([crop, cropYear]) // Crop summary queries
-  @@index([buyerId])        // Buyer filter queries (Phase 11)
-  @@index([grainBinId])     // Grain bin filter queries (Phase 11)
+  @@index([ticketNo])         // Non-unique: 14 duplicate ticket numbers exist in data
+  @@index([farm, cropYear])   // Farm summary queries
+  @@index([crop, cropYear])   // Crop summary queries
+  @@index([registryCropId])   // Cross-module crop aggregation (Phase 50+)
+  @@index([buyerId])          // Buyer filter queries (Phase 11)
+  @@index([grainBinId])       // Grain bin filter queries (Phase 11)
 }
 
 model Farm {
@@ -63,16 +65,17 @@ model Farm {
 }
 
 model CropConfig {
-  id             Int      @id @default(autoincrement())
-  cropYear       Int      // 2025, 2026, etc. — allows per-year config changes
-  cropName       String   // "Hybrid Rye", "Organic Yellow Corn", etc.
-  testWeight     Float    @default(56) // Pounds per bushel
-  moistureShrink Float    @default(0)  // Moisture shrink threshold percentage
-  discount       Float    @default(0)  // Discount percentage
-  tolerancePct   Float    @default(0)  // Acceptable weight variance as percentage (e.g., 1.5 = 1.5%)
-  toleranceLbs   Float    @default(0)  // Acceptable weight variance as fixed lbs (used when tolerancePct = 0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id              Int      @id @default(autoincrement())
+  cropYear        Int      // 2025, 2026, etc. — allows per-year config changes
+  cropName        String   // "Hybrid Rye", "Organic Yellow Corn", etc.
+  registryCropId  String?  // farm-registry canonical crop ID (e.g., crop_018) — backfilled by Phase 50
+  testWeight      Float    @default(56) // Pounds per bushel
+  moistureShrink  Float    @default(0)  // Moisture shrink threshold percentage
+  discount        Float    @default(0)  // Discount percentage
+  tolerancePct    Float    @default(0)  // Acceptable weight variance as percentage (e.g., 1.5 = 1.5%)
+  toleranceLbs    Float    @default(0)  // Acceptable weight variance as fixed lbs (used when tolerancePct = 0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@unique([cropYear, cropName])
   @@index([cropYear])
