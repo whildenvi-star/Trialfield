@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Current Position
 
 Phase: 52 of 61 (Yield Pipeline)
-Plan: 01 complete
-Status: In Progress (1/3 plans complete)
-Last activity: 2026-03-25 — Phase 52 Plan 01 complete: yield computation engine + Supabase registry migration (PIPE-01)
+Plan: 02 complete
+Status: In Progress (2/3 plans complete)
+Last activity: 2026-03-25 — Phase 52 Plan 02 complete: yield push pipeline — portal endpoint, farm-budget cache, GT badge, dashboard variance display (PIPE-02/03/04)
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -47,6 +47,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 46-field-pass-logger P02 | 5 | 2 tasks | 2 files |
 | Phase 52 P01 | 5 | 2 tasks | 3 files |
 | Phase 46-field-pass-logger P03 | 3 | 1 tasks | 1 files |
+| Phase 52 P02 | 16 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 52-01]: Weight basis for yield is netWeight (net lbs after buyer deductions) — already on tickets, consistent across buyers
 - [Phase 52-01]: Acre denominator for yieldPerAcre uses Farm.acres in grain-tickets; Plan 02 uses insurance planted_acres when pushing to portal
 - [Phase 46-03]: Pre-existing TypeScript errors in enterprise-grid.tsx are out of scope (not caused by this change, different file)
+- [Phase 52-02]: Crop-name matching used in farm-budget dashboard — cropRows aggregated by crop name with no registryCropId at render time
+- [Phase 52-02]: GT badge uses CSS group-hover tooltip — enables formatted multi-line timestamp display
 
 ### Pending Todos
 
@@ -104,6 +107,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-25
-Stopped at: Completed 46-03-PLAN.md — FPL-01, FPL-02, FPL-04 complete. plannedSource and budgetImplementId now persisted in organic-cert POST handler. Phase 46 gap closed.
+Stopped at: Completed 52-02-PLAN.md — PIPE-02/03/04 complete. yield-push endpoint, farm-budget cache, GT badge, dashboard variance display done.
 Resume file: —
-Next action: Phase 52 Plan 02 — yield push pipeline (push to portal insurance_policies and farm-budget)
+Next action: Phase 52 Plan 03 (if any) — or phase 52 complete, move to phase 53
