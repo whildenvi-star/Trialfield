@@ -415,6 +415,128 @@ async function computeCropSummariesByRegistryId() {
   return Object.values(byId).sort((a, b) => (a.cropName || '').localeCompare(b.cropName || ''));
 }
 
+// --- Yield Pipeline (Phase 52) ---
+// computeYieldSummaries: per-field per-crop yield totals grouped by registryId + registryCropId.
+// Tickets must have BOTH Farm.registryId (the farm's canonical registry field ID) and
+// Ticket.registryCropId (the canonical crop ID) to be included in yield computation.
+async function computeYieldSummaries(cropYear) {
+  const year = cropYear || new Date().getFullYear();
+
+  // Load all tickets for this crop year, including the farm name for lookup
+  const dbTickets = await prisma.ticket.findMany({
+    where: { cropYear: year },
+    select: {
+      id: true, farm: true, netWeight: true, moisture: true, fm: true,
+      crop: true, registryCropId: true, cropYear: true
+    }
+  });
+
+  // Load all farms to get registryId and acres
+  const dbFarms = await prisma.farm.findMany({
+    select: { id: true, name: true, registryId: true, acres: true }
+  });
+
+  // Build farm name → farm lookup (lowercase, trimmed)
+  const farmByName = {};
+  dbFarms.forEach(f => {
+    farmByName[(f.name || '').trim().toLowerCase()] = f;
+  });
+
+  // Get cropConfig for per-crop bushel computation
+  const cropConfig = await buildCropConfigObject(year);
+
+  // Group summaries by registryFieldId + registryCropId
+  const groups = {}; // key: `${registryFieldId}::${registryCropId}`
+  let noFieldIdCount = 0;
+  let noCropIdCount = 0;
+  const warnedFarms = {};  // track warned farms to log once per farm name
+  const warnedCrops = {};  // track warned crops to log once per crop name
+
+  dbTickets.forEach(t => {
+    const farmKey = (t.farm || '').trim().toLowerCase();
+    const farm = farmByName[farmKey];
+
+    // Exclude tickets whose farm has no registryId
+    if (!farm || !farm.registryId) {
+      noFieldIdCount++;
+      const farmName = t.farm || '(unknown)';
+      if (!warnedFarms[farmName]) {
+        warnedFarms[farmName] = true;
+        console.warn(`Yield pipeline: tickets excluded — farm "${farmName}" has no registryId`);
+      }
+      return;
+    }
+
+    // Exclude tickets with no registryCropId
+    if (!t.registryCropId) {
+      noCropIdCount++;
+      const cropName = t.crop || '(unknown)';
+      if (!warnedCrops[cropName]) {
+        warnedCrops[cropName] = true;
+        console.warn(`Yield pipeline: tickets excluded — crop "${cropName}" has no registryCropId`);
+      }
+      return;
+    }
+
+    const key = `${farm.registryId}::${t.registryCropId}`;
+    if (!groups[key]) {
+      groups[key] = {
+        registryFieldId: farm.registryId,
+        registryCropId: t.registryCropId,
+        farmName: farm.name,
+        cropName: t.crop,
+        acres: farm.acres || 0,
+        totalNetLbs: 0,
+        totalNetBU: 0,
+        ticketCount: 0
+      };
+    }
+
+    groups[key].totalNetLbs += t.netWeight;
+
+    // Compute net BU using existing Calc.computeTicket with per-farm cropConfig
+    const ticketJson = { crop: t.crop, netWeight: t.netWeight, moisture: t.moisture, fm: t.fm };
+    const computed = Calc.computeTicket(ticketJson, cropConfig);
+    groups[key].totalNetBU += computed.netBU || 0;
+    groups[key].ticketCount++;
+  });
+
+  // Finalize: compute yieldPerAcre and round values
+  const summaries = Object.values(groups).map(g => {
+    const totalNetBU = Math.round(g.totalNetBU * 100) / 100;
+    const yieldPerAcre = g.acres > 0 ? Math.round((totalNetBU / g.acres) * 100) / 100 : 0;
+    return {
+      registryFieldId: g.registryFieldId,
+      registryCropId: g.registryCropId,
+      farmName: g.farmName,
+      cropName: g.cropName,
+      totalNetLbs: Math.round(g.totalNetLbs * 100) / 100,
+      totalNetBU,
+      yieldPerAcre,
+      acres: g.acres,
+      ticketCount: g.ticketCount
+    };
+  });
+
+  return {
+    summaries,
+    excludedTickets: { noFieldId: noFieldIdCount, noCropId: noCropIdCount }
+  };
+}
+
+// pushYieldUpdates: called after every ticket save/edit/delete.
+// Recomputes yield summaries and pushes to consumers (Plan 02 implements actual push logic).
+// Fire-and-forget — never blocks the ticket response.
+async function pushYieldUpdates(cropYear) {
+  const { summaries, excludedTickets } = await computeYieldSummaries(cropYear);
+  console.log(
+    `Yield summaries recomputed: ${summaries.length} field/crop combos` +
+    (excludedTickets.noFieldId > 0 ? `, ${excludedTickets.noFieldId} excluded (no field ID)` : '') +
+    (excludedTickets.noCropId > 0 ? `, ${excludedTickets.noCropId} excluded (no crop ID)` : '')
+  );
+  // Plan 02 will add: push to portal insurance and farm-budget here
+}
+
 // --- Validation ---
 function validateTicket(body, cropConfig) {
   const errors = [];
@@ -568,6 +690,8 @@ app.post('/api/tickets', async (req, res) => {
       }
     });
     res.status(201).json(enrichTicket(dbTicketToJson(ticket), cropConfig));
+    // Trigger yield recompute after response — fire-and-forget, never blocks client
+    pushYieldUpdates(cropYear).catch(err => console.error('pushYieldUpdates (POST) error:', err));
   } catch (e) {
     console.error('POST /api/tickets error:', e);
     if (e.code === 'P2002') return res.status(409).json({ error: 'Duplicate ticket' });
@@ -617,6 +741,8 @@ app.put('/api/tickets/:id', async (req, res) => {
     const ticket = await prisma.ticket.update({ where: { id }, data: updateData });
     const cropConfig = await buildCropConfigObject(ticket.cropYear);
     res.json(enrichTicket(dbTicketToJson(ticket), cropConfig));
+    // Trigger yield recompute after response — fire-and-forget, never blocks client
+    pushYieldUpdates(ticket.cropYear).catch(err => console.error('pushYieldUpdates (PUT) error:', err));
   } catch (e) {
     console.error('PUT /api/tickets/:id error:', e);
     if (e.code === 'P2025') return res.status(404).json({ error: 'Ticket not found' });
@@ -628,8 +754,13 @@ app.delete('/api/tickets/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(404).json({ error: 'Ticket not found' });
+    // Read cropYear before deletion so we can recompute the correct year after
+    const existing = await prisma.ticket.findUnique({ where: { id }, select: { cropYear: true } });
+    const cropYear = existing ? existing.cropYear : new Date().getFullYear();
     await prisma.ticket.delete({ where: { id } });
     res.json({ ok: true });
+    // Trigger yield recompute after response — fire-and-forget, never blocks client
+    pushYieldUpdates(cropYear).catch(err => console.error('pushYieldUpdates (DELETE) error:', err));
   } catch (e) {
     if (e.code === 'P2025') return res.status(404).json({ error: 'Ticket not found' });
     console.error('DELETE /api/tickets/:id error:', e);
@@ -727,6 +858,20 @@ app.get('/api/export/farms', async (req, res) => {
     res.send(csv);
   } catch (e) {
     console.error('GET /api/export/farms error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- Yield summaries by field+crop (Phase 52) ---
+// Returns per-field per-crop yield totals grouped by registryFieldId + registryCropId.
+// Optional query param: ?cropYear=2026 (defaults to current year)
+app.get('/api/yield-summaries', async (req, res) => {
+  try {
+    const cropYear = req.query.cropYear ? parseInt(req.query.cropYear, 10) : new Date().getFullYear();
+    const result = await computeYieldSummaries(cropYear);
+    res.json({ summaries: result.summaries, cropYear, excludedTickets: result.excludedTickets });
+  } catch (e) {
+    console.error('GET /api/yield-summaries error:', e);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
