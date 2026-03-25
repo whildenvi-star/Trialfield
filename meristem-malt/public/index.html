@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meristem Malt Cost Calculator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="platform-tokens.css">
+  <meta name="theme-color" content="#080a0f">
+  <script>
+    (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+    if(window!==window.top)document.documentElement.classList.add('in-iframe');
+  </script>
+  <script>
+    // Embed base-path + fetch override — MUST run before any app scripts
+    (function(){var m=window.location.pathname.match(/^(\/embed\/[^/]+)/);window.__BASE=m?m[1]:'';if(window.__BASE){var _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf('/embed/')!==0)u=window.__BASE+u;return _f.call(this,u,o)}}})();
+  </script>
+</head>
+<body>
+  <script>
+    if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+  </script>
+
+  <!-- STICKY BREAK-EVEN DASHBOARD -->
+  <header class="sticky-header">
+    <div class="header-top">
+      <h1>meristem-malt</h1>
+      <button id="theme-toggle" class="theme-toggle">[day]</button>
+    </div>
+    <div class="dashboard-cards">
+      <div class="summary-card">
+        <div class="card-label">Cost per Batch</div>
+        <div class="card-value" id="dash-cost-batch">--</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Cost per Lb</div>
+        <div class="card-value" id="dash-cost-lb">--</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Break-Even Price/Lb</div>
+        <div class="card-value" id="dash-breakeven">--</div>
+      </div>
+      <div class="summary-card">
+        <div class="card-label">Selling Price/Lb</div>
+        <div class="card-value" id="dash-selling">--</div>
+      </div>
+      <div class="summary-card" id="card-margin-lb">
+        <div class="card-label">Margin per Lb</div>
+        <div class="card-value" id="dash-margin-lb">--</div>
+      </div>
+      <div class="summary-card" id="card-margin-pct">
+        <div class="card-label">Margin %</div>
+        <div class="card-value" id="dash-margin-pct">--</div>
+      </div>
+      <div class="summary-card" id="card-be-batches">
+        <div class="card-label">Break-Even Batches/Yr</div>
+        <div class="card-value" id="dash-be-batches">--</div>
+      </div>
+      <div class="summary-card" id="card-annual-profit">
+        <div class="card-label">Annual Profit/Loss</div>
+        <div class="card-value" id="dash-annual-profit">--</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-content">
+
+    <!-- BATCH CONFIGURATION -->
+    <div class="section-card">
+      <h2>Batch Configuration</h2>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Grain Type</label>
+          <select id="cfg-grain-type">
+            <option value="conv_corn">Conventional Corn</option>
+            <option value="conv_barley" selected>Conventional Barley</option>
+            <option value="conv_wheat">Conventional Wheat</option>
+            <option value="conv_rye">Conventional Rye</option>
+            <option value="org_corn">Organic Corn</option>
+            <option value="org_barley">Organic Barley</option>
+            <option value="org_wheat">Organic Wheat</option>
+            <option value="org_rye">Organic Rye</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Batch Size (lbs grain input)</label>
+          <input type="number" id="cfg-batch-size" step="1" min="1" value="500">
+        </div>
+        <div class="form-group">
+          <label>Malt Yield %</label>
+          <input type="number" id="cfg-yield-pct" step="1" min="50" max="100" value="80">
+        </div>
+        <div class="form-group">
+          <label>Malt Output (lbs)</label>
+          <div class="computed-value" id="cfg-output-lbs">400</div>
+        </div>
+        <div class="form-group">
+          <label>Batches per Year</label>
+          <input type="number" id="cfg-batches-year" step="1" min="1" value="12">
+        </div>
+        <div class="form-group">
+          <label>Grain Cost ($/bushel)</label>
+          <input type="number" id="cfg-grain-cost" step="0.01" min="0" value="17">
+        </div>
+      </div>
+    </div>
+
+    <!-- VARIABLE COSTS -->
+    <div class="section-card">
+      <h2>Variable Costs (Per Batch) <span class="section-total" id="var-total">--</span></h2>
+      <p class="edit-hint">Click any amount to edit. Grain cost auto-calculated from batch config. Labor = rate x hours.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Cost Item</th><th>Details</th><th class="number">Amount</th><th></th></tr>
+          </thead>
+          <tbody id="var-costs-tbody"></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td colspan="2">Per-Batch Subtotal</td>
+              <td class="number" id="var-subtotal">--</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button id="var-add-btn" class="btn-sm" style="margin-top:0.5rem">+ Add Cost</button>
+    </div>
+
+    <!-- FIXED ANNUAL COSTS -->
+    <div class="section-card">
+      <h2>Fixed Annual Costs <span class="section-total" id="fixed-total">--</span></h2>
+      <p class="edit-hint">Click any amount to edit. Per-batch allocation = annual amount / batches per year.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Cost Item</th><th class="number">Annual Amount</th><th class="number">Per Batch</th><th></th></tr>
+          </thead>
+          <tbody id="fixed-costs-tbody"></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td>Subtotal</td>
+              <td class="number" id="fixed-subtotal-annual">--</td>
+              <td class="number" id="fixed-subtotal-batch">--</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button id="fixed-add-btn" class="btn-sm" style="margin-top:0.5rem">+ Add Cost</button>
+    </div>
+
+    <!-- CAPITAL EQUIPMENT -->
+    <div class="section-card">
+      <h2>Capital Equipment <span class="section-total" id="equip-total">--</span></h2>
+      <p class="edit-hint">Click cost or useful life to edit. Amortization and per-batch cost auto-calculated.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Equipment</th>
+              <th class="number">Cost</th>
+              <th class="number">Useful Life (yrs)</th>
+              <th class="number">Annual Amort.</th>
+              <th class="number">Per Batch</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="equip-tbody"></tbody>
+          <tfoot>
+            <tr class="total-row">
+              <td>Totals</td>
+              <td class="number" id="equip-total-cost">--</td>
+              <td></td>
+              <td class="number" id="equip-total-annual">--</td>
+              <td class="number" id="equip-total-batch">--</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <button id="equip-add-btn" class="btn-sm" style="margin-top:0.5rem">+ Add Equipment</button>
+    </div>
+
+    <!-- COMMONLY FORGOTTEN COSTS -->
+    <div class="section-card">
+      <h2>Commonly Forgotten Costs</h2>
+      <p class="edit-hint">Toggle costs on/off to see their impact on break-even pricing. Edit values to match your situation.</p>
+      <div id="forgotten-costs-list" class="forgotten-costs-list"></div>
+    </div>
+
+    <!-- WHAT-IF SCENARIOS -->
+    <div class="section-card">
+      <h2>What-If Scenarios</h2>
+      <div class="whatif-controls">
+        <div class="slider-group">
+          <label>Batches / Year</label>
+          <div class="slider-value" id="whatif-batches-display">12</div>
+          <input type="range" id="whatif-batches" min="1" max="52" step="1" value="12">
+        </div>
+        <div class="slider-group">
+          <label>Batch Size (lbs)</label>
+          <div class="slider-value" id="whatif-size-display">500</div>
+          <input type="range" id="whatif-size" min="100" max="1500" step="25" value="500">
+        </div>
+        <div class="slider-group">
+          <label>Selling Price ($/lb)</label>
+          <div class="slider-value" id="whatif-price-display">$3.00</div>
+          <input type="range" id="whatif-price" min="1.00" max="10.00" step="0.25" value="3.00">
+        </div>
+      </div>
+      <div id="whatif-result" class="whatif-result"></div>
+
+      <h3>Scenario Comparison</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th><th class="number">Batches/Yr</th><th class="number">Batch Size</th>
+              <th class="number">Selling $/lb</th><th class="number">Cost/lb</th>
+              <th class="number">Margin/lb</th><th class="number">Annual Profit</th>
+            </tr>
+          </thead>
+          <tbody id="scenario-tbody"></tbody>
+        </table>
+      </div>
+
+      <h3>Organic vs Conventional</h3>
+      <div id="org-conv-comparison" class="comparison-grid"></div>
+    </div>
+
+    <!-- MALT PRICING TABLE -->
+    <div class="section-card">
+      <h2>Malt Pricing</h2>
+      <p class="edit-hint">Click any price to edit. Changes are saved automatically.</p>
+      <div id="pricing-sync-bar" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Malt Type</th>
+              <th class="number">Price per Lb</th>
+              <th style="width:60px;">Source</th>
+              <th style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody id="pricing-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+  <!-- Theme toggle -->
+  <script>
+  (function () {
+    var btn = document.getElementById('theme-toggle');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    function update() {
+      var isLight = document.body.classList.contains('light');
+      btn.textContent = isLight ? '[night]' : '[day]';
+      if (meta) meta.content = isLight ? '#ffffff' : '#080a0f';
+    }
+    update();
+    btn.addEventListener('click', function () {
+      document.body.classList.toggle('light');
+      var isLight = document.body.classList.contains('light');
+      localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
+      update();
+      window.dispatchEvent(new Event('theme-change'));
+    });
+  })();
+  </script>
+  <script src="settings-panel.js"></script>
+  <script src="formatting-agent.js"></script>
+</body>
+</html>
