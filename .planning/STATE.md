@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 52: Yield Pipeline
+**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 53: Seed Inventory & Meristem-Malt Pipelines
 
 ## Current Position
 
-Phase: 52 of 61 (Yield Pipeline)
-Plan: 03 complete
-Status: Complete (3/3 plans complete)
-Last activity: 2026-03-25 — Phase 47 Plan 02 complete: conflict detection, SyncStatusPanel bottom sheet, and pending-sync UI in field detail page (OSE-03, OSE-04)
+Phase: 53 of 61 (Seed Inventory & Meristem-Malt Pipelines)
+Plan: 02 complete
+Status: In Progress (2/3 plans complete)
+Last activity: 2026-03-25 — Phase 53 Plan 02 complete: grain price sync pipeline — settlement-prices API in grain-tickets, sync endpoints in meristem-malt, GT/Manual badges in pricing table UI (PIPE-07, PIPE-08)
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -52,6 +52,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 47 P01 | 4 | 2 tasks | 5 files |
 | Phase 47 P02 | 6 | 2 tasks | 3 files |
 | Phase 53 P01 | 6 | 2 tasks | 5 files |
+| Phase 53 P02 | 7 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 53-01]: seed-inventory is primary NOP compliance source for seed lots; farm-budget seed catalog is fallback only — eliminates double-entry
 - [Phase 53-01]: organic-cert is a nested git repo — commits to organic-cert files must be made inside that directory
 - [Phase 53-01]: SeedLot certNumber/lotNumber only overwritten on update when sourceApp=seed-inventory — preserves user edits from the UI
+- [Phase 53]: gtUrl() helper defaults GRAIN_TICKETS_TOKEN to EMBED_TOKEN so no extra config needed in single-token setups
+- [Phase 53]: Crop name mapping (hybrid barley -> barley, srww/hrw -> wheat) handled at sync time without canonical crop registry ID
+- [Phase 53]: Manual override auto-set when user edits price cell — implicit lock, no extra UX step
 
 ### Pending Todos
 
