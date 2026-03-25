@@ -1,9 +1,18 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+
+const GRAIN_TICKETS_URL = process.env.GRAIN_TICKETS_URL || 'http://localhost:3007';
+const GRAIN_TICKETS_TOKEN = process.env.GRAIN_TICKETS_TOKEN || process.env.EMBED_TOKEN || '';
+
+function gtUrl(apiPath) {
+  var sep = apiPath.includes('?') ? '&' : '?';
+  return GRAIN_TICKETS_URL + apiPath + (GRAIN_TICKETS_TOKEN ? sep + 'token=' + GRAIN_TICKETS_TOKEN : '');
+}
 
 const cors = require('cors');
 
@@ -20,8 +29,34 @@ const corsOptions = {
   credentials: true
 };
 app.use(cors(corsOptions));
+
 app.use(express.json({ limit: '2mb' }));
+
+// Cookie-setting BEFORE static files so initial page load sets the cookie
+if (process.env.EMBED_TOKEN) {
+  const cookieParser = require('cookie-parser');
+  app.use(cookieParser());
+  app.use((req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) {
+      res.cookie('embed_session', process.env.EMBED_TOKEN, {
+        httpOnly: true, sameSite: 'lax', secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+    next();
+  });
+}
+
 app.use(express.static(path.join(__dirname, 'public')));
+
+// API auth gate
+if (process.env.EMBED_TOKEN) {
+  app.use('/api', (req, res, next) => {
+    if (req.query.token === process.env.EMBED_TOKEN) return next();
+    if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
+    res.status(403).json({ error: 'Forbidden' });
+  });
+}
 
 // perf: Cache-Control on GET API responses — config/pricing rarely changes
 app.use('/api', (req, res, next) => {
@@ -89,12 +124,21 @@ let store = {
     org_barley: 5.00,
     org_wheat: 5.00,
     org_rye: 5.00
+  },
+  pricingSync: {
+    lastSyncedAt: null,
+    syncedPrices: {},    // { conv_barley: 3.50, org_rye: 5.25, ... }
+    manualOverrides: {}  // { conv_barley: true } — keys where user has manually set price
   }
 };
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     store = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  }
+  // Migration: ensure pricingSync exists in loaded store
+  if (!store.pricingSync) {
+    store.pricingSync = { lastSyncedAt: null, syncedPrices: {}, manualOverrides: {} };
   }
 }
 
@@ -142,6 +186,68 @@ app.put('/api/pricing', async (req, res) => {
   store.pricing = req.body;
   await saveData();
   res.json(store.pricing);
+});
+
+// --- Grain Price Sync (PIPE-08) ---
+// GET /api/grain-prices/status — return sync metadata
+app.get('/api/grain-prices/status', (req, res) => {
+  res.json(store.pricingSync || { lastSyncedAt: null, syncedPrices: {}, manualOverrides: {} });
+});
+
+// POST /api/grain-prices/sync — fetch settlement prices from grain-tickets and update pricing
+app.post('/api/grain-prices/sync', async (req, res) => {
+  try {
+    const cropYear = (req.body && req.body.cropYear) || new Date().getFullYear();
+    const response = await fetch(gtUrl('/api/settlement-prices?cropYear=' + cropYear));
+    if (!response.ok) throw new Error('grain-tickets returned ' + response.status);
+    const prices = await response.json();
+
+    // Map grain-tickets crop names to meristem-malt pricing keys
+    // Meristem-malt keys: conv_corn, conv_barley, conv_wheat, conv_rye, org_corn, org_barley, org_wheat, org_rye
+    const cropKeyMap = {
+      'corn': 'corn', 'yellow corn': 'corn',
+      'barley': 'barley', 'hybrid barley': 'barley',
+      'wheat': 'wheat', 'srww': 'wheat', 'hrw': 'wheat',
+      'rye': 'rye', 'hybrid rye': 'rye'
+    };
+    if (!store.pricingSync) store.pricingSync = { lastSyncedAt: null, syncedPrices: {}, manualOverrides: {} };
+    const updated = {};
+    prices.forEach(p => {
+      const cropLower = (p.crop || '').toLowerCase();
+      const isOrganic = cropLower.startsWith('org') || cropLower.includes('organic');
+      const cleanCrop = cropLower.replace(/^org(anic)?\s*/i, '').replace(/^conv(entional)?\s*/i, '').trim();
+      const base = cropKeyMap[cleanCrop] || cleanCrop;
+      const prefix = isOrganic ? 'org_' : 'conv_';
+      const key = prefix + base;
+      // Only update if key exists in pricing and not manually overridden
+      if (key in store.pricing && !store.pricingSync.manualOverrides[key]) {
+        store.pricing[key] = p.avgPricePerBushel;
+        store.pricingSync.syncedPrices[key] = p.avgPricePerBushel;
+        updated[key] = p.avgPricePerBushel;
+      }
+    });
+
+    store.pricingSync.lastSyncedAt = new Date().toISOString();
+    await saveData();
+    res.json({ synced: updated, lastSyncedAt: store.pricingSync.lastSyncedAt });
+  } catch (e) {
+    console.error('POST /api/grain-prices/sync error:', e);
+    res.status(502).json({ error: 'Failed to sync prices from grain-tickets: ' + e.message });
+  }
+});
+
+// PUT /api/grain-prices/override/:key — toggle manual override for a pricing key
+app.put('/api/grain-prices/override/:key', async (req, res) => {
+  const key = req.params.key;
+  if (!(key in store.pricing)) return res.status(404).json({ error: 'Unknown pricing key' });
+  if (!store.pricingSync) store.pricingSync = { lastSyncedAt: null, syncedPrices: {}, manualOverrides: {} };
+  if (req.body && req.body.manual === true) {
+    store.pricingSync.manualOverrides[key] = true;
+  } else {
+    delete store.pricingSync.manualOverrides[key];
+  }
+  await saveData();
+  res.json({ key, manual: !!store.pricingSync.manualOverrides[key] });
 });
 
 // --- Start ---

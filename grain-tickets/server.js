@@ -906,6 +906,52 @@ app.get('/api/yield-summaries', async (req, res) => {
   }
 });
 
+// --- Settlement prices by crop (PIPE-07) ---
+// Returns average settlement price per crop from matched settlement lines.
+// Optional query params: ?cropYear=2026 (defaults to current year), ?buyerName=Meristem Malt
+app.get('/api/settlement-prices', async (req, res) => {
+  try {
+    const cropYear = req.query.cropYear ? parseInt(req.query.cropYear, 10) : new Date().getFullYear();
+    const where = {
+      settlement: { cropYear },
+      matchStatus: { in: ['matched', 'manual'] },
+      price: { not: null },
+      ticketId: { not: null }
+    };
+    if (req.query.buyerName) {
+      where.settlement = {
+        ...where.settlement,
+        buyer: { name: { equals: req.query.buyerName, mode: 'insensitive' } }
+      };
+    }
+    const lines = await prisma.settlementLine.findMany({
+      where,
+      select: {
+        price: true,
+        ticket: { select: { crop: true } },
+        settlement: { select: { buyer: { select: { name: true } } } }
+      }
+    });
+    // Group by crop, compute avg price
+    const byCrop = {};
+    lines.forEach(l => {
+      const crop = l.ticket?.crop || 'Unknown';
+      if (!byCrop[crop]) byCrop[crop] = { prices: [], buyerName: l.settlement?.buyer?.name || null };
+      byCrop[crop].prices.push(parseFloat(l.price));
+    });
+    const result = Object.entries(byCrop).map(([crop, data]) => ({
+      crop,
+      avgPricePerBushel: Math.round(data.prices.reduce((s, p) => s + p, 0) / data.prices.length * 10000) / 10000,
+      lineCount: data.prices.length,
+      buyerName: data.buyerName
+    }));
+    res.json(result);
+  } catch (e) {
+    console.error('GET /api/settlement-prices error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // --- Crop aggregation by canonical registry ID (CONS-11) ---
 // Used for cross-module crop summaries — groups by registryCropId, not crop name string.
 app.get('/api/summary/by-crop', async (req, res) => {
