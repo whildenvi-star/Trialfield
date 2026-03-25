@@ -517,7 +517,7 @@ Plans:
 | 47. Offline Sync Engine | v9.0 | 0/? | Not started | - |
 | 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 0/? | Not started | - |
 | 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
-| 50. Canonical Crop Registry | v10.0 | 0/? | Not started | - |
+| 50. Canonical Crop Registry | 1/3 | In Progress|  | - |
 | 51. FSA/Insurance Data Consolidation | v10.0 | 0/? | Not started | - |
 | 52. Yield Pipeline | v10.0 | 0/? | Not started | - |
 | 53. Seed-Inventory & Meristem-Malt Pipelines | v10.0 | 0/? | Not started | - |

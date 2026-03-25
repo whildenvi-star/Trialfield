@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 49: Canonical Field IDs
+**Current focus:** v10.0 Platform Consolidation & Data Integrity — Phase 50: Canonical Crop Registry
 
 ## Current Position
 
-Phase: 49 of 61 (Canonical Field IDs)
-Plan: 03 complete
-Status: In progress (plan 03/3 complete — phase 49 complete)
-Last activity: 2026-03-24 — Phase 49 Plan 03 complete: cross-module join updates and registry field dropdowns
+Phase: 50 of 61 (Canonical Crop Registry)
+Plan: 01 complete
+Status: In progress (plan 01/3 complete)
+Last activity: 2026-03-25 — Phase 50 Plan 01 complete: canonical crop registry with 38 records and CRUD API
 
 Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
 
@@ -36,6 +36,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | **Total** | **47** | **96** | |
 | Phase 49 P02 | 3 | 2 tasks | 4 files |
 | Phase 49-canonical-field-ids P03 | 7 | 2 tasks | 9 files |
+| Phase 50-canonical-crop-registry P01 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -53,6 +54,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 49-02]: grain-tickets backfill script reads .env manually (no dotenv dep) to load DATABASE_URL for Prisma
 - [Phase 49-03]: grain-tickets had no registry sync — added POST /api/farms/sync-registry with ID-first/name-fallback pattern matching farm-budget
 - [Phase 49-03]: portal CLU card registry selector uses select dropdown (not autocomplete) — 56 fields fit comfortably, simpler implementation
+- [Phase 50-01]: Organic flag is boolean attribute on crop record (not baked into name) — "Yellow Corn" with organic=true, not "ORG Yellow Corn"
+- [Phase 50-01]: Seed Beans and Natto Beans kept as separate records from Soybeans — fundamentally different markets, not just organic premium
+- [Phase 50-01]: 38 crop records across 13 categories covering all platform crops; FSA land-use categories excluded
 
 ### Pending Todos
 
@@ -66,7 +70,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-24
-Stopped at: Completed 49-03-PLAN.md — cross-module join updates and registry field dropdowns
+Last session: 2026-03-25
+Stopped at: Completed 50-01-PLAN.md — canonical crop registry with 38 records and CRUD API
 Resume file: —
-Next action: Execute phase 50 (next phase in v10.0 consolidation)
+Next action: Execute phase 50 plan 02 (backfill scripts)
