@@ -8,18 +8,26 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="platform-tokens.css">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
     // Apply saved theme before first paint to prevent flash
     (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+    if(window!==window.top)document.documentElement.classList.add('in-iframe');
+  </script>
+  <script>
+    // Embed base-path + fetch override — MUST run before any app scripts
+    (function(){var m=window.location.pathname.match(/^(\/embed\/[^/]+)/);window.__BASE=m?m[1]:'';if(window.__BASE){var _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf('/embed/')!==0)u=window.__BASE+u;return _f.call(this,u,o)}}})();
   </script>
 </head>
 <body>
   <script>
     // Transfer class from html to body immediately
     if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+    // Detect iframe embedding
+    if(window.self !== window.top){document.body.classList.add('in-iframe')}
   </script>
   <header>
     <div class="header-top">
@@ -38,9 +46,8 @@
         <button class="tab-btn" data-tab="reference">Reference</button>
         <button class="tab-btn" data-tab="programs">Programs</button>
         <button class="tab-btn" data-tab="sales">Sales</button>
-        <button class="tab-btn" data-tab="orders">Orders</button>
-        <button class="tab-btn" data-tab="deliveries">Deliveries</button>
         <button class="tab-btn" data-tab="map">Map</button>
+        <button id="theme-toggle-nav" class="theme-toggle" style="margin-left:auto">&#9788;</button>
       </div>
       <div class="nav-enterprise-bar" id="nav-enterprise-bar"></div>
     </nav>
@@ -59,6 +66,7 @@
             <div class="term-chat-input-line">
               <span class="term-prompt">user@glomalin:~$</span>
               <input type="text" id="term-chat-input" class="term-chat-input" placeholder="ask the network..." autocomplete="off" spellcheck="false">
+              <span id="audit-badge" class="audit-badge" style="display:none" title="audit alerts"></span>
             </div>
           </div>
         </div>
@@ -89,6 +97,7 @@
         <div style="display:flex;gap:0.5rem;align-items:center">
           <button id="btn-sync-all-registry" class="btn-sm" title="Sync acres & rent for all fields from Farm Registry">Sync All from Registry</button>
           <button id="dash-download-pdf" class="btn-sm">Download PDF</button>
+          <button class="btn-sm" onclick="location.reload(true)" title="Clear cache and reload">&#x21bb; Refresh</button>
           <details class="settings-details">
             <summary>Settings</summary>
             <div class="settings-bar">
@@ -179,7 +188,7 @@
         </table>
       </div>
 
-      <h3 style="margin-top:1.5rem">Production by Crop Type</h3>
+      <h3 style="margin-top:1.5rem">Production by Crop Type <button id="btn-export-production" class="btn-sm" style="margin-left:0.75rem;font-size:0.75rem">Export CSV</button></h3>
       <div id="dash-production-wrap" class="table-wrap">
         <table class="prod-type-table">
           <thead>
@@ -259,34 +268,7 @@
 
     <!-- Forecasts tab removed — content merged into Reference tab -->
 
-    <!-- ORDERS -->
-    <section id="tab-orders" class="tab-content">
-      <h2>Orders</h2>
-      <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem">
-        <select id="ord-filter-status">
-          <option value="">All Statuses</option>
-          <option value="ordered">Ordered</option>
-          <option value="partial">Partial</option>
-          <option value="complete">Complete</option>
-        </select>
-        <span id="ord-count" style="color:var(--text-light);font-size:0.85rem"></span>
-        <button id="ord-new-btn" class="btn-primary btn-sm" style="margin-left:auto">+ New Order</button>
-      </div>
-      <div id="ord-list"></div>
-      <div id="ord-form" class="hidden"></div>
-    </section>
-
-    <!-- DELIVERIES -->
-    <section id="tab-deliveries" class="tab-content">
-      <h2>Deliveries</h2>
-      <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem">
-        <input type="text" id="del-search" placeholder="Search by ticket or product...">
-        <span id="del-count" style="color:var(--text-light);font-size:0.85rem"></span>
-        <button id="del-new-btn" class="btn-primary btn-sm" style="margin-left:auto">+ New Delivery</button>
-      </div>
-      <div id="del-list"></div>
-      <div id="del-form" class="hidden"></div>
-    </section>
+    <!-- Orders & Deliveries removed — procurement managed in Seed & Inventory app -->
 
     <!-- REFERENCE DATA (former Inputs Manager) -->
     <section id="tab-reference" class="tab-content">
@@ -346,16 +328,11 @@
       <div class="table-info"><span id="inp-count"></span></div>
       <div id="products-container"></div>
 
-      <!-- Product Demand by Enterprise -->
-      <h3>Product Demand by Enterprise</h3>
-      <p class="edit-hint">Total quantity and cost for each product, broken down by enterprise. Auto-computed from field input assignments.</p>
+      <!-- Product Demand — Expandable Field View -->
+      <h3>Product Demand</h3>
+      <p class="edit-hint">Click any product to see which fields are planned to use it. Auto-computed from field input assignments.</p>
       <div class="table-info"><span id="prod-demand-info"></span></div>
-      <div class="table-wrap">
-        <table id="prod-demand-table">
-          <thead id="prod-demand-thead"></thead>
-          <tbody id="prod-demand-tbody"></tbody>
-        </table>
-      </div>
+      <div id="prod-demand-container"></div>
       </div><!-- /ref-sub-products -->
 
       <!-- Implements Sub-section -->
@@ -518,6 +495,7 @@
               <th data-sort="variety">Variety</th>
               <th data-sort="pricePerUnit" title="Price per unit (bag)">Price/Unit</th>
               <th data-sort="seedsPerUnit" title="Number of seeds per unit (bag)">Seeds/Unit</th>
+              <th title="Used on certified organic ground">OG</th>
               <th></th>
             </tr>
           </thead>
@@ -525,24 +503,18 @@
         </table>
       </div>
 
-      <!-- Seed Demand by Enterprise -->
-      <h3>Seed Demand by Enterprise</h3>
-      <p class="edit-hint">Total units and cost for each seed variety, broken down by enterprise. Auto-computed from field seed assignments.</p>
+      <!-- Seed Demand — Expandable Field View -->
+      <h3>Seed Demand</h3>
+      <p class="edit-hint">Click any seed variety to see which fields are planned to use it. Auto-computed from field seed assignments.</p>
       <div class="table-info"><span id="seed-demand-info"></span></div>
-      <div class="table-wrap">
-        <table id="seed-demand-table">
-          <thead id="seed-demand-thead"></thead>
-          <tbody id="seed-demand-tbody"></tbody>
-        </table>
-      </div>
+      <div id="seed-demand-container"></div>
       </div><!-- /ref-sub-seeds -->
 
       <!-- Forecast Sub-section (merged from Forecasts tab) -->
       <div id="ref-sub-forecast" class="ref-sub-content">
       <h3>Procurement Forecast</h3>
-      <p class="edit-hint">Aggregated demand from field plans. Select items and create orders.</p>
+      <p class="edit-hint">Aggregated demand from field plans. Order &amp; delivery status pulled live from Seed &amp; Inventory.</p>
       <div class="forecast-controls" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-        <button id="fc-create-order" class="btn-primary btn-sm" disabled>Create Order from Selected</button>
         <button id="fc-print-menu" class="btn-sm">Print Reports &#9662;</button>
         <span id="fc-summary" style="color:var(--text-light);font-size:0.85rem"></span>
       </div>
@@ -630,10 +602,16 @@
       <h2>Sales / Marketing</h2>
 
       <!-- Crop Types Manager -->
-      <h3>Crop Types</h3>
-      <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis.</p>
-      <div id="crop-types-container"></div>
-      <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
+      <div class="collapsible-section" id="crop-types-section">
+        <h3 class="collapsible-header" id="crop-types-toggle">
+          <span class="collapse-arrow">&#9654;</span> Crop Types
+        </h3>
+        <div class="collapsible-body" id="crop-types-body" style="display:none">
+          <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis.</p>
+          <div id="crop-types-container"></div>
+          <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
+        </div>
+      </div>
 
       <!-- Hedging Strategy Assessment -->
       <div id="hedging-panel" class="hedging-panel">
@@ -822,7 +800,7 @@
         <div class="form-grid">
           <div class="form-group" style="position:relative;">
             <label>Field Name</label>
-            <input type="text" id="ed-name" autocomplete="off">
+            <input type="text" id="ed-name" list="field-name-list">
           </div>
           <!-- Enterprise auto-assigned from crop + system code -->
           <div class="form-group">
@@ -906,19 +884,12 @@
         <details class="editor-section">
           <summary>Seed</summary>
           <div class="editor-section-body">
-            <div class="form-grid">
-              <div class="form-group">
-                <label>Variety</label>
-                <select id="ed-seed-variety">
-                  <option value="">— select seed —</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label>Population</label>
-                <input type="number" id="ed-seed-pop" step="1" min="0">
-              </div>
-            </div>
-            <div id="ed-seed-price-preview" style="font-size:0.8rem;color:var(--text-light);margin-top:0.25rem;"></div>
+            <div id="ed-seeds-acre-hint" style="font-size:0.78rem;color:var(--text-light);margin-bottom:0.5rem;"></div>
+            <table class="ref-table" style="font-size:0.8rem">
+              <thead><tr><th>Variety</th><th>Population</th><th>Acres</th><th>Cost/ac</th><th></th></tr></thead>
+              <tbody id="ed-seeds-tbody"></tbody>
+            </table>
+            <button id="ed-add-seed" class="btn-sm" style="margin-top:0.5rem">+ Add Variety</button>
           </div>
         </details>
 
@@ -1034,6 +1005,13 @@
             <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin-top:0.2rem">
               <input type="checkbox" id="pe-organic" style="width:16px;height:16px;accent-color:var(--primary)">
               <span id="pe-organic-label" style="font-size:0.8rem">No</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Organic Ground</label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;margin-top:0.2rem">
+              <input type="checkbox" id="pe-organicGround" style="width:16px;height:16px;accent-color:#16a34a">
+              <span id="pe-organicGround-label" style="font-size:0.8rem">No</span>
             </label>
           </div>
         </div>
@@ -1206,6 +1184,7 @@
   <!-- Autocomplete datalists (populated by app.js) -->
   <datalist id="prod-search-list"></datalist>
   <datalist id="impl-search-list"></datalist>
+  <datalist id="field-name-list"></datalist>
 
   <!-- CDN Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -1215,23 +1194,54 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
   <!-- App Modules -->
-  <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available')"></script>
+  <script>
+    // Load Farm Registry client — use embed proxy when running inside portal, localhost otherwise
+    (function(){
+      var embedMatch = window.location.pathname.match(/^\/embed\/farm-budget/);
+      var src = embedMatch
+        ? '/embed/farm-registry/client/farm-registry-client.js'
+        : 'http://localhost:3005/client/farm-registry-client.js';
+      var s = document.createElement('script');
+      s.src = src;
+      s.onerror = function(){ console.log('[FarmRegistry] Not available'); };
+      s.onload = function(){
+        // Re-populate field name datalist now that FarmRegistry is available,
+        // adding all active registry fields as suggestions (not just budget fields).
+        var fieldList = document.getElementById('field-name-list');
+        if (!fieldList || !window.FarmRegistry) return;
+        FarmRegistry.getFields({ active: true }).then(function(regFields) {
+          var existing = new Set(
+            Array.from(fieldList.querySelectorAll('option')).map(function(o){ return o.value; })
+          );
+          var extras = (regFields || [])
+            .map(function(f){ return f.name || ''; })
+            .filter(function(n){ return n && !existing.has(n); });
+          if (!extras.length) return;
+          extras.sort();
+          // Merge with existing options, re-sort entire list
+          var all = Array.from(existing).concat(extras).sort();
+          fieldList.innerHTML = all.map(function(n){
+            return '<option value="' + n.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">';
+          }).join('');
+        }).catch(function(){});
+      };
+      document.currentScript.parentNode.insertBefore(s, document.currentScript.nextSibling);
+    })();
+  </script>
   <script src="calc.js"></script>
   <script src="crop-colors.js"></script>
-  <script src="app.js"></script>
-  <script src="dashboard.js"></script>
-  <script src="enterprise.js"></script>
-  <script src="field-editor.js"></script>
+  <script src="app.js?v=20260319"></script>
+  <script src="dashboard.js?v=20260319"></script>
+  <script src="enterprise.js?v=20260319"></script>
+  <script src="field-editor.js?v=20260319"></script>
   <script src="programs.js"></script>
   <script src="inputs-manager.js"></script>
   <script src="seed-manager.js"></script>
   <script src="inventory.js"></script>
-  <script src="orders.js"></script>
-  <script src="deliveries.js"></script>
   <script src="demand-manager.js"></script>
   <script src="reports.js"></script>
 
-  <script src="sales.js"></script>
+  <script src="sales.js?v=2"></script>
   <script src="hedging.js"></script>
   <script src="farm-map.js"></script>
   <script src="pdf-report.js"></script>
@@ -1241,20 +1251,25 @@
   <script>
   (function () {
     var btn = document.getElementById('theme-toggle');
+    var btnNav = document.getElementById('theme-toggle-nav');
     var meta = document.querySelector('meta[name="theme-color"]');
     function update() {
       var isLight = document.body.classList.contains('light');
-      btn.innerHTML = isLight ? '&#9790;' : '&#9788;';
+      var icon = isLight ? '&#9790;' : '&#9788;';
+      btn.innerHTML = icon;
+      btnNav.innerHTML = icon;
       if (meta) meta.content = isLight ? '#ffffff' : '#080a0f';
     }
-    update();
-    btn.addEventListener('click', function () {
+    function toggle() {
       document.body.classList.toggle('light');
       var isLight = document.body.classList.contains('light');
       localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
       update();
       window.dispatchEvent(new Event('theme-change'));
-    });
+    }
+    update();
+    btn.addEventListener('click', toggle);
+    btnNav.addEventListener('click', toggle);
   })();
   </script>
 
@@ -1546,7 +1561,39 @@
     chatInput.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
     });
+
+    // Expose sendMessage for audit badge click
+    window._glomalinChat = { send: function (msg) { chatInput.value = msg; sendMessage(); } };
   })();
   </script>
+  <script>
+  (function () {
+    var badge = document.getElementById('audit-badge');
+    function checkAudit() {
+      fetch('/api/audit?summary=true')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !data.summary) { badge.style.display = 'none'; return; }
+          var total = (data.summary.errors || 0) + (data.summary.warnings || 0);
+          if (total > 0) {
+            badge.textContent = total + ' alert' + (total > 1 ? 's' : '');
+            badge.className = 'audit-badge' + (data.summary.errors > 0 ? '' : ' warn');
+            badge.style.display = 'inline-block';
+            badge.onclick = function () {
+              if (window._glomalinChat) window._glomalinChat.send('show me the audit alerts');
+            };
+          } else {
+            badge.style.display = 'none';
+          }
+        })
+        .catch(function () { badge.style.display = 'none'; });
+    }
+    // First check after 12s (after initial audit completes)
+    setTimeout(checkAudit, 12000);
+    setInterval(checkAudit, 5 * 60 * 1000);
+  })();
+  </script>
+  <script src="settings-panel.js"></script>
+  <script src="formatting-agent.js"></script>
 </body>
 </html>

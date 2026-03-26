@@ -58,21 +58,7 @@
   --c-success: 122 158 126;
   --c-amber: 255 184 0;
 
-  /* Hex aliases for non-Tailwind usage (settings panel, canvas, etc.) */
-  --bg: #080a0f;
-  --bg-raised: #0e1118;
-  --card: #0c1015;
-  --primary: #14b8a6;
-  --primary-dim: #0d9488;
-  --text: #cbd5e1;
-  --text-light: #64748b;
-  --text-bright: #e2e8f0;
-  --border: #1e293b;
-  --border-light: #334155;
-  --highlight: #0f172a;
-  --danger: #ff3b30;
-  --success: #7A9E7E;
-  --amber: #ffb800;
+  /* Hex color aliases moved to public/platform-tokens.css (single source of truth) */
 }
 
 /* Day mode — .light on body or html flips all colors */
@@ -93,20 +79,7 @@
   --c-success: 13 148 136;
   --c-amber: 122 80 0;
 
-  --bg: #f8fafc;
-  --bg-raised: #ffffff;
-  --card: #f1f5f9;
-  --primary: #0d9488;
-  --primary-dim: #0f766e;
-  --text: #1e293b;
-  --text-light: #64748b;
-  --text-bright: #0f172a;
-  --border: #cbd5e1;
-  --border-light: #e2e8f0;
-  --highlight: #f0fdfa;
-  --danger: #c62828;
-  --success: #0d9488;
-  --amber: #7a5000;
+  /* Hex color aliases moved to public/platform-tokens.css (single source of truth) */
 }
 
 /* React Flow edge glow — subtle teal drop-shadow matching glomalin accent */

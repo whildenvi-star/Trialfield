@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Farm Registry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="platform-tokens.css">
+  <link rel="stylesheet" href="style.css">
+  <meta name="theme-color" content="#080a0f">
+  <script>
+    (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+    if(window!==window.top)document.documentElement.classList.add('in-iframe');
+  </script>
+  <script>
+    // Embed base-path + fetch override — MUST run before any app scripts
+    (function(){var m=window.location.pathname.match(/^(\/embed\/[^/]+)/);window.__BASE=m?m[1]:'';if(window.__BASE){var _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf('/embed/')!==0)u=window.__BASE+u;return _f.call(this,u,o)}}})();
+  </script>
+</head>
+<body>
+  <script>
+    if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+  </script>
+  <header>
+    <div class="header-top">
+      <div>
+        <h1>farm-registry</h1>
+        <div class="subtitle">Central field/acre registry — W. Hughes Farms, G.P.</div>
+      </div>
+      <button id="theme-toggle" class="theme-toggle">[day]</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <div class="split-layout">
+      <!-- LEFT: Field list -->
+      <div class="list-panel">
+        <div class="toolbar">
+          <input type="text" id="search" placeholder="Search fields...">
+          <select id="filter-ownership">
+            <option value="">All ownership</option>
+            <option value="rented">Rented</option>
+            <option value="owned">Owned</option>
+            <option value="mixed">Mixed</option>
+          </select>
+          <select id="filter-organic">
+            <option value="">All types</option>
+            <option value="organic">Organic only</option>
+            <option value="conventional">Conventional only</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="btn-add-field">+ Add Field</button>
+          <a href="/report.html" target="_blank" class="btn btn-sm" style="text-decoration:none;color:var(--primary);border:1px solid var(--primary);">Report</a>
+        </div>
+
+        <table class="data-table" id="field-table">
+          <thead>
+            <tr>
+              <th data-sort="name" class="sort-asc">Field</th>
+              <th data-sort="reportingAcres" class="number">Acres</th>
+              <th data-sort="organicAcres" class="number">Org</th>
+              <th data-sort="ownership">Type</th>
+              <th data-sort="totalRentDollars" class="number">Gross Rent</th>
+            </tr>
+          </thead>
+          <tbody id="field-tbody"></tbody>
+        </table>
+      </div>
+
+      <!-- RIGHT: Edit panel -->
+      <div class="edit-panel" id="edit-panel">
+        <div class="edit-empty" id="edit-empty">
+          <p>Select a field to view and edit</p>
+        </div>
+
+        <div class="edit-form" id="edit-form" style="display:none;">
+          <div class="edit-header">
+            <h3 id="edit-title"></h3>
+            <div class="edit-actions">
+              <button class="btn btn-danger-outline btn-sm" id="btn-delete">Delete</button>
+              <button class="btn btn-primary" id="btn-save">Save</button>
+            </div>
+          </div>
+
+          <div id="save-toast" class="save-toast hidden"></div>
+
+          <!-- Core fields -->
+          <section class="edit-section">
+            <div class="field-grid">
+              <div class="field-group">
+                <label for="edit-name">Field Name</label>
+                <input type="text" id="edit-name">
+              </div>
+              <div class="field-group">
+                <label for="edit-ownership">Ownership</label>
+                <select id="edit-ownership">
+                  <option value="rented">Rented</option>
+                  <option value="owned">Owned</option>
+                  <option value="mixed">Mixed</option>
+                </select>
+              </div>
+            </div>
+            <div class="acres-row">
+              <div class="field-group acres-primary">
+                <label for="edit-reporting">Acres</label>
+                <input type="number" id="edit-reporting" step="0.01" min="0" class="acres-input">
+                <span class="acres-hint">THE number used across all apps</span>
+                <div id="shp-acres-banner" class="shp-acres-hint" style="display:none;"></div>
+              </div>
+              <div class="field-group">
+                <label for="edit-cert-status">Certification</label>
+                <select id="edit-cert-status">
+                  <option value="organic">Organic</option>
+                  <option value="conventional">Conventional</option>
+                  <option value="transitional">Transitional</option>
+                  <option value="split">Split</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <!-- Tillable Acre Breakdown -->
+          <section class="edit-section" id="section-tillable">
+            <h4>Tillable Breakdown <span class="section-hint">Rented vs owned acres</span></h4>
+            <div class="field-grid">
+              <div class="field-group" id="group-rented-tillable">
+                <label for="edit-rented-tillable">Rented Tillable</label>
+                <input type="number" id="edit-rented-tillable" step="0.01" min="0">
+              </div>
+              <div class="field-group" id="group-owned-tillable">
+                <label for="edit-owned-tillable">Owned Tillable</label>
+                <input type="number" id="edit-owned-tillable" step="0.01" min="0">
+              </div>
+            </div>
+            <div class="field-grid">
+              <div class="field-group" id="group-non-tillable">
+                <label for="edit-non-tillable">Non-Tillable</label>
+                <input type="number" id="edit-non-tillable" step="0.01" min="0">
+              </div>
+              <div class="field-group"></div>
+            </div>
+            <div id="tillable-sum" class="acre-sum"></div>
+          </section>
+
+          <!-- Organic / Conventional / Transitional by ownership -->
+          <section class="edit-section" id="section-cert">
+            <h4>Certification Acres <span class="section-hint">Organic / conventional / transitional by ownership</span></h4>
+            <table class="acre-breakdown-table" id="cert-acres-table">
+              <thead>
+                <tr><th></th><th class="col-rented">Rented</th><th class="col-owned">Owned</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="row-label">Organic</td>
+                  <td class="col-rented"><input type="number" id="edit-organic-rented" step="0.01" min="0"></td>
+                  <td class="col-owned"><input type="number" id="edit-organic-owned" step="0.01" min="0"></td>
+                </tr>
+                <tr>
+                  <td class="row-label">Conventional</td>
+                  <td class="col-rented"><input type="number" id="edit-conv-rented" step="0.01" min="0"></td>
+                  <td class="col-owned"><input type="number" id="edit-conv-owned" step="0.01" min="0"></td>
+                </tr>
+                <tr>
+                  <td class="row-label">Transitional</td>
+                  <td class="col-rented"><input type="number" id="edit-trans-rented" step="0.01" min="0"></td>
+                  <td class="col-owned"><input type="number" id="edit-trans-owned" step="0.01" min="0"></td>
+                </tr>
+              </tbody>
+            </table>
+            <div id="cert-sum" class="acre-sum"></div>
+          </section>
+
+          <!-- Landlord -->
+          <section class="edit-section" id="section-landlord">
+            <h4>Landlord</h4>
+            <div class="field-grid">
+              <div class="field-group">
+                <label for="edit-landlord-name">Name</label>
+                <input type="text" id="edit-landlord-name" placeholder="Landlord name">
+              </div>
+              <div class="field-group">
+                <label for="edit-landlord-contact">Contact</label>
+                <input type="text" id="edit-landlord-contact" placeholder="Phone, email, or address">
+              </div>
+            </div>
+          </section>
+
+          <!-- Rent -->
+          <section class="edit-section" id="section-rent">
+            <h4>Rent <span class="section-hint">Annual rent or opportunity cost — rate auto-computes from acres</span></h4>
+            <div class="field-grid">
+              <div class="field-group">
+                <label for="edit-rent-total">Total Rent ($/year)</label>
+                <input type="number" id="edit-rent-total" step="0.01" min="0" placeholder="e.g. 20000">
+              </div>
+              <div class="field-group">
+                <label>Computed Rate</label>
+                <div id="rent-rate-display" class="computed-display">—</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Aliases (compact) -->
+          <section class="edit-section">
+            <h4>Aliases <span class="section-hint">Names this field goes by in other apps</span></h4>
+            <div class="alias-list" id="alias-list"></div>
+            <div class="alias-add">
+              <input type="text" id="alias-input" placeholder="Add alias...">
+              <button class="btn btn-sm btn-primary" id="btn-add-alias">Add</button>
+            </div>
+          </section>
+
+          <!-- Shapefile -->
+          <section class="edit-section">
+            <h4>Shapefile <span class="section-hint">Field boundary .shp for FSA / GIS</span></h4>
+            <div id="shp-status" class="shp-status">No file uploaded</div>
+            <div class="shp-actions">
+              <label class="btn btn-sm btn-primary" for="shp-upload" style="margin:0;">Upload .shp</label>
+              <input type="file" id="shp-upload" accept=".shp,.zip" style="display:none;">
+              <button class="btn btn-sm btn-danger-outline" id="btn-shp-remove" style="display:none;">Remove</button>
+              <a class="btn btn-sm" id="btn-shp-download" href="#" style="display:none;text-decoration:none;color:var(--primary);">Download</a>
+            </div>
+          </section>
+
+          <!-- Notes -->
+          <section class="edit-section">
+            <h4>Notes</h4>
+            <textarea id="edit-notes" rows="3" placeholder="Landlord, special cases, FSA farm/tract numbers..."></textarea>
+          </section>
+
+          <!-- FSA Reporting -->
+          <section class="edit-section" id="section-fsa">
+            <h4>FSA Reporting <span class="section-hint">Reported acres from FSA system</span></h4>
+            <div id="fsa-content">
+              <div id="fsa-loading" class="fsa-loading">Loading FSA data...</div>
+              <div id="fsa-empty" class="fsa-empty" style="display:none;">No matching FSA records found</div>
+              <div id="fsa-error" class="fsa-empty" style="display:none;">FSA service unavailable</div>
+              <div id="fsa-data" style="display:none;">
+                <table class="fsa-table" id="fsa-table">
+                  <thead>
+                    <tr>
+                      <th>Farm #</th>
+                      <th>Tract</th>
+                      <th>CLU</th>
+                      <th>Crop</th>
+                      <th class="number">Acres</th>
+                      <th>Irr.</th>
+                      <th>Org.</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fsa-tbody"></tbody>
+                </table>
+                <div id="fsa-comparison" class="fsa-comparison"></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+  <!-- Theme toggle -->
+  <script>
+  (function () {
+    var btn = document.getElementById('theme-toggle');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    function update() {
+      var isLight = document.body.classList.contains('light');
+      btn.textContent = isLight ? '[night]' : '[day]';
+      if (meta) meta.content = isLight ? '#ffffff' : '#080a0f';
+    }
+    update();
+    btn.addEventListener('click', function () {
+      document.body.classList.toggle('light');
+      var isLight = document.body.classList.contains('light');
+      localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
+      update();
+      window.dispatchEvent(new Event('theme-change'));
+    });
+  })();
+  </script>
+  <script src="settings-panel.js"></script>
+  <script src="formatting-agent.js"></script>
+</body>
+</html>

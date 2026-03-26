@@ -8,23 +8,8 @@ html.in-iframe .sticky-header { display: none !important; }
 html.in-iframe .main-content { padding-top: 0.5rem; }
 
 :root {
-  --bg: #080a0f;
-  --bg-raised: #0e1118;
-  --card: #0c1015;
-  --card-alt: #0a0e14;
-  --primary: #14b8a6;
-  --primary-dim: #0d9488;
-  --primary-light: #2dd4bf;
-  --text: #cbd5e1;
-  --text-light: #64748b;
-  --text-bright: #e2e8f0;
-  --border: #1e293b;
-  --border-light: #334155;
-  --highlight: #0f172a;
-  --danger: #ff3b30;
-  --success: #7A9E7E;
+  /* Color tokens moved to platform-tokens.css */
   --blue: #4a9eff;
-  --amber: #ffb800;
   --orange: #ff6e40;
   --purple: #b388ff;
   --transition-fast: 0.15s ease;
@@ -634,23 +619,8 @@ input[type="range"] {
    LIGHT THEME — day mode, same terminal soul
    ============================================================ */
 body.light {
-  --bg: #f8fafc;
-  --bg-raised: #ffffff;
-  --card: #f1f5f9;
-  --card-alt: #e2e8f0;
-  --primary: #0d9488;
-  --primary-dim: #0f766e;
-  --primary-light: #14b8a6;
-  --text: #1e293b;
-  --text-light: #64748b;
-  --text-bright: #0f172a;
-  --border: #cbd5e1;
-  --border-light: #e2e8f0;
-  --highlight: #f0fdfa;
-  --danger: #c62828;
-  --success: #0d9488;
+  /* Color tokens moved to platform-tokens.css .light block */
   --blue: #1565c0;
-  --amber: #7a5000;
   --orange: #e65100;
   --purple: #7b1fa2;
   --shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1);

@@ -4,13 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Seed & Input Inventory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="platform-tokens.css">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0a0e09">
+  <meta name="theme-color" content="#080a0f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <script>(function(){var t=localStorage.getItem('si-theme');if(t==='light')document.documentElement.classList.add('light-pending')})()</script>
+  <script>
+    (function(){var t=localStorage.getItem('si-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+    if(window!==window.top)document.documentElement.classList.add('in-iframe');
+  </script>
+  <script>
+    // Embed base-path + fetch override — MUST run before any app scripts
+    (function(){var m=window.location.pathname.match(/^(\/embed\/[^/]+)/);window.__BASE=m?m[1]:'';if(window.__BASE){var _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf('/embed/')!==0)u=window.__BASE+u;return _f.call(this,u,o)}}})();
+  </script>
 </head>
 <body>
   <script>if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}</script>
@@ -331,6 +342,7 @@
                   <option value="lbs">Lbs</option>
                   <option value="gal">Gallons</option>
                   <option value="tons">Tons</option>
+                  <option value="acre">Acre</option>
                 </select>
               </div>
               <div class="form-group">
@@ -442,6 +454,14 @@
                   <label for="df-notes">Notes</label>
                   <input type="text" id="df-notes" placeholder="Notes">
                 </div>
+                <div class="form-group">
+                  <label>Farm / Field</label>
+                  <div class="autocomplete-wrap">
+                    <input type="text" id="df-farm-search" placeholder="Type to search farms..." autocomplete="off">
+                    <input type="hidden" id="df-farmId">
+                    <div class="autocomplete-list" id="df-farm-aclist"></div>
+                  </div>
+                </div>
               </div>
             </fieldset>
             <fieldset class="delivery-items">
@@ -529,6 +549,7 @@
                   <option value="lbs">Lbs</option>
                   <option value="gal">Gallons</option>
                   <option value="tons">Tons</option>
+                  <option value="acre">Acre</option>
                 </select>
               </div>
               <div class="form-group">
@@ -572,6 +593,12 @@
             <button class="toggle-btn recon-type" data-type="SEED">Seeds</button>
             <button class="toggle-btn recon-type" data-type="INPUT">Inputs</button>
           </div>
+          <label class="recon-organic-toggle">
+            <input type="checkbox" id="recon-organic-only"> Organic Only
+          </label>
+        </div>
+        <div class="toolbar-right">
+          <button class="btn-sm" id="recon-export-organic" title="Export Organic Reconciliation Report">Export Organic Report</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -581,6 +608,7 @@
               <th>Type</th>
               <th>Brand</th>
               <th>Product</th>
+              <th>Unit</th>
               <th data-sort="forecast" class="number">Forecast</th>
               <th data-sort="totalOrdered" class="number">Ordered</th>
               <th data-sort="totalDelivered" class="number">Delivered</th>
@@ -648,6 +676,17 @@
 
   <div id="toast" class="toast hidden"></div>
 
+  <!-- Confirm modal (works in cross-origin iframes where window.confirm is blocked) -->
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content" style="max-width:400px">
+      <p id="confirm-modal-msg" style="margin:0 0 1rem"></p>
+      <div style="display:flex;gap:0.5rem;justify-content:flex-end">
+        <button class="btn-sm" id="confirm-modal-cancel">Cancel</button>
+        <button class="btn-primary" id="confirm-modal-ok" style="min-width:80px">OK</button>
+      </div>
+    </div>
+  </div>
+
   <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available')"></script>
   <script src="app.js"></script>
   <script src="products.js"></script>
@@ -666,7 +705,7 @@
     function updateTheme() {
       var isLight = document.body.classList.contains('light');
       btn.innerHTML = isLight ? '&#9790;' : '&#9788;';
-      if (meta) meta.content = isLight ? '#f5f5f0' : '#0a0e09';
+      if (meta) meta.content = isLight ? '#f8fafc' : '#080a0f';
     }
     updateTheme();
     btn.addEventListener('click', function () {
@@ -679,5 +718,8 @@
       navigator.serviceWorker.register('/sw.js');
     }
   </script>
+  <script>window.__SP_THEME_KEY = 'si-theme';</script>
+  <script src="settings-panel.js"></script>
+  <script src="formatting-agent.js"></script>
 </body>
 </html>
