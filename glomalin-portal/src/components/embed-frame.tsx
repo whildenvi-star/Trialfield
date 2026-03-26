@@ -53,7 +53,7 @@ export function EmbedFrame({ src, title }: EmbedFrameProps) {
   }, [])
 
   return (
-    <div className="fixed left-0 right-0 bottom-0" style={{ top: 'var(--portal-header-h, 56px)' }}>
+    <div className="fixed left-0 right-0 bottom-0" style={{ top: 'calc(var(--portal-header-h, 56px) + var(--embed-breadcrumb-h, 36px))' }}>
       {loading && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-glomalin-bg">
           <p className="text-glomalin-muted font-mono text-sm animate-pulse">

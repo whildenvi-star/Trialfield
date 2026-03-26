@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MODULES, getEmbedUrl } from '@/lib/modules'
 import { EmbedFrame } from '@/components/embed-frame'
+import { EmbedBreadcrumb } from '@/components/embed-breadcrumb'
 
 interface ModulePageProps {
   params: Promise<{ module: string }>
@@ -43,7 +44,12 @@ export default async function ModulePage({ params }: ModulePageProps) {
       )
     }
 
-    return <EmbedFrame src={embedUrl} title={mod.label} />
+    return (
+      <>
+        <EmbedBreadcrumb moduleLabel={mod.label} moduleSublabel={mod.sublabel} />
+        <EmbedFrame src={embedUrl} title={mod.label} />
+      </>
+    )
   }
 
   // Coming Soon fallback for modules not yet built

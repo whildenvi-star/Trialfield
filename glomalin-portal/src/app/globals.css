@@ -2,10 +2,111 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- Google Fonts: Outfit (headings) + DM Sans (body) --- */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
 @layer base {
+  :root {
+    /* --- Embed Layout --- */
+    --embed-breadcrumb-h: 36px;
+
+    /* --- Text Scale System --- */
+    --text-scale: 1;
+    --base-size: 14px;
+    --size-xs:   calc(var(--base-size) * 0.78 * var(--text-scale));
+    --size-sm:   calc(var(--base-size) * 0.88 * var(--text-scale));
+    --size-base: calc(var(--base-size) * 1.0  * var(--text-scale));
+    --size-md:   calc(var(--base-size) * 1.14 * var(--text-scale));
+    --size-lg:   calc(var(--base-size) * 1.29 * var(--text-scale));
+    --size-xl:   calc(var(--base-size) * 1.57 * var(--text-scale));
+    --size-2xl:  calc(var(--base-size) * 2.0  * var(--text-scale));
+    --size-3xl:  calc(var(--base-size) * 2.57 * var(--text-scale));
+
+    /* --- Font Families --- */
+    --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-code:    var(--font-mono, 'JetBrains Mono', monospace);
+
+    /* --- Readability --- */
+    --line-height-base: 1.6;
+  }
+
   body {
     @apply bg-glomalin-bg text-glomalin-text font-mono;
+    font-size: var(--size-base);
   }
+}
+
+/* ── Theme color definitions ────────────────────────────────────────
+   OUTSIDE @layer so they have full cascade weight and aren't
+   overridden by unlayered styles from platform-tokens.css etc.   */
+
+:root {
+  /* RGB triplets for Tailwind opacity modifier support (bg-color/50) */
+  --c-bg: 8 10 15;
+  --c-bg-raised: 14 17 24;
+  --c-card: 12 16 21;
+  --c-primary: 20 184 166;
+  --c-primary-dim: 13 148 136;
+  --c-text: 203 213 225;
+  --c-text-light: 100 116 139;
+  --c-text-bright: 226 232 240;
+  --c-border: 30 41 59;
+  --c-border-light: 51 65 85;
+  --c-highlight: 15 23 42;
+  --c-danger: 255 59 48;
+  --c-success: 122 158 126;
+  --c-amber: 255 184 0;
+
+  /* Hex aliases for non-Tailwind usage (settings panel, canvas, etc.) */
+  --bg: #080a0f;
+  --bg-raised: #0e1118;
+  --card: #0c1015;
+  --primary: #14b8a6;
+  --primary-dim: #0d9488;
+  --text: #cbd5e1;
+  --text-light: #64748b;
+  --text-bright: #e2e8f0;
+  --border: #1e293b;
+  --border-light: #334155;
+  --highlight: #0f172a;
+  --danger: #ff3b30;
+  --success: #7A9E7E;
+  --amber: #ffb800;
+}
+
+/* Day mode — .light on body or html flips all colors */
+.light,
+:root.light {
+  --c-bg: 248 250 252;
+  --c-bg-raised: 255 255 255;
+  --c-card: 241 245 249;
+  --c-primary: 13 148 136;
+  --c-primary-dim: 15 118 110;
+  --c-text: 30 41 59;
+  --c-text-light: 100 116 139;
+  --c-text-bright: 15 23 42;
+  --c-border: 203 213 225;
+  --c-border-light: 226 232 240;
+  --c-highlight: 240 253 250;
+  --c-danger: 198 40 40;
+  --c-success: 13 148 136;
+  --c-amber: 122 80 0;
+
+  --bg: #f8fafc;
+  --bg-raised: #ffffff;
+  --card: #f1f5f9;
+  --primary: #0d9488;
+  --primary-dim: #0f766e;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --text-bright: #0f172a;
+  --border: #cbd5e1;
+  --border-light: #e2e8f0;
+  --highlight: #f0fdfa;
+  --danger: #c62828;
+  --success: #0d9488;
+  --amber: #7a5000;
 }
 
 /* React Flow edge glow — subtle teal drop-shadow matching glomalin accent */
@@ -16,4 +117,10 @@
 /* Slow down the dash animation to feel ambient rather than frantic */
 .react-flow__edge.animated path {
   animation-duration: 3s;
+}
+
+/* Prevent duplicate banner sections from stacking on navigation.
+   If React/Next.js ever renders more than one BannerSection, hide all but the first. */
+[data-banner-section] ~ [data-banner-section] {
+  display: none !important;
 }
