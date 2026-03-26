@@ -74,6 +74,19 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Canonical field IDs and crop registry across all apps, FSA/insurance data consolidated to Supabase, automatic yield pipeline (grain-tickets → insurance → budget), seed-inventory → organic-cert pipeline, meristem-malt → grain-tickets price pipeline, unified color tokens in platform-tokens.css, iframe embed breadcrumb navigation, cross-origin theme cascade. 6 phases, 20 plans, 25 requirements — all complete. Phases 55-61 (domain features) deferred to v11.0.
 
+## Current Milestone: v11.0 Domain Features & Workflow Automation
+
+**Goal:** Build domain-specific views and workflow automation on top of the consolidated data platform — actionable dashboard, APH database, grain marketing, field timeline, prevented planting, settlement summaries, and auto field propagation.
+
+**Target features:**
+- Actionable dashboard replacing static module cards with live action items
+- Structured APH database with computed APH and insurance guarantee auto-calc
+- Grain marketing position view (contracted vs unpriced bushels, CBOT exposure)
+- Unified field activity timeline pulling from all 4 data sources
+- Prevented planting indemnity calculator with PDF integration
+- Settlement financial summary with per-buyer per-crop revenue and contract variance
+- Auto field propagation (add once in farm-registry, auto-creates in all apps)
+
 ## Requirements
 
 ### Validated
@@ -252,4 +265,4 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | Defer phases 55-61 to v11.0 | Domain features (dashboards, calculators) build on top of consolidation, not part of it | — Pending |
 
 ---
-*Last updated: 2026-03-26 after v9.0 + v10.0 milestones shipped*
+*Last updated: 2026-03-26 after v11.0 milestone initialized*
