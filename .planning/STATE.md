@@ -120,6 +120,7 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 48-02]: Dashboard API route (/api/dashboard/summary) created so SW can cache a single cacheable JSON endpoint rather than intercepting Supabase SSR calls
 - [Phase 48-02]: SW timestamp companion pattern: store {url}__timestamp alongside cached responses for staleness checks without a separate IDB store
 - [Phase 48-01]: grain-tickets-v7 — cache name bumped; window.ticketQueue in app.js for cross-tab access; Background Sync _manualSync fallback; pending rows inline in tbody; edit modal reused for pending via data-pending flag
+- [Phase 54-03]: postMessage uses '*' origin wildcard — cosmetic theme-only message, namespaced by type field, safe for dev/prod
 
 ### Pending Todos
 
@@ -133,7 +134,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-03-25
-Stopped at: Completed 48-01-PLAN.md — Grain Tickets offline entry: IndexedDB queue, Background Sync, offline banner, pending/conflict rows with side-by-side conflict resolution UI in Ticket Log.
+Last session: 2026-03-26
+Stopped at: Completed 54-03-PLAN.md — Cross-origin iframe theme sync: EmbedFrame postMessage push + organic-cert message listener.
 Resume file: —
-Next action: Phase 48 Plan 02 (dashboard caching — glomalin-portal offline summary dashboards)
+Next action: Phase 54 Plan 04 (next plan in iframe-embed-navigation-design-tokens phase)

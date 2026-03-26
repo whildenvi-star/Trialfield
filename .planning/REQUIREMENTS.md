@@ -41,7 +41,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 - [ ] **UXN-05**: Portal shows breadcrumb bar above iframe embeds showing current navigation path
 - [ ] **UXN-06**: "Back to Dashboard" escape hatch always visible when inside an embed
 - [ ] **UXN-07**: All 8 apps use identical color tokens (bg, surface, border, accent, text) from shared platform-tokens.css
-- [ ] **UXN-08**: Day/night toggle produces consistent results across portal and all embedded apps
+- [x] **UXN-08**: Day/night toggle produces consistent results across portal and all embedded apps
 - [ ] **UXN-09**: Switching between portal and any embedded app shows zero visual color jarring
 
 ### Domain Features
@@ -119,7 +119,7 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 | UXN-05 | Phase 54 | Pending |
 | UXN-06 | Phase 54 | Pending |
 | UXN-07 | Phase 54 | Pending |
-| UXN-08 | Phase 54 | Pending |
+| UXN-08 | Phase 54 | Complete |
 | UXN-09 | Phase 54 | Pending |
 | UXN-01 | Phase 55 | Pending |
 | UXN-02 | Phase 55 | Pending |
