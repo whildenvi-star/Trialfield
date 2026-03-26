@@ -381,98 +381,91 @@ Plans:
 
 ### Phase 55: Actionable Dashboard
 **Goal**: The portal dashboard shows what actually needs attention today — overdue claims, unreported CLUs, unreconciled settlements, delivery shortfalls — not just static module navigation cards
-**Depends on**: Phase 51 (consolidated FSA/insurance data required), Phase 52 (yield pipeline required for delivery shortfall detection)
-**Requirements**: UXN-01, UXN-02, UXN-03
+**Depends on**: Phase 51 (consolidated FSA/insurance data required for claim and CLU status), Phase 52 (yield pipeline required for delivery shortfall detection)
+**Requirements**: DASH-01, DASH-02, DASH-03
 **Success Criteria** (what must be TRUE):
-  1. The dashboard displays actionable items for each relevant data source: overdue insurance claims, CLU records missing acreage, settlements with unmatched loads, and delivery shortfalls against forecast
+  1. The dashboard displays actionable items drawn from live data: overdue insurance claims, CLU records missing acreage, settlements with unmatched loads, and delivery shortfalls against forecast
   2. Clicking any dashboard action item navigates directly to the relevant module with the relevant record highlighted or filtered — no extra navigation steps required
-  3. When 1-2 Express apps are offline, the dashboard degrades gracefully: items from the offline app show a "Unavailable" state rather than crashing or showing a blank dashboard
-**Plans**: 4 plans
+  3. When 1-2 Express apps are offline, the dashboard degrades gracefully using Promise.allSettled — items from the offline app show an "Unavailable" state rather than crashing or blanking the entire dashboard
+**Plans**: TBD
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 55-01-PLAN.md — Action-item API routes: aggregate status from Supabase + Express apps with Promise.allSettled
+- [ ] 55-02-PLAN.md — Actionable dashboard UI: item cards with source badges, deep-link navigation, and offline degradation states
 
 ### Phase 56: Structured APH Database
 **Goal**: Insurance APH records exist as a structured multi-year table with computed APH and automatically derived insurance guarantees — not as manually maintained spreadsheet values
-**Depends on**: Phase 51 (insurance_policies table must be the consolidated store before APH records can attach to it)
-**Requirements**: DOM-04, DOM-05, DOM-06
+**Depends on**: Phase 51 (insurance_policies table must be the consolidated Supabase store before APH records can attach to it), Phase 52 (yield pipeline populates APH source data from grain-tickets)
+**Requirements**: APH-01, APH-02, APH-03
 **Success Criteria** (what must be TRUE):
-  1. An APH records table stores 4-10 years of actual yield per farm/unit/crop, with source tracking indicating whether each year came from grain-tickets sync, manual entry, or import
-  2. The computed APH is displayed in the insurance UI as a simple average of non-zero years, with zero-yield disaster years visibly excluded from the calculation
+  1. An APH records table in Supabase stores 4-10 years of actual yield per farm/unit/crop, with each row carrying a source tag indicating whether the year came from grain-tickets sync, manual entry, or import
+  2. The computed APH displayed in the insurance UI is a simple average of non-zero years, with zero-yield disaster years visibly excluded from the calculation and labeled as "excluded"
   3. The insurance coverage guarantee auto-updates in the UI when APH changes or the coverage level slider is adjusted — no manual recalculation required
-**Plans**: 4 plans
+**Plans**: TBD
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 56-01-PLAN.md — APH Supabase table schema, API routes for CRUD and computed APH endpoint
+- [ ] 56-02-PLAN.md — APH management UI in insurance module: year table, source badges, disaster-year exclusion toggle, guarantee auto-calc
 
 ### Phase 57: Grain Marketing Position
-**Goal**: Users can see contracted vs unpriced bushels per crop alongside dollar exposure from unpriced inventory — the grain marketing position is visible at a glance
-**Depends on**: Phase 50 (canonical crop IDs needed for cross-app crop aggregation)
-**Requirements**: DOM-01, DOM-02, DOM-03
+**Goal**: Users can see contracted vs unpriced bushels per crop alongside dollar exposure from unpriced inventory — the grain marketing position is visible at a glance without opening a spreadsheet
+**Depends on**: Phase 50 (canonical crop IDs required for cross-app crop aggregation), Phase 52 (yield pipeline provides estimated production totals from grain-tickets)
+**Requirements**: MKT-01, MKT-02, MKT-03
 **Success Criteria** (what must be TRUE):
-  1. A grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop for the current season
-  2. The unpriced bushel exposure in dollars is calculated from live CBOT futures prices displayed alongside the position
-  3. Contracts can be entered with type: cash, accumulator, HTA, options, min-price, or basis — and the view aggregates correctly across all contract types
-**Plans**: 4 plans
+  1. A grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop for the current season — all three columns visible simultaneously
+  2. The unpriced bushel exposure in dollars is calculated from live CBOT futures prices displayed alongside the position, with the price source and timestamp visible
+  3. Contracts can be entered with type: cash, accumulator, HTA, options, min-price, or basis — and the position view aggregates contracted bushels correctly across all contract types
+**Plans**: TBD
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 57-01-PLAN.md — Grain contracts Supabase table (crop, bushels, price, type, delivery date) + CBOT price fetch endpoint
+- [ ] 57-02-PLAN.md — Marketing position UI: per-crop position table, contract entry form, unpriced exposure calculation
 
 ### Phase 58: Field Activity Timeline
-**Goal**: Every activity touching a field — planned operations, confirmed passes, FieldOps machine data, and grain deliveries — appears in a single chronological timeline view
+**Goal**: Every activity touching a field — planned operations, confirmed passes, FieldOps machine data, and grain deliveries — appears in a single chronological timeline view so the farm manager can see the complete field history in one place
 **Depends on**: Phase 49 (registry_field_id required to correlate activities across apps by canonical field)
-**Requirements**: DOM-07, DOM-08
+**Requirements**: FLD-01, FLD-02
 **Success Criteria** (what must be TRUE):
-  1. Selecting a field opens a unified timeline showing all activities in date order, drawing from farm-budget planned passes, organic-cert confirmed operations, FieldOps machine data, and grain-ticket delivery records
-  2. Each timeline entry is color-coded by source (budget / organic-cert / FieldOps / grain-tickets) and can be expanded to show full details for that entry
-**Plans**: 4 plans
+  1. Selecting a field opens a unified timeline showing all activities in date order, drawing from farm-budget planned passes, organic-cert confirmed operations, FieldOps machine data, and grain-ticket delivery records for that field
+  2. Each timeline entry is color-coded by source (budget / organic-cert / FieldOps / grain-tickets) and can be expanded inline to show the full details for that activity
+**Plans**: TBD
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 58-01-PLAN.md — Timeline aggregation API: fetch and merge activity data from all 4 sources by registry_field_id using Promise.allSettled
+- [ ] 58-02-PLAN.md — Field timeline UI: chronological list, source color-coding, expand-to-detail, field selector
 
 ### Phase 59: Prevented Planting Calculator
-**Goal**: Farm manager can toggle prevented planting on a CLU/policy and immediately see the estimated PP indemnity — and that figure appears in the insurance PDF report
-**Depends on**: Phase 51 (FSA/insurance data must be consolidated and the USDA RMA price scraper must be in the portal before PP factors are available)
-**Requirements**: DOM-09, DOM-10
+**Goal**: Farm manager can toggle prevented planting on a CLU/policy and immediately see the estimated PP indemnity — and that figure appears in the insurance PDF report without manual editing
+**Depends on**: Phase 51 (FSA/insurance data consolidated in Supabase and RMA price scraper in portal before PP coverage factors are available)
+**Requirements**: PP-01, PP-02
 **Success Criteria** (what must be TRUE):
-  1. Toggling "Prevented Planting" on a CLU record or insurance policy shows an estimated PP indemnity calculated using the RMA coverage factors loaded from the insurance_pricing table
-  2. The insurance PDF report includes the PP indemnity figure when PP has been toggled on, and omits it when PP is off — no manual editing of the report is needed
-**Plans**: 4 plans
+  1. Toggling "Prevented Planting" on a CLU record or insurance policy shows an estimated PP indemnity immediately, calculated from RMA coverage factors loaded from the insurance_pricing table — no external lookup required
+  2. The insurance PDF report includes the PP indemnity figure and the PP flag when prevented planting has been toggled on for a unit, and omits the PP section entirely when PP is off
+**Plans**: TBD
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 59-01-PLAN.md — PP toggle on clu_records/insurance_policies + PP indemnity calculation using RMA factors from insurance_pricing
+- [ ] 59-02-PLAN.md — PP indemnity display in insurance UI + conditional PP section in insurance PDF report
 
 ### Phase 60: Settlement Financial Summary
-**Goal**: The grain-tickets settlement view shows per-buyer per-crop revenue with contract vs actual price variance — the financial outcome of the season is readable without opening a spreadsheet
-**Depends on**: Nothing (settlement data is already in grain-tickets PostgreSQL)
-**Requirements**: DOM-11, DOM-12
+**Goal**: The grain-tickets settlement view shows per-buyer per-crop revenue with contract vs actual price variance — the financial outcome of the season is readable in the app without opening a spreadsheet
+**Depends on**: Phase 57 (grain contracts table from grain marketing position phase provides contract prices for variance calculation)
+**Requirements**: SET-01, SET-02
 **Success Criteria** (what must be TRUE):
-  1. A settlement financial summary view shows for each buyer and crop: delivered bushels, price per bushel, deductions, and net payment received
-  2. Where a contract price exists, the summary shows contract price vs actual settlement price with a variance column — positive and negative variances are visually distinguished
-**Plans**: 4 plans
+  1. A settlement financial summary view shows for each buyer and crop: delivered bushels, price per bushel, deductions, and net payment received — all in a single scannable table
+  2. Where a contract price exists for a crop/buyer combination, the summary shows contract price vs actual settlement price with a variance column — positive variances shown in green, negative in red
+**Plans**: TBD
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 60-01-PLAN.md — Settlement summary query: aggregate per-buyer per-crop from grain-tickets PostgreSQL, join grain contracts for price comparison
+- [ ] 60-02-PLAN.md — Settlement financial summary UI in grain-tickets: summary table, contract variance column, season selector
 
 ### Phase 61: Auto Field Propagation
 **Goal**: Adding a new field in farm-registry automatically creates the corresponding field record in farm-budget, grain-tickets, and the portal — with the correct registry_field_id — so manual duplication across apps is eliminated
-**Depends on**: Phase 49 (registry_field_id schema must exist in downstream apps before propagation can write correct IDs)
+**Depends on**: Phase 49 (registry_field_id schema must exist in all downstream apps before propagation can write correct IDs)
 **Requirements**: AUTO-01, AUTO-02, AUTO-03
 **Success Criteria** (what must be TRUE):
   1. After a farm manager adds a new field in farm-registry, the corresponding field appears in farm-budget's field list, grain-tickets' farm registry, and the portal's CLU records — without any additional manual steps
   2. The auto-created downstream records carry the correct registry_field_id so they are immediately usable in cross-module joins and the field activity timeline
-  3. If a downstream app is offline when the field is added, farm-registry saves successfully, logs the failure, and retries the propagation once — the user is not blocked
-**Plans**: 4 plans
+  3. If a downstream app is offline when the field is added, farm-registry saves the field successfully, logs the propagation failure, and retries once — the user is not blocked and sees a "Propagation pending" indicator
+**Plans**: TBD
 Plans:
-- [ ] 49-01-PLAN.md — Schema additions (registry_field_id in all 4 apps + autocomplete endpoint)
-- [ ] 49-02-PLAN.md — Backfill scripts (one per app, dry-run/commit mode, coverage reports)
-- [ ] 49-03-PLAN.md — Cross-module join updates + field selection dropdowns
+- [ ] 61-01-PLAN.md — farm-registry webhook dispatcher: POST field creation to farm-budget, grain-tickets, and portal with async retry-once and failure logging
+- [ ] 61-02-PLAN.md — Downstream receivers: field creation endpoints in farm-budget, grain-tickets, and portal with registry_field_id wiring
 
 ## Progress
 
@@ -523,19 +516,19 @@ Plans:
 | 43. Scene Expansion | v8.0 | 2/2 | Complete | 2026-03-07 |
 | 44. PWA Infrastructure | v9.0 | 2/2 | Complete | 2026-03-17 |
 | 45. Crop Plan Viewer | v9.0 | 2/2 | Complete | 2026-03-20 |
-| 46. Field Pass Logger | 3/3 | Complete    | 2026-03-25 | - |
-| 47. Offline Sync Engine | 2/2 | Complete    | 2026-03-25 | OSE-01..04 |
-| 48. Grain Tickets PWA + Dashboard Caching | 2/2 | Complete   | 2026-03-25 | - |
-| 49. Canonical Field IDs | 3/3 | Complete    | 2026-03-24 | - |
-| 50. Canonical Crop Registry | 3/3 | Complete    | 2026-03-25 | - |
-| 51. FSA/Insurance Data Consolidation | 3/3 | Complete   | 2026-03-25 | - |
-| 52. Yield Pipeline | 3/3 | Complete    | 2026-03-25 | - |
-| 53. Seed-Inventory & Meristem-Malt Pipelines | 4/4 | Complete    | 2026-03-25 | - |
-| 54. Iframe Embed Navigation + Design Tokens | 4/4 | Complete    | 2026-03-26 | - |
-| 55. Actionable Dashboard | v10.0 | 0/? | Not started | - |
-| 56. Structured APH Database | v10.0 | 0/? | Not started | - |
-| 57. Grain Marketing Position | v10.0 | 0/? | Not started | - |
-| 58. Field Activity Timeline | v10.0 | 0/? | Not started | - |
-| 59. Prevented Planting Calculator | v10.0 | 0/? | Not started | - |
-| 60. Settlement Financial Summary | v10.0 | 0/? | Not started | - |
-| 61. Auto Field Propagation | v10.0 | 0/? | Not started | - |
+| 46. Field Pass Logger | v9.0 | 3/3 | Complete | 2026-03-25 |
+| 47. Offline Sync Engine | v9.0 | 2/2 | Complete | 2026-03-25 |
+| 48. Grain Tickets PWA + Dashboard Caching | v9.0 | 2/2 | Complete | 2026-03-25 |
+| 49. Canonical Field IDs | v10.0 | 3/3 | Complete | 2026-03-24 |
+| 50. Canonical Crop Registry | v10.0 | 3/3 | Complete | 2026-03-25 |
+| 51. FSA/Insurance Data Consolidation | v10.0 | 3/3 | Complete | 2026-03-25 |
+| 52. Yield Pipeline | v10.0 | 3/3 | Complete | 2026-03-25 |
+| 53. Seed-Inventory & Meristem-Malt Pipelines | v10.0 | 4/4 | Complete | 2026-03-25 |
+| 54. Iframe Embed Navigation + Design Tokens | v10.0 | 4/4 | Complete | 2026-03-26 |
+| 55. Actionable Dashboard | v11.0 | 0/? | Not started | - |
+| 56. Structured APH Database | v11.0 | 0/? | Not started | - |
+| 57. Grain Marketing Position | v11.0 | 0/? | Not started | - |
+| 58. Field Activity Timeline | v11.0 | 0/? | Not started | - |
+| 59. Prevented Planting Calculator | v11.0 | 0/? | Not started | - |
+| 60. Settlement Financial Summary | v11.0 | 0/? | Not started | - |
+| 61. Auto Field Propagation | v11.0 | 0/? | Not started | - |

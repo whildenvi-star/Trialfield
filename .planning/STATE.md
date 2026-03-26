@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 Phase: 55 of 61 (Actionable Dashboard)
 Plan: Not started
 Status: Ready for `/gsd:plan-phase 55`
-Last activity: 2026-03-26 — v11.0 milestone initialized. 7 phases (55-61), 18 requirements.
+Last activity: 2026-03-26 — v11.0 roadmap phase details written. All 7 phases (55-61) have correct goals, dependencies, requirement IDs, success criteria, and plan stubs.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -126,6 +126,10 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 54-02]: --embed-breadcrumb-h: 36px CSS variable defined in globals.css :root — single source, referenced by breadcrumb height and EmbedFrame top calc
 - [Phase 54-01]: CSS load order fixed in all 6 Express index.html files — platform-tokens.css was loading after style.css (Rule 3 auto-fix)
 - [Phase 54-01]: platform-tokens.css is now single source of truth for all 16 platform color tokens across all 7 apps; style.css retains only app-specific non-color tokens
+- [v11.0 roadmap]: Phase 60 depends on Phase 57 (grain contracts table) for contract vs actual price variance — settlement summary needs contract prices to compare against
+- [v11.0 roadmap]: Phase 57 depends on Phase 52 (yield pipeline) for estimated production totals, not just Phase 50 — production baseline comes from grain-tickets yield compute
+- [v11.0 roadmap]: PP-01/PP-02 requirement IDs replaced incorrect DOM-09/DOM-10 placeholder IDs throughout roadmap
+- [v11.0 roadmap]: DASH, APH, MKT, FLD, PP, SET, AUTO requirement IDs are now correctly mapped in phase details — previous version used wrong DOM-XX and UXN-XX IDs
 
 ### Pending Todos
 
@@ -133,15 +137,11 @@ None active.
 
 ### Blockers/Concerns
 
-- v9.0 phase 48 Plan 01 complete; Plan 02 (dashboard caching) remains before milestone is done
-- Phase 51 (FSA/Insurance consolidation) is the riskiest — migrating live data between stores
-- Phase 49 touches all 8 apps — backfill scripts need careful field name matching before writing IDs
+None active. v11.0 roadmap complete. Ready to plan Phase 55.
 
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 54-02-PLAN.md — EmbedBreadcrumb component with persistent "Dashboard > Module" path and "Back to Dashboard" link above all portal iframe embeds.
+Stopped at: v11.0 roadmap phase details written — all 7 phases (55-61) have correct requirement IDs, dependencies, success criteria, and plan stubs.
 Resume file: —
-Next action: Phase 54 Plan 03 or next phase
-Resume file: —
-Next action: Phase 54 Plan 04 (next plan in iframe-embed-navigation-design-tokens phase)
+Next action: `/gsd:plan-phase 55` — Actionable Dashboard
