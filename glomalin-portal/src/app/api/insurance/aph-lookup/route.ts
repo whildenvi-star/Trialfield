@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 import { normName, computeAphFromClus } from '@/lib/insurance/calc'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 // GET /api/insurance/aph-lookup?crop=Corn&farmName=KLUG%20FARMS
 // Returns APH average computed from matching CLU records.
@@ -24,7 +25,7 @@ export async function GET(request: Request) {
     .from('clu_records')
     .select('farm_name, farm_number, aph, fsa_acres')
     .ilike('crop', `%${crop}%`)
-    .eq('crop_year', 2026)
+    .eq('crop_year', CURRENT_CROP_YEAR)
 
   if (error) {
     return NextResponse.json(

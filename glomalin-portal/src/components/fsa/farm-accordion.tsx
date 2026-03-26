@@ -18,6 +18,7 @@ interface FarmAccordionProps {
   onSelectAllInFarm: (farmRecords: CluRecord[]) => void
   onSelectAllInTract: (tractRecords: CluRecord[]) => void
   onSave: (updated: CluRecord) => void
+  onDelete: (id: string) => void
   warningsByRecordId: Map<string, ValidationWarning[]>
   dismissedPpIds: Set<string>
   onDismissPpPrompt: (id: string) => void
@@ -38,6 +39,7 @@ export function FarmAccordion({
   onSelectAllInFarm,
   onSelectAllInTract,
   onSave,
+  onDelete,
   warningsByRecordId,
   dismissedPpIds,
   onDismissPpPrompt,
@@ -122,6 +124,7 @@ export function FarmAccordion({
                 onToggleSelect={onToggleSelect}
                 onSelectAllInTract={onSelectAllInTract}
                 onSave={onSave}
+                onDelete={onDelete}
                 warningsByRecordId={warningsByRecordId}
                 dismissedPpIds={dismissedPpIds}
                 onDismissPpPrompt={onDismissPpPrompt}

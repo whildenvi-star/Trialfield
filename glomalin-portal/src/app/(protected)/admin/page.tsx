@@ -41,6 +41,7 @@ export default function AdminPage() {
 
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('')
+  const [invitePassword, setInvitePassword] = useState('')
   const [inviteRole, setInviteRole] = useState<string>('viewer')
   const [inviteModules, setInviteModules] = useState<Record<string, boolean>>(
     () => Object.fromEntries(MODULES.map((m) => [m.id, false]))
@@ -137,6 +138,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: inviteEmail.trim(),
+          password: invitePassword,
           role: inviteRole,
           modules: Object.entries(inviteModules)
             .filter(([, v]) => v)
@@ -145,8 +147,9 @@ export default function AdminPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to invite user')
-      setInviteSuccess(`Invite sent to ${inviteEmail.trim()}`)
+      setInviteSuccess(`User created: ${inviteEmail.trim()}`)
       setInviteEmail('')
+      setInvitePassword('')
       setInviteRole('viewer')
       setInviteModules(Object.fromEntries(MODULES.map((m) => [m.id, false])))
       // Refresh user list to include newly invited user
@@ -155,6 +158,23 @@ export default function AdminPage() {
       setInviteError(err instanceof Error ? err.message : 'Failed to invite user')
     } finally {
       setInviting(false)
+    }
+  }
+
+  async function handleDeleteUser(userId: string, email: string) {
+    if (!window.confirm(`Delete user ${email}? This cannot be undone.`)) return
+    setSavingCell({ userId, field: 'delete' })
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Failed to delete user')
+      }
+      setUsers((prev) => prev.filter((u) => u.id !== userId))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete user')
+    } finally {
+      setSavingCell(null)
     }
   }
 
@@ -181,6 +201,16 @@ export default function AdminPage() {
             className="bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-3 py-2 font-mono text-sm focus:outline-none focus:border-glomalin-accent w-64"
             disabled={inviting}
             required
+          />
+          <input
+            type="text"
+            value={invitePassword}
+            onChange={(e) => setInvitePassword(e.target.value)}
+            placeholder="password"
+            className="bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-3 py-2 font-mono text-sm focus:outline-none focus:border-glomalin-accent w-48"
+            disabled={inviting}
+            required
+            minLength={6}
           />
           <select
             value={inviteRole}
@@ -222,7 +252,7 @@ export default function AdminPage() {
             disabled={inviting}
             className="bg-glomalin-accent text-glomalin-bg px-4 py-2 rounded font-bold font-mono text-sm disabled:opacity-50"
           >
-            {inviting ? 'Sending...' : 'Invite User'}
+            {inviting ? 'Creating...' : 'Create User'}
           </button>
           {inviteError && (
             <span className="text-red-400 font-mono text-sm self-center">
@@ -279,13 +309,15 @@ export default function AdminPage() {
                 <th className="text-left px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border">
                   Last Login
                 </th>
+                <th className="text-center px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border">
+                </th>
               </tr>
             </thead>
             <tbody>
               {users.length === 0 && (
                 <tr>
                   <td
-                    colSpan={3 + MODULES.length + 1}
+                    colSpan={3 + MODULES.length + 2}
                     className="text-center px-4 py-6 text-glomalin-muted"
                   >
                     No users found
@@ -376,6 +408,20 @@ export default function AdminPage() {
                         </span>
                       ) : (
                         <span className="text-glomalin-muted">Never</span>
+                      )}
+                    </td>
+
+                    {/* Delete */}
+                    <td className="px-4 py-3 text-center">
+                      {!isCurrentUser && (
+                        <button
+                          onClick={() => handleDeleteUser(user.id, user.email)}
+                          disabled={isSaving(user.id, 'delete')}
+                          className="text-red-500 hover:text-red-400 text-xs font-mono disabled:opacity-50"
+                          title={`Delete ${user.email}`}
+                        >
+                          {isSaving(user.id, 'delete') ? '...' : 'Delete'}
+                        </button>
                       )}
                     </td>
                   </tr>

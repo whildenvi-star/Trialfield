@@ -8,7 +8,20 @@ export interface Module {
   embedKey?: string
 }
 
-const EMBED_URLS: Record<string, string | undefined> = {
+// Same-origin embed paths — Caddy proxies /embed/<app>/* to Express ports.
+// This keeps iframes on the portal's origin so they share localStorage
+// (theme, text-scale) without cross-origin isolation issues.
+// Falls back to NEXT_PUBLIC_EMBED_URL_* env vars for local dev.
+const EMBED_PATHS: Record<string, string> = {
+  GRAIN_TICKETS: '/embed/grain-tickets/',
+  FARM_BUDGET: '/embed/farm-budget/',
+  MERISTEM_MALT: '/embed/meristem-malt/',
+  ORG_CERT: 'https://cert.whughesfarms.com/',
+  FARM_REGISTRY: '/embed/farm-registry/',
+  SEED_INVENTORY: '/embed/seed-inventory/',
+}
+
+const EMBED_URL_OVERRIDES: Record<string, string | undefined> = {
   GRAIN_TICKETS: process.env.NEXT_PUBLIC_EMBED_URL_GRAIN_TICKETS,
   FARM_BUDGET: process.env.NEXT_PUBLIC_EMBED_URL_FARM_BUDGET,
   MERISTEM_MALT: process.env.NEXT_PUBLIC_EMBED_URL_MERISTEM_MALT,
@@ -19,7 +32,13 @@ const EMBED_URLS: Record<string, string | undefined> = {
 
 export function getEmbedUrl(mod: Module): string | null {
   if (mod.type !== 'embed' || !mod.embedKey) return null
-  return EMBED_URLS[mod.embedKey] ?? null
+  // Use env override (for local dev) or same-origin proxy path (production)
+  const base = EMBED_URL_OVERRIDES[mod.embedKey] || EMBED_PATHS[mod.embedKey] || null
+  if (!base) return null
+  const token = process.env.EMBED_TOKEN
+  if (!token) return base
+  const sep = base.includes('?') ? '&' : '?'
+  return `${base}${sep}token=${token}`
 }
 
 export const MODULES: Module[] = [

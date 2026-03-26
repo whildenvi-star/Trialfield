@@ -15,6 +15,7 @@ interface TractAccordionProps {
   onToggleSelect: (id: string) => void
   onSelectAllInTract: (tractRecords: CluRecord[]) => void
   onSave: (updated: CluRecord) => void
+  onDelete: (id: string) => void
   warningsByRecordId: Map<string, ValidationWarning[]>
   dismissedPpIds: Set<string>
   onDismissPpPrompt: (id: string) => void
@@ -31,6 +32,7 @@ export function TractAccordion({
   onToggleSelect,
   onSelectAllInTract,
   onSave,
+  onDelete,
   warningsByRecordId,
   dismissedPpIds,
   onDismissPpPrompt,
@@ -101,6 +103,7 @@ export function TractAccordion({
               onToggleExpand={() => onToggleExpandRecord(record.id)}
               onToggleSelect={() => onToggleSelect(record.id)}
               onSave={onSave}
+              onDelete={onDelete}
               isPpPromptDismissed={dismissedPpIds.has(record.id)}
               onDismissPpPrompt={onDismissPpPrompt}
             />

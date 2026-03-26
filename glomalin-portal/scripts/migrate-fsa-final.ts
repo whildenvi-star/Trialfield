@@ -294,11 +294,26 @@ function buildPolicyRows(): PolicyRow[] {
 
 // ─── Migration Functions ──────────────────────────────────────────────────────
 
+async function detectMissingColumns(rows: CluRow[]): Promise<CluRow[]> {
+  // Probe with a single row to detect missing columns
+  const probe = [{ ...rows[0] }]
+  const { error } = await supabase!.from('clu_records').upsert(probe, { onConflict: 'legacy_id', count: 'exact' })
+  if (error?.message?.includes("'registry_field_id'")) {
+    console.log('  ⚠ registry_field_id column not found — stripping from migration (run migration 004 later)')
+    return rows.map(({ registry_field_id, ...rest }) => rest as CluRow)
+  }
+  // Probe succeeded — delete the probe row and return rows as-is
+  await supabase!.from('clu_records').delete().eq('legacy_id', rows[0].legacy_id)
+  return rows
+}
+
 async function migrateCluRecords(rows: CluRow[]): Promise<void> {
   if (DRY_RUN) {
     console.log(`  [DRY-RUN] Would upsert ${rows.length} CLU records to clu_records`)
     return
   }
+
+  rows = await detectMissingColumns(rows)
 
   for (let i = 0; i < rows.length; i += 500) {
     const chunk = rows.slice(i, i + 500)

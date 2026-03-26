@@ -33,19 +33,21 @@ export const bannerGradient = {
 } as const
 
 // ── Colors (kebab-case keys — for Tailwind class generation) ───────
-// Produces classes like `bg-glomalin-accent-dim`, `text-glomalin-accent-light`
+// Uses CSS custom properties with RGB triplets so Tailwind opacity
+// modifiers work (e.g. bg-glomalin-accent/30). The --c-* variables
+// are defined in globals.css :root / .light blocks.
 export const tailwindColors: Record<string, string> = {
-  bg:             colors.bg,
-  surface:        colors.surface,
-  border:         colors.border,
-  'border-light': colors.borderLight,
-  accent:         colors.accent,
-  'accent-dim':   colors.accentDim,
-  'accent-light': colors.accentLight,
-  text:           colors.text,
-  muted:          colors.muted,
-  green:          colors.green,
-  highlight:      colors.highlight,
+  bg:             'rgb(var(--c-bg) / <alpha-value>)',
+  surface:        'rgb(var(--c-card) / <alpha-value>)',
+  border:         'rgb(var(--c-border) / <alpha-value>)',
+  'border-light': 'rgb(var(--c-border-light) / <alpha-value>)',
+  accent:         'rgb(var(--c-primary) / <alpha-value>)',
+  'accent-dim':   'rgb(var(--c-primary-dim) / <alpha-value>)',
+  'accent-light': 'rgb(var(--c-primary) / <alpha-value>)',
+  text:           'rgb(var(--c-text) / <alpha-value>)',
+  muted:          'rgb(var(--c-text-light) / <alpha-value>)',
+  green:          'rgb(var(--c-success) / <alpha-value>)',
+  highlight:      'rgb(var(--c-highlight) / <alpha-value>)',
 }
 
 // ── Fonts ──────────────────────────────────────────────────────────

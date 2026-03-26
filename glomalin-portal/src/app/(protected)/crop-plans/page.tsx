@@ -97,8 +97,9 @@ export default function CropPlansPage() {
     setError(null)
     try {
       const supabase = createClient()
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
+      // Validate session is active before using the token (getSession alone returns stale tokens)
+      const { data: { user } } = await supabase.auth.getUser()
+      const token = user ? (await supabase.auth.getSession()).data.session?.access_token : null
 
       if (token && navigator.onLine) {
         const result = await syncCropPlans(token)

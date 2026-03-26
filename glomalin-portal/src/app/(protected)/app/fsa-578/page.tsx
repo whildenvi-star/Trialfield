@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { CluWorkspace } from '@/components/fsa/clu-workspace'
 import type { CluRecord } from '@/lib/fsa/calc'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 export default async function FsaPage() {
   const supabase = await createClient()
@@ -8,7 +9,7 @@ export default async function FsaPage() {
   const { data, error } = await supabase
     .from('clu_records')
     .select('*')
-    .eq('crop_year', 2026)
+    .eq('crop_year', CURRENT_CROP_YEAR)
     .order('farm_number')
     .order('tract_number')
     .order('clu')

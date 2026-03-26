@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import type { CluRecord, ValidationWarning } from '@/lib/fsa/calc'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { FarmAccordion } from './farm-accordion'
 import { BulkActionBar } from './bulk-action-bar'
 
@@ -100,6 +101,24 @@ function groupByFarmTract(
   return grouped
 }
 
+type AddCluDraft = {
+  farm_number: string
+  tract_number: string
+  clu: string
+  field_name: string
+  fsa_acres: string
+  crop: string
+}
+
+const EMPTY_ADD_DRAFT: AddCluDraft = {
+  farm_number: '',
+  tract_number: '',
+  clu: '',
+  field_name: '',
+  fsa_acres: '',
+  crop: '',
+}
+
 export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
   const [records, setRecords] = useState<CluRecord[]>(initialRecords)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -107,6 +126,11 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
   const [warnings, setWarnings] = useState<ValidationWarning[]>([])
   // Track dismissed prevented planting prompt IDs — persists within a session across card expand/collapse
   const [dismissedPpIds, setDismissedPpIds] = useState<Set<string>>(new Set())
+  // Add CLU form state
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [addDraft, setAddDraft] = useState<AddCluDraft>(EMPTY_ADD_DRAFT)
+  const [addError, setAddError] = useState<string | null>(null)
+  const [adding, setAdding] = useState(false)
 
   // Smart defaults: farms/tracts with any unreported CLU start expanded
   const [expandedFarms, setExpandedFarms] = useState<Set<string>>(() => {
@@ -187,6 +211,62 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
 
   const handleSaveRecord = (updated: CluRecord) => {
     setRecords((prev) => prev.map((r) => (r.id === updated.id ? updated : r)))
+  }
+
+  const handleDeleteRecord = (id: string) => {
+    setRecords((prev) => prev.filter((r) => r.id !== id))
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+    if (expandedId === id) setExpandedId(null)
+  }
+
+  const handleAddRecord = async () => {
+    setAddError(null)
+    if (!addDraft.farm_number.trim() || !addDraft.tract_number.trim() || !addDraft.clu.trim()) {
+      setAddError('Farm, tract, and CLU are required')
+      return
+    }
+    const acres = parseFloat(addDraft.fsa_acres)
+    if (!addDraft.fsa_acres.trim() || isNaN(acres) || acres <= 0) {
+      setAddError('Acres must be a positive number')
+      return
+    }
+    setAdding(true)
+    try {
+      const res = await fetch('/api/fsa/clu-records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          farm_number: addDraft.farm_number.trim(),
+          tract_number: addDraft.tract_number.trim(),
+          clu: addDraft.clu.trim(),
+          field_name: addDraft.field_name.trim() || null,
+          fsa_acres: acres,
+          crop: addDraft.crop.trim() || null,
+          crop_year: CURRENT_CROP_YEAR,
+        }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setAddError(json.error ?? 'Failed to create record')
+        return
+      }
+      setRecords((prev) => [...prev, json.record as CluRecord])
+      setAddDraft(EMPTY_ADD_DRAFT)
+      setShowAddForm(false)
+      // Expand the farm/tract so the new record is visible
+      const farmKey = addDraft.farm_number.trim()
+      const tractKey = `${farmKey}-${addDraft.tract_number.trim()}`
+      setExpandedFarms((prev) => new Set(prev).add(farmKey))
+      setExpandedTracts((prev) => new Set(prev).add(tractKey))
+    } catch {
+      setAddError('Network error — please try again')
+    } finally {
+      setAdding(false)
+    }
   }
 
   const handleDismissPpPrompt = (id: string) => {
@@ -292,8 +372,19 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
             {records.length.toLocaleString()} CLU records &middot; Crop year 2026
           </p>
         </div>
-        {/* Export buttons — always visible top-right of page header */}
+        {/* Action buttons — always visible top-right of page header */}
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShowAddForm((v) => !v)
+              setAddError(null)
+              setAddDraft(EMPTY_ADD_DRAFT)
+            }}
+            className="bg-glomalin-accent text-glomalin-bg px-4 py-2 rounded font-mono text-sm font-bold hover:opacity-90 transition-opacity"
+          >
+            {showAddForm ? 'Cancel' : 'Add CLU'}
+          </button>
           <AcreagePdfButton records={records} />
           <button
             type="button"
@@ -309,6 +400,112 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
       {loadError && (
         <div className="bg-glomalin-surface border border-red-800 rounded-lg px-4 py-3 mb-6 font-mono text-sm text-red-400">
           Failed to load CLU records: {loadError}
+        </div>
+      )}
+
+      {/* Add CLU form */}
+      {showAddForm && (
+        <div className="bg-glomalin-surface border border-glomalin-accent rounded-lg px-4 py-4 mb-6 space-y-3">
+          <h2 className="font-mono font-bold text-sm text-glomalin-text">New CLU Record</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+                Farm #
+              </label>
+              <input
+                type="text"
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={addDraft.farm_number}
+                onChange={(e) => setAddDraft((d) => ({ ...d, farm_number: e.target.value }))}
+                placeholder="e.g. 1234"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+                Tract #
+              </label>
+              <input
+                type="text"
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={addDraft.tract_number}
+                onChange={(e) => setAddDraft((d) => ({ ...d, tract_number: e.target.value }))}
+                placeholder="e.g. 5678"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+                CLU
+              </label>
+              <input
+                type="text"
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={addDraft.clu}
+                onChange={(e) => setAddDraft((d) => ({ ...d, clu: e.target.value }))}
+                placeholder="e.g. 1"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+                Field Name
+              </label>
+              <input
+                type="text"
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={addDraft.field_name}
+                onChange={(e) => setAddDraft((d) => ({ ...d, field_name: e.target.value }))}
+                placeholder="optional"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+                FSA Acres
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={addDraft.fsa_acres}
+                onChange={(e) => setAddDraft((d) => ({ ...d, fsa_acres: e.target.value }))}
+                placeholder="e.g. 80.5"
+              />
+            </div>
+            <div>
+              <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+                Crop
+              </label>
+              <input
+                type="text"
+                className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                value={addDraft.crop}
+                onChange={(e) => setAddDraft((d) => ({ ...d, crop: e.target.value }))}
+                placeholder="optional"
+              />
+            </div>
+          </div>
+          {addError && (
+            <p className="font-mono text-xs text-red-400">{addError}</p>
+          )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleAddRecord}
+              disabled={adding}
+              className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-2 hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {adding ? 'Adding...' : 'Add Record'}
+            </button>
+            <button
+              onClick={() => {
+                setShowAddForm(false)
+                setAddError(null)
+                setAddDraft(EMPTY_ADD_DRAFT)
+              }}
+              disabled={adding}
+              className="font-mono text-sm text-glomalin-muted hover:text-glomalin-text transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       )}
 
@@ -335,6 +532,7 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
               onSelectAllInFarm={handleSelectAllInFarm}
               onSelectAllInTract={handleSelectAllInTract}
               onSave={handleSaveRecord}
+              onDelete={handleDeleteRecord}
               warningsByRecordId={warningsByRecordId}
               dismissedPpIds={dismissedPpIds}
               onDismissPpPrompt={handleDismissPpPrompt}

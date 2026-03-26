@@ -29,7 +29,11 @@ interface ASCIIBannerStripProps {
   onNodeClick?: () => void
 }
 
-const DEFAULT_BG_COLOR = colors.bg
+// Read bg color from CSS variable at render time so it responds to light/dark theme
+function getCurrentBgColor(): string {
+  if (typeof window === 'undefined') return colors.bg
+  return getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || colors.bg
+}
 const DEFAULT_NODE_COUNT = 10
 const CROSSFADE_DURATION = 200 // ms
 
@@ -246,7 +250,7 @@ export default function ASCIIBannerStrip({
     // Bottom gradient overlay: transparent -> bgColor
     const grad = ctx.createLinearGradient(0, h * 0.65, 0, h)
     grad.addColorStop(0, 'transparent')
-    grad.addColorStop(1, DEFAULT_BG_COLOR)
+    grad.addColorStop(1, getCurrentBgColor())
     ctx.fillStyle = grad
     ctx.fillRect(0, h * 0.65, w, h * 0.35)
   }, [generateGrid])

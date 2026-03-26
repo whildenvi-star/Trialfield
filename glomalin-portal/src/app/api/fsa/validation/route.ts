@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 import { validateCluRecords } from '@/lib/fsa/calc'
 import type { CluRecord, PricingEntry, InsurancePolicy } from '@/lib/fsa/calc'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 export async function GET() {
   const guard = await requireModuleAccess('fsa-578')
@@ -10,9 +11,9 @@ export async function GET() {
 
   // Fetch all 3 datasets in parallel for the 2026 crop year
   const [cluResult, pricingResult, policiesResult] = await Promise.all([
-    supabase.from('clu_records').select('*').eq('crop_year', 2026),
-    supabase.from('insurance_pricing').select('*').eq('year', 2026),
-    supabase.from('insurance_policies').select('*').eq('policy_year', 2026),
+    supabase.from('clu_records').select('*').eq('crop_year', CURRENT_CROP_YEAR),
+    supabase.from('insurance_pricing').select('*').eq('year', CURRENT_CROP_YEAR),
+    supabase.from('insurance_policies').select('*').eq('policy_year', CURRENT_CROP_YEAR),
   ])
 
   if (cluResult.error) {

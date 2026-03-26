@@ -10,6 +10,7 @@ create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   role user_role not null default 'viewer',
   full_name text,
+  cert_user_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

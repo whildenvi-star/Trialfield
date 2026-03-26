@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 import { fetchBudgetService } from '@/app/api/mobile/_lib/proxy'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 // ===== Types =====
 
@@ -203,7 +204,7 @@ export async function GET() {
   const { data: cluRecords, error: cluError } = await supabase
     .from('clu_records')
     .select('id, legacy_id, farm_number, tract_number, clu, field_name, crop, fsa_acres')
-    .eq('crop_year', 2026)
+    .eq('crop_year', CURRENT_CROP_YEAR)
 
   if (cluError) {
     return NextResponse.json(

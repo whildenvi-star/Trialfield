@@ -15,6 +15,17 @@ const config: Config = {
       fontFamily: {
         mono: [...fonts.mono],
       },
+      fontSize: {
+        'xs':   'var(--size-xs)',
+        'sm':   'var(--size-sm)',
+        'base': 'var(--size-base)',
+        'lg':   'var(--size-lg)',
+        'xl':   'var(--size-xl)',
+        '2xl':  'var(--size-2xl)',
+        '3xl':  'var(--size-3xl)',
+        '4xl':  'calc(var(--base-size) * 3.14 * var(--text-scale))',
+        '5xl':  'calc(var(--base-size) * 3.57 * var(--text-scale))',
+      },
     },
   },
   plugins: [],

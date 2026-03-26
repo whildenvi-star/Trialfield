@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export function createClient(request: NextRequest) {
   // Create a response we can mutate to forward refreshed session cookies
-  let supabaseResponse = NextResponse.next({
+  const supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
     },
@@ -22,12 +22,10 @@ export function createClient(request: NextRequest) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
-          // Re-create the response with updated request headers so the refreshed
-          // cookies are forwarded to downstream Server Components
-          supabaseResponse = NextResponse.next({
-            request,
-          })
-          // Also set cookies on the response so the browser receives the refresh
+          // Set cookies on the existing response so the browser receives the refresh.
+          // DO NOT reassign supabaseResponse — the middleware holds a reference to this
+          // object, and reassigning would leave it with a stale response missing the
+          // refreshed session cookies.
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )

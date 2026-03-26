@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 export async function GET(request: Request) {
   const guard = await requireModuleAccess('insurance')
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
   // Parse year from query string, default to 2026
   const { searchParams } = new URL(request.url)
   const yearParam = searchParams.get('year')
-  const year = yearParam ? parseInt(yearParam, 10) : 2026
+  const year = yearParam ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
 
   if (isNaN(year)) {
     return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 })
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
   // Build insert object with defaults for optional fields
   const insertData = {
     legacy_id: `ins_manual_${Date.now()}`,
-    policy_year: typeof body.policy_year === 'number' ? body.policy_year : 2026,
+    policy_year: typeof body.policy_year === 'number' ? body.policy_year : CURRENT_CROP_YEAR,
     farm_name: typeof body.farm_name === 'string' ? body.farm_name : null,
     farm_number: typeof body.farm_number === 'string' ? body.farm_number : null,
     crop: typeof body.crop === 'string' ? body.crop : null,

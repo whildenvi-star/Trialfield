@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { isOrganicCrop } from '@/lib/fsa/calc'
 
 type BulkAction = 'mark-reported' | 'mark-unreported' | 'assign-crop'
 
@@ -52,7 +53,8 @@ export async function POST(request: Request) {
   } else if (action === 'mark-unreported') {
     updatePayload = { reported: false }
   } else {
-    updatePayload = { crop: crop!.trim() }
+    const trimmedCrop = crop!.trim()
+    updatePayload = { crop: trimmedCrop, organic: isOrganicCrop(trimmedCrop) }
   }
 
   const { data, error } = await supabase

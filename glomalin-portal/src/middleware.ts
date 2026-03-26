@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/middleware'
 
 // Routes that are accessible without authentication
-const PUBLIC_ROUTES = ['/', '/login', '/forgot-password']
-const PUBLIC_PREFIXES = ['/_next', '/favicon.ico', '/api/auth']
+const PUBLIC_ROUTES = ['/', '/login', '/forgot-password', '/reset-password']
+const PUBLIC_PREFIXES = ['/_next', '/favicon.ico', '/api/auth', '/auth/callback', '/api/mobile']
+const PUBLIC_EXTENSIONS = ['.js', '.css', '.json', '.ico', '.svg', '.png', '.jpg', '.webp']
 
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_ROUTES.includes(pathname)) return true
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true
+  if (PUBLIC_EXTENSIONS.some((ext) => pathname.endsWith(ext))) return true
   return false
 }
 
@@ -26,8 +28,23 @@ function getModuleId(pathname: string): string | null {
   return parts[2] || null
 }
 
+// Copy session cookies from the Supabase response to a redirect so the
+// browser receives refreshed tokens even when we redirect.
+function redirectWithCookies(url: URL, source: NextResponse): NextResponse {
+  const redir = NextResponse.redirect(url)
+  source.cookies.getAll().forEach((cookie) => {
+    redir.cookies.set(cookie.name, cookie.value)
+  })
+  return redir
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+
+  // Static assets in public/ — skip auth entirely
+  if (PUBLIC_EXTENSIONS.some((ext) => pathname.endsWith(ext))) {
+    return NextResponse.next()
+  }
 
   // Create Supabase client with session refresh support
   const { supabase, response } = createClient(request)
@@ -37,8 +54,11 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Public routes: pass through without any auth checks
+  // Public routes: pass through (but redirect authenticated users on / to dashboard)
   if (isPublicRoute(pathname)) {
+    if (pathname === '/' && user) {
+      return redirectWithCookies(new URL('/dashboard', request.url), response)
+    }
     return response
   }
 
@@ -54,7 +74,7 @@ export async function middleware(request: NextRequest) {
       loginUrl.searchParams.set('expired', 'true')
     }
 
-    return NextResponse.redirect(loginUrl)
+    return redirectWithCookies(loginUrl, response)
   }
 
   // Admin route protection (/admin*)
@@ -67,7 +87,7 @@ export async function middleware(request: NextRequest) {
 
     if (!profile || profile.role !== 'admin') {
       // Silent redirect — non-admins should not know the admin panel exists
-      return NextResponse.redirect(new URL('/dashboard', request.url))
+      return redirectWithCookies(new URL('/dashboard', request.url), response)
     }
 
     return response
@@ -88,7 +108,7 @@ export async function middleware(request: NextRequest) {
       if (!access || access.granted === false) {
         const dashboardUrl = new URL('/dashboard', request.url)
         dashboardUrl.searchParams.set('denied', moduleId)
-        return NextResponse.redirect(dashboardUrl)
+        return redirectWithCookies(dashboardUrl, response)
       }
     }
 
@@ -101,6 +121,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon\\.ico|platform-tokens\\.css|settings-panel\\.js|formatting-agent\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

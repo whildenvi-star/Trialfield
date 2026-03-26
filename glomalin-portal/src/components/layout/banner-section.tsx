@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Header from '@/components/header'
 import ASCIIBannerStrip from '@/components/layout/ASCIIBannerStrip'
 import { type SceneType, nextScene } from '@/components/layout/scene-types'
@@ -68,8 +68,21 @@ export default function BannerSection({ user }: BannerSectionProps) {
     })
   }, [])
 
+  // Set CSS variable for total header height so EmbedFrame can offset correctly
+  useEffect(() => {
+    // Header = 56px (h-14). Banner = 72px desktop / 48px mobile / 0 when disabled.
+    const mql = window.matchMedia('(min-width: 768px)')
+    const update = () => {
+      const bannerH = bannerDisabled ? 0 : (mql.matches ? 72 : 48)
+      document.documentElement.style.setProperty('--portal-header-h', `${56 + bannerH}px`)
+    }
+    update()
+    mql.addEventListener('change', update)
+    return () => mql.removeEventListener('change', update)
+  }, [bannerDisabled])
+
   return (
-    <>
+    <div data-banner-section="" className="sticky top-0 z-50">
       <Header
         user={user}
         bannerDisabled={bannerDisabled}
@@ -86,6 +99,6 @@ export default function BannerSection({ user }: BannerSectionProps) {
           </div>
         </>
       )}
-    </>
+    </div>
   )
 }

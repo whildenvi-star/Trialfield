@@ -389,23 +389,11 @@ async function migrateInsurancePoliciesAndClaims() {
     })
     .filter(Boolean) as Record<string, unknown>[]
 
-  // Claims don't have a legacy_id — use policy_id as uniqueness anchor
-  // On re-run, delete existing claims for these policies first, then insert fresh
-  const policyIds = Object.values(policyIdMap)
-  if (policyIds.length > 0) {
-    const { error: deleteError } = await supabase
-      .from('claims')
-      .delete()
-      .in('policy_id', policyIds)
-    if (deleteError) throw new Error(`Failed to clear existing claims: ${deleteError.message}`)
-  }
-
-  if (claimRows.length > 0) {
-    const { error: claimError } = await supabase.from('claims').insert(claimRows)
-    if (claimError) throw new Error(`Claims insert failed: ${claimError.message}`)
-  }
-
-  console.log(`  Inserted ${claimRows.length} claims rows`)
+  // Skip legacy claims insert — Phase 31 replaced the claims table schema
+  // (claim_stage enum, stage column, etc.) which is incompatible with the
+  // legacy claim_status/claim_filed_date columns from fsa-acres data.json.
+  // Claims are created through the portal UI now.
+  console.log(`  Skipped legacy claims (Phase 31 claims schema is incompatible with legacy format)`)
   return { policies: policyRows.length, claims: claimRows.length }
 }
 
