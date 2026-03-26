@@ -526,7 +526,7 @@ Plans:
 | 51. FSA/Insurance Data Consolidation | 3/3 | Complete   | 2026-03-25 | - |
 | 52. Yield Pipeline | 3/3 | Complete    | 2026-03-25 | - |
 | 53. Seed-Inventory & Meristem-Malt Pipelines | 4/4 | Complete    | 2026-03-25 | - |
-| 54. Iframe Embed Navigation + Design Tokens | 1/4 | In Progress|  | - |
+| 54. Iframe Embed Navigation + Design Tokens | 3/4 | In Progress|  | - |
 | 55. Actionable Dashboard | v10.0 | 0/? | Not started | - |
 | 56. Structured APH Database | v10.0 | 0/? | Not started | - |
 | 57. Grain Marketing Position | v10.0 | 0/? | Not started | - |

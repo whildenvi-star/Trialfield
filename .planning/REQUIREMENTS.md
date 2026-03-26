@@ -37,12 +37,12 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 - [ ] **UXN-01**: Portal dashboard shows actionable items (overdue claims, unreported CLUs, unreconciled settlements, delivery shortfalls) instead of module cards
 - [ ] **UXN-02**: Each dashboard action item links directly to the relevant module with context (filter/highlight)
 - [ ] **UXN-03**: Dashboard works when 1-2 Express apps are offline (Promise.allSettled with graceful degradation)
-- [ ] **UXN-04**: Embedded Express apps hide their header bar when inside portal iframe
-- [ ] **UXN-05**: Portal shows breadcrumb bar above iframe embeds showing current navigation path
-- [ ] **UXN-06**: "Back to Dashboard" escape hatch always visible when inside an embed
-- [ ] **UXN-07**: All 8 apps use identical color tokens (bg, surface, border, accent, text) from shared platform-tokens.css
+- [x] **UXN-04**: Embedded Express apps hide their header bar when inside portal iframe
+- [x] **UXN-05**: Portal shows breadcrumb bar above iframe embeds showing current navigation path
+- [x] **UXN-06**: "Back to Dashboard" escape hatch always visible when inside an embed
+- [x] **UXN-07**: All 8 apps use identical color tokens (bg, surface, border, accent, text) from shared platform-tokens.css
 - [x] **UXN-08**: Day/night toggle produces consistent results across portal and all embedded apps
-- [ ] **UXN-09**: Switching between portal and any embedded app shows zero visual color jarring
+- [x] **UXN-09**: Switching between portal and any embedded app shows zero visual color jarring
 
 ### Domain Features
 
@@ -115,12 +115,12 @@ Requirements for Platform Consolidation & Data Integrity. Each maps to roadmap p
 | PIPE-06 | Phase 53 | Complete |
 | PIPE-07 | Phase 53 | Complete |
 | PIPE-08 | Phase 53 | Complete |
-| UXN-04 | Phase 54 | Pending |
-| UXN-05 | Phase 54 | Pending |
-| UXN-06 | Phase 54 | Pending |
-| UXN-07 | Phase 54 | Pending |
+| UXN-04 | Phase 54 | Complete |
+| UXN-05 | Phase 54 | Complete |
+| UXN-06 | Phase 54 | Complete |
+| UXN-07 | Phase 54 | Complete |
 | UXN-08 | Phase 54 | Complete |
-| UXN-09 | Phase 54 | Pending |
+| UXN-09 | Phase 54 | Complete |
 | UXN-01 | Phase 55 | Pending |
 | UXN-02 | Phase 55 | Pending |
 | UXN-03 | Phase 55 | Pending |

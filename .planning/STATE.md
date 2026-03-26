@@ -5,19 +5,19 @@
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v9.0 Mobile PWA — Phase 48: Grain Tickets PWA + Dashboard Caching (Plan 01 complete)
+**Current focus:** v10.0 Consolidation — Phase 54: iframe Embed Navigation & Design Tokens (Plan 01 complete)
 
 ## Current Position
 
-Phase: 53 of 61 (Seed Inventory & Meristem-Malt Pipelines)
-Plan: 04 complete
-Status: Complete (4/4 plans complete)
-Last activity: 2026-03-25 — Phase 48 Plan 01 complete: Grain Tickets offline entry — IndexedDB ticket queue with Background Sync replay, offline banner, pending/conflict rows in Ticket Log, side-by-side conflict resolution UI, stale-while-revalidate ref data cache in sw.js v7.
+Phase: 54 of 61 (iframe Embed Navigation & Design Tokens)
+Plan: 01 complete
+Status: In Progress (1/? plans complete)
+Last activity: 2026-03-26 — Phase 54 Plan 01 complete: Canonical color token block added to all 7 platform-tokens.css files; duplicate color definitions removed from all 6 Express app style.css files; CSS load order fixed in all 6 index.html files.
 
-Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [░░░░░░░░░░] 0%
+Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [███░░░░░░░] in progress
 
 **v9.0 status:** Phase 44-47 complete, Phase 48 Plan 01 complete (grain-tickets offline entry 2026-03-25). Plan 02 (dashboard caching) remaining before v9.0 ships.
-**v10.0 status:** Roadmap created — 13 phases (49-61), ready to plan phase 49
+**v10.0 status:** Phases 49-53 complete, Phase 54 Plan 01 done (canonical color token unification)
 
 ## Performance Metrics
 
@@ -57,6 +57,8 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | Phase 53 P04 | 3 | 2 tasks | 4 files |
 | Phase 48 P02 | 25 | 2 tasks | 4 files |
 | Phase 48-grain-tickets-pwa-dashboard-caching P01 | 5 | 2 tasks | 4 files |
+| Phase 54 P02 | 15 | 2 tasks | 4 files |
+| Phase 54 P01 | 18 | 2 tasks | 20 files |
 
 ## Accumulated Context
 
@@ -121,6 +123,10 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 - [Phase 48-02]: SW timestamp companion pattern: store {url}__timestamp alongside cached responses for staleness checks without a separate IDB store
 - [Phase 48-01]: grain-tickets-v7 — cache name bumped; window.ticketQueue in app.js for cross-tab access; Background Sync _manualSync fallback; pending rows inline in tbody; edit modal reused for pending via data-pending flag
 - [Phase 54-03]: postMessage uses '*' origin wildcard — cosmetic theme-only message, namespaced by type field, safe for dev/prod
+- [Phase 54-02]: EmbedBreadcrumb uses fixed positioning (not sticky) to escape layout.tsx main wrapper — same escape mechanism as EmbedFrame
+- [Phase 54-02]: --embed-breadcrumb-h: 36px CSS variable defined in globals.css :root — single source, referenced by breadcrumb height and EmbedFrame top calc
+- [Phase 54-01]: CSS load order fixed in all 6 Express index.html files — platform-tokens.css was loading after style.css (Rule 3 auto-fix)
+- [Phase 54-01]: platform-tokens.css is now single source of truth for all 16 platform color tokens across all 7 apps; style.css retains only app-specific non-color tokens
 
 ### Pending Todos
 
@@ -135,6 +141,8 @@ None active.
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Completed 54-03-PLAN.md — Cross-origin iframe theme sync: EmbedFrame postMessage push + organic-cert message listener.
+Stopped at: Completed 54-02-PLAN.md — EmbedBreadcrumb component with persistent "Dashboard > Module" path and "Back to Dashboard" link above all portal iframe embeds.
+Resume file: —
+Next action: Phase 54 Plan 03 or next phase
 Resume file: —
 Next action: Phase 54 Plan 04 (next plan in iframe-embed-navigation-design-tokens phase)
