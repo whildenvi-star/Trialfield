@@ -1,18 +1,59 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 interface EmbedFrameProps {
   src: string
   title: string
 }
 
+function getCurrentTheme(): string {
+  if (typeof window === 'undefined') return 'dark'
+  return localStorage.getItem('mru-theme') === 'light' ? 'light' : 'dark'
+}
+
 export function EmbedFrame({ src, title }: EmbedFrameProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  function sendThemeToIframe(theme: string) {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'glomalin-theme', theme },
+      '*'
+    )
+  }
+
+  // Push current theme as soon as the iframe finishes loading
+  function handleLoad() {
+    setLoading(false)
+    sendThemeToIframe(getCurrentTheme())
+  }
+
+  useEffect(() => {
+    // Listen for storage events (portal settings-panel writes mru-theme)
+    function onStorage(e: StorageEvent) {
+      if (e.key === 'mru-theme') {
+        sendThemeToIframe(e.newValue === 'light' ? 'light' : 'dark')
+      }
+    }
+
+    // Listen for custom theme-change event dispatched by settings-panel.js
+    function onThemeChange() {
+      sendThemeToIframe(getCurrentTheme())
+    }
+
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('theme-change', onThemeChange)
+
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('theme-change', onThemeChange)
+    }
+  }, [])
 
   return (
-    <div className="fixed top-14 left-0 right-0 bottom-0">
+    <div className="fixed left-0 right-0 bottom-0" style={{ top: 'var(--portal-header-h, 56px)' }}>
       {loading && !error && (
         <div className="absolute inset-0 flex items-center justify-center bg-glomalin-bg">
           <p className="text-glomalin-muted font-mono text-sm animate-pulse">
@@ -42,15 +83,15 @@ export function EmbedFrame({ src, title }: EmbedFrameProps) {
       )}
 
       <iframe
+        ref={iframeRef}
         src={src}
         title={title}
         className="w-full h-full border-0"
-        onLoad={() => setLoading(false)}
+        onLoad={handleLoad}
         onError={() => {
           setLoading(false)
           setError(true)
         }}
-        sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
       />
     </div>
   )
