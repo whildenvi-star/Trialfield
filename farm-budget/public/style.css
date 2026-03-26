@@ -2789,23 +2789,8 @@ body.light .audit-badge.warn { background: #c08800; }
    LIGHT THEME — day mode, same terminal soul
    ============================================================ */
 body.light {
-  --bg: #ffffff;
-  --bg-raised: #f5f5f5;
-  --card: #ffffff;
-  --card-alt: #fafafa;
-  --primary: #1a6b10;
-  --primary-dim: #3a8a30;
-  --primary-light: #0e5508;
-  --text: #1a1a1a;
-  --text-light: #666666;
-  --text-bright: #000000;
-  --border: #e0e0e0;
-  --border-light: #eeeeee;
-  --highlight: #f0f7ee;
-  --danger: #c62828;
-  --success: #2e7d32;
+  /* Canonical color tokens now in platform-tokens.css */
   --blue: #1565c0;
-  --amber: #7a5000;
   --purple: #7b1fa2;
   --teal: #00796b;
   --orange: #e65100;
