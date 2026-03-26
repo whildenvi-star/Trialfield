@@ -10,6 +10,9 @@
   // Kill-switch guard — if disabled, exit immediately, create no DOM
   if (!window.GLOMALIN_ENABLED) return;
 
+  // Deduplication guard — prevent multiple instances if script runs again
+  if (document.getElementById('glomalin-btn')) return;
+
   /* ----------------------------------------------------------
      State
   ---------------------------------------------------------- */
@@ -637,8 +640,10 @@
               return; // malformed SSE data
             }
 
-            handleSseEvent(eventType, data, streamStarted);
-            if (eventType === 'text_delta') streamStarted = true;
+            // Server sends type inside JSON data, not as SSE event: line
+            var effectiveType = eventType || data.type;
+            handleSseEvent(effectiveType, data, streamStarted);
+            if (effectiveType === 'text_delta') streamStarted = true;
           });
 
           pump();
@@ -660,7 +665,7 @@
         stopLoadingTractor();
         currentAssistantBubble.innerHTML = '';
       }
-      currentFullText += (data.delta || '');
+      currentFullText += (data.delta || data.content || '');
       // Throttled render: update HTML every 100ms to avoid thrashing
       if (!renderThrottleTimer) {
         renderThrottleTimer = setTimeout(function () {

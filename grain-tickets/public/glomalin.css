@@ -14,8 +14,8 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--primary, #4af626);
-  color: var(--bg, #0a0e09);
+  background: var(--primary, #14b8a6);
+  color: var(--bg, #080a0f);
   border: none;
   cursor: pointer;
   display: flex;
@@ -52,7 +52,7 @@
   height: 10px;
   border-radius: 50%;
   background: #00ff88;
-  border: 2px solid var(--bg, #0a0e09);
+  border: 2px solid var(--bg, #080a0f);
   box-shadow: 0 0 6px rgba(0, 255, 136, 0.7);
   animation: glomalin-pulse 2.5s ease-in-out infinite;
 }
@@ -111,7 +111,7 @@
 .glomalin-title {
   font-size: 0.85rem;
   font-weight: 400;
-  color: var(--primary, #4af626);
+  color: var(--primary, #14b8a6);
   letter-spacing: 0.08em;
 }
 
@@ -140,8 +140,8 @@
 }
 
 .glomalin-hdr-btn:hover {
-  color: var(--primary, #4af626);
-  border-color: var(--primary-dim, #2a8a18);
+  color: var(--primary, #14b8a6);
+  border-color: var(--primary-dim, #0d9488);
 }
 
 /* ----------------------------------------------------------
@@ -170,9 +170,9 @@
 }
 
 #glomalin-messages::-webkit-scrollbar { width: 5px; }
-#glomalin-messages::-webkit-scrollbar-track { background: var(--bg, #0a0e09); }
+#glomalin-messages::-webkit-scrollbar-track { background: var(--bg, #080a0f); }
 #glomalin-messages::-webkit-scrollbar-thumb { background: var(--border-light, #283828); border-radius: 3px; }
-#glomalin-messages::-webkit-scrollbar-thumb:hover { background: var(--primary-dim, #2a8a18); }
+#glomalin-messages::-webkit-scrollbar-thumb:hover { background: var(--primary-dim, #0d9488); }
 
 /* ----------------------------------------------------------
    Message Bubbles
@@ -219,7 +219,7 @@
 .glomalin-loading {
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.7rem;
-  color: var(--primary-dim, #2a8a18);
+  color: var(--primary-dim, #0d9488);
   white-space: pre;
   line-height: 1.3;
   animation: glomalin-blink-cursor 1s step-end infinite;
@@ -255,11 +255,11 @@
   border: 1px solid rgba(74, 246, 38, 0.15);
   padding: 0.1em 0.4em;
   border-radius: 2px;
-  color: var(--primary, #4af626);
+  color: var(--primary, #14b8a6);
 }
 
 .glomalin-pre {
-  background: var(--bg, #0a0e09);
+  background: var(--bg, #080a0f);
   border: 1px solid var(--border, #1e2e1a);
   border-radius: 3px;
   padding: 0.65rem 0.85rem;
@@ -277,7 +277,7 @@
 }
 
 .glomalin-h {
-  color: var(--primary, #4af626);
+  color: var(--primary, #14b8a6);
   font-weight: 400;
   font-size: 0.9rem;
   margin: 0.5rem 0 0.25rem;
@@ -298,10 +298,10 @@
   text-decoration: underline;
 }
 
-.glomalin-msg a:hover { color: var(--primary, #4af626); }
+.glomalin-msg a:hover { color: var(--primary, #14b8a6); }
 
 .glomalin-deeplink {
-  color: var(--primary, #4af626);
+  color: var(--primary, #14b8a6);
   cursor: pointer;
   font-weight: 600;
 }
@@ -320,7 +320,7 @@
 
 .glomalin-table th {
   background: var(--bg-raised, #0f140e);
-  color: var(--primary, #4af626);
+  color: var(--primary, #14b8a6);
   padding: 0.3rem 0.5rem;
   text-align: left;
   border-bottom: 1px solid var(--border, #1e2e1a);
@@ -347,7 +347,7 @@
   margin: 0.5rem 0;
   max-height: 250px;
   position: relative;
-  background: var(--bg, #0a0e09);
+  background: var(--bg, #080a0f);
   border: 1px solid var(--border, #1e2e1a);
   border-radius: 3px;
   padding: 0.5rem;
@@ -368,8 +368,8 @@
 .glomalin-csv-btn {
   display: inline-block;
   background: transparent;
-  border: 1px solid var(--primary-dim, #2a8a18);
-  color: var(--primary, #4af626);
+  border: 1px solid var(--primary-dim, #0d9488);
+  color: var(--primary, #14b8a6);
   padding: 0.3rem 1rem;
   font-size: 0.78rem;
   font-family: inherit;
@@ -380,8 +380,8 @@
 }
 
 .glomalin-csv-btn:hover {
-  background: var(--primary, #4af626);
-  color: var(--bg, #0a0e09);
+  background: var(--primary, #14b8a6);
+  color: var(--bg, #080a0f);
 }
 
 .glomalin-csv-preview {
@@ -427,7 +427,7 @@
 
 #glomalin-input:focus {
   outline: none;
-  border-color: var(--primary-dim, #2a8a18);
+  border-color: var(--primary-dim, #0d9488);
   box-shadow: 0 0 4px rgba(74, 246, 38, 0.15);
 }
 
@@ -443,8 +443,8 @@
 
 .glomalin-send-btn {
   background: transparent;
-  border: 1px solid var(--primary-dim, #2a8a18);
-  color: var(--primary, #4af626);
+  border: 1px solid var(--primary-dim, #0d9488);
+  color: var(--primary, #14b8a6);
   padding: 0.45rem 0.9rem;
   font-size: 0.8rem;
   font-family: inherit;
@@ -457,8 +457,8 @@
 }
 
 .glomalin-send-btn:hover {
-  background: var(--primary-dim, #2a8a18);
-  color: var(--bg, #0a0e09);
+  background: var(--primary-dim, #0d9488);
+  color: var(--bg, #080a0f);
 }
 
 .glomalin-send-btn:disabled {

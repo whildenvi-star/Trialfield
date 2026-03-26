@@ -17,11 +17,22 @@
   function loadFarms() {
     Promise.all([
       api.get('/api/farms'),
-      api.get('/api/tickets')
+      api.get('/api/tickets'),
+      fetch('http://localhost:3001/api/fields').then(function (r) { return r.ok ? r.json() : []; }).catch(function () { return []; })
     ]).then(function (results) {
       allFarms = results[0];
       var allTickets = results[1];
+      var budgetFields = results[2];
       var destinations = (window.refData && window.refData.destinations) ? window.refData.destinations : [];
+
+      // Build budget lookup: lowercase field name → { crop, yieldPerAcre }
+      var budgetLookup = {};
+      budgetFields.forEach(function (bf) {
+        var key = (bf.name || '').trim().toLowerCase();
+        if (!budgetLookup[key]) {
+          budgetLookup[key] = { crop: bf.crop || '', yieldPerAcre: bf.yieldPerAcre || 0 };
+        }
+      });
 
       // Build buyer/destination breakdown per farm: group tickets by farm name + destination
       var farmTicketMap = {};
@@ -64,6 +75,12 @@
         f.buyerBreakdown = Object.values(byDest).sort(function (a, b) {
           return b.netBU - a.netBU;
         });
+
+        // Attach budget estimate (crop + yield) from macro rollup
+        var budgetKey = farmKey;
+        var match = budgetLookup[budgetKey];
+        f.budgetCrop = match ? match.crop : '';
+        f.budgetYield = match ? match.yieldPerAcre : 0;
       });
 
       loaded = true;
@@ -185,6 +202,8 @@
       html += '<td class="number">' + util.formatNum(f.yieldPerAcre, 2) + '</td>';
       html += '<td>' + (f.type || '') + '</td>';
       html += '<td style="font-size:0.75rem; color:#555;">' + destSummary + '</td>';
+      html += '<td style="font-size:0.8rem;">' + (f.budgetCrop || '<span style="color:#888;">—</span>') + '</td>';
+      html += '<td class="number" style="font-size:0.8rem;">' + (f.budgetYield ? util.formatNum(f.budgetYield, 1) : '<span style="color:#888;">—</span>') + '</td>';
       html += '<td class="number">' + util.formatNum(f.guarantee, 0) + '</td>';
       html += '<td class="number">' + util.formatNum(f.coverage, 0) + '</td>';
       html += '<td class="number">' + util.formatNum(f.claimThreshold, 0) + '</td>';
@@ -199,7 +218,7 @@
     html += '<td></td>';
     html += '<td>TOTALS (' + filteredFarms.length + ' farms)</td>';
     html += '<td class="number">' + util.formatNum(totalBU, 2) + '</td>';
-    html += '<td colspan="9"></td>';
+    html += '<td colspan="11"></td>';
     html += '</tr>';
 
     tbody.innerHTML = html;
