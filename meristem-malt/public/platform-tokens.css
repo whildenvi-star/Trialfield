@@ -1,0 +1,444 @@
+/* ============================================================
+   PLATFORM TOKENS — Universal Text Scale + Font System
+   Shared across all Farm Operations Platform apps
+   ============================================================ */
+
+/* --- Color Tokens (Day/Night) ---
+   Single source of truth for all platform colors.
+   Every app loads this file; individual style.css must NOT redefine these. */
+:root {
+  --bg: #080a0f;
+  --bg-raised: #0e1118;
+  --card: #0c1015;
+  --card-alt: #0a0e14;
+  --primary: #14b8a6;
+  --primary-dim: #0d9488;
+  --primary-light: #2dd4bf;
+  --text: #cbd5e1;
+  --text-light: #64748b;
+  --text-bright: #e2e8f0;
+  --border: #1e293b;
+  --border-light: #334155;
+  --highlight: #0f172a;
+  --danger: #ff3b30;
+  --success: #7A9E7E;
+  --amber: #ffb800;
+}
+
+/* Day mode overrides */
+.light, :root.light {
+  --bg: #f8fafc;
+  --bg-raised: #ffffff;
+  --card: #f1f5f9;
+  --card-alt: #e2e8f0;
+  --primary: #0d9488;
+  --primary-dim: #0f766e;
+  --primary-light: #14b8a6;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --text-bright: #0f172a;
+  --border: #cbd5e1;
+  --border-light: #e2e8f0;
+  --highlight: #f0fdfa;
+  --danger: #c62828;
+  --success: #0d9488;
+  --amber: #7a5000;
+}
+
+/* --- Google Fonts: Outfit (headings) + DM Sans (body) --- */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+:root {
+  /* --- Text Scale System ---
+     5 levels: XS / S / M / L / XL
+     --text-scale is set via JS (settings-panel.js) and persisted to localStorage
+  */
+  --text-scale: 1;
+  --base-size: 14px;
+
+  /* Semantic size tokens — all typography should reference these */
+  --size-xs:   calc(var(--base-size) * 0.78 * var(--text-scale));  /* ~10.9px at M */
+  --size-sm:   calc(var(--base-size) * 0.88 * var(--text-scale));  /* ~12.3px at M */
+  --size-base: calc(var(--base-size) * 1.0  * var(--text-scale));  /* 14px at M */
+  --size-md:   calc(var(--base-size) * 1.14 * var(--text-scale));  /* ~16px at M */
+  --size-lg:   calc(var(--base-size) * 1.29 * var(--text-scale));  /* ~18px at M */
+  --size-xl:   calc(var(--base-size) * 1.57 * var(--text-scale));  /* ~22px at M */
+  --size-2xl:  calc(var(--base-size) * 2.0  * var(--text-scale));  /* 28px at M */
+  --size-3xl:  calc(var(--base-size) * 2.57 * var(--text-scale));  /* ~36px at M */
+
+  /* --- Font Families --- */
+  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body:    'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-code:    'JetBrains Mono', 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+  /* --- Readability --- */
+  --line-height-tight:  1.3;
+  --line-height-base:   1.6;
+  --line-height-loose:  1.8;
+  --max-line-length:    80ch;
+}
+
+/* --- Apply text scale to ALL text across every page --- */
+body {
+  font-size: var(--size-base);
+}
+
+/* Force all common elements to inherit scaled font-size.
+   This ensures the text-size slider controls EVERYTHING,
+   overriding any hardcoded px values in app stylesheets. */
+h1, h2, h3, h4, h5, h6,
+p, span, a, li, td, th,
+label, legend, caption,
+input, select, textarea, button,
+.header, .nav, .footer,
+.tab, .badge, .btn, .pill,
+summary, details, blockquote, pre, code {
+  font-size: inherit;
+}
+
+/* Headings get proportional scale bumps */
+h1 { font-size: var(--size-2xl) !important; }
+h2 { font-size: var(--size-xl) !important; }
+h3 { font-size: var(--size-lg) !important; }
+h4 { font-size: var(--size-md) !important; }
+
+/* Small/muted helper text stays proportionally smaller */
+small, .text-xs, .text-muted, .sub {
+  font-size: var(--size-xs) !important;
+}
+
+/* Hide legacy theme toggles — settings panel is the single source */
+#theme-toggle, #theme-toggle-nav, .theme-toggle {
+  display: none !important;
+}
+
+/* --- Settings Panel Styles --- */
+.settings-tab-trigger {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 9998;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  border-right: none;
+  color: var(--text-light, #64748b);
+  padding: 0.6rem 0.35rem;
+  cursor: pointer;
+  border-radius: 4px 0 0 4px;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transition: background 0.15s ease, color 0.15s ease;
+  line-height: 1;
+}
+.settings-tab-trigger:hover {
+  background: var(--highlight, #0f172a);
+  color: var(--text, #cbd5e1);
+}
+.settings-tab-trigger:focus-visible {
+  outline: 2px solid var(--primary, #14b8a6);
+  outline-offset: -2px;
+}
+body.light .settings-tab-trigger {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text-light, #64748b);
+}
+body.light .settings-tab-trigger:hover {
+  background: var(--highlight, #f0fdfa);
+  color: var(--text, #1e293b);
+}
+
+/* --- Settings Panel Drawer --- */
+.settings-panel {
+  position: fixed;
+  right: -320px;
+  top: 0;
+  width: 300px;
+  height: 100vh;
+  z-index: 9999;
+  background: var(--bg-raised, #0e1118);
+  border-left: 1px solid var(--border, #1e293b);
+  padding: 1.2rem;
+  overflow-y: auto;
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-code);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+}
+.settings-panel.open {
+  right: 0;
+}
+.settings-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.settings-panel-backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.light .settings-panel {
+  background: var(--bg-raised, #ffffff);
+  border-color: var(--border, #cbd5e1);
+  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.settings-panel h3 {
+  font-family: var(--font-heading);
+  font-size: var(--size-md);
+  font-weight: 600;
+  color: var(--text-bright, #e2e8f0);
+  margin-bottom: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+body.light .settings-panel h3 {
+  color: var(--text-bright, #0f172a);
+}
+
+.settings-panel .sp-close {
+  background: none;
+  border: none;
+  color: var(--text-light, #64748b);
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  transition: color 0.15s ease;
+}
+.settings-panel .sp-close:hover {
+  color: var(--text, #cbd5e1);
+}
+
+.settings-panel .sp-section {
+  margin-bottom: 1.4rem;
+}
+.settings-panel .sp-label {
+  display: block;
+  font-size: var(--size-xs);
+  color: var(--text-light, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.5rem;
+}
+
+/* Theme toggle buttons */
+.settings-panel .sp-theme-row {
+  display: flex;
+  gap: 0.5rem;
+}
+.settings-panel .sp-theme-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  color: var(--text, #cbd5e1);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-code);
+  font-size: var(--size-xs);
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.settings-panel .sp-theme-btn:hover {
+  border-color: var(--primary, #14b8a6);
+}
+.settings-panel .sp-theme-btn.active {
+  background: var(--primary, #14b8a6);
+  color: var(--bg, #080a0f);
+  border-color: var(--primary, #14b8a6);
+}
+body.light .settings-panel .sp-theme-btn {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text, #1e293b);
+}
+
+/* Text size buttons */
+.settings-panel .sp-size-row {
+  display: flex;
+  gap: 0.35rem;
+}
+.settings-panel .sp-size-btn {
+  flex: 1;
+  padding: 0.45rem 0;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  color: var(--text, #cbd5e1);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-code);
+  font-size: 0.7rem;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.settings-panel .sp-size-btn:hover {
+  border-color: var(--primary, #14b8a6);
+}
+.settings-panel .sp-size-btn.active {
+  background: var(--primary, #14b8a6);
+  color: var(--bg, #080a0f);
+  border-color: var(--primary, #14b8a6);
+}
+body.light .settings-panel .sp-size-btn {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text, #1e293b);
+}
+
+/* Text preview */
+.settings-panel .sp-preview {
+  margin-top: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-size: var(--size-base);
+  color: var(--text, #cbd5e1);
+  line-height: var(--line-height-base);
+}
+body.light .settings-panel .sp-preview {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text, #1e293b);
+}
+
+/* Formatting agent toggle */
+.settings-panel .sp-agent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+}
+.settings-panel .sp-agent-toggle {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--border, #1e293b);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.settings-panel .sp-agent-toggle.on {
+  background: var(--primary, #14b8a6);
+}
+.settings-panel .sp-agent-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: var(--text-bright, #e2e8f0);
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+}
+.settings-panel .sp-agent-toggle.on::after {
+  transform: translateX(16px);
+}
+
+/* Readability score badge */
+.settings-panel .sp-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: var(--size-xs);
+  font-weight: 600;
+  font-family: var(--font-code);
+}
+.settings-panel .sp-score.good {
+  background: rgba(122, 158, 126, 0.15);
+  color: #7A9E7E;
+}
+.settings-panel .sp-score.warn {
+  background: rgba(255, 184, 0, 0.15);
+  color: var(--amber, #ffb800);
+}
+.settings-panel .sp-score.bad {
+  background: rgba(255, 59, 48, 0.15);
+  color: var(--danger, #ff3b30);
+}
+
+/* Save button */
+.settings-panel .sp-save-row {
+  margin-top: 0.75rem;
+}
+.settings-panel .sp-save {
+  width: 100%;
+  padding: 0.6rem;
+  background: var(--primary, #14b8a6);
+  border: none;
+  color: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-code);
+  font-size: var(--size-sm);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: all 0.15s ease;
+}
+.settings-panel .sp-save:hover {
+  opacity: 0.9;
+}
+.settings-panel .sp-save.saved {
+  background: var(--success, #7A9E7E);
+}
+
+/* Reset button */
+.settings-panel .sp-reset {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.5rem;
+  background: none;
+  border: 1px solid var(--border, #1e293b);
+  color: var(--text-light, #64748b);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: var(--font-code);
+  font-size: var(--size-xs);
+  transition: all 0.15s ease;
+}
+.settings-panel .sp-reset:hover {
+  border-color: var(--danger, #ff3b30);
+  color: var(--danger, #ff3b30);
+}
+
+/* Violations list */
+.settings-panel .sp-violations {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-top: 0.4rem;
+  font-size: 0.65rem;
+  color: var(--text-light, #64748b);
+  font-family: var(--font-code);
+}
+.settings-panel .sp-violations div {
+  padding: 0.15rem 0;
+  border-bottom: 1px solid var(--border, #1e293b);
+}
+
+/* When settings panel is open, shift trigger off-screen */
+.settings-panel.open ~ .settings-tab-trigger {
+  right: 300px;
+  transition: right 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Print: hide settings entirely */
+@media print {
+  .settings-tab-trigger,
+  .settings-panel,
+  .settings-panel-backdrop { display: none !important; }
+}
