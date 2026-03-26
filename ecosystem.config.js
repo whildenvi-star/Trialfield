@@ -71,6 +71,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 3001,
+        EMBED_TOKEN: 'mi26XzEVqKG0XfGbO8Y3XsIYL2vRd0Thi7NwMdV23sU=',
       },
       instances: 1,
       autorestart: true,

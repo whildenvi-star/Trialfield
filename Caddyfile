@@ -3,7 +3,7 @@
 # ═══════════════════════════════════════════════════════════════════
 #
 # Domain is configured via the DOMAIN environment variable.
-# Default: farm.example.com (placeholder — set to your actual domain)
+# Default: whughesfarms.com (placeholder — set to your actual domain)
 #
 # Usage:
 #   DOMAIN=yourdomain.com caddy run
@@ -27,40 +27,66 @@
 # config needed. HTTP requests are redirected to HTTPS automatically.
 # ═══════════════════════════════════════════════════════════════════
 
-# ── Root domain redirect ─────────────────────────────────────────
-# Bare domain redirects to the portal subdomain
-{$DOMAIN:farm.example.com} {
-	redir https://portal.{$DOMAIN:farm.example.com}{uri} permanent
-}
+# ── Root domain ────────────────────────────────────────────────────
+# Root domain (whughesfarms.com) stays on Squarespace — no Caddy block.
+# Only subdomains are handled here.
 
 # ── Portal (Next.js 14) ─────────────────────────────────────────
-portal.{$DOMAIN:farm.example.com} {
+# Embedded apps are proxied under /embed/* so iframes share the
+# portal's origin (same localStorage, no cross-origin isolation).
+portal.{$DOMAIN:whughesfarms.com} {
 	encode gzip
+
+	# ── Same-origin embed proxies ──────────────────────────────
+	handle_path /embed/farm-budget/* {
+		reverse_proxy localhost:3001
+	}
+	handle_path /embed/grain-tickets/* {
+		reverse_proxy localhost:3007
+	}
+	handle_path /embed/seed-inventory/* {
+		reverse_proxy localhost:3006
+	}
+	handle_path /embed/farm-registry/* {
+		reverse_proxy localhost:3005
+	}
+	# organic-cert is Next.js — can't use handle_path (asset paths
+	# like /_next/* would resolve to the portal). Use subdomain embed.
+	# Kept here as a comment for documentation.
+	# handle_path /embed/organic-cert/* { ... }
+	handle_path /embed/meristem-malt/* {
+		reverse_proxy localhost:3003
+	}
+	handle_path /embed/fsa-acres/* {
+		reverse_proxy localhost:3002
+	}
+
+	# ── Portal app (catch-all) ─────────────────────────────────
 	reverse_proxy localhost:3000 {
 		header_up X-Forwarded-Proto {scheme}
 	}
 }
 
 # ── Farm Budget (Express) ───────────────────────────────────────
-budget.{$DOMAIN:farm.example.com} {
+budget.{$DOMAIN:whughesfarms.com} {
 	encode gzip
 	reverse_proxy localhost:3001
 }
 
 # ── FSA Acres (Express) ─────────────────────────────────────────
-fsa.{$DOMAIN:farm.example.com} {
+fsa.{$DOMAIN:whughesfarms.com} {
 	encode gzip
 	reverse_proxy localhost:3002
 }
 
 # ── Meristem Malt (Express) ─────────────────────────────────────
-malt.{$DOMAIN:farm.example.com} {
+malt.{$DOMAIN:whughesfarms.com} {
 	encode gzip
 	reverse_proxy localhost:3003
 }
 
 # ── Organic Cert (Next.js 16) ───────────────────────────────────
-cert.{$DOMAIN:farm.example.com} {
+cert.{$DOMAIN:whughesfarms.com} {
 	encode gzip
 	reverse_proxy localhost:3004 {
 		header_up X-Forwarded-Proto {scheme}
@@ -68,19 +94,19 @@ cert.{$DOMAIN:farm.example.com} {
 }
 
 # ── Farm Registry (Express) ─────────────────────────────────────
-registry.{$DOMAIN:farm.example.com} {
+registry.{$DOMAIN:whughesfarms.com} {
 	encode gzip
 	reverse_proxy localhost:3005
 }
 
 # ── Seed Inventory (Express) ────────────────────────────────────
-seed.{$DOMAIN:farm.example.com} {
+seed.{$DOMAIN:whughesfarms.com} {
 	encode gzip
 	reverse_proxy localhost:3006
 }
 
 # ── Grain Tickets (Express) ─────────────────────────────────────
-tickets.{$DOMAIN:farm.example.com} {
+tickets.{$DOMAIN:whughesfarms.com} {
 	encode gzip
 	reverse_proxy localhost:3007
 }
