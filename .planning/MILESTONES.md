@@ -177,3 +177,49 @@
 
 ---
 
+
+## v9.0 Mobile PWA + Field Operations Logger (Shipped: 2026-03-26)
+
+**Delivered:** Progressive Web App with offline-first crop plan viewer, field pass logger, offline sync engine with conflict resolution, and grain-tickets offline entry with dashboard caching.
+
+**Phases completed:** 44-48 (5 phases, 11 plans)
+**Timeline:** 9 days (2026-03-17 → 2026-03-25)
+
+**Key accomplishments:**
+- PWA infrastructure: @serwist/next service worker, web app manifest, install prompt, offline shell, typed IndexedDB wrapper
+- Mobile-first crop plan viewer aggregating field/crop/input data from farm-budget and farm-registry with offline caching
+- Field pass logger: confirm planned passes and add unplanned passes, writing to organic-cert FieldOperation table
+- Offline sync engine: IndexedDB queue for pending operations, Background Sync API replay, conflict detection, sync status UI
+- Grain-tickets offline entry with pending ticket list, conflict resolution, and offline-aware dashboard with staleness indicators
+
+**Git range:** `feat(44-01)` → `feat(48-02)`
+
+**Archive:** [milestones/v9.0-ROADMAP.md](milestones/v9.0-ROADMAP.md)
+
+---
+
+
+## v10.0 Platform Consolidation & Data Integrity (Shipped: 2026-03-26)
+
+**Delivered:** Eliminated scattered data and duplicate stores across the 8-app ecosystem. Canonical field IDs and crop registry, FSA/insurance data consolidated to Supabase, automatic yield and seed pipelines, and unified visual identity with shared color tokens and iframe embed navigation.
+
+**Phases completed:** 49-54 (6 phases, 20 plans)
+**Timeline:** 3 days (2026-03-24 → 2026-03-26)
+**Requirements:** 25/25 complete (CONS-01..11, PIPE-01..08, UXN-04..09)
+
+**Key accomplishments:**
+- Canonical field IDs: registry_field_id added to farm-budget, grain-tickets, portal clu_records, and fsa-acres with backfill scripts
+- Canonical crop registry in farm-registry with crop ID, canonical name, and per-app aliases — all apps fetch from registry
+- FSA/insurance data consolidated from fsa-acres JSON to portal Supabase as single source of truth, with RMA price scraper
+- Yield pipeline: grain-tickets auto-computes yield summary and pushes to insurance and budget
+- Seed-inventory seed lot/cert data piped to organic-cert compilation; meristem-malt grain cost from grain-ticket settlements
+- Unified color tokens (16 canonical) in platform-tokens.css across all 7 apps; breadcrumb navigation for iframe embeds; cross-origin theme cascade
+
+**Scope note:** Original v10.0 included phases 55-61 (domain features). These were deferred to v11.0 as they build on top of the consolidated data platform rather than being consolidation work themselves.
+
+**Git range:** `feat(49-01)` → `fix(54)`
+
+**Archive:** [milestones/v10.0-ROADMAP.md](milestones/v10.0-ROADMAP.md) | [milestones/v10.0-REQUIREMENTS.md](milestones/v10.0-REQUIREMENTS.md) | [milestones/v10.0-MILESTONE-AUDIT.md](milestones/v10.0-MILESTONE-AUDIT.md)
+
+---
+

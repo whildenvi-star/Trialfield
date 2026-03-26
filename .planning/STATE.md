@@ -2,22 +2,18 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24)
+See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v10.0 Consolidation — Phase 54: iframe Embed Navigation & Design Tokens (Plan 01 complete)
+**Current focus:** Planning v11.0 Domain Features & Workflow Automation
 
 ## Current Position
 
-Phase: 54 of 61 (iframe Embed Navigation & Design Tokens)
-Plan: 01 complete
-Status: In Progress (1/? plans complete)
-Last activity: 2026-03-26 — Phase 54 Plan 01 complete: Canonical color token block added to all 7 platform-tokens.css files; duplicate color definitions removed from all 6 Express app style.css files; CSS load order fixed in all 6 index.html files.
+Phase: Between milestones — v9.0 + v10.0 shipped, v11.0 not yet started
+Status: Ready for `/gsd:new-milestone`
+Last activity: 2026-03-26 — v9.0 and v10.0 milestones archived. Phases 55-61 deferred to v11.0.
 
-Progress: v7.0 [██████████] SHIPPED | v8.0 [██████████] SHIPPED | v9.0 [█████░░░░░] PAUSED | v10.0 [███░░░░░░░] in progress
-
-**v9.0 status:** Phase 44-47 complete, Phase 48 Plan 01 complete (grain-tickets offline entry 2026-03-25). Plan 02 (dashboard caching) remaining before v9.0 ships.
-**v10.0 status:** Phases 49-53 complete, Phase 54 Plan 01 done (canonical color token unification)
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] planned
 
 ## Performance Metrics
 
@@ -32,8 +28,9 @@ Progress: v7.0 [██████████] SHIPPED | v8.0 [█████�
 | v6.0 | 27-34 | 15 | 2026-03-06 |
 | v7.0 | 35-39 | 8 | 2026-03-08 |
 | v8.0 | 40-43 | 9 | 2026-03-08 |
-| v9.0 | 44-45 | 4 | PAUSED |
-| **Total** | **47** | **96** | |
+| v9.0 | 44-48 | 11 | 2026-03-26 |
+| v10.0 | 49-54 | 20 | 2026-03-26 |
+| **Total** | **54** | **115** | |
 | Phase 49 P02 | 3 | 2 tasks | 4 files |
 | Phase 49-canonical-field-ids P03 | 7 | 2 tasks | 9 files |
 | Phase 50-canonical-crop-registry P01 | 2 | 2 tasks | 2 files |

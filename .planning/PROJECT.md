@@ -62,32 +62,17 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** ASCIIBannerStrip canvas component with pure noise functions (~50fps, retina, no external deps), app shell integration (mobile responsive, a11y, user disable toggle), canonical tokens.ts with navy/cyan palette (37 files migrated from soil-* to glomalin-*), multi-scene engine (drone, seasonal, mycelium) with 200ms crossfade and easter egg scene cycling. 4 phases, 9 plans, 22 requirements — all complete.
 
-## Paused Milestone: v9.0 Mobile PWA + Field Operations Logger
+## Completed Milestone: v9.0 Mobile PWA + Field Operations Logger (2026-03-26)
 
-**Goal:** PWA with offline crop plan viewer and field pass logger for operators in the field.
+**Goal:** PWA with offline crop plan viewer, field pass logger, offline sync engine, and grain-tickets offline entry.
 
-**Status:** Phases 44-45 complete (PWA infrastructure + crop plan viewer). Phases 46-48 paused pending v10.0 consolidation. Will resume after v10.0 — canonical field IDs and unified data stores make the mobile work significantly cleaner.
+**Delivered:** @serwist/next service worker with IndexedDB wrapper, mobile-first crop plan viewer, field pass logger writing to organic-cert, offline sync engine with Background Sync and conflict detection, grain-tickets offline entry with dashboard caching. 5 phases, 11 plans.
 
-## Current Milestone: v10.0 Platform Consolidation & Data Integrity
+## Completed Milestone: v10.0 Platform Consolidation & Data Integrity (2026-03-26)
 
-**Goal:** Eliminate scattered data, duplicate stores, and manual re-entry across the 8-app ecosystem. Consolidate FSA/insurance to a single data store, establish canonical field and crop IDs, build automatic data pipelines, and unify the UX so the platform feels like one product.
+**Goal:** Eliminate scattered data, duplicate stores, and manual re-entry across the 8-app ecosystem.
 
-**Target features:**
-- Consolidate FSA/Insurance data to single Supabase store (eliminate portal vs fsa-acres duplication)
-- Automatic yield pipeline from grain-tickets to insurance and budget (eliminate triple manual entry)
-- Canonical field registry IDs across all 8 apps (eliminate string-name fuzzy matching)
-- Actionable farm dashboard showing what needs attention today
-- Canonical crop list shared across all apps
-- Grain marketing position view (contracted vs unpriced bushels)
-- Structured APH database for crop insurance
-- Fix iframe embed navigation (breadcrumbs, no duplicate headers)
-- Unified field activity timeline
-- Connect seed-inventory organic data to organic-cert
-- Prevented planting indemnity calculation
-- Unified design tokens across all Express apps
-- Single add-field workflow with auto-propagation
-- Settlement financial summary with contract-level P&L
-- Connect meristem-malt to grain-ticket settlement prices
+**Delivered:** Canonical field IDs and crop registry across all apps, FSA/insurance data consolidated to Supabase, automatic yield pipeline (grain-tickets → insurance → budget), seed-inventory → organic-cert pipeline, meristem-malt → grain-tickets price pipeline, unified color tokens in platform-tokens.css, iframe embed breadcrumb navigation, cross-origin theme cascade. 6 phases, 20 plans, 25 requirements — all complete. Phases 55-61 (domain features) deferred to v11.0.
 
 ## Requirements
 
@@ -157,25 +142,30 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - ✓ App shell integration — banner in protected layout, mobile responsive, a11y, user toggle — v8.0
 - ✓ Navy/cyan design token system (tokens.ts) replacing soil palette across 37 files — v8.0
 - ✓ Multi-scene engine (drone, seasonal, mycelium) with crossfade and easter egg cycling — v8.0
+- ✓ PWA infrastructure with service worker, manifest, install prompt, IndexedDB wrapper — v9.0
+- ✓ Mobile crop plan viewer with offline caching — v9.0
+- ✓ Field pass logger writing to organic-cert FieldOperation table — v9.0
+- ✓ Offline sync engine with Background Sync, conflict detection, retry logic — v9.0
+- ✓ Grain-tickets offline entry with dashboard caching and staleness indicators — v9.0
+- ✓ Canonical field IDs (registry_field_id) across all apps with backfill scripts — v10.0
+- ✓ Canonical crop registry in farm-registry with per-app aliases — v10.0
+- ✓ FSA/insurance data consolidated to single Supabase store — v10.0
+- ✓ Automatic yield pipeline (grain-tickets → insurance → budget) — v10.0
+- ✓ Seed-inventory → organic-cert seed data pipeline — v10.0
+- ✓ Meristem-malt grain cost from grain-ticket settlements — v10.0
+- ✓ Unified color tokens (platform-tokens.css) across all 8 apps — v10.0
+- ✓ Iframe embed breadcrumb navigation and cross-origin theme cascade — v10.0
 
 ### Active
 
-**v10.0 — Platform Consolidation & Data Integrity:**
-- [ ] Consolidate FSA/Insurance to single Supabase data store
-- [ ] Automatic yield pipeline (grain-tickets → insurance → budget)
-- [ ] Canonical field registry IDs across all apps
-- [ ] Actionable farm dashboard
-- [ ] Canonical crop list
-- [ ] Grain marketing position view
-- [ ] Structured APH database
-- [ ] Fix iframe embed navigation
-- [ ] Unified field activity timeline
-- [ ] Seed-inventory → organic-cert connection
-- [ ] Prevented planting calculation
-- [ ] Unified design tokens
-- [ ] Single add-field workflow
-- [ ] Settlement financial summary
-- [ ] Meristem-malt grain price connection
+**v11.0 — Domain Features & Workflow Automation:**
+- [ ] Actionable farm dashboard (replace module cards with live action items)
+- [ ] Structured APH database with computed APH and insurance guarantee
+- [ ] Grain marketing position view (contracted vs unpriced bushels, CBOT exposure)
+- [ ] Unified field activity timeline (all 4 data sources)
+- [ ] Prevented planting indemnity calculator
+- [ ] Settlement financial summary with contract-level P&L
+- [ ] Auto field propagation (farm-registry → all downstream apps)
 
 ### Deferred
 
@@ -185,8 +175,7 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - Photo evidence attachment for field documentation
 - Multi-certifier support (EU, state programs) — USDA NOP only
 - Inspector portal/login — inspectors receive print reports, not digital access
-- Mobile PWA + Field Operations Logger (planned as v9.0 — see .planning/v9.0-VISION.md)
-- Crop Year Accounting & QBO Integration (see .planning/v5.0-VISION.md — deferred to v6.0+)
+- Crop Year Accounting & QBO Integration (see .planning/v5.0-VISION.md)
 
 ### Out of Scope
 
@@ -208,7 +197,7 @@ Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 +
 
 **Port map:** 3000 grain-tickets, 3001 farm-budget, 3002 fsa-acres, 3003 meristem-malt, 3004 organic-cert, 3005 farm-registry, 3006 glomalin-portal (Next.js dev)
 
-**Total shipped:** 84 plans across 39 phases in 8 milestones (v1.0 through v8.0). Production deployment in progress (v7.0 — PM2 + Caddy + Supabase on VPS).
+**Total shipped:** 115 plans across 54 phases in 10 milestones (v1.0 through v10.0). Production deployed (PM2 + Caddy + Supabase on VPS).
 
 Primary users are farm office staff (daily ticket entry) and farm manager (farm planning, certification, settlement reconciliation).
 
@@ -253,6 +242,14 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | Canvas-only ASCII rendering (no external animation deps) | Pure TypeScript noise functions; no bundle bloat | ✓ Good — 1,241 LOC, ~50fps, retina support |
 | Easter egg scene toggle (not visible UI) | Discovery mechanic; keeps banner chrome clean | ✓ Good — bright-node click cycling works well |
 | localStorage for banner/scene prefs (not Supabase) | No schema changes; instant toggle; orthogonal controls | ✓ Good — simpler, no migration needed |
+| @serwist/next for PWA service worker | Framework-aligned SW tooling for Next.js; handles precaching and routing | ✓ Good — clean offline shell |
+| IndexedDB for offline queue (not localStorage) | Structured data, async API, no 5MB limit; stores pending ops and cached crop plans | ✓ Good — handles conflict detection |
+| Background Sync API for replay | Browser-native retry when connectivity returns; degrades gracefully | ✓ Good — reliable offline→online transition |
+| Canonical field IDs via registry_field_id FK | Eliminates fragile string-name matching across 8 apps | ✓ Good — enables clean cross-module joins |
+| Crop registry in farm-registry (not portal) | farm-registry is already the field authority; natural home for crop canonical list | ✓ Good — Express apps can fetch without Supabase |
+| Consolidate FSA/insurance to portal Supabase | Eliminates JSON duplication in fsa-acres; RLS for access control | ✓ Good — single source of truth achieved |
+| postMessage for cross-origin theme sync | organic-cert is cross-origin; localStorage events don't cross origins | ✓ Good — instant theme cascade |
+| Defer phases 55-61 to v11.0 | Domain features (dashboards, calculators) build on top of consolidation, not part of it | — Pending |
 
 ---
-*Last updated: 2026-03-24 after v10.0 milestone started (v9.0 paused)*
+*Last updated: 2026-03-26 after v9.0 + v10.0 milestones shipped*
