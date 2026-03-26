@@ -135,10 +135,14 @@
   });
 
   window.deleteOrder = function (id) {
-    if (!confirm('Delete this order?')) return;
-    api.del('/api/orders/' + id).then(function () {
-      loadOrders();
-      util.showToast('Order deleted');
+    util.confirm('Delete this order?').then(function (ok) {
+      if (!ok) return;
+      api.del('/api/orders/' + id).then(function () {
+        loadOrders();
+        util.showToast('Order deleted');
+      }).catch(function (err) {
+        util.showToast('Error: ' + err.message, 'error');
+      });
     });
   };
 

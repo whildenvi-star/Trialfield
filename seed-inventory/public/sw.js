@@ -1,4 +1,4 @@
-var CACHE_NAME = 'seed-inventory-v2';
+var CACHE_NAME = 'seed-inventory-v3';
 var PRECACHE = [
   '/',
   '/style.css',

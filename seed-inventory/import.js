@@ -56,6 +56,7 @@ function normalizeUnit(raw) {
   if (u === 'box' || u === 'boxes') return 'boxes';
   if (u === 'pallet' || u === 'pallets') return 'pallets';
   if (u === 'units' || u === 'unit') return 'units';
+  if (u === 'acre' || u === 'acres') return 'acre';
   return u;
 }
 

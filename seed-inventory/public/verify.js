@@ -302,7 +302,7 @@
           '<label>Unit</label>' +
           '<select class="mi-unit">' +
             '<option value="units">Units</option><option value="bags">Bags</option>' +
-            '<option value="lbs">Lbs</option><option value="gal">Gallons</option><option value="tons">Tons</option>' +
+            '<option value="lbs">Lbs</option><option value="gal">Gallons</option><option value="tons">Tons</option><option value="acre">Acre</option>' +
           '</select>' +
         '</div>' +
         '<div class="form-group">' +

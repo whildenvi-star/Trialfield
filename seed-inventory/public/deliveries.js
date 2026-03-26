@@ -73,14 +73,15 @@
       // Group header row
       html += '<tr class="delivery-group-header" onclick="toggleDeliveryGroup(\'' + gid + '\')">' +
         '<td>' + util.escapeHtml(first.dateReceived) + '</td>' +
-        '<td colspan="2"><strong>' + items.length + ' items</strong> &mdash; ' + util.escapeHtml(productSummary) + '</td>' +
-        '<td class="number">' + util.escapeHtml(sName) + '</td>' +
+        '<td><strong>' + items.length + ' items</strong> &mdash; ' + util.escapeHtml(productSummary) + '</td>' +
+        '<td>' + util.escapeHtml(sName) + '</td>' +
+        '<td class="number"></td>' +
         '<td></td>' +
         '<td></td>' +
         '<td>' + util.escapeHtml(first.ticketNumber) + '</td>' +
         '<td><span class="badge ' + vBadge + '">' + (first.verificationMethod || 'MANUAL') + '</span></td>' +
         '<td></td>' +
-        '<td></td>' +
+        '<td><button class="btn-edit" onclick="event.stopPropagation();editDelivery(\'' + first.id + '\')">Edit</button></td>' +
       '</tr>';
 
       // Individual item rows (hidden by default)
@@ -146,7 +147,11 @@
       '<div class="form-grid">' +
         '<div class="form-group">' +
           '<label>Product</label>' +
-          '<select class="li-productId" required><option value="">Select product...</option></select>' +
+          '<div class="autocomplete-wrap">' +
+            '<input type="text" class="li-product-search" placeholder="Type to search products..." autocomplete="off" required>' +
+            '<input type="hidden" class="li-productId">' +
+            '<div class="autocomplete-list"></div>' +
+          '</div>' +
         '</div>' +
         '<div class="form-group">' +
           '<label>Linked Order</label>' +
@@ -161,7 +166,7 @@
           '<select class="li-unit">' +
             '<option value="units">Units</option><option value="bags">Bags</option>' +
             '<option value="lbs">Lbs</option><option value="gal">Gallons</option>' +
-            '<option value="tons">Tons</option>' +
+            '<option value="tons">Tons</option><option value="acre">Acre</option>' +
           '</select>' +
         '</div>' +
         '<div class="form-group">' +
@@ -173,18 +178,104 @@
         '</div>' +
       '</div>';
 
-    // Populate product select
-    var productSel = div.querySelector('.li-productId');
-    window.refData.products.filter(function (p) { return p.active !== false; }).forEach(function (p) {
-      var opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = util.productLabel(p) + ' (' + p.type + ')';
-      productSel.appendChild(opt);
+    // Wire product autocomplete
+    var productInput = div.querySelector('.li-product-search');
+    var productHidden = div.querySelector('.li-productId');
+    var acList = div.querySelector('.autocomplete-list');
+    var acIndex = -1;
+
+    function sortProducts(list) {
+      return list.slice().sort(function (a, b) {
+        // Seeds first, then Inputs
+        if (a.type !== b.type) return a.type === 'SEED' ? -1 : 1;
+        // Then alphabetically by label
+        return util.productLabel(a).localeCompare(util.productLabel(b));
+      });
+    }
+
+    function filterProducts(query) {
+      var q = query.toLowerCase();
+      return sortProducts(window.refData.products.filter(function (p) {
+        if (p.active === false) return false;
+        var label = util.productLabel(p) + ' ' + (p.crop || '') + ' ' + (p.variety || '') + ' ' + (p.productName || '') + ' ' + p.type;
+        return label.toLowerCase().indexOf(q) !== -1;
+      }));
+    }
+
+    function showSuggestions(matches) {
+      if (matches.length === 0) { acList.innerHTML = '<div class="autocomplete-item" style="color:var(--text-light);cursor:default">No matches</div>'; acList.classList.add('open'); acIndex = -1; return; }
+      var currentType = '';
+      var html = '';
+      matches.forEach(function (p) {
+        if (p.type !== currentType) {
+          currentType = p.type;
+          html += '<div class="ac-group-label">' + (currentType === 'SEED' ? 'Seeds' : 'Inputs') + '</div>';
+        }
+        html += '<div class="autocomplete-item" data-id="' + p.id + '">' +
+          util.escapeHtml(util.productLabel(p)) +
+          '<span class="ac-type">' + util.escapeHtml(p.type) + '</span></div>';
+      });
+      acList.innerHTML = html;
+      acList.classList.add('open');
+      acIndex = -1;
+    }
+
+    function selectProduct(id) {
+      var p = window.refData.products.find(function (pp) { return pp.id === id; });
+      if (p) {
+        productInput.value = util.productLabel(p) + ' (' + p.type + ')';
+        productHidden.value = p.id;
+      }
+      acList.classList.remove('open');
+      loadOpenOrders(productHidden.value, div.querySelector('.li-orderId'));
+    }
+
+    productInput.addEventListener('input', function () {
+      productHidden.value = '';
+      var q = productInput.value.trim();
+      if (q.length === 0) {
+        acList.classList.remove('open');
+      } else {
+        showSuggestions(filterProducts(q));
+      }
     });
 
-    // Wire product change to load open orders
-    productSel.addEventListener('change', function () {
-      loadOpenOrders(productSel.value, div.querySelector('.li-orderId'));
+    productInput.addEventListener('focus', function () {
+      var q = productInput.value.trim();
+      if (q.length > 0 && !productHidden.value) {
+        showSuggestions(filterProducts(q));
+      }
+    });
+
+    productInput.addEventListener('keydown', function (e) {
+      var items = acList.querySelectorAll('.autocomplete-item');
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        acIndex = Math.min(acIndex + 1, items.length - 1);
+        items.forEach(function (el, i) { el.classList.toggle('active', i === acIndex); });
+        items[acIndex].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        acIndex = Math.max(acIndex - 1, 0);
+        items.forEach(function (el, i) { el.classList.toggle('active', i === acIndex); });
+        items[acIndex].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter' && acIndex >= 0) {
+        e.preventDefault();
+        selectProduct(items[acIndex].getAttribute('data-id'));
+      } else if (e.key === 'Escape') {
+        acList.classList.remove('open');
+      }
+    });
+
+    acList.addEventListener('click', function (e) {
+      var item = e.target.closest('.autocomplete-item');
+      if (item) selectProduct(item.getAttribute('data-id'));
+    });
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!div.contains(e.target)) acList.classList.remove('open');
     });
 
     // Wire remove button
@@ -199,7 +290,7 @@
 
     // Pre-fill if data provided
     if (data) {
-      productSel.value = data.productId || '';
+      if (data.productId) selectProduct(data.productId);
       div.querySelector('.li-quantity').value = data.quantityReceived || '';
       div.querySelector('.li-unit').value = data.unit || 'units';
       div.querySelector('.li-lotNumber').value = data.lotNumber || '';
@@ -246,12 +337,83 @@
     document.getElementById('df-items-container').appendChild(createLineItemRow(null));
   });
 
+  // --- Farm autocomplete ---
+  var farmSearchInput = document.getElementById('df-farm-search');
+  var farmHiddenInput = document.getElementById('df-farmId');
+  var farmAcList = document.getElementById('df-farm-aclist');
+  var farmAcIndex = -1;
+  var allFarms = [];
+
+  function loadFarms() {
+    api.get('/api/farms').then(function (fields) {
+      allFarms = fields.sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
+    }).catch(function () { allFarms = []; });
+  }
+
+  function filterFarms(query) {
+    var q = query.toLowerCase();
+    return allFarms.filter(function (f) {
+      var haystack = (f.name || '') + ' ' + (f.aliases || []).join(' ');
+      return haystack.toLowerCase().indexOf(q) !== -1;
+    });
+  }
+
+  function showFarmSuggestions(matches) {
+    if (matches.length === 0) {
+      farmAcList.innerHTML = '<div class="autocomplete-item" style="color:var(--text-light);cursor:default">No matches</div>';
+      farmAcList.classList.add('open');
+      farmAcIndex = -1;
+      return;
+    }
+    farmAcList.innerHTML = matches.map(function (f) {
+      var acres = f.reportingAcres ? ' <span class="ac-type">' + f.reportingAcres + ' ac</span>' : '';
+      return '<div class="autocomplete-item" data-id="' + f.id + '" data-name="' + util.escapeHtml(f.name) + '">' +
+        util.escapeHtml(f.name) + acres + '</div>';
+    }).join('');
+    farmAcList.classList.add('open');
+    farmAcIndex = -1;
+  }
+
+  function selectFarm(id, name) {
+    farmSearchInput.value = name;
+    farmHiddenInput.value = id;
+    farmAcList.classList.remove('open');
+  }
+
+  if (farmSearchInput) {
+    farmSearchInput.addEventListener('input', function () {
+      farmHiddenInput.value = '';
+      var q = farmSearchInput.value.trim();
+      if (q.length === 0) { farmAcList.classList.remove('open'); return; }
+      showFarmSuggestions(filterFarms(q));
+    });
+    farmSearchInput.addEventListener('focus', function () {
+      if (!farmHiddenInput.value && farmSearchInput.value.trim()) showFarmSuggestions(filterFarms(farmSearchInput.value.trim()));
+    });
+    farmSearchInput.addEventListener('keydown', function (e) {
+      var items = farmAcList.querySelectorAll('.autocomplete-item');
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); farmAcIndex = Math.min(farmAcIndex + 1, items.length - 1); items.forEach(function (el, i) { el.classList.toggle('active', i === farmAcIndex); }); items[farmAcIndex].scrollIntoView({ block: 'nearest' }); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); farmAcIndex = Math.max(farmAcIndex - 1, 0); items.forEach(function (el, i) { el.classList.toggle('active', i === farmAcIndex); }); items[farmAcIndex].scrollIntoView({ block: 'nearest' }); }
+      else if (e.key === 'Enter' && farmAcIndex >= 0) { e.preventDefault(); selectFarm(items[farmAcIndex].getAttribute('data-id'), items[farmAcIndex].getAttribute('data-name')); }
+      else if (e.key === 'Escape') { farmAcList.classList.remove('open'); }
+    });
+    farmAcList.addEventListener('click', function (e) {
+      var item = e.target.closest('.autocomplete-item');
+      if (item) selectFarm(item.getAttribute('data-id'), item.getAttribute('data-name'));
+    });
+    document.addEventListener('click', function (e) {
+      if (!farmSearchInput.contains(e.target) && !farmAcList.contains(e.target)) farmAcList.classList.remove('open');
+    });
+  }
+
   function openModal(receipt) {
     document.getElementById('delivery-modal-title').textContent = receipt ? 'Edit Delivery' : 'Record Delivery';
     form.reset();
     document.getElementById('df-id').value = receipt ? receipt.id : '';
     populateSupplierSelect('df-supplierId');
     lineItemCount = 0;
+    loadFarms();
 
     var container = document.getElementById('df-items-container');
     container.innerHTML = '';
@@ -259,6 +421,8 @@
     if (!receipt) {
       // New delivery — default date to today, start with one empty line item
       document.getElementById('df-dateReceived').value = new Date().toISOString().split('T')[0];
+      farmSearchInput.value = '';
+      farmHiddenInput.value = '';
       container.appendChild(createLineItemRow(null));
     } else {
       // Editing existing receipt — fill shared fields and one line item
@@ -268,6 +432,8 @@
       document.getElementById('df-receivedBy').value = receipt.receivedBy || '';
       document.getElementById('df-verifiedBy').value = receipt.verifiedBy || '';
       document.getElementById('df-notes').value = receipt.notes || '';
+      farmSearchInput.value = receipt.farmName || '';
+      farmHiddenInput.value = receipt.farmId || '';
       container.appendChild(createLineItemRow(receipt));
     }
 
@@ -282,6 +448,8 @@
 
     var shared = {
       supplierId: document.getElementById('df-supplierId').value,
+      farmId: document.getElementById('df-farmId').value,
+      farmName: document.getElementById('df-farm-search').value,
       dateReceived: document.getElementById('df-dateReceived').value,
       ticketNumber: document.getElementById('df-ticketNumber').value,
       receivedBy: document.getElementById('df-receivedBy').value,
@@ -334,10 +502,14 @@
   });
 
   window.deleteDelivery = function (id) {
-    if (!confirm('Delete this delivery record?')) return;
-    api.del('/api/receipts/' + id).then(function () {
-      loadReceipts();
-      util.showToast('Delivery deleted');
+    util.confirm('Delete this delivery record?').then(function (ok) {
+      if (!ok) return;
+      api.del('/api/receipts/' + id).then(function () {
+        loadReceipts();
+        util.showToast('Delivery deleted');
+      }).catch(function (err) {
+        util.showToast('Error: ' + err.message, 'error');
+      });
     });
   };
 

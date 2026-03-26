@@ -18,15 +18,16 @@
   });
 
   // --- Shared API helper ---
+  var B = window.__BASE || '';
   window.api = {
     get: function (url) {
-      return fetch(url).then(function (r) {
+      return fetch(B + url).then(function (r) {
         if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || 'Request failed'); });
         return r.json();
       });
     },
     post: function (url, body) {
-      return fetch(url, {
+      return fetch(B + url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -36,7 +37,7 @@
       });
     },
     put: function (url, body) {
-      return fetch(url, {
+      return fetch(B + url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -46,7 +47,7 @@
       });
     },
     del: function (url) {
-      return fetch(url, { method: 'DELETE' }).then(function (r) {
+      return fetch(B + url, { method: 'DELETE' }).then(function (r) {
         if (!r.ok) return r.json().then(function (e) { throw new Error(e.error || 'Request failed'); });
         return r.json();
       });
@@ -77,8 +78,8 @@
     },
     productLabel: function (p) {
       if (!p) return '(unknown)';
-      if (p.type === 'SEED') return p.brand + ' ' + (p.variety || p.crop);
-      return p.brand + ' ' + (p.productName || '');
+      if (p.type === 'SEED') return (p.brand ? p.brand + ' ' : '') + (p.variety || p.crop);
+      return (p.brand ? p.brand + ' ' : '') + (p.productName || '');
     },
     supplierName: function (id, suppliers) {
       var s = suppliers.find(function (s) { return s.id === id; });
@@ -87,6 +88,22 @@
     escapeHtml: function (str) {
       if (!str) return '';
       return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
+    confirm: function (msg) {
+      return new Promise(function (resolve) {
+        var modal = document.getElementById('confirm-modal');
+        document.getElementById('confirm-modal-msg').textContent = msg;
+        modal.classList.remove('hidden');
+        function cleanup() {
+          modal.classList.add('hidden');
+          document.getElementById('confirm-modal-ok').removeEventListener('click', onOk);
+          document.getElementById('confirm-modal-cancel').removeEventListener('click', onCancel);
+        }
+        function onOk() { cleanup(); resolve(true); }
+        function onCancel() { cleanup(); resolve(false); }
+        document.getElementById('confirm-modal-ok').addEventListener('click', onOk);
+        document.getElementById('confirm-modal-cancel').addEventListener('click', onCancel);
+      });
     }
   };
 

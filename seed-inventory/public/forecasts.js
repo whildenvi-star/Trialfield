@@ -133,18 +133,20 @@
   var syncBtn = document.getElementById('sync-budget-btn');
   if (syncBtn) {
     syncBtn.addEventListener('click', function () {
-      if (!confirm('Pull all forecasts from Farm Budget?\n\nThis will sync products and forecast records from the macro roll-up.')) return;
-      syncBtn.disabled = true;
-      syncBtn.textContent = 'Syncing...';
-      api.post('/api/forecasts/pull-from-budget', {}).then(function (result) {
-        util.showToast('Synced: ' + result.created + ' created, ' + result.updated + ' updated');
-        window.dispatchEvent(new Event('ref-data-reload'));
-        loadForecasts();
-      }).catch(function (err) {
-        util.showToast('Sync failed: ' + (err.message || 'Could not reach Farm Budget'), 'error');
-      }).finally(function () {
-        syncBtn.disabled = false;
-        syncBtn.textContent = 'Sync from Farm Budget';
+      util.confirm('Pull all forecasts from Farm Budget? This will sync products and forecast records from the macro roll-up.').then(function (ok) {
+        if (!ok) return;
+        syncBtn.disabled = true;
+        syncBtn.textContent = 'Syncing...';
+        api.post('/api/forecasts/pull-from-budget', {}).then(function (result) {
+          util.showToast('Synced: ' + result.created + ' created, ' + result.updated + ' updated');
+          window.dispatchEvent(new Event('ref-data-reload'));
+          loadForecasts();
+        }).catch(function (err) {
+          util.showToast('Sync failed: ' + (err.message || 'Could not reach Farm Budget'), 'error');
+        }).finally(function () {
+          syncBtn.disabled = false;
+          syncBtn.textContent = 'Sync from Farm Budget';
+        });
       });
     });
   }

@@ -122,11 +122,15 @@
   });
 
   window.deleteSupplier = function (id) {
-    if (!confirm('Delete this supplier?')) return;
-    api.del('/api/suppliers/' + id).then(function () {
-      loadSuppliers();
-      reloadRefData();
-      util.showToast('Supplier deleted');
+    util.confirm('Delete this supplier?').then(function (ok) {
+      if (!ok) return;
+      api.del('/api/suppliers/' + id).then(function () {
+        loadSuppliers();
+        reloadRefData();
+        util.showToast('Supplier deleted');
+      }).catch(function (err) {
+        util.showToast('Error: ' + err.message, 'error');
+      });
     });
   };
 
@@ -139,17 +143,19 @@
   var syncAllBtn = document.getElementById('sync-suppliers-btn');
   if (syncAllBtn) {
     syncAllBtn.addEventListener('click', function () {
-      if (!confirm('Sync all suppliers to Farm Budget?\n\nThis will create any missing suppliers in the macro.')) return;
-      syncAllBtn.disabled = true;
-      syncAllBtn.textContent = 'Syncing...';
-      api.post('/api/budget/sync-suppliers', {}).then(function (result) {
-        util.showToast('Synced: ' + result.created + ' created, ' + result.alreadyMapped + ' already mapped');
-        loadSuppliers();
-      }).catch(function (err) {
-        util.showToast('Sync failed: ' + (err.message || 'Could not reach Farm Budget'), 'error');
-      }).finally(function () {
-        syncAllBtn.disabled = false;
-        syncAllBtn.textContent = 'Sync All to Farm Budget';
+      util.confirm('Sync all suppliers to Farm Budget? This will create any missing suppliers in the macro.').then(function (ok) {
+        if (!ok) return;
+        syncAllBtn.disabled = true;
+        syncAllBtn.textContent = 'Syncing...';
+        api.post('/api/budget/sync-suppliers', {}).then(function (result) {
+          util.showToast('Synced: ' + result.created + ' created, ' + result.alreadyMapped + ' already mapped');
+          loadSuppliers();
+        }).catch(function (err) {
+          util.showToast('Sync failed: ' + (err.message || 'Could not reach Farm Budget'), 'error');
+        }).finally(function () {
+          syncAllBtn.disabled = false;
+          syncAllBtn.textContent = 'Sync All to Farm Budget';
+        });
       });
     });
   }

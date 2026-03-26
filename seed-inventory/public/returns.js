@@ -126,10 +126,14 @@
   });
 
   window.deleteReturn = function (id) {
-    if (!confirm('Delete this return?')) return;
-    api.del('/api/returns/' + id).then(function () {
-      loadReturns();
-      util.showToast('Return deleted');
+    util.confirm('Delete this return?').then(function (ok) {
+      if (!ok) return;
+      api.del('/api/returns/' + id).then(function () {
+        loadReturns();
+        util.showToast('Return deleted');
+      }).catch(function (err) {
+        util.showToast('Error: ' + err.message, 'error');
+      });
     });
   };
 
