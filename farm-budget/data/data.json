@@ -11,8 +11,21 @@
   "enterprises": [
     {
       "id": "ent_0491",
-      "name": "Conventional Corn & Small Grains",
-      "shortName": "Conv Corn/SG",
+      "name": "Conventional Corn",
+      "shortName": "Conv Corn",
+      "systemCodes": [
+        "CON",
+        "CON IRR"
+      ],
+      "category": "conventional",
+      "cropTypeNames": [
+        "Corn"
+      ]
+    },
+    {
+      "id": "ent_0492",
+      "name": "Conventional Small Grain",
+      "shortName": "Conv SM Grain",
       "systemCodes": [
         "CON",
         "CON IRR"
@@ -24,8 +37,7 @@
         "Barley",
         "Sorghum",
         "Hay",
-        "Kernza",
-        "Corn"
+        "Kernza"
       ]
     },
     {
@@ -193,7 +205,7 @@
         },
         {
           "id": "inp_0521",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -377,7 +389,7 @@
     },
     {
       "id": "fld_0568",
-      "enterpriseId": "ent_0491",
+      "enterpriseId": "ent_0492",
       "name": "Buchanon Big",
       "systemCode": "CON",
       "crop": "Hybrid Seed Rye",
@@ -598,7 +610,7 @@
         },
         {
           "id": "inp_mm06qhk5_wtl8",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -766,7 +778,7 @@
         },
         {
           "id": "inp_mm06qhk5_zzaq",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -1032,7 +1044,7 @@
         },
         {
           "id": "inp_0670",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -1174,7 +1186,7 @@
     },
     {
       "id": "fld_0709",
-      "enterpriseId": "ent_0491",
+      "enterpriseId": "ent_0492",
       "name": "Elwood's",
       "systemCode": "CON",
       "crop": "Hybrid Seed Rye",
@@ -1401,7 +1413,7 @@
         },
         {
           "id": "inp_0739",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -1559,7 +1571,7 @@
         },
         {
           "id": "inp_0777",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -1711,7 +1723,7 @@
         },
         {
           "id": "inp_0813",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 135,
           "season": "Spring"
         },
@@ -1729,7 +1741,7 @@
         }
       ],
       "seed": {
-        "variety": "P0075",
+        "variety": "P0035",
         "population": 34000
       },
       "machinery": [
@@ -1863,7 +1875,7 @@
         },
         {
           "id": "inp_0852",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 185,
           "season": "Spring"
         },
@@ -1942,7 +1954,7 @@
       "govPaymentsPerAcre": 60,
       "tariffsPerAcre": 0,
       "harvestMoisture": 15.5,
-      "buyerId": "",
+      "buyerId": "buy_0483",
       "templateId": "",
       "auxPayments": [
         {
@@ -2044,7 +2056,7 @@
         },
         {
           "id": "inp_0895",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -2202,7 +2214,7 @@
         },
         {
           "id": "inp_0933",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -2360,7 +2372,7 @@
         },
         {
           "id": "inp_0971",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -2518,7 +2530,7 @@
         },
         {
           "id": "inp_1009",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -2676,7 +2688,7 @@
         },
         {
           "id": "inp_1047",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -2982,7 +2994,7 @@
     },
     {
       "id": "fld_1128",
-      "enterpriseId": "ent_0491",
+      "enterpriseId": "ent_0492",
       "name": "Townline Farms",
       "systemCode": "CON",
       "crop": "Hybrid Seed Rye",
@@ -3132,12 +3144,12 @@
     },
     {
       "id": "fld_1156",
-      "enterpriseId": "ent_0491",
+      "enterpriseId": "ent_0492",
       "name": "Wes's",
       "systemCode": "CON",
       "crop": "Seed grade Winter Barley",
       "cropType": "SINGLE CROP",
-      "acres": 75,
+      "acres": 143,
       "rentPerAcre": 125.87,
       "inputs": [
         {
@@ -3258,7 +3270,7 @@
           "perAcre": 60
         }
       ],
-      "plantedAcres": 0,
+      "plantedAcres": 75,
       "registryFieldName": null,
       "splitGroupId": null
     },
@@ -3346,7 +3358,7 @@
         },
         {
           "id": "inp_1185",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -3509,7 +3521,7 @@
         },
         {
           "id": "inp_1223",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 200,
           "season": "Spring"
         },
@@ -3752,7 +3764,7 @@
         },
         {
           "id": "inp_1261",
-          "productName": "SideDress N 46-0-0",
+          "productName": "46-0-0 SideDress N ",
           "quantity": 165,
           "season": "Spring"
         },
@@ -3922,7 +3934,7 @@
         }
       ],
       "seed": {
-        "variety": "P26Z86E",
+        "variety": "16Z25E",
         "population": 140000
       },
       "machinery": [
@@ -4133,7 +4145,7 @@
       "crop": "Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 250,
-      "rentPerAcre": 276.53,
+      "rentPerAcre": 281.81,
       "inputs": [
         {
           "id": "inp_1361",
@@ -4611,7 +4623,7 @@
       "enterpriseId": "ent_1272",
       "name": "Klug North",
       "systemCode": "CON",
-      "crop": "Soybeans",
+      "crop": "High Oil Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 79,
       "rentPerAcre": 175,
@@ -4761,7 +4773,7 @@
       "govPaymentLabel": "Delong GCS",
       "govPaymentsPerAcre": 70,
       "tariffsPerAcre": 0,
-      "harvestMoisture": 0,
+      "harvestMoisture": 13,
       "buyerId": "",
       "templateId": "",
       "auxPayments": [
@@ -4779,7 +4791,7 @@
       "enterpriseId": "ent_1272",
       "name": "Klug/Davis South",
       "systemCode": "CON",
-      "crop": "Soybeans",
+      "crop": "High Oil Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 136.01,
       "rentPerAcre": 170.3551209,
@@ -4929,7 +4941,7 @@
       "govPaymentLabel": "Delong GCS",
       "govPaymentsPerAcre": 70,
       "tariffsPerAcre": 0,
-      "harvestMoisture": 0,
+      "harvestMoisture": 13,
       "buyerId": "",
       "templateId": "",
       "auxPayments": [
@@ -4947,7 +4959,7 @@
       "enterpriseId": "ent_1272",
       "name": "Lake",
       "systemCode": "CON",
-      "crop": "Soybeans",
+      "crop": "High Oil Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 17,
       "rentPerAcre": 158.12,
@@ -5092,7 +5104,7 @@
       "govPaymentLabel": "Delong GCS",
       "govPaymentsPerAcre": 70,
       "tariffsPerAcre": 0,
-      "harvestMoisture": 0,
+      "harvestMoisture": 13,
       "buyerId": "",
       "templateId": "",
       "auxPayments": [
@@ -5110,7 +5122,7 @@
       "enterpriseId": "ent_1272",
       "name": "Murray",
       "systemCode": "CON",
-      "crop": "Soybeans",
+      "crop": "High Oil Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 135,
       "rentPerAcre": 168.18,
@@ -5250,7 +5262,7 @@
       "govPaymentLabel": "Delong GCS",
       "govPaymentsPerAcre": 70,
       "tariffsPerAcre": 0,
-      "harvestMoisture": 0,
+      "harvestMoisture": 13,
       "buyerId": "",
       "templateId": "",
       "auxPayments": [
@@ -6134,7 +6146,7 @@
       ],
       "seed": {
         "variety": "16Z25E",
-        "population": 135000
+        "population": 140000
       },
       "machinery": [
         {
@@ -6158,13 +6170,8 @@
           "passes": 0.2
         },
         {
-          "id": "mach_1834",
-          "implementName": "Weed Zapper",
-          "passes": 2
-        },
-        {
-          "id": "mach_1835",
-          "implementName": "Hooded Redball",
+          "id": "mach_mmbkokba_231w",
+          "implementName": "Spinner",
           "passes": 1
         }
       ],
@@ -6175,9 +6182,9 @@
       "govPaymentLabel": "Delong GCS",
       "govPaymentsPerAcre": 70,
       "tariffsPerAcre": 0,
-      "harvestMoisture": 0,
+      "harvestMoisture": 13,
       "buyerId": "",
-      "templateId": "",
+      "templateId": "prog_mmbkoz1m_6zyv",
       "auxPayments": [
         {
           "label": "Delong GCS",
@@ -6193,146 +6200,137 @@
       "enterpriseId": "ent_1272",
       "name": "Bakke",
       "systemCode": "CON",
-      "crop": "",
+      "crop": "RR Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 26.9,
       "rentPerAcre": 200.74,
       "inputs": [
         {
-          "id": "inp_1853",
+          "id": "inp_mmbkp7ig_okv4",
           "productName": "Application - Liquid Pre",
           "quantity": 1,
           "season": "Spring"
         },
         {
-          "id": "inp_1854",
+          "id": "inp_mmbkp7ig_j8i0",
           "productName": "Mauler (2x2.5 Gal)",
           "quantity": 6,
           "season": "Spring"
         },
         {
-          "id": "inp_1855",
+          "id": "inp_mmbkp7ig_irqs",
           "productName": "Sonic (2x7.5 Lb)",
           "quantity": 0.31,
           "season": "Spring"
         },
         {
-          "id": "inp_1856",
+          "id": "inp_mmbkp7ig_pb9d",
           "productName": "Application - Post",
           "quantity": 1,
           "season": "Spring"
         },
         {
-          "id": "inp_1857",
-          "productName": "Volunteer",
-          "quantity": 8,
+          "id": "inp_mmbkp7ig_bk8h",
+          "productName": "PowerMax",
+          "quantity": 22,
           "season": "Spring"
         },
         {
-          "id": "inp_1858",
-          "productName": "Forsyte 1.88 SL (2x2.5 Gal)",
-          "quantity": 1.25,
+          "id": "inp_mmbkp7ig_z9o6",
+          "productName": "Enlist",
+          "quantity": 1.4,
           "season": "Spring"
         },
         {
-          "id": "inp_1859",
-          "productName": "Zidua sc",
-          "quantity": 2,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_1860",
+          "id": "inp_mmbkp7ig_x2sj",
           "productName": "Crop Oil, Insource (2x2.5 Gal)",
-          "quantity": 1.27,
+          "quantity": 0.5,
           "season": "Spring"
         },
         {
-          "id": "inp_1861",
+          "id": "inp_mmbkp7ig_3srl",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
           "season": "Spring"
         },
         {
-          "id": "inp_1862",
+          "id": "inp_mmbkp7ig_1nrc",
           "productName": "Ppst Fst/Ist (140K) Seed Treatment",
-          "quantity": 0.96,
+          "quantity": 1,
           "season": "Spring"
         },
         {
-          "id": "inp_1863",
+          "id": "inp_mmbkp7ig_vzhf",
           "productName": "Ppst 120 (140K) Inoculant",
-          "quantity": 0.96,
+          "quantity": 1,
           "season": "Spring"
         },
         {
-          "id": "inp_1864",
+          "id": "inp_mmbkp7ig_uh0j",
           "productName": "Seed Treatment Application (Unit)",
-          "quantity": 0.96,
+          "quantity": 1,
           "season": "Spring"
         },
         {
-          "id": "inp_1865",
-          "productName": "PowerMax",
-          "quantity": 20,
-          "season": "Fall"
-        },
-        {
-          "id": "inp_1866",
+          "id": "inp_mmbkp7ig_r5v6",
           "productName": "Wi Tonnage Tax",
           "quantity": 0.1,
           "season": "Fall"
         },
         {
-          "id": "inp_1867",
+          "id": "inp_mmbkp7ig_pm2a",
           "productName": "0-0-60 Potash",
           "quantity": 128.3333333,
           "season": "Fall"
         },
         {
-          "id": "inp_1868",
+          "id": "inp_mmbkp7ig_b7ir",
           "productName": "0-46-0 Triple Super 15C",
           "quantity": 95.65217391,
           "season": "Fall"
         }
       ],
-      "seed": null,
+      "seed": {
+        "variety": "16Z25E",
+        "population": 135000
+      },
       "machinery": [
         {
-          "id": "mach_1869",
+          "id": "mach_mmbkp7ig_vu8i",
           "implementName": "Soil Finisher",
           "passes": 2
         },
         {
-          "id": "mach_1870",
+          "id": "mach_mmbkp7ig_5asu",
           "implementName": "Planter",
           "passes": 1
         },
         {
-          "id": "mach_1871",
+          "id": "mach_mmbkp7ig_1xyd",
           "implementName": "Combine + Buggy",
           "passes": 1
         },
         {
-          "id": "mach_1872",
+          "id": "mach_mmbkp7ig_ad85",
           "implementName": "Trucking",
           "passes": 0.2
         },
         {
-          "id": "mach_1873",
-          "implementName": "Weed Zapper",
-          "passes": 2
+          "id": "mach_mmbkp7ig_5kho",
+          "implementName": "Spinner",
+          "passes": 1
         }
       ],
       "yieldPerAcre": 70,
       "yieldUnit": "Bu",
-      "cropInsurancePerAcre": 25,
+      "cropInsurancePerAcre": 40,
       "insuranceIncomePerAcre": 0,
       "govPaymentLabel": "Delong GCS",
       "govPaymentsPerAcre": 70,
       "tariffsPerAcre": 0,
       "harvestMoisture": 0,
       "buyerId": "",
-      "templateId": "",
+      "templateId": "prog_mmbkoz1m_6zyv",
       "auxPayments": [
         {
           "label": "Delong GCS",
@@ -6351,7 +6349,7 @@
       "crop": "Peas",
       "cropType": "DBL CROP",
       "acres": 111,
-      "rentPerAcre": 138.265,
+      "rentPerAcre": 140.91,
       "inputs": [
         {
           "id": "inp_1886",
@@ -6463,7 +6461,7 @@
       "crop": "Snap Beans",
       "cropType": "DBL CROP",
       "acres": 111,
-      "rentPerAcre": 138.265,
+      "rentPerAcre": 140.91,
       "inputs": [
         {
           "id": "inp_1916",
@@ -6807,10 +6805,7 @@
           "season": "Spring"
         }
       ],
-      "seed": {
-        "variety": "CANNING",
-        "population": 200000
-      },
+      "seed": null,
       "machinery": [
         {
           "id": "mach_1988",
@@ -7113,317 +7108,6 @@
       "buyerId": "",
       "templateId": "",
       "auxPayments": [],
-      "plantedAcres": 0,
-      "registryFieldName": null,
-      "splitGroupId": null
-    },
-    {
-      "id": "fld_mmb0c4g0_aqjn",
-      "enterpriseId": "ent_2056",
-      "name": "Simpsons Seed Corn",
-      "systemCode": "ORG",
-      "crop": "ORG Seed Corn",
-      "cropType": "SINGLE CROP",
-      "acres": 82.5,
-      "plantedAcres": 0,
-      "rentPerAcre": 250,
-      "inputs": [
-        {
-          "id": "inp_2067",
-          "productName": "Chicken Litter",
-          "quantity": 2,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2068",
-          "productName": "S04 30%",
-          "quantity": 150,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2069",
-          "productName": "Tulls manure",
-          "quantity": 25,
-          "season": "Fall"
-        },
-        {
-          "id": "inp_2070",
-          "productName": "savy crew",
-          "quantity": 1.5,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2071",
-          "productName": "BioActive Liquilife +",
-          "quantity": 2.5,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2072",
-          "productName": "TeraFed",
-          "quantity": 2.5,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2073",
-          "productName": "BioRepel",
-          "quantity": 2,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2074",
-          "productName": "Eco Tec",
-          "quantity": 6,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2075",
-          "productName": "SPE-120 dry",
-          "quantity": 1,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2076",
-          "productName": "Red Clover",
-          "quantity": 10,
-          "season": "Fall"
-        }
-      ],
-      "seed": {
-        "variety": "CANNING",
-        "population": 36000
-      },
-      "machinery": [
-        {
-          "id": "mach_2077",
-          "implementName": "Disk",
-          "passes": 2
-        },
-        {
-          "id": "mach_2078",
-          "implementName": "Soil Finisher",
-          "passes": 2
-        },
-        {
-          "id": "mach_2079",
-          "implementName": "Planter",
-          "passes": 1
-        },
-        {
-          "id": "mach_2080",
-          "implementName": "Tine weed 60",
-          "passes": 2
-        },
-        {
-          "id": "mach_2081",
-          "implementName": "Spinner",
-          "passes": 1
-        },
-        {
-          "id": "mach_2082",
-          "implementName": "Cultivator 12",
-          "passes": 3
-        },
-        {
-          "id": "mach_2083",
-          "implementName": "detassle cut",
-          "passes": 1
-        },
-        {
-          "id": "mach_2084",
-          "implementName": "detassle pull",
-          "passes": 1
-        },
-        {
-          "id": "mach_2085",
-          "implementName": "Chisle Plow",
-          "passes": 1
-        },
-        {
-          "id": "mach_2086",
-          "implementName": "Ear Picker",
-          "passes": 1
-        }
-      ],
-      "yieldPerAcre": 40,
-      "yieldUnit": "Bu",
-      "cropInsurancePerAcre": 0,
-      "insuranceIncomePerAcre": 0,
-      "auxPayments": [],
-      "harvestMoisture": 0,
-      "buyerId": "",
-      "registryFieldName": "Simpsons seed",
-      "splitGroupId": "sg_mmb0c4g0_jwwx",
-      "templateId": ""
-    },
-    {
-      "id": "fld_mmb0c4g0_bz66",
-      "enterpriseId": "ent_2185",
-      "name": "Simpsons Soybeans",
-      "systemCode": "ORG",
-      "crop": "GA ORG SEED BEANS",
-      "cropType": "SINGLE CROP",
-      "acres": 82.5,
-      "plantedAcres": 0,
-      "rentPerAcre": 250,
-      "inputs": [],
-      "seed": null,
-      "machinery": [],
-      "yieldPerAcre": 40,
-      "yieldUnit": "Bu",
-      "cropInsurancePerAcre": 0,
-      "insuranceIncomePerAcre": 0,
-      "auxPayments": [],
-      "harvestMoisture": 13,
-      "buyerId": "",
-      "registryFieldName": "Simpsons seed",
-      "splitGroupId": "sg_mmb0c4g0_jwwx",
-      "templateId": ""
-    },
-    {
-      "id": "fld_2119",
-      "enterpriseId": "ent_2056",
-      "name": "Kopp East",
-      "systemCode": "ORG IRR",
-      "crop": "ORG Blue Corn",
-      "cropType": "SINGLE CROP",
-      "acres": 218,
-      "rentPerAcre": 270.15,
-      "inputs": [
-        {
-          "id": "inp_2099",
-          "productName": "Chicken Litter",
-          "quantity": 2,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2100",
-          "productName": "SPE-120 dry",
-          "quantity": 1,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2101",
-          "productName": "S04 30%",
-          "quantity": 150,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2102",
-          "productName": "Tulls manure",
-          "quantity": 25,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2103",
-          "productName": "BioActive Liquilife +",
-          "quantity": 2.5,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2104",
-          "productName": "TeraFed",
-          "quantity": 2.5,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2105",
-          "productName": "BioRepel",
-          "quantity": 2,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2106",
-          "productName": "Eco Tec",
-          "quantity": 6,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2107",
-          "productName": "SPE-120 dry",
-          "quantity": 1,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2108",
-          "productName": "Acomplish Max",
-          "quantity": 25,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2109",
-          "productName": "Red Clover",
-          "quantity": 10,
-          "season": "Fall"
-        }
-      ],
-      "seed": {
-        "variety": "T1081J",
-        "population": 34000
-      },
-      "machinery": [
-        {
-          "id": "mach_2110",
-          "implementName": "Disk",
-          "passes": 2
-        },
-        {
-          "id": "mach_2111",
-          "implementName": "Soil Finisher",
-          "passes": 2
-        },
-        {
-          "id": "mach_2112",
-          "implementName": "Planter",
-          "passes": 1
-        },
-        {
-          "id": "mach_2113",
-          "implementName": "Tine weed 60",
-          "passes": 2
-        },
-        {
-          "id": "mach_2114",
-          "implementName": "Spinner",
-          "passes": 1
-        },
-        {
-          "id": "mach_2115",
-          "implementName": "Cultivator 12",
-          "passes": 3
-        },
-        {
-          "id": "mach_2116",
-          "implementName": "Combine + Buggy",
-          "passes": 1
-        },
-        {
-          "id": "mach_2117",
-          "implementName": "Trucking",
-          "passes": 1
-        },
-        {
-          "id": "mach_2118",
-          "implementName": "Chisle Plow",
-          "passes": 1
-        }
-      ],
-      "yieldPerAcre": 140,
-      "yieldUnit": "Bu",
-      "cropInsurancePerAcre": 25,
-      "insuranceIncomePerAcre": 0,
-      "govPaymentLabel": "Delong GCS",
-      "govPaymentsPerAcre": 70,
-      "tariffsPerAcre": 0,
-      "harvestMoisture": 0,
-      "buyerId": "",
-      "templateId": "",
-      "auxPayments": [
-        {
-          "label": "Delong GCS",
-          "perAcre": 70
-        }
-      ],
       "plantedAcres": 0,
       "registryFieldName": null,
       "splitGroupId": null
@@ -7784,7 +7468,7 @@
       "crop": "ORG Wheat",
       "cropType": "SINGLE CROP",
       "acres": 14,
-      "rentPerAcre": 137.43,
+      "rentPerAcre": 0.07,
       "inputs": [
         {
           "id": "inp_2175",
@@ -7868,7 +7552,7 @@
       "crop": "ORG Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 320,
-      "rentPerAcre": 276.53,
+      "rentPerAcre": 273.42,
       "inputs": [
         {
           "id": "inp_2190",
@@ -7973,13 +7657,13 @@
     },
     {
       "id": "fld_2223",
-      "enterpriseId": "ent_2185",
+      "enterpriseId": "ent_2056",
       "name": "Omni GRASSY KNOLL",
       "systemCode": "ORG IRR",
-      "crop": "ORG Natto Beans",
+      "crop": "ORG Blue Corn",
       "cropType": "SINGLE CROP",
-      "acres": 120,
-      "rentPerAcre": 276.53,
+      "acres": 90,
+      "rentPerAcre": 273.42,
       "inputs": [
         {
           "id": "inp_2209",
@@ -8004,11 +7688,17 @@
           "productName": "TeraFed",
           "quantity": 2.5,
           "season": "Spring"
+        },
+        {
+          "id": "inp_mmkubtho_c8n3",
+          "productName": "",
+          "quantity": 2.6,
+          "season": "Spring"
         }
       ],
       "seed": {
-        "variety": "PS151",
-        "population": 190000
+        "variety": "T1081J",
+        "population": 32000
       },
       "machinery": [
         {
@@ -8062,7 +7752,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 38,
+      "yieldPerAcre": 120,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
@@ -8082,7 +7772,7 @@
       "enterpriseId": "ent_2185",
       "name": "Goat pasture",
       "systemCode": "ORG",
-      "crop": "GA ORG SEED BEANS",
+      "crop": "ORG Natto Beans",
       "cropType": "SINGLE CROP",
       "acres": 104,
       "rentPerAcre": 270.79,
@@ -8119,8 +7809,8 @@
         }
       ],
       "seed": {
-        "variety": "CANNING",
-        "population": 180000
+        "variety": "PS151",
+        "population": 200000
       },
       "machinery": [
         {
@@ -8174,14 +7864,14 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 45,
+      "yieldPerAcre": 40,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 36,
       "insuranceIncomePerAcre": 0,
       "govPaymentLabel": "GOVT PMT / AC",
       "govPaymentsPerAcre": 0,
       "tariffsPerAcre": 0,
-      "harvestMoisture": 0,
+      "harvestMoisture": 13,
       "buyerId": "",
       "templateId": "",
       "auxPayments": [],
@@ -8190,13 +7880,14 @@
       "splitGroupId": null
     },
     {
-      "id": "fld_2263",
-      "enterpriseId": "ent_2185",
-      "name": "Kopp west",
+      "id": "fld_mmbjkxgs_ay6i",
+      "enterpriseId": "ent_2056",
+      "name": "Kopp Seed Corn",
       "systemCode": "ORG",
-      "crop": "ORG Soybeans",
+      "crop": "ORG Seed Corn",
       "cropType": "SINGLE CROP",
-      "acres": 218,
+      "acres": 90,
+      "plantedAcres": 0,
       "rentPerAcre": 270.15,
       "inputs": [
         {
@@ -8273,34 +7964,50 @@
           "passes": 2
         }
       ],
+      "yieldPerAcre": 40,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 36,
+      "insuranceIncomePerAcre": 0,
+      "auxPayments": [],
+      "harvestMoisture": 15.5,
+      "buyerId": "",
+      "registryFieldName": "Kopp west",
+      "splitGroupId": "sg_mmbjkxgs_cwup",
+      "templateId": ""
+    },
+    {
+      "id": "fld_mmbjkxgs_mp87",
+      "enterpriseId": "ent_2185",
+      "name": "Kopp Soybeans",
+      "systemCode": "ORG",
+      "crop": "ORG Soybeans",
+      "cropType": "SINGLE CROP",
+      "acres": 128,
+      "plantedAcres": 0,
+      "rentPerAcre": 270.15,
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
       "yieldPerAcre": 45,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 36,
       "insuranceIncomePerAcre": 0,
-      "govPaymentLabel": "Delong GCS",
-      "govPaymentsPerAcre": 70,
-      "tariffsPerAcre": 0,
+      "auxPayments": [],
       "harvestMoisture": 0,
       "buyerId": "",
-      "templateId": "",
-      "auxPayments": [
-        {
-          "label": "Delong GCS",
-          "perAcre": 70
-        }
-      ],
-      "plantedAcres": 0,
-      "registryFieldName": null,
-      "splitGroupId": null
+      "registryFieldName": "Kopp west",
+      "splitGroupId": "sg_mmbjkxgs_cwup",
+      "templateId": ""
     },
     {
-      "id": "fld_2281",
+      "id": "fld_mmbjggqp_w67w",
       "enterpriseId": "ent_2185",
-      "name": "Simpsons",
+      "name": "Simpsons Soybeans",
       "systemCode": "ORG",
       "crop": "GA ORG SEED BEANS",
       "cropType": "SINGLE CROP",
-      "acres": 209.4,
+      "acres": 44.4,
+      "plantedAcres": 44.4,
       "rentPerAcre": 250.72,
       "inputs": [
         {
@@ -8379,20 +8086,166 @@
           "passes": 3
         }
       ],
-      "yieldPerAcre": 50,
+      "yieldPerAcre": 35,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 36,
       "insuranceIncomePerAcre": 0,
-      "govPaymentLabel": "Delong CSC (CC,NT,590)",
-      "govPaymentsPerAcre": 0,
-      "tariffsPerAcre": 0,
+      "auxPayments": [],
       "harvestMoisture": 0,
       "buyerId": "",
-      "templateId": "",
-      "auxPayments": [],
-      "plantedAcres": 0,
-      "registryFieldName": null,
-      "splitGroupId": null
+      "registryFieldName": "Simpsons",
+      "splitGroupId": "sg_mmbjggqp_nxxi",
+      "templateId": ""
+    },
+    {
+      "id": "fld_mmbjggqq_18y2",
+      "enterpriseId": "ent_2056",
+      "name": "Simpsons Seed Corn",
+      "systemCode": "ORG IRR",
+      "crop": "ORG Seed Corn",
+      "cropType": "SINGLE CROP",
+      "acres": 165,
+      "plantedAcres": 165,
+      "rentPerAcre": 250.72,
+      "inputs": [
+        {
+          "id": "inp_mmbjywmf_c8bm",
+          "productName": "Chicken Litter",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_lhcz",
+          "productName": "SPE-120 dry",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_dfnr",
+          "productName": "S04 30%",
+          "quantity": 150,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_34d3",
+          "productName": "Tulls manure",
+          "quantity": 25,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_z1m6",
+          "productName": "BioActive Liquilife +",
+          "quantity": 2.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_goyh",
+          "productName": "TeraFed",
+          "quantity": 2.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_ciel",
+          "productName": "BioRepel",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_9m5w",
+          "productName": "Eco Tec",
+          "quantity": 6,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_fkar",
+          "productName": "SPE-120 dry",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_vznh",
+          "productName": "Acomplish Max",
+          "quantity": 25,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_0pix",
+          "productName": "Red Clover",
+          "quantity": 10,
+          "season": "Fall"
+        }
+      ],
+      "seed": null,
+      "machinery": [
+        {
+          "id": "mach_mmbjywmg_vmlz",
+          "implementName": "Disk",
+          "passes": 2
+        },
+        {
+          "id": "mach_mmbjywmg_a8us",
+          "implementName": "Soil Finisher",
+          "passes": 2
+        },
+        {
+          "id": "mach_mmbjywmg_pbnj",
+          "implementName": "Planter",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_tdom",
+          "implementName": "Tine weed 60",
+          "passes": 2
+        },
+        {
+          "id": "mach_mmbjywmg_o3c8",
+          "implementName": "Spinner",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_o9uu",
+          "implementName": "Cultivator 12",
+          "passes": 3
+        },
+        {
+          "id": "mach_mmbjywmg_g63g",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_c3nw",
+          "implementName": "Trucking",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_mafl",
+          "implementName": "Chisle Plow",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 40,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "insuranceIncomePerAcre": 0,
+      "auxPayments": [
+        {
+          "label": "Harvest charge",
+          "perAcre": 75
+        },
+        {
+          "label": "planter charge",
+          "perAcre": 15
+        },
+        {
+          "label": "cut/pull",
+          "perAcre": 35
+        }
+      ],
+      "harvestMoisture": 15.5,
+      "buyerId": "",
+      "registryFieldName": "Simpsons",
+      "splitGroupId": "sg_mmbjggqp_nxxi",
+      "templateId": "prog_mmbk0539_dkql"
     },
     {
       "id": "fld_mm05o9z2_6q3z",
@@ -8460,7 +8313,7 @@
     {
       "id": "prod_0001",
       "name": "0-0-5-10Ca-2.5Mg-12.4S",
-      "unitBilledPrice": 1592,
+      "unitBilledPrice": 2000,
       "conversionRate": 2000,
       "increasePercent": 1,
       "unit": "Lbs",
@@ -8468,7 +8321,10 @@
       "p205": 0,
       "k20": 0.5,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0002",
@@ -8481,7 +8337,10 @@
       "p205": 0,
       "k20": 0.5,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0003",
@@ -8494,7 +8353,10 @@
       "p205": 0,
       "k20": 0.6,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": true,
+      "organicGround": true
     },
     {
       "id": "prod_0004",
@@ -8507,7 +8369,10 @@
       "p205": 0,
       "k20": 0.6,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0005",
@@ -8520,7 +8385,10 @@
       "p205": 0.01,
       "k20": 0.25,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0006",
@@ -8533,7 +8401,10 @@
       "p205": 0.2,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": true,
+      "organicGround": true
     },
     {
       "id": "prod_0007",
@@ -8546,7 +8417,10 @@
       "p205": 0.46,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0008",
@@ -8559,7 +8433,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0009",
@@ -8572,7 +8450,10 @@
       "p205": 0.34,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0010",
@@ -8585,7 +8466,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0011",
@@ -8598,7 +8482,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0012",
@@ -8611,7 +8498,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0013",
@@ -8624,7 +8514,10 @@
       "p205": 0.46,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0014",
@@ -8637,7 +8530,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0015",
@@ -8649,8 +8545,11 @@
       "applicationPrice": 1.794000003,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Fertilizer"
+      "supplierId": "sup_mma0uqas_i9ue",
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0016",
@@ -8663,7 +8562,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "sup_mma0uqas_i9ue",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0017",
@@ -8676,7 +8578,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0018",
@@ -8689,7 +8595,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0019",
@@ -8702,7 +8611,11 @@
       "p205": 0,
       "k20": 0.08,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0020",
@@ -8715,7 +8628,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0021",
@@ -8728,7 +8645,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0022",
@@ -8741,7 +8662,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0023",
@@ -8754,7 +8679,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0024",
@@ -8767,7 +8696,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0025",
@@ -8780,7 +8713,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0026",
@@ -8793,7 +8730,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0027",
@@ -8806,7 +8747,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0028",
@@ -8819,7 +8763,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0029",
@@ -8831,8 +8778,12 @@
       "applicationPrice": 6.75,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "supplierId": "sup_mmc6qn29_9569",
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0030",
@@ -8844,8 +8795,12 @@
       "applicationPrice": 8.6,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "supplierId": "sup_mmc6qn29_9569",
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0031",
@@ -8857,8 +8812,12 @@
       "applicationPrice": 8.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "supplierId": "sup_mmc6qn29_9569",
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0032",
@@ -8870,8 +8829,12 @@
       "applicationPrice": 10.5,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "supplierId": "sup_mmc6qn29_9569",
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0033",
@@ -8883,8 +8846,12 @@
       "applicationPrice": 5.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "supplierId": "sup_mmc6qn29_9569",
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0034",
@@ -8897,7 +8864,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0035",
@@ -8909,8 +8879,12 @@
       "applicationPrice": 2.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "supplierId": "sup_mmc6qn29_9569",
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0036",
@@ -8922,8 +8896,12 @@
       "applicationPrice": 7.25,
       "p205": 0,
       "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "supplierId": "sup_mmc6qn29_9569",
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0037",
@@ -8936,7 +8914,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0038",
@@ -8949,7 +8930,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0039",
@@ -8962,7 +8946,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0040",
@@ -8975,7 +8962,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0041",
@@ -8988,7 +8979,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0042",
@@ -9001,7 +8996,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0043",
@@ -9014,7 +9013,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0044",
@@ -9027,7 +9030,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0045",
@@ -9040,7 +9047,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0046",
@@ -9053,7 +9064,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0047",
@@ -9066,7 +9081,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0048",
@@ -9079,7 +9098,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0049",
@@ -9092,7 +9115,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0050",
@@ -9105,7 +9132,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Quart",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0051",
@@ -9118,7 +9149,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0052",
@@ -9131,7 +9166,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0053",
@@ -9144,7 +9183,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0054",
@@ -9157,7 +9200,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0055",
@@ -9170,7 +9217,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0056",
@@ -9183,7 +9234,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0057",
@@ -9196,7 +9251,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0058",
@@ -9209,7 +9268,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0059",
@@ -9222,7 +9285,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": true,
+      "organicGround": true
     },
     {
       "id": "prod_0060",
@@ -9235,7 +9302,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0061",
@@ -9248,7 +9319,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0062",
@@ -9261,20 +9336,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
-    },
-    {
-      "id": "prod_0063",
-      "name": "Citric Acid",
-      "unitBilledPrice": 0,
-      "conversionRate": 1,
-      "increasePercent": 1,
-      "unit": "Gal",
-      "applicationPrice": 0,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0064",
@@ -9287,7 +9353,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0065",
@@ -9300,7 +9370,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0066",
@@ -9313,7 +9387,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0067",
@@ -9326,7 +9403,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0068",
@@ -9339,7 +9420,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0069",
@@ -9352,7 +9437,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0070",
@@ -9365,7 +9454,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0071",
@@ -9378,7 +9470,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0072",
@@ -9391,7 +9486,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0073",
@@ -9404,33 +9503,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
-    },
-    {
-      "id": "prod_0074",
-      "name": "CX Pro",
-      "unitBilledPrice": 7.31,
-      "conversionRate": 1,
-      "increasePercent": 1,
-      "unit": "Gal",
-      "applicationPrice": 7.31,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Other"
-    },
-    {
-      "id": "prod_0075",
-      "name": "CX-1",
-      "unitBilledPrice": 3.41,
-      "conversionRate": 1,
-      "increasePercent": 1,
-      "unit": "Gal",
-      "applicationPrice": 3.41,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0076",
@@ -9443,7 +9519,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0077",
@@ -9456,7 +9535,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0078",
@@ -9469,7 +9551,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0079",
@@ -9482,7 +9568,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0080",
@@ -9495,7 +9585,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0081",
@@ -9508,7 +9602,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0082",
@@ -9521,7 +9618,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0083",
@@ -9534,7 +9634,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0084",
@@ -9547,7 +9650,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0085",
@@ -9560,7 +9667,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0086",
@@ -9573,7 +9684,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0087",
@@ -9586,7 +9701,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0088",
@@ -9599,7 +9718,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0089",
@@ -9612,7 +9735,10 @@
       "p205": 0.04,
       "k20": 0.04,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0090",
@@ -9625,7 +9751,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0091",
@@ -9638,7 +9768,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0092",
@@ -9651,7 +9785,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "UNIT",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0093",
@@ -9664,7 +9802,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0094",
@@ -9677,7 +9819,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0095",
@@ -9690,7 +9836,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0096",
@@ -9703,7 +9853,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0097",
@@ -9716,7 +9870,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0098",
@@ -9729,7 +9887,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0099",
@@ -9742,7 +9904,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0100",
@@ -9755,7 +9920,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0101",
@@ -9768,7 +9937,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0102",
@@ -9781,20 +9954,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
-    },
-    {
-      "id": "prod_0103",
-      "name": "Hay Program",
-      "unitBilledPrice": 363.08,
-      "conversionRate": 1,
-      "increasePercent": 1,
-      "unit": "Tons",
-      "applicationPrice": 363.08,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0104",
@@ -9807,7 +9971,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0105",
@@ -9820,7 +9988,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0106",
@@ -9833,7 +10005,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0107",
@@ -9846,7 +10022,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0108",
@@ -9859,7 +10039,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Each",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0109",
@@ -9872,7 +10055,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0110",
@@ -9885,7 +10072,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0111",
@@ -9898,7 +10088,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0112",
@@ -9911,7 +10104,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Each",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0113",
@@ -9924,20 +10121,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
-    },
-    {
-      "id": "prod_0114",
-      "name": "Landis Ag Custom application",
-      "unitBilledPrice": 6,
-      "conversionRate": 1,
-      "increasePercent": 1,
-      "unit": "Acre",
-      "applicationPrice": 6,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "category": "Seed",
+      "purchaseUnit": "Bu",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0115",
@@ -9950,7 +10137,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0116",
@@ -9963,7 +10154,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0117",
@@ -9976,7 +10171,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0118",
@@ -9989,7 +10188,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0119",
@@ -10002,7 +10205,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Quart",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0120",
@@ -10015,7 +10222,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0121",
@@ -10028,7 +10239,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0122",
@@ -10041,7 +10255,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0123",
@@ -10054,7 +10272,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0124",
@@ -10067,7 +10288,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0125",
@@ -10080,7 +10304,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Each",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0126",
@@ -10093,7 +10321,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0127",
@@ -10106,7 +10338,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0128",
@@ -10119,7 +10355,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": true,
+      "organicGround": true
     },
     {
       "id": "prod_0129",
@@ -10132,7 +10372,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0130",
@@ -10145,7 +10389,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0131",
@@ -10158,7 +10406,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0132",
@@ -10171,7 +10423,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0133",
@@ -10184,7 +10440,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0134",
@@ -10197,7 +10457,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0135",
@@ -10210,7 +10474,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0136",
@@ -10223,7 +10490,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0137",
@@ -10236,7 +10506,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0138",
@@ -10249,7 +10523,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0139",
@@ -10262,7 +10540,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0140",
@@ -10275,7 +10557,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0141",
@@ -10288,7 +10574,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0142",
@@ -10301,7 +10591,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0143",
@@ -10314,7 +10607,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0144",
@@ -10327,7 +10624,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0145",
@@ -10340,7 +10641,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0146",
@@ -10353,7 +10658,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Pack",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0147",
@@ -10366,7 +10675,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Pack",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0148",
@@ -10379,20 +10691,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
-    },
-    {
-      "id": "prod_0149",
-      "name": "Prepay All Products",
-      "unitBilledPrice": 0,
-      "conversionRate": 1,
-      "increasePercent": 1,
-      "unit": "Tons",
-      "applicationPrice": 0,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0150",
@@ -10405,7 +10707,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0151",
@@ -10418,7 +10723,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0152",
@@ -10431,7 +10739,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0153",
@@ -10444,7 +10755,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0154",
@@ -10457,7 +10772,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0155",
@@ -10470,7 +10788,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0156",
@@ -10483,7 +10805,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0157",
@@ -10496,7 +10821,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": true,
+      "organicGround": true
     },
     {
       "id": "prod_0158",
@@ -10509,7 +10838,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0159",
@@ -10522,7 +10855,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0160",
@@ -10535,7 +10872,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0161",
@@ -10548,7 +10889,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Bu",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0162",
@@ -10561,7 +10905,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0163",
@@ -10574,7 +10922,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Acre",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0164",
@@ -10587,7 +10939,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0165",
@@ -10600,7 +10956,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0166",
@@ -10613,7 +10972,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "UNIT",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0167",
@@ -10626,11 +10988,15 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0168",
-      "name": "SideDress N 46-0-0",
+      "name": "46-0-0 SideDress N ",
       "unitBilledPrice": 425,
       "conversionRate": 2000,
       "increasePercent": 1,
@@ -10639,7 +11005,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0169",
@@ -10652,7 +11021,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0170",
@@ -10665,7 +11037,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0171",
@@ -10678,7 +11054,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0172",
@@ -10691,7 +11071,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0173",
@@ -10704,7 +11088,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0174",
@@ -10717,7 +11105,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0175",
@@ -10730,7 +11122,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0176",
@@ -10743,20 +11139,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
-    },
-    {
-      "id": "prod_0177",
-      "name": "test",
-      "unitBilledPrice": 320,
-      "conversionRate": 128,
-      "increasePercent": 1,
-      "unit": "OZ",
-      "applicationPrice": 2.5,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0178",
@@ -10769,7 +11156,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0179",
@@ -10782,7 +11173,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0180",
@@ -10795,7 +11189,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0181",
@@ -10808,7 +11206,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0182",
@@ -10821,7 +11223,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0183",
@@ -10834,7 +11240,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0184",
@@ -10847,7 +11257,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0185",
@@ -10860,7 +11274,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0186",
@@ -10873,7 +11291,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Chemical"
+      "category": "Chemical",
+      "purchaseUnit": "Ton",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0187",
@@ -10886,7 +11307,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0188",
@@ -10899,7 +11324,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0189",
@@ -10912,7 +11341,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0190",
@@ -10925,7 +11358,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0191",
@@ -10938,7 +11375,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0192",
@@ -10951,7 +11392,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0193",
@@ -10964,7 +11409,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0194",
@@ -10977,7 +11426,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0195",
@@ -10990,7 +11443,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0196",
@@ -11003,7 +11460,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Other",
+      "_recatV2": true,
+      "purchaseUnit": "Lbs",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0197",
@@ -11016,7 +11477,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0198",
@@ -11029,7 +11494,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0199",
@@ -11042,7 +11511,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0200",
@@ -11055,7 +11528,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0201",
@@ -11068,7 +11545,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Each",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0202",
@@ -11081,7 +11561,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "OZ",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0203",
@@ -11094,7 +11578,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0204",
@@ -11107,7 +11595,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "qt",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0205",
@@ -11120,7 +11611,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0206",
@@ -11133,7 +11628,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Fertilizer"
+      "category": "Fertilizer",
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0207",
@@ -11146,7 +11644,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Biological",
+      "_recatV2": true,
+      "purchaseUnit": "Lb",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0208",
@@ -11159,7 +11661,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Tons",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0209",
@@ -11172,7 +11678,10 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Seed"
+      "category": "Seed",
+      "purchaseUnit": "Pack",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0210",
@@ -11185,7 +11694,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0211",
@@ -11198,7 +11711,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Chemical",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     },
     {
       "id": "prod_0212",
@@ -11211,7 +11728,11 @@
       "p205": 0,
       "k20": 0,
       "supplierId": "",
-      "category": "Other"
+      "category": "Fertilizer",
+      "_recatV2": true,
+      "purchaseUnit": "Gal",
+      "organic": false,
+      "organicGround": false
     }
   ],
   "implements": [
@@ -11684,6 +12205,16 @@
       "customHireRate": 0,
       "defaultMode": "owned",
       "laborHoursPerAcre": 0
+    },
+    {
+      "id": "impl_mmbjrykb_4kxk",
+      "name": "Hand weeding pass",
+      "costPerAcre": 100,
+      "fuelGalPerAcre": 0,
+      "laborHoursPerAcre": 0,
+      "customHireRate": 0,
+      "defaultMode": "owned",
+      "unit": "/Ac"
     }
   ],
   "cropPricing": [
@@ -12203,100 +12734,100 @@
       "id": "lo_0311",
       "systemCode": "CON",
       "laborPerAcre": 17.5,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 170,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 50
     },
     {
       "id": "lo_0312",
       "systemCode": "ORG",
       "laborPerAcre": 27.5,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 180,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 60
     },
     {
       "id": "lo_0313",
       "systemCode": "CON IRR",
       "laborPerAcre": 22.5,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 170,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 50
     },
     {
       "id": "lo_0314",
       "systemCode": "ORG IRR",
       "laborPerAcre": 32.5,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 180,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 60
     },
     {
       "id": "lo_0315",
       "systemCode": "CANNING ORG",
       "laborPerAcre": 15,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 180,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 60
     },
     {
       "id": "lo_0316",
       "systemCode": "CANNING CON",
       "laborPerAcre": 10,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 180,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 60
     },
     {
       "id": "lo_0317",
       "systemCode": "CANNING ORG IRR",
       "laborPerAcre": 17.5,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 180,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 60
     },
     {
       "id": "lo_0318",
       "systemCode": "CANNING CON IRR",
       "laborPerAcre": 12.5,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 180,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 60
     },
     {
       "id": "lo_0319",
       "systemCode": "IRR HAY",
       "laborPerAcre": 10,
-      "overheadPerAcre": 150,
+      "overheadPerAcre": 180,
       "cropInsurance": 30,
       "propertyTax": 30,
       "management": 30,
       "utilities": 30,
-      "misc": 30
+      "misc": 60
     },
     {
       "id": "lo_0320",
@@ -12318,7 +12849,8 @@
       "variety": "SB151",
       "pricePerUnit": 15,
       "seedsPerUnit": 672000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qjvo_qggx",
+      "organicGround": false
     },
     {
       "id": "seed_0324",
@@ -12327,16 +12859,8 @@
       "variety": "T1081J",
       "pricePerUnit": 325,
       "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0325",
-      "crop": "CLOVER",
-      "brand": "KENNEL SEED",
-      "variety": "MAMMOTH",
-      "pricePerUnit": 0,
-      "seedsPerUnit": 0,
-      "supplierId": ""
+      "supplierId": "sup_mmc6ql2o_znpr",
+      "organicGround": false
     },
     {
       "id": "seed_0326",
@@ -12345,7 +12869,8 @@
       "variety": "DF 262",
       "pricePerUnit": 50,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0327",
@@ -12354,16 +12879,8 @@
       "variety": "DF 214",
       "pricePerUnit": 47.84,
       "seedsPerUnit": 140000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0329",
-      "crop": "Hairy_Vetch",
-      "brand": "Albert Lea",
-      "variety": "VNS vetch",
-      "pricePerUnit": 1.25,
-      "seedsPerUnit": 4413,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0331",
@@ -12372,7 +12889,8 @@
       "variety": "ProGas",
       "pricePerUnit": 175,
       "seedsPerUnit": 1000000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qmnv_eqcf",
+      "organicGround": false
     },
     {
       "id": "seed_0332",
@@ -12381,7 +12899,8 @@
       "variety": "Receptor",
       "pricePerUnit": 175,
       "seedsPerUnit": 750000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qmnv_eqcf",
+      "organicGround": false
     },
     {
       "id": "seed_0333",
@@ -12390,34 +12909,8 @@
       "variety": "Serafino",
       "pricePerUnit": 125,
       "seedsPerUnit": 750000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0337",
-      "crop": "hemp",
-      "brand": "NWG",
-      "variety": "Amplify",
-      "pricePerUnit": 250,
-      "seedsPerUnit": 1280000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0338",
-      "crop": "OATS",
-      "brand": "Great Harvest",
-      "variety": "55E4gh",
-      "pricePerUnit": 307.71,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0339",
-      "crop": "Rye",
-      "brand": "Albert Lea",
-      "variety": "Hazlett",
-      "pricePerUnit": 13,
-      "seedsPerUnit": 731400,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qmnv_eqcf",
+      "organicGround": false
     },
     {
       "id": "seed_0340",
@@ -12426,25 +12919,8 @@
       "variety": "SEED CORN",
       "pricePerUnit": 1e-8,
       "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0341",
-      "crop": "Sorghum",
-      "brand": "Pioneer",
-      "variety": "88p71",
-      "pricePerUnit": 170.82,
-      "seedsPerUnit": 820000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0342",
-      "crop": "Sorghum",
-      "brand": "Albert Lea Seed",
-      "variety": "10-60 TW",
-      "pricePerUnit": 165,
-      "seedsPerUnit": 820000,
-      "supplierId": ""
+      "supplierId": "",
+      "organicGround": false
     },
     {
       "id": "seed_0343",
@@ -12453,7 +12929,8 @@
       "variety": "16Z25E",
       "pricePerUnit": 55.76,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0344",
@@ -12462,7 +12939,8 @@
       "variety": "21A20",
       "pricePerUnit": 44.16,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0345",
@@ -12471,16 +12949,8 @@
       "variety": "26A20",
       "pricePerUnit": 48.91,
       "seedsPerUnit": 140000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0346",
-      "crop": "Soybeans",
-      "brand": "Legend seed",
-      "variety": "2580",
-      "pricePerUnit": 26,
-      "seedsPerUnit": 110000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0347",
@@ -12489,7 +12959,8 @@
       "variety": "P26Z86E",
       "pricePerUnit": 53.04,
       "seedsPerUnit": 140000,
-      "supplierId": "sup_mma12zm8_t4vm"
+      "supplierId": "sup_mma12zm8_t4vm",
+      "organicGround": false
     },
     {
       "id": "seed_0348",
@@ -12498,7 +12969,8 @@
       "variety": "VIKING 2155",
       "pricePerUnit": 51,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "",
+      "organicGround": false
     },
     {
       "id": "seed_0349",
@@ -12507,7 +12979,8 @@
       "variety": "PS151",
       "pricePerUnit": 39,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qlgz_wcld",
+      "organicGround": false
     },
     {
       "id": "seed_0350",
@@ -12516,25 +12989,8 @@
       "variety": "O.2418",
       "pricePerUnit": 52.25,
       "seedsPerUnit": 140000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0351",
-      "crop": "soybeans",
-      "brand": "Viking",
-      "variety": "Registered 2188",
-      "pricePerUnit": 25,
-      "seedsPerUnit": 140000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0352",
-      "crop": "soybeans",
-      "brand": "Legacy",
-      "variety": "LS155-21C",
-      "pricePerUnit": 51.6,
-      "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "",
+      "organicGround": false
     },
     {
       "id": "seed_0353",
@@ -12543,7 +12999,8 @@
       "variety": "SG 202OR",
       "pricePerUnit": 51,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "",
+      "organicGround": false
     },
     {
       "id": "seed_0354",
@@ -12552,7 +13009,8 @@
       "variety": "SG 155OR",
       "pricePerUnit": 51,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "",
+      "organicGround": false
     },
     {
       "id": "seed_0355",
@@ -12561,7 +13019,8 @@
       "variety": "SG 223OR",
       "pricePerUnit": 51,
       "seedsPerUnit": 140000,
-      "supplierId": ""
+      "supplierId": "",
+      "organicGround": false
     },
     {
       "id": "seed_0356",
@@ -12570,52 +13029,8 @@
       "variety": "P63HE920",
       "pricePerUnit": 224.11,
       "seedsPerUnit": 200000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0357",
-      "crop": "VNS RYE",
-      "brand": "",
-      "variety": "Cereal Rye",
-      "pricePerUnit": 0,
-      "seedsPerUnit": 200000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0358",
-      "crop": "Wheat",
-      "brand": "",
-      "variety": "sunburst",
-      "pricePerUnit": 16.85,
-      "seedsPerUnit": 625000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0359",
-      "crop": "Wheat",
-      "brand": "Limagrain",
-      "variety": "LCS 3334",
-      "pricePerUnit": 21,
-      "seedsPerUnit": 670000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0360",
-      "crop": "Wheat",
-      "brand": "Pioneer",
-      "variety": "25R34 N3431",
-      "pricePerUnit": 31,
-      "seedsPerUnit": 750000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0361",
-      "crop": "Wheat",
-      "brand": "Kennel Seed",
-      "variety": "KS- 1618",
-      "pricePerUnit": 16.35,
-      "seedsPerUnit": 750000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0362",
@@ -12624,7 +13039,8 @@
       "variety": "844",
       "pricePerUnit": 31,
       "seedsPerUnit": 750000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qjvo_qggx",
+      "organicGround": false
     },
     {
       "id": "seed_0363",
@@ -12633,16 +13049,8 @@
       "variety": "801",
       "pricePerUnit": 31,
       "seedsPerUnit": 750000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0364",
-      "crop": "wheat",
-      "brand": "Tracy",
-      "variety": "TW92-22",
-      "pricePerUnit": 28,
-      "seedsPerUnit": 681800,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qjvo_qggx",
+      "organicGround": false
     },
     {
       "id": "seed_0365",
@@ -12651,34 +13059,8 @@
       "variety": "1306W",
       "pricePerUnit": 207.4,
       "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0366",
-      "crop": "White_Corn",
-      "brand": "Pioneer",
-      "variety": "1306W untreated",
-      "pricePerUnit": 207.4,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0367",
-      "crop": "winter camelina",
-      "brand": "",
-      "variety": "joelle",
-      "pricePerUnit": 3.7,
-      "seedsPerUnit": 380000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0368",
-      "crop": "Yellow_Corn",
-      "brand": "viking",
-      "variety": "Viking 051-04GS",
-      "pricePerUnit": 250,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "",
+      "organicGround": false
     },
     {
       "id": "seed_0369",
@@ -12687,7 +13069,8 @@
       "variety": "P0157",
       "pricePerUnit": 175.5,
       "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0370",
@@ -12696,7 +13079,8 @@
       "variety": "P0075",
       "pricePerUnit": 201.5,
       "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0371",
@@ -12705,7 +13089,8 @@
       "variety": "P0720",
       "pricePerUnit": 211.2,
       "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0372",
@@ -12714,7 +13099,8 @@
       "variety": "P05081",
       "pricePerUnit": 217.8,
       "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0373",
@@ -12723,61 +13109,8 @@
       "variety": "P08527",
       "pricePerUnit": 208,
       "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0374",
-      "crop": "Yellow_Corn",
-      "brand": "viking",
-      "variety": "O46-02",
-      "pricePerUnit": 186,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0375",
-      "crop": "Yellow_Corn",
-      "brand": "viking",
-      "variety": "O.18-06UP",
-      "pricePerUnit": 219.88,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0376",
-      "crop": "Yellow_Corn",
-      "brand": "viking",
-      "variety": "55-02",
-      "pricePerUnit": 245,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0377",
-      "crop": "Yellow_Corn",
-      "brand": "viking",
-      "variety": "51-04",
-      "pricePerUnit": 225,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0378",
-      "crop": "Yellow_Corn",
-      "brand": "prarie hybrids",
-      "variety": "5141",
-      "pricePerUnit": 295,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
-    },
-    {
-      "id": "seed_0379",
-      "crop": "Yellow_Corn",
-      "brand": "prarie hybrids",
-      "variety": "5851",
-      "pricePerUnit": 295,
-      "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0380",
@@ -12786,7 +13119,8 @@
       "variety": "P1185",
       "pricePerUnit": 227.04,
       "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     },
     {
       "id": "seed_0381",
@@ -12795,7 +13129,8 @@
       "variety": "P0035",
       "pricePerUnit": 217.8,
       "seedsPerUnit": 80000,
-      "supplierId": ""
+      "supplierId": "sup_mmc6qn29_9569",
+      "organicGround": false
     }
   ],
   "rent": [
@@ -13773,7 +14108,13 @@
       "threshold": 15,
       "drying": 6,
       "shrink": 0.75,
-      "discountSchedule": [],
+      "discountSchedule": [
+        {
+          "fromMoisture": 15,
+          "toMoisture": 20,
+          "discountPerPoint": 0.06
+        }
+      ],
       "cropBasis": {}
     },
     {
@@ -13838,21 +14179,6 @@
     }
   ],
   "sales": [
-    {
-      "id": "sale_0484",
-      "complete": false,
-      "date": "Contract Date",
-      "amount": 0,
-      "crop": "Crop",
-      "contractNo": "Contract number",
-      "buyer": "SOLD TO",
-      "basis": 0,
-      "price": 0,
-      "cbotPrice": 0,
-      "shipPeriod": "SHIP PERIOD",
-      "advance": 0,
-      "notes": ""
-    },
     {
       "id": "sale_0485",
       "complete": false,
@@ -13957,6 +14283,69 @@
       "name": "Delongs",
       "type": "seed",
       "contact": "",
+      "notes": ""
+    },
+    {
+      "id": "sup_mmc6qjvo_qggx",
+      "name": "Albert Lea",
+      "type": "product",
+      "contact": "",
+      "notes": "Imported from spreadsheet"
+    },
+    {
+      "id": "sup_mmc6qk9z_64n6",
+      "name": "Tracy Seeds",
+      "type": "product",
+      "contact": "",
+      "notes": "Imported from spreadsheet"
+    },
+    {
+      "id": "sup_mmc6qkoc_umd7",
+      "name": "Pioneer",
+      "type": "product",
+      "contact": "",
+      "notes": "Imported from spreadsheet"
+    },
+    {
+      "id": "sup_mmc6ql2o_znpr",
+      "name": "Kentucky Blue Corn",
+      "type": "product",
+      "contact": "",
+      "notes": "Imported from spreadsheet"
+    },
+    {
+      "id": "sup_mmc6qlgz_wcld",
+      "name": "Puris",
+      "type": "product",
+      "contact": "",
+      "notes": "Imported from spreadsheet"
+    },
+    {
+      "id": "sup_mmc6qlva_uotv",
+      "name": "Nuseed",
+      "type": "product",
+      "contact": "",
+      "notes": "Imported from spreadsheet"
+    },
+    {
+      "id": "sup_mmc6qm9k_zzb6",
+      "name": "Pioneer Hi-Bred",
+      "type": "product",
+      "contact": "Pat Mullooly - Delong Co",
+      "notes": "HUGHRA"
+    },
+    {
+      "id": "sup_mmc6qmnv_eqcf",
+      "name": "KWS",
+      "type": "product",
+      "contact": "Chad",
+      "notes": "1151761"
+    },
+    {
+      "id": "sup_mmc6qn29_9569",
+      "name": "Delong Co",
+      "type": "product",
+      "contact": "Pat Mullooly - Delong Co",
       "notes": ""
     }
   ],
@@ -14634,6 +15023,779 @@
       "harvestMoisture": 0,
       "buyerId": "",
       "createdFromFieldId": "fld_1836"
+    },
+    {
+      "id": "prog_mmbjot25_oikz",
+      "name": "ORG Corn Program",
+      "description": "Created from Kopp East",
+      "crop": "ORG Blue Corn",
+      "systemCode": "ORG IRR",
+      "cropType": "SINGLE CROP",
+      "inputs": [
+        {
+          "id": "inp_2099",
+          "productName": "Chicken Litter",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2100",
+          "productName": "SPE-120 dry",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2101",
+          "productName": "S04 30%",
+          "quantity": 150,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2102",
+          "productName": "Tulls manure",
+          "quantity": 25,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2103",
+          "productName": "BioActive Liquilife +",
+          "quantity": 2.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2104",
+          "productName": "TeraFed",
+          "quantity": 2.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2105",
+          "productName": "BioRepel",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2106",
+          "productName": "Eco Tec",
+          "quantity": 6,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2107",
+          "productName": "SPE-120 dry",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2108",
+          "productName": "Acomplish Max",
+          "quantity": 25,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_2109",
+          "productName": "Red Clover",
+          "quantity": 10,
+          "season": "Fall"
+        }
+      ],
+      "seed": {
+        "variety": "T1081J",
+        "population": 34000
+      },
+      "machinery": [
+        {
+          "id": "mach_2110",
+          "implementName": "Disk",
+          "passes": 2
+        },
+        {
+          "id": "mach_2111",
+          "implementName": "Soil Finisher",
+          "passes": 2
+        },
+        {
+          "id": "mach_2112",
+          "implementName": "Planter",
+          "passes": 1
+        },
+        {
+          "id": "mach_2113",
+          "implementName": "Tine weed 60",
+          "passes": 2
+        },
+        {
+          "id": "mach_2114",
+          "implementName": "Spinner",
+          "passes": 1
+        },
+        {
+          "id": "mach_2115",
+          "implementName": "Cultivator 12",
+          "passes": 3
+        },
+        {
+          "id": "mach_2116",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_2117",
+          "implementName": "Trucking",
+          "passes": 1
+        },
+        {
+          "id": "mach_2118",
+          "implementName": "Chisle Plow",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 140,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 25,
+      "harvestMoisture": 0,
+      "buyerId": "",
+      "createdFromFieldId": "fld_2119"
+    },
+    {
+      "id": "prog_mmbjwp5x_kqsb",
+      "name": "ORG Seed Corn Program",
+      "description": "Created from Simpsons Seed Corn",
+      "crop": "ORG Seed Corn",
+      "systemCode": "ORG",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [
+        {
+          "id": "mach_mmbjtjxu_hd2w",
+          "implementName": "Disk",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjtomj_uc36",
+          "implementName": "Soil Finisher",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjtsoj_h52z",
+          "implementName": "Planter",
+          "passes": 3
+        },
+        {
+          "id": "mach_mmbjty9n_fde0",
+          "implementName": "Tine weed 60",
+          "passes": 3
+        },
+        {
+          "id": "mach_mmbju65t_aydq",
+          "implementName": "Cultivator 12",
+          "passes": 3
+        },
+        {
+          "id": "mach_mmbjudmc_c69c",
+          "implementName": "detassle cut",
+          "passes": 2
+        },
+        {
+          "id": "mach_mmbjuuoi_wdzh",
+          "implementName": "Ear Picker",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 40,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 15.5,
+      "buyerId": "",
+      "createdFromFieldId": "fld_mmbjggqq_18y2"
+    },
+    {
+      "id": "prog_mmbk0539_dkql",
+      "name": "ORG Seed Corn Program 1",
+      "description": "Created from Simpsons Seed Corn",
+      "crop": "ORG Seed Corn",
+      "systemCode": "ORG IRR",
+      "cropType": "SINGLE CROP",
+      "inputs": [
+        {
+          "id": "inp_mmbjywmf_c8bm",
+          "productName": "Chicken Litter",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_lhcz",
+          "productName": "SPE-120 dry",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_dfnr",
+          "productName": "S04 30%",
+          "quantity": 150,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_34d3",
+          "productName": "Tulls manure",
+          "quantity": 25,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_z1m6",
+          "productName": "BioActive Liquilife +",
+          "quantity": 2.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_goyh",
+          "productName": "TeraFed",
+          "quantity": 2.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_ciel",
+          "productName": "BioRepel",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_9m5w",
+          "productName": "Eco Tec",
+          "quantity": 6,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_fkar",
+          "productName": "SPE-120 dry",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_vznh",
+          "productName": "Acomplish Max",
+          "quantity": 25,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbjywmg_0pix",
+          "productName": "Red Clover",
+          "quantity": 10,
+          "season": "Fall"
+        }
+      ],
+      "seed": null,
+      "machinery": [
+        {
+          "id": "mach_mmbjywmg_vmlz",
+          "implementName": "Disk",
+          "passes": 2
+        },
+        {
+          "id": "mach_mmbjywmg_a8us",
+          "implementName": "Soil Finisher",
+          "passes": 2
+        },
+        {
+          "id": "mach_mmbjywmg_pbnj",
+          "implementName": "Planter",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_tdom",
+          "implementName": "Tine weed 60",
+          "passes": 2
+        },
+        {
+          "id": "mach_mmbjywmg_o3c8",
+          "implementName": "Spinner",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_o9uu",
+          "implementName": "Cultivator 12",
+          "passes": 3
+        },
+        {
+          "id": "mach_mmbjywmg_g63g",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_c3nw",
+          "implementName": "Trucking",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbjywmg_mafl",
+          "implementName": "Chisle Plow",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 40,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 15.5,
+      "buyerId": "",
+      "createdFromFieldId": "fld_mmbjggqq_18y2"
+    },
+    {
+      "id": "prog_mmbkoz1m_6zyv",
+      "name": "Enlist Soybeans Program",
+      "description": "Created from Inman",
+      "crop": "RR Soybeans",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [
+        {
+          "id": "inp_1816",
+          "productName": "Application - Liquid Pre",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1817",
+          "productName": "Mauler (2x2.5 Gal)",
+          "quantity": 6,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1818",
+          "productName": "Sonic (2x7.5 Lb)",
+          "quantity": 0.31,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1819",
+          "productName": "Application - Post",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1820",
+          "productName": "PowerMax",
+          "quantity": 22,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1821",
+          "productName": "Enlist",
+          "quantity": 1.4,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1822",
+          "productName": "Crop Oil, Insource (2x2.5 Gal)",
+          "quantity": 0.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1823",
+          "productName": "Premium Ams (51 Lb)",
+          "quantity": 2,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1824",
+          "productName": "Ppst Fst/Ist (140K) Seed Treatment",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1825",
+          "productName": "Ppst 120 (140K) Inoculant",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1826",
+          "productName": "Seed Treatment Application (Unit)",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_1827",
+          "productName": "Wi Tonnage Tax",
+          "quantity": 0.1,
+          "season": "Fall"
+        },
+        {
+          "id": "inp_1828",
+          "productName": "0-0-60 Potash",
+          "quantity": 128.3333333,
+          "season": "Fall"
+        },
+        {
+          "id": "inp_1829",
+          "productName": "0-46-0 Triple Super 15C",
+          "quantity": 95.65217391,
+          "season": "Fall"
+        }
+      ],
+      "seed": {
+        "variety": "16Z25E",
+        "population": 135000
+      },
+      "machinery": [
+        {
+          "id": "mach_1830",
+          "implementName": "Soil Finisher",
+          "passes": 2
+        },
+        {
+          "id": "mach_1831",
+          "implementName": "Planter",
+          "passes": 1
+        },
+        {
+          "id": "mach_1832",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_1833",
+          "implementName": "Trucking",
+          "passes": 0.2
+        },
+        {
+          "id": "mach_mmbkokba_231w",
+          "implementName": "Spinner",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 70,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 40,
+      "harvestMoisture": 0,
+      "buyerId": "",
+      "createdFromFieldId": "fld_1836"
+    },
+    {
+      "id": "prog_mmbmhxil_y0vu",
+      "name": "IRR Organic wheat Program",
+      "description": "",
+      "crop": "ORG Wheat",
+      "systemCode": "ORG IRR",
+      "cropType": "SINGLE CROP",
+      "inputs": [
+        {
+          "id": "inp_mmbmg8pw_8npm",
+          "productName": "Fall 22 Kutz Litter",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mmbmgefg_31w8",
+          "productName": "S04 30%",
+          "quantity": 120,
+          "season": "Spring"
+        }
+      ],
+      "seed": {
+        "variety": "801",
+        "population": 750000
+      },
+      "machinery": [
+        {
+          "id": "mach_mmbmglsb_58sh",
+          "implementName": "Soil Finisher",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbmgtkk_8vgr",
+          "implementName": "Drill",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbmgyvx_z8nm",
+          "implementName": "Spinner",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbmh4x9_plih",
+          "implementName": "Tine weed 60",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbmh8v0_e0t6",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_mmbmhegc_vti9",
+          "implementName": "Trucking",
+          "passes": 1
+        }
+      ],
+      "yieldPerAcre": 65,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 25,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmcyolgs_hg2w",
+      "name": "Yellow Corn (CON)",
+      "description": "",
+      "crop": "Yellow Corn",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx3tbf_27hm",
+      "name": "White corn (CON)",
+      "description": "",
+      "crop": "White corn",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx3wom_sk1c",
+      "name": "Yellow Corn (CON IRR)",
+      "description": "",
+      "crop": "Yellow Corn",
+      "systemCode": "CON IRR",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx3zta_1ukx",
+      "name": "Seed grade Winter Barley (CON)",
+      "description": "",
+      "crop": "Seed grade Winter Barley",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx42zj_m171",
+      "name": "Soybeans (CON)",
+      "description": "",
+      "crop": "Soybeans",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx45ty_t8o7",
+      "name": "DF seed beans (CON)",
+      "description": "",
+      "crop": "DF seed beans",
+      "systemCode": "CON",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx48u6_fued",
+      "name": "Peas (CANNING CON IRR)",
+      "description": "",
+      "crop": "Peas",
+      "systemCode": "",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx4c08_mphz",
+      "name": "Peas (CANNING CON IRR)",
+      "description": "",
+      "crop": "Peas",
+      "systemCode": "",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx4fe8_opa1",
+      "name": "Snap Beans (CANNING CON IRR)",
+      "description": "",
+      "crop": "Snap Beans",
+      "systemCode": "",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx4wqj_s6tt",
+      "name": "ORG Wheat (ORG)",
+      "description": "",
+      "crop": "ORG Wheat",
+      "systemCode": "ORG",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx4zwr_fkra",
+      "name": "ORG Soybeans (ORG IRR)",
+      "description": "",
+      "crop": "ORG Soybeans",
+      "systemCode": "ORG IRR",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx542g_kqh9",
+      "name": "ORG Natto Beans (ORG IRR)",
+      "description": "",
+      "crop": "ORG Natto Beans",
+      "systemCode": "ORG IRR",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx58as_1voa",
+      "name": "GA ORG SEED BEANS (ORG)",
+      "description": "",
+      "crop": "GA ORG SEED BEANS",
+      "systemCode": "ORG",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx5cu7_qw9c",
+      "name": "ORG Soybeans (ORG)",
+      "description": "",
+      "crop": "ORG Soybeans",
+      "systemCode": "ORG",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmfx5fv5_uvy5",
+      "name": "Lima Beans (CANNING CON)",
+      "description": "",
+      "crop": "Lima Beans",
+      "systemCode": "",
+      "cropType": "SINGLE CROP",
+      "inputs": [],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 0,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
+    },
+    {
+      "id": "prog_mmky0hcs_nwrg",
+      "name": "ORG Peas",
+      "description": "",
+      "crop": "ORG Peas",
+      "systemCode": "CON IRR",
+      "cropType": "DBL CROP",
+      "inputs": [
+        {
+          "id": "inp_mmky067u_g9la",
+          "productName": "",
+          "quantity": 0,
+          "season": "Spring"
+        }
+      ],
+      "seed": null,
+      "machinery": [],
+      "yieldPerAcre": 2,
+      "yieldUnit": "Tons",
+      "cropInsurancePerAcre": 0,
+      "harvestMoisture": 0,
+      "buyerId": ""
     }
   ],
   "cropTypes": [
@@ -14646,9 +15808,9 @@
       "dryingRate": 0.3,
       "interestRate": 0.06,
       "pricingMode": "cbot",
-      "cbotPrice": 4.71,
+      "cbotPrice": 4.815,
       "cbotSymbol": "ZCZ",
-      "cbotLastFetched": "2026-03-03T15:23:47.897Z",
+      "cbotLastFetched": "2026-03-09T21:19:40.265Z",
       "subCrops": [
         {
           "name": "Yellow Corn",
@@ -14689,7 +15851,7 @@
         {
           "name": "ORG Blue Corn",
           "pricingMode": "flat",
-          "pricePerUnit": 15,
+          "pricePerUnit": 13,
           "basisDefault": 0,
           "unit": "Bu",
           "dryingRate": 0.3,
@@ -14731,7 +15893,8 @@
           "dryingRate": 0.3,
           "shadeIndex": 8
         }
-      ]
+      ],
+      "enterpriseId": "ent_0491"
     },
     {
       "id": "ctype_mm5g1s43_mccs",
@@ -14786,7 +15949,7 @@
           "name": "GA ORG SEED BEANS",
           "pricingMode": "cbot",
           "pricePerUnit": 27.5,
-          "basisDefault": 16.2175,
+          "basisDefault": 0,
           "unit": "Bu",
           "dryingRate": 0,
           "shadeIndex": 4
@@ -14827,7 +15990,8 @@
           "dryingRate": 0,
           "shadeIndex": 8
         }
-      ]
+      ],
+      "enterpriseId": "ent_1272"
     },
     {
       "id": "ctype_mm5g1s43_s9et",
@@ -14869,7 +16033,8 @@
           "dryingRate": 0,
           "shadeIndex": 2
         }
-      ]
+      ],
+      "enterpriseId": "ent_0492"
     },
     {
       "id": "ctype_mm5g1s43_2zs7",
@@ -14911,7 +16076,8 @@
           "dryingRate": 0.2,
           "shadeIndex": 2
         }
-      ]
+      ],
+      "enterpriseId": "ent_0492"
     },
     {
       "id": "ctype_mm5g1s43_qecl",
@@ -14953,7 +16119,8 @@
           "dryingRate": 0,
           "shadeIndex": 2
         }
-      ]
+      ],
+      "enterpriseId": "ent_1875"
     },
     {
       "id": "ctype_mm5g1s43_ol53",
@@ -15004,7 +16171,8 @@
           "dryingRate": 0.3,
           "shadeIndex": 3
         }
-      ]
+      ],
+      "enterpriseId": "ent_1875"
     },
     {
       "id": "ctype_mm5g1s43_11pc",
@@ -15046,7 +16214,8 @@
           "dryingRate": 0.3,
           "shadeIndex": 2
         }
-      ]
+      ],
+      "enterpriseId": "ent_1272"
     },
     {
       "id": "ctype_mm5g1s43_ed04",
@@ -15079,7 +16248,8 @@
           "dryingRate": 0.005,
           "shadeIndex": 1
         }
-      ]
+      ],
+      "enterpriseId": "ent_2185"
     },
     {
       "id": "ctype_mm5g1s43_koot",
@@ -15130,7 +16300,8 @@
           "dryingRate": 0.3,
           "shadeIndex": 3
         }
-      ]
+      ],
+      "enterpriseId": "ent_0492"
     },
     {
       "id": "ctype_mm5g1s43_xp46",
@@ -15163,7 +16334,8 @@
           "dryingRate": 0,
           "shadeIndex": 1
         }
-      ]
+      ],
+      "enterpriseId": "ent_0492"
     },
     {
       "id": "ctype_mm5g1s43_qyr4",
@@ -15187,7 +16359,8 @@
           "dryingRate": 0.002,
           "shadeIndex": 0
         }
-      ]
+      ],
+      "enterpriseId": "ent_1272"
     },
     {
       "id": "ctype_mm5g1s43_d31p",
@@ -15229,7 +16402,8 @@
           "dryingRate": 0,
           "shadeIndex": 2
         }
-      ]
+      ],
+      "enterpriseId": "ent_0492"
     },
     {
       "id": "ctype_mm5g1s43_oekv",
@@ -15253,7 +16427,8 @@
           "dryingRate": 0,
           "shadeIndex": 0
         }
-      ]
+      ],
+      "enterpriseId": "ent_1272"
     },
     {
       "id": "ctype_mm5g1s43_jx1a",
@@ -15277,7 +16452,8 @@
           "dryingRate": 0.3,
           "shadeIndex": 0
         }
-      ]
+      ],
+      "enterpriseId": "ent_0492"
     },
     {
       "id": "ctype_mm5g1s43_xuae",
@@ -15349,6 +16525,112 @@
           "deliveredQty": 2000
         }
       ]
+    },
+    {
+      "id": "del_mmcjftnq_el3c",
+      "orderId": "ord_mmcjft9j_lfgx",
+      "deliveredAt": "2026-03-04",
+      "items": [],
+      "ticketNumber": "INV-001"
+    }
+  ],
+  "futuresConfig": [
+    {
+      "key": "corn",
+      "symbol": "ZCZ26.CBT",
+      "label": "CORN",
+      "contract": "DEC 26"
+    },
+    {
+      "key": "soybeans",
+      "symbol": "ZSX26.CBT",
+      "label": "SOYBEANS",
+      "contract": "NOV 26"
+    },
+    {
+      "key": "wheat",
+      "symbol": "ZWN26.CBT",
+      "label": "WHEAT",
+      "contract": "JUL 26"
+    }
+  ],
+  "unitPacks": [
+    {
+      "id": "up_bag50",
+      "name": "Bag",
+      "packQty": 50,
+      "packDesc": "50 lb bag",
+      "packUom": "lbs"
+    },
+    {
+      "id": "up_bag80",
+      "name": "Bag",
+      "packQty": 80,
+      "packDesc": "80 lb bag",
+      "packUom": "lbs"
+    },
+    {
+      "id": "up_tote40",
+      "name": "Tote",
+      "packQty": 40,
+      "packDesc": "40 unit tote",
+      "packUom": "units"
+    },
+    {
+      "id": "up_probox50",
+      "name": "ProBox",
+      "packQty": 50,
+      "packDesc": "50 lb ProBox",
+      "packUom": "lbs"
+    },
+    {
+      "id": "up_probox80",
+      "name": "ProBox",
+      "packQty": 80,
+      "packDesc": "80 lb ProBox",
+      "packUom": "lbs"
+    },
+    {
+      "id": "up_pallet",
+      "name": "Pallet",
+      "packQty": 2000,
+      "packDesc": "2000 lb pallet",
+      "packUom": "lbs"
+    },
+    {
+      "id": "up_jug25",
+      "name": "Jug",
+      "packQty": 2.5,
+      "packDesc": "2.5 gal jug",
+      "packUom": "gallons"
+    },
+    {
+      "id": "up_drum55",
+      "name": "Drum",
+      "packQty": 55,
+      "packDesc": "55 gal drum",
+      "packUom": "gallons"
+    },
+    {
+      "id": "up_bin",
+      "name": "Bin",
+      "packQty": 2000,
+      "packDesc": "2000 lb bin",
+      "packUom": "lbs"
+    },
+    {
+      "id": "up_unit",
+      "name": "Unit",
+      "packQty": 1,
+      "packDesc": "1 unit",
+      "packUom": "units"
+    },
+    {
+      "id": "up_each",
+      "name": "Each",
+      "packQty": 1,
+      "packDesc": "1 each",
+      "packUom": "units"
     }
   ]
 }

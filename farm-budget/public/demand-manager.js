@@ -7,11 +7,8 @@
   var demandRows = [];
   var loaded = false;
 
-  // Activate on demand sub-tab or forecasts tab
+  // Activate on demand sub-tab
   window.addEventListener('demand-activate', function () { loadDemand(); });
-  window.addEventListener('tab-activate', function (e) {
-    if (e.detail.tab === 'forecasts') loadDemand();
-  });
 
   function loadDemand() {
     api.get('/api/demand').then(function (data) {

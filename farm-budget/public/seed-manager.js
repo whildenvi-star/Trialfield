@@ -66,6 +66,7 @@
         '<td class="editable" data-id="' + s.id + '" data-field="variety">' + util.escHtml(s.variety) + '</td>' +
         '<td class="editable number" data-id="' + s.id + '" data-field="pricePerUnit">' + util.formatMoney(s.pricePerUnit) + '</td>' +
         '<td class="editable number" data-id="' + s.id + '" data-field="seedsPerUnit">' + util.formatNum(s.seedsPerUnit, 0) + '</td>' +
+        '<td style="text-align:center"><span class="seed-og-toggle" data-id="' + s.id + '" data-og="' + (s.organicGround ? '1' : '0') + '" style="cursor:pointer;padding:0.15rem 0.4rem;border-radius:3px;font-size:0.65rem;font-weight:600;' + (s.organicGround ? 'background:#16a34a;color:#fff' : 'background:var(--bg-alt);color:var(--text-light)') + '">' + (s.organicGround ? 'OG' : '—') + '</span></td>' +
         '<td><button class="btn-danger" data-del-id="' + s.id + '">Del</button></td>' +
         '</tr>';
     });
@@ -83,6 +84,19 @@
           loaded = false;
           loadSeeds();
           util.showToast('Seed deleted');
+        });
+      });
+    });
+
+    // Organic Ground toggle
+    tbody.querySelectorAll('.seed-og-toggle').forEach(function (span) {
+      span.addEventListener('click', function () {
+        var id = span.getAttribute('data-id');
+        var current = span.getAttribute('data-og') === '1';
+        api.put('/api/seeds/' + id, { organicGround: !current }).then(function () {
+          loaded = false;
+          loadSeeds();
+          util.showToast(current ? 'Removed organic ground designation' : 'Designated for organic ground');
         });
       });
     });
@@ -142,12 +156,14 @@
     });
   }
 
-  // === SEED DEMAND BY ENTERPRISE ===
+  // === SEED DEMAND — EXPANDABLE FIELD VIEW ===
 
   function renderSeedDemand(fields, seeds) {
     var enterprises = window.refData.enterprises;
-    if (!enterprises.length || !fields.length) {
-      document.getElementById('seed-demand-tbody').innerHTML = '<tr><td>No data</td></tr>';
+    var container = document.getElementById('seed-demand-container');
+    if (!container) return;
+    if (!fields.length) {
+      container.innerHTML = '<p style="color:var(--text-light)">No field data</p>';
       return;
     }
 
@@ -157,89 +173,97 @@
       seedIndex[(s.variety || '').trim().toLowerCase()] = s;
     });
 
-    // demand[variety][entIdx] = { units, cost }
+    // Build enterprise index by id
+    var entMap = {};
+    enterprises.forEach(function (e) { entMap[e.id] = e; });
+
+    // Build supplier map
+    var supplierMap = {};
+    (window.refData.suppliers || []).forEach(function (s) { supplierMap[s.id] = s.name; });
+
+    // demand[variety] = { crop, brand, pricePerUnit, totalUnits, totalCost, fields: [...] }
     var demand = {};
     fields.forEach(function (f) {
-      if (!f.seed || !f.seed.variety) return;
-      var entIdx = enterprises.findIndex(function (e) { return e.id === f.enterpriseId; });
-      if (entIdx < 0) return;
       var fieldAcres = (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
-      var key = f.seed.variety.trim().toLowerCase();
-      var seed = seedIndex[key];
-      var pop = f.seed.population || 0;
-      var seedsPerUnit = seed ? (seed.seedsPerUnit || 1) : 1;
-      var unitsNeeded = seedsPerUnit > 0 ? Math.ceil(pop * fieldAcres / seedsPerUnit) : 0;
-      var cost = seed ? unitsNeeded * (seed.pricePerUnit || 0) : 0;
+      var ent = entMap[f.enterpriseId];
+      // Support multi-variety seeds array, fall back to legacy single seed
+      var seedEntries = f.seeds && f.seeds.length > 0
+        ? f.seeds
+        : (f.seed && f.seed.variety ? [f.seed] : []);
+      seedEntries.forEach(function (se) {
+        if (!se.variety) return;
+        var key = se.variety.trim().toLowerCase();
+        var seed = seedIndex[key];
+        var pop = se.population || 0;
+        var seedAcres = se.acres > 0 ? se.acres : fieldAcres;
+        var seedsPerUnit = seed ? (seed.seedsPerUnit || 1) : 1;
+        var unitsNeeded = seedsPerUnit > 0 ? Math.ceil(pop * seedAcres / seedsPerUnit) : 0;
+        var cost = seed ? unitsNeeded * (seed.pricePerUnit || 0) : 0;
 
-      if (!demand[f.seed.variety]) demand[f.seed.variety] = {};
-      if (!demand[f.seed.variety][entIdx]) demand[f.seed.variety][entIdx] = { units: 0, cost: 0 };
-      demand[f.seed.variety][entIdx].units += unitsNeeded;
-      demand[f.seed.variety][entIdx].cost += cost;
-    });
-
-    // Build header
-    var thead = '<tr><th>Crop</th><th>Variety</th><th>Brand</th><th>Price/Unit</th>';
-    enterprises.forEach(function (e) {
-      thead += '<th title="' + util.escHtml(e.name) + '">' + util.escHtml(e.shortName) + '</th>';
-    });
-    thead += '<th>FARM TOTAL</th></tr>';
-    document.getElementById('seed-demand-thead').innerHTML = thead;
-
-    // Build rows
-    var usedVarieties = Object.keys(demand).sort();
-    var html = '';
-    var grandTotals = {};
-    var grandTotal = { units: 0, cost: 0 };
-    enterprises.forEach(function (e, idx) { grandTotals[idx] = { units: 0, cost: 0 }; });
-
-    usedVarieties.forEach(function (variety) {
-      var key = variety.trim().toLowerCase();
-      var seed = seedIndex[key];
-      var crop = seed ? (seed.crop || '--') : '--';
-      var brand = seed ? (seed.brand || '--') : '--';
-      var pricePerUnit = seed ? util.formatMoney(seed.pricePerUnit) : '--';
-
-      html += '<tr><td>' + util.escHtml(crop) + '</td>';
-      html += '<td>' + util.escHtml(variety) + '</td>';
-      html += '<td>' + util.escHtml(brand) + '</td>';
-      html += '<td class="number">' + pricePerUnit + '</td>';
-
-      var rowTotal = { units: 0, cost: 0 };
-
-      enterprises.forEach(function (e, idx) {
-        var d = demand[variety] && demand[variety][idx];
-        if (d) {
-          rowTotal.units += d.units;
-          rowTotal.cost += d.cost;
-          grandTotals[idx].units += d.units;
-          grandTotals[idx].cost += d.cost;
-
-          html += '<td class="number">' + util.formatNum(d.units, 0) + ' units' +
-            '<br><small style="color:var(--text-light)">' + util.formatMoney(d.cost, 0) + '</small></td>';
-        } else {
-          html += '<td class="number" style="color:var(--text-light)">--</td>';
+        if (!demand[se.variety]) {
+          demand[se.variety] = {
+            crop: seed ? (seed.crop || '--') : '--',
+            brand: seed ? (seed.brand || '--') : '--',
+            pricePerUnit: seed ? (seed.pricePerUnit || 0) : 0,
+            supplier: seed && seed.supplierId ? (supplierMap[seed.supplierId] || '') : '',
+            totalUnits: 0, totalCost: 0, fields: []
+          };
         }
+        demand[se.variety].totalUnits += unitsNeeded;
+        demand[se.variety].totalCost += cost;
+        demand[se.variety].fields.push({
+          name: f.name,
+          acres: seedAcres,
+          population: pop,
+          units: unitsNeeded,
+          cost: cost,
+          enterprise: ent ? (ent.shortName || ent.name) : '--'
+        });
+      });
+    });
+
+    var usedVarieties = Object.keys(demand).sort();
+    var grandCost = 0;
+    usedVarieties.forEach(function (v) { grandCost += demand[v].totalCost; });
+
+    var html = '';
+    usedVarieties.forEach(function (variety) {
+      var d = demand[variety];
+      var safeId = variety.trim().toLowerCase().replace(/[^a-z0-9]/g, '-');
+
+      // Sort fields by units descending
+      d.fields.sort(function (a, b) { return b.units - a.units; });
+
+      html += '<details class="demand-expand" id="seed-exp-' + safeId + '">';
+      html += '<summary class="demand-summary">';
+      html += '<span class="demand-name">' + util.escHtml(variety) + '</span>';
+      html += '<span class="demand-supplier">' + util.escHtml(d.crop) + (d.brand !== '--' ? ' &middot; ' + util.escHtml(d.brand) : '') + '</span>';
+      html += '<span class="demand-totals">' + util.formatNum(d.totalUnits, 0) + ' units &middot; ' + util.formatMoney(d.totalCost, 0) + '</span>';
+      html += '<span class="demand-field-count">' + d.fields.length + ' field' + (d.fields.length !== 1 ? 's' : '') + '</span>';
+      html += '</summary>';
+
+      html += '<table class="demand-fields-table"><thead><tr>' +
+        '<th>Field</th><th>Enterprise</th><th>Acres</th><th>Population</th>' +
+        '<th>Units Needed</th><th>Cost</th>' +
+        '</tr></thead><tbody>';
+
+      d.fields.forEach(function (f) {
+        html += '<tr>' +
+          '<td>' + util.escHtml(f.name) + '</td>' +
+          '<td>' + util.escHtml(f.enterprise) + '</td>' +
+          '<td class="number">' + util.formatNum(f.acres, 1) + '</td>' +
+          '<td class="number">' + util.formatNum(f.population, 0) + '</td>' +
+          '<td class="number">' + util.formatNum(f.units, 0) + '</td>' +
+          '<td class="number">' + util.formatMoney(f.cost, 0) + '</td>' +
+          '</tr>';
       });
 
-      grandTotal.units += rowTotal.units;
-      grandTotal.cost += rowTotal.cost;
-      html += '<td class="number bold">' + util.formatNum(rowTotal.units, 0) + ' units' +
-        '<br><small style="color:var(--text-light)">' + util.formatMoney(rowTotal.cost, 0) + '</small></td></tr>';
+      html += '</tbody></table></details>';
     });
 
-    // Grand total row
-    html += '<tr class="total-row"><td class="bold" colspan="4">TOTAL</td>';
-    enterprises.forEach(function (e, idx) {
-      var t = grandTotals[idx];
-      html += '<td class="number bold">' + util.formatNum(t.units, 0) + ' units' +
-        '<br><small>' + util.formatMoney(t.cost, 0) + '</small></td>';
-    });
-    html += '<td class="number bold">' + util.formatNum(grandTotal.units, 0) + ' units' +
-      '<br><small>' + util.formatMoney(grandTotal.cost, 0) + '</small></td></tr>';
-
-    document.getElementById('seed-demand-tbody').innerHTML = html;
+    container.innerHTML = html;
     document.getElementById('seed-demand-info').textContent =
-      usedVarieties.length + ' varieties in use, ' + util.formatMoney(grandTotal.cost, 0) + ' total seed cost';
+      usedVarieties.length + ' varieties in use, ' + util.formatMoney(grandCost, 0) + ' total seed cost';
   }
 
   function startEdit(td, type) {

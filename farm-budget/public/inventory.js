@@ -4,7 +4,6 @@
   'use strict';
 
   var currentForecast = null;
-  var selectedProducts = new Set();
   var printMenuOpen = false;
 
   // --- Tab activation (always reload, no caching) ---
@@ -14,7 +13,8 @@
 
   // --- Refresh status bars when a delivery is saved ---
   window.addEventListener('forecast-changed', function () {
-    if (document.getElementById('tab-forecasts').classList.contains('active')) {
+    var forecastPanel = document.getElementById('ref-sub-forecast');
+    if (forecastPanel && forecastPanel.classList.contains('active')) {
       loadForecast();
     }
   });
@@ -56,10 +56,6 @@
       return;
     }
 
-    // Reset selection (fresh render clears stale state)
-    selectedProducts.clear();
-    updateCreateOrderBtn();
-
     var html = '';
     var grandTotalProducts = 0;
     var grandTotalCost = 0;
@@ -82,19 +78,17 @@
       html += '<span class="fc-category-total badge-neutral">' + products.length + ' product' + (products.length !== 1 ? 's' : '') + '</span>';
       html += '<span class="fc-category-total">' + util.formatMoney(catCost) + '</span>';
       html += '<span class="fc-category-toggle" id="toggle-' + catId + '">&#9660;</span>';
-      html += '<button class="fc-sel-btn btn-sm" data-action="select-all" data-cat-id="' + util.escHtml(catId) + '" style="margin-left:auto">Select All</button>';
-      html += '<button class="fc-sel-btn btn-sm" data-action="clear" data-cat-id="' + util.escHtml(catId) + '">Clear</button>';
       html += '</div>';
 
       // Column header
       html += '<div class="fc-row fc-header">';
-      html += '<span></span>';
       html += '<span>Product</span>';
       html += '<span>Supplier</span>';
-      html += '<span>Amount</span>';
+      html += '<span>Forecasted</span>';
       html += '<span>Unit Cost</span>';
       html += '<span>Total Cost</span>';
       html += '<span>Ordered</span>';
+      html += '<span>Delivered</span>';
       html += '<span>Remaining</span>';
       html += '<span>% Ordered</span>';
       html += '</div>';
@@ -104,18 +98,14 @@
         var pctRaw = p.pctOrdered || 0;
         var pct = Math.min(pctRaw, 100);
         var fillClass = pctRaw > 100 ? 'over' : (pctRaw >= 100 ? 'complete' : '');
-        var remaining = (p.totalQty || 0) - (p.orderedQty || 0);
+        var billedQty = p.billedQty != null ? p.billedQty : p.totalQty;
+        var remaining = billedQty - (p.orderedQty || 0);
         var remainClass = remaining < 0 ? 'color:var(--danger)' : '';
         var rowId = 'row-' + catId + '-' + pIdx;
         var breakdownId = 'breakdown-' + catId + '-' + pIdx;
         var cbxId = 'cbx-' + catId + '-' + pIdx;
 
         html += '<div class="fc-row" id="' + rowId + '">';
-
-        // Checkbox (44px tap target via padding)
-        html += '<span style="min-width:1.5rem;padding:0.6rem 0.25rem">';
-        html += '<input type="checkbox" id="' + cbxId + '" data-product-name="' + util.escHtml(p.productName) + '" style="cursor:pointer;width:16px;height:16px">';
-        html += '</span>';
 
         // Product name (clickable to expand)
         html += '<span class="fc-expand-target" data-breakdown="' + breakdownId + '" data-row="' + rowId + '" style="cursor:pointer;padding:0.6rem 0.25rem">';
@@ -131,8 +121,8 @@
         // Supplier
         html += '<span style="color:var(--text-light);padding:0.4rem 0.25rem">' + util.escHtml(p.supplierName || '\u2014') + '</span>';
 
-        // Amount
-        html += '<span style="padding:0.4rem 0.25rem">' + util.formatNum(p.totalQty, 0) + ' ' + util.escHtml(p.unit || '') + '</span>';
+        // Forecasted (in billed/purchase units)
+        html += '<span style="padding:0.4rem 0.25rem">' + util.formatNum(billedQty, p.isSeedVariety ? 0 : 1) + ' ' + util.escHtml(p.billedUnit || p.unit || '') + '</span>';
 
         // Unit cost
         html += '<span style="padding:0.4rem 0.25rem">' + util.formatMoney(p.unitCost, 4) + '</span>';
@@ -142,6 +132,9 @@
 
         // Ordered qty
         html += '<span style="padding:0.4rem 0.25rem">' + util.formatNum(p.orderedQty || 0, 0) + '</span>';
+
+        // Delivered qty
+        html += '<span style="padding:0.4rem 0.25rem">' + util.formatNum(p.deliveredQty || 0, 0) + '</span>';
 
         // Remaining
         html += '<span style="padding:0.4rem 0.25rem;' + remainClass + '">' + util.formatNum(remaining, 0) + '</span>';
@@ -196,41 +189,6 @@
       });
     });
 
-    // Select All / Clear buttons
-    container.querySelectorAll('.fc-sel-btn').forEach(function (btn) {
-      btn.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var catId = btn.getAttribute('data-cat-id');
-        var action = btn.getAttribute('data-action');
-        var catEl = document.getElementById(catId);
-        if (!catEl) return;
-        catEl.querySelectorAll('input[type=checkbox]').forEach(function (cbx) {
-          var pName = cbx.getAttribute('data-product-name');
-          if (action === 'select-all') {
-            cbx.checked = true;
-            selectedProducts.add(pName);
-          } else {
-            cbx.checked = false;
-            selectedProducts.delete(pName);
-          }
-        });
-        updateCreateOrderBtn();
-      });
-    });
-
-    // Individual checkboxes
-    container.querySelectorAll('input[type=checkbox]').forEach(function (cbx) {
-      cbx.addEventListener('change', function () {
-        var pName = cbx.getAttribute('data-product-name');
-        if (cbx.checked) {
-          selectedProducts.add(pName);
-        } else {
-          selectedProducts.delete(pName);
-        }
-        updateCreateOrderBtn();
-      });
-    });
-
     // Expandable field breakdown (click on product name cell)
     container.querySelectorAll('.fc-expand-target').forEach(function (cell) {
       cell.addEventListener('click', function () {
@@ -258,68 +216,6 @@
         summaryEl.textContent = count + ' product' + (count !== 1 ? 's' : '') + ' \u2014 ' + util.formatMoney(total) + ' total forecast';
       }
     }
-  }
-
-  // --- Enable/disable Create Order button ---
-  function updateCreateOrderBtn() {
-    var btn = document.getElementById('fc-create-order');
-    if (btn) btn.disabled = selectedProducts.size === 0;
-  }
-
-  // --- Create Order button handler ---
-  var createBtn = document.getElementById('fc-create-order');
-  if (createBtn) {
-    createBtn.addEventListener('click', function () {
-      if (!currentForecast || selectedProducts.size === 0) return;
-
-      var allProducts = (currentForecast.categories || []).reduce(function (acc, cat) {
-        return acc.concat(cat.products || []);
-      }, []);
-
-      var chosen = allProducts.filter(function (p) { return selectedProducts.has(p.productName); });
-
-      // Group by supplierId
-      var bySupplier = {};
-      chosen.forEach(function (p) {
-        var key = p.supplierId || '__none__';
-        if (!bySupplier[key]) {
-          bySupplier[key] = { supplierId: p.supplierId || null, supplierName: p.supplierName || 'No Supplier', items: [] };
-        }
-        bySupplier[key].items.push({
-          productName: p.productName,
-          unit: p.unit || '',
-          forecastQty: p.totalQty || 0,
-          orderedQty: p.totalQty || 0,
-          unitCost: p.unitCost || 0
-        });
-      });
-
-      var groups = Object.values(bySupplier);
-      var orderPromises = groups.map(function (g) {
-        return api.post('/api/orders', {
-          supplierId: g.supplierId,
-          supplierName: g.supplierName,
-          status: 'ordered',
-          poNumber: '',
-          notes: '',
-          createdAt: new Date().toISOString(),
-          items: g.items
-        });
-      });
-
-      Promise.all(orderPromises).then(function () {
-        util.showToast('Created ' + groups.length + ' order' + (groups.length !== 1 ? 's' : ''), 3000, 'success');
-        selectedProducts.clear();
-        updateCreateOrderBtn();
-        // Reload forecast to refresh ordered quantities
-        loadForecast();
-        // Navigate to Orders tab
-        location.hash = 'orders';
-        window.dispatchEvent(new CustomEvent('tab-activate', { detail: { tab: 'orders' } }));
-      }).catch(function (err) {
-        util.showToast('Failed to create orders: ' + err.message, 4000, 'error');
-      });
-    });
   }
 
   // --- Print Reports dropdown ---

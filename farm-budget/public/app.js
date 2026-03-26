@@ -3,15 +3,16 @@
   'use strict';
 
   // --- API Helper ---
+  var B = window.__BASE || '';
   window.api = {
     get: function (url) {
-      return fetch(url).then(function (r) {
+      return fetch(B + url).then(function (r) {
         if (!r.ok) throw new Error('API error ' + r.status);
         return r.json();
       });
     },
     post: function (url, data) {
-      return fetch(url, {
+      return fetch(B + url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -21,7 +22,7 @@
       });
     },
     put: function (url, data) {
-      return fetch(url, {
+      return fetch(B + url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -31,7 +32,7 @@
       });
     },
     del: function (url) {
-      return fetch(url, { method: 'DELETE' }).then(function (r) {
+      return fetch(B + url, { method: 'DELETE' }).then(function (r) {
         if (!r.ok) throw new Error('Delete failed');
         return r.json();
       });
@@ -210,6 +211,34 @@
         return '<option value="' + util.escHtml(n) + '">';
       }).join('');
     }
+    // Populate field name datalist from all fields across enterprises,
+    // merged with all active fields from the farm registry so that registry
+    // fields that haven't yet been added to farm-budget still appear as suggestions.
+    var fieldList = document.getElementById('field-name-list');
+    if (fieldList) {
+      var budgetPromise = api.get('/api/fields?all=true').catch(function () { return []; });
+      var registryPromise = (typeof FarmRegistry !== 'undefined')
+        ? FarmRegistry.getFields({ active: true }).catch(function () { return []; })
+        : Promise.resolve([]);
+      Promise.all([budgetPromise, registryPromise]).then(function (results) {
+        var budgetFields = results[0] || [];
+        var registryFields = results[1] || [];
+        var names = [];
+        var seen = {};
+        budgetFields.forEach(function (f) {
+          var n = f.name || '';
+          if (n && !seen[n]) { seen[n] = true; names.push(n); }
+        });
+        registryFields.forEach(function (f) {
+          var n = f.name || '';
+          if (n && !seen[n]) { seen[n] = true; names.push(n); }
+        });
+        names.sort();
+        fieldList.innerHTML = names.map(function (n) {
+          return '<option value="' + util.escHtml(n) + '">';
+        }).join('');
+      });
+    }
   }
 
   // Targeted reload: only re-fetch specific collections instead of all 11.
@@ -360,17 +389,25 @@
   });
 
   // Restore tab from URL hash on load / back-forward navigation
+  var refDataReady = false;
+  window.addEventListener('ref-data-loaded', function () { refDataReady = true; });
+
   function restoreTab() {
     var hash = location.hash.replace('#', '');
     if (!hash) return false;
     // Enterprise tab: hash = "enterprise-N"
     if (hash.indexOf('enterprise-') === 0) {
       var idx = parseInt(hash.split('-')[1], 10) || 0;
-      // Defer until ref data is loaded (enterprise pills may not exist yet)
-      window.addEventListener('ref-data-loaded', function onLoad() {
-        window.removeEventListener('ref-data-loaded', onLoad);
+      if (refDataReady) {
+        // Ref data already loaded — activate immediately
         activateEnterprise(idx);
-      });
+      } else {
+        // Initial page load — defer until ref data arrives (one-shot)
+        window.addEventListener('ref-data-loaded', function onLoad() {
+          window.removeEventListener('ref-data-loaded', onLoad);
+          activateEnterprise(idx);
+        });
+      }
       return true;
     }
     // Regular tab
@@ -384,6 +421,7 @@
 
   window.getEnterpriseIdx = function () { return currentEnterpriseIdx; };
   window.setEnterpriseIdx = function (idx) { currentEnterpriseIdx = idx; };
+  window.activateEnterprise = activateEnterprise;
 
   // Reload ref data helper (full reload — backward compat)
   window.reloadRefData = loadRefData;
@@ -397,20 +435,12 @@
       document.querySelectorAll('#tab-reference .ref-sub-content').forEach(function (sec) {
         sec.classList.toggle('active', sec.id === 'ref-sub-' + sub);
       });
-    });
-  });
-
-  // --- Forecast Sub-Navigation ---
-  document.querySelectorAll('.ref-sub-btn[data-fc-sub]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      document.querySelectorAll('.ref-sub-btn[data-fc-sub]').forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      var sub = btn.getAttribute('data-fc-sub');
-      document.querySelectorAll('#tab-forecasts .fc-sub-content').forEach(function (sec) {
-        sec.classList.toggle('active', sec.id === 'fc-sub-' + sub);
-      });
-      // Trigger demand load when switching to demand sub-tab
-      if (sub === 'demand') {
+      // Trigger data loading for merged tabs
+      if (sub === 'seeds') {
+        window.dispatchEvent(new CustomEvent('tab-activate', { detail: { tab: 'seeds' } }));
+      } else if (sub === 'forecast') {
+        window.dispatchEvent(new CustomEvent('tab-activate', { detail: { tab: 'forecasts' } }));
+      } else if (sub === 'demand') {
         window.dispatchEvent(new CustomEvent('demand-activate'));
       }
     });
@@ -418,5 +448,10 @@
 
   // --- Initial Load ---
   var restoredFromHash = restoreTab();
-  loadRefData();
+  loadRefData().then(function () {
+    // Ensure dashboard loads on first visit (no hash = dashboard is default active tab)
+    if (!restoredFromHash) {
+      activateRegularTab('dashboard');
+    }
+  });
 })();

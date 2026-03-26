@@ -5,15 +5,22 @@
   var GREEN = [45, 90, 39];
   var WHITE = [255, 255, 255];
 
-  function addHeader(doc, title, landscape) {
+  function addHeader(doc, title, landscape, subtitle) {
     var w = landscape ? 297 : 210;
     doc.setFillColor(GREEN[0], GREEN[1], GREEN[2]);
-    doc.rect(0, 0, w, 18, 'F');
+    doc.rect(0, 0, w, subtitle ? 22 : 18, 'F');
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14);
-    doc.text(title, 10, 12);
+    doc.setFontSize(16);
+    doc.setFont(undefined, 'bold');
+    doc.text(title, w / 2, subtitle ? 10 : 12, { align: 'center' });
+    if (subtitle) {
+      doc.setFontSize(10);
+      doc.setFont(undefined, 'normal');
+      doc.text(subtitle, w / 2, 18, { align: 'center' });
+    }
     doc.setFontSize(8);
-    doc.text(new Date().toLocaleDateString(), w - 10, 12, { align: 'right' });
+    doc.setFont(undefined, 'normal');
+    doc.text(new Date().toLocaleDateString(), w - 10, 8, { align: 'right' });
     doc.setTextColor(0, 0, 0);
   }
 
@@ -66,14 +73,40 @@
       var jsPDF = window.jspdf.jsPDF;
       var doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       var year = window.refData.settings.year || 2026;
+      var pageW = 297;
+      var DARK = [30, 30, 30];
+      var GRAY_LINE = [180, 180, 180];
+      var LIGHT_BG = [245, 245, 240];
 
-      addHeader(doc, 'Macro Roll Up Dashboard — ' + year, true);
-      var yPos = 24;
+      // =============================================
+      // PAGE 1: Crop Production Summary
+      // =============================================
+      addHeader(doc, 'Farm Macro Roll Up — ' + year, true, 'Crop Production Summary');
+      var yPos = 26;
+
+      var cropTableStyles = {
+        theme: 'grid',
+        headStyles: { fillColor: GREEN, textColor: WHITE, fontSize: 8, halign: 'center', fontStyle: 'bold', cellPadding: 2 },
+        styles: { fontSize: 8, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.25 },
+        alternateRowStyles: { fillColor: LIGHT_BG },
+        columnStyles: {
+          0: { fontStyle: 'bold', cellWidth: 45 },
+          1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' },
+          4: { halign: 'center' }, 5: { halign: 'center' }, 6: { halign: 'center' },
+          7: { halign: 'center' }
+        }
+      };
 
       // Conventional crops
       if (data.conventional.length) {
         doc.setFontSize(11);
-        doc.text('Conventional', 10, yPos);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(DARK[0], DARK[1], DARK[2]);
+        doc.text('CONVENTIONAL ENTERPRISES', pageW / 2, yPos, { align: 'center' });
+        yPos += 1;
+        doc.setDrawColor(GRAY_LINE[0], GRAY_LINE[1], GRAY_LINE[2]);
+        doc.setLineWidth(0.5);
+        doc.line(30, yPos, pageW - 30, yPos);
         yPos += 2;
 
         var convRows = [];
@@ -86,31 +119,31 @@
           });
         });
 
-        doc.autoTable({
-          startY: yPos,
-          head: [['Crop', 'Acres', 'Avg Yield', 'Proj Total', 'Mach/AC', 'Profit/AC', 'COP', 'Unit']],
-          body: convRows,
-          theme: 'striped',
-          headStyles: { fillColor: GREEN, textColor: WHITE, fontSize: 8 },
-          styles: { fontSize: 7, cellPadding: 1.5 },
-          columnStyles: {
-            1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
-            4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' }
-          },
-          didParseCell: function (hookData) {
-            if (hookData.column.index === 5 && hookData.section === 'body') {
-              var val = parseMoneyVal(convRows[hookData.row.index][5]);
-              hookData.cell.styles.textColor = profitColor(val);
-            }
+        var convOpts = JSON.parse(JSON.stringify(cropTableStyles));
+        convOpts.startY = yPos;
+        convOpts.head = [['Crop', 'Acres', 'Avg Yield', 'Proj Total', 'Mach/AC', 'Profit/AC', 'COP', 'Unit']];
+        convOpts.body = convRows;
+        convOpts.didParseCell = function (hookData) {
+          if (hookData.column.index === 5 && hookData.section === 'body') {
+            var val = parseMoneyVal(convRows[hookData.row.index][5]);
+            hookData.cell.styles.textColor = profitColor(val);
+            hookData.cell.styles.fontStyle = 'bold';
           }
-        });
-        yPos = doc.lastAutoTable.finalY + 6;
+        };
+        doc.autoTable(convOpts);
+        yPos = doc.lastAutoTable.finalY + 8;
       }
 
       // Organic crops
       if (data.organic.length) {
         doc.setFontSize(11);
-        doc.text('Organic', 10, yPos);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(DARK[0], DARK[1], DARK[2]);
+        doc.text('ORGANIC ENTERPRISES', pageW / 2, yPos, { align: 'center' });
+        yPos += 1;
+        doc.setDrawColor(GRAY_LINE[0], GRAY_LINE[1], GRAY_LINE[2]);
+        doc.setLineWidth(0.5);
+        doc.line(30, yPos, pageW - 30, yPos);
         yPos += 2;
 
         var orgRows = [];
@@ -123,51 +156,57 @@
           });
         });
 
-        doc.autoTable({
-          startY: yPos,
-          head: [['Crop', 'Acres', 'Avg Yield', 'Proj Total', 'Mach/AC', 'Profit/AC', 'COP', 'Unit']],
-          body: orgRows,
-          theme: 'striped',
-          headStyles: { fillColor: GREEN, textColor: WHITE, fontSize: 8 },
-          styles: { fontSize: 7, cellPadding: 1.5 },
-          columnStyles: {
-            1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' },
-            4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' }
-          },
-          didParseCell: function (hookData) {
-            if (hookData.column.index === 5 && hookData.section === 'body') {
-              var val = parseMoneyVal(orgRows[hookData.row.index][5]);
-              hookData.cell.styles.textColor = profitColor(val);
-            }
+        var orgOpts = JSON.parse(JSON.stringify(cropTableStyles));
+        orgOpts.startY = yPos;
+        orgOpts.head = [['Crop', 'Acres', 'Avg Yield', 'Proj Total', 'Mach/AC', 'Profit/AC', 'COP', 'Unit']];
+        orgOpts.body = orgRows;
+        orgOpts.didParseCell = function (hookData) {
+          if (hookData.column.index === 5 && hookData.section === 'body') {
+            var val = parseMoneyVal(orgRows[hookData.row.index][5]);
+            hookData.cell.styles.textColor = profitColor(val);
+            hookData.cell.styles.fontStyle = 'bold';
           }
-        });
-        yPos = doc.lastAutoTable.finalY + 6;
+        };
+        doc.autoTable(orgOpts);
       }
 
-      // Cost category rollup
-      doc.setFontSize(11);
-      doc.text('Cost Category Rollup', 10, yPos);
-      yPos += 2;
+      // =============================================
+      // PAGE 2: Cost Category Rollup (forced page break)
+      // =============================================
+      doc.addPage('a4', 'landscape');
+      addHeader(doc, 'Farm Macro Roll Up — ' + year, true, 'Cost Category Rollup by Enterprise');
+      yPos = 28;
 
       var enterprises = data.enterpriseSummaries;
-      var rollupHead = ['Category'];
-      enterprises.forEach(function (es) { rollupHead.push(es.enterprise.shortName); });
+      var rollupHead = ['CATEGORY'];
+      enterprises.forEach(function (es) { rollupHead.push(es.enterprise.shortName.toUpperCase()); });
       rollupHead.push('TOTAL');
 
       var categories = [
-        { label: 'Acres', key: 'acres' },
+        // --- LAND ---
+        { label: 'Acres', key: 'acres', section: 'LAND' },
         { label: 'Rent', key: 'rent' },
-        { label: 'Fertilizer', key: 'fert' },
+        // --- CROP INPUTS ---
+        { label: 'Spring Fertilizer', key: 'springFert', section: 'CROP INPUTS', indent: true },
+        { label: 'Fall Fertilizer', key: 'fallFert', indent: true },
+        { label: 'Total Fertilizer', key: 'fert', bold: true },
         { label: 'Seed', key: 'seed' },
-        { label: 'Machinery', key: 'machinery' },
-        { label: 'Labor + OH', key: 'laborOverhead' },
+        // --- FIELD OPERATIONS ---
+        { label: 'Machinery', key: 'machinery', section: 'FIELD OPERATIONS' },
+        { label: 'Labor & Overhead', key: 'laborOverhead' },
         { label: 'Fuel', key: 'fuel' },
         { label: 'Drying', key: 'drying' },
-        { label: 'Interest', key: 'interest' },
-        { label: 'Insurance', key: 'insurance' },
-        { label: 'Total Expense', key: 'expTotal' },
-        { label: 'Income + Pay', key: 'incomeWithPayments' },
-        { label: 'Profit', key: 'profitWithPayments' }
+        // --- CARRYING COSTS ---
+        { label: 'Interest', key: 'interest', section: 'CARRYING COSTS' },
+        { label: 'Crop Insurance Premiums', key: 'insurance' },
+        // --- EXPENSE SUMMARY ---
+        { label: 'TOTAL EXPENSES', key: 'expTotal', section: 'SUMMARY', bold: true, highlight: true },
+        { label: 'Gross Crop Income', key: 'cropIncome', bold: true },
+        { label: 'OPERATING PROFIT', key: 'cropProfit', bold: true, profit: true, highlight: true },
+        // --- SUPPLEMENTAL PAYMENTS ---
+        { label: 'Crop Insurance Claim Payments', key: 'insIncome', section: 'SUPPLEMENTAL PAYMENTS' },
+        { label: 'AUX Payments (Gov / Conservation)', key: 'govPayments' },
+        { label: 'PROFIT WITH ALL PAYMENTS', key: 'profitWithPayments', bold: true, profit: true, highlight: true }
       ];
 
       var rollupRows = categories.map(function (cat) {
@@ -182,29 +221,79 @@
         return row;
       });
 
+      // Insert section separator rows
+      var finalRows = [];
+      var sectionIdx = [];
+      for (var ri = 0; ri < categories.length; ri++) {
+        if (categories[ri].section) {
+          var sepRow = [categories[ri].section];
+          for (var ci = 0; ci < enterprises.length + 1; ci++) sepRow.push('');
+          finalRows.push(sepRow);
+          sectionIdx.push(finalRows.length - 1);
+        }
+        finalRows.push(rollupRows[ri]);
+      }
+
+      // Map original category index to finalRows index for styling
+      var catMap = [];
+      var offset = 0;
+      for (var mi = 0; mi < categories.length; mi++) {
+        if (categories[mi].section) offset++;
+        catMap.push(mi + offset);
+      }
+
       doc.autoTable({
         startY: yPos,
         head: [rollupHead],
-        body: rollupRows,
-        theme: 'striped',
-        headStyles: { fillColor: GREEN, textColor: WHITE, fontSize: 7 },
-        styles: { fontSize: 7, cellPadding: 1.5 },
+        body: finalRows,
+        theme: 'grid',
+        headStyles: { fillColor: GREEN, textColor: WHITE, fontSize: 8, halign: 'center', fontStyle: 'bold', cellPadding: 2 },
+        styles: { fontSize: 8, cellPadding: 1.8, lineColor: [200, 200, 200], lineWidth: 0.25 },
+        alternateRowStyles: { fillColor: LIGHT_BG },
         columnStyles: (function () {
-          var cs = {};
-          for (var i = 1; i <= enterprises.length + 1; i++) cs[i] = { halign: 'right' };
+          var cs = { 0: { cellWidth: 55 } };
+          for (var i = 1; i <= enterprises.length + 1; i++) cs[i] = { halign: 'center' };
           return cs;
         })(),
         didParseCell: function (hookData) {
-          if (hookData.section === 'body') {
-            var rowIdx = hookData.row.index;
-            if (categories[rowIdx] && categories[rowIdx].key === 'profitWithPayments' && hookData.column.index > 0) {
-              var val = parseMoneyVal(hookData.cell.raw);
-              hookData.cell.styles.textColor = profitColor(val);
-              hookData.cell.styles.fontStyle = 'bold';
-            }
-            if (categories[rowIdx] && (categories[rowIdx].key === 'expTotal' || categories[rowIdx].key === 'profitWithPayments')) {
-              hookData.cell.styles.fontStyle = 'bold';
-            }
+          if (hookData.section !== 'body') return;
+          var rowIdx = hookData.row.index;
+
+          // Section separator rows — dark bar with white text
+          if (sectionIdx.indexOf(rowIdx) !== -1) {
+            hookData.cell.styles.fillColor = [60, 60, 55];
+            hookData.cell.styles.textColor = [255, 255, 255];
+            hookData.cell.styles.fontStyle = 'bold';
+            hookData.cell.styles.fontSize = 7;
+            hookData.cell.styles.cellPadding = 1.2;
+            return;
+          }
+
+          // Find which category this row maps to
+          var catIdx = -1;
+          for (var k = 0; k < catMap.length; k++) {
+            if (catMap[k] === rowIdx) { catIdx = k; break; }
+          }
+          if (catIdx === -1) return;
+          var cat = categories[catIdx];
+
+          // Highlight rows (expenses, operating profit, final profit) — light green tint
+          if (cat.highlight) {
+            hookData.cell.styles.fillColor = [230, 240, 225];
+          }
+
+          if (cat.bold) {
+            hookData.cell.styles.fontStyle = 'bold';
+          }
+          if (cat.indent && hookData.column.index === 0) {
+            hookData.cell.styles.textColor = [100, 100, 100];
+            hookData.cell.styles.fontStyle = 'italic';
+          }
+          if (cat.profit && hookData.column.index > 0) {
+            var val = parseMoneyVal(hookData.cell.raw);
+            hookData.cell.styles.textColor = profitColor(val);
+            hookData.cell.styles.fontStyle = 'bold';
+            hookData.cell.styles.fontSize = 9;
           }
         }
       });

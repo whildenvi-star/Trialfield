@@ -295,11 +295,16 @@
         body += '<tr><td></td><td>Fall Fertilizer</td>';
         body += '<td class="num">' + fmtMoney(b.fallFertPerAcre) + '</td>';
         body += '<td class="num">' + fmtMoney(b.fallFertTotal) + '</td></tr>';
+        if (b.unassignedFertPerAcre > 0) {
+          body += '<tr><td></td><td>Other Inputs</td>';
+          body += '<td class="num">' + fmtMoney(b.unassignedFertPerAcre) + '</td>';
+          body += '<td class="num">' + fmtMoney(b.unassignedFertPerAcre * (b.effectiveAcres || 0)) + '</td></tr>';
+        }
         body += '<tr><td></td><td>Seed</td>';
         body += '<td class="num">' + fmtMoney(b.seedCostPerAcre) + '</td>';
         body += '<td class="num">' + fmtMoney(b.seedTotal) + '</td></tr>';
-        var inputsSubAc = (b.springFertPerAcre || 0) + (b.fallFertPerAcre || 0) + (b.seedCostPerAcre || 0);
-        var inputsSubTot = (b.springFertTotal || 0) + (b.fallFertTotal || 0) + (b.seedTotal || 0);
+        var inputsSubAc = (b.totalFertPerAcre || 0) + (b.seedCostPerAcre || 0);
+        var inputsSubTot = (b.totalFertCost || 0) + (b.seedTotal || 0);
         body += '<tr class="subtotal-row"><td></td><td>Inputs Subtotal</td>';
         body += '<td class="num">' + fmtMoney(inputsSubAc) + '</td>';
         body += '<td class="num">' + fmtMoney(inputsSubTot) + '</td></tr>';

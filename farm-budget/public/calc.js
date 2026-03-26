@@ -140,10 +140,10 @@
   }
 
   // --- Application price calculation ---
-  // Matches spreadsheet: =(H/G)*F  i.e. (unitBilledPrice / conversionRate) * increasePercent
+  // appPrice = unitBilledPrice / conversionRate (purchase price converted to per-application-unit)
   function computeApplicationPrice(product) {
     if (!product || !product.conversionRate) return 0;
-    return (product.unitBilledPrice / product.conversionRate) * (product.increasePercent || 1);
+    return product.unitBilledPrice / product.conversionRate;
   }
 
   // --- Per-Field Budget Calculation ---
@@ -171,8 +171,10 @@
     // --- RENT (uses rentAcres — landlord obligation on total field) ---
     result.rentPerAcre = round2((field.rentPerAcre || 0) * cropTypeMultiplier);
     result.rentTotal = round2(result.rentPerAcre * rentAcres);
-    // Effective rent per crop acre (higher when paying rent on unplanted acres)
-    result.rentPerCropAcre = acres > 0 ? round2(result.rentTotal / acres) : 0;
+    // Effective rent per crop acre: when planted acres < field acres, the full rent
+    // obligation gets spread over fewer crop acres, raising the effective rate.
+    // This must match what expPerAcre includes so displayed subtotals add up.
+    result.rentPerCropAcre = acres > 0 ? round2(result.rentTotal / acres) : result.rentPerAcre;
 
     // --- FERTILIZER / CHEMICAL INPUTS ---
     var springFert = 0;
@@ -201,16 +203,28 @@
     result.fallFertTotal = round2(fallFert * acres);
     result.unassignedFertPerAcre = round2(unassignedFert);
     result.totalFertPerAcre = round2(springFert + fallFert + unassignedFert);
-    result.totalFertCost = round2(result.totalFertPerAcre * acres);
+    result.totalFertCost = round2((springFert + fallFert + unassignedFert) * acres);
 
-    // --- SEED ---
-    var seedInfo = field.seed ? findSeedByVariety(refs.seeds, field.seed.variety) : null;
+    // --- SEED (supports multiple varieties with per-variety acres) ---
     result.seedCostPerAcre = 0;
-    if (seedInfo && seedInfo.seedsPerUnit > 0 && field.seed && field.seed.population) {
-      var unitsNeeded = field.seed.population / seedInfo.seedsPerUnit;
-      result.seedCostPerAcre = round2(unitsNeeded * seedInfo.pricePerUnit);
+    result.seedTotal = 0;
+    var fieldSeeds = field.seeds && field.seeds.length > 0
+      ? field.seeds
+      : (field.seed ? [field.seed] : []);
+    if (fieldSeeds.length > 0 && acres > 0) {
+      var totalSeedCost = 0;
+      fieldSeeds.forEach(function (fs) {
+        var seedInfo = findSeedByVariety(refs.seeds, fs.variety);
+        if (seedInfo && seedInfo.seedsPerUnit > 0 && fs.population) {
+          var unitsNeeded = fs.population / seedInfo.seedsPerUnit;
+          var costPerAcre = unitsNeeded * seedInfo.pricePerUnit;
+          var seedAcres = fs.acres > 0 ? fs.acres : acres;
+          totalSeedCost += costPerAcre * seedAcres;
+        }
+      });
+      result.seedTotal = round2(totalSeedCost);
+      result.seedCostPerAcre = round2(totalSeedCost / acres);
     }
-    result.seedTotal = round2(result.seedCostPerAcre * acres);
 
     // --- MACHINERY + LABOR (single pass) ---
     // Combined loop: computes cost, fuel, AND labor hours in one pass.
@@ -246,32 +260,28 @@
       };
     });
 
-    if (settings.useFixedMachineryRate) {
-      result.machineryPerAcre = settings.fixedMachineryRate || 100;
-    } else {
-      result.machineryPerAcre = round2(machCostPerAcre);
-    }
-    result.machineryTotal = round2(result.machineryPerAcre * acres);
+    var rawMachPerAcre = settings.useFixedMachineryRate ? (settings.fixedMachineryRate || 100) : machCostPerAcre;
+    result.machineryPerAcre = round2(rawMachPerAcre);
+    result.machineryTotal = round2(rawMachPerAcre * acres);
 
     // --- LABOR & OVERHEAD ---
     var lo = findBySystemCode(refs.laborOverhead, field.systemCode);
     result.laborHoursPerAcre = round4(laborHours);
     // Use hours-based labor if any implements have labor hours; otherwise fall back to flat rate
-    if (laborHours > 0) {
-      result.laborPerAcre = round2(laborHours * (settings.wageRate || 25));
-    } else {
-      result.laborPerAcre = lo ? lo.laborPerAcre : 0;
-    }
-    result.laborTotal = round2(result.laborPerAcre * acres);
-    result.overheadPerAcre = lo ? lo.overheadPerAcre : 0;
-    result.overheadTotal = round2(result.overheadPerAcre * acres);
-    result.laborOverheadTotal = round2((result.laborPerAcre + result.overheadPerAcre) * acres);
+    var rawLaborPerAcre = laborHours > 0 ? (laborHours * (settings.wageRate || 25)) : (lo ? lo.laborPerAcre : 0);
+    result.laborPerAcre = round2(rawLaborPerAcre);
+    result.laborTotal = round2(rawLaborPerAcre * acres);
+    var rawOverheadPerAcre = (lo ? lo.overheadPerAcre : 0) * cropTypeMultiplier;
+    result.overheadPerAcre = rawOverheadPerAcre;
+    result.overheadTotal = round2(rawOverheadPerAcre * acres);
+    result.laborOverheadTotal = round2((rawLaborPerAcre + rawOverheadPerAcre) * acres);
 
     // --- FUEL ---
     var fuelPrice = settings.fuelPricePerGal || 5;
     result.fuelGallonsPerAcre = round2(fuelGallonsPerAcre);
-    result.fuelPerAcre = round2(fuelGallonsPerAcre * fuelPrice);
-    result.fuelTotal = round2(result.fuelPerAcre * acres);
+    var rawFuelPerAcre = fuelGallonsPerAcre * fuelPrice;
+    result.fuelPerAcre = round2(rawFuelPerAcre);
+    result.fuelTotal = round2(rawFuelPerAcre * acres);
 
     // --- PRICING & DRYING ---
     var buyer = field.buyerId && refs.buyers ? findById(refs.buyers, field.buyerId) : null;
@@ -306,15 +316,17 @@
     result.yieldSource = yieldSource;
     // Moisture-based drying: if field has harvestMoisture and buyer has discount schedule, use tiered calc
     result.harvestMoisture = field.harvestMoisture || 0;
+    var rawDryingPerAcre;
     if (field.harvestMoisture > 0 && buyer && buyer.discountSchedule && buyer.discountSchedule.length > 0) {
       var moistureDiscount = computeMoistureDiscount(field.harvestMoisture, buyer.discountSchedule, buyer.threshold || 15);
-      result.dryingPerAcre = round2(result.yieldPerAcre * moistureDiscount);
+      rawDryingPerAcre = result.yieldPerAcre * moistureDiscount;
       result.dryingMethod = 'moisture';
     } else {
-      result.dryingPerAcre = round2(result.yieldPerAcre * dryingRate);
+      rawDryingPerAcre = result.yieldPerAcre * dryingRate;
       result.dryingMethod = 'flat';
     }
-    result.dryingTotal = round2(result.dryingPerAcre * acres);
+    result.dryingPerAcre = round2(rawDryingPerAcre);
+    result.dryingTotal = round2(rawDryingPerAcre * acres);
 
     // --- INTEREST ---
     // Configurable carry period: carryMonths / 12 replaces the old hardcoded 0.6 (≈7.2 months/12)
@@ -326,12 +338,14 @@
       result.seedCostPerAcre +
       ((result.laborPerAcre + result.overheadPerAcre + result.fuelPerAcre) * 0.5)
     );
-    result.interestPerAcre = round2(interestBase * interestRate * carryFraction);
-    result.interestTotal = round2(result.interestPerAcre * acres);
+    var rawInterestPerAcre = interestBase * interestRate * carryFraction;
+    result.interestPerAcre = round2(rawInterestPerAcre);
+    result.interestTotal = round2(rawInterestPerAcre * acres);
 
     // --- CROP INSURANCE ---
-    result.cropInsurancePerAcre = field.cropInsurancePerAcre || 0;
-    result.cropInsuranceTotal = round2(result.cropInsurancePerAcre * acres);
+    var rawCropInsPerAcre = field.cropInsurancePerAcre || 0;
+    result.cropInsurancePerAcre = rawCropInsPerAcre;
+    result.cropInsuranceTotal = round2(rawCropInsPerAcre * acres);
 
     // --- TOTAL EXPENSE (sum individual totals — rent may use different acre base) ---
     result.expTotal = round2(
@@ -355,8 +369,9 @@
     // --- INCOME ---
     var pricePerUnit = pricing ? pricing.pricePerUnit : 0;
     result.pricePerUnit = pricePerUnit;
-    result.cropIncomePerAcre = round2(result.yieldPerAcre * pricePerUnit);
-    result.cropIncomeTotal = round2(result.cropIncomePerAcre * acres);
+    var rawCropIncomePerAcre = result.yieldPerAcre * pricePerUnit;
+    result.cropIncomePerAcre = round2(rawCropIncomePerAcre);
+    result.cropIncomeTotal = round2(rawCropIncomePerAcre * acres);
 
     // --- INSURANCE INCOME ---
     result.insuranceIncomePerAcre = field.insuranceIncomePerAcre || 0;
@@ -380,12 +395,13 @@
     );
 
     // --- PROFIT ---
+    // Core profit = crop revenue − expenses (excludes insurance claims + aux/gov payments)
     result.profitPerAcre = round2(result.cropIncomePerAcre - result.expPerAcre);
     result.profitFarmWithoutPayments = round2(
-      result.cropIncomeTotal + result.insuranceIncomeTotal - result.expTotal
+      result.cropIncomeTotal - result.expTotal
     );
     result.profitFarmWithPayments = round2(
-      result.incomeWithPayments - result.expTotal
+      result.cropIncomeTotal + result.insuranceIncomeTotal + result.totalGovPayments - result.expTotal
     );
 
     // --- COP (Cost of Production per unit) ---
@@ -400,7 +416,8 @@
       acres: 0, rent: 0, springFert: 0, fallFert: 0, fert: 0, seed: 0, machinery: 0,
       laborOverhead: 0, fuel: 0, drying: 0, interest: 0,
       insurance: 0, expTotal: 0, cropIncome: 0, insIncome: 0,
-      govPayments: 0, incomeWithPayments: 0, profitWithPayments: 0,
+      govPayments: 0, coreIncome: 0, incomeWithPayments: 0,
+      cropProfit: 0, profitWithoutPayments: 0, profitWithPayments: 0,
       totalYield: 0
     };
 
@@ -422,15 +439,19 @@
       totals.cropIncome += b.cropIncomeTotal;
       totals.insIncome += b.insuranceIncomeTotal;
       totals.govPayments += b.totalGovPayments;
+      totals.coreIncome += b.cropIncomeTotal;
       totals.incomeWithPayments += b.incomeWithPayments;
+      totals.cropProfit += b.cropIncomeTotal - b.expTotal;
+      totals.profitWithoutPayments += b.profitFarmWithoutPayments;
       totals.profitWithPayments += b.profitFarmWithPayments;
       totals.totalYield += b.totalYield;
       return { field: f, budget: b };
     });
 
     // Weighted averages
+    // Core KPI: crop revenue − expenses (pure farming performance)
     totals.avgProfitPerAcre = totals.acres > 0
-      ? round2(totals.profitWithPayments / totals.acres) : 0;
+      ? round2(totals.cropProfit / totals.acres) : 0;
     totals.avgExpPerAcre = totals.acres > 0
       ? round2(totals.expTotal / totals.acres) : 0;
     totals.cop = totals.totalYield > 0
@@ -530,7 +551,29 @@
         totals: summary.totals
       };
 
-      if (ent.category === 'organic') {
+      // Mixed enterprises (system codes with both CON and ORG) split fields
+      // into separate dashboard entries so each crop lands in the right section.
+      var hasCon = ent.systemCodes && ent.systemCodes.some(function (c) { return /\bCON\b/i.test(c); });
+      var hasOrg = ent.systemCodes && ent.systemCodes.some(function (c) { return /\bORG\b/i.test(c); });
+      var isMixed = hasCon && hasOrg;
+
+      if (isMixed) {
+        var orgFields = entFields.filter(function (f) { return /\bORG\b/i.test(f.systemCode || ''); });
+        var conFields = entFields.filter(function (f) { return !/\bORG\b/i.test(f.systemCode || ''); });
+
+        if (conFields.length > 0) {
+          var conSummary = computeEnterpriseSummary(conFields, refs, settings, options);
+          var conCropRows = computeDashboardByCrop(conFields, refs, settings, options, conSummary.budgets);
+          var conEnt = Object.assign({}, ent, { name: ent.shortName + ' (Conv)', category: 'conventional' });
+          result.conventional.push({ enterprise: conEnt, cropRows: conCropRows, totals: conSummary.totals });
+        }
+        if (orgFields.length > 0) {
+          var orgSummary = computeEnterpriseSummary(orgFields, refs, settings, options);
+          var orgCropRows = computeDashboardByCrop(orgFields, refs, settings, options, orgSummary.budgets);
+          var orgEnt = Object.assign({}, ent, { name: ent.shortName + ' (Org)', category: 'organic' });
+          result.organic.push({ enterprise: orgEnt, cropRows: orgCropRows, totals: orgSummary.totals });
+        }
+      } else if (ent.category === 'organic') {
         result.organic.push(entry);
       } else {
         result.conventional.push(entry);
@@ -544,7 +587,7 @@
       acres: 0, rent: 0, springFert: 0, fallFert: 0, fert: 0, seed: 0, machinery: 0,
       laborOverhead: 0, fuel: 0, drying: 0, interest: 0,
       insurance: 0, expTotal: 0, cropIncome: 0, insIncome: 0,
-      govPayments: 0, incomeWithPayments: 0, profitWithPayments: 0
+      govPayments: 0, incomeWithPayments: 0, cropProfit: 0, profitWithPayments: 0
     };
     result.enterpriseSummaries.forEach(function (es) {
       var t = es.totals;
@@ -565,6 +608,7 @@
       grand.insIncome += t.insIncome;
       grand.govPayments += t.govPayments;
       grand.incomeWithPayments += t.incomeWithPayments;
+      grand.cropProfit += t.cropProfit;
       grand.profitWithPayments += t.profitWithPayments;
     });
     result.grandTotals = grand;
