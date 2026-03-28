@@ -90,9 +90,9 @@ export async function GET() {
       })
     }
     groups.push({
-      module: 'fsa',
-      label: MODULE_SOURCES.fsa.label,
-      badge: MODULE_SOURCES.fsa.badge,
+      module: 'fsa-578',
+      label: MODULE_SOURCES['fsa-578'].label,
+      badge: MODULE_SOURCES['fsa-578'].badge,
       items: fsaItems,
       offline: false,
     })
@@ -272,9 +272,9 @@ export async function GET() {
   // Only include budget group if there are items or it is offline
   if (budgetItems.length > 0 || budgetOffline) {
     groups.push({
-      module: 'budget',
-      label: MODULE_SOURCES.budget.label,
-      badge: MODULE_SOURCES.budget.badge,
+      module: 'farm-budget',
+      label: MODULE_SOURCES['farm-budget'].label,
+      badge: MODULE_SOURCES['farm-budget'].badge,
       items: budgetItems,
       offline: budgetOffline,
     })

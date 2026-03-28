@@ -29,9 +29,9 @@ export type ActionItemsResponse = {
 
 /** Module display metadata keyed by module identifier. */
 export const MODULE_SOURCES: Record<string, { label: string; badge: string }> = {
-  fsa: { label: 'FSA 578', badge: 'FSA' },
+  'fsa-578': { label: 'FSA 578', badge: 'FSA' },
   insurance: { label: 'Insurance', badge: 'INS' },
   claims: { label: 'Claims', badge: 'CLM' },
   'grain-tickets': { label: 'Grain Tickets', badge: 'GT' },
-  budget: { label: 'Farm Budget', badge: 'BUDG' },
+  'farm-budget': { label: 'Farm Budget', badge: 'BUDG' },
 }
