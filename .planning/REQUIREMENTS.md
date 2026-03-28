@@ -9,9 +9,9 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 ### Dashboard & Navigation
 
-- [ ] **DASH-01**: Portal dashboard shows actionable items (overdue claims, unreported CLUs, unreconciled settlements, delivery shortfalls) instead of static module cards
+- [x] **DASH-01**: Portal dashboard shows actionable items (overdue claims, unreported CLUs, unreconciled settlements, delivery shortfalls) instead of static module cards
 - [ ] **DASH-02**: Each dashboard action item links directly to the relevant module with context (filter/highlight the specific item)
-- [ ] **DASH-03**: Dashboard works when 1-2 Express apps are offline (Promise.allSettled with graceful degradation)
+- [x] **DASH-03**: Dashboard works when 1-2 Express apps are offline (Promise.allSettled with graceful degradation)
 
 ### Insurance & APH
 
@@ -74,9 +74,9 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DASH-01 | Phase 55 | Pending |
+| DASH-01 | Phase 55 | Complete |
 | DASH-02 | Phase 55 | Pending |
-| DASH-03 | Phase 55 | Pending |
+| DASH-03 | Phase 55 | Complete |
 | APH-01 | Phase 56 | Pending |
 | APH-02 | Phase 56 | Pending |
 | APH-03 | Phase 56 | Pending |
