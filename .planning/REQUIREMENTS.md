@@ -15,9 +15,9 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 ### Insurance & APH
 
-- [ ] **APH-01**: APH records table stores 4-10 years of actual yield per farm/unit/crop with source tracking
-- [ ] **APH-02**: APH computed from yield history using simple average (excluding zero-yield disaster years)
-- [ ] **APH-03**: Insurance guarantee auto-calculated from computed APH × coverage level
+- [x] **APH-01**: APH records table stores 4-10 years of actual yield per farm/unit/crop with source tracking
+- [x] **APH-02**: APH computed from yield history using simple average (excluding zero-yield disaster years)
+- [x] **APH-03**: Insurance guarantee auto-calculated from computed APH × coverage level
 - [ ] **PP-01**: Toggling prevented planting on a CLU/policy shows estimated PP indemnity using RMA coverage factors
 - [ ] **PP-02**: PP indemnity appears in insurance PDF report
 
@@ -77,9 +77,9 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | DASH-01 | Phase 55 | Complete |
 | DASH-02 | Phase 55 | Complete |
 | DASH-03 | Phase 55 | Complete |
-| APH-01 | Phase 56 | Pending |
-| APH-02 | Phase 56 | Pending |
-| APH-03 | Phase 56 | Pending |
+| APH-01 | Phase 56 | Complete |
+| APH-02 | Phase 56 | Complete |
+| APH-03 | Phase 56 | Complete |
 | MKT-01 | Phase 57 | Pending |
 | MKT-02 | Phase 57 | Pending |
 | MKT-03 | Phase 57 | Pending |

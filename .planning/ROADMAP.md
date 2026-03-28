@@ -527,7 +527,7 @@ Plans:
 | 53. Seed-Inventory & Meristem-Malt Pipelines | v10.0 | 4/4 | Complete | 2026-03-25 |
 | 54. Iframe Embed Navigation + Design Tokens | v10.0 | 4/4 | Complete | 2026-03-26 |
 | 55. Actionable Dashboard | 3/3 | Complete    | 2026-03-28 | - |
-| 56. Structured APH Database | v11.0 | 0/? | Not started | - |
+| 56. Structured APH Database | 1/2 | In Progress|  | - |
 | 57. Grain Marketing Position | v11.0 | 0/? | Not started | - |
 | 58. Field Activity Timeline | v11.0 | 0/? | Not started | - |
 | 59. Prevented Planting Calculator | v11.0 | 0/? | Not started | - |

@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 55: Actionable Dashboard
+**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 56: Structured APH Database
 
 ## Current Position
 
-Phase: 55 of 61 (Actionable Dashboard)
-Plan: 3 of 3 complete
-Status: Phase 55 COMPLETE — actionable dashboard API + UI shipped, module ID mismatch fixed
-Last activity: 2026-03-28 — Phase 55 Plan 03 complete. Fixed MODULE_SOURCES keys ('fsa'->'fsa-578', 'budget'->'farm-budget') so dashboard group headers navigate correctly to module routes.
+Phase: 56 of 61 (Structured APH Database)
+Plan: 1 of 2 complete
+Status: Phase 56 Plan 01 COMPLETE — APH records table migration, CRUD API, and calc functions shipped
+Last activity: 2026-03-28 — Phase 56 Plan 01 complete. Created aph_records Supabase table (migration script), computeAphFromRecords + computeGuarantee calc functions, and full CRUD API (GET/POST/PATCH/DELETE). APH-01, APH-02, APH-03 requirements satisfied.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -61,6 +61,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 55 P01 | 2 | 2 tasks | 3 files |
 | Phase 55 P02 | 2 | 2 tasks | 2 files |
 | Phase 55 P03 | 5 | 1 task | 2 files |
+| Phase 56 P01 | 2 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -137,6 +138,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 55]: Empty online groups excluded from action-items response — only groups with items or offline=true are returned
 - [Phase 55]: SSR pre-fetch is Supabase-only — Express data loads client-side on mount, avoiding slow SSR for offline Express apps
 - [Phase 55-03]: MODULE_SOURCES keys must match MODULES array ids exactly — 'fsa-578' not 'fsa', 'farm-budget' not 'budget'
+- [Phase 56]: computeAphFromRecords uses simple average (not acre-weighted) — consistent with computeAphFromClus pattern in same file
+- [Phase 56]: PATCH APH [id] sets updated_at server-side — client cannot set arbitrary timestamps
+- [Phase 56]: DELETE APH [id] returns 404 when Supabase returns empty array — no match treated as not found
 
 ### Pending Todos
 
