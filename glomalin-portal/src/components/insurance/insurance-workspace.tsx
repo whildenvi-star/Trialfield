@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
 import { PolicyDrawer } from './policy-drawer'
+import { AphPanel } from './aph-panel'
 import { CoverageMatrix } from './coverage-matrix'
 import { PayoutSimulator } from './payout-simulator'
 import { PricingStalenessBadge } from './pricing-staleness-badge'
@@ -238,6 +239,13 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
     } finally {
       setClaimSubmitting(false)
     }
+  }
+
+  function handleGuaranteeChange(newGuarantee: number) {
+    if (!selectedPolicyId) return
+    setPolicies((prev) =>
+      prev.map((p) => (p.id === selectedPolicyId ? { ...p, guarantee: newGuarantee } : p))
+    )
   }
 
   function openCreateDrawer() {
@@ -493,6 +501,25 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* APH History — shown when a policy is selected */}
+      {selectedPolicy && (
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-mono font-semibold text-glomalin-accent text-base">
+              APH History
+            </h2>
+            <p className="text-xs text-glomalin-muted font-mono">
+              {selectedPolicy.farm_name ?? '(no farm)'} — {selectedPolicy.crop ?? 'no crop'}
+            </p>
+          </div>
+          <AphPanel
+            policyId={selectedPolicy.id}
+            coverageLevel={selectedPolicy.coverage_level}
+            onGuaranteeChange={handleGuaranteeChange}
+          />
         </div>
       )}
 
