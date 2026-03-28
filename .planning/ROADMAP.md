@@ -387,10 +387,11 @@ Plans:
   1. The dashboard displays actionable items drawn from live data: overdue insurance claims, CLU records missing acreage, settlements with unmatched loads, and delivery shortfalls against forecast
   2. Clicking any dashboard action item navigates directly to the relevant module with the relevant record highlighted or filtered — no extra navigation steps required
   3. When 1-2 Express apps are offline, the dashboard degrades gracefully using Promise.allSettled — items from the offline app show an "Unavailable" state rather than crashing or blanking the entire dashboard
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 55-01-PLAN.md — Action-item API routes: aggregate status from Supabase + Express apps with Promise.allSettled
 - [ ] 55-02-PLAN.md — Actionable dashboard UI: item cards with source badges, deep-link navigation, and offline degradation states
+- [ ] 55-03-PLAN.md — Gap closure: fix MODULE_SOURCES key mismatch for FSA and Budget group header navigation
 
 ### Phase 56: Structured APH Database
 **Goal**: Insurance APH records exist as a structured multi-year table with computed APH and automatically derived insurance guarantees — not as manually maintained spreadsheet values
