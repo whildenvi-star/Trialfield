@@ -96,6 +96,66 @@ export function computeClaimAlert(policy: {
   return actual < effectiveGuarantee ? 'potential' : 'none'
 }
 
+// ===== APH Record Type =====
+
+export interface AphRecord {
+  id: string
+  policy_id: string
+  crop_year: number
+  actual_yield: number
+  source: 'manual' | 'grain-tickets' | 'import'
+  is_disaster_year: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+// ===== APH Records Calculation =====
+
+/**
+ * computeAphFromRecords — compute APH average from structured per-year yield history.
+ *
+ * APH-02: Computes simple average of non-excluded, non-zero yield years.
+ * Disaster years (is_disaster_year = true) and zero/negative yields are excluded
+ * from the calculation but still counted in excludedCount / totalCount for UI display.
+ *
+ * Returns:
+ *   aph           — simple average of includable yields, rounded to 2 decimals (0 if none)
+ *   includedCount — number of years used in the average
+ *   excludedCount — number of years excluded (disaster year or zero yield)
+ *   totalCount    — total records passed in
+ */
+export function computeAphFromRecords(records: AphRecord[]): {
+  aph: number
+  includedCount: number
+  excludedCount: number
+  totalCount: number
+} {
+  const totalCount = records.length
+  const includable = records.filter((r) => !r.is_disaster_year && r.actual_yield > 0)
+  const includedCount = includable.length
+  const excludedCount = totalCount - includedCount
+
+  if (includedCount === 0) {
+    return { aph: 0, includedCount: 0, excludedCount, totalCount }
+  }
+
+  const sum = includable.reduce((acc, r) => acc + r.actual_yield, 0)
+  const aph = round2(sum / includedCount)
+
+  return { aph, includedCount, excludedCount, totalCount }
+}
+
+/**
+ * computeGuarantee — derive insurance guarantee from computed APH and coverage level.
+ *
+ * APH-03: Auto-calculated insurance guarantee from computed APH.
+ * coverageLevel is stored as an integer (e.g., 75 = 75%). Divides by 100 internally.
+ */
+export function computeGuarantee(aph: number, coverageLevel: number): number {
+  return round2(aph * (coverageLevel / 100))
+}
+
 // ===== Grain Ticket Yield Matching =====
 
 /**
