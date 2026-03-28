@@ -3,6 +3,7 @@ const BUDGET_BASE = 'http://localhost:3001'
 const SEED_BASE = 'http://localhost:3006'
 const CERT_BASE = 'http://localhost:3004'
 const REGISTRY_BASE = 'http://localhost:3005'
+const GT_BASE = 'http://localhost:3007'
 
 const defaultOptions = {
   signal: AbortSignal.timeout(8000),
@@ -28,6 +29,14 @@ export async function fetchSeedService(path: string): Promise<Response> {
 /** Fetch from farm-registry service (Express, port 3005). */
 export async function fetchRegistryService(path: string): Promise<Response> {
   return fetch(`${REGISTRY_BASE}${path}`, {
+    ...defaultOptions,
+    headers: { Cookie: `embed_session=${EMBED_TOKEN}` },
+  })
+}
+
+/** Fetch from grain-tickets service (Express, port 3007). */
+export async function fetchGrainService(path: string): Promise<Response> {
+  return fetch(`${GT_BASE}${path}`, {
     ...defaultOptions,
     headers: { Cookie: `embed_session=${EMBED_TOKEN}` },
   })
