@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 55 of 61 (Actionable Dashboard)
-Plan: 1 of 1 complete
-Status: Phase 55 Plan 01 complete — action-items API shipped
-Last activity: 2026-03-28 — Phase 55 Plan 01 complete. GET /api/dashboard/action-items aggregating 5 sources with Promise.allSettled graceful degradation.
+Plan: 2 of 2 complete
+Status: Phase 55 COMPLETE — actionable dashboard API + UI shipped
+Last activity: 2026-03-28 — Phase 55 Plan 02 complete. ActionItemsList component + dashboard page rewired to action items replacing static module card grid.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -59,6 +59,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 54 P01 | 18 | 2 tasks | 20 files |
 | Phase 54 P04 | 5 | 2 tasks | 0 files |
 | Phase 55 P01 | 2 | 2 tasks | 3 files |
+| Phase 55 P02 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [v11.0 roadmap]: DASH, APH, MKT, FLD, PP, SET, AUTO requirement IDs are now correctly mapped in phase details — previous version used wrong DOM-XX and UXN-XX IDs
 - [Phase 55]: Supabase group failures silently skip (no offline flag) — Supabase outages are rare vs Express apps that genuinely go down during dev
 - [Phase 55]: Empty online groups excluded from action-items response — only groups with items or offline=true are returned
+- [Phase 55]: SSR pre-fetch is Supabase-only — Express data loads client-side on mount, avoiding slow SSR for offline Express apps
 
 ### Pending Todos
 
