@@ -85,6 +85,7 @@ export interface InsurancePolicy {
   notes?: string | null
   prevented_planting: boolean
   prevented_planting_acres: number | null
+  yield_synced_at?: string | null
 }
 
 export interface GcsEnrollment {

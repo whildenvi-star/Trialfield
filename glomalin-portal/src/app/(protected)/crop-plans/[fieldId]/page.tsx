@@ -18,7 +18,6 @@ import { offlineQueue } from '@/lib/offline/db'
 import { getLastSyncTimestamp } from '@/lib/offline/sync-engine'
 import type { CachedCropPlan } from '@/lib/offline/types'
 import type { OperatorRecord } from '@/lib/offline/crop-plan-sync'
-import type { SyncResult } from '@/lib/offline/sync-engine'
 
 // ─── relative time helper ─────────────────────────────────────────────────────
 
@@ -489,7 +488,7 @@ export default function CropPlanDetailPage() {
 
   // ── handle sync complete from SyncStatusPanel ─────────────────────────────
 
-  const handleSyncComplete = useCallback(async (_result: SyncResult) => {
+  const handleSyncComplete = useCallback(async () => {
     await refreshQueueState()
     if (!tokenRef.current || !fieldId) return
     try {

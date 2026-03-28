@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+require('dotenv').config();
 var express = require('express');
 var fs = require('fs');
 var path = require('path');
@@ -1336,7 +1337,7 @@ function buildSeasonalStatus(settings, cluRecords, insurancePolicies, budgetFiel
 
   // -- Early Season --
   var early = { flags: [] };
-  if (budgetFields) {
+  if (budgetFields.length) {
     early.budgetFieldCount = budgetFields.length;
     early.budgetTotalAcres = 0;
     budgetFields.forEach(function (f) { early.budgetTotalAcres += (parseFloat(f.acres) || 0); });
@@ -1496,12 +1497,12 @@ app.get('/api/season/status', async function (req, res) {
       ])
     ]);
 
-    var budgetFields = crossAppResults[0];
-    var budgetDash   = crossAppResults[1];
-    var seedDash     = crossAppResults[2];
-    var seedRecon    = crossAppResults[3];
-    var regFields    = crossAppResults[4];
-    var gtFarms      = crossAppResults[5];
+    var budgetFields = Array.isArray(crossAppResults[0]) ? crossAppResults[0] : [];
+    var budgetDash   = crossAppResults[1] || {};
+    var seedDash     = crossAppResults[2] || {};
+    var seedRecon    = Array.isArray(crossAppResults[3]) ? crossAppResults[3] : [];
+    var regFields    = Array.isArray(crossAppResults[4]) ? crossAppResults[4] : [];
+    var gtFarms      = Array.isArray(crossAppResults[5]) ? crossAppResults[5] : [];
     var gtStats      = crossAppResults[6];
 
     var season = buildSeasonalStatus(appSettings, cluRecords, insurancePolicies, budgetFields, budgetDash, seedDash, seedRecon, regFields, gtFarms);
@@ -1526,9 +1527,9 @@ app.get('/api/season/field-crosswalk', async function (req, res) {
       ])
     ]);
 
-    var regFields    = crossAppResults[0] || [];
-    var budgetFields = crossAppResults[1] || [];
-    var gtFarms      = crossAppResults[2] || [];
+    var regFields    = Array.isArray(crossAppResults[0]) ? crossAppResults[0] : [];
+    var budgetFields = Array.isArray(crossAppResults[1]) ? crossAppResults[1] : [];
+    var gtFarms      = Array.isArray(crossAppResults[2]) ? crossAppResults[2] : [];
 
     var cluFieldMap = {};
     cluRecords.forEach(function (r) {

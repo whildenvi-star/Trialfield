@@ -80,6 +80,7 @@ export function CluCard({
     if (isExpanded) {
       setDraft({
         crop: record.crop ?? '',
+        registry_crop_id: record.registry_crop_id ?? '',
         use: record.use ?? '',
         grain_plant_date: record.grain_plant_date ?? '',
         organic: record.organic,
@@ -203,6 +204,7 @@ export function CluCard({
   const handleCancel = () => {
     setDraft({
       crop: record.crop ?? '',
+      registry_crop_id: record.registry_crop_id ?? '',
       use: record.use ?? '',
       grain_plant_date: record.grain_plant_date ?? '',
       organic: record.organic,
