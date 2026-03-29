@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 57: Grain Marketing Position
+**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 59: Prevented Planting Calculator
 
 ## Current Position
 
-Phase: 57 of 61 (Grain Marketing Position) — COMPLETE
-Plan: 3 of 3 complete
-Status: Phase 57 COMPLETE — gap closure applied. yieldSummaries prop wired from SSR to client state (fixes Est. Production zeroing after CRUD); marketing module registered in MODULES array (discoverable via dashboard).
-Last activity: 2026-03-29 — Phase 57 Plan 03 complete. Gap closure: wired yieldSummaries prop from page.tsx to MarketingWorkspace useState, added marketing entry to MODULES array.
+Phase: 59 of 61 (Prevented Planting Calculator) — COMPLETE
+Plan: 1 of 1 complete
+Status: Phase 59 COMPLETE — computePpIndemnity pure function added to insurance calc engine; PP toggle + PP acres input + inline indemnity estimate wired into policy drawer.
+Last activity: 2026-03-29 — Phase 59 Plan 01 complete. PP indemnity = guarantee × 60% × spring_price × pp_acres. PP fields persist via existing PATCH/POST API.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -153,6 +153,10 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 57-02]: Array.from(positionMap) used for Map iteration to satisfy TypeScript downlevelIteration without tsconfig change
 - [Phase 57-03]: yieldSummaries passed as prop from SSR page.tsx to client MarketingWorkspace — useState(initialYieldSummaries) ensures CRUD recompute uses real yield data
 - [Phase 57-03]: marketing module placed after claims in MODULES array — follows native portal module grouping (fsa-578, insurance, claims, marketing, macro-rollup)
+- [Phase 59]: PP_COVERAGE_FACTOR = 0.60 exported as named constant from insurance/calc.ts — RMA standard for most crops; single source for UI and future PDF
+- [Phase 59]: PricingEntryForPp is a module-private interface in insurance/calc.ts — avoids cross-lib import while shape-compatible with PricingEntry from fsa/calc
+- [Phase 59]: PP indemnity estimated client-side via inline IIFE in JSX — no additional state needed, recalculates reactively on every form change
+- [Phase 59]: pricing prop added to PolicyDrawer (not fetched inside) — consistent with workspace-owns-data-fetching pattern
 
 ### Pending Todos
 
@@ -165,6 +169,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-29
-Stopped at: Completed 57-02-PLAN.md — marketing position UI: page, workspace, position table, contract drawer
+Stopped at: Completed 59-01-PLAN.md — prevented planting calculator: computePpIndemnity + PP toggle/acres UI in policy drawer
 Resume file: —
-Next action: Phase 58 (next phase in v11.0 roadmap)
+Next action: Phase 60 (next phase in v11.0 roadmap)
