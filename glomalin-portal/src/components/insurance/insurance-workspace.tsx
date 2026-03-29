@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
+import { computePpIndemnity } from '@/lib/insurance/calc'
 import { PolicyDrawer } from './policy-drawer'
 import { AphPanel } from './aph-panel'
 import { CoverageMatrix } from './coverage-matrix'
@@ -87,6 +88,17 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
     policies.filter((p) => p.crop && p.crop.trim()).map((p) => p.crop!.trim().toLowerCase())
   ).size
   const claimAlerts = policies.filter((p) => p.claim_alert === 'potential').length
+
+  // PP stat card — only computed when at least one policy has PP enabled
+  const ppPolicies = policies.filter((p) => p.prevented_planting)
+  const totalPpIndemnity = ppPolicies.reduce((sum, policy) => {
+    const { ppIndemnity } = computePpIndemnity(
+      { guarantee: policy.guarantee, prevented_planting_acres: policy.prevented_planting_acres },
+      initialPricing,
+      policy.crop
+    )
+    return sum + ppIndemnity
+  }, 0)
 
   const selectedPolicy = policies.find((p) => p.id === selectedPolicyId) ?? null
 
@@ -299,7 +311,7 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className={`grid grid-cols-1 gap-4 mb-8 ${ppPolicies.length > 0 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
         <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-5 py-4">
           <p className="text-xs text-glomalin-muted uppercase tracking-wide font-mono mb-1">Policies</p>
           <p className="text-3xl font-mono font-bold text-glomalin-text">{totalPolicies}</p>
@@ -314,6 +326,14 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
             {claimAlerts}
           </p>
         </div>
+        {ppPolicies.length > 0 && (
+          <div className="rounded-lg border border-amber-700/50 bg-amber-950/20 px-5 py-4">
+            <p className="text-xs text-amber-400/80 uppercase tracking-wide font-mono mb-1">PP Indemnity</p>
+            <p className="text-2xl font-mono font-bold text-amber-300">
+              ${totalPpIndemnity.toLocaleString()}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Disclaimer */}
@@ -350,6 +370,7 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
                 <th className="px-4 py-3 text-right text-glomalin-accent font-semibold">Guarantee (bu/ac)</th>
                 <th className="px-4 py-3 text-right text-glomalin-accent font-semibold">Actual (bu/ac)</th>
                 <th className="px-4 py-3 text-center text-glomalin-accent font-semibold">Alert</th>
+                <th className="px-4 py-3 text-center text-glomalin-accent font-semibold">PP</th>
                 <th className="px-4 py-3 text-center text-glomalin-accent font-semibold">Actions</th>
               </tr>
             </thead>
@@ -457,6 +478,37 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
                           Potential
                         </span>
                       ) : (
+                        <span className="text-glomalin-muted text-xs">—</span>
+                      )}
+                    </td>
+
+                    {/* Prevented Planting */}
+                    <td className="px-4 py-3 text-center">
+                      {policy.prevented_planting ? (() => {
+                        const { ppIndemnity, ppFactor } = computePpIndemnity(
+                          { guarantee: policy.guarantee, prevented_planting_acres: policy.prevented_planting_acres },
+                          initialPricing,
+                          policy.crop
+                        )
+                        void ppFactor
+                        return (
+                          <div className="flex flex-col items-center gap-0.5">
+                            <span className="text-amber-300 bg-amber-950/30 border border-amber-700/50 rounded px-1.5 py-0.5 text-xs font-semibold">
+                              PP
+                            </span>
+                            {ppIndemnity > 0 && (
+                              <span className="text-xs text-glomalin-text font-mono">
+                                ${ppIndemnity.toLocaleString()}
+                              </span>
+                            )}
+                            {(policy.prevented_planting_acres ?? 0) > 0 && (
+                              <span className="text-[10px] text-glomalin-muted font-mono">
+                                ({policy.prevented_planting_acres} ac)
+                              </span>
+                            )}
+                          </div>
+                        )
+                      })() : (
                         <span className="text-glomalin-muted text-xs">—</span>
                       )}
                     </td>
