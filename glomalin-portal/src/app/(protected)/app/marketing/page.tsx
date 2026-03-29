@@ -190,6 +190,7 @@ export default async function MarketingPage() {
         priceSource={priceSource}
         priceTimestamp={priceTimestamp}
         yieldAvailable={yieldAvailable}
+        yieldSummaries={yieldSummaries}
       />
     </Suspense>
   )

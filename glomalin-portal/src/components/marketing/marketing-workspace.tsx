@@ -13,6 +13,7 @@ interface MarketingWorkspaceProps {
   priceSource: string
   priceTimestamp: string | null
   yieldAvailable: boolean
+  yieldSummaries: YieldSummary[]
 }
 
 interface YieldSummary {
@@ -152,6 +153,7 @@ export function MarketingWorkspace({
   priceSource: initialPriceSource,
   priceTimestamp: initialPriceTimestamp,
   yieldAvailable,
+  yieldSummaries: initialYieldSummaries,
 }: MarketingWorkspaceProps) {
   const [contracts, setContracts] = useState<GrainContract[]>(initialContracts)
   const [positions, setPositions] = useState<MarketingPosition[]>(initialPositions)
@@ -166,7 +168,7 @@ export function MarketingWorkspace({
 
   // Yield summaries are server-loaded at page load; client uses cached copy for recompute
   // (yield summaries won't change during a session — no client-side refetch needed)
-  const [yieldSummaries] = useState<YieldSummary[]>([])
+  const [yieldSummaries] = useState<YieldSummary[]>(initialYieldSummaries)
 
   const recomputePositions = useCallback(
     (updatedContracts: GrainContract[], updatedPrices: CbotPrice[]) => {
