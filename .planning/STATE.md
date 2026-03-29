@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 58: Field Activity Timeline
+**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 60: Settlement Financial Summary
 
 ## Current Position
 
-Phase: 58 of 61 (Field Activity Timeline) — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 58 complete — field activity timeline UI: split-panel field list, progressive per-source loading workspace, color-coded entry cards, filters, gap markers, and PDF/CSV export.
-Last activity: 2026-03-29 — Phase 58 Plan 02 complete. Timeline UI: page.tsx, field-list.tsx, timeline-workspace.tsx, timeline-entry-card.tsx, timeline-filters.tsx, timeline-export.tsx.
+Phase: 60 of 61 (Settlement Financial Summary) — IN PROGRESS
+Plan: 1 of 2 complete
+Status: Phase 60 Plan 01 complete — GET /api/settlement-summary endpoint: per-buyer-per-crop aggregated revenue with contract price variance from portal grain_contracts.
+Last activity: 2026-03-29 — Phase 60 Plan 01 complete. settlement-summary endpoint: deliveredBushels, avgPricePerBushel, totalDeductions, netPayment, contractPricePerBushel (nullable), priceVariance (nullable).
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -70,6 +70,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 58-field-activity-timeline P01 | 184 | 3 tasks | 4 files |
 | Phase 58-field-activity-timeline P02 | 313 | 2 tasks | 8 files |
 | Phase 57.1-marketing-yield-summaries-production-fix P01 | 1 | 2 tasks | 1 files |
+| Phase 60-settlement-financial-summary P01 | 12 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -171,6 +172,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 58-02]: SOURCE_COLORS defined in timeline-workspace.tsx and exported — single source of truth for entry cards and filter chips
 - [Phase 58-02]: TimelineExport receives already-filtered entries as props — no additional aggregated API call at export time
 - [Phase 57.1]: fetchGrainService proxy is the single source of truth for grain-tickets base URL — never hardcode localhost:3007 in SSR page.tsx files
+- [Phase 60-01]: avgPricePerBushel uses (netPayment + totalDeductions) / deliveredBushels — gross revenue before deductions divided by bushels gives true $/bu for contract comparison
+- [Phase 60-01]: contractsAvailable boolean in settlement-summary response — UI can distinguish portal-down vs no-contracts-entered
+- [Phase 60-01]: Matching contracts filtered to price_per_bushel != null before weighted avg — basis-only contracts excluded from contract reference price
 
 ### Pending Todos
 
@@ -183,6 +187,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-29
-Stopped at: Completed 58-02-PLAN.md — field activity timeline UI: page, field-list, workspace, entry cards, filters, export
+Stopped at: Completed 60-01-PLAN.md — GET /api/settlement-summary endpoint in grain-tickets/server.js
 Resume file: —
-Next action: Phase 59 or next planned phase
+Next action: Phase 60 Plan 02 — Settlement financial summary UI

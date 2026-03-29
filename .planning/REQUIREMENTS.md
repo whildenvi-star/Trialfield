@@ -34,8 +34,8 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 ### Settlement & Revenue
 
-- [ ] **SET-01**: Settlement financial summary shows per-buyer per-crop revenue (delivered BU, price, deductions, net payment)
-- [ ] **SET-02**: Settlement financial summary compares contract price vs actual settlement price with variance
+- [x] **SET-01**: Settlement financial summary shows per-buyer per-crop revenue (delivered BU, price, deductions, net payment)
+- [x] **SET-02**: Settlement financial summary compares contract price vs actual settlement price with variance
 
 ### Workflow Automation
 
@@ -87,8 +87,8 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | FLD-02 | Phase 58 | Complete |
 | PP-01 | Phase 59 | Complete |
 | PP-02 | Phase 59 | Complete |
-| SET-01 | Phase 60 | Pending |
-| SET-02 | Phase 60 | Pending |
+| SET-01 | Phase 60 | Complete |
+| SET-02 | Phase 60 | Complete |
 | AUTO-01 | Phase 61 | Pending |
 | AUTO-02 | Phase 61 | Pending |
 | AUTO-03 | Phase 61 | Pending |
