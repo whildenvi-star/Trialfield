@@ -67,6 +67,14 @@ export const MODULES: Module[] = [
     type: 'native',
   },
   {
+    id: 'marketing',
+    label: 'Grain Marketing',
+    sublabel: 'Position & Contracts',
+    route: '/app/marketing',
+    status: 'live',
+    type: 'native',
+  },
+  {
     id: 'macro-rollup',
     label: 'Field Summary',
     sublabel: 'Whole-farm Overview',
