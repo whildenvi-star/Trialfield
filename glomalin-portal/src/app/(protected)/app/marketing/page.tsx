@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { MarketingWorkspace } from '@/components/marketing/marketing-workspace'
 import type { GrainContract, CbotPrice, MarketingPosition } from '@/lib/marketing/types'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
+import { fetchGrainService } from '@/app/api/mobile/_lib/proxy'
 
 interface YieldSummary {
   farmId: string
@@ -146,10 +147,8 @@ export default async function MarketingPage() {
       next: { revalidate: 0 },
       signal: AbortSignal.timeout(8000),
     }).then((r) => r.json() as Promise<CbotResponse>),
-    fetch(`http://localhost:3007/api/yield-summaries?cropYear=${CURRENT_CROP_YEAR}`, {
-      next: { revalidate: 0 },
-      signal: AbortSignal.timeout(5000),
-    }).then((r) => r.json() as Promise<YieldSummary[]>),
+    fetchGrainService(`/api/yield-summaries?cropYear=${CURRENT_CROP_YEAR}`)
+      .then((r) => r.json() as Promise<YieldSummary[]>),
   ])
 
   const contractsSettled: GrainContract[] =
