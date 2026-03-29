@@ -294,6 +294,9 @@
     <section id="tab-settlements" class="tab-content">
       <h2>Settlements</h2>
 
+      <div id="settlement-summary-container" style="margin-bottom: 24px;"></div>
+      <hr style="border-color: var(--border, #2a2218); margin: 16px 0;">
+
       <div class="settlement-sub-nav">
         <button class="settlement-nav-btn active" data-view="import">Import File</button>
         <button class="settlement-nav-btn" data-view="manual">Manual Entry</button>
@@ -370,6 +373,7 @@
   <script src="farms.js"></script>
   <script src="scan.js"></script>
   <script src="settlements.js"></script>
+  <script src="settlement-summary.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
