@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 57 of 61 (Grain Marketing Position)
-Plan: 1 of 2 complete
-Status: Phase 57 Plan 01 COMPLETE — grain_contracts table DDL, CRUD API, and CBOT futures price endpoint shipped
-Last activity: 2026-03-29 — Phase 57 Plan 01 complete. Created grain_contracts Supabase table with 6 contract types, RLS, and indexes. Built GET/POST/PATCH/DELETE contract API and CBOT price fetch endpoint with Barchart OnDemand integration and manual-fallback. MKT-01, MKT-02, MKT-03 requirements satisfied.
+Phase: 57 of 61 (Grain Marketing Position) — COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 57 COMPLETE — grain marketing position UI shipped. Per-crop position table (Est. Production / Contracted / Unpriced / CBOT Exposure) + contract drawer for all 6 types.
+Last activity: 2026-03-29 — Phase 57 Plan 02 complete. Built marketing page (SSR with Promise.allSettled), PositionTable component (expandable inline contract rows), MarketingWorkspace (CBOT price badge, offline warning), and ContractDrawer (conditional fields per contract type, crop autocomplete).
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -64,6 +64,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 56 P01 | 2 | 2 tasks | 4 files |
 | Phase 56 P02 | 5 | 2 tasks | 2 files |
 | Phase 57 P01 | 2 | 2 tasks | 5 files |
+| Phase 57 P02 | 4 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -147,6 +148,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 57]: CBOT price endpoint returns manual-fallback when BARCHART_API_KEY not set — UI always works without an API key
 - [Phase 57]: Commodity canonical names match Phase 50 registry: Yellow Corn, Soybeans, Soft Red Winter Wheat, Oats
 - [Phase 57]: PATCH updated_at set server-side for grain_contracts — consistent with Phase 56 APH records precedent
+- [Phase 57-02]: computePositions duplicated in page.tsx (SSR) and marketing-workspace.tsx (client) — avoids shared import across server/client boundary
+- [Phase 57-02]: Array.from(positionMap) used for Map iteration to satisfy TypeScript downlevelIteration without tsconfig change
 
 ### Pending Todos
 
@@ -159,6 +162,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-29
-Stopped at: Completed 57-01-PLAN.md — grain_contracts table DDL, CRUD API, and CBOT price fetch endpoint
+Stopped at: Completed 57-02-PLAN.md — marketing position UI: page, workspace, position table, contract drawer
 Resume file: —
-Next action: Continue Phase 57 — Plan 02 (marketing position UI)
+Next action: Phase 58 (next phase in v11.0 roadmap)

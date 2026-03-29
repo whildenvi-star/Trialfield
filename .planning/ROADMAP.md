@@ -143,7 +143,7 @@
 
 - [x] **Phase 55: Actionable Dashboard** - Replace module cards with live actionable items showing what needs attention today (completed 2026-03-28)
 - [x] **Phase 56: Structured APH Database** - Build multi-year APH records table with computed APH and insurance guarantee auto-calculation (completed 2026-03-28)
-- [ ] **Phase 57: Grain Marketing Position** - Show contracted vs unpriced bushels per crop with CBOT exposure calculation
+- [x] **Phase 57: Grain Marketing Position** - Show contracted vs unpriced bushels per crop with CBOT exposure calculation (completed 2026-03-29)
 - [ ] **Phase 58: Field Activity Timeline** - Unified chronological timeline per field pulling from all 4 data sources
 - [ ] **Phase 59: Prevented Planting Calculator** - Toggle PP on a CLU and see estimated indemnity from RMA coverage factors in PDF
 - [ ] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance
@@ -528,7 +528,7 @@ Plans:
 | 54. Iframe Embed Navigation + Design Tokens | v10.0 | 4/4 | Complete | 2026-03-26 |
 | 55. Actionable Dashboard | 3/3 | Complete    | 2026-03-28 | - |
 | 56. Structured APH Database | 2/2 | Complete    | 2026-03-28 | - |
-| 57. Grain Marketing Position | 1/2 | In Progress|  | - |
+| 57. Grain Marketing Position | 2/2 | Complete   | 2026-03-29 | - |
 | 58. Field Activity Timeline | v11.0 | 0/? | Not started | - |
 | 59. Prevented Planting Calculator | v11.0 | 0/? | Not started | - |
 | 60. Settlement Financial Summary | v11.0 | 0/? | Not started | - |
