@@ -75,6 +75,14 @@ export const MODULES: Module[] = [
     type: 'native',
   },
   {
+    id: 'field-timeline',
+    label: 'Field Timeline',
+    sublabel: 'Activity History',
+    route: '/app/field-timeline',
+    status: 'live',
+    type: 'native',
+  },
+  {
     id: 'macro-rollup',
     label: 'Field Summary',
     sublabel: 'Whole-farm Overview',
