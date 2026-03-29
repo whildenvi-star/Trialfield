@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { InsurancePolicy } from '@/lib/fsa/calc'
+import type { InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
+import { computePpIndemnity, PP_COVERAGE_FACTOR } from '@/lib/insurance/calc'
 
 interface PolicyFormData {
   farm_name: string
@@ -16,6 +17,8 @@ interface PolicyFormData {
   premium_per_acre: string
   agent_name: string
   notes: string
+  prevented_planting: boolean
+  prevented_planting_acres: string
 }
 
 interface PolicyDrawerProps {
@@ -23,6 +26,7 @@ interface PolicyDrawerProps {
   policy: InsurancePolicy | null
   onClose: () => void
   onSave: (data: PolicyFormData) => void
+  pricing: PricingEntry[]
 }
 
 const EMPTY_FORM: PolicyFormData = {
@@ -38,6 +42,8 @@ const EMPTY_FORM: PolicyFormData = {
   premium_per_acre: '',
   agent_name: '',
   notes: '',
+  prevented_planting: false,
+  prevented_planting_acres: '',
 }
 
 function policyToForm(policy: InsurancePolicy): PolicyFormData {
@@ -54,10 +60,12 @@ function policyToForm(policy: InsurancePolicy): PolicyFormData {
     premium_per_acre: policy.premium_per_acre != null ? String(policy.premium_per_acre) : '',
     agent_name: policy.agent_name ?? '',
     notes: policy.notes ?? '',
+    prevented_planting: policy.prevented_planting ?? false,
+    prevented_planting_acres: policy.prevented_planting_acres != null ? String(policy.prevented_planting_acres) : '',
   }
 }
 
-export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProps) {
+export function PolicyDrawer({ open, policy, onClose, onSave, pricing }: PolicyDrawerProps) {
   const isEdit = policy !== null
   const [form, setForm] = useState<PolicyFormData>(EMPTY_FORM)
   const [aphData, setAphData] = useState<{ avgAph: number; count: number; totalRecords: number } | null>(null)
@@ -90,7 +98,13 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: name === 'coverage_level' ? Number(value) : value }))
+    if (name === 'coverage_level') {
+      setForm((prev) => ({ ...prev, [name]: Number(value) }))
+    } else if (name === 'prevented_planting' && e.target instanceof HTMLInputElement) {
+      setForm((prev) => ({ ...prev, prevented_planting: e.target instanceof HTMLInputElement ? e.target.checked : prev.prevented_planting }))
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }))
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -312,6 +326,74 @@ export function PolicyDrawer({ open, policy, onClose, onSave }: PolicyDrawerProp
               ) : (
                 <p className="text-glomalin-muted">No matching CLU records found</p>
               )}
+            </div>
+          )}
+
+          {/* Prevented Planting */}
+          <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
+            Prevented Planting
+          </p>
+
+          <div className="mb-3 flex items-center gap-2">
+            <input
+              id="prevented_planting"
+              name="prevented_planting"
+              type="checkbox"
+              checked={form.prevented_planting}
+              onChange={handleChange}
+              className="w-4 h-4 rounded border border-glomalin-border bg-glomalin-bg accent-glomalin-accent cursor-pointer"
+            />
+            <label htmlFor="prevented_planting" className="text-sm text-glomalin-text font-mono cursor-pointer">
+              Prevented Planting
+            </label>
+          </div>
+
+          {form.prevented_planting && (
+            <div className="mb-3">
+              <label className={labelClass} htmlFor="prevented_planting_acres">PP Acres</label>
+              <input
+                id="prevented_planting_acres"
+                name="prevented_planting_acres"
+                type="number"
+                step="0.01"
+                min="0"
+                value={form.prevented_planting_acres}
+                onChange={handleChange}
+                className={inputClass}
+                placeholder="e.g. 450"
+              />
+
+              {/* PP indemnity estimate — shown when pp acres entered and pricing available */}
+              {(() => {
+                const ppAcres = parseFloat(form.prevented_planting_acres)
+                const guarantee = parseFloat(form.guarantee)
+                if (!isNaN(ppAcres) && ppAcres > 0 && !isNaN(guarantee) && guarantee > 0) {
+                  const result = computePpIndemnity(
+                    { guarantee, prevented_planting_acres: ppAcres },
+                    pricing,
+                    form.crop || null
+                  )
+                  if (result.ppIndemnity > 0) {
+                    return (
+                      <div className="mt-2 rounded border border-glomalin-border bg-glomalin-bg px-3 py-2 text-xs font-mono">
+                        <p className="text-glomalin-accent font-semibold mb-0.5">PP Indemnity Estimate</p>
+                        <p className="text-glomalin-text">
+                          ${result.ppIndemnity.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </p>
+                        <p className="text-glomalin-muted mt-0.5">
+                          {guarantee} bu/ac guarantee × {(PP_COVERAGE_FACTOR * 100).toFixed(0)}% × ${result.springPrice.toFixed(2)} spring price × {ppAcres} ac
+                        </p>
+                      </div>
+                    )
+                  }
+                  return (
+                    <p className="mt-1 text-xs text-glomalin-muted font-mono">
+                      No pricing data available for {form.crop || 'this crop'}
+                    </p>
+                  )
+                }
+                return null
+              })()}
             </div>
           )}
 

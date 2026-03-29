@@ -36,6 +36,8 @@ interface PolicyFormData {
   premium_per_acre: string
   agent_name: string
   notes: string
+  prevented_planting: boolean
+  prevented_planting_acres: string
 }
 
 interface InsuranceWorkspaceProps {
@@ -104,6 +106,8 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
       premium_per_acre: formData.premium_per_acre ? parseFloat(formData.premium_per_acre) : null,
       agent_name: formData.agent_name || null,
       notes: formData.notes || null,
+      prevented_planting: formData.prevented_planting,
+      prevented_planting_acres: formData.prevented_planting_acres ? parseFloat(formData.prevented_planting_acres) : null,
     }
 
     try {
@@ -141,6 +145,8 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
       premium_per_acre: formData.premium_per_acre ? parseFloat(formData.premium_per_acre) : null,
       agent_name: formData.agent_name || null,
       notes: formData.notes || null,
+      prevented_planting: formData.prevented_planting,
+      prevented_planting_acres: formData.prevented_planting_acres ? parseFloat(formData.prevented_planting_acres) : null,
     }
 
     try {
@@ -573,6 +579,7 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
         policy={editingPolicy}
         onClose={() => setDrawerOpen(false)}
         onSave={handleDrawerSave}
+        pricing={initialPricing}
       />
 
       {/* File Claim modal */}
