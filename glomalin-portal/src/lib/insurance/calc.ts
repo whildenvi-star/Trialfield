@@ -158,6 +158,63 @@ export function computeGuarantee(aph: number, coverageLevel: number): number {
 
 // ===== Grain Ticket Yield Matching =====
 
+// ===== Prevented Planting Calculation =====
+
+/**
+ * PP_COVERAGE_FACTOR — RMA standard prevented planting coverage factor.
+ * Most crops (corn, soybeans, wheat, barley, oats, rye) receive 60% of the insured guarantee.
+ * Source: RMA Prevented Planting Standards Handbook.
+ */
+export const PP_COVERAGE_FACTOR = 0.60
+
+/**
+ * computePpIndemnity — estimate prevented planting indemnity using RMA standard formula.
+ *
+ * PP Indemnity = guarantee × PP_coverage_factor × spring_price × prevented_planting_acres
+ *
+ * Uses the same pricing lookup pattern as computeInsurancePolicy (case-insensitive crop match).
+ * Returns zeros when pricing is unavailable or prevented_planting_acres is null/0.
+ *
+ * @param policy  - object with guarantee (bu/ac) and prevented_planting_acres
+ * @param pricing - PricingEntry array from insurance_pricing table
+ * @param crop    - crop name string (case-insensitive, matched against pricing)
+ * @returns       - { ppIndemnity, ppGuarantee, springPrice, ppFactor }
+ */
+export function computePpIndemnity(
+  policy: { guarantee: number; prevented_planting_acres: number | null },
+  pricing: PricingEntryForPp[],
+  crop: string | null
+): { ppIndemnity: number; ppGuarantee: number; springPrice: number; ppFactor: number } {
+  const zero = { ppIndemnity: 0, ppGuarantee: 0, springPrice: 0, ppFactor: PP_COVERAGE_FACTOR }
+
+  const ppAcres = policy.prevented_planting_acres ?? 0
+  if (!policy.guarantee || policy.guarantee <= 0 || ppAcres <= 0) return zero
+
+  // Price lookup — case-insensitive match on crop name
+  let springPrice = 0
+  if (crop) {
+    const lc = crop.toLowerCase().trim()
+    for (const entry of pricing) {
+      if (entry.crop.toLowerCase().trim() === lc) {
+        springPrice = entry.spring_price
+        break
+      }
+    }
+  }
+  if (springPrice <= 0) return zero
+
+  const ppGuarantee = round2(policy.guarantee * PP_COVERAGE_FACTOR)
+  const ppIndemnity = round2(ppGuarantee * springPrice * ppAcres)
+
+  return { ppIndemnity, ppGuarantee, springPrice, ppFactor: PP_COVERAGE_FACTOR }
+}
+
+// Minimal type used by computePpIndemnity — matches PricingEntry from @/lib/fsa/calc
+interface PricingEntryForPp {
+  crop: string
+  spring_price: number
+}
+
 /**
  * findBestGrainMatch — score-based matching between an insurance policy and grain ticket farms.
  *
