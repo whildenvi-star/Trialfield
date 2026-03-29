@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 57 of 61 (Grain Marketing Position) — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 57 COMPLETE — grain marketing position UI shipped. Per-crop position table (Est. Production / Contracted / Unpriced / CBOT Exposure) + contract drawer for all 6 types.
-Last activity: 2026-03-29 — Phase 57 Plan 02 complete. Built marketing page (SSR with Promise.allSettled), PositionTable component (expandable inline contract rows), MarketingWorkspace (CBOT price badge, offline warning), and ContractDrawer (conditional fields per contract type, crop autocomplete).
+Plan: 3 of 3 complete
+Status: Phase 57 COMPLETE — gap closure applied. yieldSummaries prop wired from SSR to client state (fixes Est. Production zeroing after CRUD); marketing module registered in MODULES array (discoverable via dashboard).
+Last activity: 2026-03-29 — Phase 57 Plan 03 complete. Gap closure: wired yieldSummaries prop from page.tsx to MarketingWorkspace useState, added marketing entry to MODULES array.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -65,6 +65,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 56 P02 | 5 | 2 tasks | 2 files |
 | Phase 57 P01 | 2 | 2 tasks | 5 files |
 | Phase 57 P02 | 4 | 2 tasks | 4 files |
+| Phase 57 P03 | 65 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -150,6 +151,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 57]: PATCH updated_at set server-side for grain_contracts — consistent with Phase 56 APH records precedent
 - [Phase 57-02]: computePositions duplicated in page.tsx (SSR) and marketing-workspace.tsx (client) — avoids shared import across server/client boundary
 - [Phase 57-02]: Array.from(positionMap) used for Map iteration to satisfy TypeScript downlevelIteration without tsconfig change
+- [Phase 57-03]: yieldSummaries passed as prop from SSR page.tsx to client MarketingWorkspace — useState(initialYieldSummaries) ensures CRUD recompute uses real yield data
+- [Phase 57-03]: marketing module placed after claims in MODULES array — follows native portal module grouping (fsa-578, insurance, claims, marketing, macro-rollup)
 
 ### Pending Todos
 
