@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 59 of 61 (Prevented Planting Calculator) — COMPLETE
-Plan: 1 of 1 complete
-Status: Phase 59 COMPLETE — computePpIndemnity pure function added to insurance calc engine; PP toggle + PP acres input + inline indemnity estimate wired into policy drawer.
-Last activity: 2026-03-29 — Phase 59 Plan 01 complete. PP indemnity = guarantee × 60% × spring_price × pp_acres. PP fields persist via existing PATCH/POST API.
+Plan: 2 of 2 complete
+Status: Phase 59 COMPLETE — PP indemnity wired into policy table (badge + dollars + acres) and insurance PDF (PP column in Page 1 + conditional Page 3 Prevented Planting Summary).
+Last activity: 2026-03-28 — Phase 59 Plan 02 complete. PP badge/indemnity in policy table; conditional PP Summary PDF page with per-policy breakdown table and totals row.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -66,6 +66,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 57 P01 | 2 | 2 tasks | 5 files |
 | Phase 57 P02 | 4 | 2 tasks | 4 files |
 | Phase 57 P03 | 65 | 2 tasks | 3 files |
+| Phase 59 P02 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -157,6 +158,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 59]: PricingEntryForPp is a module-private interface in insurance/calc.ts — avoids cross-lib import while shape-compatible with PricingEntry from fsa/calc
 - [Phase 59]: PP indemnity estimated client-side via inline IIFE in JSX — no additional state needed, recalculates reactively on every form change
 - [Phase 59]: pricing prop added to PolicyDrawer (not fetched inside) — consistent with workspace-owns-data-fetching pattern
+- [Phase 59-02]: PP cell uses inline IIFE in JSX — avoids extra state, matches Phase 59-01 PolicyDrawer pattern
+- [Phase 59-02]: Conditional PDF page: ppPolicies.length > 0 gate wraps entire Page element — same pattern as hasPricing gate on Page 2
 
 ### Pending Todos
 
