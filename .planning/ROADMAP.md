@@ -144,6 +144,7 @@
 - [x] **Phase 55: Actionable Dashboard** - Replace module cards with live actionable items showing what needs attention today (completed 2026-03-28)
 - [x] **Phase 56: Structured APH Database** - Build multi-year APH records table with computed APH and insurance guarantee auto-calculation (completed 2026-03-28)
 - [x] **Phase 57: Grain Marketing Position** - Show contracted vs unpriced bushels per crop with CBOT exposure calculation (completed 2026-03-29)
+- [ ] **Phase 57.1: Marketing Yield-Summaries Production Fix** - Fix hardcoded localhost URL breaking Est. Production in production
 - [ ] **Phase 58: Field Activity Timeline** - Unified chronological timeline per field pulling from all 4 data sources
 - [x] **Phase 59: Prevented Planting Calculator** - Toggle PP on a CLU and see estimated indemnity from RMA coverage factors in PDF (completed 2026-03-29)
 - [ ] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance
@@ -419,6 +420,18 @@ Plans:
 - [ ] 57-01-PLAN.md — Grain contracts Supabase table (crop, bushels, price, type, delivery date) + CBOT price fetch endpoint
 - [ ] 57-02-PLAN.md — Marketing position UI: per-crop position table, contract entry form, unpriced exposure calculation
 - [ ] 57-03-PLAN.md — Gap closure: wire yieldSummaries prop + register marketing module in MODULES array
+
+### Phase 57.1: Marketing Yield-Summaries Production Fix
+**Goal**: The grain marketing position page fetches yield summaries through the proper server-side proxy instead of hardcoded localhost — fixing the production break where Est. Production shows 0 for all crops
+**Depends on**: Phase 57 (marketing position must exist before fixing its yield fetch)
+**Requirements**: MKT-01, MKT-02
+**Gap Closure**: Closes integration gap from v11.0 audit — hardcoded `http://localhost:3007` in `marketing/page.tsx:149`
+**Success Criteria** (what must be TRUE):
+  1. The marketing position page fetches yield summaries using an env-var-based URL or server-side proxy — not hardcoded localhost
+  2. Est. Production column shows correct values in both local dev and production environments
+**Plans**: 1 plan
+Plans:
+- [ ] 57.1-01-PLAN.md — Replace hardcoded localhost:3007 yield-summaries fetch with proper proxy pattern
 
 ### Phase 58: Field Activity Timeline
 **Goal**: Every activity touching a field — planned operations, confirmed passes, FieldOps machine data, and grain deliveries — appears in a single chronological timeline view so the farm manager can see the complete field history in one place
