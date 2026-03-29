@@ -145,7 +145,7 @@
 - [x] **Phase 56: Structured APH Database** - Build multi-year APH records table with computed APH and insurance guarantee auto-calculation (completed 2026-03-28)
 - [x] **Phase 57: Grain Marketing Position** - Show contracted vs unpriced bushels per crop with CBOT exposure calculation (completed 2026-03-29)
 - [ ] **Phase 57.1: Marketing Yield-Summaries Production Fix** - Fix hardcoded localhost URL breaking Est. Production in production
-- [ ] **Phase 58: Field Activity Timeline** - Unified chronological timeline per field pulling from all 4 data sources
+- [x] **Phase 58: Field Activity Timeline** - Unified chronological timeline per field pulling from all 4 data sources (completed 2026-03-29)
 - [x] **Phase 59: Prevented Planting Calculator** - Toggle PP on a CLU and see estimated indemnity from RMA coverage factors in PDF (completed 2026-03-29)
 - [ ] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance
 - [ ] **Phase 61: Auto Field Propagation** - Adding a field in farm-registry auto-creates downstream records in all apps
@@ -543,7 +543,7 @@ Plans:
 | 55. Actionable Dashboard | 3/3 | Complete    | 2026-03-28 | - |
 | 56. Structured APH Database | 2/2 | Complete    | 2026-03-28 | - |
 | 57. Grain Marketing Position | 3/3 | Complete    | 2026-03-29 | - |
-| 58. Field Activity Timeline | 1/2 | In Progress|  | - |
+| 58. Field Activity Timeline | 2/2 | Complete   | 2026-03-29 | - |
 | 59. Prevented Planting Calculator | 2/2 | Complete    | 2026-03-29 | - |
 | 60. Settlement Financial Summary | v11.0 | 0/? | Not started | - |
 | 61. Auto Field Propagation | v11.0 | 0/? | Not started | - |
