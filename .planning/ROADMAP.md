@@ -427,10 +427,10 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Selecting a field opens a unified timeline showing all activities in date order, drawing from farm-budget planned passes, organic-cert confirmed operations, FieldOps machine data, and grain-ticket delivery records for that field
   2. Each timeline entry is color-coded by source (budget / organic-cert / FieldOps / grain-tickets) and can be expanded inline to show the full details for that activity
-**Plans**: 3 plans
+**Plans**: 2 plans
 Plans:
-- [ ] 58-01-PLAN.md — Timeline aggregation API: fetch and merge activity data from all 4 sources by registry_field_id using Promise.allSettled
-- [ ] 58-02-PLAN.md — Field timeline UI: chronological list, source color-coding, expand-to-detail, field selector
+- [ ] 58-01-PLAN.md — Timeline types, per-source fetch functions, and GET /api/timeline/:fieldId aggregation endpoint
+- [ ] 58-02-PLAN.md — Field timeline UI: module page, field list, chronological timeline with source color-coding, expand-to-detail, filters, paired comparison, PDF/CSV export
 
 ### Phase 59: Prevented Planting Calculator
 **Goal**: Farm manager can toggle prevented planting on a CLU/policy and immediately see the estimated PP indemnity — and that figure appears in the insurance PDF report without manual editing
