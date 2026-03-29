@@ -952,6 +952,142 @@ app.get('/api/settlement-prices', async (req, res) => {
   }
 });
 
+// --- Settlement financial summary by buyer + crop (SET-01) ---
+// Returns per-buyer per-crop aggregated revenue: delivered bushels, avg price, deductions, net payment.
+// Joins contract prices from portal grain_contracts for variance calculation.
+// Optional query params: ?cropYear=2026 (defaults to current harvest year using same Jan-May logic as getCropYear)
+app.get('/api/settlement-summary', async (req, res) => {
+  try {
+    // Determine default crop year: Jan-May = prior harvest year
+    const now = new Date();
+    const defaultCropYear = (now.getMonth() + 1) <= 5 ? now.getFullYear() - 1 : now.getFullYear();
+    const cropYear = req.query.cropYear ? parseInt(req.query.cropYear, 10) : defaultCropYear;
+
+    // Fetch matched settlement lines with ticket crop and buyer info
+    const lines = await prisma.settlementLine.findMany({
+      where: {
+        settlement: { cropYear },
+        matchStatus: { in: ['matched', 'manual'] },
+        ticketId: { not: null }
+      },
+      select: {
+        netBushels: true,
+        price: true,
+        deductions: true,
+        netPayment: true,
+        ticket: { select: { crop: true, buyerId: true } },
+        settlement: { select: { buyer: { select: { name: true, id: true } } } }
+      }
+    });
+
+    // Aggregate per buyer+crop
+    const groupMap = {};
+    lines.forEach(l => {
+      const buyerName = l.settlement?.buyer?.name || 'Unknown';
+      const buyerId = l.settlement?.buyer?.id || null;
+      const crop = l.ticket?.crop || 'Unknown';
+      const key = `${buyerName}||${crop}`;
+      if (!groupMap[key]) {
+        groupMap[key] = {
+          buyerName,
+          buyerId,
+          crop,
+          _bushels: [],
+          _payments: [],
+          _prices: [],
+          _deductions: [],
+          lineCount: 0
+        };
+      }
+      const g = groupMap[key];
+      const nb = l.netBushels != null ? parseFloat(l.netBushels) : null;
+      const pr = l.price != null ? parseFloat(l.price) : null;
+      const ded = l.deductions != null ? parseFloat(l.deductions) : null;
+      const net = l.netPayment != null ? parseFloat(l.netPayment) : null;
+      if (nb != null) g._bushels.push(nb);
+      if (pr != null) g._prices.push(pr);
+      if (ded != null) g._deductions.push(ded);
+      if (net != null) g._payments.push(net);
+      g.lineCount++;
+    });
+
+    const summary = Object.values(groupMap).map(g => {
+      const deliveredBushels = g._bushels.reduce((s, v) => s + v, 0);
+      const totalDeductions = Math.round(g._deductions.reduce((s, v) => s + v, 0) * 100) / 100;
+      const netPayment = Math.round(g._payments.reduce((s, v) => s + v, 0) * 100) / 100;
+      // Weighted avg price: total net payment (before deductions) / bushels; fallback to simple avg
+      let avgPricePerBushel;
+      if (deliveredBushels > 0) {
+        // Use (netPayment + deductions) as revenue before deductions for weighted price
+        const totalRevenue = netPayment + totalDeductions;
+        avgPricePerBushel = Math.round((totalRevenue / deliveredBushels) * 10000) / 10000;
+      } else if (g._prices.length > 0) {
+        avgPricePerBushel = Math.round((g._prices.reduce((s, v) => s + v, 0) / g._prices.length) * 10000) / 10000;
+      } else {
+        avgPricePerBushel = null;
+      }
+      return {
+        buyerName: g.buyerName,
+        buyerId: g.buyerId,
+        crop: g.crop,
+        deliveredBushels: Math.round(deliveredBushels * 100) / 100,
+        avgPricePerBushel,
+        totalDeductions,
+        netPayment,
+        lineCount: g.lineCount,
+        contractPricePerBushel: null,
+        contractedBushels: null,
+        priceVariance: null
+      };
+    });
+
+    // Fetch contract prices from portal — graceful degradation if portal is down
+    const portalUrl = process.env.PORTAL_ORIGIN || 'http://localhost:3010';
+    let contracts = [];
+    let contractsAvailable = false;
+    try {
+      const portalRes = await fetch(`${portalUrl}/api/marketing/contracts?year=${cropYear}`, {
+        signal: AbortSignal.timeout(5000)
+      });
+      if (portalRes.ok) {
+        const portalData = await portalRes.json();
+        contracts = portalData.contracts || [];
+        contractsAvailable = true;
+      }
+    } catch (fetchErr) {
+      // Portal unreachable — proceed with no contract data
+      console.warn(`GET /api/settlement-summary: portal fetch failed — ${fetchErr.message}`);
+    }
+
+    // Join contract prices to summary rows
+    if (contractsAvailable && contracts.length > 0) {
+      summary.forEach(row => {
+        const matchingContracts = contracts.filter(c =>
+          c.buyer && c.buyer.toLowerCase() === row.buyerName.toLowerCase() &&
+          c.crop && c.crop.toLowerCase() === row.crop.toLowerCase() &&
+          c.price_per_bushel != null
+        );
+        if (matchingContracts.length > 0) {
+          const totalBushels = matchingContracts.reduce((s, c) => s + (c.bushels || 0), 0);
+          const weightedPrice = totalBushels > 0
+            ? matchingContracts.reduce((s, c) => s + (c.price_per_bushel * (c.bushels || 0)), 0) / totalBushels
+            : matchingContracts.reduce((s, c) => s + c.price_per_bushel, 0) / matchingContracts.length;
+          row.contractPricePerBushel = Math.round(weightedPrice * 10000) / 10000;
+          row.contractedBushels = Math.round(totalBushels * 100) / 100;
+          row.priceVariance = row.avgPricePerBushel != null
+            ? Math.round((row.avgPricePerBushel - row.contractPricePerBushel) * 10000) / 10000
+            : null;
+        }
+      });
+    }
+
+    res.json({ summary, cropYear, contractsAvailable });
+  } catch (e) {
+    console.error('GET /api/settlement-summary error:', e);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // --- Crop aggregation by canonical registry ID (CONS-11) ---
 // Used for cross-module crop summaries — groups by registryCropId, not crop name string.
 app.get('/api/summary/by-crop', async (req, res) => {
