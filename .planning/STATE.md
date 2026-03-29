@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 59: Prevented Planting Calculator
+**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 58: Field Activity Timeline
 
 ## Current Position
 
-Phase: 59 of 61 (Prevented Planting Calculator) — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 59 COMPLETE — PP indemnity wired into policy table (badge + dollars + acres) and insurance PDF (PP column in Page 1 + conditional Page 3 Prevented Planting Summary).
-Last activity: 2026-03-28 — Phase 59 Plan 02 complete. PP badge/indemnity in policy table; conditional PP Summary PDF page with per-policy breakdown table and totals row.
+Phase: 58 of 61 (Field Activity Timeline) — IN PROGRESS
+Plan: 1 of 2 complete
+Status: Phase 58 Plan 01 complete — timeline aggregation API with types, 4 per-source fetch functions, Promise.allSettled aggregated route, and per-source progressive-loading route.
+Last activity: 2026-03-29 — Phase 58 Plan 01 complete. Timeline API backbone: types.ts, fetch-sources.ts, GET /api/timeline/:fieldId, GET /api/timeline/:fieldId/:source.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -67,6 +67,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 57 P02 | 4 | 2 tasks | 4 files |
 | Phase 57 P03 | 65 | 2 tasks | 3 files |
 | Phase 59 P02 | 2 | 2 tasks | 2 files |
+| Phase 58-field-activity-timeline P01 | 184 | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -160,6 +161,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 59]: pricing prop added to PolicyDrawer (not fetched inside) — consistent with workspace-owns-data-fetching pattern
 - [Phase 59-02]: PP cell uses inline IIFE in JSX — avoids extra state, matches Phase 59-01 PolicyDrawer pattern
 - [Phase 59-02]: Conditional PDF page: ppPolicies.length > 0 gate wraps entire Page element — same pattern as hasPricing gate on Page 2
+- [Phase 58-01]: Per-source endpoint always returns HTTP 200 with error field — graceful degradation pattern
+- [Phase 58-01]: fetchFieldOpsActivities returns [] when no cert enterprise exists — avoids errors for non-organic fields
+- [Phase 58-01]: SOURCE_PRIORITY sort order: cert > fieldops > budget > grain — confirmed operations sort before planned for same date
 
 ### Pending Todos
 
@@ -172,6 +176,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-29
-Stopped at: Completed 59-01-PLAN.md — prevented planting calculator: computePpIndemnity + PP toggle/acres UI in policy drawer
+Stopped at: Completed 58-01-PLAN.md — timeline aggregation API: types, fetch functions, aggregated and per-source routes
 Resume file: —
-Next action: Phase 60 (next phase in v11.0 roadmap)
+Next action: Phase 58 Plan 02 (timeline UI)

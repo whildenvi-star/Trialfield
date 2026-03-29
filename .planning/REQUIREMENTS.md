@@ -29,7 +29,7 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 ### Field Operations
 
-- [ ] **FLD-01**: Unified field activity timeline shows all activities for a field in chronological order (budget planned passes, organic-cert confirmed ops, FieldOps machine data, grain-ticket deliveries)
+- [x] **FLD-01**: Unified field activity timeline shows all activities for a field in chronological order (budget planned passes, organic-cert confirmed ops, FieldOps machine data, grain-ticket deliveries)
 - [ ] **FLD-02**: Timeline entries color-coded by source with expandable details
 
 ### Settlement & Revenue
@@ -83,7 +83,7 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | MKT-01 | Phase 57 | Complete |
 | MKT-02 | Phase 57 | Complete |
 | MKT-03 | Phase 57 | Complete |
-| FLD-01 | Phase 58 | Pending |
+| FLD-01 | Phase 58 | Complete |
 | FLD-02 | Phase 58 | Pending |
 | PP-01 | Phase 59 | Complete |
 | PP-02 | Phase 59 | Complete |

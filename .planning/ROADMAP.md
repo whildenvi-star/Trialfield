@@ -530,7 +530,7 @@ Plans:
 | 55. Actionable Dashboard | 3/3 | Complete    | 2026-03-28 | - |
 | 56. Structured APH Database | 2/2 | Complete    | 2026-03-28 | - |
 | 57. Grain Marketing Position | 3/3 | Complete    | 2026-03-29 | - |
-| 58. Field Activity Timeline | v11.0 | 0/? | Not started | - |
+| 58. Field Activity Timeline | 1/2 | In Progress|  | - |
 | 59. Prevented Planting Calculator | 2/2 | Complete    | 2026-03-29 | - |
 | 60. Settlement Financial Summary | v11.0 | 0/? | Not started | - |
 | 61. Auto Field Propagation | v11.0 | 0/? | Not started | - |
