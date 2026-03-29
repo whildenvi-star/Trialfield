@@ -69,6 +69,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 59 P02 | 2 | 2 tasks | 2 files |
 | Phase 58-field-activity-timeline P01 | 184 | 3 tasks | 4 files |
 | Phase 58-field-activity-timeline P02 | 313 | 2 tasks | 8 files |
+| Phase 57.1-marketing-yield-summaries-production-fix P01 | 1 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -169,6 +170,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 58-02]: pairedMap computed after all sources resolve (isAnyLoading=false) — budget+cert pairing requires both source sets present
 - [Phase 58-02]: SOURCE_COLORS defined in timeline-workspace.tsx and exported — single source of truth for entry cards and filter chips
 - [Phase 58-02]: TimelineExport receives already-filtered entries as props — no additional aggregated API call at export time
+- [Phase 57.1]: fetchGrainService proxy is the single source of truth for grain-tickets base URL — never hardcode localhost:3007 in SSR page.tsx files
 
 ### Pending Todos
 
