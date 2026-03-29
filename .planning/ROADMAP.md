@@ -269,7 +269,7 @@ Plans:
   2. When the device reconnects, the queued operations replay automatically (Background Sync API) and the "pending sync" indicator resolves without operator action
   3. If a queued pass was already confirmed by the FieldOps API or another user, the sync skips it silently and shows a "Already confirmed — skipped" notification rather than creating a duplicate
   4. The sync status panel shows queued operation count, last successful sync timestamp, any per-item errors, and a manual "Sync now" button that triggers immediate replay
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [x] 47-01-PLAN.md — Sync engine module, Background Sync handler in SW, queue-on-fail wrappers in crop-plan-sync.ts
@@ -282,7 +282,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Office staff can enter a new grain ticket in the grain-tickets module with network disabled — the entry queues locally and syncs when connectivity returns, appearing in the ticket list without manual intervention
   2. Budget, FSA, and insurance summary dashboard views load from IndexedDB cache when offline, showing the data from the last successful sync rather than an error or blank screen
-**Plans**: 2 plans
+**Plans**: 3 plans
 
 Plans:
 - [ ] 48-01-PLAN.md — Grain ticket offline entry with IndexedDB queue, Background Sync, conflict resolution UI
@@ -401,7 +401,7 @@ Plans:
   1. An APH records table in Supabase stores 4-10 years of actual yield per farm/unit/crop, with each row carrying a source tag indicating whether the year came from grain-tickets sync, manual entry, or import
   2. The computed APH displayed in the insurance UI is a simple average of non-zero years, with zero-yield disaster years visibly excluded from the calculation and labeled as "excluded"
   3. The insurance coverage guarantee auto-updates in the UI when APH changes or the coverage level slider is adjusted — no manual recalculation required
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 56-01-PLAN.md — APH Supabase table schema, API routes for CRUD and computed APH endpoint
 - [ ] 56-02-PLAN.md — APH management UI in insurance module: year table, source badges, disaster-year exclusion toggle, guarantee auto-calc
@@ -414,10 +414,11 @@ Plans:
   1. A grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop for the current season — all three columns visible simultaneously
   2. The unpriced bushel exposure in dollars is calculated from live CBOT futures prices displayed alongside the position, with the price source and timestamp visible
   3. Contracts can be entered with type: cash, accumulator, HTA, options, min-price, or basis — and the position view aggregates contracted bushels correctly across all contract types
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 57-01-PLAN.md — Grain contracts Supabase table (crop, bushels, price, type, delivery date) + CBOT price fetch endpoint
 - [ ] 57-02-PLAN.md — Marketing position UI: per-crop position table, contract entry form, unpriced exposure calculation
+- [ ] 57-03-PLAN.md — Gap closure: wire yieldSummaries prop + register marketing module in MODULES array
 
 ### Phase 58: Field Activity Timeline
 **Goal**: Every activity touching a field — planned operations, confirmed passes, FieldOps machine data, and grain deliveries — appears in a single chronological timeline view so the farm manager can see the complete field history in one place
@@ -426,7 +427,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Selecting a field opens a unified timeline showing all activities in date order, drawing from farm-budget planned passes, organic-cert confirmed operations, FieldOps machine data, and grain-ticket delivery records for that field
   2. Each timeline entry is color-coded by source (budget / organic-cert / FieldOps / grain-tickets) and can be expanded inline to show the full details for that activity
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 58-01-PLAN.md — Timeline aggregation API: fetch and merge activity data from all 4 sources by registry_field_id using Promise.allSettled
 - [ ] 58-02-PLAN.md — Field timeline UI: chronological list, source color-coding, expand-to-detail, field selector
@@ -438,7 +439,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Toggling "Prevented Planting" on a CLU record or insurance policy shows an estimated PP indemnity immediately, calculated from RMA coverage factors loaded from the insurance_pricing table — no external lookup required
   2. The insurance PDF report includes the PP indemnity figure and the PP flag when prevented planting has been toggled on for a unit, and omits the PP section entirely when PP is off
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 59-01-PLAN.md — PP toggle on clu_records/insurance_policies + PP indemnity calculation using RMA factors from insurance_pricing
 - [ ] 59-02-PLAN.md — PP indemnity display in insurance UI + conditional PP section in insurance PDF report
@@ -450,7 +451,7 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. A settlement financial summary view shows for each buyer and crop: delivered bushels, price per bushel, deductions, and net payment received — all in a single scannable table
   2. Where a contract price exists for a crop/buyer combination, the summary shows contract price vs actual settlement price with a variance column — positive variances shown in green, negative in red
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 60-01-PLAN.md — Settlement summary query: aggregate per-buyer per-crop from grain-tickets PostgreSQL, join grain contracts for price comparison
 - [ ] 60-02-PLAN.md — Settlement financial summary UI in grain-tickets: summary table, contract variance column, season selector
@@ -463,7 +464,7 @@ Plans:
   1. After a farm manager adds a new field in farm-registry, the corresponding field appears in farm-budget's field list, grain-tickets' farm registry, and the portal's CLU records — without any additional manual steps
   2. The auto-created downstream records carry the correct registry_field_id so they are immediately usable in cross-module joins and the field activity timeline
   3. If a downstream app is offline when the field is added, farm-registry saves the field successfully, logs the propagation failure, and retries once — the user is not blocked and sees a "Propagation pending" indicator
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 61-01-PLAN.md — farm-registry webhook dispatcher: POST field creation to farm-budget, grain-tickets, and portal with async retry-once and failure logging
 - [ ] 61-02-PLAN.md — Downstream receivers: field creation endpoints in farm-budget, grain-tickets, and portal with registry_field_id wiring
