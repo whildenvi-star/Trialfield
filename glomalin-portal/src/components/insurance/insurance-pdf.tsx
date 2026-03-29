@@ -3,6 +3,7 @@
 
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
 import { computeInsurancePolicy, type InsurancePolicy, type PricingEntry } from '@/lib/fsa/calc'
+import { computePpIndemnity, PP_COVERAGE_FACTOR } from '@/lib/insurance/calc'
 
 // ===== Styles =====
 
@@ -121,6 +122,13 @@ const styles = StyleSheet.create({
   // Coverage matrix columns
   colCovLevel: { width: 55 },
   colPlanType: { flex: 1 },
+  // PP summary page columns
+  colPp: { flex: 0.6 },
+  colPpFactor: { flex: 0.6 },
+  colPpGuarantee: { flex: 0.8 },
+  colSpringPrice: { flex: 0.7 },
+  colPpAcres: { flex: 0.7 },
+  colPpIndemnity: { flex: 1 },
 })
 
 // ===== Coverage levels and plan types (mirrors CoverageMatrix component) =====
@@ -177,6 +185,7 @@ export function InsurancePdfDocument({ policies, pricing }: InsurancePdfDocument
   })
 
   const hasPricing = pricing.length > 0
+  const ppPolicies = policies.filter((p) => p.prevented_planting)
 
   return (
     <Document>
@@ -201,6 +210,7 @@ export function InsurancePdfDocument({ policies, pricing }: InsurancePdfDocument
             <Text style={[styles.cellRightBold, styles.colGuarantee]}>Guarantee</Text>
             <Text style={[styles.cellRightBold, styles.colActual]}>Actual</Text>
             <Text style={[styles.cellBold, styles.colAlert]}>Alert</Text>
+            <Text style={[styles.cellBold, styles.colPp]}>PP</Text>
           </View>
 
           {/* Policy rows */}
@@ -229,6 +239,9 @@ export function InsurancePdfDocument({ policies, pricing }: InsurancePdfDocument
                 </Text>
                 <Text style={[styles.cell, styles.colAlert]}>
                   {policy.claim_alert === 'potential' ? 'Potential' : '—'}
+                </Text>
+                <Text style={[policy.prevented_planting ? styles.cellBold : styles.cell, styles.colPp]}>
+                  {policy.prevented_planting ? 'PP' : '—'}
                 </Text>
               </View>
             )
@@ -309,6 +322,106 @@ export function InsurancePdfDocument({ policies, pricing }: InsurancePdfDocument
               </View>
             )
           })}
+
+          <PageDisclaimer />
+        </Page>
+      )}
+
+      {/* ===== Page 3: Prevented Planting Summary (conditional — only when PP policies exist) ===== */}
+      {ppPolicies.length > 0 && (
+        <Page size="LETTER" orientation="landscape" style={styles.page}>
+          <Text style={styles.header}>Prevented Planting Summary</Text>
+          <Text style={styles.generatedDate}>Generated: {today}</Text>
+          <Text style={styles.disclaimer}>
+            PP indemnity estimates use RMA standard {Math.round(PP_COVERAGE_FACTOR * 100)}% coverage factor. Verify with your agent.
+          </Text>
+
+          {/* PP policy table */}
+          <View style={styles.table}>
+            {/* Header row */}
+            <View style={styles.tableHeader}>
+              <Text style={[styles.cellBold, styles.colFarm]}>Farm</Text>
+              <Text style={[styles.cellBold, styles.colCrop]}>Crop</Text>
+              <Text style={[styles.cellRightBold, styles.colGuarantee]}>Guarantee (bu/ac)</Text>
+              <Text style={[styles.cellRightBold, styles.colPpFactor]}>PP Factor</Text>
+              <Text style={[styles.cellRightBold, styles.colPpGuarantee]}>PP Guar (bu/ac)</Text>
+              <Text style={[styles.cellRightBold, styles.colSpringPrice]}>Spring Price</Text>
+              <Text style={[styles.cellRightBold, styles.colPpAcres]}>PP Acres</Text>
+              <Text style={[styles.cellRightBold, styles.colPpIndemnity]}>PP Indemnity</Text>
+            </View>
+
+            {/* PP policy rows */}
+            {ppPolicies.map((policy, idx) => {
+              const { ppIndemnity, ppGuarantee, springPrice } = computePpIndemnity(
+                { guarantee: policy.guarantee, prevented_planting_acres: policy.prevented_planting_acres },
+                pricing,
+                policy.crop
+              )
+              const rowStyle = idx % 2 === 0 ? styles.tableRow : styles.tableRowAlt
+              return (
+                <View key={policy.id} style={rowStyle} wrap={false}>
+                  <Text style={[styles.cell, styles.colFarm]}>
+                    {policy.farm_name ?? '(no farm)'}
+                  </Text>
+                  <Text style={[styles.cell, styles.colCrop]}>
+                    {policy.crop ?? '(none)'}
+                  </Text>
+                  <Text style={[styles.cellRight, styles.colGuarantee]}>
+                    {policy.guarantee > 0 ? policy.guarantee.toFixed(1) : '—'}
+                  </Text>
+                  <Text style={[styles.cellRight, styles.colPpFactor]}>
+                    {Math.round(PP_COVERAGE_FACTOR * 100)}%
+                  </Text>
+                  <Text style={[styles.cellRight, styles.colPpGuarantee]}>
+                    {ppGuarantee > 0 ? ppGuarantee.toFixed(1) : '—'}
+                  </Text>
+                  <Text style={[styles.cellRight, styles.colSpringPrice]}>
+                    {springPrice > 0 ? `$${springPrice.toFixed(2)}` : '—'}
+                  </Text>
+                  <Text style={[styles.cellRight, styles.colPpAcres]}>
+                    {(policy.prevented_planting_acres ?? 0) > 0
+                      ? (policy.prevented_planting_acres ?? 0).toFixed(1)
+                      : '—'}
+                  </Text>
+                  <Text style={[styles.cellRightBold, styles.colPpIndemnity]}>
+                    {formatDollars(ppIndemnity)}
+                  </Text>
+                </View>
+              )
+            })}
+
+            {/* Totals row */}
+            {(() => {
+              const totalAcres = ppPolicies.reduce(
+                (sum, p) => sum + (p.prevented_planting_acres ?? 0),
+                0
+              )
+              const totalIndemnity = ppPolicies.reduce((sum, p) => {
+                const { ppIndemnity } = computePpIndemnity(
+                  { guarantee: p.guarantee, prevented_planting_acres: p.prevented_planting_acres },
+                  pricing,
+                  p.crop
+                )
+                return sum + ppIndemnity
+              }, 0)
+              return (
+                <View style={[styles.tableRow, { backgroundColor: '#f0f0f0' }]} wrap={false}>
+                  <Text style={[styles.cellBold, styles.colFarm]}>Total</Text>
+                  <Text style={[styles.cell, styles.colCrop]}></Text>
+                  <Text style={[styles.cell, styles.colGuarantee]}></Text>
+                  <Text style={[styles.cell, styles.colPpFactor]}></Text>
+                  <Text style={[styles.cell, styles.colPpGuarantee]}></Text>
+                  <Text style={[styles.cell, styles.colSpringPrice]}></Text>
+                  <Text style={[styles.cellRightBold, styles.colPpAcres]}>
+                    {totalAcres.toFixed(1)}
+                  </Text>
+                  <Text style={[styles.cellRightBold, styles.colPpIndemnity]}>
+                    {formatDollars(totalIndemnity)}
+                  </Text>
+                </View>
+              )
+            })()}
+          </View>
 
           <PageDisclaimer />
         </Page>
