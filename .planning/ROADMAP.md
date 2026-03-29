@@ -147,7 +147,7 @@
 - [x] **Phase 57.1: Marketing Yield-Summaries Production Fix** - Fix hardcoded localhost URL breaking Est. Production in production (completed 2026-03-29)
 - [x] **Phase 58: Field Activity Timeline** - Unified chronological timeline per field pulling from all 4 data sources (completed 2026-03-29)
 - [x] **Phase 59: Prevented Planting Calculator** - Toggle PP on a CLU and see estimated indemnity from RMA coverage factors in PDF (completed 2026-03-29)
-- [ ] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance
+- [x] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance (completed 2026-03-29)
 - [ ] **Phase 61: Auto Field Propagation** - Adding a field in farm-registry auto-creates downstream records in all apps
 
 ## Phase Details
@@ -545,5 +545,5 @@ Plans:
 | 57. Grain Marketing Position | 3/3 | Complete    | 2026-03-29 | - |
 | 58. Field Activity Timeline | 2/2 | Complete    | 2026-03-29 | - |
 | 59. Prevented Planting Calculator | 2/2 | Complete    | 2026-03-29 | - |
-| 60. Settlement Financial Summary | 1/2 | In Progress|  | - |
+| 60. Settlement Financial Summary | 2/2 | Complete   | 2026-03-29 | - |
 | 61. Auto Field Propagation | v11.0 | 0/? | Not started | - |

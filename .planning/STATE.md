@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 60 of 61 (Settlement Financial Summary) — IN PROGRESS
-Plan: 1 of 2 complete
-Status: Phase 60 Plan 01 complete — GET /api/settlement-summary endpoint: per-buyer-per-crop aggregated revenue with contract price variance from portal grain_contracts.
-Last activity: 2026-03-29 — Phase 60 Plan 01 complete. settlement-summary endpoint: deliveredBushels, avgPricePerBushel, totalDeductions, netPayment, contractPricePerBushel (nullable), priceVariance (nullable).
+Phase: 60 of 61 (Settlement Financial Summary) — COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 60 complete — settlement financial summary UI: per-buyer-per-crop revenue table with contract price variance (green/red), crop year selector, grand totals, and portal-offline note in grain-tickets settlements tab.
+Last activity: 2026-03-29 — Phase 60 Plan 02 complete. settlement-summary.js IIFE module + index.html wiring: #settlement-summary-container at top of settlements tab, 8-column table, variance-positive/variance-negative classes, crop year dropdown 2023-present.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -71,6 +71,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 58-field-activity-timeline P02 | 313 | 2 tasks | 8 files |
 | Phase 57.1-marketing-yield-summaries-production-fix P01 | 1 | 2 tasks | 1 files |
 | Phase 60-settlement-financial-summary P01 | 12 | 1 tasks | 1 files |
+| Phase 60-settlement-financial-summary P02 | 8 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -175,6 +176,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 60-01]: avgPricePerBushel uses (netPayment + totalDeductions) / deliveredBushels — gross revenue before deductions divided by bushels gives true $/bu for contract comparison
 - [Phase 60-01]: contractsAvailable boolean in settlement-summary response — UI can distinguish portal-down vs no-contracts-entered
 - [Phase 60-01]: Matching contracts filtered to price_per_bushel != null before weighted avg — basis-only contracts excluded from contract reference price
+- [Phase 60-02]: Settlement summary container placed before sub-nav at top of settlements tab — immediate scannable view without extra click
+- [Phase 60-02]: Style block injected at init time via createElement — self-contained module, no separate CSS file needed
 
 ### Pending Todos
 
@@ -187,6 +190,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-29
-Stopped at: Completed 60-01-PLAN.md — GET /api/settlement-summary endpoint in grain-tickets/server.js
+Stopped at: Completed 60-02-PLAN.md — settlement financial summary UI module in grain-tickets/public/settlement-summary.js
 Resume file: —
-Next action: Phase 60 Plan 02 — Settlement financial summary UI
+Next action: Phase 61 (if planned) or v11.0 milestone review
