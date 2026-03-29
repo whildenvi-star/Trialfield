@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 56: Structured APH Database
+**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 57: Grain Marketing Position
 
 ## Current Position
 
-Phase: 56 of 61 (Structured APH Database)
-Plan: 2 of 2 complete
-Status: Phase 56 COMPLETE — APH records table, CRUD API, and management UI panel shipped
-Last activity: 2026-03-28 — Phase 56 Plan 02 complete. Built AphPanel component (year table, source badges, disaster toggle, add/delete, computed APH display) and wired into InsuranceWorkspace with real-time guarantee sync. APH-01, APH-02, APH-03 requirements fully satisfied.
+Phase: 57 of 61 (Grain Marketing Position)
+Plan: 1 of 2 complete
+Status: Phase 57 Plan 01 COMPLETE — grain_contracts table DDL, CRUD API, and CBOT futures price endpoint shipped
+Last activity: 2026-03-29 — Phase 57 Plan 01 complete. Created grain_contracts Supabase table with 6 contract types, RLS, and indexes. Built GET/POST/PATCH/DELETE contract API and CBOT price fetch endpoint with Barchart OnDemand integration and manual-fallback. MKT-01, MKT-02, MKT-03 requirements satisfied.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -63,6 +63,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 55 P03 | 5 | 1 task | 2 files |
 | Phase 56 P01 | 2 | 2 tasks | 4 files |
 | Phase 56 P02 | 5 | 2 tasks | 2 files |
+| Phase 57 P01 | 2 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -143,6 +144,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 56]: PATCH APH [id] sets updated_at server-side — client cannot set arbitrary timestamps
 - [Phase 56]: DELETE APH [id] returns 404 when Supabase returns empty array — no match treated as not found
 - [Phase 56]: AphPanel uses useCallback for fetchData — policyId change triggers refetch while onGuaranteeChange fires after every CRUD operation
+- [Phase 57]: CBOT price endpoint returns manual-fallback when BARCHART_API_KEY not set — UI always works without an API key
+- [Phase 57]: Commodity canonical names match Phase 50 registry: Yellow Corn, Soybeans, Soft Red Winter Wheat, Oats
+- [Phase 57]: PATCH updated_at set server-side for grain_contracts — consistent with Phase 56 APH records precedent
 
 ### Pending Todos
 
@@ -154,7 +158,7 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 
 ## Session Continuity
 
-Last session: 2026-03-28
-Stopped at: Completed 56-02-PLAN.md — APH management UI panel wired into insurance workspace
+Last session: 2026-03-29
+Stopped at: Completed 57-01-PLAN.md — grain_contracts table DDL, CRUD API, and CBOT price fetch endpoint
 Resume file: —
-Next action: Continue v11.0 — Phase 56 or next planned phase
+Next action: Continue Phase 57 — Plan 02 (marketing position UI)

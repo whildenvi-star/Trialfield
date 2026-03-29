@@ -23,9 +23,9 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 ### Grain Marketing
 
-- [ ] **MKT-01**: Grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop
-- [ ] **MKT-02**: Unpriced bushel dollar exposure calculated from live CBOT futures prices
-- [ ] **MKT-03**: Contract type support: cash, accumulator, HTA, options, min-price, basis
+- [x] **MKT-01**: Grain marketing position view shows estimated production, contracted bushels, and unpriced bushels per crop
+- [x] **MKT-02**: Unpriced bushel dollar exposure calculated from live CBOT futures prices
+- [x] **MKT-03**: Contract type support: cash, accumulator, HTA, options, min-price, basis
 
 ### Field Operations
 
@@ -80,9 +80,9 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | APH-01 | Phase 56 | Complete |
 | APH-02 | Phase 56 | Complete |
 | APH-03 | Phase 56 | Complete |
-| MKT-01 | Phase 57 | Pending |
-| MKT-02 | Phase 57 | Pending |
-| MKT-03 | Phase 57 | Pending |
+| MKT-01 | Phase 57 | Complete |
+| MKT-02 | Phase 57 | Complete |
+| MKT-03 | Phase 57 | Complete |
 | FLD-01 | Phase 58 | Pending |
 | FLD-02 | Phase 58 | Pending |
 | PP-01 | Phase 59 | Pending |
