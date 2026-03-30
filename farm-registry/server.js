@@ -16,6 +16,113 @@ const DATA_FILE = path.join(__dirname, 'data', 'data.json');
 const SHAPEFILE_DIR = path.join(__dirname, 'data', 'shapefiles');
 const MAX_BACKUPS = 5;
 
+// Downstream app URLs for field propagation
+const FARM_BUDGET_URL = process.env.FARM_BUDGET_URL || 'http://localhost:3001';
+const GRAIN_TICKETS_URL = process.env.GRAIN_TICKETS_URL || 'http://localhost:3007';
+const PORTAL_URL = process.env.PORTAL_URL || 'http://localhost:3010';
+
+// In-memory propagation log — capped at 100 entries
+const propagationLog = [];
+
+/**
+ * propagateField — fires async POSTs to downstream apps after a new field is created.
+ * Called fire-and-forget after 201 response is sent from POST /api/fields.
+ * Failed targets retry once after 3 seconds.
+ * @param {object} field — the newly created field record
+ * @returns {Promise<Array>} array of result objects (one per target)
+ */
+async function propagateField(field) {
+  const token = process.env.EMBED_TOKEN;
+  const tokenQuery = token ? '?token=' + encodeURIComponent(token) : '';
+
+  const targets = [
+    {
+      name: 'farm-budget',
+      url: FARM_BUDGET_URL + '/api/fields' + tokenQuery,
+      body: {
+        name: field.name,
+        acres: field.reportingAcres || 0,
+        registryFieldId: field.id,
+        registryFieldName: field.name
+      }
+    },
+    {
+      name: 'grain-tickets',
+      url: GRAIN_TICKETS_URL + '/api/farms' + tokenQuery,
+      body: {
+        farm: field.name,
+        acres: field.reportingAcres || 0,
+        registryId: field.id
+      }
+    },
+    {
+      name: 'portal',
+      url: PORTAL_URL + '/api/fsa/webhook/field-created',
+      body: {
+        field_name: field.name,
+        fsa_acres: field.reportingAcres || 0,
+        registry_field_id: field.id
+      }
+    }
+  ];
+
+  async function attemptFetch(target) {
+    const resp = await fetch(target.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(target.body),
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return resp;
+  }
+
+  const settled = await Promise.allSettled(
+    targets.map(target => attemptFetch(target))
+  );
+
+  const results = targets.map((target, i) => {
+    const outcome = settled[i];
+    return {
+      target: target.name,
+      status: outcome.status === 'fulfilled' ? 'ok' : 'failed',
+      error: outcome.status === 'rejected' ? outcome.reason.message : undefined,
+      timestamp: new Date().toISOString(),
+      _target: target // kept for retry
+    };
+  });
+
+  // Push initial results to log
+  results.forEach(r => {
+    const entry = { target: r.target, status: r.status, error: r.error, timestamp: r.timestamp };
+    if (propagationLog.length >= 100) propagationLog.shift();
+    propagationLog.push(entry);
+
+    // Schedule retry for failed targets
+    if (r.status === 'failed') {
+      const target = r._target;
+      const logEntry = entry;
+      setTimeout(() => {
+        attemptFetch(target)
+          .then(() => {
+            logEntry.status = 'ok (retry)';
+            logEntry.error = undefined;
+            logEntry.retryTimestamp = new Date().toISOString();
+          })
+          .catch(err => {
+            logEntry.status = 'failed (retry exhausted)';
+            logEntry.error = err.message;
+            logEntry.retryTimestamp = new Date().toISOString();
+            console.error('[propagate] Retry failed for', target.name + ':', err.message);
+          });
+      }, 3000);
+    }
+  });
+
+  // Clean _target from returned results (internal use only)
+  return results.map(({ target, status, error, timestamp }) => ({ target, status, error, timestamp }));
+}
+
 // Health check — before CORS/middleware for fast, dependency-free response
 app.get('/health', (req, res) => res.json({ status: 'ok', app: 'farm-registry', uptime: process.uptime() }));
 
@@ -255,6 +362,8 @@ app.post('/api/fields', async (req, res) => {
   store.fields.push(field);
   await saveData();
   res.status(201).json(field);
+  // Fire-and-forget: propagate to downstream apps after 201 is sent
+  propagateField(field).catch(err => console.error('Propagation error:', err));
 });
 
 app.put('/api/fields/:id', async (req, res) => {
@@ -621,6 +730,11 @@ app.delete('/api/crops/:id', async (req, res) => {
   store.crops[idx].active = false;
   await saveData();
   res.sendStatus(204);
+});
+
+// --- Propagation log ---
+app.get('/api/propagation-log', (req, res) => {
+  res.json({ log: propagationLog });
 });
 
 // --- FSA proxy (avoid CORS issues) ---
