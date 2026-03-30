@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 61 of 61 (Auto Field Propagation) — IN PROGRESS
-Plan: 1 of 1 complete
-Status: Phase 61 Plan 01 complete — propagateField() webhook dispatcher added to farm-registry POST /api/fields; async fan-out to farm-budget, grain-tickets, and portal with AbortSignal.timeout(5000) and one retry on failure.
-Last activity: 2026-03-30 — Phase 61 Plan 01 complete. propagateField() function + propagationLog array + GET /api/propagation-log endpoint added to farm-registry/server.js.
+Phase: 61 of 61 (Auto Field Propagation) — COMPLETE
+Plan: 2 of 2 complete
+Status: Phase 61 complete — idempotent receivers added to farm-budget, grain-tickets, and portal; portal webhook creates CLU placeholder records with registry_field_id pre-wired. AUTO-01..03 complete.
+Last activity: 2026-03-30 — Phase 61 Plan 02 complete. Idempotency guards + portal webhook endpoint at /api/fsa/webhook/field-created added.
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
 ## Performance Metrics
 
@@ -73,6 +73,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 60-settlement-financial-summary P01 | 12 | 1 tasks | 1 files |
 | Phase 60-settlement-financial-summary P02 | 8 | 1 tasks | 2 files |
 | Phase 61-auto-field-propagation P01 | 2 | 1 tasks | 1 files |
+| Phase 61 P02 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -181,6 +182,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 60-02]: Style block injected at init time via createElement — self-contained module, no separate CSS file needed
 - [Phase 61-01]: propagateField uses EMBED_TOKEN query param for farm-budget and grain-tickets; portal webhook handles its own auth (Plan 02)
 - [Phase 61-01]: In-memory propagationLog capped at 100 entries — no persistence needed, debug tool only
+- [Phase 61-02]: farm-budget idempotency uses exact registryFieldId match — no name matching needed for fields
+- [Phase 61-02]: grain-tickets name-match wiring upgrades existing farms to carry registryId before propagation existed
+- [Phase 61-02]: CLU placeholder record uses farm_number=0, tract_number=0, clu=field_name — user fills in real FSA numbers via portal UI
 
 ### Pending Todos
 
@@ -193,6 +197,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Completed 61-01-PLAN.md — propagateField dispatcher in farm-registry/server.js
+Stopped at: Completed 61-02-PLAN.md — all downstream receivers idempotent, portal webhook creates CLU placeholders
 Resume file: —
-Next action: Phase 61 Plan 02 (portal webhook receiver) if planned
+Next action: Phase 61 complete — v11.0 Auto Field Propagation all requirements done

@@ -40,7 +40,7 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 ### Workflow Automation
 
 - [x] **AUTO-01**: Adding a field in farm-registry auto-creates corresponding records in farm-budget, grain-tickets, and portal
-- [ ] **AUTO-02**: Downstream records have correct registry_field_id for future syncs
+- [x] **AUTO-02**: Downstream records have correct registry_field_id for future syncs
 - [x] **AUTO-03**: Webhook failures don't block farm-registry save (async, logged, retry once)
 
 ## v12.0+ Requirements (Deferred)
@@ -90,7 +90,7 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | SET-01 | Phase 60 | Complete |
 | SET-02 | Phase 60 | Complete |
 | AUTO-01 | Phase 61 | Complete |
-| AUTO-02 | Phase 61 | Pending |
+| AUTO-02 | Phase 61 | Complete |
 | AUTO-03 | Phase 61 | Complete |
 
 **Coverage:**

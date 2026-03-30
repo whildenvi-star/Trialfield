@@ -148,7 +148,7 @@
 - [x] **Phase 58: Field Activity Timeline** - Unified chronological timeline per field pulling from all 4 data sources (completed 2026-03-29)
 - [x] **Phase 59: Prevented Planting Calculator** - Toggle PP on a CLU and see estimated indemnity from RMA coverage factors in PDF (completed 2026-03-29)
 - [x] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance (completed 2026-03-29)
-- [ ] **Phase 61: Auto Field Propagation** - Adding a field in farm-registry auto-creates downstream records in all apps
+- [x] **Phase 61: Auto Field Propagation** - Adding a field in farm-registry auto-creates downstream records in all apps (completed 2026-03-30)
 
 ## Phase Details
 
@@ -546,4 +546,4 @@ Plans:
 | 58. Field Activity Timeline | 2/2 | Complete    | 2026-03-29 | - |
 | 59. Prevented Planting Calculator | 2/2 | Complete    | 2026-03-29 | - |
 | 60. Settlement Financial Summary | 2/2 | Complete    | 2026-03-29 | - |
-| 61. Auto Field Propagation | 1/2 | In Progress|  | - |
+| 61. Auto Field Propagation | 2/2 | Complete   | 2026-03-30 | - |
