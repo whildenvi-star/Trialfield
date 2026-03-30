@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 61: Auto Field Propagation
+**Current focus:** v11.0 Gap Closure — Phase 62: Portal Webhook Auth Fix
 
 ## Current Position
 
-Phase: 61 of 61 (Auto Field Propagation) — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 61 complete — idempotent receivers added to farm-budget, grain-tickets, and portal; portal webhook creates CLU placeholder records with registry_field_id pre-wired. AUTO-01..03 complete.
-Last activity: 2026-03-30 — Phase 61 Plan 02 complete. Idempotency guards + portal webhook endpoint at /api/fsa/webhook/field-created added.
+Phase: 62 of 63 (Portal Webhook Auth Fix) — COMPLETE
+Plan: 1 of 1 complete
+Status: Phase 62 complete — tokenQuery appended to portal propagation target, PORTAL_URL env var added to farm-registry, NEXT_PUBLIC_APP_URL added to portal env. AUTO-01/AUTO-02 now satisfy production.
+Last activity: 2026-03-30 — Phase 62 Plan 01 complete. Portal webhook 403 fix deployed; all three propagateField() targets symmetric.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
@@ -74,6 +74,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 60-settlement-financial-summary P02 | 8 | 1 tasks | 2 files |
 | Phase 61-auto-field-propagation P01 | 2 | 1 tasks | 1 files |
 | Phase 61 P02 | 2 | 2 tasks | 3 files |
+| Phase 62-portal-webhook-auth-fix P01 | 1 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -185,6 +186,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 61-02]: farm-budget idempotency uses exact registryFieldId match — no name matching needed for fields
 - [Phase 61-02]: grain-tickets name-match wiring upgrades existing farms to carry registryId before propagation existed
 - [Phase 61-02]: CLU placeholder record uses farm_number=0, tract_number=0, clu=field_name — user fills in real FSA numbers via portal UI
+- [Phase 62-01]: propagateField() portal target now appends tokenQuery — symmetric with farm-budget and grain-tickets
+- [Phase 62-01]: PORTAL_URL and PORTAL_ORIGIN coexist in farm-registry/.env — CORS origin check vs fetch base URL are different code paths
 
 ### Pending Todos
 
@@ -197,6 +200,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Completed 61-02-PLAN.md — all downstream receivers idempotent, portal webhook creates CLU placeholders
+Stopped at: Completed 62-01-PLAN.md — portal webhook auth fix and production env vars added
 Resume file: —
 Next action: Phase 61 complete — v11.0 Auto Field Propagation all requirements done
