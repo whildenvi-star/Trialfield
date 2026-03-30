@@ -39,8 +39,8 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 ### Workflow Automation
 
-- [x] **AUTO-01**: Adding a field in farm-registry auto-creates corresponding records in farm-budget, grain-tickets, and portal
-- [x] **AUTO-02**: Downstream records have correct registry_field_id for future syncs
+- [ ] **AUTO-01**: Adding a field in farm-registry auto-creates corresponding records in farm-budget, grain-tickets, and portal
+- [ ] **AUTO-02**: Downstream records have correct registry_field_id for future syncs
 - [x] **AUTO-03**: Webhook failures don't block farm-registry save (async, logged, retry once)
 
 ## v12.0+ Requirements (Deferred)
@@ -80,7 +80,7 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | APH-01 | Phase 56 | Complete |
 | APH-02 | Phase 56 | Complete |
 | APH-03 | Phase 56 | Complete |
-| MKT-01 | Phase 57, 57.1 | Complete |
+| MKT-01 | Phase 57, 57.1, 63 | Pending |
 | MKT-02 | Phase 57, 57.1 | Complete |
 | MKT-03 | Phase 57 | Complete |
 | FLD-01 | Phase 58 | Complete |
@@ -89,8 +89,8 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | PP-02 | Phase 59 | Complete |
 | SET-01 | Phase 60 | Complete |
 | SET-02 | Phase 60 | Complete |
-| AUTO-01 | Phase 61 | Complete |
-| AUTO-02 | Phase 61 | Complete |
+| AUTO-01 | Phase 62 | Pending |
+| AUTO-02 | Phase 62 | Pending |
 | AUTO-03 | Phase 61 | Complete |
 
 **Coverage:**
@@ -100,4 +100,4 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-29 after v11.0 gap closure phase creation*
+*Last updated: 2026-03-29 after v11.0 gap closure phases 62-63 created*

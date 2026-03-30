@@ -482,6 +482,31 @@ Plans:
 - [ ] 61-01-PLAN.md — farm-registry webhook dispatcher: POST field creation to farm-budget, grain-tickets, and portal with async retry-once and failure logging
 - [ ] 61-02-PLAN.md — Downstream receivers: field creation endpoints in farm-budget, grain-tickets, and portal with registry_field_id wiring
 
+### Phase 62: Portal Webhook Auth Fix
+**Goal**: Restore end-to-end auto field propagation to the portal in production by appending the embed token to the portal webhook URL and setting the correct PORTAL_URL env var — fixing the 403 that blocks CLU record creation
+**Gap Closure**: Closes gaps from v11.0 audit — AUTO-01 and AUTO-02 blockers (portal CLU record never created in production due to missing `?token=` on webhook URL and missing PORTAL_URL env var)
+**Requirements**: AUTO-01, AUTO-02
+**Success Criteria** (what must be TRUE):
+  1. `propagateField()` in farm-registry appends `tokenQuery` to the portal target URL — same pattern used for farm-budget and grain-tickets targets
+  2. `farm-registry/.env` has `PORTAL_URL=https://portal.whughesfarms.com` so the correct host is used in production
+  3. `glomalin-portal/.env` has `NEXT_PUBLIC_APP_URL=https://portal.whughesfarms.com` so SSR CBOT self-fetch resolves correctly on VPS
+  4. E2E propagation smoke test confirms portal CLU record created after farm-registry field add
+**Plans**: 1 plan
+Plans:
+- [ ] 62-01-PLAN.md — Fix tokenQuery append in propagateField() and set PORTAL_URL + NEXT_PUBLIC_APP_URL env vars
+
+### Phase 63: Crop Autocomplete Server Proxy
+**Goal**: Replace the hardcoded `localhost:3005` crop autocomplete URL in the contract drawer with a portal-relative proxy route so autocomplete works in production without requiring the client to reach farm-registry directly
+**Gap Closure**: Closes DEGRADE-1 from v11.0 audit — contract-drawer.tsx hardcoded localhost:3005 causes silent autocomplete failure in production (MKT-01 UX degraded)
+**Requirements**: MKT-01
+**Success Criteria** (what must be TRUE):
+  1. Portal API route `/api/registry/crops` proxies to `REGISTRY_URL/api/crops/autocomplete` server-side
+  2. `contract-drawer.tsx` calls `/api/registry/crops` (portal-relative) — no localhost URL remains
+  3. Crop autocomplete populates correctly in the contract drawer on the VPS
+**Plans**: 1 plan
+Plans:
+- [ ] 63-01-PLAN.md — Add /api/registry/crops portal proxy route and update contract-drawer.tsx
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
