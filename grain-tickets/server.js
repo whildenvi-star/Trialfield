@@ -1332,9 +1332,34 @@ app.put('/api/crop-config/:id/tolerance', async (req, res) => {
 // Farms CRUD
 app.post('/api/farms', async (req, res) => {
   try {
+    // Idempotency guard: check by registryId first
+    if (req.body.registryId) {
+      const byRegistryId = await prisma.farm.findFirst({ where: { registryId: req.body.registryId } });
+      if (byRegistryId) {
+        return res.status(200).json(dbFarmToJson(byRegistryId));
+      }
+    }
+    // Soft name-match: wire registryId onto existing name-matched farm that lacks one
+    const trimmedName = (req.body.farm || '').trim();
+    if (trimmedName && req.body.registryId) {
+      const byName = await prisma.farm.findFirst({ where: { name: trimmedName } });
+      if (byName) {
+        if (!byName.registryId) {
+          // Wire registryId onto the existing farm
+          const updated = await prisma.farm.update({
+            where: { id: byName.id },
+            data: { registryId: req.body.registryId }
+          });
+          return res.status(200).json(dbFarmToJson(updated));
+        } else {
+          // Already has a different registryId — return as-is
+          return res.status(200).json(dbFarmToJson(byName));
+        }
+      }
+    }
     const farm = await prisma.farm.create({
       data: {
-        name: (req.body.farm || '').trim(),
+        name: trimmedName || (req.body.farm || '').trim(),
         crop: (req.body.crop || '').trim() || null,
         acres: parseFloat(req.body.acres) || 0,
         unit: req.body.unit || 'BU',

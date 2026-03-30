@@ -474,6 +474,13 @@ app.get('/api/fields/:id', (req, res) => {
 });
 
 app.post('/api/fields', async (req, res) => {
+  // Idempotency guard: if registryFieldId provided, check for existing field
+  if (req.body.registryFieldId) {
+    const existingField = store.fields.find(f => f.registryFieldId === req.body.registryFieldId);
+    if (existingField) {
+      return res.status(200).json(enrichField(existingField));
+    }
+  }
   const field = Object.assign({ id: generateId('fld') }, req.body);
   if (!field.inputs) field.inputs = [];
   if (!field.machinery) field.machinery = [];
