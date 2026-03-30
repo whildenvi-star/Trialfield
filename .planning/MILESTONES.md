@@ -223,3 +223,13 @@
 
 ---
 
+
+## v11.0 Domain Features & Workflow Automation (Shipped: 2026-03-30)
+
+**Phases completed:** 26 phases, 58 plans, 8 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+

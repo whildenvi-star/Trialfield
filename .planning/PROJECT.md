@@ -74,18 +74,11 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 **Delivered:** Canonical field IDs and crop registry across all apps, FSA/insurance data consolidated to Supabase, automatic yield pipeline (grain-tickets → insurance → budget), seed-inventory → organic-cert pipeline, meristem-malt → grain-tickets price pipeline, unified color tokens in platform-tokens.css, iframe embed breadcrumb navigation, cross-origin theme cascade. 6 phases, 20 plans, 25 requirements — all complete. Phases 55-61 (domain features) deferred to v11.0.
 
-## Current Milestone: v11.0 Domain Features & Workflow Automation
+## Completed Milestone: v11.0 Domain Features & Workflow Automation (2026-03-30)
 
 **Goal:** Build domain-specific views and workflow automation on top of the consolidated data platform — actionable dashboard, APH database, grain marketing, field timeline, prevented planting, settlement summaries, and auto field propagation.
 
-**Target features:**
-- Actionable dashboard replacing static module cards with live action items
-- Structured APH database with computed APH and insurance guarantee auto-calc
-- Grain marketing position view (contracted vs unpriced bushels, CBOT exposure)
-- Unified field activity timeline pulling from all 4 data sources
-- Prevented planting indemnity calculator with PDF integration
-- Settlement financial summary with per-buyer per-crop revenue and contract variance
-- Auto field propagation (add once in farm-registry, auto-creates in all apps)
+**Delivered:** Actionable dashboard replacing static module cards (Promise.allSettled graceful degradation), structured APH database with computed APH and insurance guarantee auto-calc, grain marketing position with CBOT exposure and contract entry (6 types), unified field activity timeline from 4 sources, prevented planting indemnity calculator with PDF integration, settlement financial summary with contract price variance, auto field propagation (farm-registry → farm-budget + grain-tickets + portal), and production gap fixes (webhook auth 403, localhost autocomplete). 10 phases (55–63), 19 plans, 18 requirements — all complete.
 
 ## Requirements
 
@@ -168,17 +161,17 @@ Complete, trustworthy records for every bushel — from the field it came from t
 - ✓ Meristem-malt grain cost from grain-ticket settlements — v10.0
 - ✓ Unified color tokens (platform-tokens.css) across all 8 apps — v10.0
 - ✓ Iframe embed breadcrumb navigation and cross-origin theme cascade — v10.0
+- ✓ Actionable dashboard with live action items and graceful offline degradation — v11.0
+- ✓ Structured APH database with computed APH and insurance guarantee auto-calc — v11.0
+- ✓ Grain marketing position view (contracted vs unpriced bushels, CBOT exposure, 6 contract types) — v11.0
+- ✓ Unified field activity timeline from 4 data sources with color-coded entries — v11.0
+- ✓ Prevented planting indemnity calculator with PDF integration — v11.0
+- ✓ Settlement financial summary with per-buyer per-crop revenue and contract variance — v11.0
+- ✓ Auto field propagation (farm-registry → farm-budget + grain-tickets + portal, retry-once) — v11.0
 
 ### Active
 
-**v11.0 — Domain Features & Workflow Automation:**
-- [ ] Actionable farm dashboard (replace module cards with live action items)
-- [ ] Structured APH database with computed APH and insurance guarantee
-- [ ] Grain marketing position view (contracted vs unpriced bushels, CBOT exposure)
-- [ ] Unified field activity timeline (all 4 data sources)
-- [ ] Prevented planting indemnity calculator
-- [ ] Settlement financial summary with contract-level P&L
-- [ ] Auto field propagation (farm-registry → all downstream apps)
+(None — v11.0 shipped. Run `/gsd:new-milestone` to define v12.0 requirements.)
 
 ### Deferred
 
@@ -206,11 +199,11 @@ Complete, trustworthy records for every bushel — from the field it came from t
 
 ## Context
 
-Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget (Express + JSON, port 3001), fsa-acres, grain-tickets (Express + Prisma + PostgreSQL, port 3000), meristem-malt, farm-registry (Express + JSON, port 3005), glomalin-portal (Next.js 14 + Supabase, navy/cyan design system). All apps share the farm-registry for field data. Glomalin Portal is the unified auth entry point with animated ASCII banner, multi-scene rendering, and RBAC-gated modules (FSA, Insurance, Claims).
+Modular ag ecosystem with independent apps: organic-cert (~85K LOC, Next.js 16 + Prisma 6 + PostgreSQL), farm-budget (Express + JSON, port 3001), fsa-acres, grain-tickets (Express + Prisma + PostgreSQL, port 3000), meristem-malt, farm-registry (Express + JSON, port 3005), glomalin-portal (Next.js 14 + Supabase, navy/cyan design system). All apps share the farm-registry for field data. Glomalin Portal is the unified auth entry point with animated ASCII banner, multi-scene rendering, and RBAC-gated modules (FSA, Insurance, Claims, Grain Marketing, Field Timeline, Settlement Summary).
 
 **Port map:** 3000 grain-tickets, 3001 farm-budget, 3002 fsa-acres, 3003 meristem-malt, 3004 organic-cert, 3005 farm-registry, 3006 glomalin-portal (Next.js dev)
 
-**Total shipped:** 115 plans across 54 phases in 10 milestones (v1.0 through v10.0). Production deployed (PM2 + Caddy + Supabase on VPS).
+**Total shipped:** 134 plans across 63 phases in 11 milestones (v1.0 through v11.0). Production deployed (PM2 + Caddy + Supabase on VPS). All portal→Express cross-module calls use server-side `fetchRegistryService`/`fetchBudgetService`/etc. proxy pattern (no localhost in client code).
 
 Primary users are farm office staff (daily ticket entry) and farm manager (farm planning, certification, settlement reconciliation).
 
@@ -262,7 +255,12 @@ Primary users are farm office staff (daily ticket entry) and farm manager (farm 
 | Crop registry in farm-registry (not portal) | farm-registry is already the field authority; natural home for crop canonical list | ✓ Good — Express apps can fetch without Supabase |
 | Consolidate FSA/insurance to portal Supabase | Eliminates JSON duplication in fsa-acres; RLS for access control | ✓ Good — single source of truth achieved |
 | postMessage for cross-origin theme sync | organic-cert is cross-origin; localStorage events don't cross origins | ✓ Good — instant theme cascade |
-| Defer phases 55-61 to v11.0 | Domain features (dashboards, calculators) build on top of consolidation, not part of it | — Pending |
+| Defer phases 55-61 to v11.0 | Domain features (dashboards, calculators) build on top of consolidation, not part of it | ✓ Good — shipped as v11.0 |
+| Promise.allSettled for dashboard aggregation | Dashboard must stay up when Express apps are offline — partial data > blank screen | ✓ Good — graceful degradation confirmed |
+| grain_contracts in portal Supabase (not grain-tickets) | Portal is the grain marketing home; keeps contract data with RBAC access control | ✓ Good — enables cross-module variance calc |
+| `fetchRegistryService` proxy pattern for all portal→Express calls | Prevents localhost URLs from escaping to client browser; server-side proxying is the correct pattern | ✓ Good — applied consistently across 5+ routes |
+| Auto field propagation as fire-and-forget + retry once | Farm-registry save should never be blocked by downstream failures | ✓ Good — field adds work even when apps are offline |
+| Gap phases (57.1, 62, 63) for production breaks | Hardcoded localhost URLs in client code silently fail in production — requires dedicated fix phases | ✓ Good — all three production breaks resolved |
 
 ---
-*Last updated: 2026-03-26 after v11.0 milestone initialized*
+*Last updated: 2026-03-30 after v11.0 milestone shipped*
