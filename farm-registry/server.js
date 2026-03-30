@@ -57,7 +57,7 @@ async function propagateField(field) {
     },
     {
       name: 'portal',
-      url: PORTAL_URL + '/api/fsa/webhook/field-created',
+      url: PORTAL_URL + '/api/fsa/webhook/field-created' + tokenQuery,
       body: {
         field_name: field.name,
         fsa_acres: field.reportingAcres || 0,
