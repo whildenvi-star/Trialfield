@@ -705,6 +705,26 @@ app.post('/api/fields/sync-registry', async (req, res) => {
       regById[rf.id] = rf;
     });
 
+    // Match a budget field to its registry entry.
+    // Returns { rf, exact } where exact=true means name/ID matched exactly
+    // (safe to sync acres), exact=false means prefix match only (rent-only sync —
+    // sub-parcels like "OMNI BIG SOUTH" within "Omni" keep their own acreage).
+    function findRegMatch(fieldName, registryFieldId, registryFieldName) {
+      if (registryFieldId) return { rf: regById[registryFieldId] || null, exact: true };
+      const fl = (fieldName || '').toLowerCase();
+      const frn = (registryFieldName || '').toLowerCase();
+      const exact = regLookup[fl] || (frn && regLookup[frn]);
+      if (exact) return { rf: exact, exact: true };
+      const prefix = regFields.find(rf => {
+        const keys = [rf.name.toLowerCase(), ...(rf.aliases || []).map(a => a.toLowerCase())];
+        return keys.some(k =>
+          fl === k || fl.startsWith(k + ' ') ||
+          (frn && (frn === k || frn.startsWith(k + ' ')))
+        );
+      });
+      return { rf: prefix || null, exact: false };
+    }
+
     const results = { synced: [], unmatched: [], unchanged: [], splitWarnings: [] };
     let changed = false;
 
@@ -714,27 +734,24 @@ app.post('/api/fields/sync-registry', async (req, res) => {
     // dividing by registry acres leaves rent unallocated if budget acres < registry acres.
     // Using the actual sum of budget field acres ensures gross rent is fully recovered.
     // Only non-split fields count here (split sub-fields are handled separately below).
-    const totalBudgetAcresForRegField = {}; // registryField.id → sum of budget field acres
+    // DBL CROP entries (same field name in multiple enterprises = same physical parcel)
+    // are deduplicated per registry farm so acres aren't double-counted.
+    const totalBudgetAcresForRegField = {}; // registryField.id → sum of unique budget field acres
+    const seenNamesPerRegField = {};         // registryField.id → Set of lowercased field names
     store.fields.forEach(field => {
       if (field.splitGroupId) return; // skip split sub-fields
-      let match = field.registryFieldId ? regById[field.registryFieldId] : null;
-      if (!match) {
-        match = regLookup[(field.name || '').toLowerCase()]
-             || regLookup[(field.registryFieldName || '').toLowerCase()];
-      }
+      const { rf: match } = findRegMatch(field.name, field.registryFieldId, field.registryFieldName);
       if (!match) return;
       const regId = match.id;
+      const nameKey = (field.name || '').toLowerCase();
+      if (!seenNamesPerRegField[regId]) seenNamesPerRegField[regId] = new Set();
+      if (seenNamesPerRegField[regId].has(nameKey)) return; // skip DBL CROP duplicate
+      seenNamesPerRegField[regId].add(nameKey);
       totalBudgetAcresForRegField[regId] = (totalBudgetAcresForRegField[regId] || 0) + (field.acres || 0);
     });
 
     store.fields.forEach(field => {
-      // Prefer canonical ID lookup (no name ambiguity).
-      // Fall back to name/alias matching for legacy records without a registryFieldId.
-      let match = field.registryFieldId ? regById[field.registryFieldId] : null;
-      if (!match) {
-        match = regLookup[(field.name || '').toLowerCase()]
-             || regLookup[(field.registryFieldName || '').toLowerCase()];
-      }
+      const { rf: match, exact: exactMatch } = findRegMatch(field.name, field.registryFieldId, field.registryFieldName);
       if (!match) {
         results.unmatched.push(field.name);
         return;
@@ -748,8 +765,10 @@ app.post('/api/fields/sync-registry', async (req, res) => {
       let fieldChanged = false;
       const isSplit = !!field.splitGroupId;
 
-      // Sync acres — skip for split fields (user manually allocates sub-field acres)
-      if (!isSplit && Math.abs((field.acres || 0) - match.reportingAcres) > 0.001) {
+      // Sync acres — only for exact name/alias matches (not prefix matches).
+      // Prefix-matched sub-parcels like "OMNI BIG SOUTH" within "Omni" have their own
+      // acreage and must not be overwritten with the registry farm's total reportingAcres.
+      if (!isSplit && exactMatch && Math.abs((field.acres || 0) - match.reportingAcres) > 0.001) {
         field.acres = match.reportingAcres;
         fieldChanged = true;
       }
@@ -785,9 +804,7 @@ app.post('/api/fields/sync-registry', async (req, res) => {
     });
     Object.keys(splitGroups).forEach(sgId => {
       const group = splitGroups[sgId];
-      // Prefer canonical ID lookup for split groups too
-      const regMatch = (group.registryFieldId ? regById[group.registryFieldId] : null)
-                    || regLookup[(group.registryFieldName || '').toLowerCase()];
+      const { rf: regMatch } = findRegMatch(null, group.registryFieldId, group.registryFieldName);
       if (!regMatch) return;
       const allocatedAcres = group.fields.reduce((sum, f) => sum + (f.acres || 0), 0);
 
