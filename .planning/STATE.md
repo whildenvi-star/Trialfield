@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 60: Settlement Financial Summary
+**Current focus:** v11.0 Domain Features & Workflow Automation — Phase 61: Auto Field Propagation
 
 ## Current Position
 
-Phase: 60 of 61 (Settlement Financial Summary) — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 60 complete — settlement financial summary UI: per-buyer-per-crop revenue table with contract price variance (green/red), crop year selector, grand totals, and portal-offline note in grain-tickets settlements tab.
-Last activity: 2026-03-29 — Phase 60 Plan 02 complete. settlement-summary.js IIFE module + index.html wiring: #settlement-summary-container at top of settlements tab, 8-column table, variance-positive/variance-negative classes, crop year dropdown 2023-present.
+Phase: 61 of 61 (Auto Field Propagation) — IN PROGRESS
+Plan: 1 of 1 complete
+Status: Phase 61 Plan 01 complete — propagateField() webhook dispatcher added to farm-registry POST /api/fields; async fan-out to farm-budget, grain-tickets, and portal with AbortSignal.timeout(5000) and one retry on failure.
+Last activity: 2026-03-30 — Phase 61 Plan 01 complete. propagateField() function + propagationLog array + GET /api/propagation-log endpoint added to farm-registry/server.js.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [░░░░░░░░░░] in progress
 
@@ -72,6 +72,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 57.1-marketing-yield-summaries-production-fix P01 | 1 | 2 tasks | 1 files |
 | Phase 60-settlement-financial-summary P01 | 12 | 1 tasks | 1 files |
 | Phase 60-settlement-financial-summary P02 | 8 | 1 tasks | 2 files |
+| Phase 61-auto-field-propagation P01 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -178,6 +179,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 60-01]: Matching contracts filtered to price_per_bushel != null before weighted avg — basis-only contracts excluded from contract reference price
 - [Phase 60-02]: Settlement summary container placed before sub-nav at top of settlements tab — immediate scannable view without extra click
 - [Phase 60-02]: Style block injected at init time via createElement — self-contained module, no separate CSS file needed
+- [Phase 61-01]: propagateField uses EMBED_TOKEN query param for farm-budget and grain-tickets; portal webhook handles its own auth (Plan 02)
+- [Phase 61-01]: In-memory propagationLog capped at 100 entries — no persistence needed, debug tool only
 
 ### Pending Todos
 
@@ -189,7 +192,7 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 
 ## Session Continuity
 
-Last session: 2026-03-29
-Stopped at: Completed 60-02-PLAN.md — settlement financial summary UI module in grain-tickets/public/settlement-summary.js
+Last session: 2026-03-30
+Stopped at: Completed 61-01-PLAN.md — propagateField dispatcher in farm-registry/server.js
 Resume file: —
-Next action: Phase 61 (if planned) or v11.0 milestone review
+Next action: Phase 61 Plan 02 (portal webhook receiver) if planned
