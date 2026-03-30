@@ -149,6 +149,8 @@
 - [x] **Phase 59: Prevented Planting Calculator** - Toggle PP on a CLU and see estimated indemnity from RMA coverage factors in PDF (completed 2026-03-29)
 - [x] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance (completed 2026-03-29)
 - [x] **Phase 61: Auto Field Propagation** - Adding a field in farm-registry auto-creates downstream records in all apps (completed 2026-03-30)
+- [x] **Phase 62: Portal Webhook Auth Fix** - Fix missing token on portal webhook target in propagateField() so CLU records are created in production (completed 2026-03-30)
+- [ ] **Phase 63: Crop Autocomplete Server Proxy** - Replace hardcoded localhost:3005 in contract-drawer.tsx with portal-relative proxy route
 
 ## Phase Details
 
@@ -493,7 +495,7 @@ Plans:
   4. E2E propagation smoke test confirms portal CLU record created after farm-registry field add
 **Plans**: 1 plan
 Plans:
-- [ ] 62-01-PLAN.md — Fix tokenQuery append in propagateField() and set PORTAL_URL + NEXT_PUBLIC_APP_URL env vars
+- [x] 62-01-PLAN.md — Fix tokenQuery append in propagateField() and set PORTAL_URL + NEXT_PUBLIC_APP_URL env vars
 
 ### Phase 63: Crop Autocomplete Server Proxy
 **Goal**: Replace the hardcoded `localhost:3005` crop autocomplete URL in the contract drawer with a portal-relative proxy route so autocomplete works in production without requiring the client to reach farm-registry directly
