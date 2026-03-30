@@ -116,17 +116,19 @@ export function ContractDrawer({
     }
     const controller = new AbortController()
     fetch(
-      `http://localhost:3005/api/crops/autocomplete?q=${encodeURIComponent(form.crop)}`,
+      `/api/registry/crops?q=${encodeURIComponent(form.crop)}`,
       { signal: controller.signal }
     )
       .then((r) => r.json())
-      .then((data: { name: string }[] | string[]) => {
+      .then((data: { crops?: { name: string }[] } | { name: string }[] | string[]) => {
         if (Array.isArray(data)) {
-          // Handle both [{name:...}] and [string] shapes
+          // flat array fallback (old shape)
           const suggestions = data.map((d) =>
             typeof d === 'string' ? d : (d as { name: string }).name
           )
           setCropSuggestions(suggestions.slice(0, 6))
+        } else if (data && 'crops' in data && Array.isArray(data.crops)) {
+          setCropSuggestions(data.crops.map((c) => c.name).slice(0, 6))
         }
       })
       .catch(() => {
