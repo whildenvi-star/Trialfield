@@ -107,6 +107,16 @@ The portal webhook route uses `SUPABASE_SERVICE_ROLE_KEY` which is already set i
 - End-to-end flow complete: creating a field in farm-registry auto-creates records in farm-budget, grain-tickets, and portal (CLU placeholder)
 - AUTO-01, AUTO-02, AUTO-03 requirements complete — Phase 61 finished
 
+## Self-Check: PASSED
+
+- FOUND: farm-budget/server.js (modified with registryFieldId duplicate guard)
+- FOUND: grain-tickets/server.js (modified with registryId duplicate guard + name-match wiring)
+- FOUND: glomalin-portal/src/app/api/fsa/webhook/field-created/route.ts (created)
+- FOUND: .planning/phases/61-auto-field-propagation/61-02-SUMMARY.md
+- FOUND commit 12791e2 (Task 1)
+- FOUND commit 0cfbb92 (Task 2)
+- FOUND commit cee6179 (docs metadata)
+
 ---
 *Phase: 61-auto-field-propagation*
 *Completed: 2026-03-30*
