@@ -728,26 +728,18 @@ app.post('/api/fields/sync-registry', async (req, res) => {
     const results = { synced: [], unmatched: [], unchanged: [], splitWarnings: [] };
     let changed = false;
 
-    // --- Pre-pass: compute total budget acres per registry farm ---
-    // Rent rate = totalRentDollars / totalBudgetCropAcres (not registry reportingAcres).
-    // When a registry farm is split across multiple enterprise entries in farm-budget,
-    // dividing by registry acres leaves rent unallocated if budget acres < registry acres.
-    // Using the actual sum of budget field acres ensures gross rent is fully recovered.
-    // Only non-split fields count here (split sub-fields are handled separately below).
-    // DBL CROP entries (same field name in multiple enterprises = same physical parcel)
-    // are deduplicated per registry farm so acres aren't double-counted.
-    const totalBudgetAcresForRegField = {}; // registryField.id → sum of unique budget field acres
-    const seenNamesPerRegField = {};         // registryField.id → Set of lowercased field names
+    // --- Pre-pass: count DBL CROP enterprise entries per field name ---
+    // DBL CROP = same physical acres planted with two crops in sequence (e.g. peas then sweet corn).
+    // Each enterprise entry on a DBL CROP field shares the rent equally.
+    // Rent rate formula: baseRate = totalRentDollars / reportingAcres (stable, from registry).
+    // DBL CROP rate = baseRate / count  (e.g. 2 crops → each pays half).
+    // Single crop rate = baseRate.
+    const dblCropCountByFieldName = {}; // lc field name → number of DBL CROP enterprise entries
     store.fields.forEach(field => {
-      if (field.splitGroupId) return; // skip split sub-fields
-      const { rf: match } = findRegMatch(field.name, field.registryFieldId, field.registryFieldName);
-      if (!match) return;
-      const regId = match.id;
+      if (field.splitGroupId) return;
+      if ((field.cropType || '').toUpperCase() !== 'DBL CROP') return;
       const nameKey = (field.name || '').toLowerCase();
-      if (!seenNamesPerRegField[regId]) seenNamesPerRegField[regId] = new Set();
-      if (seenNamesPerRegField[regId].has(nameKey)) return; // skip DBL CROP duplicate
-      seenNamesPerRegField[regId].add(nameKey);
-      totalBudgetAcresForRegField[regId] = (totalBudgetAcresForRegField[regId] || 0) + (field.acres || 0);
+      dblCropCountByFieldName[nameKey] = (dblCropCountByFieldName[nameKey] || 0) + 1;
     });
 
     store.fields.forEach(field => {
@@ -773,14 +765,16 @@ app.post('/api/fields/sync-registry', async (req, res) => {
         fieldChanged = true;
       }
 
-      // Sync rent: prorate totalRentDollars across all budget-tracked crop acres for
-      // this registry farm. Using totalBudgetAcresForRegField (sum of all non-split
-      // farm-budget fields matching this registry farm) ensures the gross rent is fully
-      // recovered regardless of whether budget acres equal registry reportingAcres.
+      // Sync rent rate using stable registry-based denominator.
+      // baseRate = totalRentDollars / reportingAcres — fixed regardless of enterprise entries.
+      // DBL CROP fields (two crops on same physical acres) divide baseRate by the number
+      // of DBL CROP enterprise entries sharing those acres so rent is not double-counted.
       // Skip for split sub-fields: their acres are handled in the split-group pass below.
       if (!isSplit && match.totalRentDollars > 0) {
-        const denominator = totalBudgetAcresForRegField[match.id] || match.reportingAcres;
-        var rate = Math.round((match.totalRentDollars / denominator) * 100) / 100;
+        const baseRate = match.totalRentDollars / match.reportingAcres;
+        const isDblCrop = (field.cropType || '').toUpperCase() === 'DBL CROP';
+        const dblCount = isDblCrop ? (dblCropCountByFieldName[(field.name || '').toLowerCase()] || 1) : 1;
+        var rate = Math.round((baseRate / dblCount) * 100) / 100;
         if (Math.abs((field.rentPerAcre || 0) - rate) > 0.001) {
           field.rentPerAcre = rate;
           fieldChanged = true;
@@ -850,12 +844,12 @@ app.post('/api/fields/sync-registry', async (req, res) => {
 //   an existing field whose acres may change before save; avoids double-counting).
 app.get('/api/fields/rent-rate', async (req, res) => {
   try {
-    const { registryFieldId, name, excludeFieldId } = req.query;
+    const { registryFieldId, name, excludeFieldId, cropType, fieldName } = req.query;
     if (!registryFieldId && !name) {
       return res.status(400).json({ error: 'registryFieldId or name required' });
     }
 
-    // Fetch registry to get totalRentDollars
+    // Fetch registry to get totalRentDollars and reportingAcres
     const resp = await fetch(registryUrl('/api/fields?active=true'));
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);
     const regFields = await resp.json();
@@ -871,7 +865,6 @@ app.get('/api/fields/rent-rate', async (req, res) => {
         rf.name.toLowerCase() === lname ||
         (rf.aliases || []).some(a => a.toLowerCase() === lname)
       );
-      // Partial match fallback: prefix
       if (!regField) {
         regField = regFields.find(rf =>
           lname.startsWith(rf.name.toLowerCase()) ||
@@ -885,40 +878,26 @@ app.get('/api/fields/rent-rate', async (req, res) => {
     }
 
     if (!regField.totalRentDollars || regField.totalRentDollars <= 0) {
-      return res.json({ found: true, registryFieldId: regField.id, registryFieldName: regField.name, totalRentDollars: 0, totalBudgetAcres: 0, rentPerAcre: 0 });
+      return res.json({ found: true, registryFieldId: regField.id, registryFieldName: regField.name, totalRentDollars: 0, rentPerAcre: 0 });
     }
 
-    // Sum all non-split budget field acres that resolve to this registry farm.
-    // Use prefix matching (field name starts with a registry alias) so farm-budget entries
-    // like 'OMNI BIG SOUTH' resolve to registry farm 'Omni' even without registryFieldId.
-    // Deduplicate by lowercase field name so DBL CROP entries (same physical acres,
-    // two enterprise records with the same name) are only counted once.
-    const regPrefixKeys = [regField.name.toLowerCase(), ...(regField.aliases || []).map(a => a.toLowerCase())];
-    const seenNames = new Set();
-    const totalBudgetAcres = store.fields
-      .filter(f => {
-        if (f.splitGroupId) return false;
-        if (excludeFieldId && f.id === excludeFieldId) return false;
-        // Canonical ID match (most reliable)
-        if (f.registryFieldId === regField.id) return true;
-        const fl = (f.name || '').toLowerCase();
-        const frn = (f.registryFieldName || '').toLowerCase();
-        // Exact name/alias match, or prefix match (field name starts with registry alias + space)
-        return regPrefixKeys.some(p =>
-          fl === p || fl.startsWith(p + ' ') ||
-          frn === p || (frn && frn.startsWith(p + ' '))
-        );
-      })
-      .reduce((sum, f) => {
-        // Deduplicate by field name: same name = same physical parcel (e.g. DBL CROP entries)
-        const key = (f.name || '').toLowerCase();
-        if (seenNames.has(key)) return sum;
-        seenNames.add(key);
-        return sum + (f.acres || 0);
-      }, 0);
-
-    const denominator = totalBudgetAcres > 0 ? totalBudgetAcres : regField.reportingAcres;
-    const rentPerAcre = Math.round((regField.totalRentDollars / denominator) * 100) / 100;
+    // Base rate = totalRentDollars / reportingAcres (stable — not affected by enterprise entries).
+    // DBL CROP fields: two crops share the same physical acres so each pays baseRate / cropCount.
+    // cropType and fieldName params (optional) allow the caller to identify DBL CROP fields
+    // so the hint shows the correct halved rate immediately on field selection.
+    const baseRate = regField.totalRentDollars / regField.reportingAcres;
+    let dblDivisor = 1;
+    if ((cropType || '').toUpperCase() === 'DBL CROP' && fieldName) {
+      const lname = fieldName.toLowerCase();
+      const savedDblCount = store.fields.filter(f =>
+        !f.splitGroupId &&
+        (f.cropType || '').toUpperCase() === 'DBL CROP' &&
+        (f.name || '').toLowerCase() === lname &&
+        (!excludeFieldId || f.id !== excludeFieldId)
+      ).length;
+      dblDivisor = savedDblCount + 1; // +1 for the field currently being added/edited
+    }
+    const rentPerAcre = Math.round((baseRate / dblDivisor) * 100) / 100;
 
     res.json({
       found: true,
@@ -926,7 +905,8 @@ app.get('/api/fields/rent-rate', async (req, res) => {
       registryFieldName: regField.name,
       totalRentDollars: regField.totalRentDollars,
       registryReportingAcres: regField.reportingAcres,
-      totalBudgetAcres: totalBudgetAcres,
+      baseRatePerAcre: Math.round(baseRate * 100) / 100,
+      dblDivisor: dblDivisor,
       rentPerAcre: rentPerAcre
     });
   } catch (err) {
