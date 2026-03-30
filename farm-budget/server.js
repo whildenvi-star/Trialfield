@@ -708,6 +708,25 @@ app.post('/api/fields/sync-registry', async (req, res) => {
     const results = { synced: [], unmatched: [], unchanged: [], splitWarnings: [] };
     let changed = false;
 
+    // --- Pre-pass: compute total budget acres per registry farm ---
+    // Rent rate = totalRentDollars / totalBudgetCropAcres (not registry reportingAcres).
+    // When a registry farm is split across multiple enterprise entries in farm-budget,
+    // dividing by registry acres leaves rent unallocated if budget acres < registry acres.
+    // Using the actual sum of budget field acres ensures gross rent is fully recovered.
+    // Only non-split fields count here (split sub-fields are handled separately below).
+    const totalBudgetAcresForRegField = {}; // registryField.id → sum of budget field acres
+    store.fields.forEach(field => {
+      if (field.splitGroupId) return; // skip split sub-fields
+      let match = field.registryFieldId ? regById[field.registryFieldId] : null;
+      if (!match) {
+        match = regLookup[(field.name || '').toLowerCase()]
+             || regLookup[(field.registryFieldName || '').toLowerCase()];
+      }
+      if (!match) return;
+      const regId = match.id;
+      totalBudgetAcresForRegField[regId] = (totalBudgetAcresForRegField[regId] || 0) + (field.acres || 0);
+    });
+
     store.fields.forEach(field => {
       // Prefer canonical ID lookup (no name ambiguity).
       // Fall back to name/alias matching for legacy records without a registryFieldId.
@@ -735,14 +754,14 @@ app.post('/api/fields/sync-registry', async (req, res) => {
         fieldChanged = true;
       }
 
-      // Sync rent: derive $/ac from registry totalRentDollars.
-      // Skip for split sub-fields: their registry match is the parent field whose
-      // reportingAcres reflects the full (pre-split) acreage, not the sub-field's
-      // allocated portion. Using parent acres as denominator would inflate the rate
-      // (e.g., parent 100ac registry field matched to a 50ac sub-field would double $/ac).
-      // Split sub-fields keep whatever rentPerAcre was last saved manually.
-      if (!isSplit && match.totalRentDollars > 0 && match.reportingAcres > 0) {
-        var rate = Math.round((match.totalRentDollars / match.reportingAcres) * 100) / 100;
+      // Sync rent: prorate totalRentDollars across all budget-tracked crop acres for
+      // this registry farm. Using totalBudgetAcresForRegField (sum of all non-split
+      // farm-budget fields matching this registry farm) ensures the gross rent is fully
+      // recovered regardless of whether budget acres equal registry reportingAcres.
+      // Skip for split sub-fields: their acres are handled in the split-group pass below.
+      if (!isSplit && match.totalRentDollars > 0) {
+        const denominator = totalBudgetAcresForRegField[match.id] || match.reportingAcres;
+        var rate = Math.round((match.totalRentDollars / denominator) * 100) / 100;
         if (Math.abs((field.rentPerAcre || 0) - rate) > 0.001) {
           field.rentPerAcre = rate;
           fieldChanged = true;
@@ -772,12 +791,11 @@ app.post('/api/fields/sync-registry', async (req, res) => {
       if (!regMatch) return;
       const allocatedAcres = group.fields.reduce((sum, f) => sum + (f.acres || 0), 0);
 
-      // Sync rent rate from registry for split sub-fields.
-      // Use registry reporting acres as denominator (not the split group's allocated
-      // acres) so the per-acre rate stays correct even when the split doesn't cover
-      // the full parcel.
-      if (regMatch.totalRentDollars > 0 && regMatch.reportingAcres > 0) {
-        var rate = Math.round((regMatch.totalRentDollars / regMatch.reportingAcres) * 100) / 100;
+      // Sync rent rate for split sub-fields: prorate totalRentDollars across the
+      // total acres allocated within this split group. This ensures the group's
+      // combined rent equals the gross rent proportional to split acres.
+      if (regMatch.totalRentDollars > 0 && allocatedAcres > 0) {
+        var rate = Math.round((regMatch.totalRentDollars / allocatedAcres) * 100) / 100;
         group.fields.forEach(f => {
           if (Math.abs((f.rentPerAcre || 0) - rate) > 0.001) {
             f.rentPerAcre = rate;
@@ -803,6 +821,99 @@ app.post('/api/fields/sync-registry', async (req, res) => {
     res.json(results);
   } catch (err) {
     res.status(502).json({ error: 'Registry sync failed: ' + err.message });
+  }
+});
+
+// --- Prorated rent rate lookup ---
+// Returns the correct $/ac rent rate for a registry farm, using total budget crop acres
+// (not registry reportingAcres) as the denominator. Called from the field editor so the
+// rent hint and saved rate are always consistent with the server-side sync.
+// Query params: registryFieldId (preferred) OR name (fallback fuzzy match)
+// Optional: excludeFieldId — exclude this field's acres from the denominator (for editing
+//   an existing field whose acres may change before save; avoids double-counting).
+app.get('/api/fields/rent-rate', async (req, res) => {
+  try {
+    const { registryFieldId, name, excludeFieldId } = req.query;
+    if (!registryFieldId && !name) {
+      return res.status(400).json({ error: 'registryFieldId or name required' });
+    }
+
+    // Fetch registry to get totalRentDollars
+    const resp = await fetch(registryUrl('/api/fields?active=true'));
+    if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+    const regFields = await resp.json();
+
+    // Find the registry match
+    let regField = null;
+    if (registryFieldId) {
+      regField = regFields.find(rf => rf.id === registryFieldId);
+    }
+    if (!regField && name) {
+      const lname = name.toLowerCase();
+      regField = regFields.find(rf =>
+        rf.name.toLowerCase() === lname ||
+        (rf.aliases || []).some(a => a.toLowerCase() === lname)
+      );
+      // Partial match fallback: prefix
+      if (!regField) {
+        regField = regFields.find(rf =>
+          lname.startsWith(rf.name.toLowerCase()) ||
+          (rf.aliases || []).some(a => lname.startsWith(a.toLowerCase()))
+        );
+      }
+    }
+
+    if (!regField) {
+      return res.json({ found: false });
+    }
+
+    if (!regField.totalRentDollars || regField.totalRentDollars <= 0) {
+      return res.json({ found: true, registryFieldId: regField.id, registryFieldName: regField.name, totalRentDollars: 0, totalBudgetAcres: 0, rentPerAcre: 0 });
+    }
+
+    // Sum all non-split budget field acres that resolve to this registry farm.
+    // Use prefix matching (field name starts with a registry alias) so farm-budget entries
+    // like 'OMNI BIG SOUTH' resolve to registry farm 'Omni' even without registryFieldId.
+    // Deduplicate by lowercase field name so DBL CROP entries (same physical acres,
+    // two enterprise records with the same name) are only counted once.
+    const regPrefixKeys = [regField.name.toLowerCase(), ...(regField.aliases || []).map(a => a.toLowerCase())];
+    const seenNames = new Set();
+    const totalBudgetAcres = store.fields
+      .filter(f => {
+        if (f.splitGroupId) return false;
+        if (excludeFieldId && f.id === excludeFieldId) return false;
+        // Canonical ID match (most reliable)
+        if (f.registryFieldId === regField.id) return true;
+        const fl = (f.name || '').toLowerCase();
+        const frn = (f.registryFieldName || '').toLowerCase();
+        // Exact name/alias match, or prefix match (field name starts with registry alias + space)
+        return regPrefixKeys.some(p =>
+          fl === p || fl.startsWith(p + ' ') ||
+          frn === p || (frn && frn.startsWith(p + ' '))
+        );
+      })
+      .reduce((sum, f) => {
+        // Deduplicate by field name: same name = same physical parcel (e.g. DBL CROP entries)
+        const key = (f.name || '').toLowerCase();
+        if (seenNames.has(key)) return sum;
+        seenNames.add(key);
+        return sum + (f.acres || 0);
+      }, 0);
+
+    const denominator = totalBudgetAcres > 0 ? totalBudgetAcres : regField.reportingAcres;
+    const rentPerAcre = Math.round((regField.totalRentDollars / denominator) * 100) / 100;
+
+    res.json({
+      found: true,
+      registryFieldId: regField.id,
+      registryFieldName: regField.name,
+      totalRentDollars: regField.totalRentDollars,
+      registryReportingAcres: regField.reportingAcres,
+      totalBudgetAcres: totalBudgetAcres,
+      rentPerAcre: rentPerAcre
+    });
+  } catch (err) {
+    res.status(502).json({ error: 'Rent rate lookup failed: ' + err.message });
   }
 });
 
