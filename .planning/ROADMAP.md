@@ -546,4 +546,4 @@ Plans:
 | 58. Field Activity Timeline | 2/2 | Complete    | 2026-03-29 | - |
 | 59. Prevented Planting Calculator | 2/2 | Complete    | 2026-03-29 | - |
 | 60. Settlement Financial Summary | 2/2 | Complete    | 2026-03-29 | - |
-| 61. Auto Field Propagation | 2/2 | Complete   | 2026-03-30 | - |
+| 61. Auto Field Propagation | 2/2 | Complete    | 2026-03-30 | - |
