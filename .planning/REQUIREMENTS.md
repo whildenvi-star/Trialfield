@@ -80,7 +80,7 @@ Requirements for Domain Features & Workflow Automation. Each maps to roadmap pha
 | APH-01 | Phase 56 | Complete |
 | APH-02 | Phase 56 | Complete |
 | APH-03 | Phase 56 | Complete |
-| MKT-01 | Phase 57, 57.1, 63 | Pending |
+| MKT-01 | Phase 57, 57.1, 63 | Complete |
 | MKT-02 | Phase 57, 57.1 | Complete |
 | MKT-03 | Phase 57 | Complete |
 | FLD-01 | Phase 58 | Complete |

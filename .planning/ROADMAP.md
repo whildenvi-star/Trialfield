@@ -150,7 +150,7 @@
 - [x] **Phase 60: Settlement Financial Summary** - Per-buyer per-crop revenue breakdown with contract vs actual price variance (completed 2026-03-29)
 - [x] **Phase 61: Auto Field Propagation** - Adding a field in farm-registry auto-creates downstream records in all apps (completed 2026-03-30)
 - [x] **Phase 62: Portal Webhook Auth Fix** - Fix missing token on portal webhook target in propagateField() so CLU records are created in production (completed 2026-03-30)
-- [ ] **Phase 63: Crop Autocomplete Server Proxy** - Replace hardcoded localhost:3005 in contract-drawer.tsx with portal-relative proxy route
+- [x] **Phase 63: Crop Autocomplete Server Proxy** - Replace hardcoded localhost:3005 in contract-drawer.tsx with portal-relative proxy route (completed 2026-03-30)
 
 ## Phase Details
 

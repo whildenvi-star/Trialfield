@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Gap Closure — Phase 62: Portal Webhook Auth Fix
+**Current focus:** v11.0 Gap Closure — Phase 63: Crop Autocomplete Server Proxy
 
 ## Current Position
 
-Phase: 62 of 63 (Portal Webhook Auth Fix) — COMPLETE
+Phase: 63 of 63 (Crop Autocomplete Server Proxy) — COMPLETE
 Plan: 1 of 1 complete
-Status: Phase 62 complete — tokenQuery appended to portal propagation target, PORTAL_URL env var added to farm-registry, NEXT_PUBLIC_APP_URL added to portal env. AUTO-01/AUTO-02 now satisfy production.
-Last activity: 2026-03-30 — Phase 62 Plan 01 complete. Portal webhook 403 fix deployed; all three propagateField() targets symmetric.
+Status: Phase 63 complete — /api/registry/crops proxy route created, contract-drawer.tsx localhost URL removed. MKT-01 satisfied.
+Last activity: 2026-03-30 — Phase 63 Plan 01 complete. Crop autocomplete now works on VPS via server-side proxy.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
@@ -75,6 +75,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 61-auto-field-propagation P01 | 2 | 1 tasks | 1 files |
 | Phase 61 P02 | 2 | 2 tasks | 3 files |
 | Phase 62-portal-webhook-auth-fix P01 | 1 | 2 tasks | 3 files |
+| Phase 63-crop-autocomplete-server-proxy P01 | 2 | 2 tasks | 2 files |
+| Phase 63 P01 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -188,6 +190,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 61-02]: CLU placeholder record uses farm_number=0, tract_number=0, clu=field_name — user fills in real FSA numbers via portal UI
 - [Phase 62-01]: propagateField() portal target now appends tokenQuery — symmetric with farm-budget and grain-tickets
 - [Phase 62-01]: PORTAL_URL and PORTAL_ORIGIN coexist in farm-registry/.env — CORS origin check vs fetch base URL are different code paths
+- [Phase 63]: New route at /api/registry/crops (no -autocomplete suffix) — calls /api/crops/autocomplete with ?q= filtering; distinct from crops-autocomplete route used by CropTypeahead
+- [Phase 63]: fetchRegistryService proxy pattern for client components: use portal-relative /api/registry/* routes instead of hardcoded localhost URLs
 
 ### Pending Todos
 
@@ -200,6 +204,6 @@ None active. v11.0 roadmap complete. Ready to plan Phase 55.
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: Completed 62-01-PLAN.md — portal webhook auth fix and production env vars added
+Stopped at: Completed 63-01-PLAN.md — crop autocomplete server proxy, contract-drawer localhost URL removed
 Resume file: —
-Next action: Phase 61 complete — v11.0 Auto Field Propagation all requirements done
+Next action: Phase 63 complete — MKT-01 satisfied, all phases complete
