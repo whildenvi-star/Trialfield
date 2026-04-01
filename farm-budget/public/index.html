@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="platform-tokens.css">
-  <link rel="stylesheet" href="style.css?v=2">
+  <link rel="stylesheet" href="style.css?v=20260401">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
@@ -808,198 +808,243 @@
   <!-- FIELD EDITOR PANEL -->
   <div id="field-editor-overlay" class="overlay">
     <div id="field-editor" class="editor-panel">
+
+      <!-- Header -->
       <div class="editor-header">
         <h2 id="editor-title">Edit Field</h2>
-        <button id="editor-close" class="btn-close">&times;</button>
+        <div style="display:flex;gap:0.4rem;align-items:center">
+          <button id="editor-expand" class="btn-sm" title="Toggle full screen" style="font-size:0.8rem;padding:0.15rem 0.45rem;line-height:1">⤢</button>
+          <button id="editor-close" class="btn-close">&times;</button>
+        </div>
       </div>
-      <div class="editor-body">
-        <!-- Split Group Banner (shown for fields in a split group) -->
-        <div id="ed-split-banner" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:#1a2a1a;border:1px solid #2d4a2d;border-radius:4px;font-size:0.8rem;">
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">
-            <span style="color:var(--primary);font-weight:600">Split Field</span>
-            <span id="ed-split-registry-name" style="color:var(--text-light)"></span>
-          </div>
-          <div id="ed-split-allocation" style="color:#888;font-size:0.75rem"></div>
-        </div>
 
-        <!-- Program Template Application -->
-        <div class="prog-apply-bar" style="margin-bottom:1rem;display:flex;gap:0.5rem;align-items:flex-end;flex-wrap:wrap;background:var(--highlight);border:1px solid var(--border);padding:0.75rem">
-          <div class="form-group" style="flex:1;margin:0">
-            <label style="font-size:0.8rem;color:var(--text-light)">Apply Program Template</label>
-            <select id="ed-apply-program" style="font-size:0.85rem">
-              <option value="">-- Select a program --</option>
+      <!-- 3-column body -->
+      <div class="editor-body-inner">
+
+        <!-- ── Left Nav ── -->
+        <nav class="editor-nav">
+          <div class="ed-nav-identity">
+            <div class="ed-nav-field-name" id="ed-nav-name">—</div>
+            <div class="ed-nav-meta" id="ed-nav-meta"></div>
+          </div>
+
+          <ul class="ed-nav-list" id="ed-nav-list">
+            <li class="ed-nav-item active" data-section="identity">Field Info</li>
+            <li class="ed-nav-item" data-section="inputs">Inputs<span class="ed-nav-badge" id="badge-inputs"></span></li>
+            <li class="ed-nav-item" data-section="machinery">Machinery<span class="ed-nav-badge" id="badge-machinery"></span></li>
+            <li class="ed-nav-item" data-section="seed">Seed<span class="ed-nav-badge" id="badge-seed"></span></li>
+            <li class="ed-nav-item" data-section="yield">Yield &amp; Income</li>
+            <li class="ed-nav-item" data-section="aux">AUX Payments<span class="ed-nav-badge" id="badge-aux"></span></li>
+            <li class="ed-nav-item" data-section="fieldops">FieldOps Data</li>
+          </ul>
+
+          <div class="ed-nav-program-bar">
+            <div class="ed-nav-program-label">Apply Program</div>
+            <select id="ed-apply-program" style="font-size:0.75rem;width:100%;margin-bottom:0.35rem">
+              <option value="">-- Select --</option>
             </select>
+            <div style="display:flex;gap:0.3rem">
+              <button id="ed-apply-program-btn" class="btn-sm btn-primary" style="flex:1;font-size:0.7rem;padding:0.25rem 0.3rem">Apply</button>
+              <button id="ed-save-as-program" class="btn-sm" style="flex:1;font-size:0.7rem;padding:0.25rem 0.3rem" title="Save field as program template">Save</button>
+            </div>
           </div>
-          <button id="ed-apply-program-btn" class="btn-sm btn-primary" style="padding:0.4rem 0.75rem;white-space:nowrap">Apply</button>
-          <button id="ed-save-as-program" class="btn-sm" style="padding:0.4rem 0.75rem;white-space:nowrap" title="Save this field's agronomic data as a new program template">Save as Program</button>
-        </div>
+        </nav>
 
-        <div class="form-grid">
-          <div class="form-group" style="position:relative;">
-            <label>Field Name</label>
-            <input type="text" id="ed-name" list="field-name-list">
-          </div>
-          <!-- Enterprise auto-assigned from crop + system code -->
-          <div class="form-group">
-            <label>System Code</label>
-            <select id="ed-systemCode">
-              <option value="CON">CON</option>
-              <option value="CON IRR">CON IRR</option>
-              <option value="ORG">ORG</option>
-              <option value="ORG IRR">ORG IRR</option>
-              <option value="CANNING CON">CANNING CON</option>
-              <option value="CANNING ORG">CANNING ORG</option>
-              <option value="CANNING CON IRR">CANNING CON IRR</option>
-              <option value="CANNING ORG IRR">CANNING ORG IRR</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Crop</label>
-            <select id="ed-crop">
-              <option value="">— select crop —</option>
-            </select>
-            <div id="ed-crop-reassign-hint" style="font-size:0.7rem;margin-top:0.15rem;display:none;"></div>
-          </div>
-          <div class="form-group">
-            <label>Crop Type</label>
-            <select id="ed-cropType">
-              <option value="SINGLE CROP">Single Crop</option>
-              <option value="DBL CROP">Double Crop</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label style="display:flex;align-items:baseline;gap:0.35rem;flex-wrap:wrap;">Field Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(rent basis)</span> <button type="button" id="ed-sync-acres" class="btn-link" style="font-size:0.7rem;color:var(--primary);cursor:pointer;border:none;background:none;text-decoration:underline;" title="Pull acres & rent from Farm Registry">Sync</button></label>
-            <input type="number" id="ed-acres" step="0.01" min="0">
-            <div id="ed-acres-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
-          </div>
-          <div class="form-group">
-            <label>Crop Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(input/seed/ops basis — leave 0 for full field)</span></label>
-            <input type="number" id="ed-plantedAcres" step="0.01" min="0">
-            <div id="ed-plantedAcres-hint" style="font-size:0.7rem;color:#888;margin-top:0.15rem;display:none;"></div>
-          </div>
-          <div class="form-group">
-            <label>Rent $/AC <span style="font-size:0.65rem;color:#888;font-weight:normal;">(from Farm Registry)</span></label>
-            <input type="number" id="ed-rentPerAcre" step="0.01" min="0" readonly style="background:var(--bg-raised);cursor:not-allowed;opacity:0.7;">
-            <div id="ed-rent-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
-          </div>
-        </div>
+        <!-- ── Content Panels ── -->
+        <div class="editor-sections">
 
-        <!-- Collapsible preview -->
-        <div id="ed-preview" class="preview-panel">
-          <div class="preview-header" id="ed-preview-header">
-            <h3>Computed Budget</h3>
-            <span id="ed-preview-summary" class="preview-summary"></span>
-            <button type="button" id="ed-preview-toggle" class="btn-sm preview-toggle-btn">Collapse</button>
-          </div>
-          <div id="ed-preview-body" class="preview-body">
-            <div id="ed-preview-grid"></div>
-          </div>
-        </div>
-
-        <details class="editor-section">
-          <summary>Input Products</summary>
-          <div class="editor-section-body">
-            <table id="ed-inputs-table" class="compact-table">
-              <thead><tr><th>Product</th><th>Qty</th><th>Unit</th><th>Season</th><th>$/AC</th><th></th></tr></thead>
-              <tbody id="ed-inputs-tbody"></tbody>
-            </table>
-            <button id="ed-add-input" class="btn-sm" style="margin-top:0.5rem">+ Add Input</button>
-          </div>
-        </details>
-
-        <details class="editor-section">
-          <summary>Machinery</summary>
-          <div class="editor-section-body">
-            <table id="ed-mach-table" class="compact-table">
-              <thead><tr><th>Implement</th><th>Passes</th><th>$/AC</th><th>Mode</th><th></th></tr></thead>
-              <tbody id="ed-mach-tbody"></tbody>
-            </table>
-            <button id="ed-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
-          </div>
-        </details>
-
-        <details class="editor-section">
-          <summary>Seed</summary>
-          <div class="editor-section-body">
-            <div id="ed-seeds-acre-hint" style="font-size:0.78rem;color:var(--text-light);margin-bottom:0.5rem;"></div>
-            <table class="ref-table" style="font-size:0.8rem">
-              <thead><tr><th>Variety</th><th>Population</th><th>Acres</th><th>Cost/ac</th><th></th></tr></thead>
-              <tbody id="ed-seeds-tbody"></tbody>
-            </table>
-            <button id="ed-add-seed" class="btn-sm" style="margin-top:0.5rem">+ Add Variety</button>
-          </div>
-        </details>
-
-        <details class="editor-section">
-          <summary>Yield & Income</summary>
-          <div class="editor-section-body">
-            <div style="margin-bottom:0.5rem;">
-              <div class="view-toggle" id="ed-yield-mode-toggle" style="display:inline-flex;">
-                <button class="toggle-btn active" data-yield-mode="projected" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Projected</button>
-                <button class="toggle-btn" data-yield-mode="actual" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Actual</button>
+          <!-- Field Info -->
+          <div class="editor-section-panel active" data-section="identity">
+            <div id="ed-split-banner" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:#1a2a1a;border:1px solid #2d4a2d;border-radius:4px;font-size:0.8rem;">
+              <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">
+                <span style="color:var(--primary);font-weight:600">Split Field</span>
+                <span id="ed-split-registry-name" style="color:var(--text-light)"></span>
               </div>
-              <span id="ed-yield-source-hint" style="font-size:0.72rem;color:var(--text-light);margin-left:0.5rem;"></span>
+              <div id="ed-split-allocation" style="color:#888;font-size:0.75rem"></div>
             </div>
             <div class="form-grid">
-              <div class="form-group">
-                <label>Yield / AC</label>
-                <input type="number" id="ed-yield" step="0.1" min="0">
+              <div class="form-group" style="position:relative;">
+                <label>Field Name</label>
+                <input type="text" id="ed-name" list="field-name-list">
               </div>
               <div class="form-group">
-                <label>Unit</label>
-                <select id="ed-yieldUnit">
-                  <option value="Bu">Bu</option>
-                  <option value="Tons">Tons</option>
-                  <option value="Lbs">Lbs</option>
-                  <option value="Each">Each</option>
+                <label>System Code</label>
+                <select id="ed-systemCode">
+                  <option value="CON">CON</option>
+                  <option value="CON IRR">CON IRR</option>
+                  <option value="ORG">ORG</option>
+                  <option value="ORG IRR">ORG IRR</option>
+                  <option value="CANNING CON">CANNING CON</option>
+                  <option value="CANNING ORG">CANNING ORG</option>
+                  <option value="CANNING CON IRR">CANNING CON IRR</option>
+                  <option value="CANNING ORG IRR">CANNING ORG IRR</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>Harvest Moisture %</label>
-                <input type="number" id="ed-harvestMoisture" step="0.1" min="0" placeholder="e.g. 18.5">
+                <label>Crop</label>
+                <select id="ed-crop">
+                  <option value="">— select crop —</option>
+                </select>
+                <div id="ed-crop-reassign-hint" style="font-size:0.7rem;margin-top:0.15rem;display:none;"></div>
               </div>
               <div class="form-group">
-                <label>Buyer (for drying calc)</label>
-                <select id="ed-buyer">
-                  <option value="">— none —</option>
+                <label>Crop Type</label>
+                <select id="ed-cropType">
+                  <option value="SINGLE CROP">Single Crop</option>
+                  <option value="DBL CROP">Double Crop</option>
                 </select>
               </div>
               <div class="form-group">
-                <label>Crop Insurance $/AC</label>
-                <input type="number" id="ed-cropIns" step="0.01" min="0">
+                <label style="display:flex;align-items:baseline;gap:0.35rem;flex-wrap:wrap;">Field Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(rent basis)</span> <button type="button" id="ed-sync-acres" class="btn-link" style="font-size:0.7rem;color:var(--primary);cursor:pointer;border:none;background:none;text-decoration:underline;" title="Pull acres &amp; rent from Farm Registry">Sync</button></label>
+                <input type="number" id="ed-acres" step="0.01" min="0">
+                <div id="ed-acres-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
               </div>
               <div class="form-group">
-                <label>Insurance Income $/AC</label>
-                <input type="number" id="ed-insIncome" step="0.01" min="0">
+                <label>Crop Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(inputs/seed/ops — leave 0 for full field)</span></label>
+                <input type="number" id="ed-plantedAcres" step="0.01" min="0">
+                <div id="ed-plantedAcres-hint" style="font-size:0.7rem;color:#888;margin-top:0.15rem;display:none;"></div>
+              </div>
+              <div class="form-group">
+                <label>Rent $/AC <span style="font-size:0.65rem;color:#888;font-weight:normal;">(from Farm Registry)</span></label>
+                <input type="number" id="ed-rentPerAcre" step="0.01" min="0" readonly style="background:var(--bg-raised);cursor:not-allowed;opacity:0.7;">
+                <div id="ed-rent-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
               </div>
             </div>
           </div>
-        </details>
 
-        <details class="editor-section">
-          <summary>AUX Payments</summary>
-          <div class="editor-section-body">
-            <table id="ed-aux-table" class="compact-table">
-              <thead><tr><th>Label</th><th>$/AC</th><th></th></tr></thead>
-              <tbody id="ed-aux-tbody"></tbody>
-            </table>
-            <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
-              <button id="ed-add-aux" class="btn-sm">+ Add Payment</button>
-              <span id="ed-aux-total" style="font-size:0.8rem;color:var(--text-light);"></span>
+          <!-- Input Products -->
+          <div class="editor-section-panel" data-section="inputs">
+            <div class="editor-section-body">
+              <table id="ed-inputs-table" class="compact-table" style="width:100%">
+                <thead><tr><th>Product</th><th>Qty</th><th>Unit</th><th>Season</th><th>$/AC</th><th></th></tr></thead>
+                <tbody id="ed-inputs-tbody"></tbody>
+              </table>
+              <button id="ed-add-input" class="btn-sm" style="margin-top:0.5rem">+ Add Input</button>
             </div>
           </div>
-        </details>
 
-        <details class="editor-section">
-          <summary>FieldOps Data <span class="fieldops-badge" style="font-size:0.7rem;background:var(--blue);color:#fff;padding:1px 6px;border-radius:3px;margin-left:0.5rem">synced</span></summary>
-          <div class="editor-section-body">
-            <h4 style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.5rem">Application History</h4>
-            <div id="ed-fieldops-applications"></div>
-            <h4 style="font-size:0.8rem;color:var(--text-light);margin:0.75rem 0 0.5rem">Yield History</h4>
-            <div id="ed-fieldops-yield-history"></div>
+          <!-- Machinery -->
+          <div class="editor-section-panel" data-section="machinery">
+            <div class="editor-section-body">
+              <table id="ed-mach-table" class="compact-table" style="width:100%">
+                <thead><tr><th>Implement</th><th>Passes</th><th>$/AC</th><th>Mode</th><th></th></tr></thead>
+                <tbody id="ed-mach-tbody"></tbody>
+              </table>
+              <button id="ed-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
+            </div>
           </div>
-        </details>
-      </div>
+
+          <!-- Seed -->
+          <div class="editor-section-panel" data-section="seed">
+            <div class="editor-section-body">
+              <div id="ed-seeds-acre-hint" style="font-size:0.78rem;color:var(--text-light);margin-bottom:0.5rem;"></div>
+              <table class="ref-table" style="font-size:0.8rem;width:100%">
+                <thead><tr><th>Variety</th><th>Population</th><th>Acres</th><th>Cost/ac</th><th></th></tr></thead>
+                <tbody id="ed-seeds-tbody"></tbody>
+              </table>
+              <button id="ed-add-seed" class="btn-sm" style="margin-top:0.5rem">+ Add Variety</button>
+            </div>
+          </div>
+
+          <!-- Yield & Income -->
+          <div class="editor-section-panel" data-section="yield">
+            <div class="editor-section-body">
+              <div style="margin-bottom:0.75rem;">
+                <div class="view-toggle" id="ed-yield-mode-toggle" style="display:inline-flex;">
+                  <button class="toggle-btn active" data-yield-mode="projected" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Projected</button>
+                  <button class="toggle-btn" data-yield-mode="actual" style="font-size:0.75rem;padding:0.25rem 0.6rem;">Actual</button>
+                </div>
+                <span id="ed-yield-source-hint" style="font-size:0.72rem;color:var(--text-light);margin-left:0.5rem;"></span>
+              </div>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Yield / AC</label>
+                  <input type="number" id="ed-yield" step="0.1" min="0">
+                </div>
+                <div class="form-group">
+                  <label>Unit</label>
+                  <select id="ed-yieldUnit">
+                    <option value="Bu">Bu</option>
+                    <option value="Tons">Tons</option>
+                    <option value="Lbs">Lbs</option>
+                    <option value="Each">Each</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Harvest Moisture %</label>
+                  <input type="number" id="ed-harvestMoisture" step="0.1" min="0" placeholder="e.g. 18.5">
+                </div>
+                <div class="form-group">
+                  <label>Buyer (for drying calc)</label>
+                  <select id="ed-buyer">
+                    <option value="">— none —</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Crop Insurance $/AC</label>
+                  <input type="number" id="ed-cropIns" step="0.01" min="0">
+                </div>
+                <div class="form-group">
+                  <label>Insurance Income $/AC</label>
+                  <input type="number" id="ed-insIncome" step="0.01" min="0">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AUX Payments -->
+          <div class="editor-section-panel" data-section="aux">
+            <div class="editor-section-body">
+              <table id="ed-aux-table" class="compact-table" style="width:100%">
+                <thead><tr><th>Label</th><th>$/AC</th><th></th></tr></thead>
+                <tbody id="ed-aux-tbody"></tbody>
+              </table>
+              <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
+                <button id="ed-add-aux" class="btn-sm">+ Add Payment</button>
+                <span id="ed-aux-total" style="font-size:0.8rem;color:var(--text-light);"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- FieldOps Data -->
+          <div class="editor-section-panel" data-section="fieldops">
+            <div class="editor-section-body">
+              <h4 style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.5rem">Application History</h4>
+              <div id="ed-fieldops-applications"></div>
+              <h4 style="font-size:0.8rem;color:var(--text-light);margin:0.75rem 0 0.5rem">Yield History</h4>
+              <div id="ed-fieldops-yield-history"></div>
+            </div>
+          </div>
+
+        </div><!-- /editor-sections -->
+
+        <!-- ── Budget Sidebar ── -->
+        <div class="editor-budget-sidebar">
+          <div class="ed-kpi-strip">
+            <div class="ed-kpi">
+              <span class="ed-kpi-label">EXP/AC</span>
+              <span class="ed-kpi-val" id="kpi-exp">—</span>
+            </div>
+            <div class="ed-kpi">
+              <span class="ed-kpi-label">INCOME/AC</span>
+              <span class="ed-kpi-val" id="kpi-inc">—</span>
+            </div>
+            <div class="ed-kpi">
+              <span class="ed-kpi-label">PROFIT/AC</span>
+              <span class="ed-kpi-val" id="kpi-profit">—</span>
+            </div>
+            <div class="ed-kpi">
+              <span class="ed-kpi-label">COP</span>
+              <span class="ed-kpi-val" id="kpi-cop">—</span>
+            </div>
+          </div>
+          <div class="ed-sidebar-label">Budget Detail</div>
+          <div id="ed-preview-grid"></div>
+        </div>
+
+      </div><!-- /editor-body-inner -->
+
+      <!-- Footer -->
       <div class="editor-footer" style="display:flex;gap:0.5rem;align-items:center">
         <button id="editor-save" class="btn-primary">Save Field</button>
         <button id="editor-cancel" class="btn-sm">Cancel</button>
@@ -1007,6 +1052,7 @@
         <button id="ed-split-field" class="btn-sm" style="color:var(--primary);border-color:var(--primary)" title="Split this field into sub-fields for separate crop tracking">Split Field</button>
         <button id="ed-merge-split" class="btn-sm" style="display:none;color:#ff9800;border-color:#ff9800" title="Merge all sub-fields of this split group back into one field">Merge Back</button>
       </div>
+
     </div>
   </div>
 
@@ -1270,7 +1316,7 @@
   <script src="app.js?v=20260319"></script>
   <script src="dashboard.js?v=20260401"></script>
   <script src="enterprise.js?v=20260331b"></script>
-  <script src="field-editor.js?v=20260319"></script>
+  <script src="field-editor.js?v=20260401"></script>
   <script src="programs.js"></script>
   <script src="inputs-manager.js"></script>
   <script src="seed-manager.js"></script>

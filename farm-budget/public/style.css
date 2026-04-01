@@ -1666,7 +1666,212 @@ body.light .audit-badge.warn { background: #c08800; }
   background: var(--bg);
 }
 
-/* Editor collapsible sections */
+/* ── Field Editor: wide 3-column layout ─────────────────────────────────── */
+
+#field-editor {
+  width: min(1280px, 96vw);
+  max-width: 96vw;
+  height: 92vh;
+  max-height: 92vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+#field-editor.fullscreen {
+  width: 100vw;
+  max-width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+}
+
+/* Override the generic editor-body since we use editor-body-inner instead */
+#field-editor > .editor-body { display: none; }
+
+.editor-body-inner {
+  display: grid;
+  grid-template-columns: 200px 1fr 280px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Left Nav ── */
+.editor-nav {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  overflow-y: auto;
+  padding: 0.6rem 0;
+}
+
+.ed-nav-identity {
+  padding: 0.5rem 0.75rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.3rem;
+}
+
+.ed-nav-field-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ed-nav-meta {
+  font-size: 0.68rem;
+  color: var(--text-light);
+  margin-top: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ed-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.ed-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--text-light);
+  border-left: 2px solid transparent;
+  transition: background 0.1s, color 0.1s;
+  user-select: none;
+}
+
+.ed-nav-item:hover {
+  color: var(--primary);
+  background: var(--highlight);
+}
+
+.ed-nav-item.active {
+  border-left-color: var(--primary);
+  color: var(--primary);
+  background: var(--highlight);
+  font-weight: 600;
+}
+
+.ed-nav-badge {
+  font-size: 0.62rem;
+  background: var(--border);
+  color: var(--text-light);
+  padding: 1px 5px;
+  border-radius: 8px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.ed-nav-item.active .ed-nav-badge {
+  background: var(--primary);
+  color: var(--bg);
+}
+
+.ed-nav-program-bar {
+  margin-top: auto;
+  padding: 0.65rem 0.7rem;
+  border-top: 1px solid var(--border);
+}
+
+.ed-nav-program-label {
+  font-size: 0.65rem;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.3rem;
+}
+
+/* ── Content Panels ── */
+.editor-sections {
+  overflow-y: auto;
+  padding: 1rem 1.25rem;
+  min-height: 0;
+}
+
+.editor-section-panel {
+  display: none;
+  height: 100%;
+}
+
+.editor-section-panel.active {
+  display: block;
+}
+
+/* ── Budget Sidebar ── */
+.editor-budget-sidebar {
+  border-left: 1px solid var(--border);
+  background: var(--bg-raised, var(--highlight));
+  overflow-y: auto;
+  padding: 0.75rem;
+  min-height: 0;
+}
+
+.ed-kpi-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.ed-kpi {
+  text-align: center;
+  padding: 0.4rem 0.3rem;
+  background: var(--card);
+  border-radius: 3px;
+}
+
+.ed-kpi-label {
+  display: block;
+  font-size: 0.56rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-light);
+  margin-bottom: 2px;
+}
+
+.ed-kpi-val {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--amber, #C8860A);
+}
+
+.ed-sidebar-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-light);
+  margin-bottom: 0.4rem;
+}
+
+/* ── Mobile: collapse sidebar, single column ── */
+@media (max-width: 900px) {
+  .editor-body-inner {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+  .editor-nav { flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border); padding: 0.35rem; }
+  .ed-nav-identity { display: none; }
+  .ed-nav-program-bar { display: none; }
+  .ed-nav-list { flex-direction: row; flex-wrap: wrap; gap: 0.2rem; flex: unset; }
+  .ed-nav-item { border-left: none; border-bottom: 2px solid transparent; padding: 0.3rem 0.6rem; font-size: 0.72rem; }
+  .ed-nav-item.active { border-bottom-color: var(--primary); border-left-color: transparent; }
+  .editor-budget-sidebar { display: none; }
+}
+
+/* Editor collapsible sections (legacy — kept for product/other panels) */
 .editor-section {
   margin-bottom: 0.6rem;
   border: 1px solid var(--border);

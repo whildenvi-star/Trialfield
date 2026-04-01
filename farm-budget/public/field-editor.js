@@ -39,7 +39,17 @@
     populateDropdowns();
     populateForm();
     updatePreview();
+    updateNavBadges();
     updateSplitBanner();
+    // Reset nav to Field Info on open
+    var navItems = document.querySelectorAll('.ed-nav-item');
+    var panels = document.querySelectorAll('.editor-section-panel');
+    navItems.forEach(function (li) { li.classList.remove('active'); });
+    panels.forEach(function (p) { p.classList.remove('active'); });
+    var firstNav = document.querySelector('.ed-nav-item[data-section="identity"]');
+    var firstPanel = document.querySelector('.editor-section-panel[data-section="identity"]');
+    if (firstNav) firstNav.classList.add('active');
+    if (firstPanel) firstPanel.classList.add('active');
     overlay.style.display = 'flex';
     requestAnimationFrame(function () {
       overlay.classList.add('visible');
@@ -415,6 +425,7 @@
         '</tr>';
     });
     tbody.innerHTML = html;
+    updateNavBadges();
 
     // Product autocomplete
     tbody.querySelectorAll('.prod-ac-input').forEach(function (input) {
@@ -486,6 +497,7 @@
         '</tr>';
     });
     tbody.innerHTML = html;
+    updateNavBadges();
 
     tbody.querySelectorAll('.ed-mach-field').forEach(function (el) {
       el.addEventListener('change', function () {
@@ -551,6 +563,7 @@
         '</tr>';
     });
     tbody.innerHTML = html;
+    updateNavBadges();
 
     var totalEl = document.getElementById('ed-aux-total');
     if (totalEl) {
@@ -618,6 +631,7 @@
         '</tr>';
     });
     tbody.innerHTML = html;
+    updateNavBadges();
 
     // Acre allocation hint
     var hint = document.getElementById('ed-seeds-acre-hint');
@@ -919,6 +933,31 @@
     }
   });
 
+  // --- Nav badges + identity ---
+  function updateNavBadges() {
+    if (!currentField) return;
+    var counts = {
+      inputs: (currentField.inputs || []).length,
+      machinery: (currentField.machinery || []).length,
+      seed: (currentField.seeds || []).length,
+      aux: (currentField.auxPayments || []).length
+    };
+    Object.keys(counts).forEach(function (key) {
+      var el = document.getElementById('badge-' + key);
+      if (!el) return;
+      var n = counts[key];
+      el.textContent = n > 0 ? n : '';
+    });
+    var nameEl = document.getElementById('ed-nav-name');
+    var metaEl = document.getElementById('ed-nav-meta');
+    if (nameEl) nameEl.textContent = currentField.name || '—';
+    if (metaEl) {
+      var crop = currentField.crop || '';
+      var acres = currentField.acres || 0;
+      metaEl.textContent = crop + (acres > 0 ? ' · ' + acres + ' ac' : '');
+    }
+  }
+
   function syncAndPreview() {
     if (!currentField) return;
     currentField.name = document.getElementById('ed-name').value;
@@ -950,6 +989,7 @@
       currentField.seed = null;
     }
 
+    updateNavBadges();
     updatePreview();
   }
 
@@ -1002,37 +1042,44 @@
     }
     var acresHeader = '<div class="prev-col-headers"><span></span><span>/ac</span><span>total</span></div>';
 
+    // All /ac display values divide by rentAcres (field acres) so every column is consistent
+    // and line items add up to the expense/profit totals.
+    var dispAc = function(total) { return budget.rentAcres > 0 ? Calc.round2(total / budget.rentAcres) : 0; };
+
+    var unassignedFertTotal = Calc.round2(budget.unassignedFertPerAcre * budget.effectiveAcres);
+
     // Build inputs items — include unassigned fert if any exist
     var inputItems = [
-      renderItem('Spring Fert', budget.springFertPerAcre, budget.springFertTotal),
-      renderItem('Fall Fert', budget.fallFertPerAcre, budget.fallFertTotal)
+      renderItem('Spring Fert', dispAc(budget.springFertTotal), budget.springFertTotal),
+      renderItem('Fall Fert', dispAc(budget.fallFertTotal), budget.fallFertTotal)
     ];
     if (budget.unassignedFertPerAcre > 0) {
-      inputItems.push(renderItem('Other Inputs', budget.unassignedFertPerAcre,
-        Calc.round2(budget.unassignedFertPerAcre * budget.effectiveAcres)));
+      inputItems.push(renderItem('Other Inputs', dispAc(unassignedFertTotal), unassignedFertTotal));
     }
-    inputItems.push(renderItem('Seed', budget.seedCostPerAcre, budget.seedTotal));
+    inputItems.push(renderItem('Seed', dispAc(budget.seedTotal), budget.seedTotal));
+
+    var inputsSubtotal = budget.totalFertCost + budget.seedTotal;
+    var opsSubtotal = budget.machineryTotal + budget.laborTotal + budget.overheadTotal + budget.fuelTotal;
+    var otherSubtotal = budget.dryingTotal + budget.interestTotal + budget.cropInsuranceTotal;
 
     var groups = [
       { name: 'Land', items: [
-        renderItem(rentLabel, budget.rentPerCropAcre, budget.rentTotal)
-      ], subtotalPerAcre: budget.rentPerCropAcre, subtotalTotal: budget.rentTotal },
+        renderItem(rentLabel, dispAc(budget.rentTotal), budget.rentTotal)
+      ], subtotalPerAcre: dispAc(budget.rentTotal), subtotalTotal: budget.rentTotal },
       { name: 'Inputs', items: inputItems,
-        subtotalPerAcre: budget.totalFertPerAcre + budget.seedCostPerAcre,
-        subtotalTotal: budget.totalFertCost + budget.seedTotal },
+        subtotalPerAcre: dispAc(inputsSubtotal),
+        subtotalTotal: inputsSubtotal },
       { name: 'Operations', items: [
-        renderItem('Machinery', budget.machineryPerAcre, budget.machineryTotal),
-        renderItem('Labor' + laborDetail, budget.laborPerAcre, budget.laborTotal),
-        renderItem('Overhead', budget.overheadPerAcre, budget.overheadTotal),
-        renderItem('Fuel (' + budget.fuelGallonsPerAcre + ' gal)', budget.fuelPerAcre, budget.fuelTotal)
-      ], subtotalPerAcre: budget.machineryPerAcre + budget.laborPerAcre + budget.overheadPerAcre + budget.fuelPerAcre,
-         subtotalTotal: budget.machineryTotal + budget.laborTotal + budget.overheadTotal + budget.fuelTotal },
+        renderItem('Machinery', dispAc(budget.machineryTotal), budget.machineryTotal),
+        renderItem('Labor' + laborDetail, dispAc(budget.laborTotal), budget.laborTotal),
+        renderItem('Overhead', dispAc(budget.overheadTotal), budget.overheadTotal),
+        renderItem('Fuel (' + budget.fuelGallonsPerAcre + ' gal)', dispAc(budget.fuelTotal), budget.fuelTotal)
+      ], subtotalPerAcre: dispAc(opsSubtotal), subtotalTotal: opsSubtotal },
       { name: 'Other', items: [
-        renderItem('Drying' + dryingDetail, budget.dryingPerAcre, budget.dryingTotal),
-        renderItem('Interest', budget.interestPerAcre, budget.interestTotal),
-        renderItem('Insurance', budget.cropInsurancePerAcre, budget.cropInsuranceTotal)
-      ], subtotalPerAcre: budget.dryingPerAcre + budget.interestPerAcre + budget.cropInsurancePerAcre,
-         subtotalTotal: budget.dryingTotal + budget.interestTotal + budget.cropInsuranceTotal }
+        renderItem('Drying' + dryingDetail, dispAc(budget.dryingTotal), budget.dryingTotal),
+        renderItem('Interest', dispAc(budget.interestTotal), budget.interestTotal),
+        renderItem('Insurance', dispAc(budget.cropInsuranceTotal), budget.cropInsuranceTotal)
+      ], subtotalPerAcre: dispAc(otherSubtotal), subtotalTotal: otherSubtotal }
     ];
 
     var html = acresHeader;
@@ -1052,33 +1099,55 @@
     // Totals section
     html += '<div class="prev-group prev-totals"><div class="prev-group-label">Totals</div><div class="prev-group-items">' +
       renderItem('Expense', budget.expPerAcre, budget.expTotal, 'highlight') +
-      renderItem('Income', budget.cropIncomePerAcre, budget.cropIncomeTotal) +
-      renderItem('AUX Payments', budget.auxTotalPerAcre, budget.totalGovPayments) +
+      renderItem('Income', dispAc(budget.cropIncomeTotal), budget.cropIncomeTotal) +
+      renderItem('AUX Payments', dispAc(budget.totalGovPayments), budget.totalGovPayments) +
       renderItem('Profit', budget.profitPerAcre, budget.profitFarmWithoutPayments, 'highlight ' + util.profitClass(budget.profitPerAcre)) +
-      renderItem('Profit (w/ Pay)', budget.profitPerAcre + budget.auxTotalPerAcre, budget.profitFarmWithPayments, 'highlight ' + util.profitClass(budget.profitFarmWithPayments)) +
+      renderItem('Profit (w/ Pay)', dispAc(budget.profitFarmWithPayments), budget.profitFarmWithPayments, 'highlight ' + util.profitClass(budget.profitFarmWithPayments)) +
       renderItem('COP', budget.cop, budget.cop, copClass) +
       '</div></div>';
 
     document.getElementById('ed-preview-grid').innerHTML = html;
 
-    // Update collapsed summary — profit colored red/green
-    var profitSumCls = util.profitClass(budget.profitPerAcre);
-    document.getElementById('ed-preview-summary').innerHTML =
-      'EXP: ' + util.formatMoney(budget.expPerAcre) + '/ac  |  Profit: <span class="' + profitSumCls + '">' + util.formatMoney(budget.profitPerAcre) + '/ac</span>';
+    // Update KPI strip in sidebar
+    var kpiExp = document.getElementById('kpi-exp');
+    var kpiInc = document.getElementById('kpi-inc');
+    var kpiProfit = document.getElementById('kpi-profit');
+    var kpiCop = document.getElementById('kpi-cop');
+    if (kpiExp) kpiExp.textContent = util.formatMoney(budget.expPerAcre);
+    if (kpiInc) kpiInc.textContent = util.formatMoney(dispAc(budget.cropIncomeTotal));
+    if (kpiProfit) {
+      kpiProfit.textContent = util.formatMoney(budget.profitPerAcre);
+      kpiProfit.className = 'ed-kpi-val ' + util.profitClass(budget.profitPerAcre);
+    }
+    if (kpiCop) kpiCop.textContent = util.formatMoney(budget.cop);
   }
 
-  // --- Preview collapse toggle ---
+  // --- Nav tab switching ---
   (function () {
-    var toggleBtn = document.getElementById('ed-preview-toggle');
-    var previewPanel = document.getElementById('ed-preview');
-    var previewBody = document.getElementById('ed-preview-body');
-    if (toggleBtn && previewPanel && previewBody) {
-      toggleBtn.addEventListener('click', function () {
-        var collapsed = previewPanel.classList.toggle('collapsed');
-        previewBody.classList.toggle('collapsed', collapsed);
-        toggleBtn.textContent = collapsed ? 'Expand' : 'Collapse';
-      });
-    }
+    var navList = document.getElementById('ed-nav-list');
+    if (!navList) return;
+    navList.addEventListener('click', function (e) {
+      var item = e.target.closest('.ed-nav-item');
+      if (!item) return;
+      var section = item.getAttribute('data-section');
+      if (!section) return;
+      navList.querySelectorAll('.ed-nav-item').forEach(function (li) { li.classList.remove('active'); });
+      item.classList.add('active');
+      document.querySelectorAll('.editor-section-panel').forEach(function (p) { p.classList.remove('active'); });
+      var panel = document.querySelector('.editor-section-panel[data-section="' + section + '"]');
+      if (panel) panel.classList.add('active');
+    });
+  })();
+
+  // --- Expand / fullscreen toggle ---
+  (function () {
+    var btn = document.getElementById('editor-expand');
+    var panel = document.getElementById('field-editor');
+    if (!btn || !panel) return;
+    btn.addEventListener('click', function () {
+      var full = panel.classList.toggle('fullscreen');
+      btn.textContent = full ? '⤡' : '⤢';
+    });
   })();
 
   // --- Sync Acres & Rent from Registry ---
@@ -1154,8 +1223,19 @@
 
     promise.then(function () {
       util.showToast(isNew ? 'Field created!' : 'Field saved!');
+      var savedEntId = currentField.enterpriseId;
       closeEditor();
-      if (window.reloadEnterprise) window.reloadEnterprise();
+      // Navigate to the field's enterprise (handles enterprise changes correctly)
+      var enterprises = window.refData ? (window.refData.enterprises || []) : [];
+      var newEntIdx = -1;
+      for (var i = 0; i < enterprises.length; i++) {
+        if (enterprises[i].id === savedEntId) { newEntIdx = i; break; }
+      }
+      if (newEntIdx >= 0 && typeof window.activateEnterprise === 'function') {
+        window.activateEnterprise(newEntIdx);
+      } else if (window.reloadEnterprise) {
+        window.reloadEnterprise();
+      }
     }).catch(function (err) {
       util.showToast('Error: ' + err.message);
     });
