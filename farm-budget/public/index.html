@@ -149,7 +149,7 @@
                 <tbody id="dash-conv-tbody"></tbody>
               </table>
             </div>
-            <div class="dash-crop-chart"><canvas id="chart-conv-acres" width="160" height="160"></canvas></div>
+            <div class="dash-crop-chart"><canvas id="chart-conv-acres" width="200" height="160"></canvas></div>
           </div>
         </div>
         <div class="panel">
@@ -170,7 +170,7 @@
                 <tbody id="dash-org-tbody"></tbody>
               </table>
             </div>
-            <div class="dash-crop-chart"><canvas id="chart-org-acres" width="160" height="160"></canvas></div>
+            <div class="dash-crop-chart"><canvas id="chart-org-acres" width="200" height="160"></canvas></div>
           </div>
         </div>
       </div>
@@ -197,6 +197,7 @@
               <th>Acres</th>
               <th>Total Production</th>
               <th>Avg Yield</th>
+              <th title="Bushels contracted/sold ÷ projected production">% Sold</th>
             </tr>
           </thead>
           <tbody id="dash-production-tbody"></tbody>
@@ -222,12 +223,6 @@
         </div>
       </details>
 
-      <div style="margin-top:1.5rem">
-        <div class="panel">
-          <h3>Net Margin by Enterprise</h3>
-          <div style="position:relative;height:320px"><canvas id="chart-net-margin"></canvas></div>
-        </div>
-      </div>
     </section>
 
     <!-- ENTERPRISE VIEW (reused for all 6) -->
@@ -246,6 +241,7 @@
             <option value="name">Sort: Field Name</option>
           </select>
           <button id="ent-download-pdf" class="btn-sm">Download PDF</button>
+          <button id="ent-batch-mode-btn" class="btn-sm" title="Toggle batch-select mode to apply programs or swap varieties across multiple fields">Batch</button>
           <button id="ent-add-field" class="btn-primary btn-sm">+ Add Field</button>
         </div>
       </div>
@@ -264,6 +260,47 @@
       </div>
       <!-- Module view (hidden by default) -->
       <div id="ent-module-view" class="hidden"></div>
+
+      <!-- BATCH COMMAND BAR: visible when batch mode is ON -->
+      <div id="ent-batch-bar" style="display:none;align-items:center;gap:0.5rem;flex-wrap:wrap;padding:0.5rem 0.75rem;background:var(--card);border:1px solid var(--primary);border-radius:6px;margin-top:0.5rem">
+        <span id="ent-batch-count" style="font-weight:600;color:var(--primary);min-width:110px;font-size:0.85rem">0 fields selected</span>
+        <button id="ent-batch-select-all" class="btn-sm" style="font-size:0.72rem">Select All</button>
+        <button id="ent-batch-select-none" class="btn-sm" style="font-size:0.72rem">Clear</button>
+        <span style="width:1px;height:1.25rem;background:var(--border);display:inline-block"></span>
+        <button id="ent-batch-apply-prog" class="btn-primary btn-sm" disabled>Apply Program</button>
+        <button id="ent-batch-swap-variety" class="btn-sm" disabled>Swap Variety</button>
+      </div>
+
+      <!-- BATCH: Program Picker Panel -->
+      <div id="ent-batch-prog-panel" class="hidden" style="margin-top:0.75rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+          <h4 style="margin:0">Apply Program &mdash; <span id="ent-batch-prog-count"></span> field(s) selected</h4>
+          <button id="ent-batch-prog-cancel" class="btn-sm">&#215; Close</button>
+        </div>
+        <p class="edit-hint" style="margin-bottom:0.75rem">Pick a program. Inputs, machinery, seed, and yield will be overwritten on all selected fields. Name, acres, and rent are preserved.</p>
+        <div id="ent-batch-prog-list" style="max-height:340px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:0.5rem"></div>
+      </div>
+
+      <!-- BATCH: Variety Swap Panel -->
+      <div id="ent-batch-variety-panel" class="hidden" style="margin-top:0.75rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+          <h4 style="margin:0">Swap Variety &mdash; <span id="ent-batch-variety-count"></span> field(s) selected</h4>
+          <button id="ent-batch-variety-cancel" class="btn-sm">&#215; Close</button>
+        </div>
+        <p class="edit-hint" style="margin-bottom:0.75rem">Changes seed variety only. Inputs (spray, fertility) and machinery are not touched.</p>
+        <div style="display:flex;gap:0.75rem;align-items:flex-end;flex-wrap:wrap">
+          <div>
+            <label style="display:block;font-size:0.8rem;margin-bottom:0.2rem;color:var(--text-light)">Variety</label>
+            <input type="text" id="ent-batch-variety-input" class="inline-input" style="width:200px" placeholder="e.g. P0035" list="ent-batch-variety-datalist" autocomplete="off">
+            <datalist id="ent-batch-variety-datalist"></datalist>
+          </div>
+          <div>
+            <label style="display:block;font-size:0.8rem;margin-bottom:0.2rem;color:var(--text-light)">Population (seeds/ac) — leave blank to keep existing</label>
+            <input type="number" id="ent-batch-pop-input" class="inline-input" style="width:140px" placeholder="keep existing" min="0" step="1000">
+          </div>
+          <button id="ent-batch-variety-apply" class="btn-primary btn-sm">Apply to Fields</button>
+        </div>
+      </div>
     </section>
 
     <!-- Forecasts tab removed — content merged into Reference tab -->
@@ -1228,11 +1265,11 @@
       document.currentScript.parentNode.insertBefore(s, document.currentScript.nextSibling);
     })();
   </script>
-  <script src="calc.js"></script>
+  <script src="calc.js?v=20260401"></script>
   <script src="crop-colors.js"></script>
   <script src="app.js?v=20260319"></script>
-  <script src="dashboard.js?v=20260319"></script>
-  <script src="enterprise.js?v=20260319"></script>
+  <script src="dashboard.js?v=20260401"></script>
+  <script src="enterprise.js?v=20260331b"></script>
   <script src="field-editor.js?v=20260319"></script>
   <script src="programs.js"></script>
   <script src="inputs-manager.js"></script>

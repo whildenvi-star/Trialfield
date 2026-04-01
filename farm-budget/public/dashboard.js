@@ -165,22 +165,29 @@
       ? '/api/dashboard-with-actuals?yieldMode=actual'
       : '/api/dashboard?yieldMode=projected';
 
-    // Fetch dashboard data and grain yields in parallel — grain yield fetch is best-effort
+    // Fetch dashboard data, grain yields, and sales in parallel
     Promise.all([
       api.get(endpoint),
-      fetchGrainYields()
+      fetchGrainYields(),
+      api.get('/api/sales').catch(function () { return { sales: [] }; })
     ]).then(function (results) {
       var data = results[0];
       grainYields = results[1] || {};
+      var salesData = results[2] || {};
+      var soldByCrop = {};
+      (salesData.sales || []).forEach(function (s) {
+        if (s.crop) {
+          var key = s.crop.toLowerCase();
+          soldByCrop[key] = (soldByCrop[key] || 0) + (s.amount || 0);
+        }
+      });
       var mode = data.yieldMode || 'projected';
       renderCropTable('dash-conv-tbody', 'dash-conv-info', 'chart-conv-acres', 'convAcres', data.conventional, mode);
       renderCropTable('dash-org-tbody', 'dash-org-info', 'chart-org-acres', 'orgAcres', data.organic, mode);
       renderRollup(data);
-      renderSummaryCharts(data);
-      renderProductionByType(data);
+      renderProductionByType(data, soldByCrop);
       updateYieldHeaders(mode);
     }).catch(function (err) {
-      // If dashboard fetch fails, still render with empty grain yields
       console.error('loadDashboard error:', err);
     });
   }
@@ -200,7 +207,7 @@
     var totalAcres = 0;
     var cropCount = 0;
     var cropLabels = [];
-    var cropAcres = [];
+    var cropProfits = [];
 
     entries.forEach(function (entry) {
       // Find enterprise index for click navigation
@@ -214,7 +221,7 @@
         totalAcres += row.acres;
         cropCount++;
         cropLabels.push(row.crop);
-        cropAcres.push(row.acres);
+        cropProfits.push(row.profitPerAcre || 0);
         var profitCls = util.profitClass(row.profitPerAcre);
         // COP coloring: red when losing money (negative profit = COP > price), green when profitable
         var copCls = row.cop > 0 ? util.profitClass(-row.profitPerAcre) : '';
@@ -264,25 +271,31 @@
     tbody.innerHTML = html;
     document.getElementById(infoId).textContent = cropCount + ' crops, ' + util.formatNum(totalAcres, 0) + ' total acres';
 
-    // Doughnut chart — acres by crop
+    // Horizontal bar chart — profit/acre by crop
     if (cropLabels.length > 0) {
       var t = ct();
-      var pal = getPalette();
-      upsertChart(chartKey, chartId, 'doughnut', {
+      var C = getColors();
+      var canvas = document.getElementById(chartId);
+      if (canvas) {
+        // Size height to fit crops: 28px per bar + 20px padding
+        var barH = Math.max(120, cropLabels.length * 32 + 24);
+        canvas.height = barH;
+        canvas.width = 200;
+      }
+      upsertChart(chartKey, chartId, 'bar', {
         labels: cropLabels,
         datasets: [{
-          data: cropAcres,
-          backgroundColor: cropLabels.map(function (label, i) {
-            return typeof CropColors !== 'undefined' ? CropColors.getCropColor(label) : pal[i % pal.length];
-          }),
+          data: cropProfits,
+          backgroundColor: cropProfits.map(function (v) { return v >= 0 ? C.teal + 'cc' : C.danger + 'cc'; }),
+          borderColor: cropProfits.map(function (v) { return v >= 0 ? C.teal : C.danger; }),
           borderWidth: 1,
-          borderColor: t.sliceBorder
+          borderRadius: 2
         }]
       }, {
+        indexAxis: 'y',
         responsive: false,
-        cutout: '55%',
         plugins: {
-          legend: { display: true, position: 'bottom', labels: { boxWidth: 8, font: { size: 9 }, color: t.legendColor, padding: 5 } },
+          legend: { display: false },
           tooltip: {
             backgroundColor: t.tooltipBg,
             borderColor: t.tooltipBorder,
@@ -290,8 +303,26 @@
             titleColor: t.tooltipTitle,
             bodyColor: t.tooltipBody,
             callbacks: {
-              label: function (ctx) { return ctx.label + ': ' + util.formatNum(ctx.raw, 1) + ' ac'; }
+              label: function (ctx) { return util.formatMoney(ctx.raw) + '/ac'; }
             }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: t.gridColor },
+            ticks: {
+              font: { size: 9 },
+              color: t.tickColor,
+              callback: function (v) {
+                var abs = Math.abs(v);
+                var s = abs >= 1000 ? '$' + Math.round(abs / 1000) + 'k' : '$' + abs;
+                return v < 0 ? '-' + s : s;
+              }
+            }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 9 }, color: t.tickColor }
           }
         }
       });
@@ -333,6 +364,7 @@
       // Fertilizer group
       { label: 'Spring Fert', key: 'springFert', group: 'fert', groupFirst: true, indent: true },
       { label: 'Fall Fert', key: 'fallFert', group: 'fert', indent: true },
+      { label: 'Other Fert', key: 'unassignedFert', group: 'fert', indent: true, skipIfZero: true },
       { label: 'Total Fert', key: 'fert', bold: true, group: 'fert', subtotal: true },
       // Actuals rows for fert (only when data exists)
       { label: '  Actual Fert', key: '_actualFert', group: 'fert', indent: true, actualRow: true, actualKey: 'fertTotal', groupLast: true },
@@ -365,6 +397,11 @@
     categories.forEach(function (cat) {
       // Skip actual rows when no actuals data exists
       if (cat.actualRow && !hasActuals) return;
+      // Skip zero rows when flagged (e.g. Other Fert when all inputs are spring/fall)
+      if (cat.skipIfZero) {
+        var rowTotal = enterprises.reduce(function (s, e) { return s + (e.totals[cat.key] || 0); }, 0);
+        if (!rowTotal) return;
+      }
 
       // Build row classes
       var classes = ['rollup-row'];
@@ -425,72 +462,9 @@
     tbody.innerHTML = html;
   }
 
-  // --- Net Margin by Enterprise Chart ---
-  function renderSummaryCharts(data) {
-    var enterprises = data.enterpriseSummaries;
-
-    var labels = enterprises.map(function (e) { return e.enterprise.shortName; });
-    var revData = enterprises.map(function (e) { return e.totals.incomeWithPayments || 0; });
-    var expData = enterprises.map(function (e) { return e.totals.expTotal || 0; });
-    var netData = enterprises.map(function (e) {
-      return (e.totals.incomeWithPayments || 0) - (e.totals.expTotal || 0);
-    });
-
-    var t = ct();
-    var C = getColors();
-    upsertChart('netMargin', 'chart-net-margin', 'bar', {
-      labels: labels,
-      datasets: [
-        { label: 'Revenue', data: revData, backgroundColor: t.incBar, borderColor: t.incBorder, borderWidth: 1, borderRadius: 2 },
-        { label: 'Expenses', data: expData, backgroundColor: t.expBar, borderColor: t.expBorder, borderWidth: 1, borderRadius: 2 },
-        {
-          label: 'Net',
-          data: netData,
-          backgroundColor: netData.map(function (v) { return v >= 0 ? C.teal + '80' : C.danger + '80'; }),
-          borderColor: netData.map(function (v) { return v >= 0 ? C.teal : C.danger; }),
-          borderWidth: 1,
-          borderRadius: 2
-        }
-      ]
-    }, {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 }, color: t.legendColor } },
-        tooltip: {
-          backgroundColor: t.tooltipBg,
-          borderColor: t.tooltipBorder,
-          borderWidth: 1,
-          titleColor: t.tooltipTitle,
-          bodyColor: t.tooltipBody,
-          callbacks: {
-            label: function (ctx) { return ctx.dataset.label + ': ' + util.formatMoney(ctx.raw, 0); }
-          }
-        }
-      },
-      scales: {
-        y: {
-          ticks: {
-            callback: function (v) {
-              var abs = Math.abs(v);
-              var label = abs >= 1000 ? '$' + Math.round(abs / 1000) + 'k' : '$' + abs;
-              return v < 0 ? '-' + label : label;
-            },
-            font: { size: 10 },
-            color: t.tickColor
-          },
-          grid: { color: t.gridColor }
-        },
-        x: {
-          ticks: { font: { size: 9 }, color: t.tickColor },
-          grid: { display: false }
-        }
-      }
-    });
-  }
-
   // --- Production by Crop Type ---
-  function renderProductionByType(data) {
+  function renderProductionByType(data, soldByCrop) {
+    soldByCrop = soldByCrop || {};
     var tbody = document.getElementById('dash-production-tbody');
     if (!tbody) return;
 
@@ -548,6 +522,17 @@
       var avgYield = g.totalAcres > 0 ? g.totalBu / g.totalAcres : 0;
       var hasMultiple = g.subCrops.length > 1;
 
+      // Compute sold bushels for this type group (sum across sub-crops)
+      var typeSoldBu = 0;
+      g.subCrops.forEach(function (sc) {
+        typeSoldBu += soldByCrop[sc.crop.toLowerCase()] || 0;
+      });
+      var typeSoldPct = g.totalBu > 0 ? typeSoldBu / g.totalBu * 100 : 0;
+      var typeSoldCell = g.totalBu > 0
+        ? '<span style="color:' + (typeSoldPct >= 100 ? '#4af626' : typeSoldPct >= 50 ? '#ffb800' : 'inherit') + '">' +
+            util.formatNum(typeSoldPct, 0) + '%</span>'
+        : '—';
+
       // Type header row
       html += '<tr class="prod-type-row" data-type="' + util.escHtml(typeName) + '">';
       html += '<td class="prod-type-name">' +
@@ -556,6 +541,7 @@
       html += '<td class="number bold">' + util.formatNum(g.totalAcres, 1) + '</td>';
       html += '<td class="number bold">' + util.formatNum(g.totalBu, 0) + ' ' + util.escHtml(g.unit) + '</td>';
       html += '<td class="number bold">' + util.formatNum(avgYield, 1) + ' ' + util.escHtml(g.unit) + '/ac</td>';
+      html += '<td class="number bold">' + typeSoldCell + '</td>';
       html += '</tr>';
 
       // Sub-crop rows (hidden by default if multiple)
@@ -563,11 +549,18 @@
       g.subCrops.forEach(function (sc) {
         var scColor = hasCropColors ? CropColors.getCropColor(sc.crop) : '#999';
         var scAvg = sc.acres > 0 ? sc.totalBu / sc.acres : 0;
+        var scSoldBu = soldByCrop[sc.crop.toLowerCase()] || 0;
+        var scSoldPct = sc.totalBu > 0 ? scSoldBu / sc.totalBu * 100 : 0;
+        var scSoldCell = sc.totalBu > 0
+          ? '<span style="color:' + (scSoldPct >= 100 ? '#4af626' : scSoldPct >= 50 ? '#ffb800' : 'inherit') + '">' +
+              util.formatNum(scSoldPct, 0) + '%</span>'
+          : '—';
         html += '<tr class="prod-sub-row' + (hasMultiple ? ' hidden' : '') + '" data-parent="' + util.escHtml(typeName) + '">';
         html += '<td class="prod-sub-name"><span class="prod-sub-dot" style="background:' + scColor + '"></span>' + util.escHtml(sc.crop) + '</td>';
         html += '<td class="number">' + util.formatNum(sc.acres, 1) + '</td>';
         html += '<td class="number">' + util.formatNum(sc.totalBu, 0) + ' ' + util.escHtml(sc.unit) + '</td>';
         html += '<td class="number">' + util.formatNum(scAvg, 1) + ' ' + util.escHtml(sc.unit) + '/ac</td>';
+        html += '<td class="number">' + scSoldCell + '</td>';
         html += '</tr>';
       });
     });
@@ -576,6 +569,7 @@
     html += '<tr class="total-row"><td>TOTAL</td>';
     html += '<td class="number">' + util.formatNum(farmTotalAcres, 1) + '</td>';
     html += '<td class="number">' + util.formatNum(farmTotalBu, 0) + '</td>';
+    html += '<td class="number"></td>';
     html += '<td class="number"></td></tr>';
 
     tbody.innerHTML = html;

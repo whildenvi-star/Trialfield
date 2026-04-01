@@ -199,6 +199,7 @@
     result.fallFertPerAcre = round2(fallFert);
     result.fallFertTotal = round2(fallFert * acres);
     result.unassignedFertPerAcre = round2(unassignedFert);
+    result.unassignedFertTotal = round2(unassignedFert * acres);
     result.totalFertPerAcre = round2(springFert + fallFert + unassignedFert);
     result.totalFertCost = round2((springFert + fallFert + unassignedFert) * acres);
 
@@ -410,7 +411,7 @@
   // --- Enterprise Summary ---
   function computeEnterpriseSummary(fields, refs, settings, options) {
     var totals = {
-      acres: 0, rent: 0, springFert: 0, fallFert: 0, fert: 0, seed: 0, machinery: 0,
+      acres: 0, rent: 0, springFert: 0, fallFert: 0, unassignedFert: 0, fert: 0, seed: 0, machinery: 0,
       laborOverhead: 0, fuel: 0, drying: 0, interest: 0,
       insurance: 0, expTotal: 0, cropIncome: 0, insIncome: 0,
       govPayments: 0, coreIncome: 0, incomeWithPayments: 0,
@@ -424,6 +425,7 @@
       totals.rent += b.rentTotal;
       totals.springFert += b.springFertTotal;
       totals.fallFert += b.fallFertTotal;
+      totals.unassignedFert += b.unassignedFertTotal;
       totals.fert += b.totalFertCost;
       totals.seed += b.seedTotal;
       totals.machinery += b.machineryTotal;
