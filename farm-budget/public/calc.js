@@ -171,10 +171,8 @@
     // --- RENT (uses rentAcres — landlord obligation on total field) ---
     result.rentPerAcre = round2((field.rentPerAcre || 0) * cropTypeMultiplier);
     result.rentTotal = round2(result.rentPerAcre * rentAcres);
-    // Effective rent per crop acre: when planted acres < field acres, the full rent
-    // obligation gets spread over fewer crop acres, raising the effective rate.
-    // This must match what expPerAcre includes so displayed subtotals add up.
-    result.rentPerCropAcre = acres > 0 ? round2(result.rentTotal / acres) : result.rentPerAcre;
+    // Rent per acre always uses rentAcres (field acres) — shows the actual rent rate.
+    result.rentPerCropAcre = rentAcres > 0 ? round2(result.rentTotal / rentAcres) : result.rentPerAcre;
 
     // --- FERTILIZER / CHEMICAL INPUTS ---
     var springFert = 0;
@@ -396,7 +394,7 @@
 
     // --- PROFIT ---
     // Core profit = crop revenue − expenses (excludes insurance claims + aux/gov payments)
-    result.profitPerAcre = round2(result.cropIncomePerAcre - result.expPerAcre);
+    result.profitPerAcre = acres > 0 ? round2((result.cropIncomeTotal - result.expTotal) / acres) : 0;
     result.profitFarmWithoutPayments = round2(
       result.cropIncomeTotal - result.expTotal
     );
@@ -531,13 +529,34 @@
     return rows;
   }
 
+  // --- Resolve enterprise for a field via Sales > Crop Types sub-crop assignment ---
+  // Looks up field.crop in cropTypes sub-crops and returns the enterprise ID set there.
+  // Falls back to field.enterpriseId for fields whose crop isn't in any sub-crop.
+  function resolveEnterpriseId(field, cropTypes, enterprises) {
+    var key = (field.crop || '').trim().toLowerCase();
+    if (key) {
+      for (var i = 0; i < cropTypes.length; i++) {
+        var subs = cropTypes[i].subCrops || [];
+        for (var j = 0; j < subs.length; j++) {
+          if ((subs[j].name || '').trim().toLowerCase() === key && subs[j].enterpriseId) {
+            return subs[j].enterpriseId;
+          }
+        }
+      }
+    }
+    return field.enterpriseId || null;
+  }
+
   // --- Full Dashboard ---
   function computeDashboard(allFields, enterprises, refs, settings, options) {
     var result = { conventional: [], organic: [], enterpriseSummaries: [] };
     result.yieldMode = (options && options.yieldMode) || 'projected';
+    var cropTypes = (refs && refs.cropTypes) || [];
 
     enterprises.forEach(function (ent) {
-      var entFields = allFields.filter(function (f) { return f.enterpriseId === ent.id; });
+      var entFields = allFields.filter(function (f) {
+        return resolveEnterpriseId(f, cropTypes, enterprises) === ent.id;
+      });
       var summary = computeEnterpriseSummary(entFields, refs, settings, options);
       summary.enterprise = ent;
 
@@ -617,6 +636,7 @@
   }
 
   // --- Exports ---
+  exports.resolveEnterpriseId = resolveEnterpriseId;
   exports.computeFieldBudget = computeFieldBudget;
   exports.computeEnterpriseSummary = computeEnterpriseSummary;
   exports.computeDashboardByCrop = computeDashboardByCrop;

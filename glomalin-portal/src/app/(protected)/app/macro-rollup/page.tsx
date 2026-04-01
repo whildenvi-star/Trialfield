@@ -1,286 +1,172 @@
 import { createClient } from '@/lib/supabase/server'
-import { CropComparison } from '@/components/macro/crop-comparison'
+import { fetchBudgetService } from '@/app/api/mobile/_lib/proxy'
+import { MacroRollupView } from '@/components/macro/macro-rollup-view'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
+import type { FieldRow, ContractEntry } from '@/components/macro/field-table'
 
-const OPEN_STAGES = ['notice_of_loss', 'filed', 'adjuster_assigned', 'under_review']
+// ── Types for farm-budget /api/budget-field-details response ──────────────────
 
-const STAGE_LABELS: Record<string, string> = {
-  notice_of_loss: 'Notice of Loss',
-  filed: 'Filed',
-  adjuster_assigned: 'Adjuster Assigned',
-  under_review: 'Under Review',
-  settled: 'Settled',
-  closed: 'Closed',
+interface BudgetField {
+  fieldId: string
+  fieldName: string
+  crop: string
+  acres: number
+  rentPerAcre: number
+  fertPerAcre: number
+  seedPerAcre: number
+  machineryPerAcre: number
+  laborPerAcre: number
+  fuelPerAcre: number
+  dryingPerAcre: number
+  interestPerAcre: number
+  insurancePerAcre: number
+  expPerAcre: number
+  cropIncomePerAcre: number
+  profitPerAcre: number
 }
 
-function fmtAcres(n: number): string {
-  return n.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-}
-
-function fmtDollars(n: number | null | undefined): string {
-  if (n === null || n === undefined) return '—'
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
-}
-
-function fmtDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return '—'
-  const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return '—'
-  return d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
-}
-
-type Row = Record<string, unknown>
+// ── Page ───────────────────────────────────────────────────────────────────────
 
 export default async function MacroRollupPage() {
+  // 1. Fetch farm-budget field details (costs + budget revenue per field)
+  let budgetFields: BudgetField[] = []
+  let budgetOffline = false
+
+  try {
+    const res = await fetchBudgetService('/api/budget-field-details')
+    if (res.ok) {
+      const data = await res.json() as { fields?: BudgetField[] }
+      budgetFields = (data.fields ?? []).filter((f) => f.acres > 0)
+    } else {
+      budgetOffline = true
+    }
+  } catch {
+    budgetOffline = true
+  }
+
+  // 2. Fetch grain contracts from Supabase
   const supabase = await createClient()
+  const { data: contractData } = await supabase
+    .from('grain_contracts')
+    .select('id, crop, bushels, price_per_bushel, contract_type, buyer, delivery_start, delivery_end, crop_year')
+    .eq('crop_year', CURRENT_CROP_YEAR)
+    .order('crop')
+    .order('created_at')
 
-  const [cluRes, policiesRes, claimsRes, gcsRes] = await Promise.all([
-    supabase.from('clu_records').select('*'),
-    supabase.from('insurance_policies').select('*'),
-    supabase.from('claims').select('*').order('created_at', { ascending: false }),
-    supabase.from('gcs_enrollments').select('*'),
-  ])
+  const allContracts = contractData ?? []
+  const hasContracts = allContracts.length > 0
 
-  const clus = (cluRes.data ?? []) as Row[]
-  const policies = (policiesRes.data ?? []) as Row[]
-  const claims = (claimsRes.data ?? []) as Row[]
-  const gcs = (gcsRes.data ?? []) as Row[]
-
-  // ── Stat card computations ──
-  const totalAcres = clus.reduce((s, r) => s + (Number(r.fsa_acres) || 0), 0)
-  const organicAcres = clus.filter((r) => r.organic).reduce((s, r) => s + (Number(r.fsa_acres) || 0), 0)
-  const insuredAcres = policies.reduce((s, r) => s + (Number(r.planted_acres) || 0), 0)
-  const openClaims = claims.filter((c) => OPEN_STAGES.includes(c.stage as string)).length
-
-  // ── Crop rollup ──
-  const cropMap = new Map<string, { total: number; organic: number; irrigated: number; count: number }>()
-  for (const r of clus) {
-    const crop = (r.crop as string) || 'Unknown'
-    const ac = Number(r.fsa_acres) || 0
-    const prev = cropMap.get(crop) ?? { total: 0, organic: 0, irrigated: 0, count: 0 }
-    prev.total += ac
-    if (r.organic) prev.organic += ac
-    if (r.irrigated) prev.irrigated += ac
-    prev.count += 1
-    cropMap.set(crop, prev)
+  // 3. Build contract revenue by crop
+  const contractsByCrop = new Map<string, typeof allContracts>()
+  for (const c of allContracts) {
+    const cropKey = (c.crop as string).toLowerCase()
+    if (!contractsByCrop.has(cropKey)) contractsByCrop.set(cropKey, [])
+    contractsByCrop.get(cropKey)!.push(c)
   }
-  const cropRows = Array.from(cropMap.entries())
-    .sort((a, b) => b[1].total - a[1].total)
-    .map(([crop, d]) => ({ crop, ...d }))
 
-  // ── Farm rollup ──
-  const farmMap = new Map<string, { name: string; total: number; organic: number; dry: number; irrigated: number }>()
-  for (const r of clus) {
-    const fn = (r.farm_number as string) || 'Unknown'
-    const ac = Number(r.fsa_acres) || 0
-    const prev = farmMap.get(fn) ?? { name: (r.farm_name as string) || fn, total: 0, organic: 0, dry: 0, irrigated: 0 }
-    prev.total += ac
-    if (r.organic) prev.organic += ac
-    if (r.irrigated) prev.irrigated += ac
-    else prev.dry += ac
-    farmMap.set(fn, prev)
+  const contractRevByCrop = new Map<string, number>()
+  contractsByCrop.forEach((contracts, cropKey) => {
+    const rev = contracts.reduce((s: number, c: Record<string, unknown>) => {
+      return s + (Number(c.bushels) || 0) * (Number(c.price_per_bushel) || 0)
+    }, 0)
+    contractRevByCrop.set(cropKey, rev)
+  })
+
+  // 4. Total budget acres per crop (denominator for proportional contract allocation)
+  const totalAcresByCrop = new Map<string, number>()
+  for (const f of budgetFields) {
+    const key = f.crop.toLowerCase()
+    totalAcresByCrop.set(key, (totalAcresByCrop.get(key) ?? 0) + f.acres)
   }
-  const farmRows = Array.from(farmMap.entries())
-    .sort((a, b) => b[1].total - a[1].total)
-    .map(([fn, d]) => ({ farmNumber: fn, ...d }))
 
-  // ── GCS totals ──
-  const cc340 = gcs.reduce((s, r) => s + (Number(r.cc340_acres) || 0), 0)
-  const rt345 = gcs.reduce((s, r) => s + (Number(r.rt345_acres) || 0), 0)
-  const nt329 = gcs.reduce((s, r) => s + (Number(r.nt329_acres) || 0), 0)
+  // 5. Build per-field rows — always carry both projected and locked revenue
+  const rows: FieldRow[] = budgetFields.map((f) => {
+    const cropKey = f.crop.toLowerCase()
+    const cropTotalAcres = totalAcresByCrop.get(cropKey) ?? 0
+
+    // Contract (locked) revenue: proportional share of crop's total contracted revenue
+    const cropRev = contractRevByCrop.get(cropKey) ?? 0
+    const share = cropTotalAcres > 0 ? f.acres / cropTotalAcres : 0
+    const revenue = hasContracts ? cropRev * share : null
+    const revenuePerAcre = revenue !== null && f.acres > 0 ? revenue / f.acres : null
+
+    // Contract list for detail panel
+    const rawContracts = contractsByCrop.get(cropKey) ?? []
+    const fieldContracts: ContractEntry[] = rawContracts.map((c) => ({
+      id: c.id as string,
+      buyer: c.buyer as string | null,
+      contractType: c.contract_type as string,
+      bushels: Number(c.bushels) || 0,
+      pricePerBushel: c.price_per_bushel != null ? Number(c.price_per_bushel) : null,
+      deliveryStart: c.delivery_start as string | null,
+      deliveryEnd: c.delivery_end as string | null,
+      total: c.price_per_bushel != null
+        ? (Number(c.bushels) || 0) * Number(c.price_per_bushel)
+        : null,
+    }))
+
+    const totalCost = f.expPerAcre * f.acres
+    const margin = revenue !== null ? revenue - totalCost : null
+    const marginPerAcre = margin !== null && f.acres > 0 ? margin / f.acres : null
+
+    const missingData: string[] = []
+    if (f.rentPerAcre === 0) missingData.push('Land rent')
+    if (f.fertPerAcre === 0) missingData.push('Fertilizer costs')
+    if (f.seedPerAcre === 0) missingData.push('Seed costs')
+
+    return {
+      fieldId: f.fieldId,
+      fieldName: f.fieldName,
+      crop: f.crop,
+      acres: f.acres,
+      totalCost,
+      costPerAcre: f.expPerAcre,
+      costBreakdown: {
+        rent: f.rentPerAcre,
+        fert: f.fertPerAcre,
+        seed: f.seedPerAcre,
+        machinery: f.machineryPerAcre,
+        labor: f.laborPerAcre,
+        fuel: f.fuelPerAcre,
+        drying: f.dryingPerAcre,
+        interest: f.interestPerAcre,
+        insurance: f.insurancePerAcre,
+      },
+      revenue,
+      revenuePerAcre,
+      margin,
+      marginPerAcre,
+      budgetMarginPerAcre: f.profitPerAcre,
+      budgetRevenuePerAcre: f.cropIncomePerAcre,
+      contracts: fieldContracts,
+      missingData,
+    }
+  })
+
+  // Sort by projected margin desc
+  rows.sort((a, b) => b.budgetMarginPerAcre - a.budgetMarginPerAcre)
+
+  // 6. Pre-compute hero values for both modes (client toggle switches between them)
+  const heroValueProjected = rows.length > 0
+    ? rows.reduce((s, r) => s + r.budgetMarginPerAcre * r.acres, 0)
+    : null
+
+  const heroValueLocked = hasContracts && rows.length > 0
+    ? rows.reduce((s, r) => s + (r.margin ?? 0), 0)
+    : null
 
   return (
     <div className="min-h-screen bg-glomalin-bg text-glomalin-text">
-      <div className="max-w-7xl mx-auto px-6 py-8">
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-mono font-semibold text-glomalin-text">Field Summary</h1>
-          <p className="mt-1 text-sm text-glomalin-muted font-mono">Whole-farm overview across all modules</p>
-        </div>
-
-        {/* Top stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-          <StatCard label="Total Acres" value={fmtAcres(totalAcres)} />
-          <StatCard label="Organic Acres" value={fmtAcres(organicAcres)} color="green" />
-          <StatCard label="Insured Acres" value={fmtAcres(insuredAcres)} />
-          <StatCard label="Open Claims" value={String(openClaims)} color={openClaims > 0 ? 'accent' : undefined} />
-        </div>
-
-        {/* Acreage by Crop */}
-        <Section title="Acreage by Crop">
-          {cropRows.length === 0 ? (
-            <EmptyState text="No CLU records found." />
-          ) : (
-            <Table
-              headers={['Crop', 'Total Acres', 'Organic', 'Irrigated', 'Fields']}
-              alignRight={[1, 2, 3, 4]}
-              rows={cropRows.map((r) => [
-                r.crop,
-                fmtAcres(r.total),
-                fmtAcres(r.organic),
-                fmtAcres(r.irrigated),
-                String(r.count),
-              ])}
-            />
-          )}
-        </Section>
-
-        {/* Farm Summary */}
-        <Section title="Farm Summary">
-          {farmRows.length === 0 ? (
-            <EmptyState text="No farm data found." />
-          ) : (
-            <Table
-              headers={['Farm', 'Total Acres', 'Organic', 'Dry', 'Irrigated']}
-              alignRight={[1, 2, 3, 4]}
-              rows={farmRows.map((r) => [
-                r.name,
-                fmtAcres(r.total),
-                fmtAcres(r.organic),
-                fmtAcres(r.dry),
-                fmtAcres(r.irrigated),
-              ])}
-            />
-          )}
-        </Section>
-
-        {/* Insurance Coverage */}
-        <Section title="Insurance Coverage">
-          {policies.length === 0 ? (
-            <EmptyState text="No insurance policies found." />
-          ) : (
-            <Table
-              headers={['Crop', 'Planted Acres', 'Coverage', 'Guarantee', 'Premium/ac', 'Alert']}
-              alignRight={[1, 2, 3, 4]}
-              rows={policies.map((p) => [
-                (p.crop as string) || '—',
-                fmtAcres(Number(p.planted_acres) || 0),
-                typeof p.coverage_level === 'number' ? `${p.coverage_level}%` : '—',
-                fmtDollars(p.guarantee as number | null),
-                fmtDollars(p.premium_per_acre as number | null),
-                (p.claim_alert as string) === 'potential'
-                  ? 'Potential'
-                  : '—',
-              ])}
-            />
-          )}
-        </Section>
-
-        {/* Claims Status */}
-        <Section title="Claims Status">
-          {claims.length === 0 ? (
-            <EmptyState text="No claims filed." />
-          ) : (
-            <Table
-              headers={['Crop', 'Stage', 'Coverage', 'Deadline', 'Eff. Guarantee']}
-              alignRight={[4]}
-              rows={claims.map((c) => {
-                const stage = c.stage as string
-                const isOpen = OPEN_STAGES.includes(stage)
-                return [
-                  (c.crop as string) || '—',
-                  `${isOpen ? '\u25CF ' : ''}${STAGE_LABELS[stage] ?? stage}`,
-                  `${(c.coverage_type as string) ?? '—'}${typeof c.coverage_level === 'number' ? ` ${c.coverage_level}%` : ''}`,
-                  fmtDate(c.deadline_at as string | null),
-                  fmtDollars(c.effective_guarantee as number | null),
-                ]
-              })}
-            />
-          )}
-        </Section>
-
-        {/* Conservation Programs */}
-        <Section title="Conservation Programs">
-          {gcs.length === 0 ? (
-            <EmptyState text="No GCS enrollment data." />
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <StatCard label="CC-340 Acres" value={fmtAcres(cc340)} color="green" />
-              <StatCard label="RT-345 Acres" value={fmtAcres(rt345)} color="green" />
-              <StatCard label="NT-329 Acres" value={fmtAcres(nt329)} color="green" />
-              <StatCard label="Total Enrollments" value={String(gcs.length)} />
-            </div>
-          )}
-        </Section>
-
-        {/* Crop Comparison Sandbox */}
-        <Section title="Crop Comparison">
-          <CropComparison
-            farms={farmRows.map((f) => ({
-              farmNumber: f.farmNumber,
-              name: f.name,
-              totalAcres: f.total,
-            }))}
-          />
-        </Section>
-
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        <MacroRollupView
+          rows={rows}
+          hasContracts={hasContracts}
+          budgetOffline={budgetOffline}
+          heroValueProjected={heroValueProjected}
+          heroValueLocked={heroValueLocked}
+          cropYear={CURRENT_CROP_YEAR}
+        />
       </div>
-    </div>
-  )
-}
-
-// ── Reusable sub-components ──
-
-function StatCard({ label, value, color }: { label: string; value: string; color?: 'green' | 'accent' }) {
-  const valueColor =
-    color === 'green' ? 'text-glomalin-green' : color === 'accent' ? 'text-glomalin-accent' : 'text-glomalin-text'
-  return (
-    <div className="rounded border border-glomalin-border bg-glomalin-surface px-5 py-4">
-      <p className="text-xs text-glomalin-muted font-mono uppercase tracking-wider">{label}</p>
-      <p className={`mt-1 text-3xl font-mono font-semibold ${valueColor}`}>{value}</p>
-    </div>
-  )
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-10">
-      <h2 className="text-lg font-mono font-semibold text-glomalin-text mb-4">{title}</h2>
-      {children}
-    </div>
-  )
-}
-
-function EmptyState({ text }: { text: string }) {
-  return (
-    <div className="rounded border border-glomalin-border bg-glomalin-surface px-6 py-8 text-center">
-      <p className="text-glomalin-muted font-mono text-sm">{text}</p>
-    </div>
-  )
-}
-
-function Table({ headers, rows, alignRight = [] }: { headers: string[]; rows: string[][]; alignRight?: number[] }) {
-  const rightSet = new Set(alignRight)
-  return (
-    <div className="rounded border border-glomalin-border overflow-hidden">
-      <table className="w-full text-sm font-mono">
-        <thead className="bg-glomalin-surface border-b border-glomalin-border">
-          <tr>
-            {headers.map((h, i) => (
-              <th
-                key={h}
-                className={`${rightSet.has(i) ? 'text-right' : 'text-left'} px-4 py-3 text-glomalin-muted font-normal text-xs uppercase tracking-wider`}
-              >
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-glomalin-border">
-          {rows.map((row, ri) => (
-            <tr key={ri} className="bg-glomalin-bg hover:bg-glomalin-surface transition-colors">
-              {row.map((cell, ci) => (
-                <td
-                  key={ci}
-                  className={`px-4 py-3 ${rightSet.has(ci) ? 'text-right' : ''} text-glomalin-text`}
-                >
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   )
 }
