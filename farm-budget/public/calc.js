@@ -152,12 +152,12 @@
   // settings: the global settings object
   function computeFieldBudget(field, refs, settings, options) {
     var result = {};
-    // Two acre concepts: rent basis (full field) vs crop basis (planted/operating)
-    // Rent uses field.acres (total field — landlord obligation)
-    // Inputs, seed, machinery, etc. use plantedAcres when set (crop allocation)
-    var rentAcres = field.acres || 0;
+    // Single acre basis: use plantedAcres when set (for split-field multi-crop farms),
+    // otherwise fall back to field.acres. Rent, costs, and per-acre calcs all use the
+    // same basis so they are internally consistent. field.acres is preserved as fieldAcres.
     var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
-    result.rentAcres = rentAcres;
+    result.rentAcres = acres;       // rent charged on this crop's acreage
+    result.fieldAcres = field.acres || 0; // full parcel size (reference only)
     result.effectiveAcres = acres;
     var opts = options || {};
 
@@ -168,11 +168,10 @@
       cropTypeMultiplier = 0.5;
     }
 
-    // --- RENT (uses rentAcres — landlord obligation on total field) ---
+    // --- RENT (charged on this crop's acres — prorated for split-field setups) ---
     result.rentPerAcre = round2((field.rentPerAcre || 0) * cropTypeMultiplier);
-    result.rentTotal = round2(result.rentPerAcre * rentAcres);
-    // Rent per acre always uses rentAcres (field acres) — shows the actual rent rate.
-    result.rentPerCropAcre = rentAcres > 0 ? round2(result.rentTotal / rentAcres) : result.rentPerAcre;
+    result.rentTotal = round2(result.rentPerAcre * acres);
+    result.rentPerCropAcre = result.rentPerAcre;
 
     // --- FERTILIZER / CHEMICAL INPUTS ---
     var springFert = 0;
