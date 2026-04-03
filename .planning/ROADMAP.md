@@ -150,6 +150,12 @@
 - [x] Phase 61: Auto Field Propagation (2/2 plans) — completed 2026-03-30
 - [x] Phase 62: Portal Webhook Auth Fix (1/1 plans) — completed 2026-03-30
 - [x] Phase 63: Crop Autocomplete Server Proxy (1/1 plans) — completed 2026-03-30
+- [ ] Phase 68: Compliance Hub Redesign (0/5 plans) — in progress
+  - [ ] 68-01-PLAN.md — Shared compliance UI library + compliance shell with tab routing
+  - [ ] 68-02-PLAN.md — Acreage tab (FSA 578 workspace) + redirect old route
+  - [ ] 68-03-PLAN.md — Insurance tab + Claims tab + redirect old routes + cross-tab nav
+  - [ ] 68-04-PLAN.md — Overview dashboard tab (StatCards, risk flags, deadlines)
+  - [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
 
 </details>
 
@@ -452,3 +458,21 @@ Plans:
 | 61. Auto Field Propagation | v11.0 | 2/2 | Complete | 2026-03-30 |
 | 62. Portal Webhook Auth Fix | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
+| 68. Compliance Hub Redesign | v12.0 | 0/5 | In Progress | — |
+
+### Phase 68: Compliance Hub Redesign
+
+**Goal:** Replace the three separate FSA 578, Insurance, and Claims nav entries with a single unified `/app/compliance` module featuring a shared component library, compliance dashboard header, tabbed sub-navigation, unified farm/crop filter, cross-tab linking, and a compliance calendar — all within the glomalin design system.
+
+**Milestone:** v12.0
+
+**Requirements:** COMP-01, COMP-02, COMP-03, COMP-04, COMP-05, COMP-06, COMP-07, COMP-08
+
+**Plans:** 5 plans
+
+Plans:
+- [ ] 68-01-PLAN.md — Shared compliance UI library + compliance shell with tab routing
+- [ ] 68-02-PLAN.md — Acreage tab (FSA 578 workspace) + redirect old route
+- [ ] 68-03-PLAN.md — Insurance tab + Claims tab + redirect old routes + cross-tab nav
+- [ ] 68-04-PLAN.md — Overview dashboard tab (StatCards, risk flags, deadlines)
+- [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
