@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 68 of 68 (Compliance Hub Redesign) — IN PROGRESS
-Plan: 1 of 5 complete
-Status: Phase 68 Plan 01 complete — compliance UI primitives + /app/compliance shell with tab routing. COMP-01/02/03 satisfied.
-Last activity: 2026-04-04 — Phase 68 Plan 01 complete. StatCard, ComplianceBadge, SectionTable, ActionButton, Drawer created. ComplianceShell with 5-tab URL-param routing and debounced filter bar.
+Plan: 2 of 5 complete
+Status: Phase 68 Plan 02 complete — AcreageTab workspace integration, /app/fsa-578 redirect. COMP-04/05 satisfied.
+Last activity: 2026-04-04 — Phase 68 Plan 02 complete. AcreageTab thin wrapper with farm/crop filter and cross-tab nav buttons. CluWorkspace mounted inside ComplianceShell. /app/fsa-578 redirects to /app/compliance?tab=acreage.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
@@ -77,6 +77,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 62-portal-webhook-auth-fix P01 | 1 | 2 tasks | 3 files |
 | Phase 63-crop-autocomplete-server-proxy P01 | 2 | 2 tasks | 2 files |
 | Phase 63 P01 | 2 | 2 tasks | 2 files |
+| Phase 68 P02 | 80 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -196,6 +197,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 62-01]: PORTAL_URL and PORTAL_ORIGIN coexist in farm-registry/.env — CORS origin check vs fetch base URL are different code paths
 - [Phase 63]: New route at /api/registry/crops (no -autocomplete suffix) — calls /api/crops/autocomplete with ?q= filtering; distinct from crops-autocomplete route used by CropTypeahead
 - [Phase 63]: fetchRegistryService proxy pattern for client components: use portal-relative /api/registry/* routes instead of hardcoded localhost URLs
+- [Phase 68-02]: AcreageTab wrapper-level View Insurance and File PP Claim buttons call navigateTab() — CluCard has no callback props, modifying workspace is out of scope
+- [Phase 68-02]: navigateTab signature widened from TabId to string in compliance-shell — AcreageTab passes tab names without importing TabId
 
 ### Pending Todos
 
@@ -208,6 +211,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 68-01-PLAN.md — compliance UI primitives + /app/compliance shell with tab routing and filter bar
+Stopped at: Completed 68-02-PLAN.md — AcreageTab workspace integration + /app/fsa-578 redirect
 Resume file: —
-Next action: Phase 68 Plan 02 — Acreage tab workspace (FSA 578 content inside ComplianceShell)
+Next action: Phase 68 Plan 03 — Insurance and Claims tabs (InsuranceTab + ClaimsTab inside ComplianceShell)
