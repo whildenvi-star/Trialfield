@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v11.0 Gap Closure — Phase 63: Crop Autocomplete Server Proxy
+**Current focus:** Phase 68: Compliance Hub Redesign — unified FSA/Insurance/Claims module
 
 ## Current Position
 
-Phase: 63 of 63 (Crop Autocomplete Server Proxy) — COMPLETE
-Plan: 1 of 1 complete
-Status: Phase 63 complete — /api/registry/crops proxy route created, contract-drawer.tsx localhost URL removed. MKT-01 satisfied.
-Last activity: 2026-03-30 — Phase 63 Plan 01 complete. Crop autocomplete now works on VPS via server-side proxy.
+Phase: 68 of 68 (Compliance Hub Redesign) — IN PROGRESS
+Plan: 1 of 5 complete
+Status: Phase 68 Plan 01 complete — compliance UI primitives + /app/compliance shell with tab routing. COMP-01/02/03 satisfied.
+Last activity: 2026-04-04 — Phase 68 Plan 01 complete. StatCard, ComplianceBadge, SectionTable, ActionButton, Drawer created. ComplianceShell with 5-tab URL-param routing and debounced filter bar.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
@@ -82,6 +82,10 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 
 ### Decisions
 
+- [Phase 68-01]: Compliance shell uses router.replace with full URL param reconstruction to preserve tab+farm+crop coherently across navigation
+- [Phase 68-01]: Filter inputs use local controlled useState debounced 300ms to URL — avoids router.replace on every keystroke
+- [Phase 68-01]: page.tsx wraps ComplianceShell in Suspense — required by Next.js 14 App Router for useSearchParams() in client components
+- [Phase 68-01]: Supabase count queries use head:true to avoid fetching row data — pure counts for Overview stats
 - [v10.0]: Pause v9.0 mobile work, do consolidation first — canonical field IDs and unified data make mobile work cleaner
 - [v10.0]: All 42 requirements in scope (CONS, PIPE, UXN, DOM, AUTO) — full consolidation
 - [v10.0]: Merged small related phases: PIPE-05..08 combined (53), UXN-04..09 combined (54) — 13 phases total
@@ -199,11 +203,11 @@ None active.
 
 ### Blockers/Concerns
 
-None active. v11.0 roadmap complete. Ready to plan Phase 55.
+None active.
 
 ## Session Continuity
 
-Last session: 2026-03-30
-Stopped at: Completed 63-01-PLAN.md — crop autocomplete server proxy, contract-drawer localhost URL removed
+Last session: 2026-04-04
+Stopped at: Completed 68-01-PLAN.md — compliance UI primitives + /app/compliance shell with tab routing and filter bar
 Resume file: —
-Next action: Phase 63 complete — MKT-01 satisfied, all phases complete
+Next action: Phase 68 Plan 02 — Acreage tab workspace (FSA 578 content inside ComplianceShell)
