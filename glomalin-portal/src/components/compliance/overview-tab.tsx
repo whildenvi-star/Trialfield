@@ -17,15 +17,16 @@ export function OverviewTab({
   activePoliciesCount,
   openClaimsCount,
   claims,
-  cluRecords: _cluRecords,
+  cluRecords: _cluRecords, // eslint-disable-line @typescript-eslint/no-unused-vars
   navigateTab,
 }: OverviewTabProps) {
   const now = new Date()
 
   // Compute overdue count
-  const overdueCount = (claims as any[]).filter(c => {
-    const d = c.deadline_at ? new Date(c.deadline_at) : null
-    return d && d < now && c.stage !== 'closed' && c.stage !== 'denied'
+  const overdueCount = claims.filter(c => {
+    const deadlineAt = c['deadline_at']
+    const d = deadlineAt ? new Date(String(deadlineAt)) : null
+    return d && d < now && c['stage'] !== 'closed' && c['stage'] !== 'denied'
   }).length
 
   // Compute risk flags
@@ -42,12 +43,13 @@ export function OverviewTab({
 
   // Compute upcoming deadlines (next 30 days)
   const in30 = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-  const upcoming = (claims as any[])
+  const upcoming = claims
     .filter(c => {
-      const d = c.deadline_at ? new Date(c.deadline_at) : null
-      return d && d >= now && d <= in30 && c.stage !== 'closed' && c.stage !== 'denied'
+      const deadlineAt = c['deadline_at']
+      const d = deadlineAt ? new Date(String(deadlineAt)) : null
+      return d && d >= now && d <= in30 && c['stage'] !== 'closed' && c['stage'] !== 'denied'
     })
-    .sort((a, b) => new Date(a.deadline_at).getTime() - new Date(b.deadline_at).getTime())
+    .sort((a, b) => new Date(String(a['deadline_at'])).getTime() - new Date(String(b['deadline_at'])).getTime())
     .slice(0, 10)
 
   return (
@@ -107,14 +109,14 @@ export function OverviewTab({
             <p className="text-xs font-mono text-glomalin-muted py-2">No deadlines in the next 30 days.</p>
           ) : (
             upcoming.map((c, i) => {
-              const daysUntil = Math.ceil((new Date(c.deadline_at).getTime() - now.getTime()) / 86400000)
+              const daysUntil = Math.ceil((new Date(String(c['deadline_at'])).getTime() - now.getTime()) / 86400000)
               return (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-glomalin-border last:border-0">
                   <span className="text-xs font-mono text-glomalin-text">
-                    {c.crop ?? c.commodity ?? 'Claim'} — {c.farm_name ?? ''}
+                    {String(c['crop'] ?? c['commodity'] ?? 'Claim')} &mdash; {String(c['farm_name'] ?? '')}
                   </span>
                   <span className={`text-xs font-mono ${daysUntil <= 7 ? 'text-amber-400' : 'text-green-400'}`}>
-                    {new Date(c.deadline_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {new Date(String(c['deadline_at'])).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </span>
                 </div>
               )

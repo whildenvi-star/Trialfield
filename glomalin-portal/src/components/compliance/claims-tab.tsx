@@ -17,14 +17,14 @@ export function ClaimsTab({ claims, farmFilter, cropFilter }: ClaimsTabProps) {
       const f = farmFilter.toLowerCase()
       out = out.filter(
         (c) =>
-          String((c as any).farm_name ?? '').toLowerCase().includes(f) ||
-          String((c as any).farm_number ?? '').toLowerCase().includes(f)
+          String(c['farm_name'] ?? '').toLowerCase().includes(f) ||
+          String(c['farm_number'] ?? '').toLowerCase().includes(f)
       )
     }
     if (cropFilter) {
       const cr = cropFilter.toLowerCase()
       out = out.filter((c) =>
-        String((c as any).crop ?? (c as any).commodity ?? '').toLowerCase().includes(cr)
+        String(c['crop'] ?? c['commodity'] ?? '').toLowerCase().includes(cr)
       )
     }
     return out

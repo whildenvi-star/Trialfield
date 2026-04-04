@@ -2,9 +2,26 @@
 
 import type { CluRecord } from '@/lib/fsa/calc'
 
+// Minimal claim shape needed for calendar rendering.
+// Uses deadline_at (confirmed field name from claim-card.tsx).
+interface ClaimDeadline {
+  deadline_at?: string | null
+  stage?: string | null
+  crop?: string | null
+  commodity?: string | null
+  farm_name?: string | null
+}
+
 interface CalendarTabProps {
-  claims: any[]
+  claims: ClaimDeadline[]
   cluRecords: CluRecord[]
+}
+
+// CluRecord extended with optional fields that may be present
+// (reporting_deadline is not in the base type but may exist on Supabase rows)
+interface CluRecordExtended extends CluRecord {
+  reporting_deadline?: string | null
+  reported_date?: string | null
 }
 
 type DeadlineEntry = {
@@ -35,9 +52,9 @@ export function CalendarTab({ claims, cluRecords }: CalendarTabProps) {
 
   // FSA reporting deadlines — use reporting_deadline field if present on CLU records
   // If no reporting_deadline field exists, skip FSA entries (do not error)
-  for (const clu of cluRecords) {
-    const deadline = (clu as any).reporting_deadline
-    if (!deadline || (clu as any).reported_date) continue
+  for (const clu of cluRecords as CluRecordExtended[]) {
+    const deadline = clu.reporting_deadline
+    if (!deadline || clu.reported_date) continue
     const d = new Date(deadline)
     if (d > in90) continue
     const daysUntil = Math.ceil((d.getTime() - now.getTime()) / 86400000)
