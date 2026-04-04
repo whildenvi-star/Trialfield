@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 68 of 68 (Compliance Hub Redesign) — IN PROGRESS
-Plan: 2 of 5 complete
-Status: Phase 68 Plan 02 complete — AcreageTab workspace integration, /app/fsa-578 redirect. COMP-04/05 satisfied.
-Last activity: 2026-04-04 — Phase 68 Plan 02 complete. AcreageTab thin wrapper with farm/crop filter and cross-tab nav buttons. CluWorkspace mounted inside ComplianceShell. /app/fsa-578 redirects to /app/compliance?tab=acreage.
+Plan: 3 of 5 complete
+Status: Phase 68 Plan 03 complete — InsuranceTab + ClaimsTab workspace integration, /app/insurance and /app/claims redirects. COMP-04/05 satisfied.
+Last activity: 2026-04-04 — Phase 68 Plan 03 complete. InsuranceTab thin wrapper with farm/crop filter and File Claim cross-tab nav. ClaimsTab thin wrapper with farm/crop filter. Both mounted inside ComplianceShell. /app/insurance and /app/claims redirect to compliance hub tabs.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
@@ -199,6 +199,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 63]: fetchRegistryService proxy pattern for client components: use portal-relative /api/registry/* routes instead of hardcoded localhost URLs
 - [Phase 68-02]: AcreageTab wrapper-level View Insurance and File PP Claim buttons call navigateTab() — CluCard has no callback props, modifying workspace is out of scope
 - [Phase 68-02]: navigateTab signature widened from TabId to string in compliance-shell — AcreageTab passes tab names without importing TabId
+- [Phase 68-03]: InsuranceTab adds wrapper-level File Claim button calling navigateTab('claims'); workspace's own internal File Claim modal coexists — both functional without modifying InsuranceWorkspace
+- [Phase 68-03]: Promise.all in compliance page.tsx extended with 4 insurance/claims fetches — all tab data fetched in parallel at page load
 
 ### Pending Todos
 
@@ -211,6 +213,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 68-02-PLAN.md — AcreageTab workspace integration + /app/fsa-578 redirect
+Stopped at: Completed 68-03-PLAN.md — InsuranceTab + ClaimsTab workspace integration + /app/insurance + /app/claims redirects
 Resume file: —
-Next action: Phase 68 Plan 03 — Insurance and Claims tabs (InsuranceTab + ClaimsTab inside ComplianceShell)
+Next action: Phase 68 Plan 04 — Overview tab (ComplianceShell overview dashboard with stats/risk flags/deadlines)
