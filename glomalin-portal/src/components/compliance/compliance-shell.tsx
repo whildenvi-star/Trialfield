@@ -2,6 +2,8 @@
 
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useRef, useState, useEffect } from 'react'
+import { AcreageTab } from '@/components/compliance/acreage-tab'
+import type { CluRecord } from '@/lib/fsa/calc'
 
 type TabId = 'overview' | 'acreage' | 'insurance' | 'claims' | 'calendar'
 
@@ -13,9 +15,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'calendar', label: 'Calendar' },
 ]
 
-const TAB_PLACEHOLDERS: Record<TabId, string> = {
+const TAB_PLACEHOLDERS: Record<Exclude<TabId, 'acreage'>, string> = {
   overview: 'Overview tab — coming in Plan 04',
-  acreage: 'Acreage tab — coming in Plan 02',
   insurance: 'Insurance tab — coming in Plan 03',
   claims: 'Claims tab — coming in Plan 03',
   calendar: 'Calendar tab — coming in Plan 05',
@@ -25,12 +26,16 @@ interface ComplianceShellProps {
   unreportedCount: number
   activePoliciesCount: number
   openClaimsCount: number
+  cluRecords: CluRecord[]
+  cluLoadError: string | null
 }
 
 export function ComplianceShell({
   unreportedCount,
   activePoliciesCount,
   openClaimsCount,
+  cluRecords,
+  cluLoadError,
 }: ComplianceShellProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -57,22 +62,7 @@ export function ComplianceShell({
     setCropInput(cropParam)
   }, [cropParam])
 
-  function buildParams(overrides: Record<string, string>): string {
-    const params = new URLSearchParams()
-    const base: Record<string, string> = {
-      tab: activeTab,
-      farm: farmInput,
-      crop: cropInput,
-    }
-    const merged = { ...base, ...overrides }
-    for (const [k, v] of Object.entries(merged)) {
-      if (v) params.set(k, v)
-    }
-    const str = params.toString()
-    return str ? `?${str}` : ''
-  }
-
-  function navigateTab(tabId: TabId) {
+  function navigateTab(tabId: string) {
     const params = new URLSearchParams()
     if (tabId !== 'overview') params.set('tab', tabId)
     if (farmInput) params.set('farm', farmInput)
@@ -108,6 +98,25 @@ export function ComplianceShell({
   void unreportedCount
   void activePoliciesCount
   void openClaimsCount
+
+  function renderTabContent() {
+    if (activeTab === 'acreage') {
+      return (
+        <AcreageTab
+          records={cluRecords}
+          loadError={cluLoadError}
+          farmFilter={farmInput || undefined}
+          cropFilter={cropInput || undefined}
+          navigateTab={navigateTab}
+        />
+      )
+    }
+    return (
+      <p className="text-glomalin-muted font-mono text-sm">
+        {TAB_PLACEHOLDERS[activeTab as Exclude<TabId, 'acreage'>]}
+      </p>
+    )
+  }
 
   return (
     <div>
@@ -172,9 +181,7 @@ export function ComplianceShell({
 
       {/* Tab content */}
       <div className="mt-4">
-        <p className="text-glomalin-muted font-mono text-sm">
-          {TAB_PLACEHOLDERS[activeTab]}
-        </p>
+        {renderTabContent()}
       </div>
     </div>
   )
