@@ -458,7 +458,7 @@ Plans:
 | 61. Auto Field Propagation | v11.0 | 2/2 | Complete | 2026-03-30 |
 | 62. Portal Webhook Auth Fix | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
-| 68. Compliance Hub Redesign | 5/5 | Complete   | 2026-04-04 | — |
+| 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
 
 ### Phase 68: Compliance Hub Redesign
 
