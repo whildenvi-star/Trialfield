@@ -5,6 +5,7 @@ import { useRef, useState, useEffect } from 'react'
 import { AcreageTab } from '@/components/compliance/acreage-tab'
 import { InsuranceTab } from '@/components/compliance/insurance-tab'
 import { ClaimsTab } from '@/components/compliance/claims-tab'
+import { OverviewTab } from '@/components/compliance/overview-tab'
 import type { CluRecord, InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
 import type { Claim } from '@/components/claims/claim-card'
 
@@ -18,8 +19,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'calendar', label: 'Calendar' },
 ]
 
-const TAB_PLACEHOLDERS: Record<Exclude<TabId, 'acreage' | 'insurance' | 'claims'>, string> = {
-  overview: 'Overview tab — coming in Plan 04',
+const TAB_PLACEHOLDERS: Record<Exclude<TabId, 'acreage' | 'insurance' | 'claims' | 'overview'>, string> = {
   calendar: 'Calendar tab — coming in Plan 05',
 }
 
@@ -103,12 +103,19 @@ export function ComplianceShell({
     router.replace(`/app/compliance${params.toString() ? `?${params.toString()}` : ''}`)
   }
 
-  // Suppress unused variable warnings — counts available for future Overview use
-  void unreportedCount
-  void activePoliciesCount
-  void openClaimsCount
-
   function renderTabContent() {
+    if (activeTab === 'overview') {
+      return (
+        <OverviewTab
+          unreportedCount={unreportedCount}
+          activePoliciesCount={activePoliciesCount}
+          openClaimsCount={openClaimsCount}
+          claims={claimsData as Record<string, unknown>[]}
+          cluRecords={cluRecords}
+          navigateTab={navigateTab}
+        />
+      )
+    }
     if (activeTab === 'acreage') {
       return (
         <AcreageTab
@@ -143,7 +150,7 @@ export function ComplianceShell({
     }
     return (
       <p className="text-glomalin-muted font-mono text-sm">
-        {TAB_PLACEHOLDERS[activeTab as Exclude<TabId, 'acreage' | 'insurance' | 'claims'>]}
+        {TAB_PLACEHOLDERS[activeTab as Exclude<TabId, 'acreage' | 'insurance' | 'claims' | 'overview'>]}
       </p>
     )
   }
