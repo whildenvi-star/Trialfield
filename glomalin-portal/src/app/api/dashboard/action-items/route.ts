@@ -86,7 +86,7 @@ export async function GET() {
         severity: 'warning',
         summary: `${unreportedCount} CLU record${unreportedCount === 1 ? '' : 's'} missing acreage report`,
         count: unreportedCount,
-        link: '/app/fsa-578?filter=unreported',
+        link: '/app/compliance?tab=acreage&filter=unreported',
       })
     }
     groups.push({
@@ -113,7 +113,7 @@ export async function GET() {
         severity: 'warning',
         summary: `${alertCount} polic${alertCount === 1 ? 'y' : 'ies'} with potential claim alerts`,
         count: alertCount,
-        link: '/app/insurance?filter=claim-alerts',
+        link: '/app/compliance?tab=insurance&filter=claim-alerts',
       })
     }
     groups.push({
@@ -141,7 +141,7 @@ export async function GET() {
         severity: 'info',
         summary: `${openCount} open claim${openCount === 1 ? '' : 's'} in pipeline`,
         count: openCount,
-        link: '/app/claims',
+        link: '/app/compliance?tab=claims',
       })
     }
 
@@ -158,7 +158,7 @@ export async function GET() {
         severity: 'warning',
         summary: `${overdueCount} claim${overdueCount === 1 ? '' : 's'} overdue (>30 days)`,
         count: overdueCount,
-        link: '/app/claims?filter=overdue',
+        link: '/app/compliance?tab=claims&filter=overdue',
       })
     }
 

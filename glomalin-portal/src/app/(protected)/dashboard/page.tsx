@@ -60,7 +60,7 @@ export default async function DashboardPage() {
               severity: 'warning',
               summary: `${unreported.length} CLU record${unreported.length === 1 ? '' : 's'} not yet reported`,
               count: unreported.length,
-              link: '/app/fsa-578?filter=unreported',
+              link: '/app/compliance?tab=acreage&filter=unreported',
             },
           ],
         })
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
             severity: 'warning',
             summary: `${n} polic${n === 1 ? 'y' : 'ies'} with potential claim alert`,
             count: n,
-            link: '/app/insurance?filter=claim-alerts',
+            link: '/app/compliance?tab=insurance&filter=claim-alerts',
           },
         ],
       })
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
           severity: 'warning',
           summary: `${overdue} claim${overdue === 1 ? '' : 's'} past due date`,
           count: overdue,
-          link: '/app/claims?filter=overdue',
+          link: '/app/compliance?tab=claims&filter=overdue',
         })
       }
       const open = n - overdue
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
           severity: 'info',
           summary: `${open} claim${open === 1 ? '' : 's'} open`,
           count: open,
-          link: '/app/claims?filter=open',
+          link: '/app/compliance?tab=claims&filter=open',
         })
       }
       if (items.length > 0) {

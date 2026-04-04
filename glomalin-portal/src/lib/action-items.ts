@@ -29,9 +29,10 @@ export type ActionItemsResponse = {
 
 /** Module display metadata keyed by module identifier. */
 export const MODULE_SOURCES: Record<string, { label: string; badge: string }> = {
-  'fsa-578': { label: 'FSA 578', badge: 'FSA' },
-  insurance: { label: 'Insurance', badge: 'INS' },
-  claims: { label: 'Claims', badge: 'CLM' },
+  compliance: { label: 'Compliance', badge: 'COMP' },   // new unified entry
+  'fsa-578': { label: 'FSA 578', badge: 'FSA' },        // keep — still used by route.ts group keys
+  insurance: { label: 'Insurance', badge: 'INS' },       // keep — still used by route.ts group keys
+  claims: { label: 'Claims', badge: 'CLM' },             // keep — still used by route.ts group keys
   'grain-tickets': { label: 'Grain Tickets', badge: 'GT' },
   'farm-budget': { label: 'Farm Budget', badge: 'BUDG' },
 }
