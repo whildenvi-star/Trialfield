@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 68 of 68 (Compliance Hub Redesign) — IN PROGRESS
-Plan: 3 of 5 complete
-Status: Phase 68 Plan 03 complete — InsuranceTab + ClaimsTab workspace integration, /app/insurance and /app/claims redirects. COMP-04/05 satisfied.
-Last activity: 2026-04-04 — Phase 68 Plan 03 complete. InsuranceTab thin wrapper with farm/crop filter and File Claim cross-tab nav. ClaimsTab thin wrapper with farm/crop filter. Both mounted inside ComplianceShell. /app/insurance and /app/claims redirect to compliance hub tabs.
+Plan: 4 of 5 complete
+Status: Phase 68 Plan 04 complete — OverviewTab with 4 StatCards, risk flags panel, 30-day deadline list. COMP-06/07 satisfied.
+Last activity: 2026-04-04 — Phase 68 Plan 04 complete. OverviewTab renders live StatCards for unreported CLUs, active policies, open claims, overdue deadlines. Risk flags panel shows actionable warnings. Upcoming deadline list filtered to next 30 days. All StatCards navigate to correct tabs via navigateTab.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
@@ -78,6 +78,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 63-crop-autocomplete-server-proxy P01 | 2 | 2 tasks | 2 files |
 | Phase 63 P01 | 2 | 2 tasks | 2 files |
 | Phase 68 P02 | 80 | 2 tasks | 4 files |
+| Phase 68 P04 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -201,6 +202,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 68-02]: navigateTab signature widened from TabId to string in compliance-shell — AcreageTab passes tab names without importing TabId
 - [Phase 68-03]: InsuranceTab adds wrapper-level File Claim button calling navigateTab('claims'); workspace's own internal File Claim modal coexists — both functional without modifying InsuranceWorkspace
 - [Phase 68-03]: Promise.all in compliance page.tsx extended with 4 insurance/claims fetches — all tab data fetched in parallel at page load
+- [Phase 68-04]: OverviewTab receives claims as Record<string, unknown>[] — avoids coupling to Claim interface for read-only summary view
+- [Phase 68-04]: Unlinked-policies risk flag omitted — InsurancePolicy has no CLU FK field, every policy would falsely appear unlinked
 
 ### Pending Todos
 
@@ -213,6 +216,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 68-03-PLAN.md — InsuranceTab + ClaimsTab workspace integration + /app/insurance + /app/claims redirects
+Stopped at: Completed 68-04-PLAN.md — OverviewTab with StatCards, risk flags, and 30-day deadlines
 Resume file: —
-Next action: Phase 68 Plan 04 — Overview tab (ComplianceShell overview dashboard with stats/risk flags/deadlines)
+Next action: Phase 68 Plan 05 — Calendar tab (compliance deadline timeline, nav consolidation)
