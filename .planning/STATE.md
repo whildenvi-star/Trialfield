@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 ## Current Position
 
-Phase: 68 of 68 (Compliance Hub Redesign) — IN PROGRESS
-Plan: 4 of 5 complete
-Status: Phase 68 Plan 04 complete — OverviewTab with 4 StatCards, risk flags panel, 30-day deadline list. COMP-06/07 satisfied.
-Last activity: 2026-04-04 — Phase 68 Plan 04 complete. OverviewTab renders live StatCards for unreported CLUs, active policies, open claims, overdue deadlines. Risk flags panel shows actionable warnings. Upcoming deadline list filtered to next 30 days. All StatCards navigate to correct tabs via navigateTab.
+Phase: 68 of 68 (Compliance Hub Redesign) — COMPLETE
+Plan: 5 of 5 complete
+Status: Phase 68 COMPLETE — All 5 tabs live on VPS. CalendarTab with 90-day deadline list. Single "Compliance" nav entry. Dashboard action-item links point to /app/compliance?tab=...
+Last activity: 2026-04-04 — Phase 68 Plan 05 complete. CalendarTab wired (color-coded 90-day deadline list), MODULES consolidated to single compliance entry, dashboard links migrated to /app/compliance?tab=..., ESLint any errors fixed in claims-tab + overview-tab, deployed to VPS.
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
 
@@ -79,6 +79,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 63 P01 | 2 | 2 tasks | 2 files |
 | Phase 68 P02 | 80 | 2 tasks | 4 files |
 | Phase 68 P04 | 2 | 2 tasks | 2 files |
+| Phase 68 P05 | 7 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -204,6 +205,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 68-03]: Promise.all in compliance page.tsx extended with 4 insurance/claims fetches — all tab data fetched in parallel at page load
 - [Phase 68-04]: OverviewTab receives claims as Record<string, unknown>[] — avoids coupling to Claim interface for read-only summary view
 - [Phase 68-04]: Unlinked-policies risk flag omitted — InsurancePolicy has no CLU FK field, every policy would falsely appear unlinked
+- [Phase 68-05]: CalendarTab uses ClaimDeadline interface (not Claim) — minimal shape needed for calendar rendering, avoids tight coupling
+- [Phase 68-05]: MODULE_SOURCES retains fsa-578/insurance/claims keys — route.ts uses them for label/badge lookups on group data even after nav consolidation
 
 ### Pending Todos
 
@@ -216,6 +219,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Completed 68-04-PLAN.md — OverviewTab with StatCards, risk flags, and 30-day deadlines
+Stopped at: Completed 68-05-PLAN.md — Phase 68 COMPLETE. CalendarTab, MODULES consolidation, dashboard links, VPS deploy.
 Resume file: —
-Next action: Phase 68 Plan 05 — Calendar tab (compliance deadline timeline, nav consolidation)
+Next action: Phase 68 complete. All 5 compliance hub tabs live on portal.whughesfarms.com.
