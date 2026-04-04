@@ -3,7 +3,10 @@
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useRef, useState, useEffect } from 'react'
 import { AcreageTab } from '@/components/compliance/acreage-tab'
-import type { CluRecord } from '@/lib/fsa/calc'
+import { InsuranceTab } from '@/components/compliance/insurance-tab'
+import { ClaimsTab } from '@/components/compliance/claims-tab'
+import type { CluRecord, InsurancePolicy, PricingEntry } from '@/lib/fsa/calc'
+import type { Claim } from '@/components/claims/claim-card'
 
 type TabId = 'overview' | 'acreage' | 'insurance' | 'claims' | 'calendar'
 
@@ -15,10 +18,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'calendar', label: 'Calendar' },
 ]
 
-const TAB_PLACEHOLDERS: Record<Exclude<TabId, 'acreage'>, string> = {
+const TAB_PLACEHOLDERS: Record<Exclude<TabId, 'acreage' | 'insurance' | 'claims'>, string> = {
   overview: 'Overview tab — coming in Plan 04',
-  insurance: 'Insurance tab — coming in Plan 03',
-  claims: 'Claims tab — coming in Plan 03',
   calendar: 'Calendar tab — coming in Plan 05',
 }
 
@@ -28,6 +29,10 @@ interface ComplianceShellProps {
   openClaimsCount: number
   cluRecords: CluRecord[]
   cluLoadError: string | null
+  policies: InsurancePolicy[]
+  pricing: PricingEntry[]
+  lastScraped: string | null
+  claimsData: Claim[]
 }
 
 export function ComplianceShell({
@@ -36,6 +41,10 @@ export function ComplianceShell({
   openClaimsCount,
   cluRecords,
   cluLoadError,
+  policies,
+  pricing,
+  lastScraped,
+  claimsData,
 }: ComplianceShellProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -111,9 +120,30 @@ export function ComplianceShell({
         />
       )
     }
+    if (activeTab === 'insurance') {
+      return (
+        <InsuranceTab
+          policies={policies}
+          pricing={pricing}
+          lastScraped={lastScraped}
+          farmFilter={farmInput || undefined}
+          cropFilter={cropInput || undefined}
+          navigateTab={navigateTab}
+        />
+      )
+    }
+    if (activeTab === 'claims') {
+      return (
+        <ClaimsTab
+          claims={claimsData}
+          farmFilter={farmInput || undefined}
+          cropFilter={cropInput || undefined}
+        />
+      )
+    }
     return (
       <p className="text-glomalin-muted font-mono text-sm">
-        {TAB_PLACEHOLDERS[activeTab as Exclude<TabId, 'acreage'>]}
+        {TAB_PLACEHOLDERS[activeTab as Exclude<TabId, 'acreage' | 'insurance' | 'claims'>]}
       </p>
     )
   }
