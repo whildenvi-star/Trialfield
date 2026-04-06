@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import BannerSection from '@/components/layout/banner-section'
+import TopBar from '@/components/layout/top-bar'
 import DeniedToast from '@/components/denied-toast'
 
 export default async function ProtectedLayout({
@@ -28,7 +28,7 @@ export default async function ProtectedLayout({
 
   return (
     <div className="min-h-screen bg-glomalin-bg">
-      <BannerSection
+      <TopBar
         user={{
           email: user.email ?? '',
           fullName: profile?.full_name ?? null,
