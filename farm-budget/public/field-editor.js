@@ -255,6 +255,8 @@
       reassignHint.style.display = 'none';
     }
     document.getElementById('ed-cropType').value = f.cropType || 'SINGLE CROP';
+    document.getElementById('ed-tillage').value = f.tillage || 'Till';
+    document.getElementById('ed-notes').value = f.notes || '';
     document.getElementById('ed-acres').value = f.acres || '';
     // Planted acres
     document.getElementById('ed-plantedAcres').value = f.plantedAcres || '';
@@ -336,11 +338,15 @@
         var price = Calc.computeApplicationPrice(p);
         return '<div class="prod-ac-item" data-i="' + i + '">' +
           '<span style="font-weight:500">' + util.escHtml(p.name) + '</span>' +
-          '<span style="color:#666;font-size:11px;margin-left:6px">' +
+          '<span class="prod-ac-item-meta">' +
           util.escHtml(p.unit || '') + ' · $' + util.formatNum(price, 4) + '/' + util.escHtml(p.unit || 'unit') +
           '</span></div>';
       }).join('');
       dropdown.innerHTML = html;
+      var rect = input.getBoundingClientRect();
+      dropdown.style.top = (rect.bottom + 2) + 'px';
+      dropdown.style.left = rect.left + 'px';
+      dropdown.style.width = Math.max(320, rect.width) + 'px';
       dropdown.style.display = 'block';
 
       dropdown.querySelectorAll('.prod-ac-item').forEach(function (el) {
@@ -390,7 +396,20 @@
     });
 
     input.addEventListener('blur', function () {
-      setTimeout(function () { dropdown.style.display = 'none'; }, 200);
+      setTimeout(function () {
+        dropdown.style.display = 'none';
+        // Snap to canonical product name on blur (case-insensitive match)
+        var typed = input.value.trim().toLowerCase();
+        if (typed) {
+          var match = (window.refData.products || []).find(function (p) {
+            return p.name.trim().toLowerCase() === typed;
+          });
+          if (match && input.value !== match.name) {
+            input.value = match.name;
+            currentField.inputs[idx].productName = match.name;
+          }
+        }
+      }, 200);
     });
 
     input.addEventListener('focus', function () {
@@ -410,8 +429,9 @@
       var cost = (inp.quantity || 0) * appPrice;
       var unitLabel = product ? (product.unit || '') : '';
 
-      html += '<tr>' +
-        '<td style="position:relative"><input type="text" value="' + util.escHtml(inp.productName || '') + '" data-idx="' + idx + '" data-field="productName" class="ed-inp-field prod-ac-input" list="prod-search-list" style="width:180px" placeholder="Type to search...">' +
+      html += '<tr data-drag-idx="' + idx + '">' +
+        '<td class="drag-handle" title="Drag to reorder">⠿</td>' +
+        '<td style="position:relative"><input type="text" value="' + util.escHtml(inp.productName || '') + '" data-idx="' + idx + '" data-field="productName" class="ed-inp-field prod-ac-input" style="width:180px" placeholder="Type to search...">' +
         '<div class="prod-ac-dropdown" data-idx="' + idx + '"></div></td>' +
         '<td><input type="number" value="' + (inp.quantity || '') + '" data-idx="' + idx + '" data-field="quantity" class="ed-inp-field" step="0.1" min="0" style="width:70px"></td>' +
         '<td class="unit-cell" style="font-size:0.78rem;color:var(--text-light);white-space:nowrap">' + util.escHtml(unitLabel) + '</td>' +
@@ -453,6 +473,11 @@
         updatePreview();
       });
     });
+
+    makeRowsSortable(tbody, function () { return currentField.inputs; }, function () {
+      renderInputRows();
+      updatePreview();
+    });
   }
 
   document.getElementById('ed-add-input').addEventListener('click', function () {
@@ -486,7 +511,8 @@
       var modeLabel = useHire ? 'Hire' : 'Own';
       var modeCls = useHire ? 'status-open' : 'status-done';
 
-      html += '<tr>' +
+      html += '<tr data-drag-idx="' + idx + '">' +
+        '<td class="drag-handle" title="Drag to reorder">⠿</td>' +
         '<td><input type="text" value="' + util.escHtml(m.implementName) + '" data-idx="' + idx + '" data-field="implementName" class="ed-mach-field" list="impl-search-list" style="width:150px"></td>' +
         '<td><input type="number" value="' + (m.passes || '') + '" data-idx="' + idx + '" data-field="passes" class="ed-mach-field" step="0.1" min="0" style="width:60px"></td>' +
         '<td class="number">' + util.formatMoney(cost) + '</td>' +
@@ -534,6 +560,11 @@
         renderMachRows();
         updatePreview();
       });
+    });
+
+    makeRowsSortable(tbody, function () { return currentField.machinery; }, function () {
+      renderMachRows();
+      updatePreview();
     });
   }
 
@@ -817,6 +848,14 @@
     syncAndPreview();
   });
 
+  // Tillage and notes are not in previewFields so need their own listeners
+  document.getElementById('ed-tillage').addEventListener('change', function () {
+    if (currentField) currentField.tillage = this.value;
+  });
+  document.getElementById('ed-notes').addEventListener('input', function () {
+    if (currentField) currentField.notes = this.value;
+  });
+
   // Update planted acres hint when the acres field changes
   document.getElementById('ed-acres').addEventListener('input', function () {
     updatePlantedAcresHint();
@@ -971,6 +1010,7 @@
       currentField.registryCropId = selectedOption.dataset.registryCropId;
     }
     currentField.cropType = document.getElementById('ed-cropType').value;
+    currentField.tillage = document.getElementById('ed-tillage').value;
     currentField.acres = parseFloat(document.getElementById('ed-acres').value) || 0;
     currentField.plantedAcres = parseFloat(document.getElementById('ed-plantedAcres').value) || 0;
     currentField.rentPerAcre = parseFloat(document.getElementById('ed-rentPerAcre').value) || 0;
@@ -1097,16 +1137,20 @@
     }
 
     // Totals section
+    var isOffice = window.APP_ROLE === 'office';
     html += '<div class="prev-group prev-totals"><div class="prev-group-label">Totals</div><div class="prev-group-items">' +
       renderItem('Expense', budget.expPerAcre, budget.expTotal, 'highlight') +
-      renderItem('Income', dispAc(budget.cropIncomeTotal), budget.cropIncomeTotal) +
-      renderItem('AUX Payments', dispAc(budget.totalGovPayments), budget.totalGovPayments) +
-      renderItem('Profit', budget.profitPerAcre, budget.profitFarmWithoutPayments, 'highlight ' + util.profitClass(budget.profitPerAcre)) +
-      renderItem('Profit (w/ Pay)', dispAc(budget.profitFarmWithPayments), budget.profitFarmWithPayments, 'highlight ' + util.profitClass(budget.profitFarmWithPayments)) +
-      renderItem('COP', budget.cop, budget.cop, copClass) +
+      (isOffice ? '' : renderItem('Income', dispAc(budget.cropIncomeTotal), budget.cropIncomeTotal)) +
+      (isOffice ? '' : renderItem('AUX Payments', dispAc(budget.totalGovPayments), budget.totalGovPayments)) +
+      (isOffice ? '' : renderItem('Profit', budget.profitPerAcre, budget.profitFarmWithoutPayments, 'highlight ' + util.profitClass(budget.profitPerAcre))) +
+      (isOffice ? '' : renderItem('Profit (w/ Pay)', dispAc(budget.profitFarmWithPayments), budget.profitFarmWithPayments, 'highlight ' + util.profitClass(budget.profitFarmWithPayments))) +
+      (isOffice ? '' : renderItem('COP', budget.cop, budget.cop, copClass)) +
       '</div></div>';
 
     document.getElementById('ed-preview-grid').innerHTML = html;
+
+    // Render cost detail panel
+    renderCostDetail(budget);
 
     // Update KPI strip in sidebar
     var kpiExp = document.getElementById('kpi-exp');
@@ -1121,6 +1165,231 @@
     }
     if (kpiCop) kpiCop.textContent = util.formatMoney(budget.cop);
   }
+
+  // --- Row drag-to-reorder helper ---
+  // Only activates when the user grabs the .drag-handle cell — inputs/selects are unaffected.
+  function makeRowsSortable(tbody, getArray, onReorder) {
+    var dragSrcIdx = null;
+
+    function clearIndicators() {
+      tbody.querySelectorAll('tr').forEach(function (r) {
+        r.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+    }
+
+    tbody.querySelectorAll('.drag-handle').forEach(function (handle) {
+      var row = handle.closest('tr');
+
+      // Only enable drag when pointer is on the handle
+      handle.addEventListener('mousedown', function () { row.draggable = true; });
+      handle.addEventListener('mouseup',   function () { row.draggable = false; });
+
+      row.addEventListener('dragstart', function (e) {
+        dragSrcIdx = parseInt(row.getAttribute('data-drag-idx'));
+        e.dataTransfer.effectAllowed = 'move';
+        row.classList.add('drag-src');
+      });
+
+      row.addEventListener('dragend', function () {
+        row.draggable = false;
+        row.classList.remove('drag-src');
+        clearIndicators();
+        dragSrcIdx = null;
+      });
+
+      row.addEventListener('dragover', function (e) {
+        if (dragSrcIdx === null) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        var targetIdx = parseInt(row.getAttribute('data-drag-idx'));
+        if (targetIdx === dragSrcIdx) return;
+        clearIndicators();
+        var rect = row.getBoundingClientRect();
+        row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-over-top' : 'drag-over-bottom');
+      });
+
+      row.addEventListener('dragleave', function () {
+        row.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+
+      row.addEventListener('drop', function (e) {
+        e.preventDefault();
+        if (dragSrcIdx === null) return;
+        var targetIdx = parseInt(row.getAttribute('data-drag-idx'));
+        if (targetIdx === dragSrcIdx) return;
+        var arr = getArray();
+        var rect = row.getBoundingClientRect();
+        var insertAfter = e.clientY >= rect.top + rect.height / 2;
+        var item = arr.splice(dragSrcIdx, 1)[0];
+        var dest = targetIdx > dragSrcIdx ? (insertAfter ? targetIdx - 1 : targetIdx - 1) : (insertAfter ? targetIdx + 1 : targetIdx);
+        arr.splice(dest, 0, item);
+        onReorder();
+      });
+    });
+  }
+
+  // --- Cost Detail panel ---
+  function renderCostDetail(budget) {
+    var el = document.getElementById('ed-cost-detail-body');
+    if (!el) return;
+    var s = window.refData ? window.refData.settings : {};
+    var fuelPrice = s.fuelPricePerGal || 5;
+    var wageRate = s.wageRate || 25;
+    var carryMonths = s.carryMonths || 6;
+
+    function cdCard(title, rows, footer) {
+      var rowsHtml = rows.map(function (r) {
+        return '<div class="cd-row">' +
+          '<span class="cd-row-label">' + r[0] + '</span>' +
+          '<span class="cd-row-val' + (r[2] ? ' ' + r[2] : '') + '">' + r[1] + '</span>' +
+          '</div>';
+      }).join('');
+      var footerHtml = footer ? '<div class="cd-footer">' + footer + '</div>' : '';
+      return '<div class="cd-card"><div class="cd-card-title">' + title + '</div>' +
+        '<div class="cd-card-body">' + rowsHtml + '</div>' + footerHtml + '</div>';
+    }
+
+    var html = '';
+
+    // --- FUEL ---
+    var fuelRows = [];
+    var details = budget.machineryDetails || [];
+    details.forEach(function (d) {
+      if (d.fuelGalPerAcre > 0) {
+        fuelRows.push([
+          d.implementName + (d.passes > 1 ? ' ×' + d.passes : ''),
+          Calc.round2(d.fuelGalPerAcre) + ' gal/ac'
+        ]);
+      }
+    });
+    if (fuelRows.length === 0) fuelRows.push(['No fuel-bearing implements', '—']);
+    fuelRows.push(['Total', budget.fuelGallonsPerAcre + ' gal/ac', 'cd-row-sub']);
+    fuelRows.push(['Rate', '$' + fuelPrice + '/gal', 'cd-row-sub']);
+    html += cdCard('Fuel',
+      fuelRows,
+      budget.fuelGallonsPerAcre + ' gal/ac × $' + fuelPrice + ' = <strong>' + util.formatMoney(budget.fuelPerAcre) + '/ac</strong>'
+    );
+
+    // --- LABOR ---
+    var laborRows = [];
+    if (budget.laborHoursPerAcre > 0) {
+      details.forEach(function (d) {
+        var impl = (window.refData.implements || []).find ? (window.refData.implements || []).find(function (i) { return i.name === d.implementName; }) : null;
+        if (impl && impl.laborHoursPerAcre > 0) {
+          var hrs = Calc.round4(impl.laborHoursPerAcre * d.passes);
+          laborRows.push([
+            d.implementName + (d.passes > 1 ? ' ×' + d.passes : ''),
+            hrs + ' hrs/ac'
+          ]);
+        }
+      });
+      laborRows.push(['Total hours', Calc.round2(budget.laborHoursPerAcre) + ' hrs/ac', 'cd-row-sub']);
+      laborRows.push(['Wage rate', '$' + wageRate + '/hr', 'cd-row-sub']);
+      html += cdCard('Labor',
+        laborRows,
+        Calc.round2(budget.laborHoursPerAcre) + ' hrs × $' + wageRate + ' = <strong>' + util.formatMoney(budget.laborPerAcre) + '/ac</strong>'
+      );
+    } else {
+      // Flat-rate labor from laborOverhead table
+      var loEntry = (window.refData.laborOverhead || []).filter ? (window.refData.laborOverhead || []).filter(function (lo) { return lo.systemCode === (currentField && currentField.systemCode); })[0] : null;
+      laborRows.push(['Source', 'Flat rate — ' + (currentField ? currentField.systemCode : '') + ' schedule']);
+      if (loEntry) laborRows.push(['Schedule rate', util.formatMoney(loEntry.laborPerAcre) + '/ac']);
+      laborRows.push(['Crop type mult.', budget.cropTypeMultiplier !== undefined ? budget.cropTypeMultiplier + '×' : '1×']);
+      html += cdCard('Labor',
+        laborRows,
+        'Flat rate: <strong>' + util.formatMoney(budget.laborPerAcre) + '/ac</strong>'
+      );
+    }
+
+    // --- OVERHEAD ---
+    var loEntry2 = (window.refData.laborOverhead || []).filter ? (window.refData.laborOverhead || []).filter(function (lo) { return lo.systemCode === (currentField && currentField.systemCode); })[0] : null;
+    var ohRows = [];
+    ohRows.push(['System code', currentField ? currentField.systemCode : '—']);
+    if (loEntry2) ohRows.push(['Schedule rate', util.formatMoney(loEntry2.overheadPerAcre) + '/ac']);
+    if (budget.cropType === 'DBL CROP') ohRows.push(['Crop type mult.', '0.5× (double crop)']);
+    html += cdCard('Overhead',
+      ohRows,
+      'Total: <strong>' + util.formatMoney(budget.overheadPerAcre) + '/ac</strong>'
+    );
+
+    // --- DRYING ---
+    var dryRows = [];
+    dryRows.push(['Method', budget.dryingMethod === 'moisture' ? 'Moisture-tiered (buyer schedule)' : 'Flat rate (crop pricing)']);
+    dryRows.push(['Yield', (budget.yieldPerAcre || 0) + ' ' + (currentField ? currentField.yieldUnit || 'Bu' : 'Bu') + '/ac']);
+    if (budget.dryingMethod === 'moisture' && currentField && currentField.harvestMoisture > 0) {
+      dryRows.push(['Harvest moisture', currentField.harvestMoisture + '%']);
+      dryRows.push(['Buyer', currentField.buyerId || '—']);
+    } else {
+      var flatRate = budget.yieldPerAcre > 0 && budget.dryingPerAcre > 0 ? Calc.round4(budget.dryingPerAcre / budget.yieldPerAcre) : 0;
+      dryRows.push(['Drying rate', '$' + flatRate + '/Bu']);
+    }
+    html += cdCard('Drying',
+      dryRows,
+      'Total: <strong>' + util.formatMoney(budget.dryingPerAcre) + '/ac</strong>'
+    );
+
+    // --- INTEREST ---
+    var intRate = (s.interestRate != null) ? s.interestRate : (function () {
+      var pricing = (window.refData.cropPricing || []).find ? (window.refData.cropPricing || []).find(function (p) { return p.crop === (currentField && currentField.crop); }) : null;
+      return pricing ? pricing.interestRate : 0.06;
+    })();
+    var intRows = [];
+    intRows.push(['Rent × 50%', util.formatMoney(Calc.round2(budget.rentPerCropAcre * 0.5)) + '/ac']);
+    intRows.push(['Spring fert', util.formatMoney(budget.springFertPerAcre) + '/ac']);
+    intRows.push(['Seed', util.formatMoney(budget.seedCostPerAcre) + '/ac']);
+    var opsBase = Calc.round2((budget.laborPerAcre + budget.overheadPerAcre + budget.fuelPerAcre) * 0.5);
+    intRows.push(['Ops (labor+OH+fuel) × 50%', util.formatMoney(opsBase) + '/ac']);
+    var intBase = Calc.round2(budget.rentPerCropAcre * 0.5 + budget.springFertPerAcre + budget.seedCostPerAcre + opsBase);
+    intRows.push(['Interest base', util.formatMoney(intBase) + '/ac', 'cd-row-sub']);
+    intRows.push(['Rate', (intRate * 100).toFixed(1) + '%', 'cd-row-sub']);
+    intRows.push(['Carry period', carryMonths + ' mo (' + Calc.round2(carryMonths / 12 * 100) + '% yr)', 'cd-row-sub']);
+    html += cdCard('Interest',
+      intRows,
+      intBase + ' × ' + (intRate * 100).toFixed(1) + '% × ' + Calc.round2(carryMonths / 12) + ' = <strong>' + util.formatMoney(budget.interestPerAcre) + '/ac</strong>'
+    );
+
+    el.innerHTML = html;
+  }
+
+  // --- Machinery Template Dropdown ---
+  window.populateMachProgDropdown = function () {
+    var sel = document.getElementById('ed-mach-template');
+    if (!sel) return;
+    var progs = (window.refData && window.refData.machineryPrograms) || [];
+    var html = '<option value="">-- Load Machinery Template --</option>';
+    progs.forEach(function (p) {
+      html += '<option value="' + util.escHtml(p.id) + '">' + util.escHtml(p.name) + '</option>';
+    });
+    sel.innerHTML = html;
+  };
+
+  // Populate on ref-data load
+  window.addEventListener('ref-data-loaded', window.populateMachProgDropdown);
+
+  // Apply machinery template button
+  (function () {
+    var btn = document.getElementById('ed-load-mach-template');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var sel = document.getElementById('ed-mach-template');
+      if (!sel || !sel.value) return;
+      var progs = (window.refData && window.refData.machineryPrograms) || [];
+      var prog = progs.find(function (p) { return p.id === sel.value; });
+      if (!prog || !currentField) return;
+      if (currentField.machinery && currentField.machinery.length > 0) {
+        if (!confirm('Replace current machinery list with "' + prog.name + '"?')) return;
+      }
+      currentField.machinery = (prog.machinery || []).map(function (m) {
+        return { id: util.generateId('mach'), implementName: m.implementName, passes: m.passes || 1, useHire: m.useHire };
+      });
+      currentField.machineryProgramId = prog.id;
+      sel.value = '';
+      renderMachRows();
+      updateNavBadges();
+      updatePreview();
+      util.showToast('Applied: ' + prog.name);
+    });
+  })();
 
   // --- Nav tab switching ---
   (function () {
@@ -1166,9 +1435,10 @@
       // Use first match (best prefix match)
       var match = results[0];
 
-      // Sync acres
+      // Sync acres + update registry ID so Sync-All uses the correct match going forward
       document.getElementById('ed-acres').value = match.reportingAcres;
       currentField.acres = match.reportingAcres;
+      currentField.registryFieldId = match.id;
       var hint = document.getElementById('ed-acres-hint');
       hint.textContent = 'Synced from registry: ' + match.name + ' — ' + match.reportingAcres + ' ac';
       hint.style.display = 'block';

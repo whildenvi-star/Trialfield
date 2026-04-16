@@ -395,7 +395,6 @@
         <button class="ref-sub-btn" data-ref-sub="unit-packs">Unit/Packs</button>
         <button class="ref-sub-btn role-hide-office" data-ref-sub="labor">Labor &amp; Overhead</button>
         <button class="ref-sub-btn" data-ref-sub="forecast">Forecast</button>
-        <button class="ref-sub-btn" data-ref-sub="demand">Demand</button>
       </div>
 
       <!-- Products Sub-section -->
@@ -440,11 +439,6 @@
       <div class="table-info"><span id="inp-count"></span></div>
       <div id="products-container"></div>
 
-      <!-- Product Demand — Expandable Field View -->
-      <h3>Product Demand</h3>
-      <p class="edit-hint">Click any product to see which fields are planned to use it. Auto-computed from field input assignments.</p>
-      <div class="table-info"><span id="prod-demand-info"></span></div>
-      <div id="prod-demand-container"></div>
       </div><!-- /ref-sub-products -->
 
       <!-- Implements Sub-section -->
@@ -615,11 +609,6 @@
         </table>
       </div>
 
-      <!-- Seed Demand — Expandable Field View -->
-      <h3>Seed Demand</h3>
-      <p class="edit-hint">Click any seed variety to see which fields are planned to use it. Auto-computed from field seed assignments.</p>
-      <div class="table-info"><span id="seed-demand-info"></span></div>
-      <div id="seed-demand-container"></div>
       </div><!-- /ref-sub-seeds -->
 
       <!-- Forecast Sub-section (merged from Forecasts tab) -->
@@ -633,50 +622,6 @@
       <div id="fc-categories"></div>
       </div><!-- /ref-sub-forecast -->
 
-      <!-- Demand Sub-section (merged from Forecasts tab) -->
-      <div id="ref-sub-demand" class="ref-sub-content">
-      <h3>Product Demand Table</h3>
-      <p class="edit-hint">Receiving manager view — all expected incoming products with forecasted quantities from active farm plans.</p>
-      <div class="filters" style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap">
-        <input type="text" id="demand-search" placeholder="Search products...">
-        <select id="demand-filter-status">
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="ordered">Ordered</option>
-          <option value="received">Received</option>
-        </select>
-        <select id="demand-filter-type">
-          <option value="">All Types</option>
-          <option value="seed">Seeds</option>
-          <option value="input">Inputs</option>
-        </select>
-        <button id="demand-refresh" class="btn-sm">Refresh</button>
-        <button id="demand-export-csv" class="btn-sm">Export CSV</button>
-        <button id="demand-print" class="btn-sm">Print</button>
-        <span id="demand-count" style="color:var(--text-light);font-size:0.85rem"></span>
-      </div>
-      <div class="table-info"><span id="demand-info"></span></div>
-      <div class="table-wrap">
-        <table id="demand-table" class="demand-table">
-          <thead>
-            <tr>
-              <th>Product Name</th>
-              <th>Type</th>
-              <th>Supplier</th>
-              <th title="Unit/Pack type">Unit/Pack</th>
-              <th title="Pack quantity">Pack Qty</th>
-              <th title="Total units expected based on farm plans">Total Expected</th>
-              <th title="Quantity already ordered">Ordered</th>
-              <th title="Quantity delivered/received">Delivered</th>
-              <th title="Expected delivery window">Delivery Window</th>
-              <th title="Current status">Status</th>
-            </tr>
-          </thead>
-          <tbody id="demand-tbody"></tbody>
-        </table>
-      </div>
-      <div id="demand-generated" style="color:var(--text-light);font-size:0.75rem;margin-top:0.5rem"></div>
-      </div><!-- /ref-sub-demand -->
     </section>
 
     <!-- PROGRAMS (Agronomic Templates) -->
@@ -1226,15 +1171,15 @@
               <span class="ed-kpi-label">EXP/AC</span>
               <span class="ed-kpi-val" id="kpi-exp">—</span>
             </div>
-            <div class="ed-kpi">
+            <div class="ed-kpi role-hide-office">
               <span class="ed-kpi-label">INCOME/AC</span>
               <span class="ed-kpi-val" id="kpi-inc">—</span>
             </div>
-            <div class="ed-kpi">
+            <div class="ed-kpi role-hide-office">
               <span class="ed-kpi-label">PROFIT/AC</span>
               <span class="ed-kpi-val" id="kpi-profit">—</span>
             </div>
-            <div class="ed-kpi">
+            <div class="ed-kpi role-hide-office">
               <span class="ed-kpi-label">COP</span>
               <span class="ed-kpi-val" id="kpi-cop">—</span>
             </div>
