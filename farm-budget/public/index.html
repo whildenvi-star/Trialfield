@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="platform-tokens.css">
-  <link rel="stylesheet" href="style.css?v=20260401">
+  <link rel="stylesheet" href="style.css?v=20260403t">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
@@ -95,16 +95,17 @@
           <button class="toggle-btn" data-yield-mode="actual">Actual</button>
         </div>
         <div style="display:flex;gap:0.5rem;align-items:center">
-          <button id="btn-sync-all-registry" class="btn-sm" title="Sync acres & rent for all fields from Farm Registry">Sync All from Registry</button>
-          <button id="dash-download-pdf" class="btn-sm">Download PDF</button>
-          <button class="btn-sm" onclick="location.reload(true)" title="Clear cache and reload">&#x21bb; Refresh</button>
-          <details class="settings-details">
+          <button id="btn-sync-all-registry" class="btn-sm role-hide-restricted" title="Sync acres & rent for all fields from Farm Registry">Sync All from Registry</button>
+          <button id="dash-download-pdf" class="btn-sm role-hide-restricted">Download PDF</button>
+          <button class="btn-sm role-hide-restricted" onclick="location.reload(true)" title="Clear cache and reload">&#x21bb; Refresh</button>
+          <details class="settings-details role-hide-restricted">
             <summary>Settings</summary>
             <div class="settings-bar">
               <label><input type="checkbox" id="set-fixed-mach"> Fixed Machinery Rate: $<input type="number" id="set-mach-rate" class="inline-input" value="100" step="1" min="0">/ac</label>
               <label>Fuel: $<input type="number" id="set-fuel-price" class="inline-input" value="5.00" step="0.01" min="0">/gal</label>
               <label>Wage: $<input type="number" id="set-wage-rate" class="inline-input" value="25" step="0.50" min="0">/hr</label>
-              <label>Interest Carry: <input type="number" id="set-carry-months" class="inline-input" value="6" step="1" min="1" max="12"> months</label>
+              <label>Interest: <input type="number" id="set-interest-rate" class="inline-input" value="6" step="0.25" min="0" max="30">%</label>
+              <label>Carry: <input type="number" id="set-carry-months" class="inline-input" value="6" step="1" min="1" max="12"> months</label>
             </div>
           </details>
           <details class="settings-details">
@@ -142,14 +143,14 @@
                     <th>Crop</th>
                     <th class="number" title="Total planted acres">Acres</th>
                     <th class="number" id="dash-conv-yield-header" title="Weighted average yield per acre">Proj Avg Yield</th>
-                    <th class="number" title="Average profit per acre after all expenses">Avg Profit/Ac</th>
-                    <th class="number" title="Cost of Production: breakeven price per unit">COP</th>
+                    <th class="number role-hide-restricted" title="Average profit per acre after all expenses">Avg Profit/Ac</th>
+                    <th class="number role-hide-restricted" title="Cost of Production: breakeven price per unit">COP</th>
                   </tr>
                 </thead>
                 <tbody id="dash-conv-tbody"></tbody>
               </table>
             </div>
-            <div class="dash-crop-chart"><canvas id="chart-conv-acres" width="200" height="160"></canvas></div>
+            <div class="dash-crop-chart role-hide-restricted"><canvas id="chart-conv-acres" width="160" height="160"></canvas></div>
           </div>
         </div>
         <div class="panel">
@@ -163,20 +164,20 @@
                     <th>Crop</th>
                     <th class="number" title="Total planted acres">Acres</th>
                     <th class="number" id="dash-org-yield-header" title="Weighted average yield per acre">Proj Avg Yield</th>
-                    <th class="number" title="Average profit per acre after all expenses">Avg Profit/Ac</th>
-                    <th class="number" title="Cost of Production: breakeven price per unit">COP</th>
+                    <th class="number role-hide-restricted" title="Average profit per acre after all expenses">Avg Profit/Ac</th>
+                    <th class="number role-hide-restricted" title="Cost of Production: breakeven price per unit">COP</th>
                   </tr>
                 </thead>
                 <tbody id="dash-org-tbody"></tbody>
               </table>
             </div>
-            <div class="dash-crop-chart"><canvas id="chart-org-acres" width="200" height="160"></canvas></div>
+            <div class="dash-crop-chart role-hide-restricted"><canvas id="chart-org-acres" width="160" height="160"></canvas></div>
           </div>
         </div>
       </div>
 
-      <h3>Cost Category Rollup</h3>
-      <div class="table-wrap">
+      <h3 class="role-hide-restricted">Cost Category Rollup</h3>
+      <div class="table-wrap role-hide-restricted">
         <table id="dash-rollup-table">
           <thead>
             <tr id="dash-rollup-thead-row">
@@ -204,6 +205,8 @@
         </table>
       </div>
 
+      <div id="dash-supply-card" style="margin-top:1.5rem"></div>
+
       <details style="margin-top:1.5rem">
         <summary style="cursor:pointer;font-weight:600;color:var(--text-light)">Acre Reconciliation <span id="dash-recon-badge" style="font-size:0.75rem;font-weight:normal"></span></summary>
         <div id="dash-recon-wrap" class="table-wrap" style="margin-top:0.5rem">
@@ -212,7 +215,7 @@
               <tr>
                 <th>Registry Field</th>
                 <th class="number">Registry Acres</th>
-                <th class="number">Budget Acres</th>
+                <th class="number" title="Physical land acres — double-crop fields counted once">Budget Land Acres</th>
                 <th class="number">Delta</th>
                 <th>Status</th>
               </tr>
@@ -241,7 +244,7 @@
             <option value="name">Sort: Field Name</option>
           </select>
           <button id="ent-download-pdf" class="btn-sm">Download PDF</button>
-          <button id="ent-batch-mode-btn" class="btn-sm" title="Toggle batch-select mode to apply programs or swap varieties across multiple fields">Batch</button>
+          <button id="ent-batch-mode-btn" class="btn-sm role-hide-operator" title="Toggle batch-select mode to apply programs or swap varieties across multiple fields">Batch</button>
           <button id="ent-add-field" class="btn-primary btn-sm">+ Add Field</button>
         </div>
       </div>
@@ -269,6 +272,9 @@
         <span style="width:1px;height:1.25rem;background:var(--border);display:inline-block"></span>
         <button id="ent-batch-apply-prog" class="btn-primary btn-sm" disabled>Apply Program</button>
         <button id="ent-batch-swap-variety" class="btn-sm" disabled>Swap Variety</button>
+        <button id="ent-batch-quick-plan" class="btn-sm" disabled>&#9889; Quick Plan</button>
+        <button id="ent-batch-compare" class="btn-sm" disabled>&#9878; Compare Plans</button>
+        <button id="ent-print-plan" class="btn-sm">&#128438; Print Plan</button>
       </div>
 
       <!-- BATCH: Program Picker Panel -->
@@ -301,6 +307,75 @@
           <button id="ent-batch-variety-apply" class="btn-primary btn-sm">Apply to Fields</button>
         </div>
       </div>
+
+      <!-- BATCH: Quick Plan Wizard Panel -->
+      <div id="ent-qp-panel" class="hidden" style="margin-top:0.75rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+          <h4 style="margin:0">&#9889; Quick Plan &mdash; <span id="ent-qp-count"></span> field(s) selected</h4>
+          <button id="ent-qp-cancel" class="btn-sm">&#215; Close</button>
+        </div>
+        <!-- Shown when no config mappings exist -->
+        <div id="ent-qp-empty" class="hidden">
+          <p class="edit-hint">No Quick Plan combinations configured yet. Go to the <strong>Programs</strong> tab &rarr; <strong>Quick Plan Config</strong> section to add crop/variant/tillage mappings.</p>
+        </div>
+        <!-- Step 1: Crop -->
+        <div id="ent-qp-step1" class="hidden">
+          <div class="qp-step-label">Step 1 &mdash; Crop</div>
+          <div id="ent-qp-crops" class="qp-radio-group"></div>
+        </div>
+        <!-- Step 2: Variant -->
+        <div id="ent-qp-step2" class="hidden">
+          <div class="qp-step-label">Step 2 &mdash; Variant</div>
+          <div id="ent-qp-variants" class="qp-radio-group"></div>
+        </div>
+        <!-- Step 3: Tillage -->
+        <div id="ent-qp-step3" class="hidden">
+          <div class="qp-step-label">Step 3 &mdash; Tillage</div>
+          <div id="ent-qp-tillages" class="qp-radio-group"></div>
+        </div>
+        <!-- Preview -->
+        <div id="ent-qp-preview" class="hidden" style="margin-top:0.75rem;padding:0.6rem 0.75rem;background:var(--bg-raised);border-radius:6px;font-size:0.85rem"></div>
+        <!-- Actions -->
+        <div id="ent-qp-actions" class="hidden" style="margin-top:0.75rem;display:flex;gap:0.5rem">
+          <button id="ent-qp-confirm" class="btn-primary btn-sm" disabled>&#10003; Apply to Fields</button>
+          <button id="ent-qp-reset" class="btn-sm">Reset</button>
+        </div>
+      </div>
+
+      <!-- BATCH: Scenario Comparison Panel -->
+      <div id="ent-scenario-panel" class="hidden" style="margin-top:0.75rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+          <h4 style="margin:0">&#9878; Compare Plans &mdash; <span id="ent-sc-basis"></span></h4>
+          <button id="ent-sc-cancel" class="btn-sm">&#215; Close</button>
+        </div>
+        <p class="edit-hint" style="margin-bottom:0.75rem">Pick up to 3 Quick Plan combinations. Numbers are computed against the selected fields — rent, acres, and field history carry over; only inputs &amp; machinery change.</p>
+        <div id="ent-sc-empty" class="hidden">
+          <p class="edit-hint">No Quick Plan combinations configured yet. Go to Programs &rarr; Quick Plan Config to add some.</p>
+        </div>
+        <div id="ent-sc-selectors" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.75rem;margin-bottom:0.75rem">
+          <div>
+            <label class="field-label" style="color:var(--primary)">Plan A</label>
+            <select id="ent-sc-a" class="inline-input"><option value="">— choose —</option></select>
+          </div>
+          <div>
+            <label class="field-label">Plan B</label>
+            <select id="ent-sc-b" class="inline-input"><option value="">— choose —</option></select>
+          </div>
+          <div>
+            <label class="field-label">Plan C <span style="color:var(--text-light);font-size:0.78rem">(optional)</span></label>
+            <select id="ent-sc-c" class="inline-input"><option value="">— choose —</option></select>
+          </div>
+        </div>
+        <button id="ent-sc-run" class="btn-primary btn-sm" style="margin-bottom:1rem">Run Comparison</button>
+        <div id="ent-sc-result" class="hidden">
+          <div class="table-wrap">
+            <table id="ent-sc-table" class="scenario-table">
+              <thead id="ent-sc-thead"></thead>
+              <tbody id="ent-sc-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Forecasts tab removed — content merged into Reference tab -->
@@ -318,7 +393,7 @@
         <button class="ref-sub-btn" data-ref-sub="implements">Implements</button>
         <button class="ref-sub-btn" data-ref-sub="suppliers">Suppliers</button>
         <button class="ref-sub-btn" data-ref-sub="unit-packs">Unit/Packs</button>
-        <button class="ref-sub-btn" data-ref-sub="labor">Labor &amp; Overhead</button>
+        <button class="ref-sub-btn role-hide-office" data-ref-sub="labor">Labor &amp; Overhead</button>
         <button class="ref-sub-btn" data-ref-sub="forecast">Forecast</button>
         <button class="ref-sub-btn" data-ref-sub="demand">Demand</button>
       </div>
@@ -488,7 +563,7 @@
       </div><!-- /ref-sub-unit-packs -->
 
       <!-- Labor Sub-section -->
-      <div id="ref-sub-labor" class="ref-sub-content">
+      <div id="ref-sub-labor" class="ref-sub-content role-hide-office">
       <h3>Labor &amp; Overhead Rates</h3>
       <p class="edit-hint">Double-click any cell to edit. Rates apply to all fields with the matching system code.</p>
       <div class="table-info"><span id="lo-count"></span></div>
@@ -617,10 +692,26 @@
 
       <!-- Bulk Deploy Panel (hidden until triggered) -->
       <div id="prog-bulk-panel" class="hidden" style="margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
-        <h3 id="prog-bulk-title" style="margin-bottom:0.5rem">Deploy Program to Fields</h3>
-        <p class="edit-hint">Select fields to receive this program's agronomic data. Existing agronomic data will be overwritten (name, acres, rent kept).</p>
-        <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.75rem">
-          <label style="font-size:0.85rem">Filter by Enterprise:</label>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+          <h3 id="prog-bulk-title" style="margin:0">Deploy Program to Fields</h3>
+          <button id="prog-bulk-cancel" class="btn-sm">&#215; Close</button>
+        </div>
+        <p class="edit-hint" style="margin-bottom:0.75rem">Choose what to push, then select the fields. <strong>Name, acres, and rent are never touched.</strong></p>
+
+        <!-- What to apply -->
+        <div style="background:var(--bg-raised);border:1px solid var(--border);border-radius:6px;padding:0.6rem 0.75rem;margin-bottom:0.75rem">
+          <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);margin-bottom:0.45rem">What to apply</div>
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            <label class="bulk-section-cb"><input type="checkbox" id="bsec-inputs" checked> <span>Inputs</span></label>
+            <label class="bulk-section-cb"><input type="checkbox" id="bsec-machinery" checked> <span>Machinery</span></label>
+            <label class="bulk-section-cb"><input type="checkbox" id="bsec-seed" checked> <span>Seed &amp; Varieties</span></label>
+            <label class="bulk-section-cb"><input type="checkbox" id="bsec-yield" checked> <span>Yield Target</span></label>
+            <label class="bulk-section-cb"><input type="checkbox" id="bsec-crop" checked> <span>Crop Info</span></label>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap">
+          <label style="font-size:0.85rem">Filter:</label>
           <select id="prog-bulk-enterprise" style="font-size:0.85rem"></select>
           <button id="prog-bulk-select-all" class="btn-sm" style="font-size:0.75rem">Select All</button>
           <button id="prog-bulk-select-none" class="btn-sm" style="font-size:0.75rem">Select None</button>
@@ -629,8 +720,95 @@
         <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
           <button id="prog-bulk-apply" class="btn-primary btn-sm">Apply to Selected</button>
           <button id="prog-bulk-linked" class="btn-sm" title="Push to all fields already linked to this program">Push to Linked</button>
-          <button id="prog-bulk-cancel" class="btn-sm">Cancel</button>
+          <button id="prog-bulk-cancel2" class="btn-sm">Cancel</button>
         </div>
+      </div>
+
+      <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--border)">
+      <h2>Machinery Programs</h2>
+      <p class="edit-hint">Reusable implement lists and pass counts. Apply to any field's Machinery section with one click — inputs, seed, and yield are unaffected.</p>
+      <div class="filters" style="margin-bottom:0.75rem">
+        <button id="mach-prog-add" class="btn-primary btn-sm">+ New Template</button>
+        <span id="mach-prog-count" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <div id="mach-prog-cards" class="mach-prog-cards"></div>
+
+      <!-- Machinery Push Panel (hidden until triggered) -->
+      <div id="mach-push-panel" class="hidden" style="margin-top:1rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+          <h3 id="mach-push-title" style="margin:0">Push Machinery to Fields</h3>
+          <button id="mach-push-cancel" class="btn-sm">&#215; Close</button>
+        </div>
+        <p class="edit-hint" style="margin-bottom:0.75rem">Select fields to receive this implement list. <strong>Only machinery is replaced</strong> — inputs, seed, yield, and rent are untouched.</p>
+        <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap">
+          <label style="font-size:0.85rem">Filter:</label>
+          <select id="mach-push-enterprise" style="font-size:0.85rem"></select>
+          <button id="mach-push-select-all" class="btn-sm" style="font-size:0.75rem">Select All</button>
+          <button id="mach-push-select-none" class="btn-sm" style="font-size:0.75rem">Select None</button>
+        </div>
+        <div id="mach-push-field-list" class="prog-bulk-field-list"></div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+          <button id="mach-push-apply" class="btn-primary btn-sm">Push Machinery to Selected</button>
+          <button id="mach-push-cancel2" class="btn-sm">Cancel</button>
+        </div>
+      </div>
+
+      <hr style="margin:1.5rem 0;border:none;border-top:1px solid var(--border)">
+      <h2>Quick Plan Config</h2>
+      <p class="edit-hint">Map (Crop + Variant + Tillage) to an input program and machinery program. The Quick Plan wizard uses these mappings to assign both programs to a batch of fields in one step.</p>
+      <div class="filters" style="margin-bottom:0.75rem">
+        <button id="qpc-add" class="btn-primary btn-sm">+ Add Combination</button>
+        <span id="qpc-count" style="color:var(--text-light);font-size:0.85rem"></span>
+      </div>
+      <!-- Add/Edit form -->
+      <div id="qpc-form-panel" class="hidden" style="margin-bottom:1rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem">
+        <h4 style="margin:0 0 0.75rem">New Quick Plan Combination</h4>
+        <div class="form-grid" style="margin-bottom:0.75rem">
+          <div>
+            <label class="field-label">Crop</label>
+            <input type="text" id="qpc-crop" class="inline-input" placeholder="e.g. Yellow Corn" list="qpc-crop-datalist" autocomplete="off">
+            <datalist id="qpc-crop-datalist"></datalist>
+          </div>
+          <div>
+            <label class="field-label">Variant <span style="color:var(--text-light);font-size:0.8rem">(leave blank if none)</span></label>
+            <input type="text" id="qpc-variant" class="inline-input" placeholder="e.g. With Resicore">
+          </div>
+          <div>
+            <label class="field-label">Tillage</label>
+            <select id="qpc-tillage" class="inline-input">
+              <option value="No-Till">No-Till</option>
+              <option value="Conv-Till">Conv-Till</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Input Program</label>
+            <select id="qpc-input-prog" class="inline-input">
+              <option value="">— none —</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">Machinery Program</label>
+            <select id="qpc-mach-prog" class="inline-input">
+              <option value="">— none —</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem">
+          <button id="qpc-save" class="btn-primary btn-sm">Save</button>
+          <button id="qpc-cancel" class="btn-sm">Cancel</button>
+        </div>
+      </div>
+      <!-- Table -->
+      <div class="table-wrap">
+        <table id="qpc-table">
+          <thead>
+            <tr>
+              <th>Crop</th><th>Variant</th><th>Tillage</th>
+              <th>Input Program</th><th>Machinery Program</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="qpc-tbody"></tbody>
+        </table>
       </div>
     </section>
 
@@ -652,14 +830,14 @@
 
       <!-- Hedging Strategy Assessment -->
       <div id="hedging-panel" class="hedging-panel">
-        <h3>Hedging Strategy Assessment</h3>
+        <h3 class="role-hide-office">Hedging Strategy Assessment</h3>
         <div class="hedging-tabs">
-          <button class="hedging-tab-btn active" data-htab="coverage">Contract Coverage</button>
-          <button class="hedging-tab-btn" data-htab="whatif">What-If Scenarios</button>
+          <button class="hedging-tab-btn active role-hide-office" data-htab="coverage">Contract Coverage</button>
+          <button class="hedging-tab-btn role-hide-office" data-htab="whatif">What-If Scenarios</button>
           <button class="hedging-tab-btn" data-htab="basis">Basis Comparison</button>
         </div>
 
-        <div id="htab-coverage" class="htab-content active">
+        <div id="htab-coverage" class="htab-content active role-hide-office">
           <div id="coverage-grid" class="coverage-grid"></div>
           <div class="table-wrap">
             <table id="coverage-detail-table">
@@ -677,7 +855,7 @@
           </div>
         </div>
 
-        <div id="htab-whatif" class="htab-content">
+        <div id="htab-whatif" class="htab-content role-hide-office">
           <div class="whatif-controls">
             <div class="form-group">
               <label>Crop</label>
@@ -784,7 +962,7 @@
           </label>
           <select id="map-color-by">
             <option value="enterprise">Color by Enterprise</option>
-            <option value="profit">Color by Profit</option>
+            <option value="profit" class="role-hide-office">Color by Profit</option>
             <option value="crop">Color by Crop</option>
             <option value="source">Color by Source</option>
           </select>
@@ -834,20 +1012,11 @@
             <li class="ed-nav-item" data-section="machinery">Machinery<span class="ed-nav-badge" id="badge-machinery"></span></li>
             <li class="ed-nav-item" data-section="seed">Seed<span class="ed-nav-badge" id="badge-seed"></span></li>
             <li class="ed-nav-item" data-section="yield">Yield &amp; Income</li>
-            <li class="ed-nav-item" data-section="aux">AUX Payments<span class="ed-nav-badge" id="badge-aux"></span></li>
+            <li class="ed-nav-item role-hide-office" data-section="aux">AUX Payments<span class="ed-nav-badge" id="badge-aux"></span></li>
             <li class="ed-nav-item" data-section="fieldops">FieldOps Data</li>
+            <li class="ed-nav-item role-hide-office" data-section="costdetail">Cost Detail</li>
           </ul>
 
-          <div class="ed-nav-program-bar">
-            <div class="ed-nav-program-label">Apply Program</div>
-            <select id="ed-apply-program" style="font-size:0.75rem;width:100%;margin-bottom:0.35rem">
-              <option value="">-- Select --</option>
-            </select>
-            <div style="display:flex;gap:0.3rem">
-              <button id="ed-apply-program-btn" class="btn-sm btn-primary" style="flex:1;font-size:0.7rem;padding:0.25rem 0.3rem">Apply</button>
-              <button id="ed-save-as-program" class="btn-sm" style="flex:1;font-size:0.7rem;padding:0.25rem 0.3rem" title="Save field as program template">Save</button>
-            </div>
-          </div>
         </nav>
 
         <!-- ── Content Panels ── -->
@@ -895,6 +1064,14 @@
                 </select>
               </div>
               <div class="form-group">
+                <label>Tillage</label>
+                <select id="ed-tillage">
+                  <option value="Till">Till</option>
+                  <option value="No-Till">No-Till</option>
+                  <option value="Strip-Till">Strip-Till</option>
+                </select>
+              </div>
+              <div class="form-group">
                 <label style="display:flex;align-items:baseline;gap:0.35rem;flex-wrap:wrap;">Field Acres <span style="font-size:0.65rem;color:#888;font-weight:normal;">(rent basis)</span> <button type="button" id="ed-sync-acres" class="btn-link" style="font-size:0.7rem;color:var(--primary);cursor:pointer;border:none;background:none;text-decoration:underline;" title="Pull acres &amp; rent from Farm Registry">Sync</button></label>
                 <input type="number" id="ed-acres" step="0.01" min="0">
                 <div id="ed-acres-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
@@ -909,14 +1086,25 @@
                 <input type="number" id="ed-rentPerAcre" step="0.01" min="0" readonly style="background:var(--bg-raised);cursor:not-allowed;opacity:0.7;">
                 <div id="ed-rent-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
               </div>
+              <div class="form-group" style="grid-column:1/-1">
+                <label>Field Notes <span style="font-size:0.65rem;color:#888;font-weight:normal;">(prints on crop plan report)</span></label>
+                <textarea id="ed-notes" rows="2" style="width:100%;resize:vertical;font-size:0.85rem;padding:0.35rem 0.5rem;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;font-family:inherit" placeholder="e.g. work the ends, watch for wet spots in NW corner…"></textarea>
+              </div>
             </div>
           </div>
 
           <!-- Input Products -->
           <div class="editor-section-panel" data-section="inputs">
             <div class="editor-section-body">
+              <div class="mach-tmpl-bar" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+                <select id="ed-apply-program" style="flex:1;font-size:0.78rem">
+                  <option value="">-- Load Agronomic Program --</option>
+                </select>
+                <button id="ed-apply-program-btn" class="btn-sm btn-primary" style="font-size:0.75rem;padding:0.25rem 0.5rem">Apply</button>
+                <button id="ed-save-as-program" class="btn-sm" style="font-size:0.75rem;padding:0.25rem 0.5rem" title="Save field as program template">Save as Program</button>
+              </div>
               <table id="ed-inputs-table" class="compact-table" style="width:100%">
-                <thead><tr><th>Product</th><th>Qty</th><th>Unit</th><th>Season</th><th>$/AC</th><th></th></tr></thead>
+                <thead><tr><th></th><th>Product</th><th>Qty</th><th>Unit</th><th>Season</th><th>$/AC</th><th></th></tr></thead>
                 <tbody id="ed-inputs-tbody"></tbody>
               </table>
               <button id="ed-add-input" class="btn-sm" style="margin-top:0.5rem">+ Add Input</button>
@@ -926,8 +1114,14 @@
           <!-- Machinery -->
           <div class="editor-section-panel" data-section="machinery">
             <div class="editor-section-body">
+              <div class="mach-tmpl-bar" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+                <select id="ed-mach-template" style="flex:1;font-size:0.78rem">
+                  <option value="">-- Load Machinery Template --</option>
+                </select>
+                <button id="ed-load-mach-template" class="btn-sm btn-primary" style="font-size:0.75rem;padding:0.25rem 0.5rem">Apply</button>
+              </div>
               <table id="ed-mach-table" class="compact-table" style="width:100%">
-                <thead><tr><th>Implement</th><th>Passes</th><th>$/AC</th><th>Mode</th><th></th></tr></thead>
+                <thead><tr><th></th><th>Implement</th><th>Passes</th><th>$/AC</th><th>Mode</th><th></th></tr></thead>
                 <tbody id="ed-mach-tbody"></tbody>
               </table>
               <button id="ed-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
@@ -993,7 +1187,7 @@
           </div>
 
           <!-- AUX Payments -->
-          <div class="editor-section-panel" data-section="aux">
+          <div class="editor-section-panel role-hide-office" data-section="aux">
             <div class="editor-section-body">
               <table id="ed-aux-table" class="compact-table" style="width:100%">
                 <thead><tr><th>Label</th><th>$/AC</th><th></th></tr></thead>
@@ -1013,6 +1207,13 @@
               <div id="ed-fieldops-applications"></div>
               <h4 style="font-size:0.8rem;color:var(--text-light);margin:0.75rem 0 0.5rem">Yield History</h4>
               <div id="ed-fieldops-yield-history"></div>
+            </div>
+          </div>
+
+          <!-- Cost Detail -->
+          <div class="editor-section-panel role-hide-office" data-section="costdetail">
+            <div class="editor-section-body">
+              <div id="ed-cost-detail-body"></div>
             </div>
           </div>
 
@@ -1262,6 +1463,44 @@
     </div>
   </div>
 
+  <!-- MACHINERY PROGRAM EDITOR OVERLAY -->
+  <div id="mach-prog-editor-overlay" class="overlay">
+    <div id="mach-prog-editor" class="editor-panel" style="max-width:560px">
+      <div class="editor-header">
+        <h2 id="mpe-title">New Machinery Program</h2>
+        <button id="mpe-close" class="btn-close">&times;</button>
+      </div>
+      <div class="editor-body">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Template Name</label>
+            <input type="text" id="mpe-name" placeholder="e.g. No-Till Soybeans">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Description (optional)</label>
+            <input type="text" id="mpe-description" placeholder="Brief notes...">
+          </div>
+        </div>
+        <div style="margin-top:1rem">
+          <label style="font-size:0.8rem;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:0.05em">Implements</label>
+          <table class="compact-table" style="width:100%;margin-top:0.4rem">
+            <thead><tr><th>Implement</th><th>Passes</th><th>$/AC</th><th></th></tr></thead>
+            <tbody id="mpe-mach-tbody"></tbody>
+          </table>
+          <button id="mpe-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
+        </div>
+        <div class="mpe-cost-total" id="mpe-cost-total" style="margin-top:0.75rem;font-family:var(--font-code);font-size:0.85rem;color:var(--text-light)"></div>
+      </div>
+      <div class="editor-footer" style="display:flex;justify-content:space-between">
+        <div style="display:flex;gap:0.5rem">
+          <button id="mpe-save" class="btn-primary">Save Template</button>
+          <button id="mpe-cancel" class="btn-sm">Cancel</button>
+        </div>
+        <button id="mpe-delete" class="btn-danger btn-sm" style="display:none">Delete</button>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="toast"></div>
 
   <!-- Autocomplete datalists (populated by app.js) -->
@@ -1311,18 +1550,18 @@
       document.currentScript.parentNode.insertBefore(s, document.currentScript.nextSibling);
     })();
   </script>
-  <script src="calc.js?v=20260401"></script>
+  <script src="calc.js?v=20260403h"></script>
   <script src="crop-colors.js"></script>
-  <script src="app.js?v=20260319"></script>
-  <script src="dashboard.js?v=20260401"></script>
-  <script src="enterprise.js?v=20260331b"></script>
-  <script src="field-editor.js?v=20260401"></script>
-  <script src="programs.js"></script>
+  <script src="app.js?v=20260403p"></script>
+  <script src="dashboard.js?v=20260403n"></script>
+  <script src="enterprise.js?v=20260406a"></script>
+  <script src="field-editor.js?v=20260406d"></script>
+  <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js"></script>
   <script src="seed-manager.js"></script>
-  <script src="inventory.js"></script>
+  <script src="inventory.js?v=20260406b"></script>
   <script src="demand-manager.js"></script>
-  <script src="reports.js"></script>
+  <script src="reports.js?v=20260406p"></script>
 
   <script src="sales.js?v=2"></script>
   <script src="hedging.js"></script>

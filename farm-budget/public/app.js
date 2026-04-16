@@ -2,6 +2,14 @@
 (function () {
   'use strict';
 
+  // --- Role-based access control ---
+  // Role is injected by the portal via ?role= URL param.
+  // Valid values: admin, agronomist, office, operator
+  // Defaults to 'admin' so direct access (no portal) remains fully functional.
+  var _role = new URLSearchParams(window.location.search).get('role') || 'admin';
+  window.APP_ROLE = _role;
+  document.documentElement.setAttribute('data-role', _role);
+
   // --- API Helper ---
   var B = window.__BASE || '';
   window.api = {
@@ -121,7 +129,9 @@
     buyers: [],
     suppliers: [],
     programs: [],
-    unitPacks: []
+    unitPacks: [],
+    machineryPrograms: [],
+    quickPlanConfig: []
   };
 
   // Full reference data load: 12 API calls.
@@ -140,7 +150,9 @@
       api.get('/api/buyers'),
       api.get('/api/suppliers'),
       api.get('/api/programs'),
-      api.get('/api/unit-packs')
+      api.get('/api/unit-packs'),
+      api.get('/api/machinery-programs'),
+      api.get('/api/quick-plan-config')
     ]).then(function (results) {
       window.refData.enterprises = results[0];
       window.refData.settings = results[1];
@@ -154,6 +166,8 @@
       window.refData.suppliers = results[9];
       window.refData.programs = results[10];
       window.refData.unitPacks = results[11] || [];
+      window.refData.machineryPrograms = results[12] || [];
+      window.refData.quickPlanConfig = results[13] || [];
 
       // Derive convenience lists client-side (saves 4 HTTP round-trips)
       deriveConvenienceLists();
@@ -255,7 +269,8 @@
         'seeds': 'seeds', 'crop-pricing': 'cropPricing',
         'crop-types': 'cropTypes', 'labor-overhead': 'laborOverhead',
         'buyers': 'buyers', 'suppliers': 'suppliers', 'programs': 'programs',
-        'unit-packs': 'unitPacks'
+        'unit-packs': 'unitPacks', 'machinery-programs': 'machineryPrograms',
+        'quick-plan-config': 'quickPlanConfig'
       };
       keyList.forEach(function (k, i) {
         var refKey = apiToRef[k];
@@ -445,6 +460,21 @@
       }
     });
   });
+
+  // --- Role: hide restricted tabs ---
+  // For operator role, remove Programs, Sales, and Map from the navigation entirely.
+  if (_role === 'operator') {
+    ['programs', 'sales', 'map'].forEach(function (tabName) {
+      var btn = document.querySelector('.nav-primary > .tab-btn[data-tab="' + tabName + '"]');
+      if (btn) btn.style.display = 'none';
+    });
+  }
+  // For office role, remove Programs (bulk program management is admin-only).
+  // Sales and Map remain accessible for contract entry and field geography.
+  if (_role === 'office') {
+    var btn = document.querySelector('.nav-primary > .tab-btn[data-tab="programs"]');
+    if (btn) btn.style.display = 'none';
+  }
 
   // --- Initial Load ---
   var restoredFromHash = restoreTab();
