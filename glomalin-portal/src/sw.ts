@@ -1,6 +1,6 @@
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
-import { Serwist } from "serwist";
+import { NetworkOnly, Serwist } from "serwist";
 
 // Declare Serwist globals injected at build time
 declare global {
@@ -21,7 +21,16 @@ const serwist = new Serwist({
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: defaultCache,
+  runtimeCaching: [
+    // Embed apps (farm-budget, grain-tickets, etc.) are deployed independently
+    // of the portal. Never cache their assets — always fetch from network so
+    // deploys take effect immediately without a 24-hour SW cache delay.
+    {
+      matcher: ({ url }: { url: URL }) => url.pathname.startsWith('/embed/'),
+      handler: new NetworkOnly(),
+    },
+    ...defaultCache,
+  ],
 });
 
 serwist.addEventListeners();
