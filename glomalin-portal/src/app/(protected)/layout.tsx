@@ -20,11 +20,16 @@ export default async function ProtectedLayout({
     redirect('/login')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('full_name, role')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { data: accessRows }] = await Promise.all([
+    supabase.from('profiles').select('full_name, role').eq('id', user.id).single(),
+    supabase.from('module_access').select('module, granted').eq('user_id', user.id),
+  ])
+
+  const role = profile?.role ?? 'viewer'
+  // Admins see all modules; everyone else sees only explicitly granted ones.
+  const grantedModules = role === 'admin'
+    ? null // null = show all
+    : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)
 
   return (
     <div className="min-h-screen bg-glomalin-bg">
@@ -32,8 +37,9 @@ export default async function ProtectedLayout({
         user={{
           email: user.email ?? '',
           fullName: profile?.full_name ?? null,
-          role: profile?.role ?? 'viewer',
+          role,
         }}
+        grantedModules={grantedModules}
       />
       <Suspense fallback={null}>
         <DeniedToast />
