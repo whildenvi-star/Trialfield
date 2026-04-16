@@ -10,6 +10,26 @@
   window.APP_ROLE = _role;
   document.documentElement.setAttribute('data-role', _role);
 
+  // --- Portal postMessage bridge ---
+  // Receives theme and text-scale changes from the Glomalin portal so the
+  // settings panel in the portal header also controls this embedded app.
+  window.addEventListener('message', function (e) {
+    if (!e.data || typeof e.data.type !== 'string') return;
+    if (e.data.type === 'glomalin-theme') {
+      if (e.data.theme === 'light') {
+        document.body.classList.add('light');
+      } else {
+        document.body.classList.remove('light');
+      }
+    }
+    if (e.data.type === 'glomalin-scale') {
+      var scale = parseFloat(e.data.scale);
+      if (!isNaN(scale)) {
+        document.documentElement.style.setProperty('--text-scale', String(scale));
+      }
+    }
+  });
+
   // --- API Helper ---
   var B = window.__BASE || '';
   window.api = {

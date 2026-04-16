@@ -12,6 +12,11 @@ function getCurrentTheme(): string {
   return localStorage.getItem('mru-theme') === 'light' ? 'light' : 'dark'
 }
 
+function getCurrentScale(): string {
+  if (typeof window === 'undefined') return '1'
+  return localStorage.getItem('mru-text-scale') ?? '1'
+}
+
 export function EmbedFrame({ src, title }: EmbedFrameProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -24,31 +29,38 @@ export function EmbedFrame({ src, title }: EmbedFrameProps) {
     )
   }
 
-  // Push current theme as soon as the iframe finishes loading
+  function sendScaleToIframe(scale: string) {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: 'glomalin-scale', scale },
+      '*'
+    )
+  }
+
+  // Push current theme + scale as soon as the iframe finishes loading
   function handleLoad() {
     setLoading(false)
     sendThemeToIframe(getCurrentTheme())
+    sendScaleToIframe(getCurrentScale())
   }
 
   useEffect(() => {
-    // Listen for storage events (portal settings-panel writes mru-theme)
-    function onStorage(e: StorageEvent) {
-      if (e.key === 'mru-theme') {
-        sendThemeToIframe(e.newValue === 'light' ? 'light' : 'dark')
-      }
-    }
-
     // Listen for custom theme-change event dispatched by settings-panel.js
     function onThemeChange() {
       sendThemeToIframe(getCurrentTheme())
     }
 
-    window.addEventListener('storage', onStorage)
+    // Listen for custom text-scale-change event dispatched by settings-panel.js
+    function onScaleChange(e: Event) {
+      const scale = (e as CustomEvent<{ scale: string }>).detail?.scale ?? getCurrentScale()
+      sendScaleToIframe(scale)
+    }
+
     window.addEventListener('theme-change', onThemeChange)
+    window.addEventListener('text-scale-change', onScaleChange)
 
     return () => {
-      window.removeEventListener('storage', onStorage)
       window.removeEventListener('theme-change', onThemeChange)
+      window.removeEventListener('text-scale-change', onScaleChange)
     }
   }, [])
 
