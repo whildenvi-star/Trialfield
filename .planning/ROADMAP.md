@@ -156,6 +156,7 @@
   - [ ] 68-03-PLAN.md — Insurance tab + Claims tab + redirect old routes + cross-tab nav
   - [ ] 68-04-PLAN.md — Overview dashboard tab (StatCards, risk flags, deadlines)
   - [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
+- [ ] Phase 69: Field Operations TC Log (0/0 plans)
 
 </details>
 
@@ -459,6 +460,7 @@ Plans:
 | 62. Portal Webhook Auth Fix | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
+| 69. Field Operations TC Log | v12.0 | 0/0 | Planned | — |
 
 ### Phase 68: Compliance Hub Redesign
 
@@ -476,3 +478,23 @@ Plans:
 - [ ] 68-03-PLAN.md — Insurance tab + Claims tab + redirect old routes + cross-tab nav
 - [ ] 68-04-PLAN.md — Overview dashboard tab (StatCards, risk flags, deadlines)
 - [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
+
+### Phase 69: Field Operations TC Log
+
+**Goal:** A portal page where all roles (office, admin, operator) can add, TC (Transaction Complete), and delete field operation records for machinery passes. Each TC captures: field, operation type, date, and who signed off. Writes to organic-cert's FieldOperation table for NOP 3-year audit history. Includes year selector for prior season review.
+
+**Milestone:** v12.0
+
+**Depends on**: Phase 46 (FieldOperation table and organic-cert write path must exist)
+
+**Requirements:** FTC-01, FTC-02, FTC-03, FTC-04
+
+**Success Criteria** (what must be TRUE):
+  1. Any role (office, admin, operator) can navigate to `/app/field-ops`, select a field, and see that field's operation records for the current crop year
+  2. A user can add a TC with field + operation type + date — it saves with their name as "TC'd by" and appears in organic-cert's FieldOperation table with `plannedSource: "field-ops-tc"`
+  3. The "TC'd by" override picker allows signing off on behalf of another user
+  4. A year selector lets users navigate to prior crop years for NOP 3-year history review
+  5. A user can delete a TC they created; admin can delete any TC
+
+**Plans:** 0 plans
+
