@@ -156,7 +156,7 @@
   - [ ] 68-03-PLAN.md — Insurance tab + Claims tab + redirect old routes + cross-tab nav
   - [ ] 68-04-PLAN.md — Overview dashboard tab (StatCards, risk flags, deadlines)
   - [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
-- [ ] Phase 69: Field Operations TC Log (0/0 plans)
+- [x] Phase 69: Field Operations TC Log (0/0 plans) (completed 2026-04-18)
 
 </details>
 
@@ -460,7 +460,7 @@ Plans:
 | 62. Portal Webhook Auth Fix | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
-| 69. Field Operations TC Log | 1/2 | In Progress|  | — |
+| 69. Field Operations TC Log | 2/2 | Complete   | 2026-04-18 | — |
 
 ### Phase 68: Compliance Hub Redesign
 
@@ -496,7 +496,7 @@ Plans:
   4. A year selector lets users navigate to prior crop years for NOP 3-year history review
   5. A user can delete a TC they created; admin can delete any TC
 
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 69-01-PLAN.md — Portal API routes for TC CRUD (GET/POST tcs, DELETE tc, GET operators)

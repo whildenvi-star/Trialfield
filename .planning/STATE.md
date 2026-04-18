@@ -211,6 +211,10 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 69-01]: noEnterprise:true for conventional fields in GET /tcs — not an error, field may not be organic-cert enrolled
 - [Phase 69-01]: Operators route omits cert_user_id IS NOT NULL filter — TC sign-off by office staff (Sandy) who may not have a cert account
 - [Phase 69-01]: SSR cookie auth (not Bearer token) for all /api/field-ops/ routes — these are portal routes, not mobile endpoints
+- [Phase 69-02]: GET /tcs response includes fieldEnterpriseId — needed by client for delete URL construction (Rule 1 auto-fix)
+- [Phase 69-02]: Delete ownership heuristic uses name-match for non-admins — cert does not store supabase IDs
+- [Phase 69-02]: Server-side refresh after TC add — avoids stale state when cert assigns real operation IDs
+- [Phase 69-02]: field-ops module inserted after compliance, before marketing in MODULES array
 
 ### Pending Todos
 
@@ -222,7 +226,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-04-17
-Stopped at: Completed 69-01-PLAN.md — Phase 69 Plan 01 complete. Three /api/field-ops/ routes: tcs GET+POST, tcs/[id] DELETE, operators GET.
+Last session: 2026-04-18
+Stopped at: Checkpoint Task 3 of 69-02-PLAN.md — Tasks 1 & 2 complete (page.tsx, field-ops-client.tsx, MODULES entry). Awaiting human verify at /app/field-ops.
 Resume file: —
-Next action: Phase 69 Plan 02 — UI for TC Log (/app/field-ops page).
+Next action: After human verify approval, Phase 69 complete.
