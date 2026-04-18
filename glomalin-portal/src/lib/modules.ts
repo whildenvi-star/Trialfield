@@ -45,7 +45,7 @@ export const MODULES: Module[] = [
   {
     id: 'maps',
     label: 'Field Map',
-    sublabel: 'Farm Field Panopticon',
+    sublabel: 'Polygon Map & Field Detail',
     route: '/app/maps',
     status: 'live',
     type: 'native',

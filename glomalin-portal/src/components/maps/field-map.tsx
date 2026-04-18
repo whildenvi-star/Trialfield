@@ -19,7 +19,7 @@ import { MapLegend } from './map-legend'
 
 // MapLibre GL JS types only — the actual library is loaded dynamically inside
 // useEffect to avoid SSR issues (MapLibre requires the browser `window` global).
-import type { Map, Popup, GeoJSONSource, ExpressionSpecification } from 'maplibre-gl'
+import type { Map, Popup, ExpressionSpecification } from 'maplibre-gl'
 
 interface GeoJSONGeometry {
   type: string
