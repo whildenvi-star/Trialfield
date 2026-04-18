@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 70: Interactive Field Map — IN PROGRESS (Plan 01 of 5 complete).
+**Current focus:** Phase 70: Interactive Field Map — IN PROGRESS (Plan 02 of 5 complete).
 
 ## Current Position
 
 Phase: 70 of 70 (Interactive Field Map) — IN PROGRESS
-Plan: 1 of 5 complete
-Status: Phase 70 Plan 01 complete — Supabase migration (006-field-boundaries.sql) and crop color config (src/lib/map-config.ts) created. Apply migration manually with: cd glomalin-portal && npx supabase db push
-Last activity: 2026-04-18 — Phase 70 Plan 01 complete. Schema foundation and MapLibre config in place.
+Plan: 2 of 5 complete
+Status: Phase 70 Plan 02 complete — Three map API routes created: GET /api/maps/boundaries (FeatureCollection), GET+POST /api/maps/center, POST /api/maps/import (admin-only shapefile import with full-replace semantics using shpjs).
+Last activity: 2026-04-18 — Phase 70 Plan 02 complete. Map API routes ready for MapLibre UI (Plan 03).
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 70 [██░░░░░░░░] IN PROGRESS
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 70 [████░░░░░░] IN PROGRESS
 
 ## Performance Metrics
 
@@ -219,6 +219,11 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 70-01]: Migration numbered 006 — 005 was already taken by add-registry-crop-id.sql
 - [Phase 70-01]: getSatelliteStyleUrl() uses MapTiler Cloud (NEXT_PUBLIC_MAPTILER_KEY) with MapLibre demo tiles fallback — no Mapbox token required
 - [Phase 70-01]: field_boundaries RLS: authenticated SELECT, admin-only INSERT/UPDATE/DELETE; import API route uses service-role key to bypass RLS
+- [Phase 70-02]: shpjs ESM import works in Next.js server routes — CJS dist bundle uses browser self global (fails in bare Node.js require), ESM path uses globalThis (works fine)
+- [Phase 70-02]: PGRST116 (row not found) on farm_map_config is silently treated as { center: null } — expected state before import runs
+- [Phase 70-02]: DELETE .neq('id', '00000000...') is the Supabase pattern for full-table delete — requires at least one filter, uuid sentinel covers all real rows
+- [Phase 70-02]: SMS shapefile property key fallback order: Name → name → FIELD_NAME → field_name — SMS exports vary by version
+- [Phase 70-02]: Service role client used for DELETE+INSERT to bypass RLS on import — admin-authenticated at application layer
 
 ### Pending Todos
 
@@ -231,6 +236,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 70-01-PLAN.md — Schema foundation and crop color config for Interactive Field Map. Next: Plan 02 (shapefile import API).
+Stopped at: Completed 70-02-PLAN.md — Map API routes (boundaries, center, import) for Interactive Field Map. Next: Plan 03 (MapLibre UI map page).
 Resume file: —
-Next action: Execute 70-02-PLAN.md (shapefile import API route + admin settings page).
+Next action: Execute 70-03-PLAN.md (MapLibre map page + field overlay + legend).
