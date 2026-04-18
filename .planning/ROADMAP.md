@@ -462,7 +462,7 @@ Plans:
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
 | 69. Field Operations TC Log | 2/2 | Complete    | 2026-04-18 | — |
-| 70. Interactive Field Map | v12.0 | 0/5 | Planned | — |
+| 70. Interactive Field Map | 1/5 | In Progress|  | — |
 
 ### Phase 68: Compliance Hub Redesign
 
@@ -521,7 +521,7 @@ Plans:
 
 **Requirements:** MAP-01, MAP-02, MAP-03, MAP-04, MAP-05
 
-**Plans:** 5 plans
+**Plans:** 1/5 plans executed
 
 Plans:
 - [ ] 70-01-PLAN.md — Supabase schema (field_boundaries + farm_map_config) + crop color config file

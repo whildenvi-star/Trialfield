@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 69: Field Operations TC Log — COMPLETE. Platform is feature-complete per current roadmap.
+**Current focus:** Phase 70: Interactive Field Map — IN PROGRESS (Plan 01 of 5 complete).
 
 ## Current Position
 
-Phase: 69 of 69 (Field Operations TC Log) — COMPLETE
-Plan: 2 of 2 complete
-Status: Phase 69 complete — Field Ops TC Log UI live at portal.whughesfarms.com/app/field-ops. Split-panel workspace with field picker, year selector, inline Add TC form, ownership-guarded delete. All 4 requirements (FTC-01..04) met.
-Last activity: 2026-04-18 — Phase 69 Plan 02 complete. UI deployed to production, all 11 human-verify steps passed.
+Phase: 70 of 70 (Interactive Field Map) — IN PROGRESS
+Plan: 1 of 5 complete
+Status: Phase 70 Plan 01 complete — Supabase migration (006-field-boundaries.sql) and crop color config (src/lib/map-config.ts) created. Apply migration manually with: cd glomalin-portal && npx supabase db push
+Last activity: 2026-04-18 — Phase 70 Plan 01 complete. Schema foundation and MapLibre config in place.
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 69 [██████████] COMPLETE
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 70 [██░░░░░░░░] IN PROGRESS
 
 ## Performance Metrics
 
@@ -80,6 +80,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 68 P02 | 80 | 2 tasks | 4 files |
 | Phase 68 P04 | 2 | 2 tasks | 2 files |
 | Phase 68 P05 | 7 | 2 tasks | 8 files |
+| Phase 70 P01 | 62 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -215,6 +216,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 69-02]: Delete ownership heuristic uses name-match for non-admins — cert does not store supabase IDs
 - [Phase 69-02]: Server-side refresh after TC add — avoids stale state when cert assigns real operation IDs
 - [Phase 69-02]: field-ops module inserted after compliance, before marketing in MODULES array
+- [Phase 70-01]: Migration numbered 006 — 005 was already taken by add-registry-crop-id.sql
+- [Phase 70-01]: getSatelliteStyleUrl() uses MapTiler Cloud (NEXT_PUBLIC_MAPTILER_KEY) with MapLibre demo tiles fallback — no Mapbox token required
+- [Phase 70-01]: field_boundaries RLS: authenticated SELECT, admin-only INSERT/UPDATE/DELETE; import API route uses service-role key to bypass RLS
 
 ### Pending Todos
 
@@ -227,6 +231,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Phase 69 Plan 02 complete — Field Ops TC Log UI deployed. Human verify approved. Platform feature-complete.
+Stopped at: Completed 70-01-PLAN.md — Schema foundation and crop color config for Interactive Field Map. Next: Plan 02 (shapefile import API).
 Resume file: —
-Next action: No immediate next action — all 69 phases complete.
+Next action: Execute 70-02-PLAN.md (shapefile import API route + admin settings page).
