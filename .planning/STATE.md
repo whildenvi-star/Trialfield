@@ -81,6 +81,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 68 P04 | 2 | 2 tasks | 2 files |
 | Phase 68 P05 | 7 | 2 tasks | 8 files |
 | Phase 70 P01 | 62 | 2 tasks | 2 files |
+| Phase 70 P03 | 25 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -227,6 +228,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 70-04]: BoundaryImport embedded in /admin page (not a standalone route) — per CONTEXT.md admin settings flow
 - [Phase 70-04]: react-dropzone accept filter { 'application/zip': ['.zip'] } — .geojson and .kml explicitly excluded
 - [Phase 70-04]: Summary heading "Previous Boundaries Replaced" communicates full-replace destructive semantics clearly
+- [Phase 70-03]: top-14 offset for map below h-14 sticky top bar (56px), not top-[48px] as plan specified
+- [Phase 70-03]: boundaries route merges crop+organic+reportingAcres server-side via Promise.allSettled — no separate fields-meta route
+- [Phase 70-03]: MapLibre CSS loaded with dynamic import + @ts-expect-error inside useEffect — avoids Next.js SSR CSS import TS error
 
 ### Pending Todos
 
