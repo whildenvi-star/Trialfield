@@ -19,12 +19,14 @@
     "@serwist/next": "^9.5.7",
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@types/shpjs": "^3.4.7",
     "@xyflow/react": "^12.10.1",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
     "react-dropzone": "^15.0.0",
-    "serwist": "^9.5.7"
+    "serwist": "^9.5.7",
+    "shpjs": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^20",
