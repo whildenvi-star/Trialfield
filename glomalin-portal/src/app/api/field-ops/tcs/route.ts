@@ -137,7 +137,7 @@ export async function GET(request: Request) {
       createdAt: op.createdAt ?? null,
     }))
 
-  return NextResponse.json({ tcs, year, fieldId })
+  return NextResponse.json({ tcs, year, fieldId, fieldEnterpriseId: certFieldEnterpriseId })
 }
 
 /**
