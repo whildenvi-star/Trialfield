@@ -460,7 +460,7 @@ Plans:
 | 62. Portal Webhook Auth Fix | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
-| 69. Field Operations TC Log | 2/2 | Complete   | 2026-04-18 | — |
+| 69. Field Operations TC Log | 2/2 | Complete    | 2026-04-18 | — |
 
 ### Phase 68: Compliance Hub Redesign
 
