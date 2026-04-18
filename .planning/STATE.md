@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 70: Interactive Field Map — IN PROGRESS (Plan 02 of 5 complete).
+**Current focus:** Phase 70: Interactive Field Map — IN PROGRESS (Plan 04 of 5 complete).
 
 ## Current Position
 
 Phase: 70 of 70 (Interactive Field Map) — IN PROGRESS
-Plan: 2 of 5 complete
-Status: Phase 70 Plan 02 complete — Three map API routes created: GET /api/maps/boundaries (FeatureCollection), GET+POST /api/maps/center, POST /api/maps/import (admin-only shapefile import with full-replace semantics using shpjs).
-Last activity: 2026-04-18 — Phase 70 Plan 02 complete. Map API routes ready for MapLibre UI (Plan 03).
+Plan: 4 of 5 complete
+Status: Phase 70 Plan 04 complete — BoundaryImport client component with react-dropzone (.zip only) embedded in /admin page as Field Boundaries section; upload summary shows matched/unmatched/no-geometry counts with full-replace confirmation.
+Last activity: 2026-04-18 — Phase 70 Plan 04 complete. Admin boundary import UI ready. Next: Plan 05 (final integration/polish).
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 70 [████░░░░░░] IN PROGRESS
 
@@ -224,6 +224,9 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 70-02]: DELETE .neq('id', '00000000...') is the Supabase pattern for full-table delete — requires at least one filter, uuid sentinel covers all real rows
 - [Phase 70-02]: SMS shapefile property key fallback order: Name → name → FIELD_NAME → field_name — SMS exports vary by version
 - [Phase 70-02]: Service role client used for DELETE+INSERT to bypass RLS on import — admin-authenticated at application layer
+- [Phase 70-04]: BoundaryImport embedded in /admin page (not a standalone route) — per CONTEXT.md admin settings flow
+- [Phase 70-04]: react-dropzone accept filter { 'application/zip': ['.zip'] } — .geojson and .kml explicitly excluded
+- [Phase 70-04]: Summary heading "Previous Boundaries Replaced" communicates full-replace destructive semantics clearly
 
 ### Pending Todos
 
@@ -236,6 +239,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-18
-Stopped at: Completed 70-02-PLAN.md — Map API routes (boundaries, center, import) for Interactive Field Map. Next: Plan 03 (MapLibre UI map page).
+Stopped at: Completed 70-04-PLAN.md — Admin boundary import UI (BoundaryImport component + /admin Field Boundaries section). Next: Plan 05 (final integration/polish).
 Resume file: —
-Next action: Execute 70-03-PLAN.md (MapLibre map page + field overlay + legend).
+Next action: Execute 70-05-PLAN.md.
