@@ -460,7 +460,7 @@ Plans:
 | 62. Portal Webhook Auth Fix | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
-| 69. Field Operations TC Log | v12.0 | 0/0 | Planned | — |
+| 69. Field Operations TC Log | 1/2 | In Progress|  | — |
 
 ### Phase 68: Compliance Hub Redesign
 
@@ -496,7 +496,7 @@ Plans:
   4. A year selector lets users navigate to prior crop years for NOP 3-year history review
   5. A user can delete a TC they created; admin can delete any TC
 
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
 - [ ] 69-01-PLAN.md — Portal API routes for TC CRUD (GET/POST tcs, DELETE tc, GET operators)

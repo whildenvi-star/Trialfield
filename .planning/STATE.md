@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 68: Compliance Hub Redesign — unified FSA/Insurance/Claims module
+**Current focus:** Phase 69: Field Operations TC Log — portal API + UI for TC record management
 
 ## Current Position
 
-Phase: 68 of 68 (Compliance Hub Redesign) — COMPLETE
-Plan: 5 of 5 complete
-Status: Phase 68 COMPLETE — All 5 tabs live on VPS. CalendarTab with 90-day deadline list. Single "Compliance" nav entry. Dashboard action-item links point to /app/compliance?tab=...
-Last activity: 2026-04-04 — Phase 68 Plan 05 complete. CalendarTab wired (color-coded 90-day deadline list), MODULES consolidated to single compliance entry, dashboard links migrated to /app/compliance?tab=..., ESLint any errors fixed in claims-tab + overview-tab, deployed to VPS.
+Phase: 69 of 69 (Field Operations TC Log) — IN PROGRESS
+Plan: 1 of 2 complete
+Status: Phase 69 Plan 01 complete — Three /api/field-ops/ routes built: GET+POST /tcs, DELETE /tcs/[id], GET /operators. All proxy to organic-cert with plannedSource="field-ops-tc". Zero TypeScript errors.
+Last activity: 2026-04-17 — Phase 69 Plan 01 complete. API layer for TC log done. Three routes: list/create TCs, delete TC (with ownership check), list operators.
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 69 [█████░░░░░] IN PROGRESS
 
 ## Performance Metrics
 
@@ -207,6 +207,10 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 68-04]: Unlinked-policies risk flag omitted — InsurancePolicy has no CLU FK field, every policy would falsely appear unlinked
 - [Phase 68-05]: CalendarTab uses ClaimDeadline interface (not Claim) — minimal shape needed for calendar rendering, avoids tight coupling
 - [Phase 68-05]: MODULE_SOURCES retains fsa-578/insurance/claims keys — route.ts uses them for label/badge lookups on group data even after nav consolidation
+- [Phase 69-01]: FULL_OP_TYPE_MAP spreads OP_TYPE_MAP from cert-bridge locally — cert-bridge.ts unchanged; No-Till and Hauling added only in tcs/route.ts scope
+- [Phase 69-01]: noEnterprise:true for conventional fields in GET /tcs — not an error, field may not be organic-cert enrolled
+- [Phase 69-01]: Operators route omits cert_user_id IS NOT NULL filter — TC sign-off by office staff (Sandy) who may not have a cert account
+- [Phase 69-01]: SSR cookie auth (not Bearer token) for all /api/field-ops/ routes — these are portal routes, not mobile endpoints
 
 ### Pending Todos
 
@@ -218,7 +222,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-04-04
-Stopped at: Completed 68-05-PLAN.md — Phase 68 COMPLETE. CalendarTab, MODULES consolidation, dashboard links, VPS deploy.
+Last session: 2026-04-17
+Stopped at: Completed 69-01-PLAN.md — Phase 69 Plan 01 complete. Three /api/field-ops/ routes: tcs GET+POST, tcs/[id] DELETE, operators GET.
 Resume file: —
-Next action: Phase 68 complete. All 5 compliance hub tabs live on portal.whughesfarms.com.
+Next action: Phase 69 Plan 02 — UI for TC Log (/app/field-ops page).
