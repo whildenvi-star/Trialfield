@@ -496,5 +496,9 @@ Plans:
   4. A year selector lets users navigate to prior crop years for NOP 3-year history review
   5. A user can delete a TC they created; admin can delete any TC
 
-**Plans:** 0 plans
+**Plans:** 2 plans
+
+Plans:
+- [ ] 69-01-PLAN.md — Portal API routes for TC CRUD (GET/POST tcs, DELETE tc, GET operators)
+- [ ] 69-02-PLAN.md — Field Ops TC Log UI (split-panel, add form, year selector, delete) + MODULES nav entry
 
