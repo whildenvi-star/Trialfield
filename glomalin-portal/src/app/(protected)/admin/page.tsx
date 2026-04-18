@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { MODULES } from '@/lib/modules'
+import { BoundaryImport } from '@/components/maps/boundary-import'
 
 interface UserRow {
   id: string
@@ -18,6 +19,13 @@ interface SavingCell {
 }
 
 const ROLES = ['admin', 'agronomist', 'operator', 'viewer'] as const
+
+const ROLE_LABELS: Record<string, string> = {
+  admin: 'Admin',
+  agronomist: 'Agronomist',
+  operator: 'Operator',
+  viewer: 'Office',
+}
 
 function formatLastSignIn(dateStr: string | null): string {
   if (!dateStr) return 'Never'
@@ -220,7 +228,7 @@ export default function AdminPage() {
           >
             {ROLES.map((r) => (
               <option key={r} value={r}>
-                {r}
+                {ROLE_LABELS[r] ?? r}
               </option>
             ))}
           </select>
@@ -431,6 +439,16 @@ export default function AdminPage() {
           </table>
         </div>
       )}
+
+      {/* Field Boundaries — admin import */}
+      <section className="mt-10">
+        <h2 className="font-mono text-base text-[#C8860A] mb-1">Field Boundaries</h2>
+        <p className="text-[#6a5a4a] text-sm mb-6">
+          Upload a shapefile .zip export from SMS to load or replace field boundary polygons.
+          Re-importing replaces all boundaries entirely — SMS is the source of truth.
+        </p>
+        <BoundaryImport />
+      </section>
     </div>
   )
 }
