@@ -157,6 +157,7 @@
   - [ ] 68-04-PLAN.md — Overview dashboard tab (StatCards, risk flags, deadlines)
   - [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
 - [x] Phase 69: Field Operations TC Log (0/0 plans) (completed 2026-04-18)
+- [ ] Phase 70: Interactive Field Map (0/0 plans)
 
 </details>
 
@@ -461,6 +462,7 @@ Plans:
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
 | 69. Field Operations TC Log | 2/2 | Complete    | 2026-04-18 | — |
+| 70. Interactive Field Map | v12.0 | 0/0 | Planned | — |
 
 ### Phase 68: Compliance Hub Redesign
 
@@ -501,4 +503,19 @@ Plans:
 Plans:
 - [ ] 69-01-PLAN.md — Portal API routes for TC CRUD (GET/POST tcs, DELETE tc, GET operators)
 - [ ] 69-02-PLAN.md — Field Ops TC Log UI (split-panel, add form, year selector, delete) + MODULES nav entry
+
+### Phase 70: Interactive Field Map
+
+**Goal:** A `/app/maps` page in the glomalin portal that renders all farm fields as interactive polygon overlays on a 2D basemap, color-coded by crop and organic certification status. Field boundaries imported from SMS shapefile export (stored as GeoJSON in Supabase). Clicking a field opens a slide-in detail panel showing current crop, organic status, and acreage. Foundation phase for the long-term field panopticon vision.
+
+**Milestone:** v12.0
+
+**Depends on**: Phase 49 (Canonical Field IDs), Phase 50 (Canonical Crop Registry)
+
+**Success Criteria** (what must be TRUE):
+  1. `/app/maps` loads and renders all 56 farm fields as colored polygons on an interactive basemap
+  2. Fields are color-coded by crop (distinct color per crop type) with organic fields visually distinct (e.g., dashed border or green tint)
+  3. Clicking a field opens a detail panel: field name, current crop, organic status, reporting acres
+  4. Field boundary GeoJSON is stored in Supabase and loaded via the portal API (not hardcoded)
+  5. An admin-only import flow accepts GeoJSON/KML exported from SMS to load or update field boundaries
 
