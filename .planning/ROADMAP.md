@@ -462,7 +462,7 @@ Plans:
 | 63. Crop Autocomplete Server Proxy | v11.0 | 1/1 | Complete | 2026-03-30 |
 | 68. Compliance Hub Redesign | 5/5 | Complete    | 2026-04-04 | — |
 | 69. Field Operations TC Log | 2/2 | Complete    | 2026-04-18 | — |
-| 70. Interactive Field Map | v12.0 | 0/0 | Planned | — |
+| 70. Interactive Field Map | v12.0 | 0/5 | Planned | — |
 
 ### Phase 68: Compliance Hub Redesign
 
@@ -518,4 +518,15 @@ Plans:
   3. Clicking a field opens a detail panel: field name, current crop, organic status, reporting acres
   4. Field boundary GeoJSON is stored in Supabase and loaded via the portal API (not hardcoded)
   5. An admin-only import flow accepts GeoJSON/KML exported from SMS to load or update field boundaries
+
+**Requirements:** MAP-01, MAP-02, MAP-03, MAP-04, MAP-05
+
+**Plans:** 5 plans
+
+Plans:
+- [ ] 70-01-PLAN.md — Supabase schema (field_boundaries + farm_map_config) + crop color config file
+- [ ] 70-02-PLAN.md — Portal API routes: GET boundaries, POST import (admin), GET/POST center
+- [ ] 70-03-PLAN.md — Mapbox GL JS map page + FieldMap component + FieldDetailPanel with Open-Meteo GDD
+- [ ] 70-04-PLAN.md — Admin import UI (drag-drop GeoJSON/KML, field matching, summary report)
+- [ ] 70-05-PLAN.md — MODULES nav entry + deploy + human verify checkpoint
 
