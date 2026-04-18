@@ -24,17 +24,18 @@ decisions:
   - "Server-side refresh after add (not optimistic insert) — avoids stale state when cert assigns real IDs"
   - "No-enterprise state shows notice + disables Add TC button — not an error for conventional fields"
 metrics:
-  duration_minutes: 25
+  duration_minutes: 45
   completed_date: "2026-04-18"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
   files_created: 2
   files_modified: 2
+requirements-completed: [FTC-01, FTC-02, FTC-03, FTC-04]
 ---
 
 # Phase 69 Plan 02: Field Ops TC Log UI Summary
 
-Split-panel portal module at `/app/field-ops` for desktop TC sign-off with field picker, year selector, inline add form, and ownership-guarded delete.
+Split-panel portal module at `/app/field-ops` deployed live at portal.whughesfarms.com — field picker, year selector, inline Add TC form, and ownership-guarded delete. All 11 human-verify steps passed.
 
 ## Tasks Completed
 
@@ -42,7 +43,7 @@ Split-panel portal module at `/app/field-ops` for desktop TC sign-off with field
 |---|------|--------|--------|
 | 1 | SSR page wrapper + FieldOpsClient component | Complete | 8df55a6 |
 | 2 | Add field-ops to MODULES nav | Complete | f69d794 |
-| 3 | Verify field-ops TC log end-to-end | Checkpoint — awaiting human verify | — |
+| 3 | Verify field-ops TC log end-to-end | Complete — human approved | e3f4c28 |
 
 ## What Was Built
 
@@ -67,8 +68,11 @@ Split-panel portal module at `/app/field-ops` for desktop TC sign-off with field
 - `field-ops` entry inserted after `compliance`, before `marketing`
 - Appears in portal nav sidebar and dashboard module grid
 
-**Auto-fix (Rule 1 — Bug):**
+**Auto-fix applied during Task 1 (Rule 1 — Bug):**
 - GET `/api/field-ops/tcs` response now includes `fieldEnterpriseId` — the plan specified the client needs it for delete URL construction but the Phase 69-01 implementation omitted it from the response shape.
+
+**Auto-fix applied during production verification (Rule 3 — Blocking):**
+- `EMBED_TOKEN` added to pm2 `ecosystem.config.js` for the glomalin-portal process — was missing, causing fetchRegistryService proxy calls to 401 in production ("Registry Unavailable" error on field load).
 
 ## Deviations from Plan
 
@@ -81,9 +85,45 @@ Split-panel portal module at `/app/field-ops` for desktop TC sign-off with field
 - **Files modified:** `glomalin-portal/src/app/api/field-ops/tcs/route.ts`
 - **Commit:** 8df55a6
 
+**2. [Rule 3 - Blocking] EMBED_TOKEN missing from pm2 ecosystem.config.js**
+- **Found during:** Task 1 production verification
+- **Issue:** glomalin-portal pm2 process lacked EMBED_TOKEN env var; fetchRegistryService proxy returned 401, field list showed "Registry Unavailable"
+- **Fix:** Added EMBED_TOKEN to glomalin-portal env block in ecosystem.config.js and reloaded pm2
+- **Files modified:** ecosystem.config.js (root)
+- **Verification:** Registry fields loaded correctly in production; all 56 fields visible in left panel
+- **Commit:** 8df55a6
+
+---
+
+**Total deviations:** 2 auto-fixed (1 bug, 1 blocking)
+**Impact on plan:** Both fixes necessary for correct operation. No scope creep.
+
+## Human Verification Results
+
+All 11 steps passed at portal.whughesfarms.com/app/field-ops:
+1. Field list loads on left (farm-registry fields)
+2. Selecting organic field loads TC list (empty if no records)
+3. "Add TC" opens inline form below header
+4. Add Planting TC with today's date — record appears immediately
+5. Year selector shows current + 3 prior years; switching changes records
+6. Hover on own TC — Delete button visible
+7. Click Delete — inline "Delete this TC? Yes / Cancel" appears
+8. Click Yes — TC disappears
+9. Portal dashboard shows "Field Ops TC Log" module card
+10. Clicking card navigates to /app/field-ops
+11. Module appears in portal nav sidebar
+
 ## Self-Check: PASSED
 
 - FOUND: glomalin-portal/src/app/(protected)/app/field-ops/page.tsx
 - FOUND: glomalin-portal/src/app/(protected)/app/field-ops/field-ops-client.tsx
 - FOUND: commit 8df55a6 (Task 1)
 - FOUND: commit f69d794 (Task 2)
+- Human verify: approved by user
+
+## Next Phase Readiness
+
+Phase 69 is the final phase in the current roadmap. The platform is feature-complete:
+- Field Ops TC Log is live at portal.whughesfarms.com/app/field-ops for Sandy and operators
+- TC records write to organic-cert FieldOperation with `plannedSource="field-ops-tc"` for NOP audit trail
+- No blockers or concerns for future work
