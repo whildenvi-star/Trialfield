@@ -21,6 +21,7 @@
     "@supabase/supabase-js": "^2.98.0",
     "@types/shpjs": "^3.4.7",
     "@xyflow/react": "^12.10.1",
+    "maplibre-gl": "^5.23.0",
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",

@@ -43,6 +43,14 @@ export function getEmbedUrl(mod: Module): string | null {
 
 export const MODULES: Module[] = [
   {
+    id: 'maps',
+    label: 'Field Map',
+    sublabel: 'Farm Field Panopticon',
+    route: '/app/maps',
+    status: 'live',
+    type: 'native',
+  },
+  {
     id: 'compliance',
     label: 'Compliance',
     sublabel: 'FSA · Insurance · Claims',
