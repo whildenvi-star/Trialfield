@@ -6,65 +6,71 @@
 <domain>
 ## Phase Boundary
 
-A `/app/maps` page in the Glomalin Portal that renders all 56 farm fields as interactive polygon overlays on a 2D basemap, color-coded by crop and organic certification status. Field boundaries stored as GeoJSON in Supabase and loaded via portal API. Clicking a field opens a slide-in detail panel. Admin-only GeoJSON/KML import flow for loading/updating boundaries. Foundation phase for the field panopticon vision — editing, yield history, and advanced analytics are separate phases.
+A `/app/maps` page in the glomalin portal that renders all 56 farm fields as interactive polygon overlays on a satellite imagery basemap, color-coded by crop and organic certification status. Field boundaries imported from SMS shapefile export (stored as GeoJSON in Supabase). Clicking a field opens a slide-in detail panel. Includes an admin-only shapefile import flow in settings.
+
+This is a read-only visualization phase. Editing field data, crop plans, and deeper drill-downs are separate phases.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Map Library & Basemap
-- **Library:** Mapbox GL JS (WebGL-powered, standard for ag/precision farming UIs)
-- **Default basemap:** Satellite imagery
-- **Layer switcher:** Satellite ↔ Hybrid (satellite + road labels) toggle control visible on map
-- **Initial position:** Fixed center derived from GeoJSON boundary centroids at import time — stored and reused as the default view center. Not auto-fit on every load.
+### Field detail panel
+- Slide-in from the right — panel overlays the map, map stays visible and interactive
+- Content: crop name, organic certification status, reporting acres — nothing else (keep it tight)
+- One action link at the bottom: "View Field Activity Timeline" (links to field's timeline page)
+- When no field is selected: empty — full map takes the entire viewport, no sidebar
 
-### Field Visual Language
-- **Crop color scheme:** Fixed palette — planner creates a semantic default palette (e.g., corn = yellow, soybeans = green, winter wheat = amber, rye = purple, oats = tan) stored as an editable config file. User tunes colors after seeing the initial implementation.
-- **Organic field indicator:** Dashed/dotted polygon border — overlaid on top of crop fill color, visible at all zoom levels
-- **Unassigned fields (no crop):** Neutral gray fill — clearly in-progress without visual noise
-- **Hover state:** Polygon brightens/lightens on hover + small tooltip showing field name only. Tooltip signals the field is clickable.
+### Color coding & legend
+- Primary color axis: crop type — each crop gets a distinct color (corn, soybeans, rye, oats, wheat, etc.)
+- Organic certification indicator: dashed green border on organic fields, layered on top of crop color
+- Fallow/uncropped fields: light gray fill, no border
+- Legend: bottom-left corner of the map, compact, always visible
 
-### Detail Panel
-- **Position:** Slides in from the right side — keeps clicked field visible on left
-- **Behavior:** Read-only display only — no editing in this phase
-- **Content:**
-  - Field name
-  - Current crop
-  - Organic status (certified / conventional)
-  - Reporting acres
-  - 7-day GDD accumulation (Growing Degree Days) fetched from Open-Meteo API using that field's polygon centroid coordinates — fetched on panel open, not pre-loaded
-- **Dismiss:** Click outside panel or X button (Claude's discretion on exact behavior)
+### Shapefile import flow
+- Format: Shapefile zip (.shp + .dbf + .prj bundled as .zip) — converted server-side to GeoJSON on upload
+- Location: Admin-only settings page (not on the map page itself)
+- Frequency: One-time setup, rarely repeated
+- On re-import: full replace — new upload replaces all boundaries entirely (SMS is source of truth)
+- Field matching: match by field name text attribute from SMS → fuzzy match to canonical field names/aliases in farm-registry
 
-### GeoJSON Import Flow
-- **Interface:** Admin-only page with drag-and-drop zone + fallback "Browse" button. Accepts GeoJSON and KML file formats.
-- **Field matching:** Match incoming GeoJSON features to farm-registry fields by field name string comparison. SMS exports typically include field names as feature properties.
-- **Re-import behavior:** Overwrites existing boundary for matched fields. Simple and predictable — corrections are applied by re-running the import.
-- **Results screen:** Summary report after processing: count of fields matched and updated, list of unmatched GeoJSON features (by name), count of registry fields with no incoming boundary. Actionable without being verbose.
+### Map basemap & chrome
+- Basemap: satellite imagery only — no toggle for this phase
+- Initial load: auto-zoom to fit all 56 farm fields (no manual navigation needed on first open)
+- Layout: full-height map filling the entire portal content area — nav sidebar on left, map takes everything else edge to edge
+
+### Workflow & roles
+- Primary use case: office user showing field status to agronomists and landowners, in-person on laptop or tablet — needs to be visually impressive and gesture-friendly
+- All roles (operator, office, admin, viewer) can view the map — read-only for everyone
+- Only admin can access the shapefile import settings page
+- Maps appears as a top-level entry in the portal navigation sidebar (same level as Dashboard, Macro Rollup, Compliance)
 
 ### Claude's Discretion
-- Exact polygon opacity/fill alpha values
-- Panel width on desktop vs mobile breakpoints
-- Detail panel dismiss behavior (click-outside, X button, or both)
-- Loading skeleton for panel while weather fetch is in-flight
-- Error state if Open-Meteo returns no data for a field centroid
-- Exact Mapbox style token / tile source selection
+- Specific map library (Leaflet vs MapLibre GL — researcher to evaluate based on portal tech stack and Supabase GeoJSON storage)
+- Exact crop color palette (should align with Glomalin dark soil design tokens: bg #080604, accent #C8860A, green #7A9E7E)
+- GeoJSON storage schema in Supabase (column type, indexing)
+- Shapefile-to-GeoJSON conversion library (server-side, Node.js)
+- Fuzzy field name matching implementation
 
 </decisions>
 
 <specifics>
 ## Specific Ideas
 
-- Open-Meteo API selected for weather (free, no API key, GDD data available) — fetch per-field using polygon centroid lat/lng when panel opens. One call per click.
-- Crop color palette should be a config file (not hardcoded) so colors can be tuned without a redeploy
-- The "derived center" approach: compute centroid of all field boundaries at import time, store as farm center config, use as fixed map starting position
+- "I want it to feel like a real farm map" — satellite imagery is the baseline expectation for growers, not abstract diagrams
+- The map is primarily used in face-to-face conversations: showing an agronomist what's planted where, or showing a landowner what's happening on their ground. Visual impressiveness matters.
+- Phase 70 is the foundation layer for the long-term panopticon vision (see `.planning/FIELD-MAP-VISION.md`) — decisions here should not close off the path to 3D and deeper visualization
 
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-- None — discussion stayed within phase scope
+- Basemap style toggle (satellite ↔ street map) — future phase if needed
+- Full-screen mode — future phase
+- Budget snapshot or rotation history in the detail panel — future phase (deeper field drill-down)
+- 3D field visualization / Rock County panopticon — long-term vision, separate milestone
+- Platform-first migration (portal absorbing farm-budget UI) — post-v12.0 milestone (see PARKING_LOT.md)
 
 </deferred>
 
