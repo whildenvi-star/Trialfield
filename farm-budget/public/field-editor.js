@@ -667,8 +667,17 @@
     window.FieldOpsGroups.GROUP_ORDER.forEach(function (g) { groupsMap[g] = []; });
 
     allItems.forEach(function (item, globalIdx) {
-      var group = window.FieldOpsGroups.classifyItem(item.name, item.itemType);
+      // Check operationGroup override first (set by cross-group DnD or inline add)
+      var sourceArr = item.sourceType === 'input' ? (currentField.inputs || []) :
+        item.sourceType === 'machinery' ? (currentField.machinery || []) : [];
+      var sourceItem = sourceArr[item.sourceIdx];
+      var group = (sourceItem && sourceItem.operationGroup)
+        ? sourceItem.operationGroup
+        : window.FieldOpsGroups.classifyItem(item.name, item.itemType);
       item.globalIdx = globalIdx;
+      item.group = group;
+      // Ensure group is a known group — fall back to Other if override is stale/unknown
+      if (!groupsMap[group]) group = 'Other';
       item.group = group;
       groupsMap[group].push(item);
     });
@@ -699,7 +708,7 @@
           ? '<span style="font-size:0.7rem;color:var(--text-light)">see Seed tab</span>'
           : '$' + util.formatNum(Calc.round2(item.costPerAcre), 2);
         var totalDisplay = item.itemType === 'seed' ? '—' : '$' + util.formatNum(fieldTotal, 2);
-        rowsHtml += '<tr data-global-idx="' + item.globalIdx + '" data-item-type="' + item.itemType + '" data-source-idx="' + item.sourceIdx + '">' +
+        rowsHtml += '<tr data-global-idx="' + item.globalIdx + '" data-item-type="' + item.itemType + '" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '"' + (!isSeed ? ' data-drag-idx="' + item.sourceIdx + '"' : '') + '>' +
           dragTd +
           '<td style="font-size:0.78rem">' + util.escHtml(item.name || '—') + '</td>' +
           '<td><span class="fo-type-badge fo-badge-' + item.itemType + '">' + item.itemType + '</span></td>' +
@@ -789,10 +798,168 @@
       });
     });
 
-    // Wire add-item buttons (Plan 03 — no-op for now)
+    // Add impl-search-list datalist for inline add form (if not already in DOM)
+    if (!document.getElementById('impl-search-list')) {
+      var implDatalist = document.createElement('datalist');
+      implDatalist.id = 'impl-search-list';
+      (window.refData.implements || []).forEach(function (impl) {
+        var opt = document.createElement('option');
+        opt.value = impl.name || '';
+        implDatalist.appendChild(opt);
+      });
+      var foBody = document.getElementById('ed-fieldops-unified-body');
+      if (foBody) foBody.appendChild(implDatalist);
+    }
+
+    // Wire add-item buttons — inline add form
     container.querySelectorAll('.fo-add-item').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        console.log('add to group:', btn.getAttribute('data-group'));
+        var groupName = btn.getAttribute('data-group');
+        // Close any existing open add rows
+        container.querySelectorAll('.fo-add-row').forEach(function (row) { row.remove(); });
+        container.querySelectorAll('.fo-add-item').forEach(function (b) { b.style.display = ''; });
+        btn.style.display = 'none';
+
+        // Find the tbody for this group
+        var groupDiv = container.querySelector('.fo-group[data-group="' + groupName + '"]');
+        if (!groupDiv) return;
+        var tbody = groupDiv.querySelector('tbody');
+        if (!tbody) return;
+
+        var addRow = document.createElement('tr');
+        addRow.className = 'fo-add-row';
+        addRow.setAttribute('data-adding-group', groupName);
+        addRow.innerHTML = '<td></td>' +
+          '<td colspan="5">' +
+          '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;padding:0.25rem 0">' +
+          '<select class="fo-add-type" style="font-size:0.75rem;width:90px">' +
+          '<option value="input">Input</option>' +
+          '<option value="pass">Pass</option>' +
+          '</select>' +
+          '<input type="text" class="fo-add-name" placeholder="Product or implement name..." ' +
+          'style="font-size:0.75rem;flex:1;min-width:140px" list="prod-search-list">' +
+          '<input type="number" class="fo-add-qty" placeholder="Qty/Passes" step="0.1" min="0" ' +
+          'style="font-size:0.75rem;width:75px">' +
+          '<button class="btn-sm btn-primary fo-add-confirm" style="font-size:0.72rem;padding:0.2rem 0.5rem">Add</button>' +
+          '<button class="btn-sm fo-add-cancel" style="font-size:0.72rem;padding:0.2rem 0.5rem">&#x2715;</button>' +
+          '</div>' +
+          '</td>' +
+          '<td></td>';
+        tbody.appendChild(addRow);
+
+        // Toggle list attr when type changes
+        var typeSelect = addRow.querySelector('.fo-add-type');
+        var nameInput = addRow.querySelector('.fo-add-name');
+        typeSelect.addEventListener('change', function () {
+          nameInput.setAttribute('list', typeSelect.value === 'pass' ? 'impl-search-list' : 'prod-search-list');
+        });
+        nameInput.focus();
+
+        // Cancel
+        addRow.querySelector('.fo-add-cancel').addEventListener('click', function () {
+          addRow.remove();
+          btn.style.display = '';
+        });
+
+        // Confirm
+        addRow.querySelector('.fo-add-confirm').addEventListener('click', function () {
+          var type = typeSelect.value;
+          var name = nameInput.value.trim();
+          var qty = parseFloat(addRow.querySelector('.fo-add-qty').value) || 0;
+          if (!name) { nameInput.focus(); return; }
+
+          if (type === 'input') {
+            if (!currentField.inputs) currentField.inputs = [];
+            currentField.inputs.push({
+              id: util.generateId('inp'),
+              productName: name,
+              quantity: qty,
+              season: 'Spring',
+              operationGroup: groupName
+            });
+          } else {
+            if (!currentField.machinery) currentField.machinery = [];
+            currentField.machinery.push({
+              id: util.generateId('mach'),
+              implementName: name,
+              passes: qty || 1,
+              operationGroup: groupName
+            });
+          }
+          renderFieldOpsPanel();
+          updatePreview();
+        });
+      });
+    });
+
+    // Wire cross-group drag-and-drop
+    makeFoGroupsDraggable();
+  }
+
+  function makeFoGroupsDraggable() {
+    var container = document.getElementById('fo-groups-container');
+    if (!container) return;
+    var dragSrc = null; // { sourceType, sourceIdx, origGroup }
+
+    container.querySelectorAll('.fo-table tbody tr[data-drag-idx]').forEach(function (row) {
+      var handle = row.querySelector('.drag-handle');
+      if (!handle) return;
+
+      handle.addEventListener('mousedown', function () { row.draggable = true; });
+      handle.addEventListener('mouseup', function () { row.draggable = false; });
+
+      row.addEventListener('dragstart', function (e) {
+        dragSrc = {
+          sourceType: row.getAttribute('data-source-type'),
+          sourceIdx: parseInt(row.getAttribute('data-source-idx'), 10),
+          origGroup: row.closest('.fo-group') ? row.closest('.fo-group').getAttribute('data-group') : null
+        };
+        e.dataTransfer.effectAllowed = 'move';
+        row.classList.add('drag-src');
+      });
+
+      row.addEventListener('dragend', function () {
+        row.draggable = false;
+        row.classList.remove('drag-src');
+        container.querySelectorAll('.fo-group').forEach(function (g) {
+          g.classList.remove('fo-drop-target');
+        });
+        dragSrc = null;
+      });
+    });
+
+    // Group-level drop zones for cross-group drops
+    container.querySelectorAll('.fo-group').forEach(function (group) {
+      var targetGroup = group.getAttribute('data-group');
+
+      group.addEventListener('dragover', function (e) {
+        if (!dragSrc) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragSrc.origGroup !== targetGroup) {
+          group.classList.add('fo-drop-target');
+        }
+      });
+
+      group.addEventListener('dragleave', function (e) {
+        if (!e.relatedTarget || !group.contains(e.relatedTarget)) {
+          group.classList.remove('fo-drop-target');
+        }
+      });
+
+      group.addEventListener('drop', function (e) {
+        e.preventDefault();
+        group.classList.remove('fo-drop-target');
+        if (!dragSrc || dragSrc.origGroup === targetGroup) return; // same group — within-group handled by row dragover
+
+        // Cross-group: set operationGroup override on source item
+        var arr = dragSrc.sourceType === 'machinery'
+          ? currentField.machinery
+          : currentField.inputs;
+        if (!arr || dragSrc.sourceIdx >= arr.length) return;
+        arr[dragSrc.sourceIdx].operationGroup = targetGroup;
+        renderFieldOpsPanel();
+        updatePreview();
       });
     });
   }
