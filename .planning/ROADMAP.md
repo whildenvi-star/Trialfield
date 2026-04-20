@@ -548,7 +548,7 @@ Plans:
 
 **Requirements:** UFO-01, UFO-02, UFO-03, UFO-04, UFO-05
 
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 71-01-PLAN.md — Group classifier module (field-ops-groups.js) + Field Ops panel HTML skeleton in index.html

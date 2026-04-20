@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 70: Interactive Field Map — IN PROGRESS (Plan 04 of 5 complete).
+**Current focus:** Phase 71: Unified Field Operations View — IN PROGRESS (Plan 01 of 3 complete).
 
 ## Current Position
 
-Phase: 70 of 70 (Interactive Field Map) — IN PROGRESS
-Plan: 4 of 5 complete
-Status: Phase 70 Plan 04 complete — BoundaryImport client component with react-dropzone (.zip only) embedded in /admin page as Field Boundaries section; upload summary shows matched/unmatched/no-geometry counts with full-replace confirmation.
-Last activity: 2026-04-18 — Phase 70 Plan 04 complete. Admin boundary import UI ready. Next: Plan 05 (final integration/polish).
+Phase: 71 of 71 (Unified Field Operations View) — IN PROGRESS
+Plan: 1 of 3 complete
+Status: Phase 71 Plan 01 complete — field-ops-groups.js classifier module (window.FieldOpsGroups) and fieldops-unified panel HTML skeleton in farm-budget index.html.
+Last activity: 2026-04-20 — Phase 71 Plan 01 complete. Classifier + HTML skeleton ready. Next: Plan 02 (renderFieldOpsPanel rendering logic).
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 70 [████░░░░░░] IN PROGRESS
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 71 [███░░░░░░░] IN PROGRESS
 
 ## Performance Metrics
 
@@ -82,6 +82,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 68 P05 | 7 | 2 tasks | 8 files |
 | Phase 70 P01 | 62 | 2 tasks | 2 files |
 | Phase 70 P03 | 25 | 2 tasks | 7 files |
+| Phase 71 P01 | 133 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -231,6 +232,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 70-03]: top-14 offset for map below h-14 sticky top bar (56px), not top-[48px] as plan specified
 - [Phase 70-03]: boundaries route merges crop+organic+reportingAcres server-side via Promise.allSettled — no separate fields-meta route
 - [Phase 70-03]: MapLibre CSS loaded with dynamic import + @ts-expect-error inside useEffect — avoids Next.js SSR CSS import TS error
+- [Phase 71-01]: Spinner implement classified Pre-emerge — standalone 'spinner' pattern added
+- [Phase 71-01]: field-ops-groups.js uses GROUP_ORDER sequence rule matching — Tillage→Fertility→Planting→Pre→Post→Fungicide→Harvest→Other
 
 ### Pending Todos
 
