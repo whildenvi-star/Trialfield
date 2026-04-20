@@ -319,6 +319,7 @@
 
     renderInputRows();
     renderMachRows();
+    renderFieldOpsPanel();
     renderAuxRows();
   }
 
@@ -577,6 +578,224 @@
     });
     renderMachRows();
   });
+
+  // --- Field Ops Unified Panel ---
+  function renderFieldOpsPanel() {
+    var container = document.getElementById('fo-groups-container');
+    var grandTotalEl = document.getElementById('fo-grand-total');
+    var grandValEl = document.getElementById('fo-grand-val');
+    var grandFieldEl = document.getElementById('fo-grand-total-field');
+    if (!container || !currentField) return;
+
+    var acres = currentField.acres || currentField.plantedAcres || 0;
+
+    // Build unified item list
+    var allItems = [];
+
+    // Add inputs
+    (currentField.inputs || []).forEach(function (inp, idx) {
+      var name = inp.productName || '';
+      var itemType = 'input';
+      // Custom coop application charges: name starts with "Application -"
+      if (name.toLowerCase().indexOf('application -') === 0) {
+        itemType = 'custom';
+      }
+      var product = (window.refData.products || []).find(function (p) {
+        return p.name.toLowerCase() === name.toLowerCase();
+      });
+      var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
+      var costPerAcre = (inp.quantity || 0) * appPrice;
+      var unitLabel = product ? (product.unit || '') : '';
+      var rateDisplay = (inp.quantity || 0) + (unitLabel ? ' ' + unitLabel : '');
+      allItems.push({
+        name: name,
+        itemType: itemType,
+        sourceType: 'input',
+        sourceIdx: idx,
+        costPerAcre: costPerAcre,
+        rateDisplay: rateDisplay
+      });
+    });
+
+    // Add machinery
+    (currentField.machinery || []).forEach(function (m, idx) {
+      var name = m.implementName || '';
+      var impl = (window.refData.implements || []).find(function (i) {
+        return i.name.toLowerCase() === name.toLowerCase();
+      });
+      var useHire = m.useHire !== undefined ? m.useHire :
+        (impl && impl.defaultMode === 'hire' && impl.customHireRate > 0);
+      var costPerAcre;
+      if (useHire && impl && impl.customHireRate > 0) {
+        costPerAcre = impl.customHireRate * (m.passes || 1);
+      } else {
+        costPerAcre = impl ? impl.costPerAcre * (m.passes || 1) : 0;
+      }
+      var passes = m.passes || 1;
+      var rateDisplay = passes + (passes === 1 ? ' pass' : ' passes');
+      allItems.push({
+        name: name,
+        itemType: 'pass',
+        sourceType: 'machinery',
+        sourceIdx: idx,
+        costPerAcre: costPerAcre,
+        rateDisplay: rateDisplay
+      });
+    });
+
+    // Add seeds as display-only rows
+    (currentField.seeds || []).forEach(function (s, idx) {
+      if (!s.variety) return;
+      allItems.push({
+        name: s.variety,
+        itemType: 'seed',
+        sourceType: 'seed',
+        sourceIdx: idx,
+        costPerAcre: 0, // see Seed tab
+        rateDisplay: s.population ? s.population + ' seeds' : '—'
+      });
+    });
+
+    // Classify each item using FieldOpsGroups
+    if (!window.FieldOpsGroups) {
+      container.innerHTML = '<p style="color:var(--text-light);font-size:0.8rem">FieldOpsGroups module not loaded.</p>';
+      return;
+    }
+
+    // Build groups map
+    var groupsMap = {};
+    window.FieldOpsGroups.GROUP_ORDER.forEach(function (g) { groupsMap[g] = []; });
+
+    allItems.forEach(function (item, globalIdx) {
+      var group = window.FieldOpsGroups.classifyItem(item.name, item.itemType);
+      item.globalIdx = globalIdx;
+      item.group = group;
+      groupsMap[group].push(item);
+    });
+
+    // Render groups
+    var html = '';
+    var grandTotal = 0;
+
+    window.FieldOpsGroups.GROUP_ORDER.forEach(function (groupName) {
+      var items = groupsMap[groupName];
+      if (!items.length) return;
+
+      var groupSubtotal = 0;
+      items.forEach(function (item) { groupSubtotal += item.costPerAcre; });
+      grandTotal += groupSubtotal;
+      var groupFieldTotal = Calc.round2(groupSubtotal * acres);
+      var subtotalDisplay = '$' + util.formatNum(Calc.round2(groupSubtotal), 2) + '/ac';
+
+      var rowsHtml = '';
+      items.forEach(function (item) {
+        var fieldTotal = Calc.round2(item.costPerAcre * acres);
+        var isSeed = item.itemType === 'seed';
+        var dragTd = isSeed ? '<td></td>' : '<td class="drag-handle">&#8287;</td>';
+        var removeTd = isSeed
+          ? '<td style="text-align:center"><span style="font-size:0.65rem;color:var(--text-light)">Seed tab</span></td>'
+          : '<td><button class="btn-danger fo-remove" data-item-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.68rem">X</button></td>';
+        var costDisplay = item.itemType === 'seed'
+          ? '<span style="font-size:0.7rem;color:var(--text-light)">see Seed tab</span>'
+          : '$' + util.formatNum(Calc.round2(item.costPerAcre), 2);
+        var totalDisplay = item.itemType === 'seed' ? '—' : '$' + util.formatNum(fieldTotal, 2);
+        rowsHtml += '<tr data-global-idx="' + item.globalIdx + '" data-item-type="' + item.itemType + '" data-source-idx="' + item.sourceIdx + '">' +
+          dragTd +
+          '<td style="font-size:0.78rem">' + util.escHtml(item.name || '—') + '</td>' +
+          '<td><span class="fo-type-badge fo-badge-' + item.itemType + '">' + item.itemType + '</span></td>' +
+          '<td class="number" style="font-size:0.75rem">' + util.escHtml(item.rateDisplay) + '</td>' +
+          '<td class="number" style="font-size:0.78rem">' + costDisplay + '</td>' +
+          '<td class="number" style="font-size:0.78rem">' + totalDisplay + '</td>' +
+          removeTd +
+          '</tr>';
+      });
+
+      html += '<div class="fo-group" data-group="' + util.escHtml(groupName) + '">' +
+        '<div class="fo-group-header fo-group-toggle" data-group="' + util.escHtml(groupName) + '">' +
+        '<span class="fo-group-chevron">&#9662;</span>' +
+        '<span class="fo-group-name">' + util.escHtml(groupName) + '</span>' +
+        '<span class="fo-group-subtotal">' + subtotalDisplay + '</span>' +
+        '</div>' +
+        '<div class="fo-group-body">' +
+        '<table class="compact-table fo-table" style="width:100%">' +
+        '<thead><tr><th></th><th>Name</th><th>Type</th><th>Rate</th><th>$/ac</th><th>Total $</th><th></th></tr></thead>' +
+        '<tbody>' + rowsHtml + '</tbody>' +
+        '</table>' +
+        '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(groupName) + '" style="margin-top:0.4rem;font-size:0.72rem">+ Add to ' + util.escHtml(groupName) + '</button>' +
+        '</div>' +
+        '</div>';
+    });
+
+    container.innerHTML = html || '<p style="color:var(--text-light);font-size:0.8rem;padding:0.5rem">No inputs or machinery on this field.</p>';
+
+    // Grand total
+    var grandPerAc = Calc.round2(grandTotal);
+    var grandField = Calc.round2(grandTotal * acres);
+    if (grandTotalEl) {
+      grandTotalEl.style.display = grandTotal > 0 ? 'flex' : 'none';
+      if (grandValEl) grandValEl.textContent = '$' + util.formatNum(grandPerAc, 2) + '/ac';
+      if (grandFieldEl) grandFieldEl.textContent = 'Field: $' + util.formatNum(grandField, 2);
+    }
+
+    // Wire collapse toggles
+    container.querySelectorAll('.fo-group-toggle').forEach(function (header) {
+      header.addEventListener('click', function () {
+        var group = header.closest('.fo-group');
+        if (!group) return;
+        var isCollapsed = group.classList.toggle('fo-collapsed');
+        var chevron = header.querySelector('.fo-group-chevron');
+        if (chevron) chevron.innerHTML = isCollapsed ? '&#9656;' : '&#9662;';
+      });
+    });
+
+    // Wire expand-all / collapse-all
+    var expandBtn = document.getElementById('fo-expand-all');
+    var collapseBtn = document.getElementById('fo-collapse-all');
+    if (expandBtn) {
+      expandBtn.onclick = function () {
+        container.querySelectorAll('.fo-group').forEach(function (g) {
+          g.classList.remove('fo-collapsed');
+          var ch = g.querySelector('.fo-group-chevron');
+          if (ch) ch.innerHTML = '&#9662;';
+        });
+      };
+    }
+    if (collapseBtn) {
+      collapseBtn.onclick = function () {
+        container.querySelectorAll('.fo-group').forEach(function (g) {
+          g.classList.add('fo-collapsed');
+          var ch = g.querySelector('.fo-group-chevron');
+          if (ch) ch.innerHTML = '&#9656;';
+        });
+      };
+    }
+
+    // Wire remove buttons
+    container.querySelectorAll('.fo-remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var sourceType = btn.getAttribute('data-item-type');
+        var sourceIdx = parseInt(btn.getAttribute('data-source-idx'), 10);
+        if (sourceType === 'input' || sourceType === 'custom') {
+          if (currentField.inputs && currentField.inputs[sourceIdx] !== undefined) {
+            currentField.inputs.splice(sourceIdx, 1);
+          }
+        } else if (sourceType === 'machinery') {
+          if (currentField.machinery && currentField.machinery[sourceIdx] !== undefined) {
+            currentField.machinery.splice(sourceIdx, 1);
+          }
+        }
+        renderFieldOpsPanel();
+        updatePreview();
+      });
+    });
+
+    // Wire add-item buttons (Plan 03 — no-op for now)
+    container.querySelectorAll('.fo-add-item').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        console.log('add to group:', btn.getAttribute('data-group'));
+      });
+    });
+  }
 
   // --- AUX Payments Table ---
   function renderAuxRows() {
@@ -987,6 +1206,12 @@
       var n = counts[key];
       el.textContent = n > 0 ? n : '';
     });
+    // Field Ops unified badge — combined inputs + machinery count
+    var foUnifiedBadge = document.getElementById('badge-fieldops-unified');
+    if (foUnifiedBadge) {
+      var foCount = (currentField.inputs || []).length + (currentField.machinery || []).length;
+      foUnifiedBadge.textContent = foCount > 0 ? foCount : '';
+    }
     var nameEl = document.getElementById('ed-nav-name');
     var metaEl = document.getElementById('ed-nav-meta');
     if (nameEl) nameEl.textContent = currentField.name || '—';
