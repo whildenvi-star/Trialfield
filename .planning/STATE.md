@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 71: Unified Field Operations View — IN PROGRESS (Plan 01 of 3 complete).
+**Current focus:** Phase 71: Unified Field Operations View — IN PROGRESS (Plan 02 of 3 complete).
 
 ## Current Position
 
 Phase: 71 of 71 (Unified Field Operations View) — IN PROGRESS
-Plan: 1 of 3 complete
-Status: Phase 71 Plan 01 complete — field-ops-groups.js classifier module (window.FieldOpsGroups) and fieldops-unified panel HTML skeleton in farm-budget index.html.
-Last activity: 2026-04-20 — Phase 71 Plan 01 complete. Classifier + HTML skeleton ready. Next: Plan 02 (renderFieldOpsPanel rendering logic).
+Plan: 2 of 3 complete
+Status: Phase 71 Plan 02 complete — renderFieldOpsPanel() rendering logic, type badges, subtotals, grand total, collapsible groups, nav restructure (Inputs/Machinery tabs removed).
+Last activity: 2026-04-20 — Phase 71 Plan 02 complete. Field Ops unified panel fully rendering. Next: Plan 03 (add-item inline forms + drag-and-drop across groups).
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 71 [███░░░░░░░] IN PROGRESS
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 71 [██████░░░░] IN PROGRESS
 
 ## Performance Metrics
 
@@ -83,6 +83,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 70 P01 | 62 | 2 tasks | 2 files |
 | Phase 70 P03 | 25 | 2 tasks | 7 files |
 | Phase 71 P01 | 133 | 2 tasks | 2 files |
+| Phase 71 P02 | 147 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -234,6 +235,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 70-03]: MapLibre CSS loaded with dynamic import + @ts-expect-error inside useEffect — avoids Next.js SSR CSS import TS error
 - [Phase 71-01]: Spinner implement classified Pre-emerge — standalone 'spinner' pattern added
 - [Phase 71-01]: field-ops-groups.js uses GROUP_ORDER sequence rule matching — Tillage→Fertility→Planting→Pre→Post→Fungicide→Harvest→Other
+- [Phase 71-02]: fo-remove uses source array name (input/machinery) as data-item-type for splice targeting — custom badge type maps to inputs array at remove time
+- [Phase 71-02]: Seed rows in Field Ops view are display-only with zero cost — editing stays in Seed tab, avoids double-computation
 
 ### Pending Todos
 
@@ -245,7 +248,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-04-18
-Stopped at: Completed 70-04-PLAN.md — Admin boundary import UI (BoundaryImport component + /admin Field Boundaries section). Next: Plan 05 (final integration/polish).
+Last session: 2026-04-20
+Stopped at: Completed 71-02-PLAN.md — renderFieldOpsPanel() + Field Ops CSS + nav restructure (Inputs/Machinery nav items removed). Next: Plan 03 (add-item inline forms + drag-and-drop across groups).
 Resume file: —
-Next action: Execute 70-05-PLAN.md.
+Next action: Execute 71-03-PLAN.md.
