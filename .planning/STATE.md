@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 71: Unified Field Operations View — IN PROGRESS (Plan 02 of 3 complete).
+**Current focus:** Phase 71: Unified Field Operations View — COMPLETE (all 3 plans done).
 
 ## Current Position
 
-Phase: 71 of 71 (Unified Field Operations View) — IN PROGRESS
-Plan: 2 of 3 complete
-Status: Phase 71 Plan 02 complete — renderFieldOpsPanel() rendering logic, type badges, subtotals, grand total, collapsible groups, nav restructure (Inputs/Machinery tabs removed).
-Last activity: 2026-04-20 — Phase 71 Plan 02 complete. Field Ops unified panel fully rendering. Next: Plan 03 (add-item inline forms + drag-and-drop across groups).
+Phase: 71 of 71 (Unified Field Operations View) — COMPLETE
+Plan: 3 of 3 complete
+Status: Phase 71 Plan 03 complete — cross-group DnD (makeFoGroupsDraggable) + inline add-item forms within each group. Phase 71 fully complete.
+Last activity: 2026-04-20 — Phase 71 complete. Unified Field Ops panel fully ships: classifier, rendering, drag-and-drop, inline add-item.
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 71 [██████░░░░] IN PROGRESS
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 71 [██████████] COMPLETE
 
 ## Performance Metrics
 
@@ -84,6 +84,7 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 | Phase 70 P03 | 25 | 2 tasks | 7 files |
 | Phase 71 P01 | 133 | 2 tasks | 2 files |
 | Phase 71 P02 | 147 | 2 tasks | 3 files |
+| Phase 71 P03 | 15 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -237,6 +238,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 - [Phase 71-01]: field-ops-groups.js uses GROUP_ORDER sequence rule matching — Tillage→Fertility→Planting→Pre→Post→Fungicide→Harvest→Other
 - [Phase 71-02]: fo-remove uses source array name (input/machinery) as data-item-type for splice targeting — custom badge type maps to inputs array at remove time
 - [Phase 71-02]: Seed rows in Field Ops view are display-only with zero cost — editing stays in Seed tab, avoids double-computation
+- [Phase 71]: operationGroup field on inputs/machinery items persists cross-group drop target across re-renders and into data.json on save — checked before classifyItem() call
+- [Phase 71]: makeFoGroupsDraggable() uses native HTML5 drag events — no library dependency, aligns with vanilla-JS farm-budget codebase
 
 ### Pending Todos
 
@@ -249,6 +252,6 @@ None active.
 ## Session Continuity
 
 Last session: 2026-04-20
-Stopped at: Completed 71-02-PLAN.md — renderFieldOpsPanel() + Field Ops CSS + nav restructure (Inputs/Machinery nav items removed). Next: Plan 03 (add-item inline forms + drag-and-drop across groups).
+Stopped at: Completed 71-03-PLAN.md — cross-group DnD (makeFoGroupsDraggable) + inline add-item forms. Phase 71 fully complete.
 Resume file: —
-Next action: Execute 71-03-PLAN.md.
+Next action: Plan next phase or milestone.

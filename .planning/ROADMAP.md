@@ -158,7 +158,7 @@
   - [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
 - [x] Phase 69: Field Operations TC Log (0/0 plans) (completed 2026-04-18)
 - [ ] Phase 70: Interactive Field Map (0/0 plans)
-- [ ] Phase 71: Unified Field Operations View (0/0 plans)
+- [x] Phase 71: Unified Field Operations View (0/0 plans) (completed 2026-04-20)
 
 </details>
 
@@ -548,7 +548,7 @@ Plans:
 
 **Requirements:** UFO-01, UFO-02, UFO-03, UFO-04, UFO-05
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [ ] 71-01-PLAN.md — Group classifier module (field-ops-groups.js) + Field Ops panel HTML skeleton in index.html
