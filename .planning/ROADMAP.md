@@ -158,6 +158,7 @@
   - [ ] 68-05-PLAN.md — Calendar tab + MODULES update + deploy
 - [x] Phase 69: Field Operations TC Log (0/0 plans) (completed 2026-04-18)
 - [ ] Phase 70: Interactive Field Map (0/0 plans)
+- [ ] Phase 71: Unified Field Operations View (0/0 plans)
 
 </details>
 
@@ -529,4 +530,23 @@ Plans:
 - [ ] 70-03-PLAN.md — Mapbox GL JS map page + FieldMap component + FieldDetailPanel with Open-Meteo GDD
 - [ ] 70-04-PLAN.md — Admin import UI (drag-drop GeoJSON/KML, field matching, summary report)
 - [ ] 70-05-PLAN.md — MODULES nav entry + deploy + human verify checkpoint
+
+### Phase 71: Unified Field Operations View
+
+**Goal:** Redesign the farm-budget field editor to replace the separate Inputs and Machinery nav sections with a single unified "Field Operations" panel that organizes all cost items — inputs, custom coop application charges, and machinery passes — by operation type in a structured, report-style layout that reflects how work is actually sequenced in the field.
+
+**Milestone:** v12.0
+
+**Depends on**: Phase 19 (farm-budget procurement pipeline complete)
+
+**Success Criteria** (what must be TRUE):
+  1. The field editor no longer has separate "Inputs" and "Machinery" sections — both are replaced by a unified "Field Operations" panel
+  2. All line items are grouped by operation/pass type (e.g., Tillage, Planting, Pre-emerge, Post-emerge, Harvest)
+  3. Custom coop application charges (e.g., "application-post", "liquid PPI") are presented alongside machine passes of the same operation type
+  4. Cost totals per operation group are visible
+  5. The layout reads as a structured field operations report, not two disconnected data tables
+
+**Requirements:** UFO-01, UFO-02, UFO-03, UFO-04, UFO-05
+
+**Plans:** TBD
 
