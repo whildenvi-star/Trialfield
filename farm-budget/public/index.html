@@ -407,7 +407,7 @@
       </div>
 
       <!-- Price Increase Simulator -->
-      <details id="price-simulator" class="editor-section" style="margin-bottom:1rem">
+      <details id="price-simulator" class="editor-section role-hide-office role-hide-operator" style="margin-bottom:1rem">
         <summary>Price Increase Simulator</summary>
         <div style="padding:0.75rem">
           <div class="whatif-controls">
@@ -956,6 +956,7 @@
             <li class="ed-nav-item" data-section="inputs">Inputs<span class="ed-nav-badge" id="badge-inputs"></span></li>
             <li class="ed-nav-item" data-section="machinery">Machinery<span class="ed-nav-badge" id="badge-machinery"></span></li>
             <li class="ed-nav-item" data-section="seed">Seed<span class="ed-nav-badge" id="badge-seed"></span></li>
+            <li class="ed-nav-item" data-section="fieldops-unified">Field Ops<span class="ed-nav-badge" id="badge-fieldops-unified"></span></li>
             <li class="ed-nav-item" data-section="yield">Yield &amp; Income</li>
             <li class="ed-nav-item role-hide-office" data-section="aux">AUX Payments<span class="ed-nav-badge" id="badge-aux"></span></li>
             <li class="ed-nav-item" data-section="fieldops">FieldOps Data</li>
@@ -1070,6 +1071,25 @@
                 <tbody id="ed-mach-tbody"></tbody>
               </table>
               <button id="ed-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
+            </div>
+          </div>
+
+          <!-- Field Ops Unified Panel -->
+          <div class="editor-section-panel" data-section="fieldops-unified">
+            <div class="editor-section-body" id="ed-fieldops-unified-body">
+              <!-- Rendered by renderFieldOpsPanel() in field-editor.js -->
+              <div class="fo-toolbar" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem">
+                <span class="fo-toolbar-label" style="font-size:0.75rem;color:var(--text-light)">Field Operations</span>
+                <span style="flex:1"></span>
+                <button id="fo-expand-all" class="btn-sm" style="font-size:0.72rem;padding:0.2rem 0.45rem" title="Expand all groups">&#9660; All</button>
+                <button id="fo-collapse-all" class="btn-sm" style="font-size:0.72rem;padding:0.2rem 0.45rem" title="Collapse all groups">&#9654; All</button>
+              </div>
+              <div id="fo-groups-container"></div>
+              <div id="fo-grand-total" class="fo-grand-total" style="display:none">
+                <span class="fo-grand-label">Total Field Operations Cost</span>
+                <span class="fo-grand-val" id="fo-grand-val"></span>
+                <span class="fo-grand-total-field" id="fo-grand-total-field"></span>
+              </div>
             </div>
           </div>
 
@@ -1500,6 +1520,7 @@
   <script src="app.js?v=20260403p"></script>
   <script src="dashboard.js?v=20260403n"></script>
   <script src="enterprise.js?v=20260406a"></script>
+  <script src="field-ops-groups.js"></script>
   <script src="field-editor.js?v=20260406d"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js"></script>
@@ -1762,7 +1783,7 @@
       fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg, history: history.slice(0, -1) })
+        body: JSON.stringify({ message: msg, history: history.slice(0, -1), role: window.APP_ROLE || 'admin' })
       }).then(function (resp) {
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
         // Remove thinking indicator
