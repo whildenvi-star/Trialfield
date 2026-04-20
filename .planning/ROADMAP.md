@@ -548,5 +548,10 @@ Plans:
 
 **Requirements:** UFO-01, UFO-02, UFO-03, UFO-04, UFO-05
 
-**Plans:** TBD
+**Plans:** 3 plans
+
+Plans:
+- [ ] 71-01-PLAN.md — Group classifier module (field-ops-groups.js) + Field Ops panel HTML skeleton in index.html
+- [ ] 71-02-PLAN.md — renderFieldOpsPanel() rendering with grouped items, type badges, subtotals, grand total; remove Inputs/Machinery nav items; add CSS
+- [ ] 71-03-PLAN.md — Cross-group drag-and-drop + inline add-item form + human verify checkpoint
 
