@@ -5,6 +5,7 @@
   var overlay = document.getElementById('field-editor-overlay');
   var currentField = null;
   var isNew = false;
+  var foActiveFilter = 'all'; // 'all' | 'planned' | 'confirmed' | 'disregarded'
 
   window.openFieldEditor = function (field, enterpriseId, defaultSystemCode) {
     if (field) {
@@ -418,13 +419,118 @@
     });
   }
 
+  // --- Field Ops add-item autocomplete (products for Input, implements for Pass) ---
+  function initFoAddAutocomplete(nameInput, typeSelect, dropdown) {
+    var timer = null;
+    var selIdx = -1;
+    var matches = [];
+
+    function getItems(q) {
+      var words = q.split(/\s+/).filter(Boolean);
+      if (typeSelect.value === 'pass') {
+        return (window.refData.implements || []).filter(function (impl) {
+          var name = (impl.name || '').toLowerCase();
+          return words.every(function (w) { return name.indexOf(w) !== -1; });
+        }).slice(0, 12);
+      }
+      return (window.refData.products || []).filter(function (p) {
+        var name = p.name.toLowerCase();
+        return words.every(function (w) { return name.indexOf(w) !== -1; });
+      }).slice(0, 12);
+    }
+
+    function showDropdown(items) {
+      matches = items;
+      selIdx = -1;
+      if (!items.length) { dropdown.style.display = 'none'; return; }
+      var html;
+      if (typeSelect.value === 'pass') {
+        html = items.map(function (impl, i) {
+          var cost = impl.costPerAcre || 0;
+          var mode = impl.defaultMode === 'hire' ? 'Hire' : 'Own';
+          return '<div class="prod-ac-item" data-i="' + i + '">' +
+            '<span style="font-weight:500">' + util.escHtml(impl.name || '') + '</span>' +
+            '<span class="prod-ac-item-meta">$' + util.formatNum(cost, 2) + '/ac · ' + mode + '</span>' +
+            '</div>';
+        }).join('');
+      } else {
+        html = items.map(function (p, i) {
+          var price = Calc.computeApplicationPrice(p);
+          return '<div class="prod-ac-item" data-i="' + i + '">' +
+            '<span style="font-weight:500">' + util.escHtml(p.name) + '</span>' +
+            '<span class="prod-ac-item-meta">' + util.escHtml(p.unit || '') + ' · $' + util.formatNum(price, 4) + '/' + util.escHtml(p.unit || 'unit') + '</span>' +
+            '</div>';
+        }).join('');
+      }
+      dropdown.innerHTML = html;
+      var rect = nameInput.getBoundingClientRect();
+      dropdown.style.top = (rect.bottom + 2) + 'px';
+      dropdown.style.left = rect.left + 'px';
+      dropdown.style.width = Math.max(280, rect.width) + 'px';
+      dropdown.style.display = 'block';
+      dropdown.querySelectorAll('.prod-ac-item').forEach(function (el) {
+        el.addEventListener('mousedown', function (e) {
+          e.preventDefault();
+          selectItem(parseInt(el.getAttribute('data-i')));
+        });
+      });
+    }
+
+    function selectItem(i) {
+      var item = matches[i];
+      if (!item) return;
+      nameInput.value = item.name || '';
+      dropdown.style.display = 'none';
+      var qtyInput = nameInput.closest('tr') ? nameInput.closest('tr').querySelector('.fo-add-qty') : null;
+      if (qtyInput) { qtyInput.focus(); qtyInput.select(); }
+    }
+
+    function highlightItem(i) {
+      dropdown.querySelectorAll('.prod-ac-item').forEach(function (el, j) {
+        el.style.background = j === i ? 'var(--highlight)' : '';
+      });
+    }
+
+    nameInput.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        var q = nameInput.value.trim().toLowerCase();
+        if (q.length < 1) { dropdown.style.display = 'none'; return; }
+        showDropdown(getItems(q));
+      }, 150);
+    });
+
+    nameInput.addEventListener('keydown', function (e) {
+      if (!matches.length) return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx + 1, matches.length - 1); highlightItem(selIdx); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx - 1, 0); highlightItem(selIdx); }
+      else if (e.key === 'Enter' && selIdx >= 0) { e.preventDefault(); selectItem(selIdx); }
+      else if (e.key === 'Escape') { dropdown.style.display = 'none'; }
+    });
+
+    nameInput.addEventListener('blur', function () {
+      setTimeout(function () { dropdown.style.display = 'none'; }, 200);
+    });
+
+    nameInput.addEventListener('focus', function () {
+      if (nameInput.value.trim().length >= 1) nameInput.dispatchEvent(new Event('input'));
+    });
+
+    typeSelect.addEventListener('change', function () {
+      dropdown.style.display = 'none';
+      matches = [];
+      selIdx = -1;
+      if (nameInput.value.trim().length >= 1) nameInput.dispatchEvent(new Event('input'));
+    });
+  }
+
   // --- Input Products Table ---
   function renderInputRows() {
     var tbody = document.getElementById('ed-inputs-tbody');
     var html = '';
     (currentField.inputs || []).forEach(function (inp, idx) {
       var product = window.refData.products.find(function (p) {
-        return p.name.toLowerCase() === (inp.productName || '').toLowerCase();
+        return p.name.trim().toLowerCase() === (inp.productName || '').trim().toLowerCase();
       });
       var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
       var cost = (inp.quantity || 0) * appPrice;
@@ -601,7 +707,7 @@
         itemType = 'custom';
       }
       var product = (window.refData.products || []).find(function (p) {
-        return p.name.toLowerCase() === name.toLowerCase();
+        return p.name.trim().toLowerCase() === name.trim().toLowerCase();
       });
       var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
       var costPerAcre = (inp.quantity || 0) * appPrice;
@@ -613,7 +719,12 @@
         sourceType: 'input',
         sourceIdx: idx,
         costPerAcre: costPerAcre,
-        rateDisplay: rateDisplay
+        rateDisplay: rateDisplay,
+        passStatus: inp.passStatus || 'planned',
+        confirmedDate: inp.confirmedDate || null,
+        confirmedBy: inp.confirmedBy || null,
+        actualQuantity: inp.actualQuantity !== undefined ? inp.actualQuantity : null,
+        statusNote: inp.statusNote || null
       });
     });
 
@@ -639,7 +750,11 @@
         sourceType: 'machinery',
         sourceIdx: idx,
         costPerAcre: costPerAcre,
-        rateDisplay: rateDisplay
+        rateDisplay: rateDisplay,
+        passStatus: m.passStatus || 'planned',
+        confirmedDate: m.confirmedDate || null,
+        confirmedBy: m.confirmedBy || null,
+        statusNote: m.statusNote || null
       });
     });
 
@@ -662,6 +777,25 @@
       return;
     }
 
+    // Compute status counts for toolbar summary (over all items before filter)
+    var statusCounts = { planned: 0, confirmed: 0, disregarded: 0 };
+    allItems.forEach(function (item) {
+      if (item.itemType === 'seed') return;
+      var s = item.passStatus || 'planned';
+      if (statusCounts[s] !== undefined) statusCounts[s]++;
+    });
+    var summaryEl = document.getElementById('fo-status-summary');
+    if (summaryEl) {
+      var parts = [];
+      if (statusCounts.confirmed > 0) parts.push(statusCounts.confirmed + ' confirmed');
+      if (statusCounts.planned > 0) parts.push(statusCounts.planned + ' planned');
+      if (statusCounts.disregarded > 0) parts.push(statusCounts.disregarded + ' disregarded');
+      summaryEl.textContent = parts.join(' · ');
+    }
+    // Sync filter select to current foActiveFilter
+    var filterSel = document.getElementById('fo-filter-select');
+    if (filterSel && filterSel.value !== foActiveFilter) filterSel.value = foActiveFilter;
+
     // Build groups map
     var groupsMap = {};
     window.FieldOpsGroups.GROUP_ORDER.forEach(function (g) { groupsMap[g] = []; });
@@ -679,12 +813,15 @@
       // Ensure group is a known group — fall back to Other if override is stale/unknown
       if (!groupsMap[group]) group = 'Other';
       item.group = group;
+      // Apply filter (seeds always shown regardless of filter)
+      if (foActiveFilter !== 'all' && item.itemType !== 'seed' && item.passStatus !== foActiveFilter) return;
       groupsMap[group].push(item);
     });
 
     // Render groups
     var html = '';
     var grandTotal = 0;
+    var isOperator = window.APP_ROLE === 'operator';
 
     window.FieldOpsGroups.GROUP_ORDER.forEach(function (groupName) {
       var items = groupsMap[groupName];
@@ -694,13 +831,45 @@
       items.forEach(function (item) { groupSubtotal += item.costPerAcre; });
       grandTotal += groupSubtotal;
       var groupFieldTotal = Calc.round2(groupSubtotal * acres);
-      var subtotalDisplay = '$' + util.formatNum(Calc.round2(groupSubtotal), 2) + '/ac';
+      var subtotalDisplay = isOperator ? '' : '$' + util.formatNum(Calc.round2(groupSubtotal), 2) + '/ac';
+
+      var confirmedInGroup = items.filter(function (i) { return i.passStatus === 'confirmed'; }).length;
+      var progressHtml = confirmedInGroup > 0
+        ? '<span class="fo-group-progress">' + confirmedInGroup + '/' + items.length + ' confirmed</span>'
+        : '';
 
       var rowsHtml = '';
       items.forEach(function (item) {
         var fieldTotal = Calc.round2(item.costPerAcre * acres);
         var isSeed = item.itemType === 'seed';
-        var dragTd = isSeed ? '<td></td>' : '<td class="drag-handle">&#8287;</td>';
+        var status = item.passStatus || 'planned';
+        var rowClass = isSeed ? '' : (status === 'confirmed' ? ' class="fo-row-confirmed"' : status === 'disregarded' ? ' class="fo-row-disregarded"' : '');
+
+        // Status chip (not for seeds)
+        var chipHtml = '';
+        if (!isSeed) {
+          if (status === 'confirmed') {
+            var dateStr = item.confirmedDate ? item.confirmedDate.slice(0, 10) : '';
+            var byStr = item.confirmedBy ? ' · ' + util.escHtml(item.confirmedBy) : '';
+            chipHtml = '<span class="fo-status-chip fo-chip-confirmed" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '">&#10003; ' + util.escHtml(dateStr) + byStr + '</span>';
+          } else if (status === 'disregarded') {
+            chipHtml = '<span class="fo-status-chip fo-chip-disregarded" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '">&#8212; disregarded</span>';
+          } else {
+            chipHtml = '<span class="fo-status-chip fo-chip-planned" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '">&#9675; planned</span>';
+          }
+        }
+
+        // Delta display for confirmed inputs where actual differs from planned
+        var deltaHtml = '';
+        if (status === 'confirmed' && item.actualQuantity !== null && (item.sourceType === 'input' || item.sourceType === 'custom')) {
+          var sourceInp = (currentField.inputs || [])[item.sourceIdx];
+          var plannedQ = sourceInp ? (sourceInp.quantity || 0) : 0;
+          if (Math.abs(item.actualQuantity - plannedQ) > 0.001) {
+            deltaHtml = '<br><span style="font-size:0.65rem;color:var(--text-light)">planned: ' + plannedQ + ', actual: ' + item.actualQuantity + '</span>';
+          }
+        }
+
+        var dragTd = isSeed ? '<td></td>' : '<td class="drag-handle" title="Drag to reorder">⠿</td>';
         var removeTd = isSeed
           ? '<td style="text-align:center"><span style="font-size:0.65rem;color:var(--text-light)">Seed tab</span></td>'
           : '<td><button class="btn-danger fo-remove" data-item-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.68rem">X</button></td>';
@@ -708,13 +877,18 @@
           ? '<span style="font-size:0.7rem;color:var(--text-light)">see Seed tab</span>'
           : '$' + util.formatNum(Calc.round2(item.costPerAcre), 2);
         var totalDisplay = item.itemType === 'seed' ? '—' : '$' + util.formatNum(fieldTotal, 2);
-        rowsHtml += '<tr data-global-idx="' + item.globalIdx + '" data-item-type="' + item.itemType + '" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '"' + (!isSeed ? ' data-drag-idx="' + item.sourceIdx + '"' : '') + '>' +
+        rowsHtml += '<tr' + rowClass + ' data-global-idx="' + item.globalIdx + '" data-item-type="' + item.itemType + '" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '"' + (!isSeed ? ' data-drag-idx="' + item.sourceIdx + '"' : '') + '>' +
           dragTd +
-          '<td style="font-size:0.78rem">' + util.escHtml(item.name || '—') + '</td>' +
+          (isSeed
+            ? '<td style="font-size:0.78rem">' + util.escHtml(item.name || '—') + '</td>'
+            : '<td class="fo-name-cell" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.78rem;cursor:pointer;text-decoration:underline dotted" title="Click to swap product">' + util.escHtml(item.name || '—') + '</td>') +
           '<td><span class="fo-type-badge fo-badge-' + item.itemType + '">' + item.itemType + '</span></td>' +
-          '<td class="number" style="font-size:0.75rem">' + util.escHtml(item.rateDisplay) + '</td>' +
-          '<td class="number" style="font-size:0.78rem">' + costDisplay + '</td>' +
-          '<td class="number" style="font-size:0.78rem">' + totalDisplay + '</td>' +
+          '<td>' + chipHtml + '</td>' +
+          (isSeed
+            ? '<td class="number" style="font-size:0.75rem">' + util.escHtml(item.rateDisplay) + '</td>'
+            : '<td class="number fo-rate-cell" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.75rem;cursor:pointer;text-decoration:underline dotted" title="Click to edit rate">' + util.escHtml(item.rateDisplay) + deltaHtml + '</td>') +
+          (isOperator ? '' : '<td class="number" style="font-size:0.78rem">' + costDisplay + '</td>') +
+          (isOperator ? '' : '<td class="number" style="font-size:0.78rem">' + totalDisplay + '</td>') +
           removeTd +
           '</tr>';
       });
@@ -723,11 +897,12 @@
         '<div class="fo-group-header fo-group-toggle" data-group="' + util.escHtml(groupName) + '">' +
         '<span class="fo-group-chevron">&#9662;</span>' +
         '<span class="fo-group-name">' + util.escHtml(groupName) + '</span>' +
+        progressHtml +
         '<span class="fo-group-subtotal">' + subtotalDisplay + '</span>' +
         '</div>' +
         '<div class="fo-group-body">' +
         '<table class="compact-table fo-table" style="width:100%">' +
-        '<thead><tr><th></th><th>Name</th><th>Type</th><th>Rate</th><th>$/ac</th><th>Total $</th><th></th></tr></thead>' +
+        '<thead><tr><th></th><th>Name</th><th>Type</th><th>Status</th><th>Rate</th>' + (isOperator ? '' : '<th>$/ac</th><th>Total $</th>') + '<th></th></tr></thead>' +
         '<tbody>' + rowsHtml + '</tbody>' +
         '</table>' +
         '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(groupName) + '" style="margin-top:0.4rem;font-size:0.72rem">+ Add to ' + util.escHtml(groupName) + '</button>' +
@@ -735,13 +910,26 @@
         '</div>';
     });
 
-    container.innerHTML = html || '<p style="color:var(--text-light);font-size:0.8rem;padding:0.5rem">No inputs or machinery on this field.</p>';
+    if (!html) {
+      var emptyStateHtml = '<p style="color:var(--text-light);font-size:0.8rem;padding:0.25rem 0 0.75rem">No inputs or passes yet — add items by operation type:</p>';
+      window.FieldOpsGroups.GROUP_ORDER.forEach(function (g) {
+        emptyStateHtml +=
+          '<div class="fo-group" data-group="' + util.escHtml(g) + '" style="margin-bottom:0.5rem">' +
+          '<div class="fo-group-header"><span class="fo-group-name">' + util.escHtml(g) + '</span></div>' +
+          '<div class="fo-group-body">' +
+          '<table class="compact-table fo-table" style="width:100%"><thead><tr></tr></thead><tbody></tbody></table>' +
+          '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(g) + '" style="margin-top:0.25rem;font-size:0.72rem">+ Add to ' + util.escHtml(g) + '</button>' +
+          '</div></div>';
+      });
+      html = emptyStateHtml;
+    }
+    container.innerHTML = html;
 
     // Grand total
     var grandPerAc = Calc.round2(grandTotal);
     var grandField = Calc.round2(grandTotal * acres);
     if (grandTotalEl) {
-      grandTotalEl.style.display = grandTotal > 0 ? 'flex' : 'none';
+      grandTotalEl.style.display = (grandTotal > 0 && !isOperator) ? 'flex' : 'none';
       if (grandValEl) grandValEl.textContent = '$' + util.formatNum(grandPerAc, 2) + '/ac';
       if (grandFieldEl) grandFieldEl.textContent = 'Field: $' + util.formatNum(grandField, 2);
     }
@@ -798,6 +986,205 @@
       });
     });
 
+    // Wire rate cell inline edit
+    container.querySelectorAll('.fo-rate-cell').forEach(function (cell) {
+      cell.addEventListener('click', function () {
+        if (cell.querySelector('input')) return; // already open
+        container.querySelectorAll('.fo-confirm-form-row').forEach(function (r) { r.remove(); });
+
+        var sourceType = cell.getAttribute('data-source-type');
+        var sourceIdx = parseInt(cell.getAttribute('data-source-idx'), 10);
+        var arr = sourceType === 'machinery' ? (currentField.machinery || []) : (currentField.inputs || []);
+        var sourceItem = arr[sourceIdx];
+        if (!sourceItem) return;
+
+        var currentVal = sourceType === 'machinery' ? (sourceItem.passes || 1) : (sourceItem.quantity || 0);
+        var label = sourceType === 'machinery' ? 'passes' : 'qty';
+        var origHtml = cell.innerHTML;
+
+        cell.innerHTML = '<input type="number" class="fo-rate-input" value="' + currentVal + '" step="0.1" min="0" ' +
+          'style="width:60px;font-size:0.75rem;padding:0.1rem 0.2rem;text-align:right">' +
+          '<span style="font-size:0.65rem;color:var(--text-light);margin-left:2px">' + label + '</span>';
+
+        var input = cell.querySelector('.fo-rate-input');
+        input.focus();
+        input.select();
+
+        function applyEdit() {
+          var newVal = parseFloat(input.value);
+          if (!isNaN(newVal) && newVal >= 0) {
+            if (sourceType === 'machinery') {
+              sourceItem.passes = newVal;
+            } else {
+              sourceItem.quantity = newVal;
+            }
+            renderFieldOpsPanel();
+            updatePreview();
+          } else {
+            cell.innerHTML = origHtml;
+          }
+        }
+
+        input.addEventListener('blur', applyEdit);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { input.blur(); }
+          if (e.key === 'Escape') { input.removeEventListener('blur', applyEdit); cell.innerHTML = origHtml; }
+        });
+      });
+    });
+
+    // Wire name cell inline swap
+    container.querySelectorAll('.fo-name-cell').forEach(function (cell) {
+      cell.addEventListener('click', function () {
+        if (cell.querySelector('input')) return;
+        container.querySelectorAll('.fo-confirm-form-row').forEach(function (r) { r.remove(); });
+
+        var sourceType = cell.getAttribute('data-source-type');
+        var sourceIdx = parseInt(cell.getAttribute('data-source-idx'), 10);
+        var arr = sourceType === 'machinery' ? (currentField.machinery || []) : (currentField.inputs || []);
+        var sourceItem = arr[sourceIdx];
+        if (!sourceItem) return;
+
+        var currentName = sourceType === 'machinery' ? (sourceItem.implementName || '') : (sourceItem.productName || '');
+        var listId = sourceType === 'machinery' ? 'impl-search-list' : 'prod-search-list';
+        var origHtml = cell.innerHTML;
+
+        cell.innerHTML = '<input type="text" class="fo-name-input" value="' + util.escHtml(currentName) + '" ' +
+          'list="' + listId + '" style="font-size:0.75rem;width:130px;padding:0.1rem 0.2rem">';
+
+        var input = cell.querySelector('.fo-name-input');
+        input.focus();
+        input.select();
+
+        function applyNameEdit() {
+          var newName = input.value.trim();
+          if (newName && newName !== currentName) {
+            if (sourceType === 'machinery') {
+              sourceItem.implementName = newName;
+            } else {
+              sourceItem.productName = newName;
+            }
+            renderFieldOpsPanel();
+            updatePreview();
+          } else {
+            cell.innerHTML = origHtml;
+          }
+        }
+
+        input.addEventListener('blur', applyNameEdit);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { input.blur(); }
+          if (e.key === 'Escape') { input.removeEventListener('blur', applyNameEdit); cell.innerHTML = origHtml; }
+        });
+      });
+    });
+
+    // Wire filter select
+    var filterSelect = document.getElementById('fo-filter-select');
+    if (filterSelect) {
+      filterSelect.onchange = function () {
+        foActiveFilter = filterSelect.value;
+        renderFieldOpsPanel();
+      };
+    }
+
+    // Wire status chip clicks — confirm/disregard/revert form
+    container.querySelectorAll('.fo-status-chip').forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var sourceType = chip.getAttribute('data-source-type');
+        var sourceIdx = parseInt(chip.getAttribute('data-source-idx'), 10);
+        var arr = sourceType === 'machinery' ? (currentField.machinery || []) : (currentField.inputs || []);
+        var sourceItem = arr[sourceIdx];
+        if (!sourceItem) return;
+        var currentStatus = sourceItem.passStatus || 'planned';
+
+        // Close any existing confirm forms
+        container.querySelectorAll('.fo-confirm-form-row').forEach(function (r) { r.remove(); });
+
+        var parentRow = chip.closest('tr');
+        if (!parentRow) return;
+
+        var today = new Date().toISOString().slice(0, 10);
+        var isInputType = sourceType === 'input' || sourceType === 'custom';
+        var plannedQty = isInputType ? (sourceItem.quantity || 0) : null;
+
+        var formRow = document.createElement('tr');
+        formRow.className = 'fo-confirm-form-row';
+
+        var formHtml = '<td colspan="8"><div class="fo-confirm-form-inner">';
+        if (currentStatus !== 'planned') {
+          // Confirmed or disregarded — show revert only
+          formHtml += '<span style="font-size:0.75rem;color:var(--text-light)">Marked as <strong>' + util.escHtml(currentStatus) + '</strong></span>' +
+            '<button class="btn-sm fo-cf-revert" style="font-size:0.72rem">&#8629; Revert to Planned</button>' +
+            '<button class="btn-sm fo-cf-cancel" style="font-size:0.72rem">Cancel</button>';
+        } else {
+          formHtml += '<span style="font-size:0.72rem;color:var(--text-light)">Date:</span>' +
+            '<input type="date" class="fo-cf-date" value="' + today + '" style="font-size:0.75rem;padding:0.15rem">';
+          if (isInputType) {
+            formHtml += '<span style="font-size:0.72rem;color:var(--text-light)">Actual qty:</span>' +
+              '<input type="number" class="fo-cf-qty" value="' + plannedQty + '" step="0.1" style="font-size:0.75rem;width:70px;padding:0.15rem">';
+          }
+          formHtml += '<span style="font-size:0.72rem;color:var(--text-light)">Note:</span>' +
+            '<input type="text" class="fo-cf-note" placeholder="optional" style="font-size:0.75rem;width:90px;padding:0.15rem">' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">By:</span>' +
+            '<input type="text" class="fo-cf-by" placeholder="name" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+            '<button class="btn-sm btn-primary fo-cf-confirm" style="font-size:0.72rem">&#10003; Confirm</button>' +
+            '<button class="btn-sm fo-cf-disregard" style="font-size:0.72rem">&#8212; Disregard</button>' +
+            '<button class="btn-sm fo-cf-cancel" style="font-size:0.72rem">Cancel</button>';
+        }
+        formHtml += '</div></td>';
+        formRow.innerHTML = formHtml;
+        parentRow.insertAdjacentElement('afterend', formRow);
+
+        formRow.querySelector('.fo-cf-cancel').addEventListener('click', function () { formRow.remove(); });
+
+        var confirmBtn = formRow.querySelector('.fo-cf-confirm');
+        if (confirmBtn) {
+          confirmBtn.addEventListener('click', function () {
+            var date = formRow.querySelector('.fo-cf-date').value;
+            var note = formRow.querySelector('.fo-cf-note').value.trim();
+            var by = formRow.querySelector('.fo-cf-by').value.trim();
+            var qtyInput = formRow.querySelector('.fo-cf-qty');
+            sourceItem.passStatus = 'confirmed';
+            sourceItem.confirmedDate = date || today;
+            sourceItem.statusNote = note || null;
+            sourceItem.confirmedBy = by || null;
+            if (isInputType && qtyInput) sourceItem.actualQuantity = parseFloat(qtyInput.value) || sourceItem.quantity;
+            renderFieldOpsPanel();
+            updatePreview();
+          });
+        }
+
+        var disregardBtn = formRow.querySelector('.fo-cf-disregard');
+        if (disregardBtn) {
+          disregardBtn.addEventListener('click', function () {
+            var note = formRow.querySelector('.fo-cf-note').value.trim();
+            var by = formRow.querySelector('.fo-cf-by').value.trim();
+            sourceItem.passStatus = 'disregarded';
+            sourceItem.confirmedDate = null;
+            sourceItem.actualQuantity = null;
+            sourceItem.statusNote = note || null;
+            sourceItem.confirmedBy = by || null;
+            renderFieldOpsPanel();
+            updatePreview();
+          });
+        }
+
+        var revertBtn = formRow.querySelector('.fo-cf-revert');
+        if (revertBtn) {
+          revertBtn.addEventListener('click', function () {
+            sourceItem.passStatus = 'planned';
+            sourceItem.confirmedDate = null;
+            sourceItem.actualQuantity = null;
+            sourceItem.statusNote = null;
+            sourceItem.confirmedBy = null;
+            renderFieldOpsPanel();
+            updatePreview();
+          });
+        }
+      });
+    });
+
     // Add impl-search-list datalist for inline add form (if not already in DOM)
     if (!document.getElementById('impl-search-list')) {
       var implDatalist = document.createElement('datalist');
@@ -836,8 +1223,11 @@
           '<option value="input">Input</option>' +
           '<option value="pass">Pass</option>' +
           '</select>' +
+          '<div style="position:relative;flex:1;min-width:140px">' +
           '<input type="text" class="fo-add-name" placeholder="Product or implement name..." ' +
-          'style="font-size:0.75rem;flex:1;min-width:140px" list="prod-search-list">' +
+          'style="font-size:0.75rem;width:100%">' +
+          '<div class="prod-ac-dropdown fo-add-ac-dropdown"></div>' +
+          '</div>' +
           '<input type="number" class="fo-add-qty" placeholder="Qty/Passes" step="0.1" min="0" ' +
           'style="font-size:0.75rem;width:75px">' +
           '<button class="btn-sm btn-primary fo-add-confirm" style="font-size:0.72rem;padding:0.2rem 0.5rem">Add</button>' +
@@ -847,12 +1237,10 @@
           '<td></td>';
         tbody.appendChild(addRow);
 
-        // Toggle list attr when type changes
         var typeSelect = addRow.querySelector('.fo-add-type');
         var nameInput = addRow.querySelector('.fo-add-name');
-        typeSelect.addEventListener('change', function () {
-          nameInput.setAttribute('list', typeSelect.value === 'pass' ? 'impl-search-list' : 'prod-search-list');
-        });
+        var acDropdown = addRow.querySelector('.fo-add-ac-dropdown');
+        initFoAddAutocomplete(nameInput, typeSelect, acDropdown);
         nameInput.focus();
 
         // Cancel
