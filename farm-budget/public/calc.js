@@ -180,18 +180,26 @@
     result.inputDetails = (field.inputs || []).map(function (inp) {
       var product = findByName(refs.products, inp.productName);
       var appPrice = product ? computeApplicationPrice(product) : 0;
-      var costPerAcre = (inp.quantity || 0) * appPrice;
-      if ((inp.season || '').toLowerCase() === 'spring') springFert += costPerAcre;
-      else if ((inp.season || '').toLowerCase() === 'fall') fallFert += costPerAcre;
-      else unassignedFert += costPerAcre;
+      var isDisregarded = inp.passStatus === 'disregarded';
+      var effectiveQty = isDisregarded ? 0 :
+        ((inp.passStatus === 'confirmed' && inp.actualQuantity != null) ? inp.actualQuantity : (inp.quantity || 0));
+      var costPerAcre = effectiveQty * appPrice;
+      if (!isDisregarded) {
+        if ((inp.season || '').toLowerCase() === 'spring') springFert += costPerAcre;
+        else if ((inp.season || '').toLowerCase() === 'fall') fallFert += costPerAcre;
+        else unassignedFert += costPerAcre;
+      }
       return {
         productName: inp.productName,
         quantity: inp.quantity || 0,
+        actualQuantity: inp.actualQuantity || null,
+        effectiveQuantity: effectiveQty,
         unit: product ? product.unit : '',
         applicationPrice: round4(appPrice),
         costPerAcre: round2(costPerAcre),
         totalCost: round2(costPerAcre * acres),
-        season: inp.season || ''
+        season: inp.season || '',
+        passStatus: inp.passStatus || 'planned'
       };
     });
     result.springFertPerAcre = round2(springFert);
@@ -243,18 +251,22 @@
         cost = impl ? impl.costPerAcre * passes : 0;
         fuel = impl ? impl.fuelGalPerAcre * passes : 0;
       }
-      machCostPerAcre += cost;
-      fuelGallonsPerAcre += fuel;
-      // Accumulate labor hours in same pass (was a separate loop before)
-      if (impl && impl.laborHoursPerAcre > 0) {
-        laborHours += impl.laborHoursPerAcre * passes;
+      var mIsDisregarded = m.passStatus === 'disregarded';
+      if (!mIsDisregarded) {
+        machCostPerAcre += cost;
+        fuelGallonsPerAcre += fuel;
+        // Accumulate labor hours in same pass (was a separate loop before)
+        if (impl && impl.laborHoursPerAcre > 0) {
+          laborHours += impl.laborHoursPerAcre * passes;
+        }
       }
       return {
         implementName: m.implementName,
-        costPerAcre: round2(cost),
-        fuelGalPerAcre: round2(fuel),
+        costPerAcre: round2(mIsDisregarded ? 0 : cost),
+        fuelGalPerAcre: round2(mIsDisregarded ? 0 : fuel),
         passes: passes,
-        isHire: !!useHire
+        isHire: !!useHire,
+        passStatus: m.passStatus || 'planned'
       };
     });
 
@@ -328,7 +340,7 @@
 
     // --- INTEREST ---
     // Configurable carry period: carryMonths / 12 replaces the old hardcoded 0.6 (≈7.2 months/12)
-    var interestRate = pricing ? pricing.interestRate : 0.06;
+    var interestRate = settings.interestRate != null ? settings.interestRate : (pricing ? pricing.interestRate : 0.06);
     var carryFraction = (settings.carryMonths || 6) / 12;
     var interestBase = (
       (result.rentPerCropAcre * 0.5) +
@@ -530,21 +542,9 @@
     return rows;
   }
 
-  // --- Resolve enterprise for a field via Sales > Crop Types sub-crop assignment ---
-  // Looks up field.crop in cropTypes sub-crops and returns the enterprise ID set there.
-  // Falls back to field.enterpriseId for fields whose crop isn't in any sub-crop.
+  // --- Resolve enterprise for a field ---
+  // Uses field.enterpriseId as the canonical assignment.
   function resolveEnterpriseId(field, cropTypes, enterprises) {
-    var key = (field.crop || '').trim().toLowerCase();
-    if (key) {
-      for (var i = 0; i < cropTypes.length; i++) {
-        var subs = cropTypes[i].subCrops || [];
-        for (var j = 0; j < subs.length; j++) {
-          if ((subs[j].name || '').trim().toLowerCase() === key && subs[j].enterpriseId) {
-            return subs[j].enterpriseId;
-          }
-        }
-      }
-    }
     return field.enterpriseId || null;
   }
 
