@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 Phase: 71 of 71 (Unified Field Operations View) — COMPLETE
 Plan: 3 of 3 complete
 Status: Phase 71 Plan 03 complete — cross-group DnD (makeFoGroupsDraggable) + inline add-item forms within each group. Phase 71 fully complete.
-Last activity: 2026-04-20 — Phase 71 complete. Unified Field Ops panel fully ships: classifier, rendering, drag-and-drop, inline add-item.
+Last activity: 2026-04-23 - Completed quick task 1: Fix 3 Field Ops bugs: program apply button unreachable, budget ignores passStatus, actualQuantity not used in budget
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 71 [██████████] COMPLETE
 
@@ -248,6 +248,12 @@ None active.
 ### Blockers/Concerns
 
 None active.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | Fix 3 Field Ops bugs: program apply button unreachable, budget ignores passStatus, actualQuantity not used in budget | 2026-04-23 | d7425f7 | [1-fix-3-field-ops-bugs-program-apply-butto](./quick/1-fix-3-field-ops-bugs-program-apply-butto/) |
 
 ## Session Continuity
 
