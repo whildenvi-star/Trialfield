@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node (for when we build the web wrapper)
+node_modules/
+.next/
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+
+# Outputs from runs
+out/
+output/
+*.log
+
+# Reference outputs are kept; reference inputs are kept
+# but anything in /tmp_runs/ is scratch
+tmp_runs/
