@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { ABLineMap } from "./ABLineMap";
+import { ABLineUpload } from "./ABLineUpload";
 import { BoundaryUpload } from "./BoundaryUpload";
 import type { LatLon, GeoJSONPolygon } from "./ABLineMap";
+import type { ABPoints } from "@/lib/abline";
 
 interface Props {
   aLon: string;
@@ -182,6 +184,17 @@ export function ABLinePanel({
           </div>
         </div>
       </div>
+
+      {/* Guidance line upload — populates A/B from file */}
+      <ABLineUpload
+        onABChange={(pts: ABPoints) => {
+          onChange("aLon", fmt(pts.aLon));
+          onChange("aLat", fmt(pts.aLat));
+          onChange("bLon", fmt(pts.bLon));
+          onChange("bLat", fmt(pts.bLat));
+          setPlacing(null);
+        }}
+      />
 
       {/* Upload path — replaces drawn boundary if used */}
       <BoundaryUpload

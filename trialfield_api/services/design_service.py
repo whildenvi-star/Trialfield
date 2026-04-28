@@ -23,6 +23,8 @@ from trialfield_core.outputs.csv_export import write_plots_csv
 from trialfield_core.outputs.kml import write_kml
 from trialfield_core.outputs.map_render import write_map
 from trialfield_core.outputs.sample_pins import write_sample_pins
+from trialfield_core.outputs.rx_agx import write_rx_agx
+from trialfield_core.outputs.rx_isoxml import write_rx_isoxml
 from trialfield_core.outputs.shapefile import write_rx_shapefile
 from trialfield_core.outputs.summary import write_summary
 
@@ -135,7 +137,12 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     write_plots_csv(plots, trial, trial_name, out_dir)
-    write_rx_shapefile(plots, trial_name, out_dir)
+    if "fieldview" in req.rx_formats:
+        write_rx_shapefile(plots, trial_name, out_dir)
+    if "isoxml" in req.rx_formats:
+        write_rx_isoxml(plots, trial_name, out_dir)
+    if "agx" in req.rx_formats:
+        write_rx_agx(plots, trial_name, out_dir)
     write_ab_line(ab, out_dir / f"{trial_name}_AB_line.zip")
     write_kml(plots, trial, trial_name, out_dir)
     write_sample_pins(plots, trial_name, out_dir)

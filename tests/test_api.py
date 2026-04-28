@@ -81,7 +81,9 @@ def test_design_zip_contains_expected_files():
     assert any(n.endswith("_layout.png") for n in names)
     assert any(n.endswith("_field_map.pdf") for n in names)
     assert any(n.endswith("_AB_line.zip") for n in names)
-    assert len(names) == 8
+    assert any(n.endswith("_Rx_ISOXML.zip") for n in names)
+    assert any(n.endswith("_Rx_AgX.json") for n in names)
+    assert len(names) == 10
 
 
 def test_design_csv_has_24_plots():

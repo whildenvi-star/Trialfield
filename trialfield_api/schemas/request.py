@@ -53,3 +53,4 @@ class DesignRequest(BaseModel):
     geometry: GeometryIn
     soil_mode: Literal["auto", "skip"] = "skip"
     seed: int = 42
+    rx_formats: list[Literal["fieldview", "isoxml", "agx"]] = ["fieldview", "isoxml", "agx"]

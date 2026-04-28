@@ -8,7 +8,7 @@ import { ProseInput } from "@/components/design-form/ProseInput";
 import { FileList } from "@/components/results/FileList";
 import { MapPreview } from "@/components/results/MapPreview";
 import { useDesign } from "@/hooks/useDesign";
-import type { TreatmentIn, TrialType } from "@/lib/types";
+import type { TreatmentIn, TrialType, RxFormat } from "@/lib/types";
 import type { GeoJSONPolygon } from "@/components/design-form/ABLineMap";
 
 const TRIAL_TYPES: TrialType[] = [
@@ -50,6 +50,13 @@ export default function DesignPage() {
   // Options
   const [soilMode, setSoilMode] = useState<"auto" | "skip">("skip");
   const [seed, setSeed] = useState("42");
+  const [rxFormats, setRxFormats] = useState<RxFormat[]>(["fieldview", "isoxml", "agx"]);
+
+  function toggleRxFormat(fmt: RxFormat) {
+    setRxFormats((prev) =>
+      prev.includes(fmt) ? prev.filter((f) => f !== fmt) : [...prev, fmt]
+    );
+  }
 
   function handleAbChange(
     field: "aLon" | "aLat" | "bLon" | "bLat",
@@ -82,6 +89,7 @@ export default function DesignPage() {
       },
       soil_mode: soilMode,
       seed: parseInt(seed),
+      rx_formats: rxFormats,
     });
   }
 
@@ -212,6 +220,30 @@ export default function DesignPage() {
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
               />
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-2">
+              Prescription formats
+            </label>
+            <div className="flex flex-wrap gap-4 text-sm">
+              {(
+                [
+                  { id: "fieldview", label: "FieldView" },
+                  { id: "isoxml", label: "John Deere / ISO" },
+                  { id: "agx", label: "AgX (AgLeader)" },
+                ] as { id: RxFormat; label: string }[]
+              ).map(({ id, label }) => (
+                <label key={id} className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rxFormats.includes(id)}
+                    onChange={() => toggleRxFormat(id)}
+                    className="accent-blue-600"
+                  />
+                  {label}
+                </label>
+              ))}
             </div>
           </div>
         </section>

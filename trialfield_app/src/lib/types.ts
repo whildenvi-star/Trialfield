@@ -31,9 +31,12 @@ export interface GeometryIn {
   field_boundary_geojson?: object | null;
 }
 
+export type RxFormat = "fieldview" | "isoxml" | "agx";
+
 export interface DesignRequest {
   design: DesignSource;
   geometry: GeometryIn;
   soil_mode: "auto" | "skip";
   seed: number;
+  rx_formats: RxFormat[];
 }
