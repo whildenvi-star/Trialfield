@@ -12,9 +12,9 @@ const SCENE_KEY = 'glomalin-scene'
 const VALID_SCENES: SceneType[] = ['mycelium', 'drone', 'seasonal']
 
 const MODULE_GROUPS: { label: string; ids: string[] }[] = [
-  { label: 'Field', ids: ['maps', 'field-history', 'field-timeline', 'macro-rollup'] },
+  { label: 'Field', ids: ['maps', 'field-history', 'field-timeline'] },
   { label: 'Operations', ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
-  { label: 'Finance', ids: ['enterprise-summary', 'marketing', 'grain-tickets', 'farm-budget', 'macro'] },
+  { label: 'Finance', ids: ['macro-rollup', 'enterprise-summary', 'farm-budget', 'grain-tickets'] },
   { label: 'Inputs', ids: ['seed-inventory', 'meristem-malt'] },
 ]
 

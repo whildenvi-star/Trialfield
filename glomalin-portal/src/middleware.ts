@@ -98,17 +98,26 @@ export async function middleware(request: NextRequest) {
     const moduleId = getModuleId(pathname)
 
     if (moduleId) {
-      const { data: access } = await supabase
-        .from('module_access')
-        .select('granted')
-        .eq('user_id', user.id)
-        .eq('module', moduleId)
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
         .single()
 
-      if (!access || access.granted === false) {
-        const dashboardUrl = new URL('/dashboard', request.url)
-        dashboardUrl.searchParams.set('denied', moduleId)
-        return redirectWithCookies(dashboardUrl, response)
+      // Admins bypass module_access checks
+      if (profile?.role !== 'admin') {
+        const { data: access } = await supabase
+          .from('module_access')
+          .select('granted')
+          .eq('user_id', user.id)
+          .eq('module', moduleId)
+          .single()
+
+        if (!access || access.granted === false) {
+          const dashboardUrl = new URL('/dashboard', request.url)
+          dashboardUrl.searchParams.set('denied', moduleId)
+          return redirectWithCookies(dashboardUrl, response)
+        }
       }
     }
 
