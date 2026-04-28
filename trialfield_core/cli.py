@@ -7,6 +7,10 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 import typer
 from shapely.geometry import MultiPolygon, Polygon, box
 
