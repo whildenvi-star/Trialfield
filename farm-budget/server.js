@@ -52,7 +52,7 @@ if (process.env.EMBED_TOKEN) {
 }
 
 // Static files served before API auth so pages always load
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h', etag: true }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, etag: true }));
 
 // API auth gate
 if (process.env.EMBED_TOKEN) {
@@ -81,6 +81,7 @@ let store = {
     fixedMachineryRate: 100.00,
     useFlatRentRate: false,
     wageRate: 25,
+    interestRate: 0.06,
     carryMonths: 6
   },
   enterprises: [],
@@ -96,6 +97,8 @@ let store = {
   sales: [],
   suppliers: [],
   programs: [],
+  machineryPrograms: [],
+  quickPlanConfig: [],
   orders: [],
   deliveries: [],
   unitPacks: [],
@@ -129,6 +132,8 @@ function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     store = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
   }
+  // Guard collections added after initial data.json was created
+  if (!store.quickPlanConfig) store.quickPlanConfig = [];
 }
 
 // Write lock: simple promise queue
@@ -178,6 +183,27 @@ function saveData() {
     }, 500);
   });
 }
+
+// Graceful shutdown: flush any pending debounced save before the process exits.
+// Without this, a `pm2 restart` during the 500ms debounce window silently drops data.
+async function flushAndExit(signal) {
+  if (_saveTimer) {
+    clearTimeout(_saveTimer);
+    _saveTimer = null;
+    const resolvers = _saveResolvers.splice(0);
+    try {
+      await saveDataImmediate();
+      resolvers.forEach(r => r.resolve());
+      console.log('[shutdown] ' + signal + ' — pending save flushed OK');
+    } catch (err) {
+      resolvers.forEach(r => r.reject(err));
+      console.error('[shutdown] Flush failed:', err.message);
+    }
+  }
+  process.exit(0);
+}
+process.on('SIGTERM', () => flushAndExit('SIGTERM'));
+process.on('SIGINT',  () => flushAndExit('SIGINT'));
 
 // Live sync: notify seed-inventory to re-pull forecasts after every save.
 // Fire-and-forget — seed-inventory being down should never block farm-budget.
@@ -235,7 +261,7 @@ app.get('/api/settings', (req, res) => {
 });
 
 app.put('/api/settings', async (req, res) => {
-  const allowed = ['year', 'fuelPricePerGal', 'useFixedMachineryRate', 'fixedMachineryRate', 'useFlatRentRate', 'wageRate', 'carryMonths'];
+  const allowed = ['year', 'fuelPricePerGal', 'useFixedMachineryRate', 'fixedMachineryRate', 'useFlatRentRate', 'wageRate', 'interestRate', 'carryMonths'];
   allowed.forEach(k => {
     if (req.body[k] !== undefined) store.settings[k] = req.body[k];
   });
@@ -301,14 +327,15 @@ app.get('/api/dashboard', (req, res) => {
 app.get('/api/budget-field-details', (req, res) => {
   const refs = getRefs();
   const rows = store.fields.map(field => {
-    const ent = store.enterprises.find(e => e.id === field.enterpriseId);
+    const resolvedEntId = Calc.resolveEnterpriseId(field, store.cropTypes || [], store.enterprises);
+    const ent = store.enterprises.find(e => e.id === resolvedEntId);
     const b = Calc.computeFieldBudget(field, refs, store.settings);
     return {
       fieldId: field.id,
       fieldName: field.name,
       crop: field.crop,
       acres: b.effectiveAcres,
-      enterpriseId: field.enterpriseId,
+      enterpriseId: resolvedEntId,
       enterpriseName: ent ? ent.name : '',
       category: ent ? ent.category : 'conventional',
       // 10 cost categories (per-acre)
@@ -430,6 +457,42 @@ app.get('/api/dashboard-with-actuals', async (req, res) => {
   res.json(dashboard);
 });
 
+// --- Local Invoice Totals (confirmed invoiceCostTotal per enterprise) ---
+app.get('/api/enterprise-invoice-totals', (req, res) => {
+  const byEnterprise = {};
+  const pendingFields = [];
+
+  store.fields.forEach(field => {
+    const entId = Calc.resolveEnterpriseId(field, store.cropTypes || [], store.enterprises);
+    if (!byEnterprise[entId]) byEnterprise[entId] = { inputs: 0, count: 0 };
+
+    let pendingCount = 0;
+    (field.inputs || []).forEach(inp => {
+      if (inp.passStatus === 'confirmed' && inp.invoiceCostTotal != null) {
+        byEnterprise[entId].inputs += inp.invoiceCostTotal;
+        byEnterprise[entId].count += 1;
+      } else if (!inp.passStatus || inp.passStatus === 'planned') {
+        pendingCount++;
+      }
+    });
+
+    if (pendingCount > 0) {
+      pendingFields.push({
+        fieldId: field.id,
+        fieldName: field.name,
+        crop: field.crop || '',
+        enterpriseId: entId,
+        pendingCount
+      });
+    }
+  });
+
+  // Sort pending fields alphabetically
+  pendingFields.sort((a, b) => a.fieldName.localeCompare(b.fieldName));
+
+  res.json({ byEnterprise, pendingFields });
+});
+
 // --- Enterprises ---
 app.get('/api/enterprises', (req, res) => {
   res.json(store.enterprises);
@@ -438,7 +501,9 @@ app.get('/api/enterprises', (req, res) => {
 app.get('/api/enterprises/:id', (req, res) => {
   const ent = store.enterprises.find(e => e.id === req.params.id);
   if (!ent) return res.status(404).json({ error: 'Enterprise not found' });
-  const entFields = store.fields.filter(f => f.enterpriseId === ent.id);
+  const entFields = store.fields.filter(f =>
+    Calc.resolveEnterpriseId(f, store.cropTypes || [], store.enterprises) === ent.id
+  );
   const summary = Calc.computeEnterpriseSummary(entFields, getRefs(), store.settings);
   res.json({ enterprise: ent, ...summary });
 });
@@ -455,7 +520,9 @@ app.put('/api/enterprises/:id', async (req, res) => {
 app.get('/api/fields', (req, res) => {
   let fields = store.fields;
   if (req.query.enterpriseId) {
-    fields = fields.filter(f => f.enterpriseId === req.query.enterpriseId);
+    fields = fields.filter(f =>
+      Calc.resolveEnterpriseId(f, store.cropTypes || [], store.enterprises) === req.query.enterpriseId
+    );
   }
   if (req.query.splitGroupId) {
     fields = fields.filter(f => f.splitGroupId === req.query.splitGroupId);
@@ -499,8 +566,9 @@ app.put('/api/fields/:id', async (req, res) => {
     'acres', 'plantedAcres', 'rentPerAcre', 'inputs', 'seed', 'seeds', 'machinery',
     'yieldPerAcre', 'yieldUnit', 'cropInsurancePerAcre',
     'insuranceIncomePerAcre', 'govPaymentLabel', 'govPaymentsPerAcre',
-    'auxPayments', 'tariffsPerAcre', 'geometry', 'harvestMoisture', 'buyerId', 'templateId',
-    'registryFieldName', 'splitGroupId', 'registryFieldId'
+    'auxPayments', 'tariffsPerAcre', 'geometry', 'harvestMoisture', 'buyerId', 'templateId', 'machineryProgramId',
+    'registryFieldName', 'splitGroupId', 'registryFieldId',
+    'tillage', 'notes'
   ];
   updatable.forEach(k => {
     if (req.body[k] !== undefined) store.fields[idx][k] = req.body[k];
@@ -728,20 +796,6 @@ app.post('/api/fields/sync-registry', async (req, res) => {
     const results = { synced: [], unmatched: [], unchanged: [], splitWarnings: [] };
     let changed = false;
 
-    // --- Pre-pass: count DBL CROP enterprise entries per field name ---
-    // DBL CROP = same physical acres planted with two crops in sequence (e.g. peas then sweet corn).
-    // Each enterprise entry on a DBL CROP field shares the rent equally.
-    // Rent rate formula: baseRate = totalRentDollars / reportingAcres (stable, from registry).
-    // DBL CROP rate = baseRate / count  (e.g. 2 crops → each pays half).
-    // Single crop rate = baseRate.
-    const dblCropCountByFieldName = {}; // lc field name → number of DBL CROP enterprise entries
-    store.fields.forEach(field => {
-      if (field.splitGroupId) return;
-      if ((field.cropType || '').toUpperCase() !== 'DBL CROP') return;
-      const nameKey = (field.name || '').toLowerCase();
-      dblCropCountByFieldName[nameKey] = (dblCropCountByFieldName[nameKey] || 0) + 1;
-    });
-
     store.fields.forEach(field => {
       const { rf: match, exact: exactMatch } = findRegMatch(field.name, field.registryFieldId, field.registryFieldName);
       if (!match) {
@@ -757,24 +811,25 @@ app.post('/api/fields/sync-registry', async (req, res) => {
       let fieldChanged = false;
       const isSplit = !!field.splitGroupId;
 
-      // Sync acres — only for exact name/alias matches (not prefix matches).
-      // Prefix-matched sub-parcels like "OMNI BIG SOUTH" within "Omni" have their own
-      // acreage and must not be overwritten with the registry farm's total reportingAcres.
-      if (!isSplit && exactMatch && Math.abs((field.acres || 0) - match.reportingAcres) > 0.001) {
+      // Sync acres — only when caller explicitly requests it (acresSync=true).
+      // The background auto-sync (fired on every enterprise tab open) skips acres so
+      // manually-set planted/budget acres are not silently overwritten. The "Sync from
+      // Registry" button in the field editor passes acresSync=true for a full sync.
+      // Prefix-matched sub-parcels (e.g. "OMNI BIG SOUTH" inside "Omni") are always skipped.
+      const syncAcres = req.body.acresSync === true;
+      if (syncAcres && !isSplit && exactMatch && Math.abs((field.acres || 0) - match.reportingAcres) > 0.001) {
         field.acres = match.reportingAcres;
         fieldChanged = true;
       }
 
       // Sync rent rate using stable registry-based denominator.
-      // baseRate = totalRentDollars / reportingAcres — fixed regardless of enterprise entries.
-      // DBL CROP fields (two crops on same physical acres) divide baseRate by the number
-      // of DBL CROP enterprise entries sharing those acres so rent is not double-counted.
+      // baseRate = totalRentDollars / reportingAcres — store the FULL farm rate.
+      // calc.js applies cropTypeMultiplier (0.5 for DBL CROP) so we must NOT pre-divide here.
+      // Storing the full rate here + calc.js halving = correct effective rent per crop.
       // Skip for split sub-fields: their acres are handled in the split-group pass below.
       if (!isSplit && match.totalRentDollars > 0) {
         const baseRate = match.totalRentDollars / match.reportingAcres;
-        const isDblCrop = (field.cropType || '').toUpperCase() === 'DBL CROP';
-        const dblCount = isDblCrop ? (dblCropCountByFieldName[(field.name || '').toLowerCase()] || 1) : 1;
-        var rate = Math.round((baseRate / dblCount) * 100) / 100;
+        var rate = Math.round(baseRate * 100) / 100;
         if (Math.abs((field.rentPerAcre || 0) - rate) > 0.001) {
           field.rentPerAcre = rate;
           fieldChanged = true;
@@ -975,7 +1030,14 @@ app.get('/api/dashboard/reconciliation', async (req, res) => {
         });
       }
 
-      var budgetAcres = budgetFields.reduce((sum, f) => sum + (f.acres || 0), 0);
+      // Physical acres: split sub-fields sum (they divide the land); non-split entries
+      // may be double-cropped (same land, different crops) so take the max of those.
+      const splitFields    = budgetFields.filter(f => !!f.splitGroupId);
+      const nonSplitFields = budgetFields.filter(f => !f.splitGroupId);
+      const nonSplitAcres  = nonSplitFields.length ? Math.max(...nonSplitFields.map(f => f.acres || 0)) : 0;
+      const splitAcres     = splitFields.reduce((sum, f) => sum + (f.acres || 0), 0);
+      var budgetAcres = nonSplitAcres + splitAcres;
+
       var delta = Math.round((budgetAcres - rf.reportingAcres) * 100) / 100;
       var status = budgetFields.length === 0 ? 'missing' :
                    Math.abs(delta) < 0.02 ? 'matched' :
@@ -988,7 +1050,8 @@ app.get('/api/dashboard/reconciliation', async (req, res) => {
         budgetAcres: budgetAcres,
         delta: delta,
         status: status,
-        subFields: budgetFields.map(f => ({ name: f.name, acres: f.acres, splitGroupId: f.splitGroupId }))
+        cropCount: nonSplitFields.length,
+        subFields: budgetFields.map(f => ({ name: f.name, crop: f.crop || '', acres: f.acres, splitGroupId: f.splitGroupId }))
       });
     });
 
@@ -1138,31 +1201,86 @@ app.post('/api/programs/:id/apply/:fieldId', async (req, res) => {
 });
 
 // Bulk apply program to multiple fields
+// sections: array of 'inputs' | 'machinery' | 'seed' | 'yield' | 'crop' (default: all)
 app.post('/api/programs/:id/apply-bulk', async (req, res) => {
   const prog = store.programs.find(p => p.id === req.params.id);
   if (!prog) return res.status(404).json({ error: 'Program not found' });
   const fieldIds = req.body.fieldIds || [];
+  const allSections = ['inputs', 'machinery', 'seed', 'yield', 'crop'];
+  const sections = Array.isArray(req.body.sections) && req.body.sections.length
+    ? req.body.sections.filter(s => allSections.includes(s))
+    : allSections;
 
-  const agronomicKeys = [
-    'crop', 'systemCode', 'cropType', 'inputs', 'seed', 'machinery',
-    'yieldPerAcre', 'yieldUnit', 'cropInsurancePerAcre',
-    'harvestMoisture', 'buyerId'
-  ];
+  const sectionKeys = {
+    inputs:   ['inputs'],
+    machinery:['machinery'],
+    seed:     ['seed', 'seeds'],
+    yield:    ['yieldPerAcre', 'yieldUnit', 'harvestMoisture', 'cropInsurancePerAcre'],
+    crop:     ['crop', 'cropType', 'systemCode', 'buyerId']
+  };
+
   var updated = 0;
   fieldIds.forEach(fid => {
     const idx = store.fields.findIndex(f => f.id === fid);
     if (idx === -1) return;
-    agronomicKeys.forEach(k => {
-      if (prog[k] !== undefined) {
-        store.fields[idx][k] = JSON.parse(JSON.stringify(prog[k]));
-      }
+    sections.forEach(sec => {
+      (sectionKeys[sec] || []).forEach(k => {
+        if (prog[k] !== undefined) {
+          store.fields[idx][k] = JSON.parse(JSON.stringify(prog[k]));
+        }
+      });
     });
-    (store.fields[idx].inputs || []).forEach(inp => { inp.id = generateId('inp'); });
-    (store.fields[idx].machinery || []).forEach(m => { m.id = generateId('mach'); });
-    store.fields[idx].templateId = prog.id;
+    if (sections.includes('inputs')) {
+      (store.fields[idx].inputs || []).forEach(inp => { inp.id = generateId('inp'); });
+      store.fields[idx].templateId = prog.id;
+    }
+    if (sections.includes('machinery')) {
+      (store.fields[idx].machinery || []).forEach(m => { m.id = generateId('mach'); });
+    }
     updated++;
   });
 
+  await saveData();
+  res.json({ updated: updated });
+});
+
+// Push machinery program to selected fields — machinery only, inputs/seed/yield untouched
+app.post('/api/machinery-programs/:id/push', async (req, res) => {
+  const prog = store.machineryPrograms.find(p => p.id === req.params.id);
+  if (!prog) return res.status(404).json({ error: 'Machinery program not found' });
+  const fieldIds = req.body.fieldIds || [];
+  var updated = 0;
+  fieldIds.forEach(fid => {
+    const idx = store.fields.findIndex(f => f.id === fid);
+    if (idx === -1) return;
+    store.fields[idx].machinery = JSON.parse(JSON.stringify(prog.machinery || []));
+    store.fields[idx].machinery.forEach(m => { m.id = generateId('mach'); });
+    store.fields[idx].machineryProgramId = prog.id;
+    updated++;
+  });
+  await saveData();
+  res.json({ updated });
+});
+
+// Batch variety swap — seeds only, inputs/machinery/yield left untouched
+app.post('/api/fields/batch-variety', async (req, res) => {
+  const { fieldIds, variety, population } = req.body;
+  if (!Array.isArray(fieldIds) || !fieldIds.length) return res.status(400).json({ error: 'fieldIds required' });
+  if (!variety) return res.status(400).json({ error: 'variety required' });
+  var updated = 0;
+  fieldIds.forEach(fid => {
+    const idx = store.fields.findIndex(f => f.id === fid);
+    if (idx === -1) return;
+    const field = store.fields[idx];
+    const acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    // Keep existing population if caller sends 0 or omits it
+    const existingPop = (field.seeds && field.seeds[0] ? field.seeds[0].population : null) ||
+                        (field.seed ? field.seed.population : null) || 0;
+    const pop = (population && population > 0) ? population : existingPop;
+    field.seeds = [{ variety: variety, population: pop, acres: acres }];
+    field.seed  = { variety: variety, population: pop };
+    updated++;
+  });
   await saveData();
   res.json({ updated: updated });
 });
@@ -1230,6 +1348,12 @@ app.get('/api/seed-varieties', (req, res) => {
   res.json(varieties);
 });
 
+// Machinery Programs
+crudRoutes('machinery-programs', 'machineryPrograms', 'mplan');
+
+// Quick Plan Config — maps (crop, variant, tillage) → (inputProgramId, machineryProgramId)
+crudRoutes('quick-plan-config', 'quickPlanConfig', 'qpc');
+
 // --- Forecast: aggregate field inputs + seeds into procurement view ---
 app.get('/api/forecast', async function (req, res) {
   res.set('Cache-Control', 'no-store');
@@ -1240,9 +1364,18 @@ app.get('/api/forecast', async function (req, res) {
     productIndex[(p.name || '').trim().toLowerCase()] = p;
   });
 
+  // Build enterprise lookup maps
+  var entCatMap = {};
+  var entNameMap = {};
+  (store.enterprises || []).forEach(function (e) {
+    entCatMap[e.id] = e.category || 'conventional';
+    entNameMap[e.id] = e.shortName || e.name || '';
+  });
+
   // Aggregate field inputs
   (store.fields || []).forEach(function (field) {
     var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    var entCat = entCatMap[field.enterpriseId] || 'conventional';
     (field.inputs || []).forEach(function (inp) {
       if (!inp.productName) return;
       var key = inp.productName.trim().toLowerCase();
@@ -1258,68 +1391,23 @@ app.get('/api/forecast', async function (req, res) {
           unitCost: product ? Calc.computeApplicationPrice(product) : 0,
           category: product ? (product.category || 'Other') : 'Other',
           organicGround: product ? !!product.organicGround : false,
-          totalQty: 0,
+          totalQty: 0, convQty: 0, orgQty: 0,
           fields: []
         };
       }
       var fieldQty = (inp.quantity || 0) * acres;
+      var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
       productMap[mapKey].totalQty += fieldQty;
+      if (entCat === 'organic') productMap[mapKey].orgQty += fieldQty;
+      else productMap[mapKey].convQty += fieldQty;
       productMap[mapKey].fields.push({
         fieldName: field.name,
+        enterprise: entNameMap[field.enterpriseId] || '',
         acres: acres,
         qty: fieldQty,
         rate: inp.quantity || 0,
+        cost: Math.round(fieldQty * appPrice * 100) / 100,
         season: inp.season || ''
-      });
-    });
-  });
-
-  // Aggregate program-level inputs (inputs defined in agronomic templates but not on individual fields)
-  (store.programs || []).forEach(function (prog) {
-    if (!prog.inputs || prog.inputs.length === 0) return;
-    // Find fields matching this program's systemCode + crop
-    var matchingFields = (store.fields || []).filter(function (f) {
-      return f.systemCode === prog.systemCode && f.crop === prog.crop;
-    });
-    if (matchingFields.length === 0) return;
-
-    prog.inputs.forEach(function (progInput) {
-      if (!progInput.productName) return;
-      var key = progInput.productName.trim().toLowerCase();
-      var product = productIndex[key];
-      var mapKey = progInput.productName;
-
-      matchingFields.forEach(function (field) {
-        // Skip if this field already has this input (field-level takes precedence)
-        var alreadyOnField = (field.inputs || []).some(function (fi) {
-          return (fi.productName || '').trim().toLowerCase() === key;
-        });
-        if (alreadyOnField) return;
-
-        var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
-        if (!productMap[mapKey]) {
-          productMap[mapKey] = {
-            productName: progInput.productName,
-            supplierId: product ? (product.supplierId || '') : '',
-            unit: product ? (product.unit || '') : '',
-            purchaseUnit: product ? (product.purchaseUnit || product.unit || '') : '',
-            conversionRate: product ? (product.conversionRate || 1) : 1,
-            unitCost: product ? Calc.computeApplicationPrice(product) : 0,
-            category: product ? (product.category || 'Other') : 'Other',
-            organicGround: product ? !!product.organicGround : false,
-            totalQty: 0,
-            fields: []
-          };
-        }
-        var fieldQty = (progInput.quantity || 0) * acres;
-        productMap[mapKey].totalQty += fieldQty;
-        productMap[mapKey].fields.push({
-          fieldName: field.name,
-          acres: acres,
-          qty: fieldQty,
-          rate: progInput.quantity || 0,
-          season: progInput.season || ''
-        });
       });
     });
   });
@@ -1330,28 +1418,43 @@ app.get('/api/forecast', async function (req, res) {
     seedIndex[(s.variety || '').trim().toLowerCase()] = s;
   });
   (store.fields || []).forEach(function (field) {
-    if (!field.seed || !field.seed.variety) return;
-    var s = seedIndex[field.seed.variety.trim().toLowerCase()];
+    var fieldSeeds = field.seeds && field.seeds.length > 0 ? field.seeds : (field.seed ? [field.seed] : []);
+    if (!fieldSeeds.length) return;
     var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
-    var pop = field.seed.population || 0;
-    var seedsPerUnit = s ? (s.seedsPerUnit || 1) : 1;
-    var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
-    var mapKey = 'seed:' + field.seed.variety;
-    if (!productMap[mapKey]) {
-      productMap[mapKey] = {
-        productName: field.seed.variety,
-        supplierId: s ? (s.supplierId || '') : '',
-        unit: 'units',
-        unitCost: s ? (s.pricePerUnit || 0) : 0,
-        category: 'Seed',
-        isSeedVariety: true,
-        organicGround: s ? !!s.organicGround : false,
-        totalQty: 0,
-        fields: []
-      };
-    }
-    productMap[mapKey].totalQty += qty;
-    productMap[mapKey].fields.push({ fieldName: field.name, acres: acres, qty: qty, season: 'Spring' });
+    var seedEntCat = entCatMap[field.enterpriseId] || 'conventional';
+    fieldSeeds.forEach(function (fs) {
+      if (!fs.variety) return;
+      var s = seedIndex[fs.variety.trim().toLowerCase()];
+      var pop = fs.population || 0;
+      var seedsPerUnit = s ? (s.seedsPerUnit || 1) : 1;
+      var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
+      var mapKey = 'seed:' + fs.variety;
+      if (!productMap[mapKey]) {
+        productMap[mapKey] = {
+          productName: fs.variety,
+          supplierId: s ? (s.supplierId || '') : '',
+          unit: 'units',
+          unitCost: s ? (s.pricePerUnit || 0) : 0,
+          category: 'Seed',
+          isSeedVariety: true,
+          organicGround: s ? !!s.organicGround : false,
+          totalQty: 0, convQty: 0, orgQty: 0,
+          fields: []
+        };
+      }
+      productMap[mapKey].totalQty += qty;
+      if (seedEntCat === 'organic') productMap[mapKey].orgQty += qty;
+      else productMap[mapKey].convQty += qty;
+      productMap[mapKey].fields.push({
+        fieldName: field.name,
+        enterprise: entNameMap[field.enterpriseId] || '',
+        acres: acres,
+        qty: qty,
+        rate: pop,
+        cost: Math.round(qty * (s ? (s.pricePerUnit || 0) : 0) * 100) / 100,
+        season: 'Spring'
+      });
+    });
   });
 
   // Pull ordered/delivered quantities from seed-inventory (single source of truth for procurement)
@@ -1393,9 +1496,17 @@ app.get('/api/forecast', async function (req, res) {
     var conv = row.conversionRate || 1;
     var billedQty = row.isSeedVariety ? row.totalQty : Math.ceil(row.totalQty / conv * 100) / 100;
     var billedUnit = row.isSeedVariety ? (row.unit || 'units') : (row.purchaseUnit || row.unit || '');
+    var totalCost = Math.round(row.totalQty * (row.unitCost || 0) * 100) / 100;
+    var cq = row.convQty || 0, oq = row.orgQty || 0;
+    var splitType = cq > 0 && oq > 0 ? 'split' : (oq > 0 ? 'organic' : 'conventional');
+    var convCost = row.totalQty > 0 ? Math.round(totalCost * cq / row.totalQty * 100) / 100 : 0;
+    var orgCost  = row.totalQty > 0 ? Math.round(totalCost * oq / row.totalQty * 100) / 100 : 0;
     grouped[cat].push(Object.assign({}, row, {
       supplierName: supplierMap[row.supplierId] || '',
-      totalCost: Math.round(row.totalQty * (row.unitCost || 0) * 100) / 100,
+      totalCost: totalCost,
+      convCost: convCost,
+      orgCost: orgCost,
+      splitType: splitType,
       billedQty: billedQty,
       billedUnit: billedUnit,
       orderedQty: ordered,
@@ -1499,27 +1610,31 @@ app.get('/api/forecast/organic-ground', function (req, res) {
   var seeds = [];
   var seedMap = {};
   (store.fields || []).forEach(function (field) {
-    if (!field.seed || !field.seed.variety) return;
-    var vKey = field.seed.variety.trim().toLowerCase();
-    if (!seedIndex[vKey]) return; // skip non-organic-ground
-    var s = seedIndex[vKey];
+    var fieldSeeds = field.seeds && field.seeds.length > 0 ? field.seeds : (field.seed ? [field.seed] : []);
+    if (!fieldSeeds.length) return;
     var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
-    var pop = field.seed.population || 0;
-    var seedsPerUnit = s.seedsPerUnit || 1;
-    var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
-    if (!seedMap[vKey]) {
-      seedMap[vKey] = {
-        seedId: s.id,
-        crop: s.crop,
-        brand: s.brand || '',
-        variety: s.variety,
-        totalQty: 0,
-        fields: []
-      };
-      seeds.push(seedMap[vKey]);
-    }
-    seedMap[vKey].totalQty += qty;
-    seedMap[vKey].fields.push({ fieldName: field.name, acres: acres, qty: qty });
+    fieldSeeds.forEach(function (fs) {
+      if (!fs.variety) return;
+      var vKey = fs.variety.trim().toLowerCase();
+      if (!seedIndex[vKey]) return; // skip non-organic-ground
+      var s = seedIndex[vKey];
+      var pop = fs.population || 0;
+      var seedsPerUnit = s.seedsPerUnit || 1;
+      var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
+      if (!seedMap[vKey]) {
+        seedMap[vKey] = {
+          seedId: s.id,
+          crop: s.crop,
+          brand: s.brand || '',
+          variety: s.variety,
+          totalQty: 0,
+          fields: []
+        };
+        seeds.push(seedMap[vKey]);
+      }
+      seedMap[vKey].totalQty += qty;
+      seedMap[vKey].fields.push({ fieldName: field.name, acres: acres, qty: qty });
+    });
   });
 
   res.json({ inputs: inputs, seeds: seeds });
@@ -1561,28 +1676,6 @@ app.get('/api/demand', async function (req, res) {
     });
   });
 
-  // Also aggregate program-level inputs for matching fields
-  (store.programs || []).forEach(function (prog) {
-    if (!prog.inputs || prog.inputs.length === 0) return;
-    var matchingFields = (store.fields || []).filter(function (f) {
-      return f.systemCode === prog.systemCode && f.crop === prog.crop;
-    });
-    if (matchingFields.length === 0) return;
-    prog.inputs.forEach(function (progInput) {
-      if (!progInput.productName) return;
-      var key = progInput.productName.trim().toLowerCase();
-      matchingFields.forEach(function (field) {
-        var alreadyOnField = (field.inputs || []).some(function (fi) {
-          return (fi.productName || '').trim().toLowerCase() === key;
-        });
-        if (alreadyOnField) return;
-        var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
-        if (!productAgg[key]) productAgg[key] = { name: progInput.productName, totalQty: 0 };
-        productAgg[key].totalQty += (progInput.quantity || 0) * acres;
-      });
-    });
-  });
-
   Object.values(productAgg).forEach(function (agg) {
     var product = productIndex[agg.name.trim().toLowerCase()];
     demandRows.push({
@@ -1604,15 +1697,19 @@ app.get('/api/demand', async function (req, res) {
   // Aggregate seeds from field seed assignments
   var seedAgg = {};
   (store.fields || []).forEach(function (field) {
-    if (!field.seed || !field.seed.variety) return;
-    var key = field.seed.variety.trim().toLowerCase();
-    var s = seedIndex[key];
+    var fieldSeeds = field.seeds && field.seeds.length > 0 ? field.seeds : (field.seed ? [field.seed] : []);
+    if (!fieldSeeds.length) return;
     var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
-    var pop = field.seed.population || 0;
-    var seedsPerUnit = s ? (s.seedsPerUnit || 1) : 1;
-    var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
-    if (!seedAgg[key]) seedAgg[key] = { name: field.seed.variety, totalQty: 0 };
-    seedAgg[key].totalQty += qty;
+    fieldSeeds.forEach(function (fs) {
+      if (!fs.variety) return;
+      var key = fs.variety.trim().toLowerCase();
+      var s = seedIndex[key];
+      var pop = fs.population || 0;
+      var seedsPerUnit = s ? (s.seedsPerUnit || 1) : 1;
+      var qty = seedsPerUnit > 0 ? Math.ceil(pop * acres / seedsPerUnit) : 0;
+      if (!seedAgg[key]) seedAgg[key] = { name: fs.variety, totalQty: 0 };
+      seedAgg[key].totalQty += qty;
+    });
   });
 
   Object.values(seedAgg).forEach(function (agg) {
@@ -1911,6 +2008,13 @@ app.post('/api/chat', async (req, res) => {
 
   var userMessage = (req.body.message || '').trim();
   var chatHistory = req.body.history || [];
+  var chatRole = (req.body.role || 'admin').toLowerCase();
+  // Normalize: 'viewer' and 'office' both mean the office persona
+  if (chatRole === 'viewer') chatRole = 'office';
+  var isFullAccess = (chatRole === 'admin' || chatRole === 'agronomist');
+  var isOffice = (chatRole === 'office');
+  var isOperator = (chatRole === 'operator');
+
   if (!userMessage) {
     return res.status(400).json({ error: 'No message provided' });
   }
@@ -1921,25 +2025,47 @@ app.post('/api/chat', async (req, res) => {
   // --- LOCAL: Dashboard & Enterprise Summaries ---
   try {
     var dashboard = Calc.computeDashboard(store.fields, store.enterprises, getRefs(), store.settings, { yieldMode: 'projected' });
-    var entSummary = (dashboard.enterpriseSummaries || []).map(function (s) {
-      var t = s.totals;
-      return s.enterprise.shortName + ': ' + t.acres + ' ac, rent $' + (t.rent || 0).toFixed(0) +
-        ', expenses $' + (t.expTotal || 0).toFixed(0) + ', crop income $' + (t.cropIncome || 0).toFixed(0) +
-        ', profit $' + (t.cropProfit || 0).toFixed(0) + '/ac' +
-        ', w/ payments $' + (t.profitWithPayments || 0).toFixed(0) + '/ac';
-    });
-    contextParts.push('ENTERPRISE SUMMARIES:\n' + entSummary.join('\n'));
+    if (isFullAccess) {
+      // Full financial breakdown
+      var entSummary = (dashboard.enterpriseSummaries || []).map(function (s) {
+        var t = s.totals;
+        return s.enterprise.shortName + ': ' + t.acres + ' ac, rent $' + (t.rent || 0).toFixed(0) +
+          ', expenses $' + (t.expTotal || 0).toFixed(0) + ', crop income $' + (t.cropIncome || 0).toFixed(0) +
+          ', profit $' + (t.cropProfit || 0).toFixed(0) + '/ac' +
+          ', w/ payments $' + (t.profitWithPayments || 0).toFixed(0) + '/ac';
+      });
+      contextParts.push('ENTERPRISE SUMMARIES:\n' + entSummary.join('\n'));
 
-    var cropRows = [];
-    ['conventional', 'organic'].forEach(function (cat) {
-      (dashboard[cat] || []).forEach(function (eg) {
-        (eg.cropRows || []).forEach(function (r) {
-          cropRows.push(eg.enterprise.shortName + ' ' + r.crop + ': ' + r.acres + ' ac, yield ' +
-            r.avgYield + ' ' + (r.unit || 'bu') + '/ac, profit $' + (r.profitPerAcre || 0).toFixed(2) + '/ac, COP $' + (r.cop || 0).toFixed(2) + '/bu');
+      var cropRows = [];
+      ['conventional', 'organic'].forEach(function (cat) {
+        (dashboard[cat] || []).forEach(function (eg) {
+          (eg.cropRows || []).forEach(function (r) {
+            cropRows.push(eg.enterprise.shortName + ' ' + r.crop + ': ' + r.acres + ' ac, yield ' +
+              r.avgYield + ' ' + (r.unit || 'bu') + '/ac, profit $' + (r.profitPerAcre || 0).toFixed(2) + '/ac, COP $' + (r.cop || 0).toFixed(2) + '/bu');
+          });
         });
       });
-    });
-    if (cropRows.length) contextParts.push('CROP DETAIL:\n' + cropRows.join('\n'));
+      if (cropRows.length) contextParts.push('CROP DETAIL:\n' + cropRows.join('\n'));
+    } else {
+      // Office and operator: acres and crop only — no financials
+      var entAcres = (dashboard.enterpriseSummaries || []).map(function (s) {
+        return s.enterprise.shortName + ': ' + s.totals.acres + ' ac';
+      });
+      contextParts.push('ENTERPRISES:\n' + entAcres.join('\n'));
+
+      if (!isOperator) {
+        // Office also gets yield targets (no costs)
+        var cropRowsBasic = [];
+        ['conventional', 'organic'].forEach(function (cat) {
+          (dashboard[cat] || []).forEach(function (eg) {
+            (eg.cropRows || []).forEach(function (r) {
+              cropRowsBasic.push(eg.enterprise.shortName + ' ' + r.crop + ': ' + r.acres + ' ac, yield target ' + r.avgYield + ' ' + (r.unit || 'bu') + '/ac');
+            });
+          });
+        });
+        if (cropRowsBasic.length) contextParts.push('CROP DETAIL:\n' + cropRowsBasic.join('\n'));
+      }
+    }
   } catch (e) {
     contextParts.push('Dashboard data unavailable: ' + e.message);
   }
@@ -1947,112 +2073,170 @@ app.post('/api/chat', async (req, res) => {
   // --- LOCAL: Field-level data ---
   try {
     var refs = getRefs();
-    var fieldLines = store.fields.map(function (f) {
-      var ent = store.enterprises.find(function (e) { return e.id === f.enterpriseId; });
-      var entName = ent ? ent.shortName : 'unassigned';
-      var b = Calc.computeFieldBudget(f, refs, store.settings);
-      return f.name + ' (' + entName + '): ' + (f.acres || 0) + ' ac, crop ' + (f.crop || 'none') +
-        ', rent $' + (f.rentPerAcre || 0).toFixed(0) + '/ac' +
-        ', input $' + (b.totalFertPerAcre || 0).toFixed(0) + '/ac' +
-        ', seed $' + (b.seedCostPerAcre || 0).toFixed(0) + '/ac' +
-        ', mach $' + (b.machineryPerAcre || 0).toFixed(0) + '/ac' +
-        ', yield ' + (b.yieldPerAcre || 0) + ' ' + (b.yieldUnit || 'bu') + '/ac' +
-        ', exp $' + (b.expPerAcre || 0).toFixed(0) + '/ac' +
-        ', profit $' + (b.profitPerAcre || 0).toFixed(0) + '/ac';
-    });
+    var fieldLines;
+    if (isFullAccess) {
+      fieldLines = store.fields.map(function (f) {
+        var resolvedEntId = Calc.resolveEnterpriseId(f, store.cropTypes || [], store.enterprises);
+        var ent = store.enterprises.find(function (e) { return e.id === resolvedEntId; });
+        var entName = ent ? ent.shortName : 'unassigned';
+        var b = Calc.computeFieldBudget(f, refs, store.settings);
+        return f.name + ' (' + entName + '): ' + (f.acres || 0) + ' ac, crop ' + (f.crop || 'none') +
+          ', rent $' + (f.rentPerAcre || 0).toFixed(0) + '/ac' +
+          ', input $' + (b.totalFertPerAcre || 0).toFixed(0) + '/ac' +
+          ', seed $' + (b.seedCostPerAcre || 0).toFixed(0) + '/ac' +
+          ', mach $' + (b.machineryPerAcre || 0).toFixed(0) + '/ac' +
+          ', yield ' + (b.yieldPerAcre || 0) + ' ' + (b.yieldUnit || 'bu') + '/ac' +
+          ', exp $' + (b.expPerAcre || 0).toFixed(0) + '/ac' +
+          ', profit $' + (b.profitPerAcre || 0).toFixed(0) + '/ac';
+      });
+    } else {
+      // Office and operator: name, enterprise, acres, crop only
+      fieldLines = store.fields.map(function (f) {
+        var resolvedEntId = Calc.resolveEnterpriseId(f, store.cropTypes || [], store.enterprises);
+        var ent = store.enterprises.find(function (e) { return e.id === resolvedEntId; });
+        var entName = ent ? ent.shortName : 'unassigned';
+        return f.name + ' (' + entName + '): ' + (f.acres || 0) + ' ac, crop ' + (f.crop || 'none');
+      });
+    }
     if (fieldLines.length) contextParts.push('FIELDS (' + fieldLines.length + '):\n' + fieldLines.join('\n'));
   } catch (e) { /* skip */ }
 
   // --- LOCAL: Programs (agronomic templates) ---
-  try {
-    if (store.programs && store.programs.length) {
-      var progLines = store.programs.map(function (p) {
-        var linkedCount = store.fields.filter(function (f) { return f.templateId === p.id; }).length;
-        var inputCount = (p.inputs || []).length;
-        return p.name + ' (' + (p.crop || 'unknown') + ', ' + (p.systemCode || '') + '): ' +
-          linkedCount + ' fields, ' + inputCount + ' inputs' +
-          ', yield ' + (p.yieldPerAcre || 0) + ' ' + (p.yieldUnit || 'bu') + '/ac' +
-          ', ins $' + (p.cropInsurancePerAcre || 0).toFixed(0) + '/ac';
-      });
-      contextParts.push('PROGRAMS (' + store.programs.length + '):\n' + progLines.join('\n'));
-    }
-  } catch (e) { /* skip */ }
+  // Office gets program names/crops for scheduling context; operator skips; full access gets detail
+  if (!isOperator) {
+    try {
+      if (store.programs && store.programs.length) {
+        var progLines = store.programs.map(function (p) {
+          var linkedCount = store.fields.filter(function (f) { return f.templateId === p.id; }).length;
+          if (isFullAccess) {
+            var inputCount = (p.inputs || []).length;
+            return p.name + ' (' + (p.crop || 'unknown') + ', ' + (p.systemCode || '') + '): ' +
+              linkedCount + ' fields, ' + inputCount + ' inputs' +
+              ', yield ' + (p.yieldPerAcre || 0) + ' ' + (p.yieldUnit || 'bu') + '/ac' +
+              ', ins $' + (p.cropInsurancePerAcre || 0).toFixed(0) + '/ac';
+          } else {
+            return p.name + ' (' + (p.crop || 'unknown') + '): ' + linkedCount + ' fields';
+          }
+        });
+        contextParts.push('PROGRAMS (' + store.programs.length + '):\n' + progLines.join('\n'));
+      }
+    } catch (e) { /* skip */ }
+  }
 
   // --- LOCAL: Procurement (orders & deliveries) ---
-  try {
-    if (store.orders && store.orders.length) {
-      var orderLines = store.orders.map(function (o) {
-        var itemSummary = (o.items || []).map(function (it) {
-          var cost = (it.orderedQty || 0) * (it.unitCost || 0);
-          return it.productName + ' ' + (it.orderedQty || 0) + ' ' + (it.unit || 'units') + ' $' + cost.toFixed(0);
-        }).join('; ');
-        return (o.supplierName || 'TBD') + ' [' + (o.status || 'pending') + ']: ' + (itemSummary || 'no items');
-      });
-      contextParts.push('ORDERS (' + store.orders.length + '):\n' + orderLines.join('\n'));
-    }
-    if (store.deliveries && store.deliveries.length) {
-      var delLines = store.deliveries.map(function (d) {
-        var itemSummary = (d.items || []).map(function (it) {
-          return it.productName + ' ' + (it.deliveredQty || 0) + ' ' + (it.unit || 'units');
-        }).join('; ');
-        return (d.ticketNumber || 'no-ticket') + ' (' + (d.deliveredAt || 'unknown date') + '): ' + (itemSummary || 'no items');
-      });
-      contextParts.push('DELIVERIES (' + store.deliveries.length + '):\n' + delLines.join('\n'));
-    }
-  } catch (e) { /* skip */ }
+  if (isFullAccess) {
+    try {
+      if (store.orders && store.orders.length) {
+        var orderLines = store.orders.map(function (o) {
+          var itemSummary = (o.items || []).map(function (it) {
+            var cost = (it.orderedQty || 0) * (it.unitCost || 0);
+            return it.productName + ' ' + (it.orderedQty || 0) + ' ' + (it.unit || 'units') + ' $' + cost.toFixed(0);
+          }).join('; ');
+          return (o.supplierName || 'TBD') + ' [' + (o.status || 'pending') + ']: ' + (itemSummary || 'no items');
+        });
+        contextParts.push('ORDERS (' + store.orders.length + '):\n' + orderLines.join('\n'));
+      }
+      if (store.deliveries && store.deliveries.length) {
+        var delLines = store.deliveries.map(function (d) {
+          var itemSummary = (d.items || []).map(function (it) {
+            return it.productName + ' ' + (it.deliveredQty || 0) + ' ' + (it.unit || 'units');
+          }).join('; ');
+          return (d.ticketNumber || 'no-ticket') + ' (' + (d.deliveredAt || 'unknown date') + '): ' + (itemSummary || 'no items');
+        });
+        contextParts.push('DELIVERIES (' + store.deliveries.length + '):\n' + delLines.join('\n'));
+      }
+    } catch (e) { /* skip */ }
+  } else if (isOffice) {
+    // Office can see delivery status (what arrived) but not costs
+    try {
+      if (store.deliveries && store.deliveries.length) {
+        var delLinesOffice = store.deliveries.map(function (d) {
+          var itemSummary = (d.items || []).map(function (it) {
+            return it.productName + ' ' + (it.deliveredQty || 0) + ' ' + (it.unit || 'units');
+          }).join('; ');
+          return (d.ticketNumber || 'no-ticket') + ' (' + (d.deliveredAt || 'unknown date') + '): ' + (itemSummary || 'no items');
+        });
+        contextParts.push('DELIVERIES (' + store.deliveries.length + '):\n' + delLinesOffice.join('\n'));
+      }
+    } catch (e) { /* skip */ }
+  }
 
   // --- LOCAL: Seeds ---
   try {
     if (store.seeds && store.seeds.length) {
       var seedLines = store.seeds.map(function (s) {
-        return (s.variety || 'unknown') + ': ' + (s.crop || '') +
-          ', ' + (s.brand || '') +
-          ', $' + (s.pricePerUnit || 0).toFixed(2) + '/unit' +
-          ', ' + (s.seedsPerUnit || 0) + ' seeds/unit';
+        if (isFullAccess) {
+          return (s.variety || 'unknown') + ': ' + (s.crop || '') +
+            ', ' + (s.brand || '') +
+            ', $' + (s.pricePerUnit || 0).toFixed(2) + '/unit' +
+            ', ' + (s.seedsPerUnit || 0) + ' seeds/unit';
+        } else {
+          // Office and operator: variety and crop only — no prices
+          return (s.variety || 'unknown') + ': ' + (s.crop || '') + (s.brand ? ', ' + s.brand : '');
+        }
       });
       contextParts.push('SEED VARIETIES (' + store.seeds.length + '):\n' + seedLines.join('\n'));
     }
   } catch (e) { /* skip */ }
 
   // --- LOCAL: Sales / Buyers ---
-  try {
-    if (store.sales && store.sales.length) {
-      var saleLines = store.sales.map(function (s) {
-        return (s.buyer || s.buyerName || 'unknown') + ': ' + (s.crop || '') +
-          ' ' + (s.bushels || s.quantity || 0) + ' bu @ $' + (s.pricePerBu || s.price || 0).toFixed(2);
-      });
-      contextParts.push('SALES CONTRACTS (' + store.sales.length + '):\n' + saleLines.join('\n'));
-    }
-    if (store.buyers && store.buyers.length) {
-      contextParts.push('BUYERS: ' + store.buyers.map(function (b) { return b.name; }).join(', '));
-    }
-  } catch (e) { /* skip */ }
+  if (isFullAccess) {
+    try {
+      if (store.sales && store.sales.length) {
+        var saleLines = store.sales.map(function (s) {
+          return (s.buyer || s.buyerName || 'unknown') + ': ' + (s.crop || '') +
+            ' ' + (s.bushels || s.quantity || 0) + ' bu @ $' + (s.pricePerBu || s.price || 0).toFixed(2);
+        });
+        contextParts.push('SALES CONTRACTS (' + store.sales.length + '):\n' + saleLines.join('\n'));
+      }
+      if (store.buyers && store.buyers.length) {
+        contextParts.push('BUYERS: ' + store.buyers.map(function (b) { return b.name; }).join(', '));
+      }
+    } catch (e) { /* skip */ }
+  } else if (isOffice) {
+    // Office sees buyer list and bushel quantities but not prices
+    try {
+      if (store.sales && store.sales.length) {
+        var saleLinesOffice = store.sales.map(function (s) {
+          return (s.buyer || s.buyerName || 'unknown') + ': ' + (s.crop || '') +
+            ' ' + (s.bushels || s.quantity || 0) + ' bu';
+        });
+        contextParts.push('SALES CONTRACTS (' + store.sales.length + '):\n' + saleLinesOffice.join('\n'));
+      }
+      if (store.buyers && store.buyers.length) {
+        contextParts.push('BUYERS: ' + store.buyers.map(function (b) { return b.name; }).join(', '));
+      }
+    } catch (e) { /* skip */ }
+  }
 
-  // --- LOCAL: Futures ---
-  try {
-    if (futuresCache.data) {
-      var futStr = futuresCache.data.map(function (f) {
-        if (f.error) return f.label + ': unavailable';
-        return f.label + ' (' + f.contract + '): $' + f.price + '/bu, chg ' +
-          (f.change >= 0 ? '+' : '') + f.change + ' (' + f.changePct + '%)';
-      }).join('\n');
-      contextParts.push('CBOT FUTURES:\n' + futStr);
-    }
-  } catch (e) { /* skip */ }
+  // --- LOCAL: Futures (office sees market prices; operator does not) ---
+  if (isFullAccess || isOffice) {
+    try {
+      if (futuresCache.data) {
+        var futStr = futuresCache.data.map(function (f) {
+          if (f.error) return f.label + ': unavailable';
+          return f.label + ' (' + f.contract + '): $' + f.price + '/bu, chg ' +
+            (f.change >= 0 ? '+' : '') + f.change + ' (' + f.changePct + '%)';
+        }).join('\n');
+        contextParts.push('CBOT FUTURES:\n' + futStr);
+      }
+    } catch (e) { /* skip */ }
+  }
 
   // --- LOCAL: Settings & Counts ---
-  contextParts.push('SETTINGS: Season ' + (store.settings.year || 'N/A') +
-    ', fuel $' + (store.settings.fuelPrice || 0) + '/gal' +
-    ', machinery $' + (store.settings.machineryRate || 0) + '/ac' +
-    ', wage $' + (store.settings.wageRate || 0) + '/hr' +
-    ', carry months ' + (store.settings.carryMonths || 0));
+  if (isFullAccess) {
+    contextParts.push('SETTINGS: Season ' + (store.settings.year || 'N/A') +
+      ', fuel $' + (store.settings.fuelPrice || 0) + '/gal' +
+      ', machinery $' + (store.settings.machineryRate || 0) + '/ac' +
+      ', wage $' + (store.settings.wageRate || 0) + '/hr' +
+      ', carry months ' + (store.settings.carryMonths || 0));
+  } else {
+    contextParts.push('SEASON: ' + (store.settings.year || 'N/A'));
+  }
 
   contextParts.push('NETWORK: ' + (store.fields || []).length + ' budget fields, ' +
     (store.enterprises || []).length + ' enterprises, ' +
-    (store.products || []).length + ' products, ' +
-    (store.seeds || []).length + ' seed varieties, ' +
-    (store.orders || []).length + ' orders, ' +
-    (store.deliveries || []).length + ' deliveries');
+    (store.seeds || []).length + ' seed varieties');
 
   // --- CROSS-MODULE: Parallel queries with 3s timeout ---
   var crossModuleQueries = [
@@ -2106,29 +2290,52 @@ app.post('/api/chat', async (req, res) => {
     if (latestAudit && latestAudit.alerts) {
       var unresolvedAlerts = latestAudit.alerts.filter(function (a) { return !a.resolved; });
       if (unresolvedAlerts.length > 0) {
-        var auditErrors = unresolvedAlerts.filter(function (a) { return a.severity === 'error'; });
-        var auditWarnings = unresolvedAlerts.filter(function (a) { return a.severity === 'warning'; });
-        var alertLines = ['AUDIT ALERTS (' + unresolvedAlerts.length + ' unresolved, last run ' + latestAudit.runAt + '):'];
-        auditErrors.forEach(function (a) {
-          alertLines.push('[ERROR] ' + a.message);
-        });
-        auditWarnings.slice(0, 10).forEach(function (a) {
-          alertLines.push('[WARN] ' + a.message);
-        });
-        if (auditWarnings.length > 10) alertLines.push('... and ' + (auditWarnings.length - 10) + ' more warnings');
-        contextParts.push(alertLines.join('\n'));
+        // Financial alerts (rent, cost, profit mentions) are hidden from non-admin roles
+        var financialKeywords = /rent|cost|profit|expense|price|budget|income|margin/i;
+        var visibleAlerts = isFullAccess
+          ? unresolvedAlerts
+          : unresolvedAlerts.filter(function (a) { return !financialKeywords.test(a.message); });
+        if (visibleAlerts.length > 0) {
+          var auditErrors = visibleAlerts.filter(function (a) { return a.severity === 'error'; });
+          var auditWarnings = visibleAlerts.filter(function (a) { return a.severity === 'warning'; });
+          var alertLines = ['AUDIT ALERTS (' + visibleAlerts.length + ' unresolved, last run ' + latestAudit.runAt + '):'];
+          auditErrors.forEach(function (a) { alertLines.push('[ERROR] ' + a.message); });
+          auditWarnings.slice(0, 10).forEach(function (a) { alertLines.push('[WARN] ' + a.message); });
+          if (auditWarnings.length > 10) alertLines.push('... and ' + (auditWarnings.length - 10) + ' more warnings');
+          contextParts.push(alertLines.join('\n'));
+        }
       }
     }
   } catch (e) { /* skip */ }
 
-  var systemPrompt = 'You are Glomalin, the terminal AI for a farming operation\'s macro rollup dashboard. ' +
-    'You have access to live data from the entire Glomalin network — farm budget, grain tickets, ' +
-    'farm registry, FSA acres, and CBOT futures. Answer questions concisely in a terminal style — ' +
-    'short, data-driven responses. Use numbers and units. No markdown headers or bullet lists — plain text, ' +
-    'line breaks for structure. Keep responses under 200 words unless the user asks for detail. ' +
-    'If there are AUDIT ALERTS in the data, proactively mention them when relevant. When a user asks about ' +
-    'a field with audit issues, cite the specific alerts. Recommend the user investigate flagged items.\n\n' +
-    'LIVE DATA:\n' + contextParts.join('\n\n');
+  // --- Build role-appropriate system prompt ---
+  var systemPrompt;
+  if (isOperator) {
+    systemPrompt = 'You are Glomalin, a field operations assistant for a farming operation. ' +
+      'You help operators understand what crops are planted in each field, field assignments, acreage, and harvest logistics. ' +
+      'You do NOT have access to financial information — costs, rent, prices, budgets, or profitability are outside your knowledge. ' +
+      'If asked about finances, politely explain that financial data is not available in your view. ' +
+      'Answer concisely in a terminal style — short, data-driven responses. Plain text, line breaks for structure. ' +
+      'Keep responses under 150 words.\n\nLIVE DATA:\n' + contextParts.join('\n\n');
+  } else if (isOffice) {
+    systemPrompt = 'You are Glomalin, an office assistant for a farming operation. ' +
+      'You help with scheduling, tracking deliveries, understanding what crops are planted where, ' +
+      'grain ticket counts, and reviewing sales contract quantities and market prices. ' +
+      'You do NOT have access to detailed financial information — per-field costs, rent rates, input costs, ' +
+      'profitability, or budget details are not available in your view. ' +
+      'If asked about costs or financial details, politely explain that those figures are not in your view. ' +
+      'Answer concisely in a terminal style — short, data-driven responses. Plain text, line breaks for structure. ' +
+      'Keep responses under 200 words.\n\nLIVE DATA:\n' + contextParts.join('\n\n');
+  } else {
+    systemPrompt = 'You are Glomalin, the terminal AI for a farming operation\'s macro rollup dashboard. ' +
+      'You have access to live data from the entire Glomalin network — farm budget, grain tickets, ' +
+      'farm registry, FSA acres, and CBOT futures. Answer questions concisely in a terminal style — ' +
+      'short, data-driven responses. Use numbers and units. No markdown headers or bullet lists — plain text, ' +
+      'line breaks for structure. Keep responses under 200 words unless the user asks for detail. ' +
+      'If there are AUDIT ALERTS in the data, proactively mention them when relevant. When a user asks about ' +
+      'a field with audit issues, cite the specific alerts. Recommend the user investigate flagged items.\n\n' +
+      'LIVE DATA:\n' + contextParts.join('\n\n');
+  }
 
   // Build messages array
   var messages = [];
@@ -2323,6 +2530,22 @@ function migrateData() {
   }
   if (store.settings.carryMonths === undefined) {
     store.settings.carryMonths = 6;
+    changed = true;
+  }
+  // Seed boilerplate machinery program templates
+  if (!store.machineryPrograms || !store.machineryPrograms.length) {
+    store.machineryPrograms = [
+      { id: 'mplan_notill_soy',     name: 'No-Till Soybeans',    description: 'No-till — planter, weed zapper ×2, harvest',                   machinery: [{ implementName:'Planter',passes:1},{ implementName:'Weed Zapper',passes:2},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] },
+      { id: 'mplan_notill_corn',    name: 'No-Till Corn',         description: 'No-till — planter, stalk chopper, harvest',                    machinery: [{ implementName:'Planter',passes:1},{ implementName:'Stalk Choper',passes:1},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] },
+      { id: 'mplan_conv_soy',       name: 'Conventional Soybeans',description: 'Tilled — disk, soil finisher ×2, planter, weed zapper, harvest', machinery: [{ implementName:'Disk',passes:1},{ implementName:'Soil Finisher',passes:2},{ implementName:'Planter',passes:1},{ implementName:'Weed Zapper',passes:1},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] },
+      { id: 'mplan_conv_corn',      name: 'Conventional Corn',    description: 'Tilled — disk, soil finisher ×2, planter, stalk chopper, harvest', machinery: [{ implementName:'Disk',passes:1},{ implementName:'Soil Finisher',passes:2},{ implementName:'Planter',passes:1},{ implementName:'Stalk Choper',passes:1},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] },
+      { id: 'mplan_org_soy',        name: 'Organic Soybeans',     description: 'Organic — disk, soil finisher ×2, planter, rotary hoe ×2, cultivator ×2, hooded redball, harvest', machinery: [{ implementName:'Disk',passes:1},{ implementName:'Soil Finisher',passes:2},{ implementName:'Planter',passes:1},{ implementName:'Rotary Hoe 60',passes:2},{ implementName:'Cultivator 12',passes:2},{ implementName:'Hooded Redball',passes:1},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] },
+      { id: 'mplan_org_seed_corn',  name: 'Organic Seed Corn',    description: 'Organic seed corn — full cultivation + detasseling',           machinery: [{ implementName:'Disk',passes:1},{ implementName:'Soil Finisher',passes:2},{ implementName:'Planter',passes:1},{ implementName:'Rotary Hoe 60',passes:1},{ implementName:'Tine Weed 80',passes:1},{ implementName:'Cultivator 12',passes:2},{ implementName:'detassle cut',passes:1},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] },
+      { id: 'mplan_org_wheat',      name: 'Organic Wheat',        description: 'Organic wheat — drill seeded, spinner fertility',              machinery: [{ implementName:'Disk',passes:1},{ implementName:'Soil Finisher',passes:1},{ implementName:'Drill',passes:1},{ implementName:'Spinner',passes:2},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] },
+      { id: 'mplan_canning_beans',  name: 'Canning Beans',        description: 'Canning / food beans — soil finisher ×2, planter, harvest',   machinery: [{ implementName:'Soil Finisher',passes:2},{ implementName:'Planter',passes:1},{ implementName:'Weed Zapper',passes:1},{ implementName:'Combine + Buggy',passes:1}] },
+      { id: 'mplan_canning_corn',   name: 'Canning Corn',         description: 'Canning corn — disk, soil finisher ×2, planter, harvest',     machinery: [{ implementName:'Disk',passes:1},{ implementName:'Soil Finisher',passes:2},{ implementName:'Planter',passes:1},{ implementName:'Combine + Buggy',passes:1}] },
+      { id: 'mplan_hybrid_rye',     name: 'Hybrid Seed Rye',      description: 'Hybrid rye — disk, soil finisher, drill, spinner ×2, harvest', machinery: [{ implementName:'Disk',passes:1},{ implementName:'Soil Finisher',passes:1},{ implementName:'Drill',passes:1},{ implementName:'Spinner',passes:2},{ implementName:'Combine + Buggy',passes:1},{ implementName:'Trucking',passes:1}] }
+    ];
     changed = true;
   }
   // Add harvestMoisture and buyerId to fields
