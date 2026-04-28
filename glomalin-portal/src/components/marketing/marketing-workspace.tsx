@@ -11,7 +11,6 @@ import type {
 } from '@/lib/marketing/types'
 import type { BudgetField } from '@/app/(protected)/app/macro-rollup/page'
 import { computeCommodityPositions } from '@/lib/marketing/queries'
-import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { HedgingDashboard } from './hedging-dashboard'
 import { CommodityTable } from './commodity-table'
 import { InstrumentForm } from './instrument-form'

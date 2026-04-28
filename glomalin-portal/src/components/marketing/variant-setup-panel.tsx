@@ -50,8 +50,6 @@ export function VariantSetupPanel({
   const [error, setError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
 
-  const commodityMap = new Map(commodities.map((c) => [c.id, c]))
-
   function updateEdit(id: string, patch: Partial<VariantEdit>) {
     setEdits((prev) => ({ ...prev, [id]: { ...prev[id], ...patch, dirty: true } }))
   }
