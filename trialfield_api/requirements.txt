@@ -1,0 +1,4 @@
+# FastAPI sidecar deps — trialfield-core is installed as an editable dep from ../
+fastapi>=0.111
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
