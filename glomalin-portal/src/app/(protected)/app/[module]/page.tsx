@@ -3,9 +3,18 @@ import { notFound } from 'next/navigation'
 import { MODULES, getEmbedUrl } from '@/lib/modules'
 import { EmbedFrame } from '@/components/embed-frame'
 import { EmbedBreadcrumb } from '@/components/embed-breadcrumb'
+import { createClient } from '@/lib/supabase/server'
 
 interface ModulePageProps {
   params: Promise<{ module: string }>
+}
+
+// Map DB role values to iframe-visible role names
+const EMBED_ROLE_MAP: Record<string, string> = {
+  admin: 'admin',
+  agronomist: 'agronomist',
+  operator: 'operator',
+  viewer: 'office',
 }
 
 export default async function ModulePage({ params }: ModulePageProps) {
@@ -44,10 +53,25 @@ export default async function ModulePage({ params }: ModulePageProps) {
       )
     }
 
+    // Resolve the user's role and pass it to the embedded app
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    let embedRole = 'admin'
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      const dbRole = profile?.role ?? 'viewer'
+      embedRole = EMBED_ROLE_MAP[dbRole] ?? dbRole
+    }
+    const roleUrl = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'role=' + embedRole
+
     return (
       <>
         <EmbedBreadcrumb moduleLabel={mod.label} moduleSublabel={mod.sublabel} />
-        <EmbedFrame src={embedUrl} title={mod.label} />
+        <EmbedFrame src={roleUrl} title={mod.label} />
       </>
     )
   }

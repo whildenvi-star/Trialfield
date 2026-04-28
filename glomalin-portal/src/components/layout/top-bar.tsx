@@ -40,11 +40,9 @@ interface TopBarProps {
     fullName: string | null
     role: string
   }
-  /** Module IDs the user has been granted access to. null = show all (admin). */
-  grantedModules: string[] | null
 }
 
-export default function TopBar({ user, grantedModules }: TopBarProps) {
+export default function TopBar({ user }: TopBarProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
   const [bannerDisabled, setBannerDisabled] = useState<boolean>(readBannerPref)
@@ -117,8 +115,8 @@ export default function TopBar({ user, grantedModules }: TopBarProps) {
                 Dashboard
               </NavTab>
 
-              {/* Module tabs — filtered to granted modules only */}
-              {MODULES.filter((mod) => grantedModules === null || grantedModules.includes(mod.id)).map((mod) => (
+              {/* Module tabs */}
+              {MODULES.map((mod) => (
                 <NavTab
                   key={mod.id}
                   href={mod.route}

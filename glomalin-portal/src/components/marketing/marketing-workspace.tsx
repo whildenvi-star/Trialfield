@@ -1,125 +1,34 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import type { GrainContract, CbotPrice, MarketingPosition } from '@/lib/marketing/types'
+import type {
+  Commodity,
+  CropVariant,
+  SaleInstrument,
+  CbotPrice,
+  CommodityPosition,
+  YieldSummary,
+} from '@/lib/marketing/types'
+import type { BudgetField } from '@/app/(protected)/app/macro-rollup/page'
+import { computeCommodityPositions } from '@/lib/marketing/queries'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
-import { PositionTable } from './position-table'
-import { ContractDrawer } from './contract-drawer'
+import { HedgingDashboard } from './hedging-dashboard'
+import { CommodityTable } from './commodity-table'
+import { InstrumentForm } from './instrument-form'
+import { VariantSetupPanel } from './variant-setup-panel'
 
 interface MarketingWorkspaceProps {
-  initialContracts: GrainContract[]
-  initialPositions: MarketingPosition[]
+  commodities: Commodity[]
+  initialVariants: CropVariant[]
+  initialInstruments: SaleInstrument[]
+  initialCommodityPositions: CommodityPosition[]
   cbotPrices: CbotPrice[]
   priceSource: string
   priceTimestamp: string | null
   yieldAvailable: boolean
   yieldSummaries: YieldSummary[]
-}
-
-interface YieldSummary {
-  farmId: string
-  farmName: string
-  registryCropId: string | null
-  cropName: string
+  budgetFields: BudgetField[]
   cropYear: number
-  totalNetBU: number
-  acres: number | null
-}
-
-/**
- * Compute marketing positions from contracts + yield summaries + CBOT prices.
- * Mirrors the server-side computePositions in page.tsx for client-side refresh.
- */
-function computePositions(
-  contracts: GrainContract[],
-  yieldSummaries: YieldSummary[],
-  cbotPrices: CbotPrice[]
-): MarketingPosition[] {
-  const yieldByRegistryId = new Map<string, number>()
-  const yieldByCropName = new Map<string, number>()
-
-  for (const ys of yieldSummaries) {
-    if (ys.registryCropId) {
-      yieldByRegistryId.set(
-        ys.registryCropId,
-        (yieldByRegistryId.get(ys.registryCropId) ?? 0) + ys.totalNetBU
-      )
-    }
-    const key = ys.cropName.toLowerCase().trim()
-    yieldByCropName.set(key, (yieldByCropName.get(key) ?? 0) + ys.totalNetBU)
-  }
-
-  const priceByName = new Map<string, number>()
-  for (const p of cbotPrices) {
-    priceByName.set(p.commodity.toLowerCase().trim(), p.price)
-  }
-
-  const positionMap = new Map<
-    string,
-    { crop: string; registry_crop_id: string | null; contracts: GrainContract[] }
-  >()
-
-  for (const contract of contracts) {
-    const key = contract.registry_crop_id
-      ? `registry:${contract.registry_crop_id}`
-      : `name:${contract.crop.toLowerCase().trim()}`
-
-    if (!positionMap.has(key)) {
-      positionMap.set(key, {
-        crop: contract.crop,
-        registry_crop_id: contract.registry_crop_id,
-        contracts: [],
-      })
-    }
-    positionMap.get(key)!.contracts.push(contract)
-  }
-
-  // Include yield-only crops (no contracts)
-  for (const ys of yieldSummaries) {
-    const key = ys.registryCropId
-      ? `registry:${ys.registryCropId}`
-      : `name:${ys.cropName.toLowerCase().trim()}`
-
-    if (!positionMap.has(key)) {
-      positionMap.set(key, {
-        crop: ys.cropName,
-        registry_crop_id: ys.registryCropId,
-        contracts: [],
-      })
-    }
-  }
-
-  const positions: MarketingPosition[] = []
-
-  for (const [, entry] of Array.from(positionMap)) {
-    const contracted_bu = entry.contracts.reduce((sum: number, c: GrainContract) => sum + c.bushels, 0)
-
-    let estimated_production_bu = 0
-    if (entry.registry_crop_id && yieldByRegistryId.has(entry.registry_crop_id)) {
-      estimated_production_bu = yieldByRegistryId.get(entry.registry_crop_id)!
-    } else {
-      estimated_production_bu = yieldByCropName.get(entry.crop.toLowerCase().trim()) ?? 0
-    }
-
-    const unpriced_bu = Math.max(0, estimated_production_bu - contracted_bu)
-    const cbot_price = priceByName.get(entry.crop.toLowerCase().trim()) ?? null
-    const unpriced_exposure_dollars =
-      cbot_price !== null ? unpriced_bu * cbot_price : null
-
-    positions.push({
-      crop: entry.crop,
-      registry_crop_id: entry.registry_crop_id,
-      estimated_production_bu,
-      contracted_bu,
-      unpriced_bu,
-      cbot_price,
-      unpriced_exposure_dollars,
-      contracts: entry.contracts,
-    })
-  }
-
-  positions.sort((a, b) => a.crop.localeCompare(b.crop))
-  return positions
 }
 
 function formatPriceTimestamp(ts: string | null): string {
@@ -147,34 +56,35 @@ function priceSourceLabel(source: string): string {
 }
 
 export function MarketingWorkspace({
-  initialContracts,
-  initialPositions,
+  commodities,
+  initialVariants,
+  initialInstruments,
+  initialCommodityPositions,
   cbotPrices: initialCbotPrices,
   priceSource: initialPriceSource,
   priceTimestamp: initialPriceTimestamp,
   yieldAvailable,
-  yieldSummaries: initialYieldSummaries,
+  budgetFields,
+  cropYear,
 }: MarketingWorkspaceProps) {
-  const [contracts, setContracts] = useState<GrainContract[]>(initialContracts)
-  const [positions, setPositions] = useState<MarketingPosition[]>(initialPositions)
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'contracts'>('dashboard')
+  const [variants, setVariants] = useState<CropVariant[]>(initialVariants)
+  const [instruments, setInstruments] = useState<SaleInstrument[]>(initialInstruments)
+  const [positions, setPositions] = useState<CommodityPosition[]>(initialCommodityPositions)
   const [cbotPrices, setCbotPrices] = useState<CbotPrice[]>(initialCbotPrices)
   const [priceSource, setPriceSource] = useState(initialPriceSource)
   const [priceTimestamp, setPriceTimestamp] = useState<string | null>(initialPriceTimestamp)
   const [priceRefreshing, setPriceRefreshing] = useState(false)
 
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create')
-  const [editingContract, setEditingContract] = useState<GrainContract | null>(null)
+  const [instrumentFormOpen, setInstrumentFormOpen] = useState(false)
+  const [editingInstrument, setEditingInstrument] = useState<SaleInstrument | null>(null)
+  const [variantSetupOpen, setVariantSetupOpen] = useState(false)
 
-  // Yield summaries are server-loaded at page load; client uses cached copy for recompute
-  // (yield summaries won't change during a session — no client-side refetch needed)
-  const [yieldSummaries] = useState<YieldSummary[]>(initialYieldSummaries)
-
-  const recomputePositions = useCallback(
-    (updatedContracts: GrainContract[], updatedPrices: CbotPrice[]) => {
-      setPositions(computePositions(updatedContracts, yieldSummaries, updatedPrices))
+  const recompute = useCallback(
+    (updatedVariants: CropVariant[], updatedInstruments: SaleInstrument[], updatedPrices: CbotPrice[]) => {
+      setPositions(computeCommodityPositions(commodities, updatedVariants, updatedInstruments, updatedPrices))
     },
-    [yieldSummaries]
+    [commodities]
   )
 
   async function handleRefreshPrices() {
@@ -189,7 +99,7 @@ export function MarketingWorkspace({
         setPriceSource(prices[0].source)
         setPriceTimestamp(prices[0].timestamp)
       }
-      recomputePositions(contracts, prices)
+      recompute(variants, instruments, prices)
     } catch (err) {
       console.error('Failed to refresh CBOT prices:', err)
     } finally {
@@ -197,136 +107,188 @@ export function MarketingWorkspace({
     }
   }
 
-  async function fetchContracts(): Promise<GrainContract[]> {
+  async function refreshInstruments() {
     try {
-      const res = await fetch(
-        `/api/marketing/contracts?cropYear=${CURRENT_CROP_YEAR}`,
-        { cache: 'no-store' }
-      )
+      const res = await fetch(`/api/marketing/instruments?cropYear=${cropYear}`, { cache: 'no-store' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
-      return (data.contracts as GrainContract[]) ?? []
+      const updated: SaleInstrument[] = data.instruments ?? []
+      setInstruments(updated)
+      recompute(variants, updated, cbotPrices)
     } catch (err) {
-      console.error('Failed to fetch contracts:', err)
-      return contracts
+      console.error('Failed to refresh instruments:', err)
     }
   }
 
-  function openCreateDrawer() {
-    setEditingContract(null)
-    setDrawerMode('create')
-    setDrawerOpen(true)
-  }
-
-  function openEditDrawer(contract: GrainContract) {
-    setEditingContract(contract)
-    setDrawerMode('edit')
-    setDrawerOpen(true)
-  }
-
-  async function handleDrawerSave() {
-    setDrawerOpen(false)
-    const updated = await fetchContracts()
-    setContracts(updated)
-    recomputePositions(updated, cbotPrices)
-  }
-
-  async function handleDeleteContract(id: string) {
-    const contract = contracts.find((c) => c.id === id)
-    const label = `${contract?.crop ?? 'contract'} — ${contract?.bushels?.toLocaleString() ?? '?'} bu`
-    if (!confirm(`Delete ${label}?`)) return
-
+  async function refreshVariants() {
     try {
-      const res = await fetch(`/api/marketing/contracts/${id}`, { method: 'DELETE' })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        console.error('Failed to delete contract:', err)
-        return
-      }
-      const updated = contracts.filter((c) => c.id !== id)
-      setContracts(updated)
-      recomputePositions(updated, cbotPrices)
+      const res = await fetch(`/api/marketing/variants?cropYear=${cropYear}`, { cache: 'no-store' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      const updated: CropVariant[] = data.variants ?? []
+      setVariants(updated)
+      recompute(updated, instruments, cbotPrices)
     } catch (err) {
-      console.error('Network error deleting contract:', err)
+      console.error('Failed to refresh variants:', err)
     }
+  }
+
+  function openNewInstrument() {
+    setEditingInstrument(null)
+    setInstrumentFormOpen(true)
+  }
+
+  function openEditInstrument(inst: SaleInstrument) {
+    setEditingInstrument(inst)
+    setInstrumentFormOpen(true)
+  }
+
+  async function handleDeleteInstrument(id: string) {
+    const inst = instruments.find((i) => i.id === id)
+    const label = `${inst?.instrument_type ?? 'instrument'} — ${(inst?.bushels ?? inst?.daily_bu ?? 0).toLocaleString()} bu`
+    if (!confirm(`Delete ${label}?`)) return
+    try {
+      const res = await fetch(`/api/marketing/instruments/${id}`, { method: 'DELETE' })
+      if (!res.ok) return
+      const updated = instruments.filter((i) => i.id !== id)
+      setInstruments(updated)
+      recompute(variants, updated, cbotPrices)
+    } catch (err) {
+      console.error('Delete failed:', err)
+    }
+  }
+
+  async function handleInstrumentSave() {
+    setInstrumentFormOpen(false)
+    await refreshInstruments()
   }
 
   const isLivePrices = priceSource === 'barchart-delayed'
   const isFallbackPrices = priceSource === 'manual-fallback'
 
-  return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* Page header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h1 className="text-2xl font-mono font-semibold text-glomalin-accent">
-            Grain Marketing Position
-          </h1>
-          <p className="text-glomalin-muted text-sm mt-1 font-mono">
-            {CURRENT_CROP_YEAR} crop year — estimated production vs. contracted bushels
-          </p>
-        </div>
-        <button
-          onClick={openCreateDrawer}
-          className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-2 hover:opacity-90 transition-opacity"
-        >
-          Add Contract
-        </button>
-      </div>
+  const subTabs = [
+    { id: 'dashboard' as const, label: 'Hedging Dashboard' },
+    { id: 'contracts' as const, label: 'Contract Management' },
+  ]
 
-      {/* CBOT price source badge + refresh */}
-      <div className="flex items-center gap-3 mb-6">
-        <div
-          className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-mono font-semibold border ${
-            isLivePrices
-              ? 'bg-green-900/30 border-green-700 text-green-300'
-              : isFallbackPrices
-              ? 'bg-orange-900/30 border-orange-700 text-orange-300'
-              : 'bg-glomalin-surface border-glomalin-border text-glomalin-muted'
-          }`}
-        >
-          <span>{priceSourceLabel(priceSource)}</span>
-          {priceTimestamp && (
-            <span className="text-opacity-75">— {formatPriceTimestamp(priceTimestamp)}</span>
-          )}
+  return (
+    <div>
+      {/* Price source badge + refresh */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div
+            className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-xs font-mono font-semibold border ${
+              isLivePrices
+                ? 'bg-[#14b8a6]/10 border-[#14b8a6]/40 text-[#2dd4bf]'
+                : isFallbackPrices
+                ? 'bg-amber-900/20 border-amber-700/40 text-amber-400'
+                : 'bg-glomalin-surface border-glomalin-border text-glomalin-muted'
+            }`}
+          >
+            <span>{priceSourceLabel(priceSource)}</span>
+            {priceTimestamp && (
+              <span className="opacity-75">— {formatPriceTimestamp(priceTimestamp)}</span>
+            )}
+          </div>
+          <button
+            onClick={handleRefreshPrices}
+            disabled={priceRefreshing}
+            className="text-xs font-mono text-glomalin-muted hover:text-glomalin-accent transition-colors disabled:opacity-50"
+          >
+            {priceRefreshing ? 'Refreshing...' : '↺ Refresh Prices'}
+          </button>
         </div>
-        <button
-          onClick={handleRefreshPrices}
-          disabled={priceRefreshing}
-          className="text-xs font-mono text-glomalin-muted hover:text-glomalin-accent transition-colors disabled:opacity-50"
-        >
-          {priceRefreshing ? 'Refreshing...' : 'Refresh Prices'}
-        </button>
+
+        {/* Actions for contract management tab */}
+        {activeSubTab === 'contracts' && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setVariantSetupOpen(true)}
+              className="font-mono text-xs text-glomalin-muted hover:text-glomalin-text transition-colors border border-glomalin-border rounded px-3 py-1.5"
+              title="Manage crop variants"
+            >
+              ⚙ Variants
+            </button>
+            <button
+              onClick={openNewInstrument}
+              className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-1.5 hover:opacity-90 transition-opacity"
+            >
+              + Add Instrument
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Grain-tickets offline warning */}
       {!yieldAvailable && (
-        <div className="mb-6 rounded-md border border-orange-800/50 bg-orange-950/30 px-4 py-3 text-sm font-mono">
-          <p className="text-orange-400 font-semibold">
+        <div className="mb-5 rounded-md border border-amber-800/50 bg-amber-950/20 px-4 py-3 text-sm font-mono">
+          <p className="text-amber-400 font-semibold">
             Grain-tickets offline — estimated production unavailable
           </p>
-          <p className="text-orange-300 text-xs mt-0.5">
-            Start grain-tickets on port 3007 to see per-crop estimated production totals.
-            Contracts and CBOT exposure still visible.
+          <p className="text-amber-300/70 text-xs mt-0.5">
+            Start grain-tickets on port 3007 to populate estimated production from harvest data.
           </p>
         </div>
       )}
 
-      {/* Position table */}
-      <PositionTable
-        positions={positions}
-        onEditContract={openEditDrawer}
-        onDeleteContract={handleDeleteContract}
+      {/* Sub-tab strip */}
+      <div className="flex gap-0 border-b border-glomalin-border mb-6">
+        {subTabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveSubTab(t.id)}
+            className={[
+              'px-4 py-2 font-mono text-xs transition-colors border-b-2 -mb-px',
+              activeSubTab === t.id
+                ? 'border-glomalin-accent text-glomalin-accent'
+                : 'border-transparent text-glomalin-muted hover:text-glomalin-text',
+            ].join(' ')}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab content */}
+      {activeSubTab === 'dashboard' && (
+        <HedgingDashboard
+          positions={positions}
+          cropYear={cropYear}
+          onSwitchToContracts={() => setActiveSubTab('contracts')}
+        />
+      )}
+
+      {activeSubTab === 'contracts' && (
+        <CommodityTable
+          positions={positions}
+          onEditInstrument={openEditInstrument}
+          onDeleteInstrument={handleDeleteInstrument}
+        />
+      )}
+
+      {/* Instrument form drawer */}
+      <InstrumentForm
+        open={instrumentFormOpen}
+        instrument={editingInstrument}
+        commodities={commodities}
+        variants={variants}
+        cropYear={cropYear}
+        onClose={() => setInstrumentFormOpen(false)}
+        onSave={handleInstrumentSave}
+        onVariantCreated={refreshVariants}
       />
 
-      {/* Contract create/edit drawer */}
-      <ContractDrawer
-        open={drawerOpen}
-        mode={drawerMode}
-        contract={editingContract}
-        onClose={() => setDrawerOpen(false)}
-        onSave={handleDrawerSave}
-      />
+      {/* Variant setup panel */}
+      {variantSetupOpen && (
+        <VariantSetupPanel
+          commodities={commodities}
+          variants={variants}
+          budgetFields={budgetFields}
+          cropYear={cropYear}
+          onClose={() => setVariantSetupOpen(false)}
+          onSaved={refreshVariants}
+        />
+      )}
     </div>
   )
 }

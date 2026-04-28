@@ -48,7 +48,7 @@ export function FieldDetailPanel({ field, onClose }: FieldDetailPanelProps) {
       {/* Slide-in panel */}
       <div
         className={[
-          'fixed right-0 top-14 h-[calc(100vh-56px)] w-96 max-w-[90vw] z-20',
+          'fixed right-0 top-0 h-screen w-96 max-w-[90vw] z-20',
           'bg-[#0e0c0b] border-l border-[#2a2218]',
           'transition-transform duration-300',
           isOpen ? 'translate-x-0' : 'translate-x-full',

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { fetchGrainService } from '@/app/api/mobile/_lib/proxy'
 import {
   findBestGrainMatch,
   computeClaimAlert,
@@ -39,22 +40,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Policy not found' }, { status: 404 })
   }
 
-  // Cross-app fetch to grain-tickets (port 3000)
-  // CRITICAL: no caching, timeout after 5 seconds
+  // Cross-app fetch to grain-tickets via proxy helper
   let gtFarms: GrainFarm[] = []
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fetchOptions: any = {
-      signal: AbortSignal.timeout(5000),
-      next: { revalidate: 0 },
-    }
-    const res = await fetch('http://localhost:3000/api/farms', fetchOptions)
+    const res = await fetchGrainService('/api/farms')
     if (!res.ok) throw new Error(`Grain-tickets returned ${res.status}`)
     gtFarms = (await res.json()) as GrainFarm[]
   } catch {
     // Grain-tickets offline is not a server error — return 200 with clear message
     return NextResponse.json({
-      error: 'Grain ticket service unavailable — is port 3000 running?',
+      error: 'Grain ticket service unavailable',
       matched: false,
       policy: null,
     })

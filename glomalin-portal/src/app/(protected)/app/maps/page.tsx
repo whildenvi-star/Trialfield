@@ -12,8 +12,7 @@ import { FieldMap } from '@/components/maps/field-map'
  */
 export default async function MapsPage() {
   return (
-    // fixed inset-0 top-14: fills the entire viewport below the h-14 sticky top bar
-    <div className="fixed inset-0 top-14">
+    <div className="fixed top-0 bottom-0 right-0 left-[220px]">
       <Suspense fallback={<div className="w-full h-full bg-[#080604] animate-pulse" />}>
         <FieldMap />
       </Suspense>

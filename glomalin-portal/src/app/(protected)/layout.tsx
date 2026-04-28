@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import TopBar from '@/components/layout/top-bar'
+import SideNav from '@/components/layout/side-nav'
 import DeniedToast from '@/components/denied-toast'
 
 export default async function ProtectedLayout({
@@ -32,8 +32,8 @@ export default async function ProtectedLayout({
     : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)
 
   return (
-    <div className="min-h-screen bg-glomalin-bg">
-      <TopBar
+    <div className="bg-glomalin-bg">
+      <SideNav
         user={{
           email: user.email ?? '',
           fullName: profile?.full_name ?? null,
@@ -41,12 +41,14 @@ export default async function ProtectedLayout({
         }}
         grantedModules={grantedModules}
       />
-      <Suspense fallback={null}>
-        <DeniedToast />
-      </Suspense>
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      <div className="md:ml-[220px]">
+        <Suspense fallback={null}>
+          <DeniedToast />
+        </Suspense>
+        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

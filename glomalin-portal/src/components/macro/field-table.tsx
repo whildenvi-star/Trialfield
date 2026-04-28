@@ -28,6 +28,14 @@ export interface CostBreakdown {
   insurance: number
 }
 
+export interface InputEntry {
+  id: string
+  productName: string
+  quantity: number
+  season: string
+  unit: string
+}
+
 export interface FieldRow {
   fieldId: string
   fieldName: string
@@ -44,6 +52,9 @@ export interface FieldRow {
   budgetRevenuePerAcre: number
   contracts: ContractEntry[]
   missingData: string[]
+  variety: string | null
+  population: number | null
+  inputs: InputEntry[]
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
@@ -236,15 +247,18 @@ function FieldDetail({ row, mode }: { row: FieldRow; mode: RevenueMode }) {
 export function FieldTable({
   rows,
   mode,
-  hasContracts,
+  role = 'admin',
 }: {
   rows: FieldRow[]
   mode: RevenueMode
-  hasContracts: boolean
+  hasContracts: boolean // kept for API compat — mode is the source of truth
+  role?: string
 }) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const showFinancials = role === 'admin' || role === 'agronomist'
 
   function toggle(id: string) {
+    if (!showFinancials) return // no detail panel for restricted roles
     setExpandedId((prev) => (prev === id ? null : id))
   }
 
@@ -264,21 +278,25 @@ export function FieldTable({
             <th className="px-4 py-3 text-left text-xs font-normal uppercase tracking-wider text-glomalin-muted">
               Crop
             </th>
-            <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
-              {revenueLabel}
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
-              Costs
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
-              Margin
-            </th>
-            <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
-              $/Acre
-            </th>
-            <th className="px-4 py-3 text-center text-xs font-normal uppercase tracking-wider text-glomalin-muted">
-              {/* status */}
-            </th>
+            {showFinancials && (
+              <>
+                <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
+                  {revenueLabel}
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
+                  Costs
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
+                  Margin
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-normal uppercase tracking-wider text-glomalin-muted">
+                  $/Acre
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-normal uppercase tracking-wider text-glomalin-muted">
+                  {/* status */}
+                </th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody className="divide-y divide-glomalin-border">
@@ -299,17 +317,22 @@ export function FieldTable({
             return (
               <Fragment key={row.fieldId}>
                 <tr
-                  className="cursor-pointer bg-glomalin-bg hover:bg-glomalin-surface transition-colors"
+                  className={[
+                    'bg-glomalin-bg transition-colors',
+                    showFinancials ? 'cursor-pointer hover:bg-glomalin-surface' : '',
+                  ].join(' ')}
                   onClick={() => toggle(row.fieldId)}
-                  aria-expanded={isOpen}
+                  aria-expanded={showFinancials ? isOpen : undefined}
                 >
-                  {/* Field name + expand chevron */}
+                  {/* Field name */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       <span className="text-glomalin-text">{row.fieldName}</span>
-                      <span className="text-glomalin-muted">
-                        <Chevron open={isOpen} />
-                      </span>
+                      {showFinancials && (
+                        <span className="text-glomalin-muted">
+                          <Chevron open={isOpen} />
+                        </span>
+                      )}
                     </div>
                   </td>
 
@@ -321,53 +344,59 @@ export function FieldTable({
                   {/* Crop */}
                   <td className="px-4 py-3 text-glomalin-muted">{row.crop}</td>
 
-                  {/* Revenue */}
-                  <td className="px-4 py-3 text-right text-glomalin-text">
-                    {fmtDollars(displayRevenue)}
-                  </td>
+                  {showFinancials && (
+                    <>
+                      {/* Revenue */}
+                      <td className="px-4 py-3 text-right text-glomalin-text">
+                        {fmtDollars(displayRevenue)}
+                      </td>
 
-                  {/* Costs */}
-                  <td className="px-4 py-3 text-right text-glomalin-text">
-                    {fmtDollars(row.totalCost)}
-                  </td>
+                      {/* Costs */}
+                      <td className="px-4 py-3 text-right text-glomalin-text">
+                        {fmtDollars(row.totalCost)}
+                      </td>
 
-                  {/* Margin */}
-                  <td className="px-4 py-3 text-right">
-                    <span className={displayMargin >= 0 ? 'text-glomalin-green' : 'text-red-400'}>
-                      {fmtDollars(displayMargin)}
-                    </span>
-                  </td>
+                      {/* Margin */}
+                      <td className="px-4 py-3 text-right">
+                        <span className={displayMargin >= 0 ? 'text-glomalin-green' : 'text-red-400'}>
+                          {fmtDollars(displayMargin)}
+                        </span>
+                      </td>
 
-                  {/* $/Acre */}
-                  <td className="px-4 py-3 text-right">
-                    <span
-                      className={displayMarginPerAcre >= 0 ? 'text-glomalin-green' : 'text-red-400'}
-                    >
-                      {fmtDollarsExact(displayMarginPerAcre)}
-                    </span>
-                  </td>
+                      {/* $/Acre */}
+                      <td className="px-4 py-3 text-right">
+                        <span
+                          className={displayMarginPerAcre >= 0 ? 'text-glomalin-green' : 'text-red-400'}
+                        >
+                          {fmtDollarsExact(displayMarginPerAcre)}
+                        </span>
+                      </td>
 
-                  {/* Status */}
-                  <td className="px-4 py-3 text-center">
-                    <StatusDot margin={statusMargin} isEstimate={isProjected} />
-                  </td>
+                      {/* Status */}
+                      <td className="px-4 py-3 text-center">
+                        <StatusDot margin={statusMargin} isEstimate={isProjected} />
+                      </td>
+                    </>
+                  )}
                 </tr>
 
-                {/* Expand: Layer 3 detail */}
-                {isOpen && <FieldDetail row={row} mode={mode} />}
+                {/* Expand: Layer 3 detail — financial roles only */}
+                {showFinancials && isOpen && <FieldDetail row={row} mode={mode} />}
               </Fragment>
             )
           })}
         </tbody>
       </table>
 
-      <div className="border-t border-glomalin-border bg-glomalin-surface px-4 py-2">
-        <p className="font-mono text-xs text-glomalin-muted">
-          {mode === 'projected'
-            ? 'Projected — farm-budget price × yield estimate. Switch to Locked In to see contracted position.'
-            : 'Locked In — contracted bushels only. Uncontracted production not included in margin.'}
-        </p>
-      </div>
+      {showFinancials && (
+        <div className="border-t border-glomalin-border bg-glomalin-surface px-4 py-2">
+          <p className="font-mono text-xs text-glomalin-muted">
+            {mode === 'projected'
+              ? 'Projected — farm-budget price × yield estimate. Switch to Locked In to see contracted position.'
+              : 'Locked In — contracted bushels only. Uncontracted production not included in margin.'}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 
-// TODO: Add daily cron job for automatic price refreshes.
-// Options: Supabase scheduled functions (pg_cron) or a simple setInterval on the Next.js server.
-// For now, the manual "Refresh Prices" button is the only trigger (CONS-03).
-
 // POST /api/insurance/pricing/scrape
 // Fetches current prices from USDA RMA Price Discovery API and updates insurance_pricing table.
 // Only updates rows where manual_override is not true — preserves user-entered overrides.

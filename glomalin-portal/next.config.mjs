@@ -1,9 +1,7 @@
 import withSerwist from "@serwist/next";
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  output: 'standalone',
-};
+const nextConfig = {};
 
 export default withSerwist({
   swSrc: "src/sw.ts",

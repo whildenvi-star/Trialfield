@@ -2,11 +2,34 @@
 
 import { useState } from 'react'
 import { FieldTable } from '@/components/macro/field-table'
+import { MarketingWorkspace } from '@/components/marketing/marketing-workspace'
 import type { FieldRow } from '@/components/macro/field-table'
+import type {
+  Commodity,
+  CropVariant,
+  SaleInstrument,
+  CbotPrice,
+  CommodityPosition,
+  YieldSummary,
+} from '@/lib/marketing/types'
+import type { BudgetField } from '@/app/(protected)/app/macro-rollup/page'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export type RevenueMode = 'projected' | 'locked'
+
+export interface MarketingData {
+  commodities: Commodity[]
+  cropVariants: CropVariant[]
+  saleInstruments: SaleInstrument[]
+  initialCommodityPositions: CommodityPosition[]
+  cbotPrices: CbotPrice[]
+  priceSource: string
+  priceTimestamp: string | null
+  yieldAvailable: boolean
+  yieldSummaries: YieldSummary[]
+  budgetFields: BudgetField[]
+}
 
 interface MacroRollupViewProps {
   rows: FieldRow[]
@@ -15,6 +38,8 @@ interface MacroRollupViewProps {
   heroValueProjected: number | null
   heroValueLocked: number | null
   cropYear: number
+  role?: string
+  marketingData: MarketingData
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
@@ -27,7 +52,7 @@ function fmtDollars(n: number): string {
   }).format(n)
 }
 
-// ── Toggle ─────────────────────────────────────────────────────────────────────
+// ── Mode toggle ────────────────────────────────────────────────────────────────
 
 function ModeToggle({
   mode,
@@ -94,7 +119,7 @@ function Hero({
     value === null
       ? 'text-glomalin-muted'
       : value >= 0
-        ? 'text-glomalin-green'
+        ? 'text-[#2dd4bf]'
         : 'text-red-400'
 
   return (
@@ -102,7 +127,6 @@ function Hero({
       <p className="mb-1 font-mono text-xs uppercase tracking-widest text-glomalin-muted">
         {label}
       </p>
-
       {value !== null ? (
         <p className={`font-mono text-5xl font-semibold tracking-tight ${valueColor}`}>
           {fmtDollars(value)}
@@ -110,13 +134,45 @@ function Hero({
       ) : (
         <p className="font-mono text-4xl font-semibold text-glomalin-muted">—</p>
       )}
-
       <p className="mt-2 font-mono text-sm text-glomalin-muted">
         {fieldCount > 0
           ? `${profitableCount} of ${fieldCount} fields — ${cropYear} crop year`
           : `${cropYear} crop year`}
       </p>
       <p className="mt-0.5 font-mono text-xs text-glomalin-muted/70">{sublabel}</p>
+    </div>
+  )
+}
+
+// ── Tab strip ──────────────────────────────────────────────────────────────────
+
+function TabStrip({
+  active,
+  onChange,
+}: {
+  active: 'overview' | 'marketing'
+  onChange: (tab: 'overview' | 'marketing') => void
+}) {
+  const tabs: Array<{ id: 'overview' | 'marketing'; label: string }> = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'marketing', label: 'Sales & Marketing' },
+  ]
+  return (
+    <div className="flex gap-0 border-b border-glomalin-border mb-6">
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          onClick={() => onChange(t.id)}
+          className={[
+            'px-5 py-2.5 font-mono text-sm transition-colors border-b-2 -mb-px',
+            active === t.id
+              ? 'border-glomalin-accent text-glomalin-accent'
+              : 'border-transparent text-glomalin-muted hover:text-glomalin-text',
+          ].join(' ')}
+        >
+          {t.label}
+        </button>
+      ))}
     </div>
   )
 }
@@ -130,8 +186,12 @@ export function MacroRollupView({
   heroValueProjected,
   heroValueLocked,
   cropYear,
+  role = 'admin',
+  marketingData,
 }: MacroRollupViewProps) {
   const [mode, setMode] = useState<RevenueMode>('projected')
+  const [activeTab, setActiveTab] = useState<'overview' | 'marketing'>('overview')
+  const showFinancials = role === 'admin' || role === 'agronomist'
 
   const heroValue = mode === 'projected' ? heroValueProjected : heroValueLocked
 
@@ -140,45 +200,76 @@ export function MacroRollupView({
     return m > 0
   }).length
 
-  if (budgetOffline) {
+  if (budgetOffline && activeTab === 'overview') {
     return (
-      <div className="mt-10 rounded border border-glomalin-border bg-glomalin-surface px-6 py-10 text-center">
-        <p className="font-mono text-sm text-glomalin-muted">
-          Farm Budget is offline — start the service on port 3001 to see field data
-        </p>
-      </div>
-    )
-  }
-
-  if (rows.length === 0) {
-    return (
-      <div className="mt-10 rounded border border-glomalin-border bg-glomalin-surface px-6 py-10 text-center">
-        <p className="font-mono text-sm text-glomalin-muted">
-          No fields found in Farm Budget — add fields and crop assignments to get started
-        </p>
-      </div>
+      <>
+        <TabStrip active={activeTab} onChange={setActiveTab} />
+        <div className="mt-6 rounded border border-glomalin-border bg-glomalin-surface px-6 py-10 text-center">
+          <p className="font-mono text-sm text-glomalin-muted">
+            Farm Budget is offline — start the service on port 3001 to see field data
+          </p>
+        </div>
+      </>
     )
   }
 
   return (
     <>
-      {/* Toggle + Hero */}
-      <div className="mb-2 flex items-start justify-between">
-        <Hero
-          mode={mode}
-          value={heroValue}
-          fieldCount={rows.length}
-          profitableCount={profitableCount}
+      <TabStrip active={activeTab} onChange={setActiveTab} />
+
+      {activeTab === 'overview' && (
+        <>
+          {showFinancials && rows.length > 0 && (
+            <>
+              <div className="mb-2 flex items-start justify-between">
+                <Hero
+                  mode={mode}
+                  value={heroValue}
+                  fieldCount={rows.length}
+                  profitableCount={profitableCount}
+                  cropYear={cropYear}
+                />
+                <div className="pt-1">
+                  <ModeToggle mode={mode} hasContracts={hasContracts} onChange={setMode} />
+                </div>
+              </div>
+              <div className="my-8 border-t border-glomalin-border" />
+            </>
+          )}
+
+          {!showFinancials && (
+            <p className="mb-6 font-mono text-xs text-glomalin-muted uppercase tracking-widest">
+              {cropYear} Field Summary
+            </p>
+          )}
+
+          {rows.length === 0 ? (
+            <div className="mt-4 rounded border border-glomalin-border bg-glomalin-surface px-6 py-10 text-center">
+              <p className="font-mono text-sm text-glomalin-muted">
+                No fields found in Farm Budget — add fields and crop assignments to get started
+              </p>
+            </div>
+          ) : (
+            <FieldTable rows={rows} mode={mode} hasContracts={hasContracts} role={role} />
+          )}
+        </>
+      )}
+
+      {activeTab === 'marketing' && (
+        <MarketingWorkspace
+          commodities={marketingData.commodities}
+          initialVariants={marketingData.cropVariants}
+          initialInstruments={marketingData.saleInstruments}
+          initialCommodityPositions={marketingData.initialCommodityPositions}
+          cbotPrices={marketingData.cbotPrices}
+          priceSource={marketingData.priceSource}
+          priceTimestamp={marketingData.priceTimestamp}
+          yieldAvailable={marketingData.yieldAvailable}
+          yieldSummaries={marketingData.yieldSummaries}
+          budgetFields={marketingData.budgetFields}
           cropYear={cropYear}
         />
-        <div className="pt-1">
-          <ModeToggle mode={mode} hasContracts={hasContracts} onChange={setMode} />
-        </div>
-      </div>
-
-      <div className="my-8 border-t border-glomalin-border" />
-
-      <FieldTable rows={rows} mode={mode} hasContracts={hasContracts} />
+      )}
     </>
   )
 }
