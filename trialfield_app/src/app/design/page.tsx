@@ -220,6 +220,9 @@ export default function DesignPage() {
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
               />
+              <p className="text-xs text-gray-400 mt-1">
+                Controls how treatments are shuffled across reps. Change this to get a different valid layout.
+              </p>
             </div>
           </div>
           <div>
