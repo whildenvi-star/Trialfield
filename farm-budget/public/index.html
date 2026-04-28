@@ -131,6 +131,9 @@
         </div>
       </div>
 
+      <div id="dash-stat-bar" class="ent-summary-bar" style="display:none;flex-wrap:wrap;gap:1rem 2rem;margin-top:0.75rem"></div>
+      <div id="dash-pending-bar" style="display:none;margin-top:0.5rem"></div>
+
       <div class="dashboard-panels">
         <div class="panel">
           <h3>Conventional</h3>
@@ -1079,13 +1082,15 @@
                   <option value="confirmed">Confirmed</option>
                   <option value="disregarded">Disregarded</option>
                 </select>
+                <button id="fo-view-perac" class="btn-sm" style="font-size:0.72rem;padding:0.2rem 0.45rem" title="Show per-acre rates and costs">per ac</button>
+                <button id="fo-view-perfield" class="btn-sm" style="font-size:0.72rem;padding:0.2rem 0.45rem" title="Show field totals (invoice view)">per field</button>
                 <button id="fo-expand-all" class="btn-sm" style="font-size:0.72rem;padding:0.2rem 0.45rem" title="Expand all groups">&#9660; All</button>
                 <button id="fo-collapse-all" class="btn-sm" style="font-size:0.72rem;padding:0.2rem 0.45rem" title="Collapse all groups">&#9654; All</button>
                 <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.4rem;padding-top:0.4rem;border-top:1px solid var(--border);width:100%">
                   <select id="ed-apply-program" style="flex:1;font-size:0.78rem">
-                    <option value="">-- Load Agronomic Program --</option>
+                    <option value="">-- Load Template --</option>
                   </select>
-                  <button id="ed-apply-program-btn" class="btn-sm btn-primary" style="font-size:0.75rem;padding:0.25rem 0.5rem">Apply</button>
+                  <button id="ed-apply-program-btn" class="btn-sm btn-primary" style="font-size:0.75rem;padding:0.25rem 0.5rem">Load</button>
                   <button id="ed-save-as-program" class="btn-sm" style="font-size:0.75rem;padding:0.25rem 0.5rem" title="Save field as program template">Save as Program</button>
                 </div>
               </div>
@@ -1520,19 +1525,19 @@
       document.currentScript.parentNode.insertBefore(s, document.currentScript.nextSibling);
     })();
   </script>
-  <script src="calc.js?v=20260403h"></script>
+  <script src="calc.js?v=20260427a"></script>
   <script src="crop-colors.js"></script>
   <script src="app.js?v=20260403p"></script>
-  <script src="dashboard.js?v=20260403n"></script>
+  <script src="dashboard.js?v=20260428a"></script>
   <script src="enterprise.js?v=20260406a"></script>
   <script src="field-ops-groups.js"></script>
-  <script src="field-editor.js?v=20260406d"></script>
+  <script src="field-editor.js?v=20260427l"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js"></script>
   <script src="seed-manager.js"></script>
-  <script src="inventory.js?v=20260406b"></script>
+  <script src="inventory.js?v=20260423"></script>
   <script src="demand-manager.js"></script>
-  <script src="reports.js?v=20260406p"></script>
+  <script src="reports.js?v=20260427h"></script>
 
   <script src="sales.js?v=2"></script>
   <script src="hedging.js"></script>
