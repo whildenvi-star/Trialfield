@@ -10,7 +10,6 @@ export function MapPreview({ files }: Props) {
   const [src, setSrc] = useState<string | null>(null);
 
   useEffect(() => {
-    // Find the layout PNG by suffix
     const entry = [...files.entries()].find(([name]) => name.endsWith("_layout.png"));
     if (!entry) return;
     const url = URL.createObjectURL(entry[1]);
@@ -21,13 +20,13 @@ export function MapPreview({ files }: Props) {
   if (!src) return null;
 
   return (
-    <div className="space-y-2">
-      <h3 className="font-semibold text-gray-700">Field layout preview</h3>
+    <div className="bg-white rounded-xl shadow-sm p-4 space-y-3">
+      <h3 className="font-semibold text-stone-700">Field layout preview</h3>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={src}
         alt="Trial field layout"
-        className="w-full rounded border shadow-sm"
+        className="w-full rounded-lg border border-stone-100"
       />
     </div>
   );

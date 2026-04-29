@@ -14,6 +14,7 @@ const ICON: Record<string, string> = {
   xlsx: "📊",
   png: "🖼️",
   pdf: "📋",
+  json: "📋",
 };
 
 function ext(name: string) {
@@ -37,26 +38,26 @@ export function FileList({ files, zipBlob, trialName }: Props) {
   const entries = [...files.entries()].sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
-    <div className="space-y-3">
+    <div className="bg-white rounded-xl shadow-sm p-5 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-gray-700">Output files</h3>
+        <h3 className="font-semibold text-stone-700">Output files</h3>
         <button
           onClick={downloadAll}
-          className="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+          className="text-sm bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-full font-medium transition-colors shadow-sm"
         >
           Download all (.zip)
         </button>
       </div>
-      <ul className="divide-y border rounded overflow-hidden">
+      <ul className="divide-y divide-stone-100 border border-stone-100 rounded-lg overflow-hidden">
         {entries.map(([name, blob]) => (
-          <li key={name} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50">
+          <li key={name} className="flex items-center justify-between px-4 py-2.5 hover:bg-stone-50 transition-colors">
             <span className="text-sm flex items-center gap-2">
               <span>{ICON[ext(name)] ?? "📁"}</span>
-              <span className="font-mono text-gray-700">{name}</span>
+              <span className="font-mono text-stone-600 text-xs">{name}</span>
             </span>
             <button
               onClick={() => downloadFile(blob, name)}
-              className="text-xs text-blue-600 hover:underline"
+              className="text-xs text-green-700 hover:text-green-900 font-medium"
             >
               Download
             </button>

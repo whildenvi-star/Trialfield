@@ -49,7 +49,7 @@ export function BoundaryUpload({ onBoundaryChange }: Props) {
           ? "border-green-400 bg-green-50 text-green-700"
           : status === "error"
           ? "border-red-300 bg-red-50 text-red-600"
-          : "border-gray-300 hover:border-gray-400 text-gray-500"
+          : "border-stone-300 bg-stone-50 hover:border-green-400 hover:bg-green-50 text-stone-400"
       }`}
     >
       <input
@@ -64,7 +64,7 @@ export function BoundaryUpload({ onBoundaryChange }: Props) {
       {status === "error" && `Error: ${message}`}
       {status === "idle" && (
         <>Drop or click to upload boundary<br />
-          <span className="text-xs text-gray-400">.geojson · .json · shapefile .zip</span>
+          <span className="text-xs text-stone-400">.geojson · .json · shapefile .zip</span>
         </>
       )}
     </div>

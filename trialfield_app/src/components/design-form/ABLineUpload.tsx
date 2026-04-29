@@ -48,7 +48,7 @@ export function ABLineUpload({ onABChange }: Props) {
           ? "border-blue-400 bg-blue-50 text-blue-700"
           : status === "error"
           ? "border-red-300 bg-red-50 text-red-600"
-          : "border-gray-300 hover:border-gray-400 text-gray-500"
+          : "border-stone-300 bg-stone-50 hover:border-green-400 hover:bg-green-50 text-stone-400"
       }`}
     >
       <input

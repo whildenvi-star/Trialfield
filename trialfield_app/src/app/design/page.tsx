@@ -93,37 +93,38 @@ export default function DesignPage() {
     });
   }
 
-  return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Design a trial</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Fill in the form below, then click Run to generate your prescription
-          file bundle.
-        </p>
-      </div>
+  const card = "bg-white rounded-xl shadow-sm p-5 space-y-4";
+  const sectionHeading = "font-semibold text-stone-700 border-l-4 border-green-600 pl-3";
+  const fieldLabel = "block text-xs font-medium text-stone-500 mb-1";
+  const input = "border border-stone-300 rounded-md bg-white px-3 py-1.5 text-sm w-full";
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+  return (
+    <div className="bg-stone-50 min-h-[calc(100vh-3.5rem)]">
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-stone-900">Design a trial</h1>
+          <p className="text-sm text-stone-400 mt-1">
+            Fill in the form below, then click Run to generate your prescription file bundle.
+          </p>
+        </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Trial identity */}
-        <section className="space-y-3 border rounded-lg p-4">
-          <h2 className="font-semibold text-gray-700">Trial</h2>
+        <section className={card}>
+          <h2 className={sectionHeading}>Trial</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Name
-              </label>
+              <label className={fieldLabel}>Name</label>
               <input
-                className="border rounded px-2 py-1 text-sm w-full"
+                className={input}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Type
-              </label>
+              <label className={fieldLabel}>Type</label>
               <select
-                className="border rounded px-2 py-1 text-sm w-full"
+                className={input}
                 value={trialType}
                 onChange={(e) => setTrialType(e.target.value as TrialType)}
               >
@@ -135,11 +136,9 @@ export default function DesignPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Reps
-              </label>
+              <label className={fieldLabel}>Reps</label>
               <input
-                className="border rounded px-2 py-1 text-sm w-full"
+                className={input}
                 type="number"
                 min={2}
                 max={8}
@@ -148,11 +147,9 @@ export default function DesignPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Plot length (ft)
-              </label>
+              <label className={fieldLabel}>Plot length (ft)</label>
               <input
-                className="border rounded px-2 py-1 text-sm w-full"
+                className={input}
                 type="number"
                 step="any"
                 value={plotLengthFt}
@@ -163,17 +160,17 @@ export default function DesignPage() {
         </section>
 
         {/* Treatments */}
-        <section className="space-y-3 border rounded-lg p-4">
-          <h2 className="font-semibold text-gray-700">Treatments</h2>
+        <section className={card}>
+          <h2 className={sectionHeading}>Treatments</h2>
           <TreatmentTable treatments={treatments} onChange={setTreatments} />
-          <div className="border-t pt-3 mt-3">
+          <div className="border-t border-stone-100 pt-4">
             <ProseInput value={prose} onChange={setProse} />
           </div>
         </section>
 
         {/* Geometry */}
-        <section className="space-y-3 border rounded-lg p-4">
-          <h2 className="font-semibold text-gray-700">Geometry</h2>
+        <section className={card}>
+          <h2 className={sectionHeading}>Geometry</h2>
           <ABLinePanel
             aLon={aLon}
             aLat={aLat}
@@ -192,15 +189,13 @@ export default function DesignPage() {
         </section>
 
         {/* Options */}
-        <section className="space-y-3 border rounded-lg p-4">
-          <h2 className="font-semibold text-gray-700">Options</h2>
+        <section className={card}>
+          <h2 className={sectionHeading}>Options</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Soil data
-              </label>
+              <label className={fieldLabel}>Soil data</label>
               <select
-                className="border rounded px-2 py-1 text-sm w-full"
+                className={input}
                 value={soilMode}
                 onChange={(e) =>
                   setSoilMode(e.target.value as "auto" | "skip")
@@ -211,24 +206,20 @@ export default function DesignPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
-                Random seed
-              </label>
+              <label className={fieldLabel}>Random seed</label>
               <input
-                className="border rounded px-2 py-1 text-sm w-full"
+                className={input}
                 type="number"
                 value={seed}
                 onChange={(e) => setSeed(e.target.value)}
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-stone-400 mt-1">
                 Controls how treatments are shuffled across reps. Change this to get a different valid layout.
               </p>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-2">
-              Prescription formats
-            </label>
+            <label className={`${fieldLabel} mb-2`}>Prescription formats</label>
             <div className="flex flex-wrap gap-4 text-sm">
               {(
                 [
@@ -237,12 +228,12 @@ export default function DesignPage() {
                   { id: "agx", label: "AgX (AgLeader)" },
                 ] as { id: RxFormat; label: string }[]
               ).map(({ id, label }) => (
-                <label key={id} className="flex items-center gap-1.5 cursor-pointer">
+                <label key={id} className="flex items-center gap-1.5 cursor-pointer text-stone-600">
                   <input
                     type="checkbox"
                     checked={rxFormats.includes(id)}
                     onChange={() => toggleRxFormat(id)}
-                    className="accent-blue-600"
+                    className="accent-green-600"
                   />
                   {label}
                 </label>
@@ -254,20 +245,20 @@ export default function DesignPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50"
+          className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white py-3.5 rounded-full font-semibold text-base shadow-md shadow-green-200 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? "Running…" : "Run design"}
+          {loading ? "Running…" : "Run design →"}
         </button>
       </form>
 
       {error && (
-        <div className="border border-red-300 bg-red-50 rounded-lg p-4 text-sm text-red-700">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
           <strong>Error:</strong> {error}
         </div>
       )}
 
       {result && (
-        <div className="space-y-6 border-t pt-6">
+        <div className="space-y-4">
           <MapPreview files={result.files} />
           <FileList
             files={result.files}
@@ -276,6 +267,7 @@ export default function DesignPage() {
           />
         </div>
       )}
+      </div>
     </div>
   );
 }
