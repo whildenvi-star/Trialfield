@@ -20,6 +20,7 @@ from trialfield_core.io.ssurgo import get_soil
 from trialfield_core.models.geometry_inputs import ABLine
 from trialfield_core.models.trial_design import Treatment, TrialDesign
 from trialfield_core.outputs.csv_export import write_plots_csv
+from trialfield_core.outputs.flagging_pins import write_flagging_pins
 from trialfield_core.outputs.kml import write_kml
 from trialfield_core.outputs.map_render import write_map
 from trialfield_core.outputs.sample_pins import write_sample_pins
@@ -118,12 +119,23 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
         except Exception as exc:
             raise ValueError(f"invalid field_boundary_geojson: {exc}") from exc
 
-    field_uv_raw = None
-    if field_wgs84 is not None:
+    # Optional trial zone: overrides field boundary for plot placement
+    trial_zone_wgs84: Polygon | MultiPolygon | None = None
+    if g.trial_zone_geojson is not None:
         try:
-            field_uv_raw = _field_to_uv(frame, field_wgs84)
+            geojson_tz = _close_geojson_rings(g.trial_zone_geojson)
+            trial_zone_wgs84 = shapely_shape(geojson_tz)
         except Exception as exc:
-            raise ValueError(f"invalid field_boundary_geojson: {exc}") from exc
+            raise ValueError(f"invalid trial_zone_geojson: {exc}") from exc
+
+    placement_wgs84 = trial_zone_wgs84 if trial_zone_wgs84 is not None else field_wgs84
+
+    field_uv_raw = None
+    if placement_wgs84 is not None:
+        try:
+            field_uv_raw = _field_to_uv(frame, placement_wgs84)
+        except Exception as exc:
+            raise ValueError(f"invalid placement geometry: {exc}") from exc
         headland_ft = 2.0 * g.trial_swath_ft
         buffered = headland_buffer(field_uv_raw, headland_ft)
         field_uv = buffered if buffered is not None else field_uv_raw
@@ -162,7 +174,7 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
     trial_name = _safe_name(trial.name)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    write_plots_csv(plots, trial, trial_name, out_dir)
+    write_plots_csv(plots, trial, trial_name, out_dir, blocks=blocks, frame=frame)
     if "fieldview" in req.rx_formats:
         write_rx_shapefile(plots, trial_name, out_dir)
     if "isoxml" in req.rx_formats:
@@ -172,6 +184,7 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
     write_ab_line(ab, out_dir / f"{trial_name}_AB_line.zip")
     write_kml(plots, trial, trial_name, out_dir)
     write_sample_pins(plots, trial_name, out_dir)
+    write_flagging_pins(blocks, frame, trial_name, out_dir)
     write_summary(trial, plots, blocks, soil, ab, trial_name, out_dir)
     write_map(plots, trial, trial_name, out_dir,
               field_wgs84=field_wgs84, field_uv=field_uv_raw)

@@ -14,7 +14,7 @@ const ABLineMapInner = dynamic(
   }
 );
 
-export type { LatLon, GeoJSONPolygon } from "./ABLineMapInner";
+export type { LatLon, GeoJSONPolygon, SoilZoneFeature } from "./ABLineMapInner";
 export type ABLineMapProps = ABLineMapInnerProps;
 
 export function ABLineMap(props: ABLineMapProps) {

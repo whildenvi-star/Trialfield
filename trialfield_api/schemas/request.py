@@ -46,6 +46,8 @@ class GeometryIn(BaseModel):
     combine_ft: Optional[float] = Field(default=None, gt=0.0)
     # GeoJSON Polygon or MultiPolygon geometry object (no Feature wrapper needed).
     field_boundary_geojson: Optional[dict] = None
+    # Optional sub-area within the field for trial placement (overrides field_boundary for plots).
+    trial_zone_geojson: Optional[dict] = None
 
 
 class DesignRequest(BaseModel):

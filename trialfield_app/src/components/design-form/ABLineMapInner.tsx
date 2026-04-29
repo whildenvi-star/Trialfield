@@ -13,14 +13,11 @@ import {
 } from "react-leaflet";
 
 // Geoman expects window.L to exist before its module body runs.
-// Setting it here (module body, after static imports) ensures it's available
-// when we load geoman via dynamic import() inside GeomanController.
 if (typeof window !== "undefined") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).L = L;
 }
 
-// Fix Leaflet's broken default icon path in webpack builds
 function fixLeafletIcons() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -41,9 +38,24 @@ export interface GeoJSONPolygon {
   coordinates: number[][][];
 }
 
-// ── Fit map to boundary when one is set ───────────────────────────────────────
+export interface SoilZoneFeature {
+  type: "Feature";
+  geometry: {
+    type: "Polygon" | "MultiPolygon";
+    coordinates: number[][][] | number[][][][];
+  };
+  properties: { mukey: string; muname: string; compname: string };
+}
 
-function BoundaryFitter({ boundary }: { boundary: GeoJSONPolygon | null }) {
+// ── Fit map to boundary / trial zone when set ────────────────────────────────
+
+function BoundaryFitter({
+  boundary,
+  trialZone,
+}: {
+  boundary: GeoJSONPolygon | null;
+  trialZone: GeoJSONPolygon | null;
+}) {
   const map = useMap();
   useEffect(() => {
     if (!boundary) return;
@@ -52,6 +64,13 @@ function BoundaryFitter({ boundary }: { boundary: GeoJSONPolygon | null }) {
     );
     map.fitBounds(latlngs, { padding: [24, 24] });
   }, [boundary, map]);
+  useEffect(() => {
+    if (!trialZone) return;
+    const latlngs = trialZone.coordinates[0].map(
+      ([lon, lat]) => [lat, lon] as [number, number]
+    );
+    map.fitBounds(latlngs, { padding: [24, 24] });
+  }, [trialZone, map]);
   return null;
 }
 
@@ -72,48 +91,110 @@ function ClickHandler({ placing, onPlace }: ClickHandlerProps) {
 }
 
 // ── Geoman polygon draw controller ────────────────────────────────────────────
-// Geoman is guaranteed loaded before MapContainer renders (see ABLineMapInner),
-// so map.pm is always available here — no dynamic import or ready flag needed.
 
 interface GeomanControllerProps {
   drawingBoundary: boolean;
+  drawingTrialZone: boolean;
   onBoundaryChange: (geojson: GeoJSONPolygon | null) => void;
-  onDrawingComplete: () => void;
+  onBoundaryDrawComplete: () => void;
+  onTrialZoneChange: (geojson: GeoJSONPolygon | null) => void;
+  onTrialZoneDrawComplete: () => void;
 }
 
 function GeomanController({
   drawingBoundary,
+  drawingTrialZone,
   onBoundaryChange,
-  onDrawingComplete,
+  onBoundaryDrawComplete,
+  onTrialZoneChange,
+  onTrialZoneDrawComplete,
 }: GeomanControllerProps) {
   const map = useMap();
+  const activeRef = useRef<"boundary" | "trialZone" | null>(null);
 
   useEffect(() => {
+    activeRef.current = drawingBoundary ? "boundary" : drawingTrialZone ? "trialZone" : null;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pm = (map as any).pm;
     if (!pm) return;
-    if (drawingBoundary) {
+    if (drawingBoundary || drawingTrialZone) {
       pm.enableDraw("Polygon", { snappable: false, tooltips: false });
     } else {
       pm.disableDraw();
     }
-  }, [drawingBoundary, map]);
+  }, [drawingBoundary, drawingTrialZone, map]);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function handleCreate(e: any) {
       const geojson = e.layer.toGeoJSON().geometry as GeoJSONPolygon;
       map.removeLayer(e.layer);
-      onBoundaryChange(geojson);
-      onDrawingComplete();
+      if (activeRef.current === "boundary") {
+        onBoundaryChange(geojson);
+        onBoundaryDrawComplete();
+      } else if (activeRef.current === "trialZone") {
+        onTrialZoneChange(geojson);
+        onTrialZoneDrawComplete();
+      }
     }
     map.on("pm:create", handleCreate);
     return () => {
       map.off("pm:create", handleCreate);
     };
-  }, [map, onBoundaryChange, onDrawingComplete]);
+  }, [map, onBoundaryChange, onBoundaryDrawComplete, onTrialZoneChange, onTrialZoneDrawComplete]);
 
   return null;
+}
+
+// ── Soil zone polygon renderer ────────────────────────────────────────────────
+
+const SOIL_COLORS = [
+  "#c8a97d", "#8fbc8f", "#d4b896", "#a0b4a0",
+  "#c9b08a", "#9ab09a", "#d2c4a0", "#94a894",
+];
+
+function SoilZones({
+  features,
+  onSoilZoneClick,
+}: {
+  features: SoilZoneFeature[];
+  onSoilZoneClick: (f: SoilZoneFeature) => void;
+}) {
+  return (
+    <>
+      {features.map((f, fi) => {
+        const color = SOIL_COLORS[fi % SOIL_COLORS.length];
+        const pathOptions = { color: "#7c5c2e", fillColor: color, fillOpacity: 0.40, weight: 1.5 };
+
+        const rings: [number, number][][] = [];
+        if (f.geometry.type === "Polygon") {
+          for (const ring of f.geometry.coordinates as number[][][]) {
+            rings.push(ring.map(([lon, lat]) => [lat, lon]));
+          }
+          return (
+            <Polygon
+              key={f.properties.mukey}
+              positions={rings as [number, number][][]}
+              pathOptions={pathOptions}
+              eventHandlers={{ click: () => onSoilZoneClick(f) }}
+            />
+          );
+        } else {
+          return (f.geometry.coordinates as number[][][][]).map((poly, pi) => {
+            const polyRings = poly.map((ring) => ring.map(([lon, lat]) => [lat, lon] as [number, number]));
+            return (
+              <Polygon
+                key={`${f.properties.mukey}-${pi}`}
+                positions={polyRings}
+                pathOptions={pathOptions}
+                eventHandlers={{ click: () => onSoilZoneClick(f) }}
+              />
+            );
+          });
+        }
+      })}
+    </>
+  );
 }
 
 // ── Main map component ────────────────────────────────────────────────────────
@@ -127,6 +208,12 @@ export interface Props {
   drawingBoundary: boolean;
   onBoundaryChange: (geojson: GeoJSONPolygon | null) => void;
   onDrawingComplete: () => void;
+  trialZone: GeoJSONPolygon | null;
+  drawingTrialZone: boolean;
+  onTrialZoneChange: (geojson: GeoJSONPolygon | null) => void;
+  onTrialZoneDrawComplete: () => void;
+  soilZones: SoilZoneFeature[];
+  onSoilZoneClick: (feature: SoilZoneFeature) => void;
   snappingField: boolean;
   onSnapDone: () => void;
   onSnapFail: (msg: string) => void;
@@ -153,11 +240,15 @@ export function ABLineMapInner({
   drawingBoundary,
   onBoundaryChange,
   onDrawingComplete,
+  trialZone,
+  drawingTrialZone,
+  onTrialZoneChange,
+  onTrialZoneDrawComplete,
+  soilZones,
+  onSoilZoneClick,
 }: Props) {
   const fixedRef = useRef(false);
   const [satellite, setSatellite] = useState(true);
-  // Geoman must be loaded before MapContainer mounts so addInitHook fires
-  // on the map instance and map.pm is available.
   const [geomanReady, setGeomanReady] = useState(false);
 
   useEffect(() => {
@@ -177,7 +268,11 @@ export function ABLineMapInner({
     ? boundary.coordinates[0].map(([lon, lat]) => [lat, lon])
     : null;
 
-  const cursor = placing || drawingBoundary ? "cursor-crosshair" : "";
+  const trialZonePositions: [number, number][] | null = trialZone
+    ? trialZone.coordinates[0].map(([lon, lat]) => [lat, lon])
+    : null;
+
+  const cursor = placing || drawingBoundary || drawingTrialZone ? "cursor-crosshair" : "";
 
   if (!geomanReady) {
     return <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />;
@@ -207,18 +302,34 @@ export function ABLineMapInner({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
         )}
-        <BoundaryFitter boundary={boundary} />
+        <BoundaryFitter boundary={boundary} trialZone={trialZone} />
         <ClickHandler placing={placing} onPlace={onPlace} />
         <GeomanController
           drawingBoundary={drawingBoundary}
+          drawingTrialZone={drawingTrialZone}
           onBoundaryChange={onBoundaryChange}
-          onDrawingComplete={onDrawingComplete}
+          onBoundaryDrawComplete={onDrawingComplete}
+          onTrialZoneChange={onTrialZoneChange}
+          onTrialZoneDrawComplete={onTrialZoneDrawComplete}
         />
+
+        {/* Soil zone overlays — rendered below field boundary */}
+        {soilZones.length > 0 && (
+          <SoilZones features={soilZones} onSoilZoneClick={onSoilZoneClick} />
+        )}
 
         {boundaryPositions && (
           <Polygon
             positions={boundaryPositions}
             pathOptions={{ color: "#16a34a", fillColor: "#16a34a", fillOpacity: 0.12, weight: 2 }}
+          />
+        )}
+
+        {/* Trial zone: orange, more opaque than field boundary */}
+        {trialZonePositions && (
+          <Polygon
+            positions={trialZonePositions}
+            pathOptions={{ color: "#ea580c", fillColor: "#f97316", fillOpacity: 0.20, weight: 2.5, dashArray: "6 3" }}
           />
         )}
 

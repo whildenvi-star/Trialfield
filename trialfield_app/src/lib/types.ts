@@ -36,6 +36,7 @@ export interface GeometryIn {
   trial_swath_ft: number;
   combine_ft?: number | null;
   field_boundary_geojson?: object | null;
+  trial_zone_geojson?: object | null;
 }
 
 export type RxFormat = "fieldview" | "isoxml" | "agx";

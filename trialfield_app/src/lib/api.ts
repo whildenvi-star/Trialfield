@@ -23,3 +23,17 @@ export async function postDesign(req: DesignRequest): Promise<Blob> {
 
   return res.blob();
 }
+
+export async function fetchSoilZones(fieldBoundaryGeojson: object): Promise<{ type: string; features: unknown[] }> {
+  try {
+    const res = await fetch(`${API_URL}/soil-zones`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ field_boundary_geojson: fieldBoundaryGeojson }),
+    });
+    if (!res.ok) return { type: "FeatureCollection", features: [] };
+    return res.json();
+  } catch {
+    return { type: "FeatureCollection", features: [] };
+  }
+}

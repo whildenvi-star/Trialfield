@@ -69,6 +69,7 @@ export default function DesignPage() {
   const [trialSwathFt, setTrialSwathFt] = useState("60");
   const [combineFt, setCombineFt] = useState("");
   const [boundary, setBoundary] = useState<GeoJSONPolygon | null>(null);
+  const [trialZone, setTrialZone] = useState<GeoJSONPolygon | null>(null);
 
   // Options
   const [soilMode, setSoilMode] = useState<"auto" | "skip">("skip");
@@ -115,6 +116,7 @@ export default function DesignPage() {
         trial_swath_ft: parseFloat(trialSwathFt),
         combine_ft: combineFt ? parseFloat(combineFt) : null,
         field_boundary_geojson: boundary ?? null,
+        trial_zone_geojson: trialZone ?? null,
       },
       soil_mode: soilMode,
       seed: parseInt(seed),
@@ -208,6 +210,8 @@ export default function DesignPage() {
             onChange={handleAbChange}
             boundary={boundary}
             onBoundaryChange={setBoundary}
+            trialZone={trialZone}
+            onTrialZoneChange={setTrialZone}
           />
           <SwathPanel
             trialSwathFt={trialSwathFt}

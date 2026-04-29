@@ -78,20 +78,27 @@ def test_design_zip_contains_expected_files():
     assert any(n.endswith(".kml") for n in names)
     assert any(n.endswith("_summary.md") for n in names)
     assert any(n.endswith("_soil_sample_pins.xlsx") for n in names)
+    assert any(n.endswith("_flagging_pins.xlsx") for n in names)
     assert any(n.endswith("_layout.png") for n in names)
     assert any(n.endswith("_field_map.pdf") for n in names)
     assert any(n.endswith("_AB_line.zip") for n in names)
     assert any(n.endswith("_Rx_ISOXML.zip") for n in names)
     assert any(n.endswith("_Rx_AgX.json") for n in names)
-    assert len(names) == 10
+    assert len(names) == 11
 
 
 def test_design_csv_has_24_plots():
     resp = client.post("/design", json=SCHULTZ_PAYLOAD)
     zf = _unzip_response(resp)
     csv_name = next(n for n in zf.namelist() if n.endswith("_plots.csv"))
-    lines = zf.read(csv_name).decode().strip().splitlines()
-    assert len(lines) == 25  # 1 header + 24 data rows
+    content = zf.read(csv_name).decode()
+    lines = content.strip().splitlines()
+    plot_rows = [l for l in lines if l.startswith("R") and "-S" in l]
+    assert len(plot_rows) == 24
+    assert "TRIAL EXTERIOR CORNERS" in content
+    assert "REPLICATION CORNERS" in content
+    assert "google.com/maps" in content
+    assert "maps.apple.com" in content
 
 
 def test_design_csv_columns():
@@ -279,7 +286,8 @@ def test_categorical_trial_plot_count():
     zf = _unzip_response(resp)
     csv_name = next(n for n in zf.namelist() if n.endswith("_plots.csv"))
     lines = zf.read(csv_name).decode().strip().splitlines()
-    assert len(lines) == 7  # header + 2 treatments × 3 reps
+    plot_rows = [l for l in lines if l.startswith("R") and "-S" in l]
+    assert len(plot_rows) == 6  # 2 treatments × 3 reps
 
 
 # ---------------------------------------------------------------------------

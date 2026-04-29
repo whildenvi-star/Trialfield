@@ -10,6 +10,7 @@ from fastapi.responses import StreamingResponse
 
 from ..schemas.request import DesignRequest
 from ..services.design_service import run_design_to_zip
+from trialfield_core.io.soil_zones import fetch_soil_zones
 
 router = APIRouter()
 
@@ -48,3 +49,18 @@ def design(
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{trial_name}.zip"'},
     )
+
+
+@router.post("/soil-zones")
+def soil_zones(body: dict) -> dict:
+    """Return soil map unit polygons intersecting the given field boundary."""
+    field_geojson = body.get("field_boundary_geojson")
+    if not field_geojson:
+        return {"type": "FeatureCollection", "features": []}
+    try:
+        from shapely.geometry import shape as shapely_shape
+        geom = shapely_shape(field_geojson)
+        features = fetch_soil_zones(geom.wkt)
+        return {"type": "FeatureCollection", "features": features}
+    except Exception:
+        return {"type": "FeatureCollection", "features": []}

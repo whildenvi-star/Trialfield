@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ABLineMap } from "./ABLineMap";
 import { ABLineUpload } from "./ABLineUpload";
 import { BoundaryUpload } from "./BoundaryUpload";
-import type { LatLon, GeoJSONPolygon } from "./ABLineMap";
+import { fetchSoilZones } from "@/lib/api";
+import type { LatLon, GeoJSONPolygon, SoilZoneFeature } from "./ABLineMap";
 import type { ABPoints } from "@/lib/abline";
 
 interface Props {
@@ -15,6 +16,8 @@ interface Props {
   onChange: (field: "aLon" | "aLat" | "bLon" | "bLat", value: string) => void;
   boundary: GeoJSONPolygon | null;
   onBoundaryChange: (geojson: GeoJSONPolygon | null) => void;
+  trialZone: GeoJSONPolygon | null;
+  onTrialZoneChange: (geojson: GeoJSONPolygon | null) => void;
 }
 
 type Placing = "A" | "B" | null;
@@ -26,9 +29,13 @@ function fmt(n: number) {
 export function ABLinePanel({
   aLon, aLat, bLon, bLat, onChange,
   boundary, onBoundaryChange,
+  trialZone, onTrialZoneChange,
 }: Props) {
   const [placing, setPlacing] = useState<Placing>(null);
   const [drawingBoundary, setDrawingBoundary] = useState(false);
+  const [drawingTrialZone, setDrawingTrialZone] = useState(false);
+  const [soilZones, setSoilZones] = useState<SoilZoneFeature[]>([]);
+  const [loadingSoilZones, setLoadingSoilZones] = useState(false);
 
   const pointA: LatLon | null =
     aLon && aLat ? { lat: parseFloat(aLat), lon: parseFloat(aLon) } : null;
@@ -48,6 +55,7 @@ export function ABLinePanel({
   }
 
   function handleDrawToggle() {
+    setDrawingTrialZone(false);
     if (boundary) {
       onBoundaryChange(null);
       setDrawingBoundary(false);
@@ -56,6 +64,48 @@ export function ABLinePanel({
       setDrawingBoundary((d) => !d);
     }
   }
+
+  function handleTrialZoneToggle() {
+    setDrawingBoundary(false);
+    if (trialZone) {
+      onTrialZoneChange(null);
+      setDrawingTrialZone(false);
+    } else {
+      setPlacing(null);
+      setDrawingTrialZone((d) => !d);
+    }
+  }
+
+  async function handleSoilZonesToggle() {
+    if (soilZones.length > 0) {
+      setSoilZones([]);
+      return;
+    }
+    if (!boundary) return;
+    setLoadingSoilZones(true);
+    const fc = await fetchSoilZones(boundary);
+    setSoilZones(fc.features as SoilZoneFeature[]);
+    setLoadingSoilZones(false);
+  }
+
+  function handleSoilZoneClick(feature: SoilZoneFeature) {
+    // Convert soil zone geometry to GeoJSONPolygon (Polygon only)
+    let geom: GeoJSONPolygon;
+    if (feature.geometry.type === "Polygon") {
+      geom = feature.geometry as GeoJSONPolygon;
+    } else {
+      // MultiPolygon: use first polygon
+      const firstPoly = (feature.geometry.coordinates as number[][][][])[0];
+      geom = { type: "Polygon", coordinates: firstPoly };
+    }
+    onTrialZoneChange(geom);
+    setSoilZones([]);
+  }
+
+  let hint = "Click Place A / Place B then click the map, or type coordinates. Markers are draggable.";
+  if (drawingBoundary) hint = "Click vertices to trace the field boundary. Click the first point to close.";
+  else if (drawingTrialZone) hint = "Click vertices to trace the trial zone (sub-area for plot placement). Click the first point to close.";
+  else if (soilZones.length > 0) hint = "Click a soil zone to use it as the trial zone. Soil zones are colored by map unit.";
 
   return (
     <div className="space-y-3">
@@ -68,6 +118,12 @@ export function ABLinePanel({
         drawingBoundary={drawingBoundary}
         onBoundaryChange={onBoundaryChange}
         onDrawingComplete={() => setDrawingBoundary(false)}
+        trialZone={trialZone}
+        drawingTrialZone={drawingTrialZone}
+        onTrialZoneChange={onTrialZoneChange}
+        onTrialZoneDrawComplete={() => setDrawingTrialZone(false)}
+        soilZones={soilZones}
+        onSoilZoneClick={handleSoilZoneClick}
         snappingField={false}
         onSnapDone={() => {}}
         onSnapFail={() => {}}
@@ -79,6 +135,7 @@ export function ABLinePanel({
           type="button"
           onClick={() => {
             setDrawingBoundary(false);
+            setDrawingTrialZone(false);
             setPlacing(placing === "A" ? null : "A");
           }}
           className={`flex-1 border rounded py-1 font-medium transition-colors ${
@@ -93,6 +150,7 @@ export function ABLinePanel({
           type="button"
           onClick={() => {
             setDrawingBoundary(false);
+            setDrawingTrialZone(false);
             setPlacing(placing === "B" ? null : "B");
           }}
           className={`flex-1 border rounded py-1 font-medium transition-colors ${
@@ -114,11 +172,7 @@ export function ABLinePanel({
               : "bg-white text-gray-700 hover:bg-gray-50"
           }`}
         >
-          {drawingBoundary
-            ? "Draw boundary…"
-            : boundary
-            ? "Clear boundary"
-            : "Draw boundary"}
+          {drawingBoundary ? "Drawing boundary…" : boundary ? "Clear boundary" : "Draw boundary"}
         </button>
         {(pointA || pointB) && (
           <button
@@ -135,6 +189,37 @@ export function ABLinePanel({
           </button>
         )}
       </div>
+
+      {/* Trial zone row — only shown when field boundary is set */}
+      {boundary && (
+        <div className="flex gap-2 text-sm flex-wrap">
+          <button
+            type="button"
+            onClick={handleTrialZoneToggle}
+            className={`flex-1 border rounded py-1 font-medium transition-colors ${
+              drawingTrialZone
+                ? "bg-orange-500 text-white border-orange-500"
+                : trialZone
+                ? "bg-orange-100 text-orange-800 border-orange-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            {drawingTrialZone ? "Drawing trial zone…" : trialZone ? "Clear trial zone" : "Draw trial zone"}
+          </button>
+          <button
+            type="button"
+            onClick={handleSoilZonesToggle}
+            disabled={loadingSoilZones}
+            className={`flex-1 border rounded py-1 font-medium transition-colors disabled:opacity-50 ${
+              soilZones.length > 0
+                ? "bg-amber-100 text-amber-800 border-amber-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                : "bg-white text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            {loadingSoilZones ? "Loading…" : soilZones.length > 0 ? "Clear soil zones" : "Load soil zones"}
+          </button>
+        </div>
+      )}
 
       {/* Coordinate inputs */}
       <div className="grid grid-cols-2 gap-3">
@@ -205,11 +290,7 @@ export function ABLinePanel({
         }}
       />
 
-      <p className="text-xs text-gray-400">
-        {drawingBoundary
-          ? "Click vertices to trace the field boundary. Click the first point to close."
-          : "Click Place A / Place B then click the map, or type coordinates. Markers are draggable."}
-      </p>
+      <p className="text-xs text-gray-400">{hint}</p>
     </div>
   );
 }

@@ -5,14 +5,24 @@ type GeoJSONGeometry =
   | GeoJSONPolygon
   | { type: "MultiPolygon"; coordinates: number[][][][] };
 
+function closeRings(geom: GeoJSONPolygon): GeoJSONPolygon {
+  const coordinates = geom.coordinates.map((ring) => {
+    const first = ring[0];
+    const last = ring[ring.length - 1];
+    if (!first || !last || (first[0] === last[0] && first[1] === last[1])) return ring;
+    return [...ring, first];
+  });
+  return { ...geom, coordinates };
+}
+
 function firstPolygon(geom: GeoJSONGeometry): GeoJSONPolygon {
-  if (geom.type === "Polygon") return geom;
+  if (geom.type === "Polygon") return closeRings(geom);
   // MultiPolygon → take the largest ring by vertex count
   const rings = geom.coordinates;
   const largest = rings.reduce((a, b) =>
     a[0].length >= b[0].length ? a : b
   );
-  return { type: "Polygon", coordinates: largest };
+  return closeRings({ type: "Polygon", coordinates: largest });
 }
 
 function geometryFromFeatureCollection(
