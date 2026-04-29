@@ -45,7 +45,7 @@
         </div>
         <button class="tab-btn" data-tab="reference">Reference</button>
         <button class="tab-btn" data-tab="programs">Programs</button>
-        <button class="tab-btn" data-tab="sales">Sales</button>
+        <button class="tab-btn" data-tab="sales">Sales &amp; Marketing</button>
         <button class="tab-btn" data-tab="map">Map</button>
         <button id="theme-toggle-nav" class="theme-toggle" style="margin-left:auto">&#9788;</button>
       </div>
@@ -760,143 +760,141 @@
       </div>
     </section>
 
-    <!-- SALES -->
+    <!-- SALES & MARKETING -->
     <section id="tab-sales" class="tab-content">
-      <h2>Sales / Marketing</h2>
+      <h2>Sales &amp; Marketing</h2>
 
-      <!-- Crop Types Manager -->
-      <div class="collapsible-section" id="crop-types-section">
-        <h3 class="collapsible-header" id="crop-types-toggle">
-          <span class="collapse-arrow">&#9654;</span> Crop Types
-        </h3>
-        <div class="collapsible-body" id="crop-types-body" style="display:none">
-          <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis.</p>
-          <div id="crop-types-container"></div>
-          <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
-        </div>
+      <!-- Sub-tab strip -->
+      <div class="mkt-tabs">
+        <button class="mkt-tab-btn active" data-mtab="dashboard">Hedging Dashboard</button>
+        <button class="mkt-tab-btn" data-mtab="instruments">Instruments</button>
+        <button class="mkt-tab-btn" data-mtab="variants">Variant Setup</button>
+        <button class="mkt-tab-btn role-hide-office" data-mtab="whatif">What-If</button>
+        <button class="mkt-tab-btn" data-mtab="basis">Basis</button>
+        <button class="mkt-tab-btn" data-mtab="legacy">Legacy</button>
       </div>
 
-      <!-- Hedging Strategy Assessment -->
-      <div id="hedging-panel" class="hedging-panel">
-        <h3 class="role-hide-office">Hedging Strategy Assessment</h3>
-        <div class="hedging-tabs">
-          <button class="hedging-tab-btn active role-hide-office" data-htab="coverage">Contract Coverage</button>
-          <button class="hedging-tab-btn role-hide-office" data-htab="whatif">What-If Scenarios</button>
-          <button class="hedging-tab-btn" data-htab="basis">Basis Comparison</button>
-        </div>
+      <!-- Hedging Dashboard -->
+      <div id="mtab-dashboard" class="mtab-content active">
+        <div id="mkt-dashboard-root"></div>
+      </div>
 
-        <div id="htab-coverage" class="htab-content active role-hide-office">
-          <div id="coverage-grid" class="coverage-grid"></div>
-          <div class="table-wrap">
-            <table id="coverage-detail-table">
-              <thead>
-                <tr>
-                  <th>Crop</th><th>Proj Total</th><th>Amt Sold</th>
-                  <th>% Sold</th><th>Avg Price</th><th>COP</th>
-                  <th title="Avg sale price minus COP">Margin</th>
-                  <th>Remaining</th>
-                  <th title="Price needed on remaining bushels to break even">Breakeven</th>
-                </tr>
-              </thead>
-              <tbody id="coverage-detail-tbody"></tbody>
-            </table>
-          </div>
-        </div>
+      <!-- Instruments -->
+      <div id="mtab-instruments" class="mtab-content">
+        <div id="mkt-instruments-root"></div>
+      </div>
 
-        <div id="htab-whatif" class="htab-content role-hide-office">
-          <div class="whatif-controls">
-            <div class="form-group">
-              <label>Crop</label>
-              <select id="whatif-crop"></select>
-            </div>
-            <div class="form-group">
-              <label>CBOT Price: $<span id="whatif-cbot-display">4.50</span></label>
-              <input type="range" id="whatif-cbot-slider" min="2.00" max="12.00" step="0.10" value="4.50">
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table id="whatif-table">
-              <thead>
-                <tr><th>CBOT</th><th>Cash Price</th><th>Unsold Revenue</th>
-                    <th>Total Revenue</th><th>Total Profit</th><th>Profit/AC</th></tr>
-              </thead>
-              <tbody id="whatif-tbody"></tbody>
-            </table>
-          </div>
-          <h4 style="margin-top:1rem">Bear / Base / Bull Comparison</h4>
-          <div class="scenario-picker">
-            <label>Bear: $<input type="number" id="whatif-bear" step="0.05" value="3.50" class="inline-input"></label>
-            <label>Base: $<input type="number" id="whatif-base" step="0.05" value="4.50" class="inline-input"></label>
-            <label>Bull: $<input type="number" id="whatif-bull" step="0.05" value="5.50" class="inline-input"></label>
-          </div>
-          <div class="table-wrap">
-            <table id="whatif-compare-table">
-              <thead>
-                <tr><th>Scenario</th><th>CBOT</th><th>Total Profit</th>
-                    <th>Profit/AC</th><th>vs Base</th></tr>
-              </thead>
-              <tbody id="whatif-compare-tbody"></tbody>
-            </table>
-          </div>
-        </div>
+      <!-- Variant Setup -->
+      <div id="mtab-variants" class="mtab-content">
+        <div id="mkt-variants-root"></div>
+      </div>
 
-        <div id="htab-basis" class="htab-content">
-          <div class="form-group" style="max-width:300px;margin-bottom:1rem">
+      <!-- What-If (legacy hedging.js) -->
+      <div id="mtab-whatif" class="mtab-content role-hide-office">
+        <div class="whatif-controls">
+          <div class="form-group">
             <label>Crop</label>
-            <select id="basis-crop"></select>
+            <select id="whatif-crop"></select>
           </div>
-          <div class="table-wrap">
-            <table id="basis-table">
-              <thead>
-                <tr><th>Buyer</th><th>Basis</th><th>Net Price</th>
-                    <th>Load Size</th><th>RT Hours</th><th>Trucking/Bu</th>
-                    <th>Drying Rate</th><th>Shrink %</th>
-                    <th title="Net price minus trucking and handling costs">Net-of-Costs</th></tr>
-              </thead>
-              <tbody id="basis-tbody"></tbody>
-            </table>
+          <div class="form-group">
+            <label>CBOT Price: $<span id="whatif-cbot-display">4.50</span></label>
+            <input type="range" id="whatif-cbot-slider" min="2.00" max="12.00" step="0.10" value="4.50">
           </div>
+        </div>
+        <div class="table-wrap">
+          <table id="whatif-table">
+            <thead>
+              <tr><th>CBOT</th><th>Cash Price</th><th>Unsold Revenue</th>
+                  <th>Total Revenue</th><th>Total Profit</th><th>Profit/AC</th></tr>
+            </thead>
+            <tbody id="whatif-tbody"></tbody>
+          </table>
+        </div>
+        <h4 style="margin-top:1rem">Bear / Base / Bull Comparison</h4>
+        <div class="scenario-picker">
+          <label>Bear: $<input type="number" id="whatif-bear" step="0.05" value="3.50" class="inline-input"></label>
+          <label>Base: $<input type="number" id="whatif-base" step="0.05" value="4.50" class="inline-input"></label>
+          <label>Bull: $<input type="number" id="whatif-bull" step="0.05" value="5.50" class="inline-input"></label>
+        </div>
+        <div class="table-wrap">
+          <table id="whatif-compare-table">
+            <thead>
+              <tr><th>Scenario</th><th>CBOT</th><th>Total Profit</th>
+                  <th>Profit/AC</th><th>vs Base</th></tr>
+            </thead>
+            <tbody id="whatif-compare-tbody"></tbody>
+          </table>
         </div>
       </div>
 
-      <h3>Contract Log</h3>
-      <div class="filters">
-        <input type="text" id="sale-search" placeholder="Search contracts...">
-        <select id="sale-filter-crop">
-          <option value="">All Crops</option>
-        </select>
-        <select id="sale-filter-status">
-          <option value="">All Status</option>
-          <option value="open">Open</option>
-          <option value="done">Done</option>
-        </select>
-        <button id="sale-add" class="btn-primary btn-sm">+ Add Contract</button>
-      </div>
-      <div class="table-info"><span id="sales-count"></span></div>
-      <div class="table-wrap">
-        <table id="sales-table">
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Amount</th>
-              <th>Crop</th>
-              <th>Buyer</th>
-              <th title="Basis adjustment from CBOT price">Basis</th>
-              <th>Price</th>
-              <th title="Chicago Board of Trade reference price">CBOT</th>
-              <th>Notes</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="sales-tbody"></tbody>
-        </table>
+      <!-- Basis (legacy hedging.js) -->
+      <div id="mtab-basis" class="mtab-content">
+        <div class="form-group" style="max-width:300px;margin-bottom:1rem">
+          <label>Crop</label>
+          <select id="basis-crop"></select>
+        </div>
+        <div class="table-wrap">
+          <table id="basis-table">
+            <thead>
+              <tr><th>Buyer</th><th>Basis</th><th>Net Price</th>
+                  <th>Load Size</th><th>RT Hours</th><th>Trucking/Bu</th>
+                  <th>Drying Rate</th><th>Shrink %</th>
+                  <th title="Net price minus trucking and handling costs">Net-of-Costs</th></tr>
+            </thead>
+            <tbody id="basis-tbody"></tbody>
+          </table>
+        </div>
       </div>
 
-      <!-- Buyer Discount Schedules -->
-      <h3>Buyer Discount Schedules</h3>
-      <p class="edit-hint">Set moisture discount tiers per buyer. These are used when a field has Harvest Moisture % and a Buyer assigned.</p>
-      <div id="buyer-schedule-container"></div>
+      <!-- Legacy (old contract log + crop types + buyer schedules) -->
+      <div id="mtab-legacy" class="mtab-content">
+
+        <!-- Crop Types Manager -->
+        <div class="collapsible-section" id="crop-types-section">
+          <h3 class="collapsible-header" id="crop-types-toggle">
+            <span class="collapse-arrow">&#9654;</span> Crop Types
+          </h3>
+          <div class="collapsible-body" id="crop-types-body" style="display:none">
+            <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis.</p>
+            <div id="crop-types-container"></div>
+            <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
+          </div>
+        </div>
+
+        <h3>Contract Log</h3>
+        <div class="filters">
+          <input type="text" id="sale-search" placeholder="Search contracts...">
+          <select id="sale-filter-crop">
+            <option value="">All Crops</option>
+          </select>
+          <select id="sale-filter-status">
+            <option value="">All Status</option>
+            <option value="open">Open</option>
+            <option value="done">Done</option>
+          </select>
+          <button id="sale-add" class="btn-primary btn-sm">+ Add Contract</button>
+        </div>
+        <div class="table-info"><span id="sales-count"></span></div>
+        <div class="table-wrap">
+          <table id="sales-table">
+            <thead>
+              <tr>
+                <th>Status</th><th>Date</th><th>Amount</th><th>Crop</th>
+                <th>Buyer</th><th title="Basis adjustment from CBOT price">Basis</th>
+                <th>Price</th><th title="Chicago Board of Trade reference price">CBOT</th>
+                <th>Notes</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="sales-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Buyer Discount Schedules -->
+        <h3 style="margin-top:2rem">Buyer Discount Schedules</h3>
+        <p class="edit-hint">Set moisture discount tiers per buyer.</p>
+        <div id="buyer-schedule-container"></div>
+      </div>
+
     </section>
 
     <!-- FARM MAP -->
@@ -1541,6 +1539,7 @@
 
   <script src="sales.js?v=2"></script>
   <script src="hedging.js"></script>
+  <script src="sales-marketing.js?v=1"></script>
   <script src="farm-map.js"></script>
   <script src="pdf-report.js"></script>
   <script src="fieldops-ui.js"></script>

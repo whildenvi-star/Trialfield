@@ -5,6 +5,7 @@ require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const { createClient } = require('@supabase/supabase-js');
 const compression = require('compression');
 const Calc = require('./public/calc.js');
 const fieldopsClient = require('./fieldops/client');
@@ -2904,6 +2905,103 @@ if (migrateData()) {
   saveData().then(function () { console.log('Data migrated (suppliers, labor hours, discount schedules, settings)'); });
 }
 console.log(`Loaded: ${store.fields.length} fields, ${store.products.length} products, ${store.implements.length} implements, ${store.seeds.length} seeds, ${store.rent.length} rent parcels`);
+
+// ── Sales & Marketing — Supabase-backed routes ────────────────────────────────
+const supabase = (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  : null;
+
+function getCropYear() {
+  return store.settings && store.settings.year ? store.settings.year : new Date().getFullYear();
+}
+
+app.get('/api/marketing/commodities', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const { data, error } = await supabase.from('commodities').select('*').order('sort_order');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.get('/api/marketing/variants', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const year = parseInt(req.query.cropYear) || getCropYear();
+  const { data, error } = await supabase.from('crop_variants').select('*').eq('crop_year', year).order('name');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/marketing/variants', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const year = getCropYear();
+  const { commodity_id, name, estimated_bu, is_contracted, notes } = req.body;
+  const { data, error } = await supabase.from('crop_variants').insert({
+    commodity_id, name, estimated_bu: estimated_bu || null,
+    is_contracted: !!is_contracted, crop_year: year, notes: notes || null
+  }).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+app.patch('/api/marketing/variants/:id', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const allowed = ['name', 'estimated_bu', 'is_contracted', 'notes'];
+  const patch = {};
+  allowed.forEach(k => { if (k in req.body) patch[k] = req.body[k]; });
+  const { data, error } = await supabase.from('crop_variants').update(patch).eq('id', req.params.id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.delete('/api/marketing/variants/:id', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const { error } = await supabase.from('crop_variants').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+
+app.get('/api/marketing/instruments', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const year = parseInt(req.query.cropYear) || getCropYear();
+  const { data, error } = await supabase.from('sale_instruments').select('*').eq('crop_year', year).order('created_at');
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.post('/api/marketing/instruments', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const year = getCropYear();
+  const NUMERIC = ['bushels','price_per_bushel','basis','futures_reference','delivered_bu',
+    'strike_price','premium_paid','ko_level','ki_level','daily_bu','weekly_bu','leverage_ratio'];
+  const payload = { crop_year: year };
+  Object.entries(req.body).forEach(([k, v]) => {
+    if (k === 'crop_year') return;
+    payload[k] = NUMERIC.includes(k) ? (v !== '' && v !== null && v !== undefined ? Number(v) : null) : v;
+  });
+  const { data, error } = await supabase.from('sale_instruments').insert(payload).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.status(201).json(data);
+});
+
+app.patch('/api/marketing/instruments/:id', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const NUMERIC = ['bushels','price_per_bushel','basis','futures_reference','delivered_bu',
+    'strike_price','premium_paid','ko_level','ki_level','daily_bu','weekly_bu','leverage_ratio'];
+  const patch = {};
+  Object.entries(req.body).forEach(([k, v]) => {
+    patch[k] = NUMERIC.includes(k) ? (v !== '' && v !== null && v !== undefined ? Number(v) : null) : v;
+  });
+  const { data, error } = await supabase.from('sale_instruments').update(patch).eq('id', req.params.id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.delete('/api/marketing/instruments/:id', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const { error } = await supabase.from('sale_instruments').delete().eq('id', req.params.id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ ok: true });
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Macro Roll Up server running at http://localhost:${PORT}`);
