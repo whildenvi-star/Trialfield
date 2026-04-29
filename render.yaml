@@ -13,3 +13,20 @@ services:
         sync: false        # set to your Vercel URL after first deploy
       - key: PYTHON_VERSION
         value: "3.12"
+      # ── Payments (set manually in Render dashboard) ──────────────────────────
+      - key: PAYMENT_REQUIRED
+        value: "false"     # flip to "true" when ready to charge
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_STARTER_PRICE_ID
+        sync: false
+      - key: STRIPE_PRO_PRICE_ID
+        sync: false
+      - key: FRONTEND_URL
+        sync: false        # set to https://trialfield.vercel.app

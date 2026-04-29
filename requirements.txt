@@ -18,3 +18,5 @@ python-multipart==0.0.27
 anyio==4.13.0
 starlette==1.0.0
 click==8.3.3
+supabase==2.29.0
+stripe==15.1.0

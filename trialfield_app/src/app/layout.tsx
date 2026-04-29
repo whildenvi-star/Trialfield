@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   description: "On-farm strip trial designer",
 };
 
+import { NavKeyManager } from "@/components/NavKeyManager";
+
+const PAYMENT_ENABLED = process.env.NEXT_PUBLIC_PAYMENT_ENABLED === "true";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -37,12 +41,15 @@ export default function RootLayout({
             >
               Trialfield
             </Link>
-            <Link
-              href="/design"
-              className="text-sm font-medium text-stone-500 hover:text-green-700 transition-colors"
-            >
-              Design a trial →
-            </Link>
+            <div className="flex items-center gap-4">
+              {PAYMENT_ENABLED && <NavKeyManager />}
+              <Link
+                href="/design"
+                className="text-sm font-medium text-stone-500 hover:text-green-700 transition-colors"
+              >
+                Design a trial →
+              </Link>
+            </div>
           </div>
         </header>
 

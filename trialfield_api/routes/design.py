@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import io
+import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from fastapi.responses import StreamingResponse
 
 from ..schemas.request import DesignRequest
@@ -13,13 +14,28 @@ from ..services.design_service import run_design_to_zip
 router = APIRouter()
 
 
-@router.post("/design")
-def design(req: DesignRequest) -> StreamingResponse:
-    """Accept a trial design request and return the output file bundle as a ZIP.
+def _check_credits(key: str | None) -> None:
+    """Raise HTTP 402 if payment is required and the key has no credits.
 
-    The route is a plain `def` (not `async def`) so FastAPI dispatches it to a
-    thread-pool executor — appropriate for the CPU-bound geometry pipeline.
+    When PAYMENT_REQUIRED=false (default) this is a no-op, keeping the
+    service free until the owner decides to flip the flag.
     """
+    if os.getenv("PAYMENT_REQUIRED", "false").lower() != "true":
+        return
+    if not key:
+        raise HTTPException(status_code=402, detail="Access key required — visit /buy to get one.")
+    from ..services.billing_service import consume_credit
+    if not consume_credit(key):
+        raise HTTPException(status_code=402, detail="No credits remaining — visit /buy to top up.")
+
+
+@router.post("/design")
+def design(
+    req: DesignRequest,
+    x_access_key: str | None = Header(default=None),
+) -> StreamingResponse:
+    """Accept a trial design request and return the output file bundle as a ZIP."""
+    _check_credits(x_access_key)
     try:
         zip_bytes, trial_name = run_design_to_zip(req)
     except ValueError as exc:
