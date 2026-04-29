@@ -39,7 +39,9 @@ def get_credits(key: str) -> int | None:
         .maybe_single()
         .execute()
     )
-    return row.data["credits"] if row.data else None
+    if row is None or row.data is None:
+        return None
+    return row.data["credits"]
 
 
 def consume_credit(key: str) -> bool:
