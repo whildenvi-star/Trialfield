@@ -20,6 +20,7 @@ interface FormState {
   variant_id: string
   new_variant_name: string
   instrument_type: InstrumentType
+  crop_year: string
   buyer: string
   counterparty: string
   notes: string
@@ -54,6 +55,7 @@ const EMPTY: FormState = {
   variant_id: '',
   new_variant_name: '',
   instrument_type: 'cash',
+  crop_year: String(CURRENT_CROP_YEAR),
   buyer: '',
   counterparty: '',
   notes: '',
@@ -86,6 +88,7 @@ function instrumentToForm(inst: SaleInstrument): FormState {
     commodity_id: inst.commodity_id,
     variant_id: inst.variant_id ?? '',
     instrument_type: inst.instrument_type,
+    crop_year: String(inst.crop_year ?? CURRENT_CROP_YEAR),
     buyer: inst.buyer ?? '',
     counterparty: inst.counterparty ?? '',
     notes: inst.notes ?? '',
@@ -139,11 +142,11 @@ export function InstrumentForm({
 
   useEffect(() => {
     if (open) {
-      setForm(isEdit ? instrumentToForm(instrument!) : EMPTY)
+      setForm(isEdit ? instrumentToForm(instrument!) : { ...EMPTY, crop_year: String(cropYear) })
       setError(null)
       setShowNewVariant(false)
     }
-  }, [open, instrument, isEdit])
+  }, [open, instrument, isEdit, cropYear])
 
   function set(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -197,7 +200,7 @@ export function InstrumentForm({
       commodity_id:    form.commodity_id,
       variant_id:      form.variant_id || null,
       instrument_type: form.instrument_type,
-      crop_year:       cropYear,
+      crop_year:       parseInt(form.crop_year) || cropYear,
       buyer:           form.buyer.trim() || null,
       counterparty:    form.counterparty.trim() || null,
       notes:           form.notes.trim() || null,
@@ -314,7 +317,7 @@ export function InstrumentForm({
           <p className={secLabel}>Commodity & Variant</p>
 
           <div className={fc}>
-            <label className={lc}>Commodity <span className="text-red-400">*</span></label>
+            <label className={lc}>Commodity <span className="text-glomalin-danger">*</span></label>
             <select
               value={form.commodity_id}
               onChange={(e) => {
@@ -385,6 +388,31 @@ export function InstrumentForm({
               )}
             </div>
           )}
+
+          {/* ── Crop year ─────────────────────────────────────────── */}
+          <div className={`${fc} mt-3`}>
+            <label className={lc}>
+              Crop Year
+              {parseInt(form.crop_year) !== CURRENT_CROP_YEAR && form.crop_year && (
+                <span className="ml-2 text-glomalin-warning">(forward year)</span>
+              )}
+            </label>
+            <input
+              type="number"
+              min="2020"
+              max="2040"
+              step="1"
+              value={form.crop_year}
+              onChange={(e) => set('crop_year', e.target.value)}
+              className={ic}
+              placeholder={String(CURRENT_CROP_YEAR)}
+            />
+            {parseInt(form.crop_year) !== CURRENT_CROP_YEAR && form.crop_year && (
+              <p className="text-xs text-glomalin-warning/80 font-mono mt-1">
+                This instrument will be tracked against {form.crop_year} production.
+              </p>
+            )}
+          </div>
 
           {/* ── Instrument type ───────────────────────────────────── */}
           <p className={`${secLabel} mt-4`}>Instrument Type</p>
@@ -459,7 +487,7 @@ export function InstrumentForm({
             <>
               <p className={`${secLabel} mt-4`}>Price & Delivery</p>
               <div className={fc}>
-                <label className={lc}>Bushels <span className="text-red-400">*</span></label>
+                <label className={lc}>Bushels <span className="text-glomalin-danger">*</span></label>
                 <input type="number" step="1" min="1" value={form.bushels}
                   onChange={(e) => set('bushels', e.target.value)} className={ic} placeholder="e.g. 15000" />
               </div>
@@ -549,13 +577,13 @@ export function InstrumentForm({
               </div>
 
               <div className={fc}>
-                <label className={lc}>Contract Size (bu) <span className="text-red-400">*</span></label>
+                <label className={lc}>Contract Size (bu) <span className="text-glomalin-danger">*</span></label>
                 <input type="number" step="1" min="1" value={form.bushels}
                   onChange={(e) => set('bushels', e.target.value)} className={ic} placeholder="e.g. 15000" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className={fc}>
-                  <label className={lc}>Strike ($/bu) <span className="text-red-400">*</span></label>
+                  <label className={lc}>Strike ($/bu) <span className="text-glomalin-danger">*</span></label>
                   <input type="number" step="0.001" min="0" value={form.strike_price}
                     onChange={(e) => set('strike_price', e.target.value)} className={ic} placeholder="e.g. 11.00" />
                 </div>
@@ -613,7 +641,7 @@ export function InstrumentForm({
 
               <div className="grid grid-cols-2 gap-3">
                 <div className={fc}>
-                  <label className={lc}>KO Level ($/bu) <span className="text-red-400">*</span></label>
+                  <label className={lc}>KO Level ($/bu) <span className="text-glomalin-danger">*</span></label>
                   <input type="number" step="0.001" min="0" value={form.ko_level}
                     onChange={(e) => set('ko_level', e.target.value)} className={ic} placeholder="e.g. 12.50" />
                 </div>
@@ -666,7 +694,7 @@ export function InstrumentForm({
 
           {/* Error */}
           {error && (
-            <div className="mb-4 rounded border border-red-800/50 bg-red-950/30 px-3 py-2 text-sm font-mono text-red-400">
+            <div className="mb-4 rounded border border-glomalin-danger/30 bg-glomalin-danger/10 px-3 py-2 text-sm font-mono text-glomalin-danger">
               {error}
             </div>
           )}

@@ -58,6 +58,21 @@ export interface SaleInstrument {
   updated_at: string
 }
 
+// ── Pricing config (per crop-year) ────────────────────────────────────────────
+
+export type PricingMode = 'cbot_basis' | 'flat_contract'
+export type PriceUnit = 'per_bu' | 'per_ton' | 'per_cwt'
+
+export interface CommodityPricing {
+  id: string
+  commodity_id: string
+  crop_year: number
+  pricing_mode: PricingMode
+  price_value: number | null  // signed basis offset ($/bu) for cbot_basis; flat price for flat_contract
+  price_unit: PriceUnit
+  notes: string | null
+}
+
 // ── Computed aggregates ────────────────────────────────────────────────────────
 
 export interface VariantPosition {

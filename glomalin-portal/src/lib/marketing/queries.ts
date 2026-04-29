@@ -4,6 +4,7 @@ import type {
   SaleInstrument,
   CbotPrice,
   CommodityPosition,
+  CommodityPricing,
   VariantPosition,
   InstrumentType,
 } from './types'
@@ -90,12 +91,18 @@ export function computeCommodityPositions(
   commodities: Commodity[],
   variants: CropVariant[],
   instruments: SaleInstrument[],
-  cbotPrices: CbotPrice[]
+  cbotPrices: CbotPrice[],
+  pricingConfigs: CommodityPricing[] = []
 ): CommodityPosition[] {
   const priceBySymbol = new Map<string, number>()
   for (const p of cbotPrices) {
     if (p.symbol) priceBySymbol.set(p.symbol.toUpperCase(), p.price)
     priceBySymbol.set(p.commodity.toLowerCase(), p.price)
+  }
+
+  const configByCommodity = new Map<string, CommodityPricing>()
+  for (const pc of pricingConfigs) {
+    configByCommodity.set(pc.commodity_id, pc)
   }
 
   const instrumentsByVariant = new Map<string, SaleInstrument[]>()
@@ -162,13 +169,25 @@ export function computeCommodityPositions(
     }
     const wap = wadBu > 0 ? wadSum / wadBu : null
 
+    const config = configByCommodity.get(commodity.id)
+    const isFlat = config?.pricing_mode === 'flat_contract'
+
     let cbot_price: number | null = null
     if (commodity.cbot_symbol) {
       cbot_price = priceBySymbol.get(commodity.cbot_symbol.toUpperCase()) ?? null
     }
 
-    const unpriced_exposure_dollars =
-      commodity.is_hedgeable && cbot_price != null ? unpriced_bu * cbot_price : null
+    let unpriced_exposure_dollars: number | null = null
+    if (isFlat) {
+      // Flat contract: exposure uses the configured price (no CBOT lookup)
+      if (config?.price_value != null && unpriced_bu > 0) {
+        unpriced_exposure_dollars = unpriced_bu * config.price_value
+      }
+    } else if (commodity.is_hedgeable && cbot_price != null) {
+      // CBOT basis: exposure = unpriced_bu × (CBOT + basis offset)
+      const basis = config?.price_value ?? 0
+      unpriced_exposure_dollars = unpriced_bu * (cbot_price + basis)
+    }
 
     const allInstruments = instrumentsByCommodity.get(commodity.id) ?? []
     const instrument_mix: Record<InstrumentType, number> = {

@@ -3,7 +3,7 @@ import { fetchBudgetService, fetchGrainService } from '@/app/api/mobile/_lib/pro
 import { MobileMacroView } from '@/components/macro/mobile-macro-view'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import type { FieldRow, ContractEntry, InputEntry } from '@/components/macro/field-table'
-import type { Commodity, CropVariant, SaleInstrument, CbotPrice } from '@/lib/marketing/types'
+import type { Commodity, CropVariant, SaleInstrument, CbotPrice, CommodityPricing } from '@/lib/marketing/types'
 import { computeCommodityPositions } from '@/lib/marketing/queries'
 
 const ROLE_MAP: Record<string, string> = {
@@ -84,6 +84,7 @@ export default async function MacroRollupPage() {
     commoditiesResult,
     variantsResult,
     instrumentsResult,
+    pricingResult,
     cbotResult,
     yieldResult,
   ] = await Promise.allSettled([
@@ -94,6 +95,7 @@ export default async function MacroRollupPage() {
     supabase.from('commodities').select('*').order('sort_order'),
     supabase.from('crop_variants').select('*').eq('crop_year', CURRENT_CROP_YEAR),
     supabase.from('sale_instruments').select('*').eq('crop_year', CURRENT_CROP_YEAR).order('commodity_id'),
+    supabase.from('commodity_pricing').select('*').eq('crop_year', CURRENT_CROP_YEAR),
     fetch(`${appUrl}/api/marketing/cbot-prices`, {
       next: { revalidate: 0 },
       signal: AbortSignal.timeout(8000),
@@ -165,6 +167,11 @@ export default async function MacroRollupPage() {
       ? ((instrumentsResult.value.data as SaleInstrument[]) ?? [])
       : []
 
+  const pricingConfigs: CommodityPricing[] =
+    pricingResult.status === 'fulfilled'
+      ? ((pricingResult.value.data as CommodityPricing[]) ?? [])
+      : []
+
   const cbotData: CbotResponse =
     cbotResult.status === 'fulfilled'
       ? cbotResult.value
@@ -186,7 +193,8 @@ export default async function MacroRollupPage() {
     commodities,
     cropVariants,
     saleInstruments,
-    cbotData.prices
+    cbotData.prices,
+    pricingConfigs
   )
 
   // ── Legacy grain_contracts (for overview tab revenue allocation) ───────────
@@ -314,6 +322,7 @@ export default async function MacroRollupPage() {
         cropVariants,
         saleInstruments,
         initialCommodityPositions,
+        initialPricingConfigs: pricingConfigs,
         cbotPrices: cbotData.prices,
         priceSource,
         priceTimestamp,

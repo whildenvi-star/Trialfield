@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import { FieldTable } from '@/components/macro/field-table'
 import { MarketingWorkspace } from '@/components/marketing/marketing-workspace'
+import { Tabs } from '@/components/ui/tabs'
+import { KpiStrip } from '@/components/ui/kpi-strip'
+import { StatCard } from '@/components/ui/stat-card'
+import { Empty } from '@/components/ui/empty'
+import { formatUsd, formatPct } from '@/lib/fmt'
 import type { FieldRow } from '@/components/macro/field-table'
 import type {
   Commodity,
@@ -10,6 +15,7 @@ import type {
   SaleInstrument,
   CbotPrice,
   CommodityPosition,
+  CommodityPricing,
   YieldSummary,
 } from '@/lib/marketing/types'
 import type { BudgetField } from '@/app/(protected)/app/macro-rollup/page'
@@ -23,6 +29,7 @@ export interface MarketingData {
   cropVariants: CropVariant[]
   saleInstruments: SaleInstrument[]
   initialCommodityPositions: CommodityPosition[]
+  initialPricingConfigs: CommodityPricing[]
   cbotPrices: CbotPrice[]
   priceSource: string
   priceTimestamp: string | null
@@ -44,13 +51,8 @@ interface MacroRollupViewProps {
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
 
-function fmtDollars(n: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n)
-}
+// Local alias for readability — kept in sync with src/lib/fmt
+const fmtDollars = formatUsd
 
 // ── Mode toggle ────────────────────────────────────────────────────────────────
 
@@ -95,6 +97,7 @@ function ModeToggle({
 }
 
 // ── Hero ───────────────────────────────────────────────────────────────────────
+// Large net-margin hero with KPI strip showing field profitability breakdown.
 
 function Hero({
   mode,
@@ -119,8 +122,10 @@ function Hero({
     value === null
       ? 'text-glomalin-muted'
       : value >= 0
-        ? 'text-[#2dd4bf]'
-        : 'text-red-400'
+        ? 'text-glomalin-accent-light'
+        : 'text-glomalin-danger'
+
+  const pctProfitable = fieldCount > 0 ? formatPct(profitableCount / fieldCount) : '—'
 
   return (
     <div className="mb-2">
@@ -134,48 +139,34 @@ function Hero({
       ) : (
         <p className="font-mono text-4xl font-semibold text-glomalin-muted">—</p>
       )}
-      <p className="mt-2 font-mono text-sm text-glomalin-muted">
-        {fieldCount > 0
-          ? `${profitableCount} of ${fieldCount} fields — ${cropYear} crop year`
-          : `${cropYear} crop year`}
-      </p>
-      <p className="mt-0.5 font-mono text-xs text-glomalin-muted/70">{sublabel}</p>
+      <p className="mt-2 font-mono text-xs text-glomalin-muted/70">{sublabel}</p>
+
+      {fieldCount > 0 && (
+        <KpiStrip cols={3} className="mt-4">
+          <StatCard label="Fields" value={fieldCount.toString()} sublabel={`${cropYear} crop year`} />
+          <StatCard
+            label="Profitable"
+            value={`${profitableCount} / ${fieldCount}`}
+            sublabel={pctProfitable}
+            variant={profitableCount === fieldCount ? 'success' : profitableCount > 0 ? 'default' : 'danger'}
+          />
+          <StatCard
+            label="Net Margin"
+            value={value != null ? fmtDollars(value) : '—'}
+            variant={value == null ? 'default' : value >= 0 ? 'success' : 'danger'}
+          />
+        </KpiStrip>
+      )}
     </div>
   )
 }
 
-// ── Tab strip ──────────────────────────────────────────────────────────────────
+// ── Tab config ─────────────────────────────────────────────────────────────────
 
-function TabStrip({
-  active,
-  onChange,
-}: {
-  active: 'overview' | 'marketing'
-  onChange: (tab: 'overview' | 'marketing') => void
-}) {
-  const tabs: Array<{ id: 'overview' | 'marketing'; label: string }> = [
-    { id: 'overview', label: 'Overview' },
-    { id: 'marketing', label: 'Sales & Marketing' },
-  ]
-  return (
-    <div className="flex gap-0 border-b border-glomalin-border mb-6">
-      {tabs.map((t) => (
-        <button
-          key={t.id}
-          onClick={() => onChange(t.id)}
-          className={[
-            'px-5 py-2.5 font-mono text-sm transition-colors border-b-2 -mb-px',
-            active === t.id
-              ? 'border-glomalin-accent text-glomalin-accent'
-              : 'border-transparent text-glomalin-muted hover:text-glomalin-text',
-          ].join(' ')}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
-  )
-}
+const PLANNER_TABS = [
+  { id: 'overview' as const, label: 'Overview' },
+  { id: 'marketing' as const, label: 'Sales & Marketing' },
+]
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
@@ -203,19 +194,15 @@ export function MacroRollupView({
   if (budgetOffline && activeTab === 'overview') {
     return (
       <>
-        <TabStrip active={activeTab} onChange={setActiveTab} />
-        <div className="mt-6 rounded border border-glomalin-border bg-glomalin-surface px-6 py-10 text-center">
-          <p className="font-mono text-sm text-glomalin-muted">
-            Farm Budget is offline — start the service on port 3001 to see field data
-          </p>
-        </div>
+        <Tabs tabs={PLANNER_TABS} active={activeTab} onChange={setActiveTab} className="mb-6" />
+        <Empty title="Farm Budget offline" description="Start the service on port 3001 to see field data." />
       </>
     )
   }
 
   return (
     <>
-      <TabStrip active={activeTab} onChange={setActiveTab} />
+      <Tabs tabs={PLANNER_TABS} active={activeTab} onChange={setActiveTab} className="mb-6" />
 
       {activeTab === 'overview' && (
         <>
@@ -244,11 +231,7 @@ export function MacroRollupView({
           )}
 
           {rows.length === 0 ? (
-            <div className="mt-4 rounded border border-glomalin-border bg-glomalin-surface px-6 py-10 text-center">
-              <p className="font-mono text-sm text-glomalin-muted">
-                No fields found in Farm Budget — add fields and crop assignments to get started
-              </p>
-            </div>
+            <Empty title="No fields found" description="Add fields and crop assignments in Farm Budget to get started." />
           ) : (
             <FieldTable rows={rows} mode={mode} hasContracts={hasContracts} role={role} />
           )}
@@ -261,6 +244,7 @@ export function MacroRollupView({
           initialVariants={marketingData.cropVariants}
           initialInstruments={marketingData.saleInstruments}
           initialCommodityPositions={marketingData.initialCommodityPositions}
+          initialPricingConfigs={marketingData.initialPricingConfigs}
           cbotPrices={marketingData.cbotPrices}
           priceSource={marketingData.priceSource}
           priceTimestamp={marketingData.priceTimestamp}
