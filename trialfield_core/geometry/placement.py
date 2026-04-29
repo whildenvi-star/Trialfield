@@ -303,9 +303,18 @@ def place_trial(
     swath_width_ft: float,
     plot_length_ft: float,
     v_ref: float = 0.0,
+    prefer_linear: bool = False,
 ) -> list[RepBlock]:
-    """Try placement strategies in order; raise if none succeed."""
-    for strategy in (place_block_2x2, place_linear, place_staggered, place_free):
+    """Try placement strategies in order; raise if none succeed.
+
+    When prefer_linear is True (e.g. a user-drawn trial zone), linear is tried
+    before block_2x2 so narrow zones aren't rejected unnecessarily.
+    """
+    if prefer_linear:
+        ordered = (place_linear, place_block_2x2, place_staggered, place_free)
+    else:
+        ordered = (place_block_2x2, place_linear, place_staggered, place_free)
+    for strategy in ordered:
         result = strategy(
             field_uv=field_uv,
             n_reps=n_reps,

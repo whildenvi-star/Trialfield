@@ -136,7 +136,8 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
             field_uv_raw = _field_to_uv(frame, placement_wgs84)
         except Exception as exc:
             raise ValueError(f"invalid placement geometry: {exc}") from exc
-        headland_ft = 2.0 * g.trial_swath_ft
+        # Trial zone is explicitly drawn by the user — use a tighter headland.
+        headland_ft = (0.5 if trial_zone_wgs84 is not None else 2.0) * g.trial_swath_ft
         buffered = headland_buffer(field_uv_raw, headland_ft)
         field_uv = buffered if buffered is not None else field_uv_raw
     else:
@@ -154,6 +155,7 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
         swath_width_ft=g.trial_swath_ft,
         plot_length_ft=trial.plot_length_ft,
         v_ref=v_ref,
+        prefer_linear=trial_zone_wgs84 is not None,
     )
 
     assignments = randomize_treatments(trial.reps, trial.n_treatments, seed=req.seed)
