@@ -201,6 +201,55 @@ def place_linear(
     return blocks
 
 
+def place_linear_u(
+    field_uv: Polygon | MultiPolygon,
+    n_reps: int,
+    n_strips: int,
+    swath_width_ft: float,
+    plot_length_ft: float,
+    v_ref: float = 0.0,
+) -> Optional[list[RepBlock]]:
+    """Place all reps side by side in a single row along U (east-west linear).
+
+    All reps share the same V band; reps are arranged sequentially in U.
+    Preferred when the trial zone is wide along the AB line and narrow
+    perpendicular to it — e.g. a long skinny field section.
+    """
+    total_width_u = n_reps * plot_length_ft
+    u_min, u_max, v_min, v_max = _uv_bounds(field_uv)
+
+    all_strips = strips_in_range(v_min, v_max, swath_width_ft, v_ref)
+    if len(all_strips) < n_strips:
+        return None
+
+    for start in range(len(all_strips) - n_strips + 1):
+        v_south = all_strips[start][0]
+        v_north = all_strips[start + n_strips - 1][1]
+        ur = _usable_u_range_at_v(field_uv, v_south, v_north)
+        if ur is None or (ur[1] - ur[0]) < total_width_u:
+            continue
+
+        u_start = ur[0] + (ur[1] - ur[0] - total_width_u) / 2.0
+        blocks: list[RepBlock] = []
+        for rep_idx in range(n_reps):
+            u_west = u_start + rep_idx * plot_length_ft
+            u_east = u_west + plot_length_ft
+            blocks.append(
+                RepBlock(
+                    rep=rep_idx + 1,
+                    label=str(rep_idx + 1),
+                    u_west=u_west,
+                    u_east=u_east,
+                    v_south=v_south,
+                    v_north=v_north,
+                    strip_order=list(range(n_strips)),
+                )
+            )
+        return blocks
+
+    return None
+
+
 def place_staggered(
     field_uv: Polygon | MultiPolygon,
     n_reps: int,
@@ -311,7 +360,7 @@ def place_trial(
     before block_2x2 so narrow zones aren't rejected unnecessarily.
     """
     if prefer_linear:
-        ordered = (place_linear, place_block_2x2, place_staggered, place_free)
+        ordered = (place_linear_u, place_linear, place_block_2x2, place_staggered, place_free)
     else:
         ordered = (place_block_2x2, place_linear, place_staggered, place_free)
     for strategy in ordered:
