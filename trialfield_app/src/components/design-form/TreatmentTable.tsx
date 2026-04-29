@@ -5,11 +5,12 @@ import type { TreatmentIn } from "@/lib/types";
 interface Props {
   treatments: TreatmentIn[];
   onChange: (treatments: TreatmentIn[]) => void;
+  suggestedUnit?: string;
 }
 
 const inp = "border border-stone-300 rounded-md bg-white px-3 py-1.5 text-sm w-full";
 
-export function TreatmentTable({ treatments, onChange }: Props) {
+export function TreatmentTable({ treatments, onChange, suggestedUnit = "" }: Props) {
   function update(index: number, field: keyof TreatmentIn, raw: string) {
     const next = treatments.map((t, i) => {
       if (i !== index) return t;
@@ -22,7 +23,7 @@ export function TreatmentTable({ treatments, onChange }: Props) {
   }
 
   function add() {
-    onChange([...treatments, { label: "", value: null, unit: "" }]);
+    onChange([...treatments, { label: "", value: null, unit: suggestedUnit }]);
   }
 
   function remove(index: number) {
@@ -41,7 +42,7 @@ export function TreatmentTable({ treatments, onChange }: Props) {
         <div key={i} className="grid grid-cols-[1fr_1fr_1fr_2rem] gap-2 items-center">
           <input className={inp} placeholder="0 N" value={t.label} onChange={(e) => update(i, "label", e.target.value)} />
           <input className={inp} placeholder="0" type="number" value={t.value ?? ""} onChange={(e) => update(i, "value", e.target.value)} />
-          <input className={inp} placeholder="lb N/ac" value={t.unit} onChange={(e) => update(i, "unit", e.target.value)} />
+          <input className={inp} placeholder={suggestedUnit || "unit"} value={t.unit} onChange={(e) => update(i, "unit", e.target.value)} />
           <button
             type="button"
             onClick={() => remove(i)}

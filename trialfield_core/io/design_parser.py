@@ -15,7 +15,7 @@ _SYSTEM_PROMPT = """You are an agricultural trial design parser. Extract trial d
 from the provided text or image and call the create_trial_design tool with the structured result.
 
 Rules:
-- trial_type must be one of: fertility, seeding, spray, tillage, ground_speed, other
+- trial_type must be one of: fertility, seeding, spray, fungicide, herbicide, lime, cover_crop, biologicals, tillage, variety, ground_speed, planting_depth, other
 - For numeric treatments (nitrogen rates, seeding rates, etc.) set value to the numeric amount \
 and unit to the appropriate unit string (e.g. "lb N/ac", "seeds/ac")
 - For categorical treatments (product names, tank mixes, etc.) set value to null and unit to ""
@@ -38,7 +38,7 @@ _TOOL: dict = {
             },
             "trial_type": {
                 "type": "string",
-                "enum": ["fertility", "seeding", "spray", "tillage", "ground_speed", "other"],
+                "enum": ["fertility", "seeding", "spray", "fungicide", "herbicide", "lime", "cover_crop", "biologicals", "tillage", "variety", "ground_speed", "planting_depth", "other"],
             },
             "treatments": {
                 "type": "array",

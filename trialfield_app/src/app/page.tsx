@@ -11,12 +11,6 @@ export default function Home() {
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-3.5rem)] px-4 bg-gradient-to-b from-stone-50 to-white">
       <div className="max-w-xl w-full text-center space-y-8 py-20">
 
-        {/* Badge */}
-        <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs font-semibold px-3 py-1 rounded-full border border-green-200">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-          Free & open source
-        </div>
-
         {/* Headline */}
         <div className="space-y-3">
           <h1 className="text-5xl font-bold text-stone-900 tracking-tight leading-none">

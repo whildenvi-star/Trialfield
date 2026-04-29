@@ -43,12 +43,6 @@ export default function RootLayout({
             </Link>
             <div className="flex items-center gap-4">
               {PAYMENT_ENABLED && <NavKeyManager />}
-              <Link
-                href="/design"
-                className="text-sm font-medium text-stone-500 hover:text-green-700 transition-colors"
-              >
-                Design a trial →
-              </Link>
             </div>
           </div>
         </header>

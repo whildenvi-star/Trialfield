@@ -11,14 +11,37 @@ import { useDesign } from "@/hooks/useDesign";
 import type { TreatmentIn, TrialType, RxFormat } from "@/lib/types";
 import type { GeoJSONPolygon } from "@/components/design-form/ABLineMap";
 
-const TRIAL_TYPES: TrialType[] = [
-  "fertility",
-  "seeding",
-  "spray",
-  "tillage",
-  "ground_speed",
-  "other",
+const TRIAL_TYPES: { value: TrialType; label: string }[] = [
+  { value: "fertility",      label: "Fertility" },
+  { value: "seeding",        label: "Seeding rate" },
+  { value: "spray",          label: "Spray / application" },
+  { value: "fungicide",      label: "Fungicide" },
+  { value: "herbicide",      label: "Herbicide" },
+  { value: "lime",           label: "Lime" },
+  { value: "cover_crop",     label: "Cover crop" },
+  { value: "biologicals",    label: "Biologicals" },
+  { value: "tillage",        label: "Tillage" },
+  { value: "variety",        label: "Variety / hybrid" },
+  { value: "ground_speed",   label: "Ground speed" },
+  { value: "planting_depth", label: "Planting depth" },
+  { value: "other",          label: "Other" },
 ];
+
+const DEFAULT_UNIT: Record<TrialType, string> = {
+  fertility:      "lb N/ac",
+  seeding:        "seeds/ac",
+  spray:          "oz/ac",
+  fungicide:      "fl oz/ac",
+  herbicide:      "oz/ac",
+  lime:           "tons/ac",
+  cover_crop:     "lbs/ac",
+  biologicals:    "oz/ac",
+  tillage:        "",
+  variety:        "",
+  ground_speed:   "mph",
+  planting_depth: "in",
+  other:          "",
+};
 
 export default function DesignPage() {
   const { submit, loading, error, result } = useDesign();
@@ -51,6 +74,12 @@ export default function DesignPage() {
   const [soilMode, setSoilMode] = useState<"auto" | "skip">("skip");
   const [seed, setSeed] = useState("42");
   const [rxFormats, setRxFormats] = useState<RxFormat[]>(["fieldview", "isoxml", "agx"]);
+
+  function handleTrialTypeChange(newType: TrialType) {
+    setTrialType(newType);
+    const unit = DEFAULT_UNIT[newType];
+    setTreatments((prev) => prev.map((t) => ({ ...t, unit })));
+  }
 
   function toggleRxFormat(fmt: RxFormat) {
     setRxFormats((prev) =>
@@ -126,11 +155,11 @@ export default function DesignPage() {
               <select
                 className={input}
                 value={trialType}
-                onChange={(e) => setTrialType(e.target.value as TrialType)}
+                onChange={(e) => handleTrialTypeChange(e.target.value as TrialType)}
               >
-                {TRIAL_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
+                {TRIAL_TYPES.map(({ value, label }) => (
+                  <option key={value} value={value}>
+                    {label}
                   </option>
                 ))}
               </select>
@@ -162,7 +191,7 @@ export default function DesignPage() {
         {/* Treatments */}
         <section className={card}>
           <h2 className={sectionHeading}>Treatments</h2>
-          <TreatmentTable treatments={treatments} onChange={setTreatments} />
+          <TreatmentTable treatments={treatments} onChange={setTreatments} suggestedUnit={DEFAULT_UNIT[trialType]} />
           <div className="border-t border-stone-100 pt-4">
             <ProseInput value={prose} onChange={setProse} />
           </div>

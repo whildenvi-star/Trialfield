@@ -2,8 +2,15 @@ export type TrialType =
   | "fertility"
   | "seeding"
   | "spray"
+  | "fungicide"
+  | "herbicide"
+  | "lime"
+  | "cover_crop"
+  | "biologicals"
   | "tillage"
+  | "variety"
   | "ground_speed"
+  | "planting_depth"
   | "other";
 
 export interface TreatmentIn {

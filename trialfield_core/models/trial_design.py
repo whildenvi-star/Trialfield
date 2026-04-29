@@ -12,8 +12,15 @@ class TrialType(str, Enum):
     fertility = "fertility"
     seeding = "seeding"
     spray = "spray"
+    fungicide = "fungicide"
+    herbicide = "herbicide"
+    lime = "lime"
+    cover_crop = "cover_crop"
+    biologicals = "biologicals"
     tillage = "tillage"
+    variety = "variety"
     ground_speed = "ground_speed"
+    planting_depth = "planting_depth"
     other = "other"
 
 
@@ -21,8 +28,15 @@ DEFAULT_PLOT_LENGTH_FT: dict[TrialType, Optional[float]] = {
     TrialType.fertility: 400.0,
     TrialType.seeding: 400.0,
     TrialType.spray: 300.0,
+    TrialType.fungicide: 300.0,
+    TrialType.herbicide: 300.0,
+    TrialType.lime: 400.0,
+    TrialType.cover_crop: 400.0,
+    TrialType.biologicals: 300.0,
     TrialType.tillage: 600.0,
+    TrialType.variety: 400.0,
     TrialType.ground_speed: 800.0,
+    TrialType.planting_depth: 400.0,
     TrialType.other: None,
 }
 
