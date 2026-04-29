@@ -29,8 +29,6 @@ export function ABLinePanel({
 }: Props) {
   const [placing, setPlacing] = useState<Placing>(null);
   const [drawingBoundary, setDrawingBoundary] = useState(false);
-  const [snappingField, setSnappingField] = useState(false);
-  const [snapMessage, setSnapMessage] = useState<string | null>(null);
 
   const pointA: LatLon | null =
     aLon && aLat ? { lat: parseFloat(aLat), lon: parseFloat(aLon) } : null;
@@ -51,23 +49,12 @@ export function ABLinePanel({
 
   function handleDrawToggle() {
     if (boundary) {
-      // Clear existing boundary
       onBoundaryChange(null);
       setDrawingBoundary(false);
     } else {
-      // Disarm AB placement while drawing, then start draw mode
       setPlacing(null);
-      setSnappingField(false);
-      setSnapMessage(null);
       setDrawingBoundary((d) => !d);
     }
-  }
-
-  function handleSnapToggle() {
-    setPlacing(null);
-    setDrawingBoundary(false);
-    setSnapMessage(null);
-    setSnappingField((s) => !s);
   }
 
   return (
@@ -81,9 +68,9 @@ export function ABLinePanel({
         drawingBoundary={drawingBoundary}
         onBoundaryChange={onBoundaryChange}
         onDrawingComplete={() => setDrawingBoundary(false)}
-        snappingField={snappingField}
-        onSnapDone={() => { setSnappingField(false); setSnapMessage(null); }}
-        onSnapFail={(msg) => { setSnapMessage(msg); }}
+        snappingField={false}
+        onSnapDone={() => {}}
+        onSnapFail={() => {}}
       />
 
       {/* Control buttons row */}
@@ -92,8 +79,6 @@ export function ABLinePanel({
           type="button"
           onClick={() => {
             setDrawingBoundary(false);
-            setSnappingField(false);
-            setSnapMessage(null);
             setPlacing(placing === "A" ? null : "A");
           }}
           className={`flex-1 border rounded py-1 font-medium transition-colors ${
@@ -108,8 +93,6 @@ export function ABLinePanel({
           type="button"
           onClick={() => {
             setDrawingBoundary(false);
-            setSnappingField(false);
-            setSnapMessage(null);
             setPlacing(placing === "B" ? null : "B");
           }}
           className={`flex-1 border rounded py-1 font-medium transition-colors ${
@@ -120,19 +103,6 @@ export function ABLinePanel({
         >
           {placing === "B" ? "Click map for B…" : "Place B"}
         </button>
-        {!boundary && (
-          <button
-            type="button"
-            onClick={handleSnapToggle}
-            className={`flex-1 border rounded py-1 font-medium transition-colors ${
-              snappingField
-                ? "bg-green-600 text-white border-green-600"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            {snappingField ? "Click a field…" : "Snap to field"}
-          </button>
-        )}
         <button
           type="button"
           onClick={handleDrawToggle}
@@ -232,18 +202,12 @@ export function ABLinePanel({
         onBoundaryChange={(g) => {
           onBoundaryChange(g);
           setDrawingBoundary(false);
-          setSnappingField(false);
-          setSnapMessage(null);
         }}
       />
 
       <p className="text-xs text-gray-400">
-        {snapMessage
-          ? snapMessage
-          : drawingBoundary
+        {drawingBoundary
           ? "Click vertices to trace the field boundary. Click the first point to close."
-          : snappingField
-          ? "Click anywhere on your field — we'll look up its boundary from USDA records."
           : "Click Place A / Place B then click the map, or type coordinates. Markers are draggable."}
       </p>
     </div>
