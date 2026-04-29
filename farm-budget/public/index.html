@@ -625,6 +625,18 @@
       <div id="fc-categories"></div>
       </div><!-- /ref-sub-forecast -->
 
+      <!-- Crop Types Manager -->
+      <div class="collapsible-section" id="crop-types-section" style="margin-top:1.5rem">
+        <h3 class="collapsible-header" id="crop-types-toggle" style="cursor:pointer;user-select:none">
+          <span class="collapse-arrow">&#9654;</span> Crop Types
+        </h3>
+        <div class="collapsible-body" id="crop-types-body" style="display:none">
+          <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis. Sub-crops and pricing modes drive the Sales &amp; Marketing pool split.</p>
+          <div id="crop-types-container"></div>
+          <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
+        </div>
+      </div>
+
     </section>
 
     <!-- PROGRAMS (Agronomic Templates) -->
@@ -768,10 +780,8 @@
       <div class="mkt-tabs">
         <button class="mkt-tab-btn active" data-mtab="dashboard">Hedging Dashboard</button>
         <button class="mkt-tab-btn" data-mtab="instruments">Instruments</button>
-        <button class="mkt-tab-btn" data-mtab="variants">Variant Setup</button>
         <button class="mkt-tab-btn role-hide-office" data-mtab="whatif">What-If</button>
         <button class="mkt-tab-btn" data-mtab="basis">Basis</button>
-        <button class="mkt-tab-btn" data-mtab="legacy">Legacy</button>
       </div>
 
       <!-- Hedging Dashboard -->
@@ -782,11 +792,6 @@
       <!-- Instruments -->
       <div id="mtab-instruments" class="mtab-content">
         <div id="mkt-instruments-root"></div>
-      </div>
-
-      <!-- Variant Setup -->
-      <div id="mtab-variants" class="mtab-content">
-        <div id="mkt-variants-root"></div>
       </div>
 
       <!-- What-If (legacy hedging.js) -->
@@ -842,50 +847,6 @@
                   <th title="Net price minus trucking and handling costs">Net-of-Costs</th></tr>
             </thead>
             <tbody id="basis-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Legacy (old contract log + crop types + buyer schedules) -->
-      <div id="mtab-legacy" class="mtab-content">
-
-        <!-- Crop Types Manager -->
-        <div class="collapsible-section" id="crop-types-section">
-          <h3 class="collapsible-header" id="crop-types-toggle">
-            <span class="collapse-arrow">&#9654;</span> Crop Types
-          </h3>
-          <div class="collapsible-body" id="crop-types-body" style="display:none">
-            <p class="edit-hint">Organize crops by type. CBOT-linked crops auto-compute price from futures + basis.</p>
-            <div id="crop-types-container"></div>
-            <button class="btn-sm btn-primary" id="btn-add-crop-type" style="margin-top:0.5rem">+ Add Crop Type</button>
-          </div>
-        </div>
-
-        <h3>Contract Log</h3>
-        <div class="filters">
-          <input type="text" id="sale-search" placeholder="Search contracts...">
-          <select id="sale-filter-crop">
-            <option value="">All Crops</option>
-          </select>
-          <select id="sale-filter-status">
-            <option value="">All Status</option>
-            <option value="open">Open</option>
-            <option value="done">Done</option>
-          </select>
-          <button id="sale-add" class="btn-primary btn-sm">+ Add Contract</button>
-        </div>
-        <div class="table-info"><span id="sales-count"></span></div>
-        <div class="table-wrap">
-          <table id="sales-table">
-            <thead>
-              <tr>
-                <th>Status</th><th>Date</th><th>Amount</th><th>Crop</th>
-                <th>Buyer</th><th title="Basis adjustment from CBOT price">Basis</th>
-                <th>Price</th><th title="Chicago Board of Trade reference price">CBOT</th>
-                <th>Notes</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="sales-tbody"></tbody>
           </table>
         </div>
 
@@ -1537,9 +1498,9 @@
   <script src="demand-manager.js"></script>
   <script src="reports.js?v=20260427h"></script>
 
-  <script src="sales.js?v=2"></script>
-  <script src="hedging.js"></script>
-  <script src="sales-marketing.js?v=1"></script>
+  <script src="sales.js?v=3"></script>
+  <script src="hedging.js?v=3"></script>
+  <script src="sales-marketing.js?v=5"></script>
   <script src="farm-map.js"></script>
   <script src="pdf-report.js"></script>
   <script src="fieldops-ui.js"></script>

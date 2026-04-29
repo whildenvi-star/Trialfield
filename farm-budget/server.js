@@ -2915,50 +2915,6 @@ function getCropYear() {
   return store.settings && store.settings.year ? store.settings.year : new Date().getFullYear();
 }
 
-app.get('/api/marketing/commodities', async (req, res) => {
-  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
-  const { data, error } = await supabase.from('commodities').select('*').order('sort_order');
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
-
-app.get('/api/marketing/variants', async (req, res) => {
-  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
-  const year = parseInt(req.query.cropYear) || getCropYear();
-  const { data, error } = await supabase.from('crop_variants').select('*').eq('crop_year', year).order('name');
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
-
-app.post('/api/marketing/variants', async (req, res) => {
-  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
-  const year = getCropYear();
-  const { commodity_id, name, estimated_bu, is_contracted, notes } = req.body;
-  const { data, error } = await supabase.from('crop_variants').insert({
-    commodity_id, name, estimated_bu: estimated_bu || null,
-    is_contracted: !!is_contracted, crop_year: year, notes: notes || null
-  }).select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  res.status(201).json(data);
-});
-
-app.patch('/api/marketing/variants/:id', async (req, res) => {
-  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
-  const allowed = ['name', 'estimated_bu', 'is_contracted', 'notes'];
-  const patch = {};
-  allowed.forEach(k => { if (k in req.body) patch[k] = req.body[k]; });
-  const { data, error } = await supabase.from('crop_variants').update(patch).eq('id', req.params.id).select().single();
-  if (error) return res.status(500).json({ error: error.message });
-  res.json(data);
-});
-
-app.delete('/api/marketing/variants/:id', async (req, res) => {
-  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
-  const { error } = await supabase.from('crop_variants').delete().eq('id', req.params.id);
-  if (error) return res.status(500).json({ error: error.message });
-  res.json({ ok: true });
-});
-
 app.get('/api/marketing/instruments', async (req, res) => {
   if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
   const year = parseInt(req.query.cropYear) || getCropYear();
@@ -2972,9 +2928,10 @@ app.post('/api/marketing/instruments', async (req, res) => {
   const year = getCropYear();
   const NUMERIC = ['bushels','price_per_bushel','basis','futures_reference','delivered_bu',
     'strike_price','premium_paid','ko_level','ki_level','daily_bu','weekly_bu','leverage_ratio'];
+  const BLOCKED = ['commodity_id', 'variant_id', 'crop_year'];
   const payload = { crop_year: year };
   Object.entries(req.body).forEach(([k, v]) => {
-    if (k === 'crop_year') return;
+    if (BLOCKED.includes(k)) return;
     payload[k] = NUMERIC.includes(k) ? (v !== '' && v !== null && v !== undefined ? Number(v) : null) : v;
   });
   const { data, error } = await supabase.from('sale_instruments').insert(payload).select().single();
@@ -2982,7 +2939,7 @@ app.post('/api/marketing/instruments', async (req, res) => {
   res.status(201).json(data);
 });
 
-app.patch('/api/marketing/instruments/:id', async (req, res) => {
+app.put('/api/marketing/instruments/:id', async (req, res) => {
   if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
   const NUMERIC = ['bushels','price_per_bushel','basis','futures_reference','delivered_bu',
     'strike_price','premium_paid','ko_level','ki_level','daily_bu','weekly_bu','leverage_ratio'];
@@ -3000,6 +2957,76 @@ app.delete('/api/marketing/instruments/:id', async (req, res) => {
   const { error } = await supabase.from('sale_instruments').delete().eq('id', req.params.id);
   if (error) return res.status(500).json({ error: error.message });
   res.json({ ok: true });
+});
+
+app.post('/api/marketing/migrate-legacy', async (req, res) => {
+  if (!supabase) return res.status(503).json({ error: 'Supabase not configured' });
+  const sales = store.sales || [];
+  if (!sales.length) return res.json({ migrated: 0, message: 'No legacy sales to migrate' });
+
+  const year = getCropYear();
+
+  function findCropTypeId(cropName) {
+    const cn = (cropName || '').toLowerCase().trim();
+    let ct = store.cropTypes.find(c => (c.name || '').toLowerCase().trim() === cn);
+    if (ct) return ct.id;
+    ct = store.cropTypes.find(c =>
+      (c.subCrops || []).some(sc => (sc.name || '').toLowerCase().trim() === cn)
+    );
+    return ct ? ct.id : null;
+  }
+
+  function extractTotalBu(contractNo) {
+    const m = String(contractNo || '').match(/^([0-9,]+)/);
+    return m ? parseInt(m[1].replace(/,/g, ''), 10) : null;
+  }
+
+  const records = [];
+  const errors = [];
+
+  for (const sale of sales) {
+    const isAccum = /accumulator/i.test(sale.contractNo || '');
+    const ctId = findCropTypeId(sale.crop);
+    if (!ctId) {
+      errors.push({ id: sale.id, reason: 'No crop type found for: ' + sale.crop });
+      continue;
+    }
+    const payload = { crop_type_id: ctId, crop_year: year, buyer: sale.buyer || null, delivery_start: sale.date || null };
+    if (isAccum) {
+      const totalBu = extractTotalBu(sale.contractNo);
+      Object.assign(payload, {
+        instrument_type: 'accumulator',
+        bushels: totalBu || null,
+        delivered_bu: sale.amount || null,
+        price_per_bushel: sale.cbotPrice || sale.price || null,
+        basis: sale.basis || null,
+        accumulation_start: sale.date || null,
+        notes: sale.contractNo || null,
+      });
+    } else {
+      Object.assign(payload, {
+        instrument_type: 'cash',
+        bushels: sale.amount || null,
+        price_per_bushel: sale.price || null,
+        basis: sale.basis || null,
+        contract_number: sale.contractNo || null,
+        notes: sale.notes || null,
+      });
+    }
+    const { data, error } = await supabase.from('sale_instruments').insert(payload).select().single();
+    if (error) {
+      errors.push({ id: sale.id, reason: error.message });
+    } else {
+      records.push({ legacyId: sale.id, newId: data.id, type: payload.instrument_type, crop: sale.crop });
+    }
+  }
+
+  if (records.length > 0) {
+    store.sales = [];
+    await saveData();
+  }
+
+  res.json({ migrated: records.length, skipped: errors.length, errors: errors.length ? errors : undefined, records });
 });
 // ─────────────────────────────────────────────────────────────────────────────
 

@@ -3902,6 +3902,11 @@ tr.fo-confirm-form-row td {
 .mkt-progress-label { font-size: 0.75rem; color: var(--muted); margin-bottom: 0.4rem; }
 .mkt-wap-row { font-size: 0.78rem; color: var(--text); display: flex; gap: 0.75rem; margin-bottom: 0.4rem; }
 .mkt-unpriced-row { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+.mkt-double-up-row { font-size: 0.75rem; color: var(--muted); margin-top: 0.35rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.mkt-double-up-row.active { color: #f59e0b; }
+.mkt-ki-badge { font-size: 0.7rem; font-weight: 600; padding: 1px 5px; border-radius: 3px; background: var(--border); color: var(--muted); }
+.mkt-ki-badge.active { background: #f59e0b22; color: #f59e0b; }
+.mkt-double-up-meta { color: var(--muted); font-size: 0.72rem; }
 .mkt-card-stat { font-size: 0.82rem; color: var(--muted); }
 
 /* Mix strip */
@@ -4029,3 +4034,18 @@ tr.fo-confirm-form-row td {
 .text-cyan { color: #14b8a6; }
 .text-amber { color: #f59e0b; }
 .text-danger { color: var(--danger, #ff3b30); }
+
+/* Variety breakdown table inside commodity cards */
+.mkt-variety-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin-top: 0.6rem; }
+.mkt-variety-table th { text-align: left; padding: 0.25rem 0.4rem; color: var(--muted); font-size: 0.7rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+.mkt-variety-table td { padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--border); color: var(--text); }
+.mkt-variety-table tr:last-child td { border-bottom: none; }
+
+/* Instrument group headers */
+.mkt-inst-group { margin-bottom: 1rem; }
+.mkt-inst-group-hdr { font-weight: 600; font-size: 0.82rem; color: var(--text); padding: 0.4rem 0; border-bottom: 1px solid var(--border); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.mkt-inst-group-hdr a { font-weight: 400; font-size: 0.75rem; color: var(--primary); text-decoration: none; margin-left: auto; }
+.mkt-inst-count { background: var(--border); color: var(--muted); font-size: 0.7rem; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
+
+/* Summary strip warning highlight */
+.mkt-summary-warn .mkt-summary-val { color: #f59e0b; }

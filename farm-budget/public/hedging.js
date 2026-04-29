@@ -101,6 +101,7 @@
   function renderCoverage() {
     var grid = document.getElementById('coverage-grid');
     var tbody = document.getElementById('coverage-detail-tbody');
+    if (!grid || !tbody) return;
     var gridHtml = '';
     var tableHtml = '';
     var crops = Object.keys(cropAggregates).sort();
@@ -278,10 +279,13 @@
     api.get('/api/buyers').then(function (buyers) {
       buyersData = buyers;
       renderBasis();
+      renderBuyerSchedules(buyers);
     });
   }
 
-  document.getElementById('basis-crop').addEventListener('change', renderBasis);
+  document.getElementById('basis-crop').addEventListener('change', function () {
+    renderBasis();
+  });
 
   function renderBasis() {
     var crop = document.getElementById('basis-crop').value;
@@ -348,5 +352,176 @@
         '</tr>';
     });
     tbody.innerHTML = html;
+  }
+
+  // =============================================
+  // BUYER DISCOUNT SCHEDULES
+  // =============================================
+  function renderBuyerSchedules(buyers) {
+    var container = document.getElementById('buyer-schedule-container');
+    if (!container) return;
+    var html = '';
+
+    buyers.forEach(function (buyer) {
+      var schedule = buyer.discountSchedule || [];
+      html += '<div class="buyer-schedule-card" style="border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">';
+      html += '<strong>' + util.escHtml(buyer.name) + '</strong>';
+      html += '<span style="font-size:0.8rem;color:var(--text-light)">Threshold: ' + (buyer.threshold || 15) + '% FM</span>';
+      html += '</div>';
+
+      if (schedule.length > 0) {
+        html += '<table class="compact-table" style="width:100%"><thead><tr>';
+        html += '<th>From FM %</th><th>To FM %</th><th>Discount $/point</th><th></th>';
+        html += '</tr></thead><tbody>';
+        schedule.forEach(function (tier, idx) {
+          html += '<tr>';
+          html += '<td class="buyer-tier-edit number" data-buyer-id="' + buyer.id + '" data-tier-idx="' + idx + '" data-tier-field="fromMoisture">' + util.formatNum(tier.fromMoisture, 1) + '</td>';
+          html += '<td class="buyer-tier-edit number" data-buyer-id="' + buyer.id + '" data-tier-idx="' + idx + '" data-tier-field="toMoisture">' + util.formatNum(tier.toMoisture, 1) + '</td>';
+          html += '<td class="buyer-tier-edit number" data-buyer-id="' + buyer.id + '" data-tier-idx="' + idx + '" data-tier-field="discountPerPoint">' + util.formatMoney(tier.discountPerPoint, 4) + '</td>';
+          html += '<td><button class="btn-danger buyer-tier-del" data-buyer-id="' + buyer.id + '" data-tier-idx="' + idx + '" style="font-size:0.7rem">X</button></td>';
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+      } else {
+        html += '<p style="color:var(--text-light);font-size:0.85rem;margin:0.5rem 0">No discount tiers set.</p>';
+      }
+
+      html += '<button class="btn-sm buyer-tier-add" data-buyer-id="' + buyer.id + '" style="margin-top:0.5rem">+ Add Tier</button>';
+
+      var cropBasis = buyer.cropBasis || {};
+      var basisEntries = Object.keys(cropBasis);
+      html += '<div style="margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border)">';
+      html += '<div style="font-size:0.78rem;font-weight:500;margin-bottom:0.3rem">Crop Basis Overrides <span style="color:var(--text-light);font-weight:400">(general: $' + util.formatNum(buyer.basis || 0, 2) + ')</span></div>';
+      if (basisEntries.length > 0) {
+        html += '<table class="compact-table" style="width:100%;max-width:350px"><thead><tr><th>Crop</th><th class="number">Basis</th><th></th></tr></thead><tbody>';
+        basisEntries.forEach(function (crop) {
+          html += '<tr><td style="font-size:0.82rem">' + util.escHtml(crop) + '</td>';
+          html += '<td class="number buyer-basis-edit" data-buyer-id="' + buyer.id + '" data-crop="' + util.escHtml(crop) + '" style="cursor:pointer">$' + util.formatNum(cropBasis[crop], 2) + '</td>';
+          html += '<td><button class="btn-danger buyer-basis-del" data-buyer-id="' + buyer.id + '" data-crop="' + util.escHtml(crop) + '" style="font-size:0.7rem">X</button></td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+      html += '<button class="btn-sm buyer-basis-add" data-buyer-id="' + buyer.id + '" style="margin-top:0.3rem;font-size:0.75rem">+ Add Crop Basis</button>';
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('.buyer-tier-add').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var buyerId = btn.getAttribute('data-buyer-id');
+        var buyer = buyers.find(function (b) { return b.id === buyerId; });
+        if (!buyer) return;
+        var schedule = buyer.discountSchedule || [];
+        var lastTo = schedule.length > 0 ? schedule[schedule.length - 1].toMoisture : (buyer.threshold || 15);
+        schedule.push({ fromMoisture: lastTo, toMoisture: lastTo + 5, discountPerPoint: 0.06 });
+        api.put('/api/buyers/' + buyerId, { discountSchedule: schedule }).then(function () {
+          loadBuyersAndRenderBasis();
+          util.showToast('Tier added');
+        });
+      });
+    });
+
+    container.querySelectorAll('.buyer-tier-del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var buyerId = btn.getAttribute('data-buyer-id');
+        var tierIdx = parseInt(btn.getAttribute('data-tier-idx'));
+        var buyer = buyers.find(function (b) { return b.id === buyerId; });
+        if (!buyer) return;
+        var schedule = (buyer.discountSchedule || []).slice();
+        schedule.splice(tierIdx, 1);
+        api.put('/api/buyers/' + buyerId, { discountSchedule: schedule }).then(function () {
+          loadBuyersAndRenderBasis();
+          util.showToast('Tier removed');
+        });
+      });
+    });
+
+    container.querySelectorAll('.buyer-tier-edit').forEach(function (td) {
+      td.addEventListener('dblclick', function () {
+        if (td.classList.contains('editing')) return;
+        var buyerId = td.getAttribute('data-buyer-id');
+        var tierIdx = parseInt(td.getAttribute('data-tier-idx'));
+        var tierField = td.getAttribute('data-tier-field');
+        var oldVal = td.textContent.replace(/[$,]/g, '').trim();
+        td.classList.add('editing');
+        var input = document.createElement('input');
+        input.type = 'number'; input.step = '0.01'; input.value = oldVal; input.style.width = '80px';
+        td.textContent = ''; td.appendChild(input); input.focus(); input.select();
+        function save() {
+          var buyer = buyers.find(function (b) { return b.id === buyerId; });
+          if (!buyer) return;
+          var schedule = (buyer.discountSchedule || []).slice();
+          if (schedule[tierIdx]) {
+            schedule[tierIdx] = Object.assign({}, schedule[tierIdx]);
+            schedule[tierIdx][tierField] = parseFloat(input.value) || 0;
+          }
+          api.put('/api/buyers/' + buyerId, { discountSchedule: schedule }).then(function () { loadBuyersAndRenderBasis(); });
+        }
+        input.addEventListener('blur', save);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') input.blur();
+          if (e.key === 'Escape') loadBuyersAndRenderBasis();
+        });
+      });
+    });
+
+    container.querySelectorAll('.buyer-basis-add').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var buyerId = btn.getAttribute('data-buyer-id');
+        var buyer = buyers.find(function (b) { return b.id === buyerId; });
+        if (!buyer) return;
+        var crop = prompt('Crop name for basis override:');
+        if (!crop || !crop.trim()) return;
+        var basis = parseFloat(prompt('Basis for ' + crop + ' (e.g. -0.50 or 2.15):'));
+        if (isNaN(basis)) return;
+        var cropBasis = Object.assign({}, buyer.cropBasis || {});
+        cropBasis[crop.trim()] = basis;
+        api.put('/api/buyers/' + buyerId, { cropBasis: cropBasis }).then(function () {
+          loadBuyersAndRenderBasis();
+          util.showToast('Crop basis added');
+        });
+      });
+    });
+
+    container.querySelectorAll('.buyer-basis-del').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var buyerId = btn.getAttribute('data-buyer-id');
+        var crop = btn.getAttribute('data-crop');
+        var buyer = buyers.find(function (b) { return b.id === buyerId; });
+        if (!buyer) return;
+        var cropBasis = Object.assign({}, buyer.cropBasis || {});
+        delete cropBasis[crop];
+        api.put('/api/buyers/' + buyerId, { cropBasis: cropBasis }).then(function () {
+          loadBuyersAndRenderBasis();
+          util.showToast('Crop basis removed');
+        });
+      });
+    });
+
+    container.querySelectorAll('.buyer-basis-edit').forEach(function (td) {
+      td.addEventListener('dblclick', function () {
+        if (td.querySelector('input')) return;
+        var buyerId = td.getAttribute('data-buyer-id');
+        var crop = td.getAttribute('data-crop');
+        var oldVal = td.textContent.replace(/[$,]/g, '').trim();
+        var input = document.createElement('input');
+        input.type = 'number'; input.step = '0.01'; input.value = parseFloat(oldVal) || 0; input.style.width = '80px';
+        td.textContent = ''; td.appendChild(input); input.focus(); input.select();
+        function saveBasis() {
+          var buyer = buyers.find(function (b) { return b.id === buyerId; });
+          if (!buyer) return;
+          var cropBasis = Object.assign({}, buyer.cropBasis || {});
+          cropBasis[crop] = parseFloat(input.value) || 0;
+          api.put('/api/buyers/' + buyerId, { cropBasis: cropBasis }).then(function () { loadBuyersAndRenderBasis(); });
+        }
+        input.addEventListener('blur', saveBasis);
+        input.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') input.blur();
+          if (e.key === 'Escape') loadBuyersAndRenderBasis();
+        });
+      });
+    });
   }
 })();
