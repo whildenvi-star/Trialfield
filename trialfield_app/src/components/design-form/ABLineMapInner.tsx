@@ -41,14 +41,18 @@ export interface GeoJSONPolygon {
   coordinates: number[][][];
 }
 
-function closePolygonRings(geom: GeoJSONPolygon): GeoJSONPolygon {
-  const closed = geom.coordinates.map((ring) => {
-    const first = ring[0];
-    const last = ring[ring.length - 1];
-    if (!first || !last || (first[0] === last[0] && first[1] === last[1])) return ring;
-    return [...ring, first];
-  });
-  return { ...geom, coordinates: closed };
+// ── Fit map to boundary when one is set ───────────────────────────────────────
+
+function BoundaryFitter({ boundary }: { boundary: GeoJSONPolygon | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!boundary) return;
+    const latlngs = boundary.coordinates[0].map(
+      ([lon, lat]) => [lat, lon] as [number, number]
+    );
+    map.fitBounds(latlngs, { padding: [24, 24] });
+  }, [boundary, map]);
+  return null;
 }
 
 // ── Click handler for AB point placement ──────────────────────────────────────
@@ -203,6 +207,7 @@ export function ABLineMapInner({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
         )}
+        <BoundaryFitter boundary={boundary} />
         <ClickHandler placing={placing} onPlace={onPlace} />
         <GeomanController
           drawingBoundary={drawingBoundary}
