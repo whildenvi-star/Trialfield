@@ -41,6 +41,16 @@ export interface GeoJSONPolygon {
   coordinates: number[][][];
 }
 
+function closePolygonRings(geom: GeoJSONPolygon): GeoJSONPolygon {
+  const closed = geom.coordinates.map((ring) => {
+    const first = ring[0];
+    const last = ring[ring.length - 1];
+    if (!first || !last || (first[0] === last[0] && first[1] === last[1])) return ring;
+    return [...ring, first];
+  });
+  return { ...geom, coordinates: closed };
+}
+
 // ── Click handler for AB point placement ──────────────────────────────────────
 
 interface ClickHandlerProps {
@@ -58,6 +68,8 @@ function ClickHandler({ placing, onPlace }: ClickHandlerProps) {
 }
 
 // ── Geoman polygon draw controller ────────────────────────────────────────────
+// Geoman is guaranteed loaded before MapContainer renders (see ABLineMapInner),
+// so map.pm is always available here — no dynamic import or ready flag needed.
 
 interface GeomanControllerProps {
   drawingBoundary: boolean;
@@ -71,16 +83,8 @@ function GeomanController({
   onDrawingComplete,
 }: GeomanControllerProps) {
   const map = useMap();
-  const [ready, setReady] = useState(false);
 
-  // Load geoman once, after window.L is guaranteed to be set
   useEffect(() => {
-    import("@geoman-io/leaflet-geoman-free").then(() => setReady(true));
-  }, []);
-
-  // Arm / disarm draw mode
-  useEffect(() => {
-    if (!ready) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pm = (map as any).pm;
     if (!pm) return;
@@ -89,11 +93,9 @@ function GeomanController({
     } else {
       pm.disableDraw();
     }
-  }, [drawingBoundary, ready, map]);
+  }, [drawingBoundary, map]);
 
-  // Capture drawn polygon, remove geoman layer, let react-leaflet render it
   useEffect(() => {
-    if (!ready) return;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function handleCreate(e: any) {
       const geojson = e.layer.toGeoJSON().geometry as GeoJSONPolygon;
@@ -105,61 +107,8 @@ function GeomanController({
     return () => {
       map.off("pm:create", handleCreate);
     };
-  }, [ready, map, onBoundaryChange, onDrawingComplete]);
+  }, [map, onBoundaryChange, onDrawingComplete]);
 
-  return null;
-}
-
-// ── USDA CLU field boundary snap handler ─────────────────────────────────────
-
-interface FieldSnapHandlerProps {
-  snappingField: boolean;
-  onBoundaryChange: (geojson: GeoJSONPolygon | null) => void;
-  onSnapDone: () => void;
-  onSnapFail: (msg: string) => void;
-  onFetchingChange: (fetching: boolean) => void;
-}
-
-function FieldSnapHandler({
-  snappingField,
-  onBoundaryChange,
-  onSnapDone,
-  onSnapFail,
-  onFetchingChange,
-}: FieldSnapHandlerProps) {
-  async function fetchCLU(lat: number, lng: number) {
-    onFetchingChange(true);
-    try {
-      const url = new URL("https://gis.fsa.usda.gov/api/public/map/CLU/MapServer/0/query");
-      url.searchParams.set("geometry", `${lng},${lat}`);
-      url.searchParams.set("geometryType", "esriGeometryPoint");
-      url.searchParams.set("inSR", "4326");
-      url.searchParams.set("spatialRel", "esriSpatialRelIntersects");
-      url.searchParams.set("outFields", "*");
-      url.searchParams.set("returnGeometry", "true");
-      url.searchParams.set("f", "geojson");
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error("CLU request failed");
-      const data = await res.json();
-      if (!data.features?.length) {
-        onSnapFail("No field boundary found here — try drawing one manually.");
-        return;
-      }
-      onBoundaryChange(data.features[0].geometry as GeoJSONPolygon);
-      onSnapDone();
-    } catch {
-      onSnapFail("No field boundary found here — try drawing one manually.");
-    } finally {
-      onFetchingChange(false);
-    }
-  }
-
-  useMapEvents({
-    click(e) {
-      if (!snappingField) return;
-      void fetchCLU(e.latlng.lat, e.latlng.lng);
-    },
-  });
   return null;
 }
 
@@ -200,19 +149,19 @@ export function ABLineMapInner({
   drawingBoundary,
   onBoundaryChange,
   onDrawingComplete,
-  snappingField,
-  onSnapDone,
-  onSnapFail,
 }: Props) {
   const fixedRef = useRef(false);
   const [satellite, setSatellite] = useState(true);
-  const [fetching, setFetching] = useState(false);
+  // Geoman must be loaded before MapContainer mounts so addInitHook fires
+  // on the map instance and map.pm is available.
+  const [geomanReady, setGeomanReady] = useState(false);
 
   useEffect(() => {
     if (!fixedRef.current) {
       fixLeafletIcons();
       fixedRef.current = true;
     }
+    import("@geoman-io/leaflet-geoman-free").then(() => setGeomanReady(true));
   }, []);
 
   const center: [number, number] = pointA
@@ -224,7 +173,11 @@ export function ABLineMapInner({
     ? boundary.coordinates[0].map(([lon, lat]) => [lat, lon])
     : null;
 
-  const cursor = placing || drawingBoundary || snappingField || fetching ? "cursor-crosshair" : "";
+  const cursor = placing || drawingBoundary ? "cursor-crosshair" : "";
+
+  if (!geomanReady) {
+    return <div className="h-[320px] bg-gray-100 rounded-lg animate-pulse" />;
+  }
 
   return (
     <div style={{ position: "relative" }}>
@@ -250,13 +203,6 @@ export function ABLineMapInner({
           drawingBoundary={drawingBoundary}
           onBoundaryChange={onBoundaryChange}
           onDrawingComplete={onDrawingComplete}
-        />
-        <FieldSnapHandler
-          snappingField={snappingField}
-          onBoundaryChange={onBoundaryChange}
-          onSnapDone={onSnapDone}
-          onSnapFail={onSnapFail}
-          onFetchingChange={setFetching}
         />
 
         {boundaryPositions && (
@@ -313,22 +259,6 @@ export function ABLineMapInner({
       >
         {satellite ? "Street" : "Satellite"}
       </button>
-
-      {/* CLU lookup in-progress indicator */}
-      {fetching && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 8,
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 1000,
-          }}
-          className="bg-white border border-gray-200 rounded px-3 py-1 text-xs shadow-sm text-gray-600"
-        >
-          Looking up field boundary…
-        </div>
-      )}
     </div>
   );
 }
