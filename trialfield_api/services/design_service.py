@@ -35,6 +35,27 @@ def _safe_name(name: str) -> str:
     return re.sub(r"_+", "_", re.sub(r"[^a-zA-Z0-9]", "_", name.strip())).strip("_")
 
 
+def _close_geojson_rings(geojson: dict) -> dict:
+    """Close any unclosed rings in a GeoJSON Polygon/MultiPolygon geometry.
+
+    ESRI GeoJSON outputs sometimes omit the closing coordinate even though the
+    spec requires first == last.  Shapely 2.x / GEOS raises
+    IllegalArgumentException when it encounters such a ring.
+    """
+    def _close(ring: list) -> list:
+        return ring if ring and ring[0] == ring[-1] else ring + [ring[0]]
+
+    gtype = geojson.get("type", "")
+    if gtype == "Polygon":
+        return {**geojson, "coordinates": [_close(r) for r in geojson["coordinates"]]}
+    if gtype == "MultiPolygon":
+        return {
+            **geojson,
+            "coordinates": [[_close(r) for r in poly] for poly in geojson["coordinates"]],
+        }
+    return geojson
+
+
 def _polygon_to_uv(frame: UVFrame, poly: Polygon) -> Polygon:
     exterior = [frame.wgs84_to_uv(lon, lat) for lon, lat in poly.exterior.coords]
     holes = [
@@ -92,15 +113,20 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
     field_wgs84: Polygon | MultiPolygon | None = None
     if g.field_boundary_geojson is not None:
         try:
-            field_wgs84 = shapely_shape(g.field_boundary_geojson)
+            geojson = _close_geojson_rings(g.field_boundary_geojson)
+            field_wgs84 = shapely_shape(geojson)
         except Exception as exc:
             raise ValueError(f"invalid field_boundary_geojson: {exc}") from exc
 
+    field_uv_raw = None
     if field_wgs84 is not None:
-        field_uv = _field_to_uv(frame, field_wgs84)
+        try:
+            field_uv_raw = _field_to_uv(frame, field_wgs84)
+        except Exception as exc:
+            raise ValueError(f"invalid field_boundary_geojson: {exc}") from exc
         headland_ft = 2.0 * g.trial_swath_ft
-        buffered = headland_buffer(field_uv, headland_ft)
-        field_uv = buffered if buffered is not None else field_uv
+        buffered = headland_buffer(field_uv_raw, headland_ft)
+        field_uv = buffered if buffered is not None else field_uv_raw
     else:
         n_strips = trial.n_treatments
         v_needed = trial.reps * n_strips * g.trial_swath_ft * 2.0
@@ -147,7 +173,8 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
     write_kml(plots, trial, trial_name, out_dir)
     write_sample_pins(plots, trial_name, out_dir)
     write_summary(trial, plots, blocks, soil, ab, trial_name, out_dir)
-    write_map(plots, trial, trial_name, out_dir)
+    write_map(plots, trial, trial_name, out_dir,
+              field_wgs84=field_wgs84, field_uv=field_uv_raw)
 
     return trial_name
 

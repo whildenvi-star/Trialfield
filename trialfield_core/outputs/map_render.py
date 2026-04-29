@@ -29,6 +29,9 @@ def write_map(
     trial: TrialDesign,
     trial_name: str,
     out_dir: Path,
+    *,
+    field_wgs84=None,
+    field_uv=None,
 ) -> tuple[Path, Path]:
     """Render a two-panel layout map and return (png_path, pdf_path)."""
     import matplotlib
@@ -85,9 +88,26 @@ def write_map(
                 lbl = p.treatment.label
             legend_patches.append(mpatches.Patch(facecolor=color, edgecolor="black", label=lbl))
 
+    if field_uv is not None:
+        try:
+            xy_uv = list(field_uv.exterior.coords)
+            uv_patch = MplPolygon(xy_uv, closed=True, facecolor="none",
+                                  edgecolor="#444444", linewidth=1.2,
+                                  linestyle="--", zorder=0)
+            ax_uv.add_patch(uv_patch)
+        except AttributeError:
+            pass  # MultiPolygon or other geometry — skip outline
+
     if plots:
         all_u = [p.u_west_ft for p in plots] + [p.u_east_ft for p in plots]
         all_v = [p.v_south_ft for p in plots] + [p.v_north_ft for p in plots]
+        if field_uv is not None:
+            try:
+                bu, bv = field_uv.exterior.xy
+                all_u += list(bu)
+                all_v += list(bv)
+            except AttributeError:
+                pass
         margin_u = (max(all_u) - min(all_u)) * 0.08
         margin_v = (max(all_v) - min(all_v)) * 0.08
         ax_uv.set_xlim(min(all_u) - margin_u, max(all_u) + margin_u)
@@ -109,9 +129,26 @@ def write_map(
                            linewidth=0.5, alpha=0.75)
         ax_geo.add_patch(patch)
 
+    if field_wgs84 is not None:
+        try:
+            xy_geo = list(field_wgs84.exterior.coords)
+            geo_patch = MplPolygon(xy_geo, closed=True, facecolor="none",
+                                   edgecolor="#444444", linewidth=1.2,
+                                   linestyle="--", zorder=0)
+            ax_geo.add_patch(geo_patch)
+        except AttributeError:
+            pass
+
     if plots:
         all_lons = [lon for p in plots for lon, _ in p.polygon_wgs84]
         all_lats = [lat for p in plots for _, lat in p.polygon_wgs84]
+        if field_wgs84 is not None:
+            try:
+                blons, blats = field_wgs84.exterior.xy
+                all_lons += list(blons)
+                all_lats += list(blats)
+            except AttributeError:
+                pass
         margin_lon = (max(all_lons) - min(all_lons)) * 0.12
         margin_lat = (max(all_lats) - min(all_lats)) * 0.12
         ax_geo.set_xlim(min(all_lons) - margin_lon, max(all_lons) + margin_lon)
