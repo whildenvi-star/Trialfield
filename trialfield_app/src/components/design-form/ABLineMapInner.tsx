@@ -329,7 +329,7 @@ export function ABLineMapInner({
         {trialZonePositions && (
           <Polygon
             positions={trialZonePositions}
-            pathOptions={{ color: "#ea580c", fillColor: "#f97316", fillOpacity: 0.20, weight: 2.5, dashArray: "6 3" }}
+            pathOptions={{ color: "#ea580c", fillColor: "#f97316", fillOpacity: 0.20, weight: 2.5 }}
           />
         )}
 

@@ -194,9 +194,14 @@ def _run_pipeline(req: DesignRequest, out_dir: Path) -> str:
     return trial_name
 
 
+_ZIP_EPOCH = (2020, 1, 1, 0, 0, 0)  # fixed timestamp → deterministic ZIP bytes
+
+
 def _assemble_zip(out_dir: Path) -> bytes:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         for path in sorted(out_dir.iterdir()):
-            zf.write(path, path.name)
+            info = zipfile.ZipInfo(path.name, date_time=_ZIP_EPOCH)
+            info.compress_type = zipfile.ZIP_DEFLATED
+            zf.writestr(info, path.read_bytes())
     return buf.getvalue()

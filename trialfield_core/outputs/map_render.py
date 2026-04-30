@@ -93,7 +93,7 @@ def write_map(
             xy_uv = list(field_uv.exterior.coords)
             uv_patch = MplPolygon(xy_uv, closed=True, facecolor="none",
                                   edgecolor="#444444", linewidth=1.2,
-                                  linestyle="--", zorder=0)
+                                  linestyle="-", zorder=0)
             ax_uv.add_patch(uv_patch)
         except AttributeError:
             pass  # MultiPolygon or other geometry — skip outline
@@ -134,7 +134,7 @@ def write_map(
             xy_geo = list(field_wgs84.exterior.coords)
             geo_patch = MplPolygon(xy_geo, closed=True, facecolor="none",
                                    edgecolor="#444444", linewidth=1.2,
-                                   linestyle="--", zorder=0)
+                                   linestyle="-", zorder=0)
             ax_geo.add_patch(geo_patch)
         except AttributeError:
             pass

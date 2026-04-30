@@ -59,13 +59,33 @@ def _usable_u_range_at_v(
     v_south: float,
     v_north: float,
 ) -> Optional[tuple[float, float]]:
-    """Return the largest contiguous u-interval inside field_uv at this v band."""
+    """Return the u-interval that is inside field_uv at every v in [v_south, v_north].
+
+    Samples N thin horizontal slices and intersects their U ranges so that any
+    rectangle placed within the returned interval is fully contained in the zone,
+    not just within its bounding box.
+    """
     band = box(-1e9, v_south, 1e9, v_north)
     clipped = field_uv.intersection(band)
     if clipped.is_empty:
         return None
-    u_min, u_max, _, _ = _uv_bounds(clipped)
-    return u_min, u_max
+
+    u_lo, u_hi = -1e9, 1e9
+    height = v_north - v_south
+    n_samples = 5
+    for i in range(n_samples):
+        v = v_south + height * (i + 0.5) / n_samples
+        thin = box(-1e9, v - 0.1, 1e9, v + 0.1)
+        sliced = clipped.intersection(thin)
+        if sliced.is_empty:
+            return None
+        b = sliced.bounds
+        u_lo = max(u_lo, b[0])
+        u_hi = min(u_hi, b[2])
+
+    if u_hi <= u_lo:
+        return None
+    return u_lo, u_hi
 
 
 def place_block_2x2(

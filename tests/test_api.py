@@ -120,9 +120,17 @@ def test_design_csv_all_six_rates_present():
 
 
 def test_design_seed_determinism():
+    # Compare the plots CSV (text, no embedded timestamps) rather than raw ZIP
+    # bytes — XLSX, PDF, and nested ZIPs all embed wall-clock timestamps that
+    # make bitwise comparison non-deterministic.
+    def csv_content(resp):
+        zf = _unzip_response(resp)
+        name = next(n for n in zf.namelist() if n.endswith("_plots.csv"))
+        return zf.read(name)
+
     r1 = client.post("/design", json=SCHULTZ_PAYLOAD)
     r2 = client.post("/design", json=SCHULTZ_PAYLOAD)
-    assert r1.content == r2.content
+    assert csv_content(r1) == csv_content(r2)
 
 
 def test_design_content_disposition_header():
