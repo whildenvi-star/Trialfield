@@ -188,7 +188,7 @@ export function AddContractModal({ crops, cropYear, onClose }: AddContractModalP
           </div>
 
           {error && (
-            <p className="text-xs text-red-400">{error}</p>
+            <p className="text-xs text-glomalin-danger">{error}</p>
           )}
 
           <button

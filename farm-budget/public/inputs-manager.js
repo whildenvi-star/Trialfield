@@ -15,22 +15,25 @@
 
   var allSuppliers = [];
 
+  var procurementByName = {};
+
   function loadAll() {
     Promise.all([
       api.get('/api/products'),
       api.get('/api/implements'),
       api.get('/api/fields?all=true'),
       api.get('/api/labor-overhead'),
-      api.get('/api/suppliers')
+      api.get('/api/suppliers'),
+      api.get('/api/procurement-status').catch(function () { return { offline: true, byName: {} }; })
     ]).then(function (results) {
       allProducts = results[0];
       allImplements = results[1];
       allFields = results[2];
       allLaborOverhead = results[3];
       allSuppliers = results[4];
+      procurementByName = (results[5] && results[5].byName) ? results[5].byName : {};
       computeProductDemandTotals(allFields, allProducts);
       renderProductTable(allProducts);
-      renderProductDemand(allFields, allProducts);
       renderImplTable(allImplements);
       renderMachMode();
       renderImplUsage(allFields, allImplements);
@@ -85,21 +88,19 @@
   });
 
   document.getElementById('inp-add').addEventListener('click', function () {
-    api.post('/api/products', {
-      name: 'New Product',
+    openProductPanel({
+      id: null,
+      name: '',
+      category: 'Other',
       unitBilledPrice: 0,
       conversionRate: 1,
-      increasePercent: 1,
       unit: 'Lbs',
       purchaseUnit: 'Lbs',
       organic: false,
-      category: 'Other',
+      organicGround: false,
       p205: 0,
-      k20: 0
-    }).then(function () {
-      loaded = false;
-      loadAll();
-      util.showToast('Product added');
+      k20: 0,
+      supplierId: ''
     });
   });
 
@@ -216,15 +217,17 @@
       html += '<span class="prod-category-toggle">&#9660;</span>';
       html += '</div>';
       html += '<div class="prod-category-body">';
+      var _showProdPrices = window.APP_ROLE !== 'operator';
       html += '<table class="prod-table"><thead><tr>';
       html += '<th><input type="checkbox" class="cat-select-all" data-category="' + cat + '"></th>';
       html += '<th>Product Name</th>';
       html += '<th>Supplier</th>';
-      html += '<th>Purchase Price</th>';
+      if (_showProdPrices) html += '<th>Purchase Price</th>';
       html += '<th>Purch Unit</th>';
-      html += '<th title="Computed from purchase price / conversion rate">App Price</th>';
+      if (_showProdPrices) html += '<th title="Computed from purchase price / conversion rate">App Price</th>';
       html += '<th>App Unit</th>';
       html += '<th title="Total demand across all enterprises in purchase units">Demand</th>';
+      html += '<th title="Ordered / Delivered from Inputs Receiving">Procurement</th>';
       html += '<th title="Organic / OMRI approved">ORG</th>';
       html += '<th title="Used on certified organic ground">OG</th>';
       html += '<th></th>';
@@ -247,9 +250,9 @@
         html += '<td><input type="checkbox" class="prod-select" data-prod-id="' + p.id + '"' + (isSelected ? ' checked' : '') + '></td>';
         html += '<td class="prod-name-cell" data-id="' + p.id + '">' + util.escHtml(p.name) + '</td>';
         html += '<td class="supplier-cell" data-id="' + p.id + '" data-supplier-id="' + (p.supplierId || '') + '" data-type="products" style="cursor:pointer">' + util.escHtml(supplierName) + '</td>';
-        html += '<td class="editable number' + previewCls + '" data-id="' + p.id + '" data-field="unitBilledPrice" data-type="products">' + priceDisplay + '</td>';
+        if (_showProdPrices) html += '<td class="editable number' + previewCls + '" data-id="' + p.id + '" data-field="unitBilledPrice" data-type="products">' + priceDisplay + '</td>';
         html += '<td>' + util.escHtml(p.purchaseUnit || '--') + '</td>';
-        html += '<td class="number' + previewCls + '">' + appDisplay + '</td>';
+        if (_showProdPrices) html += '<td class="number' + previewCls + '">' + appDisplay + '</td>';
         html += '<td class="editable" data-id="' + p.id + '" data-field="unit" data-type="products">' + util.escHtml(p.unit) + '</td>';
         var demandAppQty = productDemandTotals[p.id] || 0;
         var demandPurchQty = demandAppQty && p.conversionRate ? demandAppQty / p.conversionRate : demandAppQty;
@@ -257,6 +260,20 @@
           ? util.formatNum(demandPurchQty, 1) + ' ' + util.escHtml(p.purchaseUnit || p.unit || '')
           : '<span style="color:var(--text-light)">--</span>';
         html += '<td class="number">' + demandLabel + '</td>';
+        var procKey = (p.name || '').toLowerCase();
+        var proc = procurementByName[procKey];
+        var procLabel;
+        if (!proc) {
+          procLabel = '<span style="color:var(--text-light)">--</span>';
+        } else {
+          var pctDel = proc.orderedQty > 0 ? Math.round(proc.deliveredQty / proc.orderedQty * 100) : 0;
+          var procColor = proc.deliveredQty >= proc.orderedQty && proc.orderedQty > 0 ? '#4ade80' :
+                          proc.orderedQty > 0 ? '#f59e0b' : 'var(--text-light)';
+          procLabel = '<span style="color:' + procColor + '" title="' + pctDel + '% delivered">' +
+            util.formatNum(proc.orderedQty, 0) + ' / ' + util.formatNum(proc.deliveredQty, 0) +
+            (proc.unit ? ' ' + util.escHtml(proc.unit) : '') + '</span>';
+        }
+        html += '<td class="number">' + procLabel + '</td>';
         html += '<td>' + (p.organic ? '<span class="prod-organic-badge">ORG</span>' : '') + '</td>';
         html += '<td>' + (p.organicGround ? '<span class="prod-og-badge" style="background:#16a34a;color:#fff;padding:0.1rem 0.35rem;border-radius:3px;font-size:0.65rem;font-weight:600">OG</span>' : '') + '</td>';
         html += '<td><button class="btn-danger" data-del-id="' + p.id + '" data-del-type="products" style="font-size:0.7rem;padding:0.15rem 0.4rem">Del</button></td>';
@@ -350,7 +367,9 @@
   }
 
   function openProductPanel(product) {
-    peCurrentId = product.id;
+    peCurrentId = product.id || null;
+    document.getElementById('prod-editor-title').textContent = peCurrentId ? 'Edit Product' : 'Add Product';
+    document.getElementById('pe-delete').style.display = peCurrentId ? '' : 'none';
     document.getElementById('pe-name').value = product.name || '';
     document.getElementById('pe-category').value = product.category || 'Other';
     document.getElementById('pe-purchasePrice').value = product.unitBilledPrice || 0;
@@ -454,7 +473,6 @@
   document.getElementById('pe-convRate').addEventListener('input', updatePanelAppPrice);
 
   document.getElementById('pe-save').addEventListener('click', function () {
-    if (!peCurrentId) return;
     var data = {
       name: document.getElementById('pe-name').value,
       category: document.getElementById('pe-category').value,
@@ -468,12 +486,15 @@
       p205: parseFloat(document.getElementById('pe-p205').value) || 0,
       k20: parseFloat(document.getElementById('pe-k20').value) || 0
     };
-    api.put('/api/products/' + peCurrentId, data).then(function () {
+    var save = peCurrentId
+      ? api.put('/api/products/' + peCurrentId, data)
+      : api.post('/api/products', data);
+    save.then(function () {
       closeProductPanel();
       loaded = false;
       loadAll();
       window.reloadRefDataSelective('products');
-      util.showToast('Product saved');
+      util.showToast(peCurrentId ? 'Product saved' : 'Product added');
     });
   });
 
@@ -870,105 +891,6 @@
     document.getElementById('impl-usage-info').textContent =
       usedNames.length + ' implements, ' + util.formatMoney(grandTotal.cost, 0) + ' total machinery cost' +
       (showFuelInUsage ? ' + ' + util.formatMoney(grandTotal.fuelCost, 0) + ' fuel' : '');
-  }
-
-  // === PRODUCT DEMAND — EXPANDABLE FIELD VIEW ===
-
-  function renderProductDemand(fields, products) {
-    var enterprises = window.refData.enterprises;
-    var container = document.getElementById('prod-demand-container');
-    if (!container) return;
-    if (!fields.length) {
-      container.innerHTML = '<p style="color:var(--text-light)">No field data</p>';
-      return;
-    }
-
-    // Build product index by lowercase name
-    var productIndex = {};
-    products.forEach(function (p) {
-      productIndex[(p.name || '').trim().toLowerCase()] = p;
-    });
-
-    // Build enterprise index by id
-    var entMap = {};
-    enterprises.forEach(function (e) { entMap[e.id] = e; });
-
-    // demand[productName] = { totalQty, totalCost, fields: [{ name, acres, qty, cost, enterprise, season }] }
-    var demand = {};
-    fields.forEach(function (f) {
-      var fieldAcres = (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
-      var ent = entMap[f.enterpriseId];
-      (f.inputs || []).forEach(function (inp) {
-        if (!inp.productName) return;
-        var key = inp.productName.trim().toLowerCase();
-        var product = productIndex[key];
-        var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
-        var fieldQty = (inp.quantity || 0) * fieldAcres;
-        var fieldCost = fieldQty * appPrice;
-
-        if (!demand[inp.productName]) demand[inp.productName] = { totalQty: 0, totalCost: 0, fields: [] };
-        demand[inp.productName].totalQty += fieldQty;
-        demand[inp.productName].totalCost += fieldCost;
-        demand[inp.productName].fields.push({
-          name: f.name,
-          acres: fieldAcres,
-          rate: inp.quantity || 0,
-          qty: fieldQty,
-          cost: fieldCost,
-          enterprise: ent ? (ent.shortName || ent.name) : '--',
-          season: inp.season || '--'
-        });
-      });
-    });
-
-    var usedNames = Object.keys(demand).sort();
-    var grandTotal = 0;
-    usedNames.forEach(function (n) { grandTotal += demand[n].totalCost; });
-
-    var html = '';
-    usedNames.forEach(function (name) {
-      var d = demand[name];
-      var key = name.trim().toLowerCase();
-      var product = productIndex[key];
-      var unit = product ? (product.unit || 'units') : 'units';
-      var supplierName = product ? getSupplierName(product.supplierId, 'product') : '';
-      var safeId = key.replace(/[^a-z0-9]/g, '-');
-
-      // Sort fields by qty descending
-      d.fields.sort(function (a, b) { return b.qty - a.qty; });
-
-      html += '<details class="demand-expand" id="prod-exp-' + safeId + '">';
-      html += '<summary class="demand-summary">';
-      html += '<span class="demand-name">' + util.escHtml(name) + '</span>';
-      if (supplierName) html += '<span class="demand-supplier">' + util.escHtml(supplierName) + '</span>';
-      html += '<span class="demand-totals">' + util.formatNum(d.totalQty, 0) + ' ' + util.escHtml(unit) +
-        ' &middot; ' + util.formatMoney(d.totalCost, 0) + '</span>';
-      html += '<span class="demand-field-count">' + d.fields.length + ' field' + (d.fields.length !== 1 ? 's' : '') + '</span>';
-      html += '</summary>';
-
-      html += '<table class="demand-fields-table"><thead><tr>' +
-        '<th>Field</th><th>Enterprise</th><th>Acres</th><th>Rate/' + util.escHtml(unit === 'Lbs' ? 'Ac' : 'Ac') + '</th>' +
-        '<th>Total ' + util.escHtml(unit) + '</th><th>Cost</th><th>Season</th>' +
-        '</tr></thead><tbody>';
-
-      d.fields.forEach(function (f) {
-        html += '<tr>' +
-          '<td>' + util.escHtml(f.name) + '</td>' +
-          '<td>' + util.escHtml(f.enterprise) + '</td>' +
-          '<td class="number">' + util.formatNum(f.acres, 1) + '</td>' +
-          '<td class="number">' + util.formatNum(f.rate, 1) + '</td>' +
-          '<td class="number">' + util.formatNum(f.qty, 0) + '</td>' +
-          '<td class="number">' + util.formatMoney(f.cost, 0) + '</td>' +
-          '<td>' + util.escHtml(f.season) + '</td>' +
-          '</tr>';
-      });
-
-      html += '</tbody></table></details>';
-    });
-
-    container.innerHTML = html;
-    document.getElementById('prod-demand-info').textContent =
-      usedNames.length + ' products in use, ' + util.formatMoney(grandTotal, 0) + ' total input cost';
   }
 
   // === LABOR & OVERHEAD (Features 1 + 3) ===

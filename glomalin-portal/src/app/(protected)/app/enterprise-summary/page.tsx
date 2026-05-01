@@ -1,5 +1,7 @@
 import { fetchBudgetService, fetchGrainService } from '@/app/api/mobile/_lib/proxy'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
+import { Badge } from '@/components/ui/badge'
+import { Empty } from '@/components/ui/empty'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -161,7 +163,7 @@ export default async function EnterpriseSummaryPage() {
 
       {/* Banners */}
       {budgetOffline && (
-        <div className="mb-4 px-4 py-3 bg-amber-950/30 border border-amber-800/40 text-amber-400 text-sm rounded">
+        <div className="mb-4 px-4 py-3 bg-glomalin-warning/10 border border-glomalin-warning/30 text-glomalin-warning text-sm rounded">
           Farm-budget is offline — cost data unavailable
         </div>
       )}
@@ -172,7 +174,7 @@ export default async function EnterpriseSummaryPage() {
       )}
 
       {rows.length === 0 && !budgetOffline ? (
-        <div className="py-16 text-center text-glomalin-muted text-sm">No budget data found</div>
+        <Empty title="No budget data found" description="Start farm-budget on port 3001 to see field data." />
       ) : (
         <div className="space-y-8">
           {Array.from(grouped.entries()).map(([enterpriseName, entRows]) => {
@@ -183,13 +185,9 @@ export default async function EnterpriseSummaryPage() {
                 {/* Enterprise label */}
                 <div className="flex items-center gap-3 mb-2">
                   <span className="text-base font-semibold text-glomalin-text">{enterpriseName}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                    isOrganic
-                      ? 'bg-green-950/40 text-green-400 border-green-800/40'
-                      : 'bg-glomalin-surface text-glomalin-muted border-glomalin-border'
-                  }`}>
+                  <Badge variant={isOrganic ? 'success' : 'default'} size="sm">
                     {isOrganic ? 'organic' : 'conventional'}
-                  </span>
+                  </Badge>
                   <span className="text-sm text-glomalin-muted">{sub.acres.toFixed(1)} ac</span>
                 </div>
 
@@ -221,13 +219,13 @@ export default async function EnterpriseSummaryPage() {
                           <td className="px-4 py-2.5 text-right">{fmt(row.dryingPerAcre)}</td>
                           <td className="px-4 py-2.5 text-right">{fmt(row.insurancePerAcre)}</td>
                           <td className="px-4 py-2.5 text-right font-medium text-glomalin-text">{fmt(row.totalCostPerAcre)}</td>
-                          <td className="px-4 py-2.5 text-right text-green-400">{fmt(row.revenuePerAcre)}</td>
+                          <td className="px-4 py-2.5 text-right text-glomalin-success">{fmt(row.revenuePerAcre)}</td>
                           <td className="px-4 py-2.5 text-center">
                             {row.revenueSource === 'Actual' && (
-                              <span className="text-xs px-1.5 py-0.5 rounded bg-green-950/40 text-green-400 border border-green-800/40">Actual</span>
+                              <Badge variant="success" size="sm">Actual</Badge>
                             )}
                             {row.revenueSource === 'Budget Est.' && (
-                              <span className="text-xs px-1.5 py-0.5 rounded bg-amber-950/30 text-amber-400 border border-amber-800/40">Est.</span>
+                              <Badge variant="warning" size="sm">Est.</Badge>
                             )}
                           </td>
                         </tr>
@@ -241,7 +239,7 @@ export default async function EnterpriseSummaryPage() {
                         <td className="px-4 py-2.5 text-right">{fmt(sub.dryingPerAcre)}</td>
                         <td className="px-4 py-2.5 text-right">{fmt(sub.insurancePerAcre)}</td>
                         <td className="px-4 py-2.5 text-right font-bold">{fmt(sub.totalCostPerAcre)}</td>
-                        <td className="px-4 py-2.5 text-right font-bold text-green-400">{fmt(sub.revenuePerAcre)}</td>
+                        <td className="px-4 py-2.5 text-right font-bold text-glomalin-success">{fmt(sub.revenuePerAcre)}</td>
                         <td />
                       </tr>
                     </tbody>

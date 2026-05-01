@@ -776,12 +776,20 @@
     <section id="tab-sales" class="tab-content">
       <h2>Sales &amp; Marketing</h2>
 
+      <!-- Crop year selector -->
+      <div class="mkt-year-bar">
+        <button class="mkt-year-btn" id="mkt-year-prev" title="Previous year">←</button>
+        <span id="mkt-year-label">—</span>
+        <button class="mkt-year-btn" id="mkt-year-next" title="Next year">→</button>
+      </div>
+
       <!-- Sub-tab strip -->
       <div class="mkt-tabs">
         <button class="mkt-tab-btn active" data-mtab="dashboard">Hedging Dashboard</button>
         <button class="mkt-tab-btn" data-mtab="instruments">Instruments</button>
         <button class="mkt-tab-btn role-hide-office" data-mtab="whatif">What-If</button>
         <button class="mkt-tab-btn" data-mtab="basis">Basis</button>
+        <button class="mkt-tab-btn" data-mtab="croptypes">Crop Types</button>
       </div>
 
       <!-- Hedging Dashboard -->
@@ -792,6 +800,11 @@
       <!-- Instruments -->
       <div id="mtab-instruments" class="mtab-content">
         <div id="mkt-instruments-root"></div>
+      </div>
+
+      <!-- Crop Types -->
+      <div id="mtab-croptypes" class="mtab-content">
+        <div id="mkt-croptypes-root"></div>
       </div>
 
       <!-- What-If (legacy hedging.js) -->

@@ -92,6 +92,11 @@
           <span class="stat-value" id="stat-discrepancies">--</span>
         </div>
       </div>
+      <div style="margin-top:1.25rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+        <button class="btn-primary" id="dash-log-delivery" style="font-size:0.9rem;padding:0.5rem 1.25rem">+ Log a Delivery</button>
+        <button class="btn-sm" id="dash-view-outstanding" style="font-size:0.85rem">View Outstanding</button>
+      </div>
+      <div id="dash-outstanding-list" style="margin-top:1rem"></div>
     </section>
 
     <!-- PRODUCTS TAB (read-only lookup from Farm Budget) -->
@@ -320,9 +325,25 @@
             <div class="form-grid">
               <div class="form-group">
                 <label for="of-productId">Product</label>
-                <select id="of-productId" required>
-                  <option value="">Select product...</option>
-                </select>
+                <div style="display:flex;gap:0.4rem;align-items:center">
+                  <select id="of-productId" required style="flex:1"></select>
+                  <button type="button" id="order-add-product-btn" class="btn-secondary btn-sm" title="Add new product">+</button>
+                </div>
+                <div id="order-add-product-panel" class="hidden" style="border:1px solid var(--border);background:var(--surface-2,#1a1710);padding:0.6rem;margin-top:0.25rem;font-size:0.85rem">
+                  <div style="font-weight:600;margin-bottom:0.4rem;color:var(--primary,#C8860A)">Add New Product</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">
+                    <div class="form-group" style="grid-column:1/-1"><label style="font-size:0.75rem">Name</label><input type="text" id="oap-name" style="width:100%"></div>
+                    <div class="form-group"><label style="font-size:0.75rem">Type</label><select id="oap-type" style="width:100%"><option value="INPUT">Input</option><option value="SEED">Seed</option></select></div>
+                    <div class="form-group" id="oap-catgroup"><label style="font-size:0.75rem">Category</label><select id="oap-category" style="width:100%"><option value="FERTILIZER">Fertilizer</option><option value="CHEMICAL">Chemical</option><option value="BIOLOGICAL">Biological</option><option value="OTHER">Other</option></select></div>
+                    <div class="form-group"><label style="font-size:0.75rem">App Unit</label><input type="text" id="oap-unit" placeholder="lbs" style="width:100%"></div>
+                    <div class="form-group"><label style="font-size:0.75rem">Purchase Unit</label><input type="text" id="oap-purchaseUnit" placeholder="tons" style="width:100%"></div>
+                  </div>
+                  <div style="display:flex;gap:0.5rem;margin-top:0.4rem">
+                    <button type="button" id="oap-save" class="btn-primary btn-sm">Add &amp; Select</button>
+                    <button type="button" id="oap-cancel" class="btn-secondary btn-sm">Cancel</button>
+                  </div>
+                  <div id="oap-status" style="display:none;font-size:0.75rem;margin-top:0.25rem;color:var(--text-warn,#a0855a)"></div>
+                </div>
               </div>
               <div class="form-group">
                 <label for="of-supplierId">Supplier</label>
@@ -377,6 +398,33 @@
                 <label for="of-notes">Notes</label>
                 <input type="text" id="of-notes" placeholder="Notes">
               </div>
+            </div>
+            <!-- Pickup Numbers Section -->
+            <div id="pku-section" class="pku-section hidden">
+              <div class="pku-header">
+                <span class="pku-title">Pickup Numbers</span>
+                <span class="pku-hint">Co-op pre-authorization codes for bulk drawdown</span>
+              </div>
+              <div class="table-wrap" style="margin:0">
+                <table class="pku-table">
+                  <thead>
+                    <tr>
+                      <th>Pickup #</th>
+                      <th>Auth Qty</th>
+                      <th>Unit</th>
+                      <th>Farm</th>
+                      <th>Crop</th>
+                      <th>Status</th>
+                      <th>Notes</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="pku-container"></tbody>
+                </table>
+              </div>
+            </div>
+            <div style="margin-top:0.75rem">
+              <button type="button" class="btn-sm" id="pku-add-btn">+ Add Pickup Number</button>
             </div>
             <div class="form-actions">
               <button type="submit" class="btn-primary">Save Order</button>
@@ -595,6 +643,9 @@
           </div>
           <label class="recon-organic-toggle">
             <input type="checkbox" id="recon-organic-only"> Organic Only
+          </label>
+          <label class="recon-organic-toggle">
+            <input type="checkbox" id="recon-outstanding-only" checked> Outstanding Only
           </label>
         </div>
         <div class="toolbar-right">

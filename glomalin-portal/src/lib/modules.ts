@@ -99,14 +99,6 @@ export const MODULES: Module[] = [
     type: 'native',
   },
   {
-    id: 'macro-rollup',
-    label: 'Macro Rollup',
-    sublabel: 'Overview & Sales',
-    route: '/app/macro-rollup',
-    status: 'live',
-    type: 'native',
-  },
-  {
     id: 'farm-budget',
     label: 'Enterprise Planner',
     sublabel: 'Enterprise & Field Planning',

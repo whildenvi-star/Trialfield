@@ -4,6 +4,7 @@
 
   var currentType = '';
   var organicOnly = false;
+  var outstandingOnly = true;
   var lastData = [];
 
   // Type filter toggle
@@ -22,6 +23,15 @@
     organicCheckbox.addEventListener('change', function () {
       organicOnly = organicCheckbox.checked;
       loadReconciliation();
+    });
+  }
+
+  // Outstanding only filter
+  var outstandingCheckbox = document.getElementById('recon-outstanding-only');
+  if (outstandingCheckbox) {
+    outstandingCheckbox.addEventListener('change', function () {
+      outstandingOnly = outstandingCheckbox.checked;
+      renderReconciliation(lastData);
     });
   }
 
@@ -62,7 +72,14 @@
       return;
     }
 
-    var html = data.map(function (r) {
+    var filtered = outstandingOnly ? data.filter(function (r) { return r.balance > 0; }) : data;
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="12" class="empty-state">All items fully received. Uncheck "Outstanding Only" to see the full list.</td></tr>';
+      return;
+    }
+
+    var html = '';
+    filtered.forEach(function (r) {
       var name = r.type === 'SEED' ? (r.crop + ' ' + r.variety) : r.productName;
       var badgeClass = r.type === 'SEED' ? 'badge-seed' : 'badge-input';
       var organicBadge = r.organicGround ? ' <span class="badge badge-organic">ORG</span>' : '';
@@ -76,13 +93,22 @@
       // Balance: negative means over-delivered
       var balanceClass = r.balance < 0 ? 'recon-bad' : r.balance === 0 ? 'recon-good' : '';
 
-      return '<tr>' +
+      var hasPkus = r.pickupRows && r.pickupRows.length > 0;
+      var gid = r.productId;
+
+      // Main product row — ordered column shows expand toggle if pickups exist
+      var orderedCell = hasPkus
+        ? '<td class="number" style="cursor:pointer" onclick="togglePickupRows(\'' + gid + '\')" title="Click to see pickup breakdown">' +
+            util.formatNum(r.totalOrdered) + ' <span class="pku-toggle-icon" id="pku-icon-' + gid + '">&#9660;</span></td>'
+        : '<td class="number">' + util.formatNum(r.totalOrdered) + '</td>';
+
+      html += '<tr>' +
         '<td><span class="badge ' + badgeClass + '">' + r.type + '</span>' + organicBadge + '</td>' +
         '<td>' + util.escapeHtml(r.brand) + '</td>' +
         '<td>' + util.escapeHtml(name) + '</td>' +
         '<td>' + util.escapeHtml(r.unit || '') + '</td>' +
         '<td class="number">' + util.formatNum(r.forecast) + '</td>' +
-        '<td class="number">' + util.formatNum(r.totalOrdered) + '</td>' +
+        orderedCell +
         '<td class="number">' + util.formatNum(r.totalDelivered) + '</td>' +
         '<td class="number">' + util.formatNum(r.totalReturned) + '</td>' +
         '<td class="number"><strong>' + util.formatNum(r.onHand) + '</strong></td>' +
@@ -90,10 +116,29 @@
         '<td class="number ' + pctClass + '"><strong>' + util.formatNum(r.percentDelivered, 1) + '%</strong></td>' +
         '<td class="number">' + util.formatMoney(r.totalCost) + '</td>' +
       '</tr>';
-    }).join('');
 
-    // Totals row
-    var totals = data.reduce(function (acc, r) {
+      // Pickup sub-rows (visible by default, togglable)
+      if (hasPkus) {
+        r.pickupRows.forEach(function (pku) {
+          var pkuStatusClass = pku.status === 'received' ? 'pku-status-received' : pku.status === 'partial' ? 'pku-status-partial' : 'pku-status-pending';
+          var pkuLabel = pku.pickupNum || '(unnamed)';
+          if (pku.farmName) pkuLabel += ' / ' + pku.farmName;
+          if (pku.crop) pkuLabel += ' · ' + pku.crop;
+          html += '<tr class="pku-subrow" data-pku-group="' + gid + '">' +
+            '<td colspan="4" style="padding-left:2.5rem;color:var(--text-light);font-size:0.82rem">' +
+              '<span class="badge ' + pkuStatusClass + ' badge-sm">' + pku.status + '</span> ' +
+              util.escapeHtml(pkuLabel) +
+            '</td>' +
+            '<td></td>' +
+            '<td class="number" style="font-size:0.82rem;color:var(--text-light)">' + util.formatNum(pku.authorizedQty) + ' ' + util.escapeHtml(pku.unit) + '</td>' +
+            '<td colspan="6"></td>' +
+          '</tr>';
+        });
+      }
+    });
+
+    // Totals row (based on visible filtered set)
+    var totals = filtered.reduce(function (acc, r) {
       acc.forecast += r.forecast;
       acc.totalOrdered += r.totalOrdered;
       acc.totalDelivered += r.totalDelivered;
@@ -117,6 +162,14 @@
 
     tbody.innerHTML = html;
   }
+
+  window.togglePickupRows = function (gid) {
+    var rows = document.querySelectorAll('.pku-subrow[data-pku-group="' + gid + '"]');
+    var icon = document.getElementById('pku-icon-' + gid);
+    var isHidden = rows.length > 0 && rows[0].classList.contains('hidden');
+    rows.forEach(function (r) { r.classList.toggle('hidden', !isHidden); });
+    if (icon) icon.innerHTML = isHidden ? '&#9660;' : '&#9658;';
+  };
 
   // --- Organic Report Export (CSV) ---
   function exportOrganicReport() {

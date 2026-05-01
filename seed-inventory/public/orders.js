@@ -55,8 +55,12 @@
       var p = window.refData.products.find(function (p) { return p.id === o.productId; });
       var sName = util.supplierName(o.supplierId, window.refData.suppliers);
       var badgeClass = o.paymentStatus === 'PAID' ? 'badge-paid' : o.paymentStatus === 'PARTIAL' ? 'badge-partial' : 'badge-unpaid';
+      var pkus = o.pickupNumbers || [];
+      var pkuBadge = pkus.length > 0
+        ? ' <span class="badge badge-pickup" title="' + pkus.length + ' pickup number(s)">' + pkus.length + ' PKU</span>'
+        : '';
       return '<tr>' +
-        '<td>' + util.escapeHtml(util.productLabel(p)) + '</td>' +
+        '<td>' + util.escapeHtml(util.productLabel(p)) + pkuBadge + '</td>' +
         '<td>' + util.escapeHtml(sName) + '</td>' +
         '<td class="number">' + util.formatNum(o.quantityOrdered) + '</td>' +
         '<td>' + util.escapeHtml(o.unit) + '</td>' +
@@ -82,12 +86,61 @@
   document.getElementById('order-cancel-btn').addEventListener('click', closeModal);
   modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
+  // Add-product panel in order form
+  var oapPanel = document.getElementById('order-add-product-panel');
+  document.getElementById('order-add-product-btn').addEventListener('click', function () {
+    document.getElementById('oap-name').value = '';
+    document.getElementById('oap-status').style.display = 'none';
+    oapPanel.classList.toggle('hidden');
+    if (!oapPanel.classList.contains('hidden')) document.getElementById('oap-name').focus();
+  });
+  document.getElementById('oap-type').addEventListener('change', function () {
+    document.getElementById('oap-catgroup').style.display = this.value === 'SEED' ? 'none' : '';
+  });
+  document.getElementById('oap-cancel').addEventListener('click', function () { oapPanel.classList.add('hidden'); });
+  document.getElementById('oap-save').addEventListener('click', function () {
+    var name = document.getElementById('oap-name').value.trim();
+    if (!name) { document.getElementById('oap-name').focus(); return; }
+    var type = document.getElementById('oap-type').value;
+    var cat  = document.getElementById('oap-category').value;
+    var unit = document.getElementById('oap-unit').value.trim() || 'lbs';
+    var pUnit = document.getElementById('oap-purchaseUnit').value.trim() || unit;
+    var statusEl = document.getElementById('oap-status');
+    var saveBtn = document.getElementById('oap-save');
+    saveBtn.disabled = true;
+    statusEl.textContent = 'Saving…'; statusEl.style.display = '';
+    api.post('/api/products', {
+      type: type,
+      productName: type === 'INPUT' ? name : '',
+      variety: type === 'SEED' ? name : '',
+      inputCategory: type === 'INPUT' ? cat : '',
+      unitType: unit,
+      purchaseUnit: pUnit,
+      conversionRate: 1,
+      notes: 'Added during order entry'
+    }).then(function (created) {
+      window.reloadRefData().then(function () {
+        oapPanel.classList.add('hidden');
+        saveBtn.disabled = false;
+        populateProductSelect('of-productId');
+        document.getElementById('of-productId').value = created.id;
+      });
+    }).catch(function (err) {
+      saveBtn.disabled = false;
+      statusEl.textContent = 'Error: ' + (err.message || 'Save failed');
+    });
+  });
+
+  // Pickup numbers state (belongs to the currently-open order)
+  var pickupNumbers = [];
+
   function openModal(order) {
     document.getElementById('order-modal-title').textContent = order ? 'Edit Order' : 'Add Order';
     form.reset();
     document.getElementById('of-id').value = order ? order.id : '';
     populateProductSelect('of-productId');
     populateSupplierSelect('of-supplierId');
+    pickupNumbers = order && Array.isArray(order.pickupNumbers) ? JSON.parse(JSON.stringify(order.pickupNumbers)) : [];
     if (order) {
       document.getElementById('of-productId').value = order.productId || '';
       document.getElementById('of-supplierId').value = order.supplierId || '';
@@ -101,14 +154,97 @@
       document.getElementById('of-paymentStatus').value = order.paymentStatus || 'UNPAID';
       document.getElementById('of-notes').value = order.notes || '';
     }
+    renderPickupNumbers();
     modal.classList.remove('hidden');
   }
 
   function closeModal() { modal.classList.add('hidden'); }
 
+  // --- Pickup Numbers ---
+
+  function renderPickupNumbers() {
+    var container = document.getElementById('pku-container');
+    if (!container) return;
+
+    var section = document.getElementById('pku-section');
+    if (section) section.classList.toggle('hidden', pickupNumbers.length === 0);
+
+    if (pickupNumbers.length === 0) return;
+
+    container.innerHTML = pickupNumbers.map(function (pku, i) {
+      var statusClass = pku.status === 'received' ? 'pku-status-received' : pku.status === 'partial' ? 'pku-status-partial' : 'pku-status-pending';
+      return '<tr class="pku-row" data-idx="' + i + '">' +
+        '<td><input class="pku-num" type="text" value="' + util.escapeHtml(pku.pickupNum || '') + '" placeholder="P003" style="width:5rem"></td>' +
+        '<td><input class="pku-qty" type="number" value="' + (pku.authorizedQty || '') + '" step="any" min="0" placeholder="10" style="width:5rem"></td>' +
+        '<td><select class="pku-unit">' +
+          ['units','bags','lbs','gal','tons','acre'].map(function (u) {
+            return '<option value="' + u + '"' + (pku.unit === u ? ' selected' : '') + '>' + u.charAt(0).toUpperCase() + u.slice(1) + '</option>';
+          }).join('') +
+        '</select></td>' +
+        '<td><input class="pku-farm" type="text" value="' + util.escapeHtml(pku.farmName || '') + '" placeholder="Farm (optional)" style="width:9rem"></td>' +
+        '<td><input class="pku-crop" type="text" value="' + util.escapeHtml(pku.crop || '') + '" placeholder="Crop (optional)" style="width:7rem"></td>' +
+        '<td><span class="badge ' + statusClass + '">' + (pku.status || 'pending') + '</span></td>' +
+        '<td><input class="pku-notes" type="text" value="' + util.escapeHtml(pku.notes || '') + '" placeholder="Notes" style="width:9rem"></td>' +
+        '<td><button type="button" class="btn-danger btn-sm pku-remove">Remove</button></td>' +
+      '</tr>';
+    }).join('');
+
+    // Wire inputs to update pickupNumbers array on change
+    container.querySelectorAll('.pku-row').forEach(function (row) {
+      var idx = parseInt(row.getAttribute('data-idx'));
+      row.querySelector('.pku-num').addEventListener('change', function () { pickupNumbers[idx].pickupNum = this.value; });
+      row.querySelector('.pku-qty').addEventListener('change', function () { pickupNumbers[idx].authorizedQty = parseFloat(this.value) || 0; });
+      row.querySelector('.pku-unit').addEventListener('change', function () { pickupNumbers[idx].unit = this.value; });
+      row.querySelector('.pku-farm').addEventListener('change', function () { pickupNumbers[idx].farmName = this.value; });
+      row.querySelector('.pku-crop').addEventListener('change', function () { pickupNumbers[idx].crop = this.value; });
+      row.querySelector('.pku-notes').addEventListener('change', function () { pickupNumbers[idx].notes = this.value; });
+      row.querySelector('.pku-remove').addEventListener('click', function () {
+        pickupNumbers.splice(idx, 1);
+        renderPickupNumbers();
+      });
+    });
+  }
+
+  var addPkuBtn = document.getElementById('pku-add-btn');
+  if (addPkuBtn) {
+    addPkuBtn.addEventListener('click', function () {
+      var orderUnit = document.getElementById('of-unit').value || 'tons';
+      pickupNumbers.push({
+        id: 'pku_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 5),
+        pickupNum: '',
+        authorizedQty: 0,
+        unit: orderUnit,
+        farmName: '',
+        crop: '',
+        notes: '',
+        status: 'pending'
+      });
+      var section = document.getElementById('pku-section');
+      if (section) section.classList.remove('hidden');
+      renderPickupNumbers();
+    });
+  }
+
+  // --- Form Submit ---
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var id = document.getElementById('of-id').value;
+
+    // Collect any in-flight edits from inputs (change events may not have fired if user tabs fast)
+    var rows = document.querySelectorAll('#pku-container .pku-row');
+    rows.forEach(function (row) {
+      var idx = parseInt(row.getAttribute('data-idx'));
+      if (pickupNumbers[idx]) {
+        pickupNumbers[idx].pickupNum = row.querySelector('.pku-num').value;
+        pickupNumbers[idx].authorizedQty = parseFloat(row.querySelector('.pku-qty').value) || 0;
+        pickupNumbers[idx].unit = row.querySelector('.pku-unit').value;
+        pickupNumbers[idx].farmName = row.querySelector('.pku-farm').value;
+        pickupNumbers[idx].crop = row.querySelector('.pku-crop').value;
+        pickupNumbers[idx].notes = row.querySelector('.pku-notes').value;
+      }
+    });
+
     var data = {
       productId: document.getElementById('of-productId').value,
       supplierId: document.getElementById('of-supplierId').value,
@@ -121,7 +257,8 @@
       invoiceDate: document.getElementById('of-invoiceDate').value,
       dueDate: document.getElementById('of-dueDate').value,
       paymentStatus: document.getElementById('of-paymentStatus').value,
-      notes: document.getElementById('of-notes').value
+      notes: document.getElementById('of-notes').value,
+      pickupNumbers: pickupNumbers
     };
 
     var promise = id ? api.put('/api/orders/' + id, data) : api.post('/api/orders', data);

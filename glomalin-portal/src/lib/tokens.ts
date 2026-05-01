@@ -18,8 +18,14 @@ export const colors = {
   accentLight: '#2dd4bf',
   text:        '#cbd5e1',
   muted:       '#64748b',
-  green:       '#7A9E7E',
   highlight:   '#0f172a',
+  // Semantic status (dark-mode values — for canvas/inline styles)
+  success:     '#7A9E7E',
+  danger:      '#ff3b30',
+  warning:     '#ffb800',
+  info:        '#38bdf8',
+  // Legacy alias
+  green:       '#7A9E7E',
 } as const
 
 // ── Banner gradient (cyan brightness ramp for canvas rendering) ─────
@@ -37,17 +43,48 @@ export const bannerGradient = {
 // modifiers work (e.g. bg-glomalin-accent/30). The --c-* variables
 // are defined in globals.css :root / .light blocks.
 export const tailwindColors: Record<string, string> = {
-  bg:             'rgb(var(--c-bg) / <alpha-value>)',
-  surface:        'rgb(var(--c-card) / <alpha-value>)',
-  border:         'rgb(var(--c-border) / <alpha-value>)',
-  'border-light': 'rgb(var(--c-border-light) / <alpha-value>)',
-  accent:         'rgb(var(--c-primary) / <alpha-value>)',
-  'accent-dim':   'rgb(var(--c-primary-dim) / <alpha-value>)',
-  'accent-light': 'rgb(var(--c-primary) / <alpha-value>)',
-  text:           'rgb(var(--c-text) / <alpha-value>)',
-  muted:          'rgb(var(--c-text-light) / <alpha-value>)',
-  green:          'rgb(var(--c-success) / <alpha-value>)',
-  highlight:      'rgb(var(--c-highlight) / <alpha-value>)',
+  // Surfaces
+  bg:               'rgb(var(--c-bg) / <alpha-value>)',
+  surface:          'rgb(var(--c-card) / <alpha-value>)',
+  elevated:         'rgb(var(--c-elevated) / <alpha-value>)',
+  highlight:        'rgb(var(--c-highlight) / <alpha-value>)',
+
+  // Borders
+  border:           'rgb(var(--c-border) / <alpha-value>)',
+  'border-light':   'rgb(var(--c-border-light) / <alpha-value>)',
+  'border-strong':  'rgb(var(--c-border-strong) / <alpha-value>)',
+
+  // Accent
+  accent:           'rgb(var(--c-primary) / <alpha-value>)',
+  'accent-dim':     'rgb(var(--c-primary-dim) / <alpha-value>)',
+  'accent-light':   'rgb(var(--c-primary-light) / <alpha-value>)',
+
+  // Text
+  text:             'rgb(var(--c-text) / <alpha-value>)',
+  muted:            'rgb(var(--c-text-light) / <alpha-value>)',
+  bright:           'rgb(var(--c-text-bright) / <alpha-value>)',
+
+  // Semantic status
+  success:          'rgb(var(--c-success) / <alpha-value>)',
+  danger:           'rgb(var(--c-danger) / <alpha-value>)',
+  warning:          'rgb(var(--c-warning) / <alpha-value>)',
+  info:             'rgb(var(--c-info) / <alpha-value>)',
+
+  // Focus ring
+  ring:             'rgb(var(--c-ring) / <alpha-value>)',
+
+  // Confidence tiers (reuse semantic colors for consistent meaning)
+  // CONFIDENT = verified/locked data (success green)
+  // INFERRED  = calculated from other data (accent teal)
+  // MANUAL    = hand-entered, less reliable (warning amber)
+  // UNVERIFIED = unknown provenance (muted gray)
+  'tier-confident':   'rgb(var(--c-success) / <alpha-value>)',
+  'tier-inferred':    'rgb(var(--c-primary) / <alpha-value>)',
+  'tier-manual':      'rgb(var(--c-warning) / <alpha-value>)',
+  'tier-unverified':  'rgb(var(--c-text-light) / <alpha-value>)',
+
+  // Legacy alias — keep so existing `text-glomalin-green` still works
+  green:            'rgb(var(--c-success) / <alpha-value>)',
 }
 
 // ── Fonts ──────────────────────────────────────────────────────────

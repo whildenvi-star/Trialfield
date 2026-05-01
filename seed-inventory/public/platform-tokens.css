@@ -54,7 +54,7 @@
      --text-scale is set via JS (settings-panel.js) and persisted to localStorage
   */
   --text-scale: 1;
-  --base-size: 14px;
+  --base-size: 18px;
 
   /* Semantic size tokens — all typography should reference these */
   --size-xs:   calc(var(--base-size) * 0.78 * var(--text-scale));  /* ~10.9px at M */

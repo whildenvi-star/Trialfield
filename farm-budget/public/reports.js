@@ -38,6 +38,7 @@
     /* ── P&L colours ── */
     '.profit-neg { color: #8b0000 !important; }',
     '.profit-pos { color: #1a5c10 !important; }',
+    '.confirmed-row td { background: #f0f9f0 !important; }',
 
     /* ── Page setup — letter portrait, extra left margin for binder ── */
     '@page { size: letter portrait; margin: 0.7in 0.7in 0.8in 1.15in; }',
@@ -126,6 +127,33 @@
   function generateReport(type) {
     // Crop plan and field history have config modals — intercept before opening popup
     if (type === 'crop-plan') {
+      // If a saved config with at least one included enterprise exists, print directly
+      var savedCfg = loadCropPlanConfig();
+      if (savedCfg.__included && savedCfg.__included.length > 0) {
+        var win = window.open('', '_blank');
+        if (!win) { util.showToast('Enable popups to print reports', 4000, 'error'); return; }
+        win.document.write('<!DOCTYPE html><html><head><title>Loading...</title><style>body{font-family:Arial,sans-serif;padding:2rem;color:#666}</style></head><body><p>Building crop plan...</p></body></html>');
+        Promise.all([
+          api.get('/api/fields?all=true'),
+          api.get('/api/settings')
+        ]).then(function (res) {
+          var html = buildCropPlanReport(res[0], res[1], savedCfg);
+          win.document.open();
+          win.document.write(html);
+          win.document.close();
+          win.focus();
+          win.print();
+        }).catch(function (err) {
+          win.document.open();
+          win.document.write('<!DOCTYPE html><html><head><title>Error</title><style>body{font-family:Arial,sans-serif;padding:2rem;color:#c00}</style></head><body><h1>Report failed</h1><p>' + esc(err.message) + '</p></body></html>');
+          win.document.close();
+        });
+        return;
+      }
+      showCropPlanConfig();
+      return;
+    }
+    if (type === 'crop-plan-setup') {
       showCropPlanConfig();
       return;
     }
@@ -315,7 +343,10 @@
       body += '<p>No field-level input data found. Add inputs to fields in the Macro Roll-Up first.</p>';
     } else {
       sortedFields.forEach(function (field) {
-        var b = field._computed || {};
+        // Enrich on-the-fly if fetched via all=true (no _computed)
+        var b = field._computed || (window.Calc && window.refData
+          ? window.Calc.computeFieldBudget(field, window.refData, settings)
+          : {});
         var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
 
         body += '<h2>' + esc(field.name) + ' (' + fmtNum(acres, 1) + ' ac) — ' + esc(field.crop || '') + '</h2>';
@@ -424,38 +455,53 @@
 
         body += '</tbody></table>';
 
-        // Product inputs detail table (from forecast data)
-        var categories = (forecast && forecast.categories) || [];
-        var fieldInputs = [];
-        categories.forEach(function (cat) {
-          (cat.products || []).forEach(function (p) {
-            (p.fields || []).forEach(function (fi) {
-              if (fi.fieldName === field.name && (fi.qty || 0) > 0) {
-                fieldInputs.push({
-                  productName: p.productName,
-                  unit: p.unit || '',
-                  qty: fi.qty || 0,
-                  season: fi.season || '',
-                  isSeed: p.isSeedVariety || false,
-                  ratePerAc: fi.acres > 0 ? (fi.qty / fi.acres) : 0
-                });
-              }
-            });
-          });
+        // Product inputs detail — read directly from field.inputs[] for actuals support
+        var rawInputs = (field.inputs || []).filter(function (i) {
+          return i.passStatus !== 'disregarded' && (i.productName || '').trim();
         });
+        var hasConfirmed = rawInputs.some(function (i) { return i.passStatus === 'confirmed'; });
 
-        if (fieldInputs.length > 0) {
+        if (rawInputs.length > 0) {
           body += '<table style="margin-top:0.25em">';
-          body += '<thead><tr><th>Product</th><th>Season</th><th class="num">Qty</th><th>Unit</th><th class="num">Rate/Ac</th></tr></thead>';
+          if (hasConfirmed) {
+            body += '<thead><tr><th>Product</th><th>Season</th><th>Status</th>' +
+              '<th class="num">Plan/Ac</th><th class="num">Act/Ac</th><th>Unit</th>' +
+              '<th class="num">Invoice $</th><th>Invoice #</th></tr></thead>';
+          } else {
+            body += '<thead><tr><th>Product</th><th>Season</th>' +
+              '<th class="num">Rate/Ac</th><th>Unit</th></tr></thead>';
+          }
           body += '<tbody>';
-          fieldInputs.forEach(function (inp) {
-            body += '<tr>';
-            body += '<td>' + esc(inp.productName) + (inp.isSeed ? ' <em>[seed]</em>' : '') + '</td>';
-            body += '<td>' + esc(inp.season) + '</td>';
-            body += '<td class="num">' + fmtNum(inp.qty, 0) + '</td>';
-            body += '<td>' + esc(inp.unit) + '</td>';
-            body += '<td class="num">' + fmtNum(inp.ratePerAc, 2) + '</td>';
-            body += '</tr>';
+          rawInputs.forEach(function (inp) {
+            var prod = window.refData && (window.refData.products || []).find(function (p) {
+              return p.name.trim().toLowerCase() === (inp.productName || '').trim().toLowerCase();
+            });
+            var unit = prod ? (prod.unit || '') : '';
+            var planQty = fmtNum(inp.quantity || 0, 2);
+            var confirmed = inp.passStatus === 'confirmed';
+            var statusChar = confirmed ? '&#10003;' : '&mdash;';
+            if (hasConfirmed) {
+              var actQty = confirmed ? fmtNum(inp.actualQuantity != null ? inp.actualQuantity : (inp.quantity || 0), 2) : '&mdash;';
+              var invCost = confirmed && inp.invoiceCostTotal != null ? fmtMoney(inp.invoiceCostTotal) : '&mdash;';
+              var invNum  = confirmed && inp.invoiceNumber ? esc(inp.invoiceNumber) : '&mdash;';
+              body += '<tr' + (confirmed ? ' class="confirmed-row"' : '') + '>';
+              body += '<td>' + esc(inp.productName || '') + '</td>';
+              body += '<td>' + esc(inp.season || '') + '</td>';
+              body += '<td style="text-align:center">' + statusChar + '</td>';
+              body += '<td class="num">' + planQty + '</td>';
+              body += '<td class="num">' + actQty + '</td>';
+              body += '<td>' + esc(unit) + '</td>';
+              body += '<td class="num">' + invCost + '</td>';
+              body += '<td>' + invNum + '</td>';
+              body += '</tr>';
+            } else {
+              body += '<tr>';
+              body += '<td>' + esc(inp.productName || '') + '</td>';
+              body += '<td>' + esc(inp.season || '') + '</td>';
+              body += '<td class="num">' + planQty + '</td>';
+              body += '<td>' + esc(unit) + '</td>';
+              body += '</tr>';
+            }
           });
           body += '</tbody></table>';
         }
@@ -734,7 +780,20 @@
       fields.forEach(function (f) {
         if (!f.enterpriseId) return;
         if (!entFieldMap[f.enterpriseId]) entFieldMap[f.enterpriseId] = [];
-        entFieldMap[f.enterpriseId].push(f);
+        if (f.seeds && f.seeds.length > 1) {
+          f.seeds.forEach(function (s) {
+            var vf = Object.assign({}, f, {
+              id: f.id + '::' + (s.variety || ''),
+              seed: { variety: s.variety || '', population: s.population || 0 },
+              seeds: [s],
+              acres: s.acres > 0 ? s.acres : f.acres,
+              plantedAcres: s.acres > 0 ? s.acres : (f.plantedAcres || f.acres),
+            });
+            entFieldMap[f.enterpriseId].push(vf);
+          });
+        } else {
+          entFieldMap[f.enterpriseId].push(f);
+        }
       });
 
       var config = loadCropPlanConfig();
@@ -942,72 +1001,252 @@
           renderVarOrder();
         }
 
-        // --- Field Planting Order ---
+        // --- Field Planting Order (variety-grouped, drag-and-drop) ---
         var entFields = entFieldMap[ent.id] || [];
         if (entFields.length > 1) {
           var fieldOrderKey = '__fieldOrder_' + ent.id;
+
+          // Map each field to its primary variety key
+          var fieldVarKeyMap = {};
+          entFields.forEach(function (f) {
+            var v = '';
+            if (f.seeds && f.seeds.length > 0) v = f.seeds[0].variety || '';
+            else if (f.seed) v = f.seed.variety || '';
+            fieldVarKeyMap[f.id] = v || '__none__';
+          });
+
+          // Variety order key — shared with the Variety Planting Order section above
+          var foVarOrderKey = '__varOrder_' + ent.id;
+
+          // Named variety order: read saved config first, fall back to discovery order
+          var namedVars = entVarietyMap[ent.id] || [];
+          var savedVarArr = (config[foVarOrderKey] || []).filter(function (v) { return namedVars.indexOf(v) !== -1; });
+          namedVars.forEach(function (v) { if (savedVarArr.indexOf(v) === -1) savedVarArr.push(v); });
+          // groupVarOrder is mutable — arrow clicks splice it and write back to config
+          var groupVarOrder = savedVarArr.slice();
+          var hasNoVar = entFields.some(function (f) { return fieldVarKeyMap[f.id] === '__none__'; });
+          // __none__ always appended last and is not reorderable
+
+          // Colors tied to original discovery index so they stay stable when user reorders
+          var VAR_PALETTE = ['#cce5cc','#cce0f0','#f5e4b8','#e2cff0','#f0cccc','#c8f0e4','#f0e8cc','#ccd0f0','#f0cce4','#ccf0d8','#f0d8cc','#ccecf0'];
+          var groupColorMap = { '__none__': '#e8e8e8' };
+          namedVars.forEach(function (v, i) { groupColorMap[v] = VAR_PALETTE[i % VAR_PALETTE.length]; });
+
+          // Init / prune saved order
           var savedFieldIds = (config[fieldOrderKey] || []).filter(function (id) {
             return entFields.some(function (f) { return f.id === id; });
           });
-          var newFields = entFields.filter(function (f) {
+          var unseenFields = entFields.filter(function (f) {
             return savedFieldIds.indexOf(f.id) === -1;
           }).sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); });
-          config[fieldOrderKey] = savedFieldIds.concat(newFields.map(function (f) { return f.id; }));
+          config[fieldOrderKey] = savedFieldIds.concat(unseenFields.map(function (f) { return f.id; }));
 
           var fieldIdMap = {};
           entFields.forEach(function (f) { fieldIdMap[f.id] = f; });
+
+          // Full ordered key list for iteration: named varieties (user-ordered) + __none__ last
+          function allGroupKeys() {
+            return groupVarOrder.concat(hasNoVar ? ['__none__'] : []);
+          }
+
+          // Build variety-grouped structure from flat order
+          function buildVarGroups() {
+            var groups = {};
+            allGroupKeys().forEach(function (vk) { groups[vk] = []; });
+            config[fieldOrderKey].forEach(function (id) {
+              var vk = fieldVarKeyMap[id] || '__none__';
+              if (!groups[vk]) groups[vk] = [];
+              groups[vk].push(id);
+            });
+            return groups;
+          }
+
+          // Flatten groups back to a single ordered array
+          function flattenVarGroups(groups) {
+            var flat = [];
+            allGroupKeys().forEach(function (vk) {
+              (groups[vk] || []).forEach(function (id) { flat.push(id); });
+            });
+            return flat;
+          }
 
           var fieldSection = document.createElement('div');
           fieldSection.style.cssText = 'margin-top:0.75rem;padding-top:0.6rem;border-top:1px solid var(--border,#2a2218)';
 
           var fieldLabel = document.createElement('div');
-          fieldLabel.style.cssText = 'font-size:0.72rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted,#6a5a4a);margin-bottom:0.4rem';
+          fieldLabel.style.cssText = 'font-size:0.72rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted,#6a5a4a);margin-bottom:0.25rem';
           fieldLabel.textContent = 'Field Planting Order';
           fieldSection.appendChild(fieldLabel);
 
           var fieldHint = document.createElement('div');
           fieldHint.style.cssText = 'font-size:0.7rem;color:var(--text-muted,#6a5a4a);margin-bottom:0.5rem;font-style:italic';
-          fieldHint.textContent = 'Use \u2191\u2193 to set the order fields print on the report.';
+          fieldHint.textContent = 'Drag fields within each variety group to set planting order.';
           fieldSection.appendChild(fieldHint);
 
-          var fieldList = document.createElement('div');
-          fieldSection.appendChild(fieldList);
+          var fieldListContainer = document.createElement('div');
+          fieldSection.appendChild(fieldListContainer);
           body.appendChild(fieldSection);
 
+          // Drag state — shared across re-renders via closure
+          var dnd = { id: null, variety: null };
+
           function renderFieldOrder() {
-            var order = config[fieldOrderKey];
-            fieldList.innerHTML = order.map(function (id, i) {
-              var f = fieldIdMap[id];
-              if (!f) return '';
-              var variety = '';
-              if (f.seeds && f.seeds.length > 0) variety = f.seeds[0].variety || '';
-              else if (f.seed) variety = f.seed.variety || '';
-              var hint = variety
-                ? ' <span style="color:var(--text-muted,#6a5a4a);font-size:0.72rem">(' + esc(variety) + ', ' + (f.plantedAcres || f.acres || 0) + ' ac)</span>'
-                : ' <span style="color:var(--text-muted,#6a5a4a);font-size:0.72rem">(' + (f.plantedAcres || f.acres || 0) + ' ac)</span>';
-              return '<div style="display:flex;align-items:center;gap:0.4rem;padding:0.22rem 0.4rem;margin-bottom:0.2rem;background:var(--bg,#080604);border-radius:4px;font-size:0.8rem">' +
-                '<span style="flex:1;color:var(--text,#e8d8c0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(f.name || id) + hint + '</span>' +
-                '<button data-fi="' + i + '" class="for-up" title="Move earlier" style="background:none;border:1px solid var(--border,#2a2218);color:var(--accent,#C8860A);cursor:pointer;font-size:0.75rem;padding:1px 6px;border-radius:3px;line-height:1.4"' + (i === 0 ? ' disabled' : '') + '>\u2191</button>' +
-                '<button data-fi="' + i + '" class="for-dn" title="Move later" style="background:none;border:1px solid var(--border,#2a2218);color:var(--accent,#C8860A);cursor:pointer;font-size:0.75rem;padding:1px 6px;border-radius:3px;line-height:1.4"' + (i === order.length - 1 ? ' disabled' : '') + '>\u2193</button>' +
-              '</div>';
-            }).join('');
-            fieldList.querySelectorAll('.for-up').forEach(function (btn) {
-              btn.addEventListener('click', function () {
-                var i = parseInt(btn.getAttribute('data-fi'));
-                if (i <= 0) return;
-                var tmp = config[fieldOrderKey][i - 1];
-                config[fieldOrderKey][i - 1] = config[fieldOrderKey][i];
-                config[fieldOrderKey][i] = tmp;
-                renderFieldOrder();
+            var groups = buildVarGroups();
+            fieldListContainer.innerHTML = '';
+
+            allGroupKeys().forEach(function (vk) {
+              var groupIds = groups[vk];
+              if (!groupIds || groupIds.length === 0) return;
+
+              var vLabel = vk !== '__none__' ? vk : 'No Variety';
+              var vColor = groupColorMap[vk];
+              var isNamed = vk !== '__none__';
+              var vIdx = isNamed ? groupVarOrder.indexOf(vk) : -1;
+
+              // Variety group header row: colored chip + optional ↑↓ buttons
+              var chipRow = document.createElement('div');
+              chipRow.style.cssText = 'display:flex;align-items:center;gap:0.3rem;margin-bottom:4px';
+
+              var chip = document.createElement('span');
+              chip.style.cssText = 'font-size:0.68rem;font-weight:bold;padding:2px 7px;border-radius:3px;color:#1a1a1a;background:' + vColor;
+              chip.textContent = vLabel + ' \u2014 ' + groupIds.length + ' field' + (groupIds.length !== 1 ? 's' : '');
+              chipRow.appendChild(chip);
+
+              if (isNamed) {
+                var btnStyle = 'background:none;border:1px solid var(--border,#2a2218);color:var(--accent,#C8860A);cursor:pointer;font-size:0.7rem;padding:1px 5px;border-radius:3px;line-height:1.3';
+                var upBtn = document.createElement('button');
+                upBtn.innerHTML = '\u2191';
+                upBtn.title = 'Move variety earlier in planting order';
+                upBtn.style.cssText = btnStyle + (vIdx === 0 ? ';opacity:0.3;cursor:default' : '');
+                upBtn.disabled = vIdx === 0;
+                upBtn.addEventListener('click', function () {
+                  var i = groupVarOrder.indexOf(vk);
+                  if (i <= 0) return;
+                  var tmp = groupVarOrder[i - 1];
+                  groupVarOrder[i - 1] = groupVarOrder[i];
+                  groupVarOrder[i] = tmp;
+                  config[foVarOrderKey] = groupVarOrder.slice();
+                  renderFieldOrder();
+                });
+                var dnBtn = document.createElement('button');
+                dnBtn.innerHTML = '\u2193';
+                dnBtn.title = 'Move variety later in planting order';
+                dnBtn.style.cssText = btnStyle + (vIdx === groupVarOrder.length - 1 ? ';opacity:0.3;cursor:default' : '');
+                dnBtn.disabled = vIdx === groupVarOrder.length - 1;
+                dnBtn.addEventListener('click', function () {
+                  var i = groupVarOrder.indexOf(vk);
+                  if (i >= groupVarOrder.length - 1) return;
+                  var tmp = groupVarOrder[i + 1];
+                  groupVarOrder[i + 1] = groupVarOrder[i];
+                  groupVarOrder[i] = tmp;
+                  config[foVarOrderKey] = groupVarOrder.slice();
+                  renderFieldOrder();
+                });
+                chipRow.appendChild(upBtn);
+                chipRow.appendChild(dnBtn);
+              }
+              fieldListContainer.appendChild(chipRow);
+
+              // Drop zone container for this variety
+              var zoneEl = document.createElement('div');
+              zoneEl.setAttribute('data-zone', vk);
+              zoneEl.style.cssText = 'margin-bottom:0.55rem;border:1px solid var(--border,#2a2218);border-radius:4px;padding:2px;min-height:30px';
+              fieldListContainer.appendChild(zoneEl);
+
+              groupIds.forEach(function (id) {
+                var f = fieldIdMap[id];
+                if (!f) return;
+                var acres = ((f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0)
+                  .toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+                var row = document.createElement('div');
+                row.setAttribute('draggable', 'true');
+                row.setAttribute('data-drag-id', id);
+                row.style.cssText = [
+                  'display:flex;align-items:center;gap:0.4rem',
+                  'padding:0.22rem 0.5rem;margin-bottom:2px',
+                  'background:var(--bg,#080604);border-radius:4px',
+                  'font-size:0.8rem;cursor:grab;user-select:none',
+                  'border:1px solid transparent;transition:border-color 0.1s',
+                ].join(';');
+                row.innerHTML =
+                  '<span style="color:var(--text-muted,#6a5a4a);font-size:0.8rem;line-height:1;flex-shrink:0">\u283f</span>' +
+                  '<span style="flex:1;color:var(--text,#e8d8c0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(f.name || id) + '</span>' +
+                  '<span style="color:var(--text-muted,#6a5a4a);font-size:0.72rem;flex-shrink:0">' + acres + ' ac</span>';
+
+                row.addEventListener('dragstart', function (e) {
+                  dnd.id = id;
+                  dnd.variety = vk;
+                  e.dataTransfer.effectAllowed = 'move';
+                  setTimeout(function () { row.style.opacity = '0.35'; }, 0);
+                });
+                row.addEventListener('dragend', function () {
+                  row.style.opacity = '';
+                  // Clear any lingering indicators
+                  fieldListContainer.querySelectorAll('[data-zone]').forEach(function (z) {
+                    z.style.borderColor = 'var(--border,#2a2218)';
+                  });
+                  fieldListContainer.querySelectorAll('[data-drag-id]').forEach(function (r) {
+                    r.style.borderColor = 'transparent';
+                  });
+                });
+                row.addEventListener('dragenter', function (e) {
+                  if (dnd.variety !== vk || dnd.id === id) return;
+                  e.preventDefault();
+                  row.style.borderTopColor = 'var(--accent,#C8860A)';
+                });
+                row.addEventListener('dragleave', function () {
+                  row.style.borderTopColor = 'transparent';
+                });
+                row.addEventListener('dragover', function (e) {
+                  if (dnd.variety !== vk) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                });
+                row.addEventListener('drop', function (e) {
+                  e.preventDefault();
+                  row.style.borderTopColor = 'transparent';
+                  if (!dnd.id || dnd.variety !== vk || dnd.id === id) return;
+                  var g = buildVarGroups();
+                  var grp = g[vk];
+                  var from = grp.indexOf(dnd.id);
+                  var to   = grp.indexOf(id);
+                  if (from !== -1 && to !== -1) {
+                    grp.splice(from, 1);
+                    grp.splice(to, 0, dnd.id);
+                    g[vk] = grp;
+                    config[fieldOrderKey] = flattenVarGroups(g);
+                  }
+                  dnd.id = null; dnd.variety = null;
+                  renderFieldOrder();
+                });
+
+                zoneEl.appendChild(row);
               });
-            });
-            fieldList.querySelectorAll('.for-dn').forEach(function (btn) {
-              btn.addEventListener('click', function () {
-                var i = parseInt(btn.getAttribute('data-fi'));
-                if (i >= config[fieldOrderKey].length - 1) return;
-                var tmp = config[fieldOrderKey][i + 1];
-                config[fieldOrderKey][i + 1] = config[fieldOrderKey][i];
-                config[fieldOrderKey][i] = tmp;
+
+              // Drop at end of group (empty space below last row)
+              zoneEl.addEventListener('dragover', function (e) {
+                if (dnd.variety !== vk) return;
+                e.preventDefault();
+                zoneEl.style.borderColor = 'var(--accent,#C8860A)';
+              });
+              zoneEl.addEventListener('dragleave', function () {
+                zoneEl.style.borderColor = 'var(--border,#2a2218)';
+              });
+              zoneEl.addEventListener('drop', function (e) {
+                e.preventDefault();
+                zoneEl.style.borderColor = 'var(--border,#2a2218)';
+                if (!dnd.id || dnd.variety !== vk) return;
+                var g = buildVarGroups();
+                var grp = g[vk];
+                var from = grp.indexOf(dnd.id);
+                if (from !== -1) {
+                  grp.splice(from, 1);
+                  grp.push(dnd.id);
+                  g[vk] = grp;
+                  config[fieldOrderKey] = flattenVarGroups(g);
+                }
+                dnd.id = null; dnd.variety = null;
                 renderFieldOrder();
               });
             });
@@ -1155,6 +1394,7 @@
             if (!varGroups[key]) varGroups[key] = { variety: v, fields: [] };
             var seedAcres = s.acres > 0 ? s.acres : 0;
             var virtualField = Object.assign({}, f, {
+              id: f.id + '::' + (s.variety || ''),
               seed: { variety: s.variety || '', population: s.population || 0 },
               seeds: [s],
               acres: seedAcres || f.acres,
@@ -1304,10 +1544,16 @@
               entInputAcres[prodName] += acres;
               var prod = prodMap[prodName.trim()];
               var appUnit = prod ? (prod.unit || '') : '';
+              var convRate = prod ? (prod.conversionRate || 1) : 1;
+              var purchUnit = prod ? (prod.purchaseUnit || appUnit) : appUnit;
+              var showBilled = convRate > 1 && purchUnit && purchUnit !== appUnit;
               body += '<td class="num" style="font-size:8.5pt">' +
                 fmtNum(rate, 0) + (appUnit ? ' ' + appUnit : '') + '/ac' +
                 '<br><span style="font-weight:normal;font-size:7.5pt">' +
-                fmtNum(fieldTotal, 0) + (appUnit ? ' ' + appUnit : '') + '</span></td>';
+                fmtNum(fieldTotal, 0) + (appUnit ? ' ' + appUnit : '') + '</span>' +
+                (showBilled ? '<br><span style="font-weight:normal;font-size:7pt;color:#666">' +
+                  fmtNum(fieldTotal / convRate, 2) + ' ' + purchUnit + '</span>' : '') +
+                '</td>';
             } else {
               body += '<td class="num">\u2014</td>';
             }
@@ -1338,10 +1584,16 @@
             var prod  = prodMap[prodName.trim()];
             if (total > 0 && iAc > 0) {
               var appUnit = prod ? (prod.unit || '') : '';
+              var convRate = prod ? (prod.conversionRate || 1) : 1;
+              var purchUnit = prod ? (prod.purchaseUnit || appUnit) : appUnit;
+              var showBilled = convRate > 1 && purchUnit && purchUnit !== appUnit;
               body += '<td class="num" style="font-size:8pt">' +
                 fmtNum(total / iAc, 0) + (appUnit ? ' ' + appUnit : '') + '/ac' +
                 '<br><span style="font-weight:normal;font-size:7.5pt">' +
-                fmtNum(total, 0) + (appUnit ? ' ' + appUnit : '') + ' total</span></td>';
+                fmtNum(total, 0) + (appUnit ? ' ' + appUnit : '') + ' total</span>' +
+                (showBilled ? '<br><span style="font-weight:normal;font-size:7pt;color:#666">' +
+                  fmtNum(total / convRate, 2) + ' ' + purchUnit + ' total</span>' : '') +
+                '</td>';
             } else {
               body += '<td class="num">\u2014</td>';
             }
@@ -1366,9 +1618,14 @@
         var cell  = '\u2014';
         if (total > 0 && iAc > 0) {
           var appUnit = prod ? (prod.unit || '') : '';
+          var convRate = prod ? (prod.conversionRate || 1) : 1;
+          var purchUnit = prod ? (prod.purchaseUnit || appUnit) : appUnit;
+          var showBilled = convRate > 1 && purchUnit && purchUnit !== appUnit;
           cell = fmtNum(total / iAc, 0) + (appUnit ? ' ' + appUnit : '') + '/ac' +
                  '<br><span style="font-weight:normal;font-size:7.5pt">' +
-                 fmtNum(total, 0) + (appUnit ? ' ' + appUnit : '') + ' total</span>';
+                 fmtNum(total, 0) + (appUnit ? ' ' + appUnit : '') + ' total</span>' +
+                 (showBilled ? '<br><span style="font-weight:normal;font-size:7pt;color:#666">' +
+                   fmtNum(total / convRate, 2) + ' ' + purchUnit + ' total</span>' : '');
         }
         body += '<td class="num" style="font-size:8.5pt">' + cell + '</td>';
       });

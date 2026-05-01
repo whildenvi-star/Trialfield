@@ -30,4 +30,28 @@
     });
   }
 
+  // Quick action: jump to Deliveries tab to log a new receipt
+  var logBtn = document.getElementById('dash-log-delivery');
+  if (logBtn) {
+    logBtn.addEventListener('click', function () {
+      // Activate the deliveries tab
+      var tab = document.querySelector('.tab-btn[data-tab="deliveries"]');
+      if (tab) tab.click();
+      // Give the tab time to render, then click the New Delivery button
+      setTimeout(function () {
+        var newBtn = document.getElementById('add-delivery-btn');
+        if (newBtn) newBtn.click();
+      }, 150);
+    });
+  }
+
+  // Quick action: jump to reconciliation with outstanding filter
+  var outstandingBtn = document.getElementById('dash-view-outstanding');
+  if (outstandingBtn) {
+    outstandingBtn.addEventListener('click', function () {
+      var tab = document.querySelector('.tab-btn[data-tab="reconciliation"]');
+      if (tab) tab.click();
+    });
+  }
+
 })();

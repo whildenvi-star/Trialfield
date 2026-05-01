@@ -204,7 +204,7 @@ function InputRow({
       </select>
       <button
         onClick={onRemove}
-        className="shrink-0 text-glomalin-muted hover:text-red-400 transition-colors"
+        className="shrink-0 text-glomalin-muted hover:text-glomalin-danger transition-colors"
         aria-label="Remove input"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -404,7 +404,7 @@ function OperatorFieldCard({
 
           {/* Error */}
           {error && (
-            <p className="font-mono text-xs text-red-400">{error}</p>
+            <p className="font-mono text-xs text-glomalin-danger">{error}</p>
           )}
 
           {/* Actions */}
@@ -484,7 +484,7 @@ export function MobileMacroView({
   return (
     <>
       {budgetOffline && (
-        <div className="bg-yellow-900/30 border-b border-yellow-700/40 px-4 py-2 font-mono text-xs text-yellow-400 text-center">
+        <div className="bg-glomalin-warning/10 border-b border-glomalin-warning/30 px-4 py-2 font-mono text-xs text-glomalin-warning text-center">
           Farm budget service offline — showing last known data
         </div>
       )}

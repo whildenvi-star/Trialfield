@@ -138,7 +138,9 @@
         syncBtn.disabled = true;
         syncBtn.textContent = 'Syncing...';
         api.post('/api/forecasts/pull-from-budget', {}).then(function (result) {
-          util.showToast('Synced: ' + result.created + ' created, ' + result.updated + ' updated');
+          var msg = 'Synced: ' + result.created + ' created, ' + result.updated + ' updated';
+          if (result.removed > 0) msg += ', ' + result.removed + ' removed';
+          util.showToast(msg);
           window.dispatchEvent(new Event('ref-data-reload'));
           loadForecasts();
         }).catch(function (err) {

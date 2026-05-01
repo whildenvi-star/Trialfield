@@ -103,7 +103,7 @@ function StatusDot({ margin, isEstimate }: { margin: number | null; isEstimate: 
   }
   return (
     <span title={isEstimate ? 'Budget estimate: losing money' : 'Losing money'}>
-      <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500 opacity-80" />
+      <span className="inline-block h-2.5 w-2.5 rounded-full bg-glomalin-danger opacity-80" />
     </span>
   )
 }
@@ -358,7 +358,7 @@ export function FieldTable({
 
                       {/* Margin */}
                       <td className="px-4 py-3 text-right">
-                        <span className={displayMargin >= 0 ? 'text-glomalin-green' : 'text-red-400'}>
+                        <span className={displayMargin >= 0 ? 'text-glomalin-success' : 'text-glomalin-danger'}>
                           {fmtDollars(displayMargin)}
                         </span>
                       </td>
@@ -366,7 +366,7 @@ export function FieldTable({
                       {/* $/Acre */}
                       <td className="px-4 py-3 text-right">
                         <span
-                          className={displayMarginPerAcre >= 0 ? 'text-glomalin-green' : 'text-red-400'}
+                          className={displayMarginPerAcre >= 0 ? 'text-glomalin-success' : 'text-glomalin-danger'}
                         >
                           {fmtDollarsExact(displayMarginPerAcre)}
                         </span>

@@ -458,6 +458,38 @@ app.get('/api/dashboard-with-actuals', async (req, res) => {
   res.json(dashboard);
 });
 
+// --- Procurement Status (ordered/delivered per product, pulled from seed-inventory) ---
+let _procurementCache = { data: null, fetchedAt: 0 };
+const PROCUREMENT_CACHE_TTL = 30 * 1000;
+
+app.get('/api/procurement-status', async (req, res) => {
+  const now = Date.now();
+  if (_procurementCache.data && (now - _procurementCache.fetchedAt) < PROCUREMENT_CACHE_TTL) {
+    return res.json(_procurementCache.data);
+  }
+  try {
+    const siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation';
+    const siResp = await fetch(siUrl);
+    if (!siResp.ok) throw new Error('seed-inventory returned ' + siResp.status);
+    const recon = await siResp.json();
+    const byName = {};
+    recon.forEach(function (row) {
+      var key = (row.type === 'SEED' ? row.variety : row.productName) || '';
+      if (!key) return;
+      byName[key.toLowerCase()] = {
+        orderedQty: row.totalOrdered || 0,
+        deliveredQty: row.totalDelivered || 0,
+        unit: row.unit || ''
+      };
+    });
+    const response = { offline: false, byName: byName };
+    _procurementCache = { data: response, fetchedAt: now };
+    res.json(response);
+  } catch (e) {
+    res.json({ offline: true, byName: {} });
+  }
+});
+
 // --- Local Invoice Totals (confirmed invoiceCostTotal per enterprise) ---
 app.get('/api/enterprise-invoice-totals', (req, res) => {
   const byEnterprise = {};
@@ -2928,8 +2960,8 @@ app.post('/api/marketing/instruments', async (req, res) => {
   const year = getCropYear();
   const NUMERIC = ['bushels','price_per_bushel','basis','futures_reference','delivered_bu',
     'strike_price','premium_paid','ko_level','ki_level','daily_bu','weekly_bu','leverage_ratio'];
-  const BLOCKED = ['commodity_id', 'variant_id', 'crop_year'];
-  const payload = { crop_year: year };
+  const BLOCKED = ['commodity_id', 'variant_id'];
+  const payload = { crop_year: parseInt(req.body.crop_year) || year };
   Object.entries(req.body).forEach(([k, v]) => {
     if (BLOCKED.includes(k)) return;
     payload[k] = NUMERIC.includes(k) ? (v !== '' && v !== null && v !== undefined ? Number(v) : null) : v;

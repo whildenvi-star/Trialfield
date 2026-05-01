@@ -278,7 +278,7 @@ export function CropComparison({ farms }: { farms: FarmOption[] }) {
         {slots.map((slot, idx) => (
           <div key={idx} className={`rounded border bg-glomalin-surface p-4 ${
             idx === bestIdx && activeSlots.length > 1
-              ? 'border-glomalin-green'
+              ? 'border-glomalin-success'
               : 'border-glomalin-border'
           }`}>
             {/* Header */}
@@ -287,7 +287,7 @@ export function CropComparison({ farms }: { farms: FarmOption[] }) {
               {slots.length > 1 && (
                 <button
                   onClick={() => removeSlot(idx)}
-                  className="text-xs text-glomalin-muted hover:text-red-400 font-mono transition-colors"
+                  className="text-xs text-glomalin-muted hover:text-glomalin-danger font-mono transition-colors"
                 >
                   Remove
                 </button>
@@ -347,13 +347,13 @@ export function CropComparison({ farms }: { farms: FarmOption[] }) {
                   <ResultRow
                     label="Profit"
                     value={fmt$(profit(slot))}
-                    color={profit(slot) >= 0 ? 'text-glomalin-green' : 'text-red-400'}
+                    color={profit(slot) >= 0 ? 'text-glomalin-success' : 'text-glomalin-danger'}
                     bold
                   />
                   <div className="border-t border-glomalin-border pt-2 mt-2">
                     <ResultRow label="Breakeven Yield" value={`${fmtN(breakEvenYield(slot), 1)} units/ac`} />
                     <ResultRow label="Breakeven Price" value={fmt$(breakEvenPrice(slot))} />
-                    <ResultRow label="Cost of Production" value={slot.expectedYield > 0 ? fmt$(totalCost(slot) / slot.expectedYield) + '/unit' : '—'} />
+                    <ResultRow label="Cost of Production" value={slot.expectedYield > 0 ? `${fmt$(totalCost(slot) / slot.expectedYield)} /unit` : '—'} />
                   </div>
                 </div>
               </>

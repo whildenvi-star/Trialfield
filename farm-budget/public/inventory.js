@@ -239,7 +239,10 @@
       { label: 'Field-Level Input Plan', type: 'field-plan' },
       { label: 'Forecast Summary', type: 'forecast-summary' },
       { label: 'Order Status Report', type: 'order-status' },
-      { label: 'Delivery Receipt Log', type: 'delivery-log' }
+      { label: 'Delivery Receipt Log', type: 'delivery-log' },
+      { label: 'Crop Plan by Enterprise', type: 'crop-plan' },
+      { label: 'Configure Crop Plan...', type: 'crop-plan-setup' },
+      { label: 'Field History Report', type: 'field-history' }
     ];
 
     menuEl.innerHTML = reportItems.map(function (item) {

@@ -88,7 +88,6 @@ const SOURCE_APPS = [
 
 // ------- Portal modules (inner ring, 5 nodes) -------
 const PORTAL_MODULES = [
-  { id: 'mod-macro-rollup', label: 'Macro Rollup', sublabel: 'Whole-farm P&L', description: 'Aggregated whole-farm profit & loss across all enterprises' },
   { id: 'mod-farm-registry', label: 'Farm Registry', sublabel: 'Field & Acre Registry', description: 'Central field and acre registry — source of truth for all apps' },
   { id: 'mod-org-cert', label: 'Organic Cert', sublabel: 'NOP Compliance', description: 'USDA NOP audit trail and organic certification tracking' },
   { id: 'mod-inputs-seeds', label: 'Inputs & Seeds', sublabel: 'Seed & Input Tracking', description: 'Seed variety and input procurement tracking across seasons' },

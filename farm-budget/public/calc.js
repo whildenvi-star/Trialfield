@@ -181,9 +181,17 @@
       var product = findByName(refs.products, inp.productName);
       var appPrice = product ? computeApplicationPrice(product) : 0;
       var isDisregarded = inp.passStatus === 'disregarded';
-      var effectiveQty = isDisregarded ? 0 :
-        ((inp.passStatus === 'confirmed' && inp.actualQuantity != null) ? inp.actualQuantity : (inp.quantity || 0));
-      var costPerAcre = effectiveQty * appPrice;
+      var effectiveQty, costPerAcre;
+      if (isDisregarded) {
+        effectiveQty = 0;
+        costPerAcre = 0;
+      } else if (inp.passStatus === 'confirmed' && inp.invoiceCostTotal != null) {
+        costPerAcre = acres > 0 ? inp.invoiceCostTotal / acres : 0;
+        effectiveQty = inp.actualQuantity || inp.quantity || 0;
+      } else {
+        effectiveQty = (inp.passStatus === 'confirmed' && inp.actualQuantity != null) ? inp.actualQuantity : (inp.quantity || 0);
+        costPerAcre = effectiveQty * appPrice;
+      }
       if (!isDisregarded) {
         if ((inp.season || '').toLowerCase() === 'spring') springFert += costPerAcre;
         else if ((inp.season || '').toLowerCase() === 'fall') fallFert += costPerAcre;

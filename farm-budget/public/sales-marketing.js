@@ -2,12 +2,14 @@
 (function () {
   'use strict';
 
-  var cropTypes  = [];
-  var instruments = [];
-  var cbotMap    = {};
-  var pools      = [];
-  var flatEntries = [];
-  var loaded     = false;
+  var cropTypes    = [];
+  var instruments  = [];
+  var cbotMap      = {};
+  var pools        = [];
+  var flatEntries  = [];
+  var loaded       = false;
+  var activeCropYear = new Date().getFullYear();
+  var currentSettingsYear = activeCropYear; // the "official" season year from settings
 
   // ── Sub-tab switching ─────────────────────────────────────────────────────
   document.querySelectorAll('.mkt-tab-btn').forEach(function (btn) {
@@ -17,6 +19,7 @@
       btn.classList.add('active');
       var panel = document.getElementById('mtab-' + btn.getAttribute('data-mtab'));
       if (panel) panel.classList.add('active');
+      if (btn.getAttribute('data-mtab') === 'croptypes') renderCropTypes();
     });
   });
 
@@ -24,19 +27,63 @@
     if (e.detail.tab === 'sales' && !loaded) loadAll();
   });
 
+  // ── Year selector ─────────────────────────────────────────────────────────
+  function initYearSelector() {
+    var lbl  = document.getElementById('mkt-year-label');
+    var prev = document.getElementById('mkt-year-prev');
+    var next = document.getElementById('mkt-year-next');
+    if (!lbl) return;
+    updateYearLabel();
+    if (prev) prev.addEventListener('click', function () { setYear(activeCropYear - 1); });
+    if (next) next.addEventListener('click', function () { setYear(activeCropYear + 1); });
+  }
+
+  function updateYearLabel() {
+    var lbl = document.getElementById('mkt-year-label');
+    if (!lbl) return;
+    var isFwd = activeCropYear !== currentSettingsYear;
+    lbl.innerHTML = (isFwd
+      ? '<span style="color:var(--warning,#f59e0b)">' + activeCropYear + ' ⚑</span>'
+      : '<span>' + activeCropYear + '</span>');
+    lbl.title = isFwd ? 'Forward year — tracking against ' + activeCropYear + ' production' : 'Current season';
+  }
+
+  function setYear(y) {
+    activeCropYear = y;
+    updateYearLabel();
+    api.get('/api/marketing/instruments?cropYear=' + y).then(function (data) {
+      instruments = data || [];
+      buildPools({});
+      // Rebuild with last known dashBu — simplified: just reload everything
+      reload();
+    }).catch(function () {
+      instruments = [];
+      buildPools({});
+      renderDashboard();
+      renderInstruments();
+      renderCropTypes();
+    });
+  }
+
   // ── Data loading ──────────────────────────────────────────────────────────
   function loadAll() {
     Promise.all([
       api.get('/api/crop-types'),
       api.get('/api/dashboard'),
-      api.get('/api/marketing/instruments'),
+      api.get('/api/marketing/instruments?cropYear=' + activeCropYear),
       api.get('/api/cbot-fetch').catch(function () { return { prices: [] }; })
     ]).then(function (res) {
-      cropTypes   = res[0] || [];
-      var dash    = res[1] || {};
+      cropTypes  = res[0] || [];
+      var dash   = res[1] || {};
       instruments = res[2] || [];
 
-      // dashBu: crop name (lowercase) → projected total bushels across all enterprises
+      // Sync activeCropYear to settings year on first load
+      if (dash.year) {
+        activeCropYear = dash.year;
+        currentSettingsYear = dash.year;
+      }
+      initYearSelector();
+
       var dashBu = {};
       (dash.enterpriseSummaries || []).forEach(function (es) {
         (es.cropRows || []).forEach(function (cr) {
@@ -46,7 +93,6 @@
         });
       });
 
-      // cbotMap: symbol → live price
       cbotMap = {};
       ((res[3] || {}).prices || []).forEach(function (p) {
         if (p.symbol) cbotMap[p.symbol] = Number(p.price) || 0;
@@ -63,7 +109,41 @@
     });
   }
 
-  function reload() { loaded = false; loadAll(); }
+  function reload() {
+    Promise.all([
+      api.get('/api/crop-types'),
+      api.get('/api/dashboard'),
+      api.get('/api/marketing/instruments?cropYear=' + activeCropYear),
+      api.get('/api/cbot-fetch').catch(function () { return { prices: [] }; })
+    ]).then(function (res) {
+      cropTypes   = res[0] || [];
+      var dash    = res[1] || {};
+      instruments = res[2] || [];
+
+      var dashBu = {};
+      (dash.enterpriseSummaries || []).forEach(function (es) {
+        (es.cropRows || []).forEach(function (cr) {
+          if (!cr.crop || !(cr.projectedTotal > 0)) return;
+          var k = cr.crop.toLowerCase().trim();
+          dashBu[k] = (dashBu[k] || 0) + cr.projectedTotal;
+        });
+      });
+
+      cbotMap = {};
+      ((res[3] || {}).prices || []).forEach(function (p) {
+        if (p.symbol) cbotMap[p.symbol] = Number(p.price) || 0;
+      });
+
+      buildPools(dashBu);
+      renderDashboard();
+      renderInstruments();
+      // Re-render crop types tab if active
+      var ct = document.getElementById('mtab-croptypes');
+      if (ct && ct.classList.contains('active')) renderCropTypes();
+    }).catch(function (err) {
+      console.error('[sales-marketing] reload failed', err);
+    });
+  }
 
   // ── Pool computation ──────────────────────────────────────────────────────
   function buildPools(dashBu) {
@@ -73,10 +153,23 @@
     cropTypes.forEach(function (ct) {
       if (!ct.subCrops || !ct.subCrops.length) return;
 
-      var cbotSubs = ct.subCrops.filter(function (sc) { return sc.pricingMode === 'cbot'; });
-      var flatSubs = ct.subCrops.filter(function (sc) { return sc.pricingMode !== 'cbot'; });
+      // Check per-year pricing override
+      var yp = (ct.yearPricing || {})[activeCropYear];
+      var yearMode = yp ? yp.mode : null; // 'cbot_basis' | 'flat' | null
 
-      // CBOT pool: all CBOT-linked subCrops roll up to one board position
+      var cbotSubs, flatSubs;
+      if (yearMode === 'flat') {
+        cbotSubs = [];
+        flatSubs = ct.subCrops.slice();
+      } else if (yearMode === 'cbot_basis') {
+        cbotSubs = ct.subCrops.slice();
+        flatSubs = [];
+      } else {
+        cbotSubs = ct.subCrops.filter(function (sc) { return sc.pricingMode === 'cbot'; });
+        flatSubs = ct.subCrops.filter(function (sc) { return sc.pricingMode !== 'cbot'; });
+      }
+
+      // CBOT pool
       if (cbotSubs.length) {
         var subCropData = cbotSubs.map(function (sc) {
           return {
@@ -89,7 +182,6 @@
         var totalEst = subCropData.reduce(function (s, sc) { return s + sc.estimatedBu; }, 0);
         var poolInst = instruments.filter(function (i) { return i.crop_type_id === ct.id; });
 
-        // Live CBOT price: compute first so double-up check can use it
         var sym = ct.cbotSymbol || '';
         var cbotPrice = cbotMap[sym] || cbotMap[sym.slice(0, 2)] || ct.cbotPrice || 0;
 
@@ -106,7 +198,11 @@
           }
           if (inst.instrument_type in mix) mix[inst.instrument_type]++;
         });
+
         var unpricedBu = Math.max(0, totalEst - pricedBu);
+        // Exposure: CBOT + optional year basis offset
+        var basisOffset = (yearMode === 'cbot_basis' && yp && yp.basis != null) ? Number(yp.basis) : 0;
+        var exposure = unpricedBu * (cbotPrice + basisOffset);
 
         pools.push({
           id: ct.id,
@@ -120,22 +216,26 @@
           wap: wapBu > 0 ? wapVal / wapBu : null,
           pctPriced: totalEst > 0 ? Math.min(100, (pricedBu / totalEst) * 100) : 0,
           unpricedBu: unpricedBu,
-          exposure: unpricedBu * cbotPrice,
+          exposure: exposure,
           mix: mix
         });
       }
 
-      // Flat / pre-contracted: each subCrop is its own entry (organic, contract price, etc.)
+      // Flat / pre-contracted
       flatSubs.forEach(function (sc) {
         var bu = dashBu[sc.name.toLowerCase().trim()] || 0;
         if (bu <= 0) return;
+        // Use year flat price if set, otherwise fall back to subCrop price
+        var yp2 = (ct.yearPricing || {})[activeCropYear];
+        var price = (yp2 && yp2.mode === 'flat' && yp2.price != null) ? Number(yp2.price) : (sc.pricePerUnit || 0);
+        var unit  = (yp2 && yp2.unit) || sc.unit || ct.unit || 'Bu';
         flatEntries.push({
           cropTypeName: ct.name,
           name: sc.name,
           pricingMode: sc.pricingMode,
-          pricePerUnit: sc.pricePerUnit || 0,
+          pricePerUnit: price,
           estimatedBu: bu,
-          unit: sc.unit || ct.unit || 'Bu'
+          unit: unit
         });
       });
     });
@@ -156,7 +256,6 @@
       var eff = (end && end < now) ? end : now;
       if (eff <= start) return 0;
       var leverage = Number(inst.leverage_ratio) || 1;
-      // When CBOT < KI, accumulation doubles
       if (inst.ki_level && cbotPrice > 0 && cbotPrice < Number(inst.ki_level)) leverage = 2;
       if (inst.daily_bu)  return Math.floor((eff - start) / 86400000)  * Number(inst.daily_bu)  * leverage;
       if (inst.weekly_bu) return Math.floor((eff - start) / 604800000) * Number(inst.weekly_bu) * leverage;
@@ -169,10 +268,10 @@
     var root = document.getElementById('mkt-dashboard-root');
     if (!root) return;
 
-    var totalEst     = pools.reduce(function (s, p) { return s + p.totalEst; }, 0);
-    var totalPriced  = pools.reduce(function (s, p) { return s + p.pricedBu; }, 0);
-    var totalExp     = pools.reduce(function (s, p) { return s + p.exposure; }, 0);
-    var farmPct      = totalEst > 0 ? (totalPriced / totalEst) * 100 : 0;
+    var totalEst    = pools.reduce(function (s, p) { return s + p.totalEst; }, 0);
+    var totalPriced = pools.reduce(function (s, p) { return s + p.pricedBu; }, 0);
+    var totalExp    = pools.reduce(function (s, p) { return s + p.exposure; }, 0);
+    var farmPct     = totalEst > 0 ? (totalPriced / totalEst) * 100 : 0;
 
     var html =
       '<div class="mkt-summary-strip">' +
@@ -197,7 +296,6 @@
 
       html += '<div class="mkt-card">';
 
-      // Header
       html +=
         '<div class="mkt-card-header">' +
           '<span class="mkt-card-title">' + util.escHtml(pool.name) + '</span>' +
@@ -205,11 +303,9 @@
           (pool.cbotPrice > 0 ? '<span class="mkt-card-cbot">CBOT ' + util.formatMoney(pool.cbotPrice) + '</span>' : '') +
         '</div>';
 
-      // Progress
       html += '<div class="mkt-progress-track"><div class="mkt-progress-fill" style="width:' + pct + '%;background:' + barColor + '"></div></div>';
       html += '<div class="mkt-progress-label">' + util.formatNum(pool.pricedBu, 0) + ' / ' + util.formatNum(pool.totalEst, 0) + ' bu &nbsp;·&nbsp; ' + util.formatNum(pct, 1) + '% priced</div>';
 
-      // WAP
       if (pool.wap !== null) {
         var delta = pool.cbotPrice > 0 ? pool.wap - pool.cbotPrice : null;
         html += '<div class="mkt-wap-row">WAP <strong>' + util.formatMoney(pool.wap) + '</strong>';
@@ -220,7 +316,6 @@
         html += '</div>';
       }
 
-      // Mix strip
       var totalMix = Object.values(pool.mix).reduce(function (s, n) { return s + n; }, 0);
       if (totalMix > 0) {
         var mixColors = { cash: '#14b8a6', forward_contract: '#3b82f6', option: '#8b5cf6', accumulator: '#f59e0b' };
@@ -232,12 +327,10 @@
         html += '</div>';
       }
 
-      // Unpriced exposure
       if (pool.unpricedBu > 0) {
-        html += '<div class="mkt-unpriced-row">' + util.formatNum(pool.unpricedBu, 0) + ' bu unpriced &nbsp;·&nbsp; ' + util.formatMoney(pool.exposure, 0) + ' exposure at CBOT</div>';
+        html += '<div class="mkt-unpriced-row">' + util.formatNum(pool.unpricedBu, 0) + ' bu unpriced &nbsp;·&nbsp; ' + util.formatMoney(pool.exposure, 0) + ' exposure</div>';
       }
 
-      // Accumulator double-up exposure warning
       var accumsWithKI = pool.instruments.filter(function (i) {
         return i.instrument_type === 'accumulator' && i.ki_level;
       });
@@ -253,7 +346,6 @@
           '</div>';
       }
 
-      // Variety breakdown: show when >1 subCrop has bushels, or any has a non-zero basis
       var visSubs = pool.subCrops.filter(function (sc) { return sc.estimatedBu > 0; });
       if (visSubs.length > 1 || (visSubs.length === 1 && visSubs[0].basisDefault !== 0)) {
         html += '<table class="mkt-variety-table"><thead><tr><th>Variety</th><th class="number">Est Bu</th><th class="number">Basis</th><th class="number">Effective</th></tr></thead><tbody>';
@@ -275,7 +367,6 @@
       html += '</div>'; // .mkt-card
     });
 
-    // Pre-contracted / organic section
     if (flatEntries.length > 0) {
       var byType = {};
       flatEntries.forEach(function (fe) {
@@ -308,10 +399,15 @@
     var root = document.getElementById('mkt-instruments-root');
     if (!root) return;
 
-    var html = '<div class="mkt-toolbar"><button class="btn-primary btn-sm" id="mkt-add-inst-btn">+ Add Instrument</button></div>';
+    var isFwd = activeCropYear !== currentSettingsYear;
+    var yearNote = isFwd
+      ? '<span class="mkt-year-note">Showing <strong>' + activeCropYear + '</strong> instruments — forward year</span>'
+      : '';
+
+    var html = '<div class="mkt-toolbar"><button class="btn-primary btn-sm" id="mkt-add-inst-btn">+ Add Instrument</button>' + yearNote + '</div>';
 
     if (!instruments.length) {
-      root.innerHTML = html + util.emptyState('', 'No instruments yet', 'Add a cash sale, forward contract, option, or accumulator');
+      root.innerHTML = html + util.emptyState('', 'No instruments for ' + activeCropYear, 'Add a cash sale, forward contract, option, or accumulator');
     } else {
       var grouped = {};
       instruments.forEach(function (i) {
@@ -331,9 +427,7 @@
 
         if (group.length) {
           html += '<table class="mkt-inst-table"><tbody>';
-          group.forEach(function (inst) {
-            html += renderInstRow(inst, mixColors, typeLabel);
-          });
+          group.forEach(function (inst) { html += renderInstRow(inst, mixColors, typeLabel); });
           html += '</tbody></table>';
         } else {
           html += '<div class="mkt-inst-empty">No instruments for this pool.</div>';
@@ -398,15 +492,145 @@
       if (inst.daily_bu) detail += ' · ' + util.formatNum(inst.daily_bu, 0) + ' bu/day';
       else if (inst.weekly_bu) detail += ' · ' + util.formatNum(inst.weekly_bu, 0) + ' bu/wk';
     }
+
+    // Year badge for forward-year instruments
+    var yearBadge = (inst.crop_year && inst.crop_year !== currentSettingsYear)
+      ? '<span class="mkt-year-badge">' + inst.crop_year + '</span>'
+      : '';
+
     return '<tr class="mkt-inst-row">' +
       '<td style="width:56px"><span class="type-badge" style="background:' + color + '20;color:' + color + ';padding:2px 6px">' + lbl + '</span></td>' +
-      '<td class="mkt-inst-buyer">' + util.escHtml(inst.buyer || inst.counterparty || '—') + '</td>' +
+      '<td class="mkt-inst-buyer">' + util.escHtml(inst.buyer || inst.counterparty || '—') + yearBadge + '</td>' +
       '<td class="mkt-inst-detail">' + util.escHtml(detail) + '</td>' +
       '<td class="mkt-inst-actions">' +
         '<button class="btn-link mkt-edit-inst" data-iid="' + inst.id + '">Edit</button>' +
         '<button class="btn-link mkt-del-inst" style="color:var(--danger)" data-iid="' + inst.id + '">Del</button>' +
       '</td>' +
     '</tr>';
+  }
+
+  // ── Crop Types Tab ────────────────────────────────────────────────────────
+  function renderCropTypes() {
+    var root = document.getElementById('mkt-croptypes-root');
+    if (!root) return;
+
+    if (!cropTypes.length) {
+      root.innerHTML = util.emptyState('', 'No crop types', 'Add crop types in the Reference tab');
+      return;
+    }
+
+    var html = '<div class="mkt-ct-header">Per-year pricing for <strong>' + activeCropYear + '</strong> &nbsp;—&nbsp; <span class="mkt-ct-hint">Changes here only affect the selected year</span></div>';
+    html += '<table class="mkt-ct-table"><thead><tr>' +
+      '<th>Crop Type</th>' +
+      '<th>Pricing Mode</th>' +
+      '<th>Price / Basis</th>' +
+      '<th>Unit</th>' +
+      '<th>Notes</th>' +
+      '<th></th>' +
+    '</tr></thead><tbody>';
+
+    cropTypes.forEach(function (ct) {
+      var yp    = (ct.yearPricing || {})[activeCropYear] || {};
+      var mode  = yp.mode || 'cbot_basis';
+      var price = yp.price != null ? yp.price : (yp.basis != null ? yp.basis : '');
+      var unit  = yp.unit || 'per_bu';
+      var notes = yp.notes || '';
+
+      html += '<tr class="mkt-ct-row" data-ctid="' + util.escHtml(ct.id) + '">' +
+        '<td class="mkt-ct-name">' + util.escHtml(ct.name) + '</td>' +
+        '<td>' +
+          '<div class="mkt-ct-mode-toggle">' +
+            '<button type="button" class="mkt-ct-mode-btn' + (mode === 'cbot_basis' ? ' active' : '') + '" data-mode="cbot_basis">CBOT Basis</button>' +
+            '<button type="button" class="mkt-ct-mode-btn' + (mode === 'flat' ? ' active' : '') + '" data-mode="flat">Flat</button>' +
+          '</div>' +
+        '</td>' +
+        '<td>' +
+          '<input type="number" class="mkt-ct-price form-control-sm" step="0.01" value="' + util.escHtml(String(price)) + '" ' +
+            'placeholder="' + (mode === 'flat' ? '15.00' : '−0.15') + '" style="width:80px">' +
+          '<span class="mkt-ct-price-lbl" style="margin-left:4px;font-size:0.75rem;color:var(--muted)">' +
+            (mode === 'flat' ? '$/unit' : '$/bu basis') +
+          '</span>' +
+        '</td>' +
+        '<td>' +
+          '<select class="mkt-ct-unit form-control-sm" style="' + (mode !== 'flat' ? 'visibility:hidden' : '') + '">' +
+            '<option value="per_bu"' + (unit === 'per_bu' ? ' selected' : '') + '>per bu</option>' +
+            '<option value="per_ton"' + (unit === 'per_ton' ? ' selected' : '') + '>per ton</option>' +
+            '<option value="per_cwt"' + (unit === 'per_cwt' ? ' selected' : '') + '>per cwt</option>' +
+          '</select>' +
+        '</td>' +
+        '<td><input type="text" class="mkt-ct-notes form-control-sm" value="' + util.escHtml(notes) + '" placeholder="optional" style="width:120px"></td>' +
+        '<td><button type="button" class="btn-primary btn-sm mkt-ct-save-btn" data-ctid="' + util.escHtml(ct.id) + '">Save</button></td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table>';
+    html += '<div class="mkt-ct-footer">CBOT Basis: unpriced exposure = unpriced bu × (CBOT + basis). &nbsp;Flat: exposure = unpriced bu × flat price (no CBOT lookup).</div>';
+
+    root.innerHTML = html;
+    bindCropTypeEvents(root);
+  }
+
+  function bindCropTypeEvents(root) {
+    // Mode toggle buttons
+    root.querySelectorAll('.mkt-ct-mode-toggle').forEach(function (tog) {
+      tog.querySelectorAll('.mkt-ct-mode-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          tog.querySelectorAll('.mkt-ct-mode-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          var row  = btn.closest('.mkt-ct-row');
+          var mode = btn.getAttribute('data-mode');
+          var lbl  = row.querySelector('.mkt-ct-price-lbl');
+          var unit = row.querySelector('.mkt-ct-unit');
+          var priceInput = row.querySelector('.mkt-ct-price');
+          if (lbl)  lbl.textContent  = mode === 'flat' ? '$/unit' : '$/bu basis';
+          if (unit) unit.style.visibility = mode === 'flat' ? '' : 'hidden';
+          if (priceInput) priceInput.placeholder = mode === 'flat' ? '15.00' : '−0.15';
+        });
+      });
+    });
+
+    // Save buttons
+    root.querySelectorAll('.mkt-ct-save-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var ctId = btn.getAttribute('data-ctid');
+        var ct   = cropTypes.find(function (c) { return c.id === ctId; });
+        if (!ct) return;
+
+        var row   = btn.closest('.mkt-ct-row');
+        var mode  = (row.querySelector('.mkt-ct-mode-btn.active') || {}).getAttribute('data-mode') || 'cbot_basis';
+        var price = parseFloat(row.querySelector('.mkt-ct-price').value);
+        var unit  = row.querySelector('.mkt-ct-unit').value;
+        var notes = row.querySelector('.mkt-ct-notes').value.trim();
+
+        var updated = Object.assign({}, ct);
+        updated.yearPricing = Object.assign({}, ct.yearPricing || {});
+        updated.yearPricing[activeCropYear] = {
+          mode: mode,
+          price: mode === 'flat' ? (isNaN(price) ? null : price) : null,
+          basis: mode === 'cbot_basis' ? (isNaN(price) ? null : price) : null,
+          unit: unit,
+          notes: notes
+        };
+
+        btn.disabled = true;
+        btn.textContent = '…';
+
+        api.put('/api/crop-types/' + ctId, updated).then(function () {
+          // Update local copy
+          var idx = cropTypes.findIndex(function (c) { return c.id === ctId; });
+          if (idx >= 0) cropTypes[idx] = updated;
+          util.showToast('Saved');
+          btn.disabled = false;
+          btn.textContent = 'Save';
+          // Rebuild pools to reflect new pricing
+          buildPools({});
+        }).catch(function (err) {
+          util.showToast('Save failed: ' + (err.message || 'error'), 'error');
+          btn.disabled = false;
+          btn.textContent = 'Save';
+        });
+      });
+    });
   }
 
   // ── Instrument Drawer ─────────────────────────────────────────────────────
@@ -418,6 +642,7 @@
 
     var selCtId  = (inst && inst.crop_type_id) || preCtId || (pools[0] && pools[0].id) || '';
     var curType  = (inst && inst.instrument_type) || 'cash';
+    var instYear = (inst && inst.crop_year) || activeCropYear;
     var poolOpts = pools.map(function (p) {
       return '<option value="' + util.escHtml(p.id) + '"' + (p.id === selCtId ? ' selected' : '') + '>' + util.escHtml(p.name) + '</option>';
     }).join('');
@@ -426,6 +651,11 @@
       return '<button type="button" class="mkt-type-btn' + (t === curType ? ' active' : '') + '" data-type="' + t + '">' + lbl + '</button>';
     }).join('');
 
+    var isFwd = instYear !== currentSettingsYear;
+    var yearHint = isFwd
+      ? '<div class="mkt-year-hint">Tracked against ' + instYear + ' production</div>'
+      : '';
+
     drawer.innerHTML =
       '<div class="mkt-drawer-header">' +
         '<span>' + (inst ? 'Edit Instrument' : 'Add Instrument') + '</span>' +
@@ -433,6 +663,10 @@
       '</div>' +
       '<div class="mkt-drawer-body">' +
         '<label class="form-label">Pool<select id="mkt-form-pool" class="form-control">' + poolOpts + '</select></label>' +
+        '<label class="form-label">Crop Year' +
+          '<input type="number" id="mkt-form-year" class="form-control" value="' + instYear + '" min="2020" max="2040" step="1">' +
+        '</label>' +
+        '<div id="mkt-year-hint-box">' + yearHint + '</div>' +
         '<label class="form-label">Buyer / Counterparty<input type="text" id="mkt-form-buyer" class="form-control" value="' + util.escHtml((inst && (inst.buyer || inst.counterparty)) || '') + '"></label>' +
         '<div class="mkt-type-btns" style="margin:0.75rem 0">' + typeBtns + '</div>' +
         '<div id="mkt-type-fields">' + buildTypeFields(curType, inst) + '</div>' +
@@ -452,6 +686,17 @@
     drawer.addEventListener('click', function (e) { e.stopPropagation(); });
     drawer.querySelector('.mkt-drawer-close').addEventListener('click', close);
     drawer.querySelector('#mkt-cancel-btn').addEventListener('click', close);
+
+    // Year input → update hint
+    drawer.querySelector('#mkt-form-year').addEventListener('input', function () {
+      var y = parseInt(this.value) || currentSettingsYear;
+      var hintBox = drawer.querySelector('#mkt-year-hint-box');
+      if (hintBox) {
+        hintBox.innerHTML = (y !== currentSettingsYear)
+          ? '<div class="mkt-year-hint">Tracked against ' + y + ' production</div>'
+          : '';
+      }
+    });
 
     drawer.querySelectorAll('.mkt-type-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -529,9 +774,11 @@
 
   function saveInstrument(drawer, existing, close) {
     var type = (drawer.querySelector('.mkt-type-btn.active') || {}).getAttribute('data-type') || 'cash';
+    var yearVal = parseInt(drawer.querySelector('#mkt-form-year').value) || activeCropYear;
     var payload = {
       crop_type_id:    drawer.querySelector('#mkt-form-pool').value,
       instrument_type: type,
+      crop_year:       yearVal,
       buyer:           (drawer.querySelector('#mkt-form-buyer').value || '').trim() || null,
       notes:           (drawer.querySelector('#mkt-form-notes').value || '').trim() || null
     };

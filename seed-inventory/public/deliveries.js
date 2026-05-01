@@ -151,11 +151,30 @@
             '<input type="text" class="li-product-search" placeholder="Type to search products..." autocomplete="off" required>' +
             '<input type="hidden" class="li-productId">' +
             '<div class="autocomplete-list"></div>' +
+            '<div class="add-product-panel hidden" style="border:1px solid var(--border);border-top:none;background:var(--surface-2,#1a1710);padding:0.75rem;font-size:0.85rem">' +
+              '<div style="font-weight:600;margin-bottom:0.5rem;color:var(--primary,#C8860A)">Add New Product</div>' +
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">' +
+                '<div class="form-group" style="grid-column:1/-1"><label style="font-size:0.75rem">Name</label><input type="text" class="ap-name" style="width:100%"></div>' +
+                '<div class="form-group"><label style="font-size:0.75rem">Type</label><select class="ap-type" style="width:100%"><option value="INPUT">Input</option><option value="SEED">Seed</option></select></div>' +
+                '<div class="form-group ap-catgroup"><label style="font-size:0.75rem">Category</label><select class="ap-category" style="width:100%"><option value="FERTILIZER">Fertilizer</option><option value="CHEMICAL">Chemical</option><option value="BIOLOGICAL">Biological</option><option value="OTHER">Other</option></select></div>' +
+                '<div class="form-group"><label style="font-size:0.75rem">App Unit</label><input type="text" class="ap-unit" placeholder="lbs" style="width:100%"></div>' +
+                '<div class="form-group"><label style="font-size:0.75rem">Purchase Unit</label><input type="text" class="ap-purchaseUnit" placeholder="tons" style="width:100%"></div>' +
+              '</div>' +
+              '<div style="display:flex;gap:0.5rem;margin-top:0.5rem">' +
+                '<button type="button" class="btn-primary btn-sm ap-save">Add &amp; Select</button>' +
+                '<button type="button" class="btn-secondary btn-sm ap-cancel">Cancel</button>' +
+              '</div>' +
+              '<div class="ap-status" style="display:none;font-size:0.75rem;margin-top:0.25rem;color:var(--text-warn,#a0855a)"></div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
         '<div class="form-group">' +
           '<label>Linked Order</label>' +
           '<select class="li-orderId"><option value="">No linked order</option></select>' +
+        '</div>' +
+        '<div class="form-group pku-select-wrap hidden">' +
+          '<label>Pickup #</label>' +
+          '<select class="li-pickupNumberId"><option value="">No pickup</option></select>' +
         '</div>' +
         '<div class="form-group">' +
           '<label>Quantity</label>' +
@@ -202,8 +221,15 @@
       }));
     }
 
+    var addPanel = div.querySelector('.add-product-panel');
+
     function showSuggestions(matches) {
-      if (matches.length === 0) { acList.innerHTML = '<div class="autocomplete-item" style="color:var(--text-light);cursor:default">No matches</div>'; acList.classList.add('open'); acIndex = -1; return; }
+      addPanel.classList.add('hidden');
+      if (matches.length === 0) {
+        acList.innerHTML = '<div class="autocomplete-item" style="color:var(--text-light);cursor:default">No matches</div>' +
+          '<div class="autocomplete-item ac-add-new" style="color:var(--primary,#C8860A);cursor:pointer;border-top:1px solid var(--border)">&#43; Add new product&hellip;</div>';
+        acList.classList.add('open'); acIndex = -1; return;
+      }
       var currentType = '';
       var html = '';
       matches.forEach(function (p) {
@@ -220,6 +246,8 @@
       acIndex = -1;
     }
 
+    var pkuSelect = div.querySelector('.li-pickupNumberId');
+
     function selectProduct(id) {
       var p = window.refData.products.find(function (pp) { return pp.id === id; });
       if (p) {
@@ -227,7 +255,7 @@
         productHidden.value = p.id;
       }
       acList.classList.remove('open');
-      loadOpenOrders(productHidden.value, div.querySelector('.li-orderId'));
+      loadOpenOrders(productHidden.value, div.querySelector('.li-orderId'), null, pkuSelect, null);
     }
 
     productInput.addEventListener('input', function () {
@@ -270,12 +298,102 @@
 
     acList.addEventListener('click', function (e) {
       var item = e.target.closest('.autocomplete-item');
-      if (item) selectProduct(item.getAttribute('data-id'));
+      if (!item) return;
+      if (item.classList.contains('ac-add-new')) {
+        acList.classList.remove('open');
+        var nameVal = productInput.value.trim();
+        addPanel.querySelector('.ap-name').value = nameVal;
+        addPanel.querySelector('.ap-unit').value = '';
+        addPanel.querySelector('.ap-purchaseUnit').value = '';
+        addPanel.querySelector('.ap-status').style.display = 'none';
+        addPanel.classList.remove('hidden');
+        addPanel.querySelector('.ap-name').focus();
+        return;
+      }
+      selectProduct(item.getAttribute('data-id'));
+    });
+
+    // Add-product panel wiring
+    addPanel.querySelector('.ap-type').addEventListener('change', function () {
+      var isSeed = this.value === 'SEED';
+      addPanel.querySelector('.ap-catgroup').style.display = isSeed ? 'none' : '';
+    });
+
+    addPanel.querySelector('.ap-cancel').addEventListener('click', function () {
+      addPanel.classList.add('hidden');
+    });
+
+    addPanel.querySelector('.ap-save').addEventListener('click', function () {
+      var nameEl = addPanel.querySelector('.ap-name');
+      var name = nameEl.value.trim();
+      if (!name) { nameEl.focus(); return; }
+      var type = addPanel.querySelector('.ap-type').value;
+      var cat = addPanel.querySelector('.ap-category').value;
+      var unit = addPanel.querySelector('.ap-unit').value.trim() || 'lbs';
+      var pUnit = addPanel.querySelector('.ap-purchaseUnit').value.trim() || unit;
+      var statusEl = addPanel.querySelector('.ap-status');
+      var saveBtn = addPanel.querySelector('.ap-save');
+
+      saveBtn.disabled = true;
+      statusEl.textContent = 'Saving…';
+      statusEl.style.display = '';
+
+      api.post('/api/products', {
+        type: type,
+        productName: type === 'INPUT' ? name : '',
+        variety: type === 'SEED' ? name : '',
+        inputCategory: type === 'INPUT' ? cat : '',
+        unitType: unit,
+        purchaseUnit: pUnit,
+        conversionRate: 1,
+        notes: 'Added during delivery entry'
+      }).then(function (created) {
+        // Reload ref data then select the new product
+        window.reloadRefData().then(function () {
+          addPanel.classList.add('hidden');
+          saveBtn.disabled = false;
+          selectProduct(created.id);
+        });
+        statusEl.textContent = 'Syncing to Enterprise Planner…';
+      }).catch(function (err) {
+        saveBtn.disabled = false;
+        statusEl.textContent = 'Error: ' + (err.message || 'Save failed');
+      });
     });
 
     // Close suggestions when clicking outside
     document.addEventListener('click', function (e) {
-      if (!div.contains(e.target)) acList.classList.remove('open');
+      if (!div.contains(e.target)) {
+        acList.classList.remove('open');
+        addPanel.classList.add('hidden');
+      }
+    });
+
+    // When order selection changes, refresh pickup dropdown
+    div.querySelector('.li-orderId').addEventListener('change', function () {
+      var orderId = this.value;
+      if (!orderId) {
+        renderPickupDropdown(pkuSelect, [], null, null, null);
+        return;
+      }
+      api.get('/api/orders/' + orderId).then(function (order) {
+        var pkus = Array.isArray(order.pickupNumbers) ? order.pickupNumbers : [];
+        renderPickupDropdown(pkuSelect, pkus, order.unit, div.querySelector('.li-quantity'), null);
+      }).catch(function () {
+        renderPickupDropdown(pkuSelect, [], null, null, null);
+      });
+    });
+
+    // When pickup # selected, pre-fill qty and shared farm field if empty
+    pkuSelect.addEventListener('change', function () {
+      var opt = pkuSelect.options[pkuSelect.selectedIndex];
+      if (!opt || !opt.value) return;
+      var qty = opt.getAttribute('data-qty');
+      var farm = opt.getAttribute('data-farm');
+      if (qty) div.querySelector('.li-quantity').value = qty;
+      if (farm && !document.getElementById('df-farm-search').value) {
+        document.getElementById('df-farm-search').value = farm;
+      }
     });
 
     // Wire remove button
@@ -295,16 +413,17 @@
       div.querySelector('.li-unit').value = data.unit || 'units';
       div.querySelector('.li-lotNumber').value = data.lotNumber || '';
       if (data.productId) {
-        loadOpenOrders(data.productId, div.querySelector('.li-orderId'), data.orderId);
+        loadOpenOrders(data.productId, div.querySelector('.li-orderId'), data.orderId, pkuSelect, data.pickupNumberId || null);
       }
     }
 
     return div;
   }
 
-  function loadOpenOrders(productId, selectEl, preselectId) {
+  function loadOpenOrders(productId, selectEl, preselectId, pkuSelectEl, preselectPkuId) {
     if (!productId) {
       selectEl.innerHTML = '<option value="">No linked order</option>';
+      if (pkuSelectEl) renderPickupDropdown(pkuSelectEl, [], null, null, null);
       return;
     }
     var year = window.refData.settings.cropYear || 2026;
@@ -318,9 +437,42 @@
       });
       selectEl.innerHTML = opts;
       if (preselectId) selectEl.value = preselectId;
+
+      // Populate pickup dropdown for the currently selected order
+      var selectedOrderId = preselectId || '';
+      var selectedOrder = filtered.find(function (o) { return o.id === selectedOrderId; }) || null;
+      if (pkuSelectEl) {
+        var pkus = selectedOrder && Array.isArray(selectedOrder.pickupNumbers) ? selectedOrder.pickupNumbers : [];
+        renderPickupDropdown(pkuSelectEl, pkus, selectedOrder ? selectedOrder.unit : null, null, preselectPkuId);
+      }
     }).catch(function () {
       selectEl.innerHTML = '<option value="">No linked order</option>';
+      if (pkuSelectEl) renderPickupDropdown(pkuSelectEl, [], null, null, null);
     });
+  }
+
+  function renderPickupDropdown(pkuSelectEl, pkus, orderUnit, qtyInput, preselectId) {
+    var pending = pkus.filter(function (p) { return p.status !== 'received'; });
+    var wrap = pkuSelectEl.closest('.pku-select-wrap');
+    if (!wrap) return;
+
+    if (pending.length === 0) {
+      wrap.classList.add('hidden');
+      pkuSelectEl.innerHTML = '<option value="">No pickup</option>';
+      return;
+    }
+    wrap.classList.remove('hidden');
+    var opts = '<option value="">No pickup #</option>';
+    pending.forEach(function (p) {
+      var label = p.pickupNum || '(unnamed)';
+      if (p.authorizedQty) label += ' — ' + util.formatNum(p.authorizedQty) + ' ' + (p.unit || orderUnit || '');
+      if (p.farmName) label += ' / ' + p.farmName;
+      if (p.crop) label += ' · ' + p.crop;
+      label += ' [' + (p.status || 'pending') + ']';
+      opts += '<option value="' + p.id + '" data-qty="' + (p.authorizedQty || '') + '" data-farm="' + util.escapeHtml(p.farmName || '') + '">' + label + '</option>';
+    });
+    pkuSelectEl.innerHTML = opts;
+    if (preselectId) pkuSelectEl.value = preselectId;
   }
 
   // --- Modal ---
@@ -466,6 +618,7 @@
       items.push({
         productId: productId,
         orderId: row.querySelector('.li-orderId').value,
+        pickupNumberId: row.querySelector('.li-pickupNumberId').value,
         quantityReceived: qty,
         unit: row.querySelector('.li-unit').value,
         lotNumber: row.querySelector('.li-lotNumber').value

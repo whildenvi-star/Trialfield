@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import type { Commodity, CropVariant } from '@/lib/marketing/types'
-import type { BudgetField } from '@/app/(protected)/app/macro-rollup/page'
+import type { BudgetField } from '@/lib/marketing/types'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 interface VariantSetupPanelProps {
@@ -205,7 +205,7 @@ export function VariantSetupPanel({
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {error && (
-            <div className="mb-4 rounded border border-amber-800/50 bg-amber-950/20 px-3 py-2 text-xs font-mono text-amber-400">
+            <div className="mb-4 rounded border border-glomalin-warning/30 bg-glomalin-warning/10 px-3 py-2 text-xs font-mono text-glomalin-warning">
               {error}
             </div>
           )}
@@ -276,7 +276,7 @@ export function VariantSetupPanel({
                           <td className="py-1.5 text-right">
                             <button
                               onClick={() => handleDelete(v.id, v.name)}
-                              className="font-mono text-[10px] text-glomalin-muted hover:text-red-400 transition-colors"
+                              className="font-mono text-[10px] text-glomalin-muted hover:text-glomalin-danger transition-colors"
                               title="Delete variant"
                             >
                               ✕
@@ -326,7 +326,7 @@ export function VariantSetupPanel({
                           <td className="py-1.5 text-right">
                             <button
                               onClick={() => removeNew(globalIdx)}
-                              className="font-mono text-[10px] text-glomalin-muted hover:text-red-400 transition-colors"
+                              className="font-mono text-[10px] text-glomalin-muted hover:text-glomalin-danger transition-colors"
                             >
                               ✕
                             </button>

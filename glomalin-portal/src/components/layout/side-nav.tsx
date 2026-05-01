@@ -14,7 +14,7 @@ const VALID_SCENES: SceneType[] = ['mycelium', 'drone', 'seasonal']
 const MODULE_GROUPS: { label: string; ids: string[] }[] = [
   { label: 'Field', ids: ['maps', 'field-history', 'field-timeline'] },
   { label: 'Operations', ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
-  { label: 'Finance', ids: ['macro-rollup', 'enterprise-summary', 'farm-budget', 'grain-tickets'] },
+  { label: 'Finance', ids: ['enterprise-summary', 'farm-budget', 'grain-tickets'] },
   { label: 'Inputs', ids: ['seed-inventory', 'meristem-malt'] },
 ]
 

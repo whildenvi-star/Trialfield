@@ -1,5 +1,5 @@
 import type { Config } from "tailwindcss";
-import { tailwindColors, fonts } from "./src/lib/tokens";
+import { tailwindColors } from "./src/lib/tokens";
 
 const config: Config = {
   content: [
@@ -13,7 +13,9 @@ const config: Config = {
         glomalin: tailwindColors,
       },
       fontFamily: {
-        mono: [...fonts.mono],
+        mono:    ['JetBrains Mono', 'monospace'],
+        heading: ['Outfit', 'sans-serif'],
+        sans:    ['DM Sans', 'sans-serif'],
       },
       fontSize: {
         'xs':   'var(--size-xs)',
@@ -25,6 +27,13 @@ const config: Config = {
         '3xl':  'var(--size-3xl)',
         '4xl':  'calc(var(--base-size) * 3.14 * var(--text-scale))',
         '5xl':  'calc(var(--base-size) * 3.57 * var(--text-scale))',
+      },
+      borderRadius: {
+        'sm':  '4px',
+        'md':  '6px',
+        'lg':  '8px',
+        'xl':  '12px',
+        '2xl': '16px',
       },
     },
   },

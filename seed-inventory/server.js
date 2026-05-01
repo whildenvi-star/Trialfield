@@ -209,10 +209,15 @@ app.post('/api/products', async function (req, res) {
     productName: req.body.productName || '',
     inputCategory: req.body.inputCategory || '',
     unitType: req.body.unitType || 'units',
+    purchaseUnit: req.body.purchaseUnit || req.body.unitType || 'units',
+    conversionRate: parseFloat(req.body.conversionRate) || 1,
     packSize: parseFloat(req.body.packSize) || 0,
     packType: req.body.packType || '',
     organicCertNumber: req.body.organicCertNumber || '',
     omriListed: req.body.omriListed || false,
+    organicGround: req.body.organicGround || false,
+    budgetProductId: req.body.budgetProductId || null,
+    budgetProductType: req.body.budgetProductType || null,
     notes: req.body.notes || '',
     active: true,
     createdAt: new Date().toISOString(),
@@ -221,6 +226,21 @@ app.post('/api/products', async function (req, res) {
   store.products.push(item);
   await saveData();
   res.status(201).json(item);
+
+  // Write-back to farm-budget (fire-and-forget) — only for brand-new products not already linked
+  if (!item.budgetProductId) {
+    pushProductToBudget(item).then(async function (result) {
+      if (result && result.id) {
+        item.budgetProductId = result.id;
+        item.budgetProductType = result.type;
+        _catalogCache = { data: null, fetchedAt: 0 };
+        await saveData();
+        console.log('[write-back] Product pushed to farm-budget:', item.productName || item.variety, '->', result.id);
+      }
+    }).catch(function (e) {
+      console.warn('[write-back] Product push failed for', item.productName || item.variety, ':', e.message);
+    });
+  }
 });
 
 app.put('/api/products/:id', async function (req, res) {
@@ -270,6 +290,13 @@ app.post('/api/suppliers', async function (req, res) {
   store.suppliers.push(item);
   await saveData();
   res.status(201).json(item);
+
+  // Auto-sync to farm-budget (fire-and-forget) so the supplier appears in the reference tab
+  ensureSupplierInBudget(item).then(function (budgetId) {
+    if (budgetId) console.log('[write-back] Supplier synced to farm-budget:', item.name, '->', budgetId);
+  }).catch(function (e) {
+    console.warn('[write-back] Supplier sync failed for', item.name, ':', e.message);
+  });
 });
 
 app.put('/api/suppliers/:id', async function (req, res) {
@@ -402,6 +429,114 @@ app.delete('/api/forecasts/:id', async function (req, res) {
 
 // ─── Pull Forecasts from Farm Budget ─────────────────────────────────
 
+// Shared sync logic — upserts forecast records from farm-budget data and removes orphans.
+// Returns { created, updated, removed, skipped }.
+function applyForecastSync(data, cropYear) {
+  var categoryMap = {
+    'Seed': 'SEED',
+    'Fertilizer': 'INPUT',
+    'Chemical': 'INPUT',
+    'Biological': 'INPUT',
+    'Other': 'INPUT'
+  };
+  var inputCategoryMap = {
+    'Fertilizer': 'FERTILIZER',
+    'Chemical': 'CHEMICAL',
+    'Biological': 'BIOLOGICAL',
+    'Other': 'OTHER'
+  };
+
+  var created = 0;
+  var updated = 0;
+  var skipped = 0;
+  var processedFields = {}; // productId → Set of linkedFieldName
+
+  var categories = data.categories || [];
+  for (var ci = 0; ci < categories.length; ci++) {
+    var cat = categories[ci];
+    var products = cat.products || [];
+    for (var pi = 0; pi < products.length; pi++) {
+      var bp = products[pi];
+      var type = categoryMap[cat.name] || 'INPUT';
+      var fields = bp.fields || [];
+      if (fields.length === 0) { skipped++; continue; }
+
+      var product = findOrCreateProduct(bp, type, cat.name, inputCategoryMap);
+      if (!processedFields[product.id]) processedFields[product.id] = new Set();
+
+      for (var fi = 0; fi < fields.length; fi++) {
+        var f = fields[fi];
+        var season = (f.season || '').toLowerCase() || 'spring';
+        if (season !== 'spring' && season !== 'fall') season = 'full-year';
+
+        processedFields[product.id].add(f.fieldName || '');
+
+        var existing = store.forecasts.find(function (fc) {
+          return fc.productId === product.id &&
+            fc.linkedFieldName === f.fieldName &&
+            String(fc.cropYear) === String(cropYear);
+        });
+
+        if (existing) {
+          existing.linkedAcres = f.acres || 0;
+          existing.ratePerAcre = f.rate || 0;
+          existing.projectedQuantity = f.qty || 0;
+          existing.season = season;
+          existing.unit = bp.unit || 'units';
+          existing.rateUnit = (f.rate ? bp.unit + '/ac' : '');
+          existing.notes = 'Synced from Farm Budget';
+          existing.updatedAt = new Date().toISOString();
+          updated++;
+        } else {
+          store.forecasts.push({
+            id: generateId('fct'),
+            productId: product.id,
+            cropYear: cropYear,
+            season: season,
+            linkedFieldName: f.fieldName || '',
+            linkedFieldId: '',
+            linkedAcres: f.acres || 0,
+            ratePerAcre: f.rate || 0,
+            rateUnit: (f.rate ? bp.unit + '/ac' : ''),
+            projectedQuantity: f.qty || 0,
+            unit: bp.unit || 'units',
+            notes: 'Synced from Farm Budget',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          });
+          created++;
+        }
+      }
+    }
+  }
+
+  // Remove orphaned auto-synced records whose fields no longer exist in farm-budget
+  var removed = 0;
+  store.forecasts = store.forecasts.filter(function (fc) {
+    if (String(fc.cropYear) !== String(cropYear)) return true;
+    if (fc.notes !== 'Synced from Farm Budget') return true;
+    if (!processedFields[fc.productId]) return true;
+    if (!processedFields[fc.productId].has(fc.linkedFieldName)) {
+      removed++;
+      return false;
+    }
+    return true;
+  });
+
+  return { created: created, updated: updated, removed: removed, skipped: skipped };
+}
+
+// Manual trigger to pull the full product/seed catalog from farm-budget (used by Forecasts tab sync button)
+app.post('/api/products/sync-from-budget', async function (req, res) {
+  try {
+    var result = await syncAllProductsFromBudget();
+    _catalogCache = { data: null, fetchedAt: 0 };
+    res.json({ ok: true, changed: result.changed, products: result.products, seeds: result.seeds });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to sync from Farm Budget: ' + err.message });
+  }
+});
+
 app.post('/api/forecasts/pull-from-budget', async function (req, res) {
   try {
     var pullUrl = budgetUrl('/api/forecast');
@@ -410,93 +545,17 @@ app.post('/api/forecasts/pull-from-budget', async function (req, res) {
     var data = await response.json();
     var cropYear = store.settings.cropYear || 2026;
 
-    // Category → seed-inventory type mapping
-    var categoryMap = {
-      'Seed': 'SEED',
-      'Fertilizer': 'INPUT',
-      'Chemical': 'INPUT',
-      'Biological': 'INPUT',
-      'Other': 'INPUT'
-    };
-    var inputCategoryMap = {
-      'Fertilizer': 'FERTILIZER',
-      'Chemical': 'CHEMICAL',
-      'Biological': 'BIOLOGICAL',
-      'Other': 'OTHER'
-    };
-
-    var created = 0;
-    var updated = 0;
-    var skipped = 0;
-
-    var categories = data.categories || [];
-    for (var ci = 0; ci < categories.length; ci++) {
-      var cat = categories[ci];
-      var products = cat.products || [];
-
-      for (var pi = 0; pi < products.length; pi++) {
-        var bp = products[pi];
-        var type = categoryMap[cat.name] || 'INPUT';
-        var fields = bp.fields || [];
-
-        if (fields.length === 0) { skipped++; continue; }
-
-        // Find or create a matching product in seed-inventory
-        var product = findOrCreateProduct(bp, type, cat.name, inputCategoryMap);
-
-        // For each field breakdown, create/update a forecast
-        for (var fi = 0; fi < fields.length; fi++) {
-          var f = fields[fi];
-          var season = (f.season || '').toLowerCase() || 'spring';
-          if (season !== 'spring' && season !== 'fall') season = 'full-year';
-
-          // Check if forecast already exists for this product+field+cropYear
-          var existing = store.forecasts.find(function (fc) {
-            return fc.productId === product.id &&
-              fc.linkedFieldName === f.fieldName &&
-              String(fc.cropYear) === String(cropYear);
-          });
-
-          if (existing) {
-            // Update qty/rate/acres
-            existing.linkedAcres = f.acres || 0;
-            existing.ratePerAcre = f.rate || 0;
-            existing.projectedQuantity = f.qty || 0;
-            existing.season = season;
-            existing.unit = bp.unit || 'units';
-            existing.rateUnit = (f.rate ? bp.unit + '/ac' : '');
-            existing.notes = 'Synced from Farm Budget';
-            existing.updatedAt = new Date().toISOString();
-            updated++;
-          } else {
-            store.forecasts.push({
-              id: generateId('fct'),
-              productId: product.id,
-              cropYear: cropYear,
-              season: season,
-              linkedFieldName: f.fieldName || '',
-              linkedFieldId: '',
-              linkedAcres: f.acres || 0,
-              ratePerAcre: f.rate || 0,
-              rateUnit: (f.rate ? bp.unit + '/ac' : ''),
-              projectedQuantity: f.qty || 0,
-              unit: bp.unit || 'units',
-              notes: 'Synced from Farm Budget',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
-            created++;
-          }
-        }
-      }
-    }
-
+    var result = applyForecastSync(data, cropYear);
+    // Also sync the full product catalog (not just forecasted products)
+    await syncAllProductsFromBudget();
     await saveData();
+
     res.json({
       ok: true,
-      created: created,
-      updated: updated,
-      skipped: skipped,
+      created: result.created,
+      updated: result.updated,
+      removed: result.removed,
+      skipped: result.skipped,
       totalProducts: store.products.filter(function (p) { return p.active !== false; }).length,
       totalForecasts: store.forecasts.filter(function (f) { return String(f.cropYear) === String(cropYear); }).length
     });
@@ -507,13 +566,14 @@ app.post('/api/forecasts/pull-from-budget', async function (req, res) {
 });
 
 // Live sync webhook — called by farm-budget after every save.
-// Runs the same pull-from-budget logic but returns quickly.
 let _syncInProgress = false;
 app.post('/api/forecasts/sync-webhook', async function (req, res) {
   // Respond immediately so farm-budget isn't blocked
   res.json({ ok: true, queued: true });
 
-  // Skip if a sync is already running (prevents pile-up)
+  // Always invalidate the catalog cache so new products appear on next /api/products call
+  _catalogCache = { data: null, fetchedAt: 0 };
+
   if (_syncInProgress) return;
   _syncInProgress = true;
 
@@ -524,65 +584,14 @@ app.post('/api/forecasts/sync-webhook', async function (req, res) {
     var data = await response.json();
     var cropYear = store.settings.cropYear || 2026;
 
-    var categoryMap = { 'Seed': 'SEED', 'Fertilizer': 'INPUT', 'Chemical': 'INPUT', 'Biological': 'INPUT', 'Other': 'INPUT' };
-    var inputCategoryMap = { 'Fertilizer': 'FERTILIZER', 'Chemical': 'CHEMICAL', 'Biological': 'BIOLOGICAL', 'Other': 'OTHER' };
-
-    var categories = data.categories || [];
-    for (var ci = 0; ci < categories.length; ci++) {
-      var cat = categories[ci];
-      var products = cat.products || [];
-      for (var pi = 0; pi < products.length; pi++) {
-        var bp = products[pi];
-        var type = categoryMap[cat.name] || 'INPUT';
-        var fields = bp.fields || [];
-        if (fields.length === 0) continue;
-
-        var product = findOrCreateProduct(bp, type, cat.name, inputCategoryMap);
-
-        for (var fi = 0; fi < fields.length; fi++) {
-          var f = fields[fi];
-          var season = (f.season || '').toLowerCase() || 'spring';
-          if (season !== 'spring' && season !== 'fall') season = 'full-year';
-
-          var existing = store.forecasts.find(function (fc) {
-            return fc.productId === product.id &&
-              fc.linkedFieldName === f.fieldName &&
-              String(fc.cropYear) === String(cropYear);
-          });
-
-          if (existing) {
-            existing.linkedAcres = f.acres || 0;
-            existing.ratePerAcre = f.rate || 0;
-            existing.projectedQuantity = f.qty || 0;
-            existing.season = season;
-            existing.unit = bp.unit || 'units';
-            existing.rateUnit = (f.rate ? bp.unit + '/ac' : '');
-            existing.notes = 'Synced from Farm Budget';
-            existing.updatedAt = new Date().toISOString();
-          } else {
-            store.forecasts.push({
-              id: generateId('fct'),
-              productId: product.id,
-              cropYear: cropYear,
-              season: season,
-              linkedFieldName: f.fieldName || '',
-              linkedFieldId: '',
-              linkedAcres: f.acres || 0,
-              ratePerAcre: f.rate || 0,
-              rateUnit: (f.rate ? bp.unit + '/ac' : ''),
-              projectedQuantity: f.qty || 0,
-              unit: bp.unit || 'units',
-              notes: 'Synced from Farm Budget',
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
-          }
-        }
-      }
-    }
-
+    var result = applyForecastSync(data, cropYear);
     await saveData();
-    console.log('[live-sync] Forecasts synced from farm-budget (' + new Date().toISOString() + ')');
+    console.log('[live-sync] Forecasts synced from farm-budget — created:' + result.created + ' updated:' + result.updated + ' removed:' + result.removed + ' (' + new Date().toISOString() + ')');
+
+    // Background: materialize any new products/seeds from farm-budget
+    syncAllProductsFromBudget().then(function (r) {
+      if (r.changed) console.log('[live-sync] Product catalog synced — ' + r.products + ' products, ' + r.seeds + ' seeds checked');
+    }).catch(function (e) { console.warn('[live-sync] Product sync error:', e.message); });
   } catch (err) {
     console.error('[live-sync] Sync failed:', err.message);
   } finally {
@@ -669,6 +678,205 @@ function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
   }
 
   return match;
+}
+
+// ─── Farm-Budget Product Sync Helpers ───────────────────────────────
+
+function mapInputCategoryToBudget(cat) {
+  var m = { 'FERTILIZER': 'Fertilizer', 'CHEMICAL': 'Chemical', 'BIOLOGICAL': 'Biological', 'OTHER': 'Other', 'SEED': 'Seed' };
+  return m[cat] || 'Other';
+}
+
+// Push a new seed-inventory product to farm-budget. Returns the budget product id or null.
+async function pushProductToBudget(localProduct) {
+  try {
+    var isSeed = localProduct.type === 'SEED';
+    var url = isSeed ? budgetUrl('/api/seeds') : budgetUrl('/api/products');
+
+    // Resolve supplier mapping for the budget-side supplierId
+    var budgetSupplierId = '';
+    if (localProduct.supplier) {
+      var nameMatch = (store.supplierMappings || []).find(function (m) {
+        var s = (store.suppliers || []).find(function (s) { return s.id === m.localSupplierId; });
+        return s && s.name.toLowerCase() === (localProduct.supplier || '').toLowerCase();
+      });
+      if (nameMatch) budgetSupplierId = nameMatch.budgetSupplierId;
+    }
+
+    var payload = isSeed ? {
+      crop: localProduct.crop || '',
+      brand: localProduct.brand || '',
+      variety: localProduct.variety || '',
+      pricePerUnit: 0,
+      seedsPerUnit: Math.round(localProduct.conversionRate) || 80000,
+      organicGround: !!localProduct.organicGround,
+      supplierId: budgetSupplierId || ''
+    } : {
+      name: localProduct.productName || '',
+      category: mapInputCategoryToBudget(localProduct.inputCategory),
+      unit: localProduct.unitType || 'lbs',
+      purchaseUnit: localProduct.purchaseUnit || '',
+      unitBilledPrice: 0,
+      conversionRate: localProduct.conversionRate || 1,
+      organic: !!localProduct.organicGround,
+      organicGround: !!localProduct.organicGround,
+      supplierId: budgetSupplierId || ''
+    };
+
+    var resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error('Farm Budget returned ' + resp.status);
+    var created = await resp.json();
+    return { id: created.id, type: isSeed ? 'seed' : 'product' };
+  } catch (e) {
+    console.warn('[write-back] pushProductToBudget failed:', e.message);
+    return null;
+  }
+}
+
+// Ensure a local supplier exists in farm-budget; returns the budget supplier id or null.
+async function ensureSupplierInBudget(localSupplier) {
+  try {
+    // Check existing mapping
+    var existing = (store.supplierMappings || []).find(function (m) { return m.localSupplierId === localSupplier.id; });
+    if (existing) return existing.budgetSupplierId;
+
+    // Check name match in farm-budget
+    var budgetSuppliers = await fetch(budgetUrl('/api/suppliers')).then(function (r) { return r.json(); });
+    var nameMatch = budgetSuppliers.find(function (s) {
+      return s.name.toLowerCase() === (localSupplier.name || '').toLowerCase();
+    });
+
+    var budgetSupplierId;
+    if (nameMatch) {
+      budgetSupplierId = nameMatch.id;
+    } else {
+      var created = await fetch(budgetUrl('/api/suppliers'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: localSupplier.name,
+          type: 'product',
+          contact: localSupplier.contactName || localSupplier.email || '',
+          notes: localSupplier.notes || ''
+        })
+      }).then(function (r) { return r.json(); });
+      budgetSupplierId = created.id;
+    }
+
+    if (!store.supplierMappings) store.supplierMappings = [];
+    store.supplierMappings.push({ localSupplierId: localSupplier.id, budgetSupplierId: budgetSupplierId, syncedAt: new Date().toISOString() });
+    await saveData();
+    _catalogCache = { data: null, fetchedAt: 0 };
+    return budgetSupplierId;
+  } catch (e) {
+    console.warn('[write-back] ensureSupplierInBudget failed:', e.message);
+    return null;
+  }
+}
+
+// Materialize all farm-budget products/seeds as local records with budgetProductId set.
+// Safe to call repeatedly — skips products already linked by ID or matched by name.
+async function syncAllProductsFromBudget() {
+  try {
+    var results = await Promise.allSettled([
+      fetch(budgetUrl('/api/products')).then(function (r) { return r.json(); }),
+      fetch(budgetUrl('/api/seeds')).then(function (r) { return r.json(); })
+    ]);
+    if (results[0].status === 'rejected' && results[1].status === 'rejected') return { changed: false };
+
+    var budgetProducts = results[0].status === 'fulfilled' && Array.isArray(results[0].value) ? results[0].value : [];
+    var budgetSeeds    = results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : [];
+    var changed = false;
+
+    // Input products
+    for (var i = 0; i < budgetProducts.length; i++) {
+      var bp = budgetProducts[i];
+      var bpName = (bp.name || '').toLowerCase();
+      var local = (store.products || []).find(function (p) {
+        if (p.active === false) return false;
+        if (p.budgetProductId && p.budgetProductId === bp.id) return true;
+        return p.type === 'INPUT' && (p.productName || '').toLowerCase() === bpName;
+      });
+      if (local) {
+        // Backfill ID + keep units in sync
+        if (!local.budgetProductId) { local.budgetProductId = bp.id; local.budgetProductType = 'product'; changed = true; }
+        if (bp.purchaseUnit && local.purchaseUnit !== bp.purchaseUnit.toLowerCase()) { local.purchaseUnit = bp.purchaseUnit.toLowerCase(); changed = true; }
+        if (bp.conversionRate && local.conversionRate !== bp.conversionRate) { local.conversionRate = bp.conversionRate; changed = true; }
+      } else {
+        store.products.push({
+          id: generateId('prod'),
+          type: (bp.category === 'Seed') ? 'SEED' : 'INPUT',
+          brand: '',
+          supplier: '',
+          crop: '',
+          variety: '',
+          productName: bp.name || '',
+          inputCategory: mapInputCategoryToBudget(bp.category) === 'Seed' ? '' : mapInputCategoryToBudget(bp.category),
+          unitType: (bp.unit || 'units').toLowerCase(),
+          purchaseUnit: (bp.purchaseUnit || bp.unit || 'units').toLowerCase(),
+          conversionRate: bp.conversionRate || 1,
+          packSize: 0, packType: '',
+          organicCertNumber: '', omriListed: false,
+          organicGround: !!bp.organicGround,
+          budgetProductId: bp.id,
+          budgetProductType: 'product',
+          notes: 'Synced from Farm Budget',
+          active: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        changed = true;
+      }
+    }
+
+    // Seeds
+    for (var j = 0; j < budgetSeeds.length; j++) {
+      var bs = budgetSeeds[j];
+      var bsVariety = (bs.variety || '').toLowerCase();
+      var localSeed = (store.products || []).find(function (p) {
+        if (p.active === false) return false;
+        if (p.budgetProductId && p.budgetProductId === bs.id) return true;
+        return p.type === 'SEED' && (p.variety || '').toLowerCase() === bsVariety;
+      });
+      if (localSeed) {
+        if (!localSeed.budgetProductId) { localSeed.budgetProductId = bs.id; localSeed.budgetProductType = 'seed'; changed = true; }
+      } else {
+        store.products.push({
+          id: generateId('prod'),
+          type: 'SEED',
+          brand: bs.brand || '',
+          supplier: '',
+          crop: bs.crop || '',
+          variety: bs.variety || '',
+          productName: '',
+          inputCategory: '',
+          unitType: 'units',
+          purchaseUnit: 'units',
+          conversionRate: bs.seedsPerUnit || 1,
+          packSize: 0, packType: '',
+          organicCertNumber: '', omriListed: false,
+          organicGround: !!bs.organicGround,
+          budgetProductId: bs.id,
+          budgetProductType: 'seed',
+          notes: 'Synced from Farm Budget',
+          active: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+        changed = true;
+      }
+    }
+
+    if (changed) await saveData();
+    return { changed: changed, products: budgetProducts.length, seeds: budgetSeeds.length };
+  } catch (e) {
+    console.error('[sync-products] Failed:', e.message);
+    return { changed: false, error: e.message };
+  }
 }
 
 // ─── Budget Catalog Proxy (read-only from farm-budget) ──────────────
@@ -1035,6 +1243,29 @@ app.get('/api/receipts/:id', function (req, res) {
   res.json(item);
 });
 
+// Update pickup statuses on an order based on its current receipts.
+// 'received' when qty >= authorizedQty, 'partial' when some delivered but less, 'pending' otherwise.
+function syncPickupStatuses(orderId) {
+  var order = store.orders.find(function (o) { return o.id === orderId; });
+  if (!order || !Array.isArray(order.pickupNumbers) || order.pickupNumbers.length === 0) return;
+
+  var orderReceipts = store.receipts.filter(function (r) { return r.orderId === orderId; });
+
+  order.pickupNumbers.forEach(function (pku) {
+    // Receipts that reference this pickup
+    var pkuReceipts = orderReceipts.filter(function (r) { return r.pickupNumberId === pku.id; });
+    var delivered = pkuReceipts.reduce(function (s, r) { return s + (r.quantityReceived || 0); }, 0);
+    var auth = pku.authorizedQty || 0;
+    if (delivered <= 0) {
+      pku.status = 'pending';
+    } else if (auth > 0 && delivered >= auth) {
+      pku.status = 'received';
+    } else {
+      pku.status = 'partial';
+    }
+  });
+}
+
 app.post('/api/receipts', async function (req, res) {
   var item = {
     id: generateId('rct'),
@@ -1056,9 +1287,11 @@ app.post('/api/receipts', async function (req, res) {
     discrepancyFlag: req.body.discrepancyFlag || false,
     discrepancyNotes: req.body.discrepancyNotes || '',
     notes: req.body.notes || '',
+    pickupNumberId: req.body.pickupNumberId || '',
     createdAt: new Date().toISOString()
   };
   store.receipts.push(item);
+  if (item.orderId) syncPickupStatuses(item.orderId);
   await saveData();
   res.status(201).json(item);
 });
@@ -1067,6 +1300,8 @@ app.put('/api/receipts/:id', async function (req, res) {
   var idx = store.receipts.findIndex(function (r) { return r.id === req.params.id; });
   if (idx === -1) return res.status(404).json({ error: 'Receipt not found' });
   Object.assign(store.receipts[idx], req.body, { updatedAt: new Date().toISOString() });
+  var orderId = store.receipts[idx].orderId;
+  if (orderId) syncPickupStatuses(orderId);
   await saveData();
   res.json(store.receipts[idx]);
 });
@@ -1074,7 +1309,9 @@ app.put('/api/receipts/:id', async function (req, res) {
 app.delete('/api/receipts/:id', async function (req, res) {
   var idx = store.receipts.findIndex(function (r) { return r.id === req.params.id; });
   if (idx === -1) return res.status(404).json({ error: 'Receipt not found' });
+  var orderId = store.receipts[idx].orderId;
   store.receipts.splice(idx, 1);
+  if (orderId) syncPickupStatuses(orderId);
   await saveData();
   res.json({ ok: true });
 });
@@ -1092,6 +1329,7 @@ app.post('/api/receipts/batch', async function (req, res) {
   var deliveryGroupId = generateId('dlv');
   var created = [];
 
+  var affectedOrderIds = new Set();
   items.forEach(function (item) {
     var receipt = {
       id: generateId('rct'),
@@ -1114,12 +1352,15 @@ app.post('/api/receipts/batch', async function (req, res) {
       discrepancyFlag: item.discrepancyFlag || false,
       discrepancyNotes: item.discrepancyNotes || '',
       notes: shared.notes || '',
+      pickupNumberId: item.pickupNumberId || '',
       createdAt: new Date().toISOString()
     };
     store.receipts.push(receipt);
     created.push(receipt);
+    if (receipt.orderId) affectedOrderIds.add(receipt.orderId);
   });
 
+  affectedOrderIds.forEach(function (oid) { syncPickupStatuses(oid); });
   await saveData();
   res.status(201).json({ deliveryGroupId: deliveryGroupId, receipts: created });
 });
@@ -1255,6 +1496,21 @@ app.get('/api/reconciliation', async function (req, res) {
     var totalReturned = returns.reduce(function (s, r) { return s + (r.quantityReturned || 0); }, 0);
     var totalCost = orders.reduce(function (s, o) { return s + (o.totalCost || 0); }, 0);
 
+    // Collect pickup numbers across all orders for this product
+    var pickupRows = [];
+    orders.forEach(function (o) {
+      (o.pickupNumbers || []).forEach(function (pku) {
+        pickupRows.push({
+          pickupNum: pku.pickupNum || '',
+          authorizedQty: pku.authorizedQty || 0,
+          unit: pku.unit || purchaseUnit,
+          farmName: pku.farmName || '',
+          crop: pku.crop || '',
+          status: pku.status || 'pending'
+        });
+      });
+    });
+
     return {
       productId: p.id,
       type: p.type,
@@ -1272,7 +1528,8 @@ app.get('/api/reconciliation', async function (req, res) {
       balance: totalOrdered - totalDelivered,
       percentOrdered: forecast > 0 ? Math.round(totalOrdered / forecast * 1000) / 10 : 0,
       percentDelivered: totalOrdered > 0 ? Math.round(totalDelivered / totalOrdered * 1000) / 10 : 0,
-      totalCost: totalCost
+      totalCost: totalCost,
+      pickupRows: pickupRows
     };
   });
 
@@ -1567,9 +1824,11 @@ app.post('/api/verify/confirm', async function (req, res) {
       discrepancyFlag: shared.discrepancyFlag || false,
       discrepancyNotes: shared.discrepancyNotes || '',
       notes: shared.notes || '',
+      pickupNumberId: shared.pickupNumberId || '',
       createdAt: new Date().toISOString()
     };
     store.receipts.push(receipt);
+    if (receipt.orderId) syncPickupStatuses(receipt.orderId);
     await saveData();
     return res.status(201).json(receipt);
   }
@@ -1577,6 +1836,7 @@ app.post('/api/verify/confirm', async function (req, res) {
   // Batch creation with deliveryGroupId
   var deliveryGroupId = generateId('dlv');
   var created = [];
+  var affectedOrders = new Set();
   items.forEach(function (item) {
     var receipt = {
       id: generateId('rct'),
@@ -1599,11 +1859,14 @@ app.post('/api/verify/confirm', async function (req, res) {
       discrepancyFlag: item.discrepancyFlag || false,
       discrepancyNotes: item.discrepancyNotes || '',
       notes: shared.notes || '',
+      pickupNumberId: item.pickupNumberId || '',
       createdAt: new Date().toISOString()
     };
     store.receipts.push(receipt);
     created.push(receipt);
+    if (receipt.orderId) affectedOrders.add(receipt.orderId);
   });
+  affectedOrders.forEach(function (oid) { syncPickupStatuses(oid); });
   await saveData();
   res.status(201).json({ deliveryGroupId: deliveryGroupId, receipts: created });
 });
@@ -1705,4 +1968,23 @@ console.log('Loaded ' + store.products.length + ' products, ' +
 app.listen(PORT, '0.0.0.0', function () {
   console.log('Seed Inventory server running at http://localhost:' + PORT);
   console.log('LAN access: http://<your-ip>:' + PORT);
+
+  // Pull fresh forecasts from farm-budget on startup so data.json never serves stale numbers.
+  // Delay 3s to allow farm-budget to finish its own startup if both restart together.
+  setTimeout(async function () {
+    try {
+      var pullUrl = budgetUrl('/api/forecast');
+      var response = await fetch(pullUrl);
+      if (!response.ok) { console.warn('[startup-sync] Farm Budget returned', response.status); return; }
+      var data = await response.json();
+      var cropYear = store.settings.cropYear || 2026;
+      var result = applyForecastSync(data, cropYear);
+      var catResult = await syncAllProductsFromBudget();
+      await saveData();
+      console.log('[startup-sync] Forecasts synced — created:' + result.created + ' updated:' + result.updated + ' removed:' + result.removed);
+      if (catResult.changed) console.log('[startup-sync] Product catalog updated — ' + catResult.products + ' products, ' + catResult.seeds + ' seeds checked');
+    } catch (err) {
+      console.warn('[startup-sync] Could not reach Farm Budget:', err.message);
+    }
+  }, 3000);
 });

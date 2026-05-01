@@ -6,8 +6,9 @@
   var currentField = null;
   var isNew = false;
   var foActiveFilter = 'all'; // 'all' | 'planned' | 'confirmed' | 'disregarded'
+  var foViewMode = 'perAcre'; // 'perAcre' | 'perField'
 
-  window.openFieldEditor = function (field, enterpriseId, defaultSystemCode) {
+  window.openFieldEditor = function (field, enterpriseId, defaultSystemCode, defaultSection) {
     if (field) {
       currentField = JSON.parse(JSON.stringify(field)); // deep copy
       isNew = false;
@@ -42,15 +43,18 @@
     updatePreview();
     updateNavBadges();
     updateSplitBanner();
-    // Reset nav to Field Info on open
+    // Reset nav — jump to defaultSection if provided, otherwise Field Info
     var navItems = document.querySelectorAll('.ed-nav-item');
     var panels = document.querySelectorAll('.editor-section-panel');
     navItems.forEach(function (li) { li.classList.remove('active'); });
     panels.forEach(function (p) { p.classList.remove('active'); });
-    var firstNav = document.querySelector('.ed-nav-item[data-section="identity"]');
-    var firstPanel = document.querySelector('.editor-section-panel[data-section="identity"]');
-    if (firstNav) firstNav.classList.add('active');
-    if (firstPanel) firstPanel.classList.add('active');
+    var startSection = defaultSection || 'identity';
+    var startNav = document.querySelector('.ed-nav-item[data-section="' + startSection + '"]') ||
+                   document.querySelector('.ed-nav-item[data-section="identity"]');
+    var startPanel = document.querySelector('.editor-section-panel[data-section="' + startSection + '"]') ||
+                     document.querySelector('.editor-section-panel[data-section="identity"]');
+    if (startNav) startNav.classList.add('active');
+    if (startPanel) startPanel.classList.add('active');
     overlay.style.display = 'flex';
     requestAnimationFrame(function () {
       overlay.classList.add('visible');
@@ -712,6 +716,8 @@
       var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
       var costPerAcre = (inp.quantity || 0) * appPrice;
       var unitLabel = product ? (product.unit || '') : '';
+      var purchaseUnit = product ? (product.purchaseUnit || unitLabel) : unitLabel;
+      var conversionRate = product ? (product.conversionRate || 1) : 1;
       var rateDisplay = (inp.quantity || 0) + (unitLabel ? ' ' + unitLabel : '');
       allItems.push({
         name: name,
@@ -720,11 +726,22 @@
         sourceIdx: idx,
         costPerAcre: costPerAcre,
         rateDisplay: rateDisplay,
+        unitLabel: unitLabel,
+        purchaseUnit: purchaseUnit,
+        conversionRate: conversionRate,
         passStatus: inp.passStatus || 'planned',
         confirmedDate: inp.confirmedDate || null,
         confirmedBy: inp.confirmedBy || null,
         actualQuantity: inp.actualQuantity !== undefined ? inp.actualQuantity : null,
-        statusNote: inp.statusNote || null
+        statusNote: inp.statusNote || null,
+        invoiceCostTotal: inp.invoiceCostTotal != null ? inp.invoiceCostTotal : null,
+        invoiceQtyTotal: inp.invoiceQtyTotal != null ? inp.invoiceQtyTotal : null,
+        invoiceAcres: inp.invoiceAcres != null ? inp.invoiceAcres : null,
+        invoiceNumber: inp.invoiceNumber || null,
+        invoiceVendor: inp.invoiceVendor || null,
+        invoiceDate: inp.invoiceDate || null,
+        invoiceUnit: inp.invoiceUnit || null,
+        foSortOrder: inp.foSortOrder != null ? inp.foSortOrder : null
       });
     });
 
@@ -754,7 +771,8 @@
         passStatus: m.passStatus || 'planned',
         confirmedDate: m.confirmedDate || null,
         confirmedBy: m.confirmedBy || null,
-        statusNote: m.statusNote || null
+        statusNote: m.statusNote || null,
+        foSortOrder: m.foSortOrder != null ? m.foSortOrder : null
       });
     });
 
@@ -818,6 +836,15 @@
       groupsMap[group].push(item);
     });
 
+    // Sort each group by foSortOrder (items without it preserve insertion order via globalIdx)
+    window.FieldOpsGroups.GROUP_ORDER.forEach(function (g) {
+      groupsMap[g].sort(function (a, b) {
+        var aOrd = a.foSortOrder != null ? a.foSortOrder : Infinity;
+        var bOrd = b.foSortOrder != null ? b.foSortOrder : Infinity;
+        return aOrd !== bOrd ? aOrd - bOrd : a.globalIdx - b.globalIdx;
+      });
+    });
+
     // Render groups
     var html = '';
     var grandTotal = 0;
@@ -833,9 +860,13 @@
       var groupFieldTotal = Calc.round2(groupSubtotal * acres);
       var subtotalDisplay = isOperator ? '' : '$' + util.formatNum(Calc.round2(groupSubtotal), 2) + '/ac';
 
-      var confirmedInGroup = items.filter(function (i) { return i.passStatus === 'confirmed'; }).length;
+      var nonSeedItems = items.filter(function (i) { return i.itemType !== 'seed'; });
+      var confirmedInGroup = nonSeedItems.filter(function (i) { return i.passStatus === 'confirmed'; }).length;
+      var allConfirmed = nonSeedItems.length > 0 && confirmedInGroup === nonSeedItems.length;
       var progressHtml = confirmedInGroup > 0
-        ? '<span class="fo-group-progress">' + confirmedInGroup + '/' + items.length + ' confirmed</span>'
+        ? '<span class="fo-group-progress" style="' + (allConfirmed ? 'color:var(--primary)' : '') + '">' +
+          (allConfirmed ? '&#10003; done' : confirmedInGroup + '/' + nonSeedItems.length + ' confirmed') +
+          '</span>'
         : '';
 
       var rowsHtml = '';
@@ -851,7 +882,9 @@
           if (status === 'confirmed') {
             var dateStr = item.confirmedDate ? item.confirmedDate.slice(0, 10) : '';
             var byStr = item.confirmedBy ? ' · ' + util.escHtml(item.confirmedBy) : '';
-            chipHtml = '<span class="fo-status-chip fo-chip-confirmed" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '">&#10003; ' + util.escHtml(dateStr) + byStr + '</span>';
+            var invStr = item.invoiceNumber ? ' · #' + util.escHtml(item.invoiceNumber) : '';
+            var vendorTitle = item.invoiceVendor ? ' title="' + util.escHtml(item.invoiceVendor) + '"' : '';
+            chipHtml = '<span class="fo-status-chip fo-chip-confirmed" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '"' + vendorTitle + '>&#10003; ' + util.escHtml(dateStr) + byStr + invStr + '</span>';
           } else if (status === 'disregarded') {
             chipHtml = '<span class="fo-status-chip fo-chip-disregarded" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '">&#8212; disregarded</span>';
           } else {
@@ -861,10 +894,15 @@
 
         // Delta display for confirmed inputs where actual differs from planned
         var deltaHtml = '';
-        if (status === 'confirmed' && item.actualQuantity !== null && (item.sourceType === 'input' || item.sourceType === 'custom')) {
-          var sourceInp = (currentField.inputs || [])[item.sourceIdx];
-          var plannedQ = sourceInp ? (sourceInp.quantity || 0) : 0;
-          if (Math.abs(item.actualQuantity - plannedQ) > 0.001) {
+        var sourceInp = (item.sourceType === 'input' || item.sourceType === 'custom') ? (currentField.inputs || [])[item.sourceIdx] : null;
+        if (status === 'confirmed' && item.actualQuantity !== null && sourceInp) {
+          var plannedQ = sourceInp.quantity || 0;
+          if (foViewMode === 'perField' && item.invoiceQtyTotal != null) {
+            var plannedFieldQty = Calc.round2(plannedQ * acres);
+            if (Math.abs(item.invoiceQtyTotal - plannedFieldQty) > 0.01) {
+              deltaHtml = '<br><span style="font-size:0.65rem;color:var(--text-light)">planned: ' + plannedFieldQty + ', inv: ' + item.invoiceQtyTotal + '</span>';
+            }
+          } else if (foViewMode === 'perAcre' && Math.abs(item.actualQuantity - plannedQ) > 0.001) {
             deltaHtml = '<br><span style="font-size:0.65rem;color:var(--text-light)">planned: ' + plannedQ + ', actual: ' + item.actualQuantity + '</span>';
           }
         }
@@ -873,10 +911,32 @@
         var removeTd = isSeed
           ? '<td style="text-align:center"><span style="font-size:0.65rem;color:var(--text-light)">Seed tab</span></td>'
           : '<td><button class="btn-danger fo-remove" data-item-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.68rem">X</button></td>';
-        var costDisplay = item.itemType === 'seed'
-          ? '<span style="font-size:0.7rem;color:var(--text-light)">see Seed tab</span>'
-          : '$' + util.formatNum(Calc.round2(item.costPerAcre), 2);
-        var totalDisplay = item.itemType === 'seed' ? '—' : '$' + util.formatNum(fieldTotal, 2);
+        // Per-field view: derive field-level qty and use invoice cost when available
+        var rateDisplayFinal, costDisplay, totalDisplay;
+        if (foViewMode === 'perField' && !isSeed) {
+          if (item.sourceType === 'input' || item.sourceType === 'custom') {
+            var fConverted;
+            if (item.invoiceQtyTotal != null) {
+              fConverted = { qty: item.invoiceQtyTotal, unit: item.invoiceUnit || item.purchaseUnit || item.unitLabel };
+            } else {
+              var rawFieldQty = Calc.round2((sourceInp ? (sourceInp.quantity || 0) : 0) * acres);
+              var cr = item.conversionRate || 1;
+              fConverted = { qty: Math.round(rawFieldQty / cr * 1000) / 1000, unit: item.purchaseUnit || item.unitLabel };
+            }
+            rateDisplayFinal = util.formatNum(fConverted.qty, 3) + (fConverted.unit ? ' ' + fConverted.unit : '');
+          } else {
+            rateDisplayFinal = item.rateDisplay;
+          }
+          var fieldCost = item.invoiceCostTotal != null ? item.invoiceCostTotal : fieldTotal;
+          costDisplay = '$' + util.formatNum(fieldCost, 2);
+          totalDisplay = '<span style="font-size:0.7rem;color:var(--text-light)">$' + util.formatNum(Calc.round2(item.costPerAcre), 2) + '/ac</span>';
+        } else {
+          rateDisplayFinal = item.rateDisplay;
+          costDisplay = item.itemType === 'seed'
+            ? '<span style="font-size:0.7rem;color:var(--text-light)">see Seed tab</span>'
+            : '$' + util.formatNum(Calc.round2(item.costPerAcre), 2);
+          totalDisplay = item.itemType === 'seed' ? '—' : '$' + util.formatNum(fieldTotal, 2);
+        }
         rowsHtml += '<tr' + rowClass + ' data-global-idx="' + item.globalIdx + '" data-item-type="' + item.itemType + '" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '"' + (!isSeed ? ' data-drag-idx="' + item.sourceIdx + '"' : '') + '>' +
           dragTd +
           (isSeed
@@ -886,14 +946,14 @@
           '<td>' + chipHtml + '</td>' +
           (isSeed
             ? '<td class="number" style="font-size:0.75rem">' + util.escHtml(item.rateDisplay) + '</td>'
-            : '<td class="number fo-rate-cell" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.75rem;cursor:pointer;text-decoration:underline dotted" title="Click to edit rate">' + util.escHtml(item.rateDisplay) + deltaHtml + '</td>') +
+            : '<td class="number fo-rate-cell" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.75rem;cursor:pointer;text-decoration:underline dotted" title="Click to edit rate">' + util.escHtml(rateDisplayFinal) + deltaHtml + '</td>') +
           (isOperator ? '' : '<td class="number" style="font-size:0.78rem">' + costDisplay + '</td>') +
           (isOperator ? '' : '<td class="number" style="font-size:0.78rem">' + totalDisplay + '</td>') +
           removeTd +
           '</tr>';
       });
 
-      html += '<div class="fo-group" data-group="' + util.escHtml(groupName) + '">' +
+      html += '<div class="fo-group' + (allConfirmed ? ' fo-collapsed' : '') + '" data-group="' + util.escHtml(groupName) + '">' +
         '<div class="fo-group-header fo-group-toggle" data-group="' + util.escHtml(groupName) + '">' +
         '<span class="fo-group-chevron">&#9662;</span>' +
         '<span class="fo-group-name">' + util.escHtml(groupName) + '</span>' +
@@ -902,10 +962,16 @@
         '</div>' +
         '<div class="fo-group-body">' +
         '<table class="compact-table fo-table" style="width:100%">' +
-        '<thead><tr><th></th><th>Name</th><th>Type</th><th>Status</th><th>Rate</th>' + (isOperator ? '' : '<th>$/ac</th><th>Total $</th>') + '<th></th></tr></thead>' +
+        '<thead><tr><th></th><th>Name</th><th>Type</th><th>Status</th>' +
+        (foViewMode === 'perField' ? '<th>Field Qty</th>' : '<th>Rate</th>') +
+        (isOperator ? '' : (foViewMode === 'perField' ? '<th>Field $</th><th>$/ac</th>' : '<th>$/ac</th><th>Total $</th>')) +
+        '<th></th></tr></thead>' +
         '<tbody>' + rowsHtml + '</tbody>' +
         '</table>' +
         '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(groupName) + '" style="margin-top:0.4rem;font-size:0.72rem">+ Add to ' + util.escHtml(groupName) + '</button>' +
+        (items.some(function(i) { return (i.sourceType === 'input' || i.sourceType === 'custom') && i.passStatus === 'planned'; })
+          ? '<button class="btn-sm fo-enter-invoice" data-group="' + util.escHtml(groupName) + '" style="margin-top:0.4rem;margin-left:0.5rem;font-size:0.72rem">&#128203; Enter Invoice</button>'
+          : '') +
         '</div>' +
         '</div>';
     });
@@ -998,8 +1064,26 @@
         var sourceItem = arr[sourceIdx];
         if (!sourceItem) return;
 
-        var currentVal = sourceType === 'machinery' ? (sourceItem.passes || 1) : (sourceItem.quantity || 0);
-        var label = sourceType === 'machinery' ? 'passes' : 'qty';
+        var isInputType = sourceType !== 'machinery';
+        var usePerField = foViewMode === 'perField' && isInputType;
+        var currentVal, label, perFieldCr, perFieldAcres;
+        if (sourceType === 'machinery') {
+          currentVal = sourceItem.passes || 1;
+          label = 'passes';
+        } else if (usePerField) {
+          var pfProduct = (window.refData.products || []).find(function (p) {
+            return p.name.trim().toLowerCase() === (sourceItem.productName || '').trim().toLowerCase();
+          });
+          perFieldCr    = pfProduct ? (pfProduct.conversionRate || 1) : 1;
+          var pfUnit    = pfProduct ? (pfProduct.purchaseUnit || pfProduct.unit || '') : '';
+          perFieldAcres = currentField.acres || 0;
+          var rawFQ     = Calc.round2((sourceItem.quantity || 0) * perFieldAcres);
+          currentVal    = Math.round(rawFQ / perFieldCr * 1000) / 1000;
+          label         = pfUnit || 'total';
+        } else {
+          currentVal = sourceItem.quantity || 0;
+          label = 'qty';
+        }
         var origHtml = cell.innerHTML;
 
         cell.innerHTML = '<input type="number" class="fo-rate-input" value="' + currentVal + '" step="0.1" min="0" ' +
@@ -1015,6 +1099,10 @@
           if (!isNaN(newVal) && newVal >= 0) {
             if (sourceType === 'machinery') {
               sourceItem.passes = newVal;
+            } else if (usePerField) {
+              if (perFieldAcres > 0) {
+                sourceItem.quantity = Calc.round2((newVal * perFieldCr) / perFieldAcres);
+              }
             } else {
               sourceItem.quantity = newVal;
             }
@@ -1088,6 +1176,29 @@
       };
     }
 
+    // Wire per-ac / per-field view toggle
+    var viewAcBtn = document.getElementById('fo-view-perac');
+    var viewFieldBtn = document.getElementById('fo-view-perfield');
+    if (viewAcBtn && viewFieldBtn) {
+      function syncViewBtns() {
+        viewAcBtn.style.background    = foViewMode === 'perAcre'  ? 'var(--primary)' : '';
+        viewAcBtn.style.color         = foViewMode === 'perAcre'  ? 'var(--bg)'      : '';
+        viewFieldBtn.style.background = foViewMode === 'perField' ? 'var(--primary)' : '';
+        viewFieldBtn.style.color      = foViewMode === 'perField' ? 'var(--bg)'      : '';
+      }
+      viewAcBtn.onclick = function () {
+        foViewMode = 'perAcre';
+        syncViewBtns();
+        renderFieldOpsPanel();
+      };
+      viewFieldBtn.onclick = function () {
+        foViewMode = 'perField';
+        syncViewBtns();
+        renderFieldOpsPanel();
+      };
+      syncViewBtns();
+    }
+
     // Wire status chip clicks — confirm/disregard/revert form
     container.querySelectorAll('.fo-status-chip').forEach(function (chip) {
       chip.addEventListener('click', function () {
@@ -1107,15 +1218,84 @@
         var today = new Date().toISOString().slice(0, 10);
         var isInputType = sourceType === 'input' || sourceType === 'custom';
         var plannedQty = isInputType ? (sourceItem.quantity || 0) : null;
+        var sourceProduct = isInputType ? (window.refData.products || []).find(function (p) {
+          return p.name.trim().toLowerCase() === (sourceItem.productName || '').trim().toLowerCase();
+        }) : null;
+        var sourceUnit = sourceProduct ? (sourceProduct.unit || '') : '';
+        var fieldAcresForForm = currentField.acres || 0;
+        var cropAcresForForm = currentField.plantedAcres > 0 ? currentField.plantedAcres : fieldAcresForForm;
+        var sourcePurchaseUnit = sourceProduct ? (sourceProduct.purchaseUnit || sourceUnit) : sourceUnit;
+        var sourceConvRate = sourceProduct ? (sourceProduct.conversionRate || 1) : 1;
+        var hintQtyRaw = isInputType ? Calc.round2((sourceItem.quantity || 0) * fieldAcresForForm) : 0;
+        var hintQtyTotal = sourceConvRate !== 1 ? Math.round(hintQtyRaw / sourceConvRate * 1000) / 1000 : hintQtyRaw;
+        var hintUnit = sourcePurchaseUnit;
 
         var formRow = document.createElement('tr');
         formRow.className = 'fo-confirm-form-row';
 
         var formHtml = '<td colspan="8"><div class="fo-confirm-form-inner">';
         if (currentStatus !== 'planned') {
-          // Confirmed or disregarded — show revert only
-          formHtml += '<span style="font-size:0.75rem;color:var(--text-light)">Marked as <strong>' + util.escHtml(currentStatus) + '</strong></span>' +
-            '<button class="btn-sm fo-cf-revert" style="font-size:0.72rem">&#8629; Revert to Planned</button>' +
+          // Confirmed — show edit invoice form pre-filled with existing values
+          if (currentStatus === 'confirmed' && isInputType) {
+            var eDate   = sourceItem.confirmedDate || today;
+            var eBy     = sourceItem.confirmedBy || '';
+            var eNote   = sourceItem.statusNote || '';
+            var eInvNum = sourceItem.invoiceNumber || '';
+            var eVendor = sourceItem.invoiceVendor || '';
+            var eAcres  = sourceItem.invoiceAcres != null ? sourceItem.invoiceAcres : fieldAcresForForm;
+            var eQty    = sourceItem.invoiceQtyTotal != null ? sourceItem.invoiceQtyTotal : (hintQtyTotal || '');
+            var eCost   = sourceItem.invoiceCostTotal != null ? sourceItem.invoiceCostTotal : '';
+            var eUnit   = sourceItem.invoiceUnit || sourcePurchaseUnit || sourceUnit;
+            formHtml +=
+              '<span style="font-size:0.72rem;color:var(--text-light)">Date:</span>' +
+              '<input type="date" class="fo-cf-date" value="' + util.escHtml(eDate) + '" style="font-size:0.75rem;padding:0.15rem">' +
+              '<span style="font-size:0.72rem;color:var(--text-light)">Invoice #:</span>' +
+              '<input type="text" class="fo-cf-inv-num" value="' + util.escHtml(eInvNum) + '" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+              '<span style="font-size:0.72rem;color:var(--text-light)">Vendor:</span>' +
+              '<input type="text" class="fo-cf-inv-vendor" value="' + util.escHtml(eVendor) + '" style="font-size:0.75rem;width:80px;padding:0.15rem">' +
+              '<span style="font-size:0.72rem;color:var(--text-light)">Inv. Acres:</span>' +
+              '<input type="number" class="fo-cf-inv-acres" value="' + eAcres + '" step="0.1" style="font-size:0.75rem;width:55px;padding:0.15rem">' +
+              '<span style="font-size:0.72rem;color:var(--text-light)">Field Qty:</span>' +
+              '<input type="number" class="fo-cf-inv-qty" value="' + eQty + '" step="0.001" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+              '<span style="font-size:0.8rem;font-weight:600;margin-left:2px;min-width:28px;display:inline-block">' + util.escHtml(eUnit) + '</span>' +
+              '<span style="font-size:0.72rem;color:var(--text-light)">Total $:</span>' +
+              '<input type="number" class="fo-cf-inv-cost" value="' + eCost + '" step="0.01" style="font-size:0.75rem;width:70px;padding:0.15rem">' +
+              '<span style="font-size:0.72rem;color:var(--text-light)">By:</span>' +
+              '<input type="text" class="fo-cf-by" value="' + util.escHtml(eBy) + '" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+              '<span style="font-size:0.72rem;color:var(--text-light)">Note:</span>' +
+              '<input type="text" class="fo-cf-note" value="' + util.escHtml(eNote) + '" style="font-size:0.75rem;width:80px;padding:0.15rem">' +
+              '<button class="btn-sm btn-primary fo-cf-confirm" style="font-size:0.72rem">&#10003; Save</button>' +
+              '<button class="btn-sm fo-cf-revert" style="font-size:0.72rem">&#8629; Revert</button>' +
+              '<button class="btn-sm fo-cf-cancel" style="font-size:0.72rem">Cancel</button>';
+          } else {
+            // Disregarded or non-input confirmed — revert only
+            formHtml += '<span style="font-size:0.75rem;color:var(--text-light)">Marked as <strong>' + util.escHtml(currentStatus) + '</strong></span>' +
+              '<button class="btn-sm fo-cf-revert" style="font-size:0.72rem">&#8629; Revert to Planned</button>' +
+              '<button class="btn-sm fo-cf-cancel" style="font-size:0.72rem">Cancel</button>';
+          }
+        } else if (foViewMode === 'perField' && isInputType) {
+          // Invoice (per-field) entry form
+          formHtml +=
+            '<span style="font-size:0.72rem;color:var(--text-light)">Date:</span>' +
+            '<input type="date" class="fo-cf-date" value="' + today + '" style="font-size:0.75rem;padding:0.15rem">' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">Invoice #:</span>' +
+            '<input type="text" class="fo-cf-inv-num" placeholder="optional" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">Vendor:</span>' +
+            '<input type="text" class="fo-cf-inv-vendor" placeholder="optional" style="font-size:0.75rem;width:80px;padding:0.15rem">' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">Inv. Acres:</span>' +
+            '<input type="number" class="fo-cf-inv-acres" value="' + fieldAcresForForm + '" step="0.1" style="font-size:0.75rem;width:55px;padding:0.15rem">' +
+            '<span style="font-size:0.7rem;color:var(--text-light)">(crop ac: ' + cropAcresForForm + ')</span>' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">Field Qty:</span>' +
+            '<input type="number" class="fo-cf-inv-qty" value="' + (hintQtyTotal || '') + '" step="0.001" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+            '<span style="font-size:0.8rem;font-weight:600;margin-left:2px;min-width:28px;display:inline-block">' + util.escHtml(hintUnit || '') + '</span>' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">Total $:</span>' +
+            '<input type="number" class="fo-cf-inv-cost" placeholder="0.00" step="0.01" style="font-size:0.75rem;width:70px;padding:0.15rem">' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">Note:</span>' +
+            '<input type="text" class="fo-cf-note" placeholder="optional" style="font-size:0.75rem;width:80px;padding:0.15rem">' +
+            '<span style="font-size:0.72rem;color:var(--text-light)">By:</span>' +
+            '<input type="text" class="fo-cf-by" placeholder="name" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+            '<button class="btn-sm btn-primary fo-cf-confirm" style="font-size:0.72rem">&#10003; Confirm</button>' +
+            '<button class="btn-sm fo-cf-disregard" style="font-size:0.72rem">&#8212; Disregard</button>' +
             '<button class="btn-sm fo-cf-cancel" style="font-size:0.72rem">Cancel</button>';
         } else {
           formHtml += '<span style="font-size:0.72rem;color:var(--text-light)">Date:</span>' +
@@ -1136,6 +1316,14 @@
         formRow.innerHTML = formHtml;
         parentRow.insertAdjacentElement('afterend', formRow);
 
+        formRow.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            var btn = formRow.querySelector('.fo-cf-confirm');
+            if (btn) btn.click();
+          }
+        });
+
         formRow.querySelector('.fo-cf-cancel').addEventListener('click', function () { formRow.remove(); });
 
         var confirmBtn = formRow.querySelector('.fo-cf-confirm');
@@ -1144,12 +1332,31 @@
             var date = formRow.querySelector('.fo-cf-date').value;
             var note = formRow.querySelector('.fo-cf-note').value.trim();
             var by = formRow.querySelector('.fo-cf-by').value.trim();
-            var qtyInput = formRow.querySelector('.fo-cf-qty');
             sourceItem.passStatus = 'confirmed';
             sourceItem.confirmedDate = date || today;
             sourceItem.statusNote = note || null;
             sourceItem.confirmedBy = by || null;
-            if (isInputType && qtyInput) sourceItem.actualQuantity = parseFloat(qtyInput.value) || sourceItem.quantity;
+            var invCostEl = formRow.querySelector('.fo-cf-inv-cost');
+            if (invCostEl) {
+              // Per-field invoice entry
+              var invNum = (formRow.querySelector('.fo-cf-inv-num').value || '').trim();
+              var invVendor = (formRow.querySelector('.fo-cf-inv-vendor').value || '').trim();
+              var invDate = formRow.querySelector('.fo-cf-inv-date') ? formRow.querySelector('.fo-cf-inv-date').value : (date || today);
+              var invAcres = parseFloat(formRow.querySelector('.fo-cf-inv-acres').value) || fieldAcresForForm;
+              var invQty = parseFloat(formRow.querySelector('.fo-cf-inv-qty').value) || 0;
+              var invCost = parseFloat(invCostEl.value) || 0;
+              sourceItem.invoiceNumber = invNum || null;
+              sourceItem.invoiceVendor = invVendor || null;
+              sourceItem.invoiceDate = invDate || null;
+              sourceItem.invoiceAcres = invAcres || null;
+              sourceItem.invoiceQtyTotal = invQty || null;
+              sourceItem.invoiceCostTotal = invCost || null;
+              sourceItem.invoiceUnit = sourcePurchaseUnit || sourceUnit;
+              sourceItem.actualQuantity = invAcres > 0 && invQty > 0 ? Calc.round2(invQty / invAcres) : (sourceItem.quantity || 0);
+            } else {
+              var qtyInput = formRow.querySelector('.fo-cf-qty');
+              if (isInputType && qtyInput) sourceItem.actualQuantity = parseFloat(qtyInput.value) || sourceItem.quantity;
+            }
             renderFieldOpsPanel();
             updatePreview();
           });
@@ -1178,6 +1385,13 @@
             sourceItem.actualQuantity = null;
             sourceItem.statusNote = null;
             sourceItem.confirmedBy = null;
+            sourceItem.invoiceCostTotal = null;
+            sourceItem.invoiceQtyTotal = null;
+            sourceItem.invoiceAcres = null;
+            sourceItem.invoiceNumber = null;
+            sourceItem.invoiceVendor = null;
+            sourceItem.invoiceDate = null;
+            sourceItem.invoiceUnit = null;
             renderFieldOpsPanel();
             updatePreview();
           });
@@ -1280,6 +1494,125 @@
       });
     });
 
+    // Wire "Enter Invoice" batch form buttons
+    container.querySelectorAll('.fo-enter-invoice').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var groupName = btn.getAttribute('data-group');
+        var groupEl = btn.closest('.fo-group');
+        if (!groupEl) return;
+
+        // Toggle: close if already open
+        var existing = groupEl.querySelector('.fo-invoice-batch-form');
+        if (existing) { existing.remove(); return; }
+
+        var today = new Date().toISOString().slice(0, 10);
+        var fieldAcres = currentField.acres || 0;
+        var cropAcres  = currentField.plantedAcres > 0 ? currentField.plantedAcres : fieldAcres;
+
+        // Collect planned input/custom items in this group, respecting foSortOrder
+        var plannedItems = [];
+        (currentField.inputs || []).forEach(function (inp, idx) {
+          if (inp.passStatus && inp.passStatus !== 'planned') return;
+          var iType = (inp.productName || '').toLowerCase().indexOf('application -') === 0 ? 'custom' : 'input';
+          var grp = inp.operationGroup || window.FieldOpsGroups.classifyItem(inp.productName || '', iType);
+          if (grp !== groupName) return;
+          var prod = (window.refData.products || []).find(function (p) {
+            return p.name.trim().toLowerCase() === (inp.productName || '').trim().toLowerCase();
+          });
+          var rawUnit = prod ? (prod.unit || '') : '';
+          var batchCr = prod ? (prod.conversionRate || 1) : 1;
+          var batchPu = prod ? (prod.purchaseUnit || rawUnit) : rawUnit;
+          var hintRaw = Calc.round2((inp.quantity || 0) * fieldAcres);
+          var hintQty = batchCr !== 1 ? Math.round(hintRaw / batchCr * 1000) / 1000 : hintRaw;
+          plannedItems.push({ idx: idx, name: inp.productName || '', hintQty: hintQty, unit: batchPu, sortOrder: inp.foSortOrder != null ? inp.foSortOrder : idx * 100 });
+        });
+        plannedItems.sort(function (a, b) { return a.sortOrder - b.sortOrder; });
+        if (!plannedItems.length) return;
+
+        var rowsHtml = plannedItems.map(function (pi) {
+          return '<tr data-inp-idx="' + pi.idx + '">' +
+            '<td style="font-size:0.78rem;padding:0.2rem 0.4rem;white-space:nowrap">' + util.escHtml(pi.name) + '</td>' +
+            '<td style="padding:0.2rem 0.2rem"><input type="number" class="fo-inv-item-qty" value="' + (pi.hintQty || '') + '" step="0.001" style="width:62px;font-size:0.75rem;padding:0.15rem"></td>' +
+            '<td style="padding:0.2rem 0.2rem"><input type="text" class="fo-inv-item-unit" value="' + util.escHtml(pi.unit) + '" style="width:40px;font-size:0.75rem;padding:0.15rem"></td>' +
+            '<td style="padding:0.2rem 0.2rem"><input type="number" class="fo-inv-item-cost" placeholder="0.00" step="0.01" style="width:70px;font-size:0.75rem;padding:0.15rem"></td>' +
+            '</tr>';
+        }).join('');
+
+        var batchHtml =
+          '<div class="fo-invoice-batch-form" style="margin-top:0.5rem;padding:0.6rem;border:1px solid var(--border);border-radius:4px;background:var(--surface-2,var(--surface))">' +
+          '<div style="display:flex;flex-wrap:wrap;gap:0.35rem;align-items:center;margin-bottom:0.5rem">' +
+          '<span style="font-size:0.72rem;color:var(--text-light)">Invoice #:</span>' +
+          '<input type="text" class="fo-inv-num" style="width:70px;font-size:0.75rem;padding:0.15rem">' +
+          '<span style="font-size:0.72rem;color:var(--text-light)">Vendor:</span>' +
+          '<input type="text" class="fo-inv-vendor" placeholder="e.g. DeLong Co." style="width:100px;font-size:0.75rem;padding:0.15rem">' +
+          '<span style="font-size:0.72rem;color:var(--text-light)">Date:</span>' +
+          '<input type="date" class="fo-inv-date" value="' + today + '" style="font-size:0.75rem;padding:0.15rem">' +
+          '<span style="font-size:0.72rem;color:var(--text-light)">Inv. Acres:</span>' +
+          '<input type="number" class="fo-inv-acres" value="' + fieldAcres + '" step="0.1" style="width:55px;font-size:0.75rem;padding:0.15rem">' +
+          '<span style="font-size:0.7rem;color:var(--text-light)">(crop ac: ' + cropAcres + ')</span>' +
+          '<span style="font-size:0.72rem;color:var(--text-light)">By:</span>' +
+          '<input type="text" class="fo-inv-by" style="width:65px;font-size:0.75rem;padding:0.15rem">' +
+          '<span style="font-size:0.72rem;color:var(--text-light)">Note:</span>' +
+          '<input type="text" class="fo-inv-note" style="width:90px;font-size:0.75rem;padding:0.15rem">' +
+          '</div>' +
+          '<table style="width:auto;font-size:0.78rem;margin-bottom:0.5rem;border-collapse:collapse">' +
+          '<thead><tr>' +
+          '<th style="text-align:left;padding:0.2rem 0.4rem;font-size:0.7rem;color:var(--text-light);font-weight:normal">Product</th>' +
+          '<th style="padding:0.2rem 0.2rem;font-size:0.7rem;color:var(--text-light);font-weight:normal">Field Qty</th>' +
+          '<th style="padding:0.2rem 0.2rem;font-size:0.7rem;color:var(--text-light);font-weight:normal">Unit</th>' +
+          '<th style="padding:0.2rem 0.2rem;font-size:0.7rem;color:var(--text-light);font-weight:normal">Total $</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rowsHtml + '</tbody>' +
+          '</table>' +
+          '<div style="display:flex;gap:0.4rem">' +
+          '<button class="btn-sm fo-inv-confirm-all" style="font-size:0.72rem;background:var(--primary);color:var(--bg)">&#10003; Confirm All</button>' +
+          '<button class="btn-sm fo-inv-cancel" style="font-size:0.72rem">Cancel</button>' +
+          '</div></div>';
+
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = batchHtml;
+        btn.parentElement.appendChild(wrapper.firstElementChild);
+
+        var batchForm = groupEl.querySelector('.fo-invoice-batch-form');
+
+        batchForm.querySelector('.fo-inv-cancel').addEventListener('click', function () { batchForm.remove(); });
+
+        batchForm.querySelector('.fo-inv-confirm-all').addEventListener('click', function () {
+          var invNum    = batchForm.querySelector('.fo-inv-num').value.trim();
+          var invVendor = batchForm.querySelector('.fo-inv-vendor').value.trim();
+          var invDate   = batchForm.querySelector('.fo-inv-date').value;
+          var invAcres  = parseFloat(batchForm.querySelector('.fo-inv-acres').value) || fieldAcres;
+          var invBy     = batchForm.querySelector('.fo-inv-by').value.trim();
+          var invNote   = batchForm.querySelector('.fo-inv-note').value.trim();
+          var today2    = new Date().toISOString().slice(0, 10);
+
+          batchForm.querySelectorAll('tbody tr[data-inp-idx]').forEach(function (row) {
+            var inpIdx = parseInt(row.getAttribute('data-inp-idx'), 10);
+            var inp = (currentField.inputs || [])[inpIdx];
+            if (!inp) return;
+            var qty  = parseFloat(row.querySelector('.fo-inv-item-qty').value) || null;
+            var unit = row.querySelector('.fo-inv-item-unit').value.trim() || null;
+            var cost = parseFloat(row.querySelector('.fo-inv-item-cost').value) || null;
+            inp.passStatus       = 'confirmed';
+            inp.confirmedDate    = invDate || today2;
+            inp.confirmedBy      = invBy || null;
+            inp.statusNote       = invNote || null;
+            inp.invoiceNumber    = invNum || null;
+            inp.invoiceVendor    = invVendor || null;
+            inp.invoiceDate      = invDate || null;
+            inp.invoiceAcres     = invAcres || null;
+            inp.invoiceQtyTotal  = qty;
+            inp.invoiceUnit      = unit;
+            inp.invoiceCostTotal = cost;
+            inp.actualQuantity   = (invAcres > 0 && qty) ? Calc.round2(qty / invAcres) : inp.quantity;
+          });
+
+          renderFieldOpsPanel();
+          updatePreview();
+        });
+      });
+    });
+
     // Wire cross-group drag-and-drop
     makeFoGroupsDraggable();
   }
@@ -1288,6 +1621,12 @@
     var container = document.getElementById('fo-groups-container');
     if (!container) return;
     var dragSrc = null; // { sourceType, sourceIdx, origGroup }
+
+    function clearRowIndicators() {
+      container.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(function (r) {
+        r.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+    }
 
     container.querySelectorAll('.fo-table tbody tr[data-drag-idx]').forEach(function (row) {
       var handle = row.querySelector('.drag-handle');
@@ -1309,10 +1648,69 @@
       row.addEventListener('dragend', function () {
         row.draggable = false;
         row.classList.remove('drag-src');
+        clearRowIndicators();
         container.querySelectorAll('.fo-group').forEach(function (g) {
           g.classList.remove('fo-drop-target');
         });
         dragSrc = null;
+      });
+
+      // Within-group row reorder
+      row.addEventListener('dragover', function (e) {
+        if (!dragSrc) return;
+        var rowGroup = row.closest('.fo-group') ? row.closest('.fo-group').getAttribute('data-group') : null;
+        if (dragSrc.origGroup !== rowGroup) return;
+        var isSelf = row.getAttribute('data-source-type') === dragSrc.sourceType &&
+          parseInt(row.getAttribute('data-source-idx'), 10) === dragSrc.sourceIdx;
+        if (isSelf) return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        clearRowIndicators();
+        var rect = row.getBoundingClientRect();
+        row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-over-top' : 'drag-over-bottom');
+      });
+
+      row.addEventListener('dragleave', function () {
+        row.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+
+      row.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!dragSrc) return;
+        var rowGroup = row.closest('.fo-group') ? row.closest('.fo-group').getAttribute('data-group') : null;
+        if (dragSrc.origGroup !== rowGroup) return;
+        var tgtType = row.getAttribute('data-source-type');
+        var tgtIdx = parseInt(row.getAttribute('data-source-idx'), 10);
+        if (tgtType === dragSrc.sourceType && tgtIdx === dragSrc.sourceIdx) return;
+
+        var rect = row.getBoundingClientRect();
+        var insertAfter = e.clientY >= rect.top + rect.height / 2;
+
+        // Build current ordered list from DOM rows in this group
+        var groupEl = row.closest('.fo-group');
+        var domRows = Array.from(groupEl.querySelectorAll('tbody tr[data-source-type]'));
+        var ordered = domRows.map(function (r) {
+          return { sourceType: r.getAttribute('data-source-type'), sourceIdx: parseInt(r.getAttribute('data-source-idx'), 10) };
+        });
+
+        var srcPos = ordered.findIndex(function (i) { return i.sourceType === dragSrc.sourceType && i.sourceIdx === dragSrc.sourceIdx; });
+        var tgtPos = ordered.findIndex(function (i) { return i.sourceType === tgtType && i.sourceIdx === tgtIdx; });
+        if (srcPos === -1 || tgtPos === -1) return;
+
+        var moved = ordered.splice(srcPos, 1)[0];
+        var dest = tgtPos > srcPos ? tgtPos - 1 : tgtPos;
+        ordered.splice(insertAfter ? dest + 1 : dest, 0, moved);
+
+        // Write foSortOrder back to backing arrays
+        ordered.forEach(function (item, order) {
+          var arr = item.sourceType === 'machinery' ? currentField.machinery : currentField.inputs;
+          if (arr && arr[item.sourceIdx]) arr[item.sourceIdx].foSortOrder = order;
+        });
+
+        renderFieldOpsPanel();
+        updatePreview();
       });
     });
 
@@ -2294,51 +2692,89 @@
   // --- Program Template Integration ---
   function populateProgramDropdown() {
     var select = document.getElementById('ed-apply-program');
-    select.innerHTML = '<option value="">-- Select a program --</option>';
-    (window.refData.programs || []).forEach(function (prog) {
-      var opt = document.createElement('option');
-      opt.value = prog.id;
-      opt.textContent = prog.name + ' (' + (prog.crop || '--') + ' / ' + (prog.systemCode || '') + ')';
-      if (currentField && currentField.templateId === prog.id) {
-        opt.textContent += ' [current]';
-      }
-      select.appendChild(opt);
-    });
-    // Pre-select current template if set
+    select.innerHTML = '<option value="">-- Load Template --</option>';
+
+    var qpcs = window.refData.quickPlanConfig || [];
+    var programs = window.refData.programs || [];
+
+    // Quick Plan Config entries first (formatted as crop — tillage)
+    if (qpcs.length) {
+      var qpcGroup = document.createElement('optgroup');
+      qpcGroup.label = 'Templates';
+      qpcs.forEach(function (qpc) {
+        var label = [qpc.crop, qpc.variant && qpc.variant !== '—' ? qpc.variant : null, qpc.tillage]
+          .filter(Boolean).join(' — ');
+        var opt = document.createElement('option');
+        opt.value = 'qpc:' + qpc.id;
+        opt.textContent = label;
+        qpcGroup.appendChild(opt);
+      });
+      select.appendChild(qpcGroup);
+    }
+
+    // Raw programs as fallback
+    if (programs.length) {
+      var progGroup = document.createElement('optgroup');
+      progGroup.label = 'Programs';
+      programs.forEach(function (prog) {
+        var opt = document.createElement('option');
+        opt.value = 'prog:' + prog.id;
+        opt.textContent = prog.name + ' (' + (prog.crop || '--') + ')';
+        if (currentField && currentField.templateId === prog.id) {
+          opt.textContent += ' [current]';
+        }
+        progGroup.appendChild(opt);
+      });
+      select.appendChild(progGroup);
+    }
+
+    // Pre-select current template if set (raw program only)
     if (currentField && currentField.templateId) {
-      select.value = currentField.templateId;
+      select.value = 'prog:' + currentField.templateId;
     }
   }
 
   document.getElementById('ed-apply-program-btn').addEventListener('click', function () {
-    var progId = document.getElementById('ed-apply-program').value;
-    if (!progId) { util.showToast('Select a program first'); return; }
-    var prog = (window.refData.programs || []).find(function (p) { return p.id === progId; });
-    if (!prog) return;
+    var val = document.getElementById('ed-apply-program').value;
+    if (!val) { util.showToast('Select a template first'); return; }
 
-    if (!confirm('Apply "' + prog.name + '" to this field? This overwrites inputs, machinery, seed, yield, and crop data.')) return;
+    var inputProg, machineryProg, templateName;
 
-    // Copy agronomic data from program into currentField (in-memory)
-    currentField.crop = prog.crop || '';
-    currentField.systemCode = prog.systemCode || currentField.systemCode;
-    currentField.cropType = prog.cropType || currentField.cropType;
-    currentField.inputs = JSON.parse(JSON.stringify(prog.inputs || []));
+    if (val.indexOf('qpc:') === 0) {
+      var qpcId = val.slice(4);
+      var qpc = (window.refData.quickPlanConfig || []).find(function (c) { return c.id === qpcId; });
+      if (!qpc) { util.showToast('Template not found'); return; }
+      inputProg = (window.refData.programs || []).find(function (p) { return p.id === qpc.inputProgramId; });
+      machineryProg = (window.refData.machineryPrograms || []).find(function (p) { return p.id === qpc.machineryProgramId; });
+      templateName = [qpc.crop, qpc.variant && qpc.variant !== '—' ? qpc.variant : null, qpc.tillage]
+        .filter(Boolean).join(' — ');
+    } else {
+      var progId = val.slice(5); // strip "prog:"
+      inputProg = (window.refData.programs || []).find(function (p) { return p.id === progId; });
+      machineryProg = null;
+      templateName = inputProg ? inputProg.name : '';
+    }
+
+    if (!inputProg) { util.showToast('Program not found'); return; }
+
+    if (!confirm('Load inputs and passes from "' + templateName + '"?\nYield, seed, and crop settings will not be changed.')) return;
+
+    // Copy inputs from input program only
+    currentField.inputs = JSON.parse(JSON.stringify(inputProg.inputs || []));
     currentField.inputs.forEach(function (inp) { inp.id = util.generateId('inp'); });
-    currentField.seed = prog.seed ? JSON.parse(JSON.stringify(prog.seed)) : null;
-    currentField.seeds = prog.seeds ? JSON.parse(JSON.stringify(prog.seeds))
-      : (prog.seed ? [{ variety: prog.seed.variety || '', population: prog.seed.population || 0, acres: 0 }] : []);
-    currentField.machinery = JSON.parse(JSON.stringify(prog.machinery || []));
+
+    // Copy machinery: prefer machineryProg, fall back to inputProg
+    var machSource = (machineryProg || inputProg);
+    currentField.machinery = JSON.parse(JSON.stringify(machSource.machinery || []));
     currentField.machinery.forEach(function (m) { m.id = util.generateId('mach'); });
-    currentField.yieldPerAcre = prog.yieldPerAcre || 0;
-    currentField.yieldUnit = prog.yieldUnit || 'Bu';
-    currentField.cropInsurancePerAcre = prog.cropInsurancePerAcre || 0;
-    currentField.harvestMoisture = prog.harvestMoisture || 0;
-    currentField.buyerId = prog.buyerId || '';
-    currentField.templateId = prog.id;
+
+    currentField.templateId = inputProg.id;
+
+    // seed, yield, crop, cropType, systemCode, buyerId — never touched
 
     populateForm();
     updatePreview();
-    util.showToast('Program "' + prog.name + '" applied!');
+    util.showToast('Loaded "' + templateName + '" — inputs and passes updated');
   });
 
   document.getElementById('ed-save-as-program').addEventListener('click', function () {
