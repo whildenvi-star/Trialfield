@@ -10,6 +10,7 @@ import { AphPanel } from './aph-panel'
 import { CoverageMatrix } from './coverage-matrix'
 import { PayoutSimulator } from './payout-simulator'
 import { PricingStalenessBadge } from './pricing-staleness-badge'
+import { ProductionTracker } from './production-tracker'
 
 // SSR-guarded PDF button — @react-pdf/renderer cannot run on the server
 const InsurancePdfButton = dynamic(
@@ -561,6 +562,9 @@ export function InsuranceWorkspace({ initialPolicies, initialPricing, lastScrape
           </table>
         </div>
       )}
+
+      {/* Production vs Guarantee tracker — shown when policies have yield data */}
+      <ProductionTracker policies={policies} />
 
       {/* APH History — shown when a policy is selected */}
       {selectedPolicy && (

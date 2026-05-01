@@ -647,6 +647,142 @@ export function coverCropSummary(records: CluRecord[]) {
   return result
 }
 
+// ===== Management Zone Types =====
+
+export interface ManagementZone {
+  id: string
+  registry_field_id: string | null
+  name: string
+  geometry: GeoJSON.Polygon | null
+  organic_default: boolean
+  irrigated_default: boolean
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ZoneYearAttributes {
+  id: string
+  zone_id: string
+  crop_year: number
+  crop: string | null
+  variety: string | null
+  irrigated: boolean | null          // null = inherit zone default
+  organic: boolean | null            // null = inherit zone default
+  intended_use: string | null        // 'grain' | 'forage' | 'seed' | 'silage'
+  tillage: string | null             // A-G code
+  cover_crop: boolean | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CluBoundary {
+  id: string
+  crop_year: number
+  farm_number: string
+  tract_number: string
+  clu_label: string
+  geometry: GeoJSON.Polygon | null
+  fsa_acres: number | null
+  fsa_attributes: Record<string, unknown>  // verbatim .dbf fields
+  source_file: string | null
+  imported_at: string
+}
+
+export interface CoverageEvent {
+  id: string
+  zone_id: string | null
+  crop_year: number
+  source_adapter: 'fieldview' | 'jd_ops' | 'cnh_fieldops' | 'manual'
+  operation_type: 'planting' | 'application' | 'harvest'
+  op_date: string | null
+  geometry: GeoJSON.Polygon | null
+  applied_acres: number | null
+  product: string | null
+  rate: number | null
+  rate_unit: string | null
+  raw_payload: Record<string, unknown>
+  imported_at: string
+}
+
+export interface PracticeLedgerEntry {
+  id: string
+  zone_id: string
+  crop_year: number
+  practice_code: string              // '340' | '345' | '329' | custom
+  value: string | null
+  source: 'user' | 'coverage_event' | 'shapefile_import'
+  recorded_at: string
+}
+
+export interface RotationRule {
+  id: string
+  name: string
+  crop: string
+  rule_type: 'max_frequency' | 'cannot_follow'
+  max_frequency_years: number | null
+  cannot_follow_crop: string | null
+  cannot_follow_product: string | null
+  notes: string | null
+  active: boolean
+  created_at: string
+}
+
+// ===== Reconciliation Types =====
+
+export type ReconciliationStatus = 'ok' | 'flagged' | 'unresolved'
+
+export type ReconciliationCause =
+  | 'within_tolerance'
+  | 'unmapped_waterway'
+  | 'boundary_creep'
+  | 'split_not_recognized'
+  | 'missing_coverage_data'
+  | 'manual_entry_error'
+  | 'unknown'
+
+export interface ReconciliationRow {
+  clu_boundary_id: string
+  clu_label: string
+  farm_number: string
+  tract_number: string
+  zone_ids: string[]                 // management zones intersecting this CLU
+  zone_names: string[]
+  as_applied_acres: number           // from coverage_events intersection
+  fsa_declared_acres: number         // from clu_boundaries.fsa_acres
+  delta: number                      // as_applied - fsa_declared
+  status: ReconciliationStatus
+  cause: ReconciliationCause
+  // Pre-filled from coverage data; confirmed by office person
+  suggested_crop: string | null
+  confirmed_crop: string | null
+  irrigated: boolean
+  organic: boolean
+}
+
+/** Apply the 0.1 ac flat tolerance rule from the design brief. */
+export function reconciliationStatus(delta: number): ReconciliationStatus {
+  if (Math.abs(delta) <= 0.1) return 'ok'
+  if (Math.abs(delta) <= 1.0) return 'flagged'
+  return 'unresolved'
+}
+
+/** Heuristic cause attribution for reconciliation deltas. */
+export function attributeCause(
+  delta: number,
+  cluAcres: number,
+  adjacentCluExists: boolean
+): ReconciliationCause {
+  const absDelta = Math.abs(delta)
+  if (absDelta <= 0.1) return 'within_tolerance'
+  // Small delta on a small CLU → likely unmapped waterway or wet area
+  if (absDelta < 0.5 && cluAcres < 20) return 'unmapped_waterway'
+  // Large delta that matches an adjacent CLU's size → boundary creep
+  if (adjacentCluExists && absDelta > 1.0) return 'boundary_creep'
+  return 'unknown'
+}
+
 // ===== GCS Summary =====
 
 export function gcsSummary(enrollments: GcsEnrollment[]) {

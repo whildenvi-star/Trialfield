@@ -1,8 +1,12 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { CluWorkspace } from '@/components/fsa/clu-workspace'
+import { ZoneSetupPanel } from '@/components/fsa/zone-setup-panel'
+import { ReconciliationView } from '@/components/fsa/reconciliation-view'
+import { CoverageImportPanel } from '@/components/fsa/coverage-import-panel'
 import { ActionButton } from '@/components/compliance/ui'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 import type { CluRecord } from '@/lib/fsa/calc'
 
 interface AcreageTabProps {
@@ -14,6 +18,8 @@ interface AcreageTabProps {
 }
 
 export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigateTab }: AcreageTabProps) {
+  const [view, setView] = useState<'clu' | 'zones' | 'reconcile' | 'coverage'>('clu')
+
   const filtered = useMemo(() => {
     let out = records
     if (farmFilter) {
@@ -31,13 +37,13 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
     return out
   }, [records, farmFilter, cropFilter])
 
+  // Reconciliation view needs full height — remove max-w constraint for that view
+  const wrapClass = view === 'reconcile' ? 'h-[calc(100vh-220px)]' : 'max-w-7xl mx-auto px-0'
+
   return (
-    <div className="max-w-7xl">
-      {/* Wrapper-level cross-tab navigation buttons (COMP-05).
-          CluCard has internal router.push calls that cannot be intercepted without
-          modifying workspace code. These wrapper buttons give users the direct
-          compliance-hub path for the same actions. */}
-      <div className="flex gap-3 mb-4 pb-4 border-b border-glomalin-border">
+    <div className={wrapClass}>
+      {/* Header bar: cross-tab nav + view toggle */}
+      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-glomalin-border">
         <ActionButton
           variant="secondary"
           size="sm"
@@ -52,16 +58,46 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
         >
           File PP Claim &rarr;
         </ActionButton>
+        <div className="ml-auto flex rounded border border-glomalin-border overflow-hidden text-xs font-mono">
+          {(['clu', 'zones', 'reconcile', 'coverage'] as const).map((v, i) => {
+            const labels = { clu: 'CLU Records', zones: 'Zone Setup', reconcile: 'Reconcile', coverage: 'As-Applied' }
+            return (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`px-3 py-1.5 transition-colors ${i > 0 ? 'border-l border-glomalin-border' : ''} ${view === v ? 'bg-glomalin-accent text-black' : 'text-glomalin-muted hover:text-glomalin-text'}`}
+              >
+                {labels[v]}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {(farmFilter || cropFilter) && filtered.length !== records.length && (
-        <p className="text-xs font-mono text-glomalin-muted mb-3">
-          Showing {filtered.length} of {records.length} CLU records
-          {farmFilter ? ` — farm: "${farmFilter}"` : ''}
-          {cropFilter ? ` — crop: "${cropFilter}"` : ''}
-        </p>
+      {view === 'clu' && (
+        <>
+          {(farmFilter || cropFilter) && filtered.length !== records.length && (
+            <p className="text-xs font-mono text-glomalin-muted mb-3">
+              Showing {filtered.length} of {records.length} CLU records
+              {farmFilter ? ` — farm: "${farmFilter}"` : ''}
+              {cropFilter ? ` — crop: "${cropFilter}"` : ''}
+            </p>
+          )}
+          <CluWorkspace initialRecords={filtered} loadError={loadError} />
+        </>
       )}
-      <CluWorkspace initialRecords={filtered} loadError={loadError} />
+
+      {view === 'zones' && (
+        <ZoneSetupPanel cropYear={CURRENT_CROP_YEAR} />
+      )}
+
+      {view === 'reconcile' && (
+        <ReconciliationView cropYear={CURRENT_CROP_YEAR} />
+      )}
+
+      {view === 'coverage' && (
+        <CoverageImportPanel cropYear={CURRENT_CROP_YEAR} />
+      )}
     </div>
   )
 }

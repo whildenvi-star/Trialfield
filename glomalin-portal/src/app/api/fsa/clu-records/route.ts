@@ -12,18 +12,25 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const yearParam = searchParams.get('year')
   const year = yearParam ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
+  const unlinkedOnly = searchParams.get('unlinked') === 'true'
 
   if (isNaN(year)) {
     return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 })
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('clu_records')
     .select('*')
     .eq('crop_year', year)
     .order('farm_number')
     .order('tract_number')
     .order('clu')
+
+  if (unlinkedOnly) {
+    query = query.is('zone_id', null).not('registry_field_id', 'is', null)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     return NextResponse.json(

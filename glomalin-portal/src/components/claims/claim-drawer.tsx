@@ -55,6 +55,19 @@ interface ClaimDrawerProps {
 
 type ActiveTab = 'timeline' | 'documents' | 'financials'
 
+// FSA cross-reference data fetched from /api/fsa/clu-summary
+interface FsaCluSummary {
+  farm_number: string | null
+  farm_name: string | null
+  crop: string | null
+  crop_year: number
+  total_clu_count: number
+  confirmed_count: number
+  unconfirmed_count: number
+  total_fsa_ac: number
+  confirmed_fsa_ac: number
+}
+
 function formatCurrency(amount: number | null | undefined): string {
   if (amount === null || amount === undefined) return '—'
   return new Intl.NumberFormat('en-US', {
@@ -71,6 +84,8 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
   const [documents, setDocuments] = useState<ClaimDocument[]>([])
   const [loading, setLoading] = useState(false)
   const [stageUpdating, setStageUpdating] = useState(false)
+  const [fsaSummary, setFsaSummary] = useState<FsaCluSummary | null>(null)
+  const [fsaLoading, setFsaLoading] = useState(false)
 
   // Fetch timeline + documents in parallel when drawer opens or claim changes
   const fetchData = useCallback(async (claimId: string) => {
@@ -95,8 +110,20 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
     if (open && claim) {
       fetchData(claim.id)
       setActiveTab('timeline')
+      setFsaSummary(null)
     }
   }, [open, claim, fetchData])
+
+  // Lazy-load FSA cross-reference when Financials tab is opened
+  useEffect(() => {
+    if (activeTab !== 'financials' || !claim?.policy_id || fsaSummary || fsaLoading) return
+    setFsaLoading(true)
+    fetch(`/api/fsa/clu-summary?policy_id=${claim.policy_id}`)
+      .then((r) => r.json())
+      .then((d) => setFsaSummary(d.error ? null : d))
+      .catch(() => {})
+      .finally(() => setFsaLoading(false))
+  }, [activeTab, claim, fsaSummary, fsaLoading])
 
   async function handleStageChange(newStage: string) {
     if (!claim || stageUpdating) return
@@ -271,8 +298,10 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
                 />
               )}
 
-              {/* Financials tab — read-only from claim object, no API call */}
-              {activeTab === 'financials' && <FinancialsTab claim={claim} />}
+              {/* Financials tab — read-only from claim object + FSA cross-ref */}
+              {activeTab === 'financials' && (
+                <FinancialsTab claim={claim} fsaSummary={fsaSummary} fsaLoading={fsaLoading} />
+              )}
             </>
           )}
         </div>
@@ -282,10 +311,18 @@ export function ClaimDrawer({ open, claim, onClose, onClaimUpdated }: ClaimDrawe
 }
 
 // ---------------------------------------------------------------------------
-// Financials tab — read-only summary from claim object (no API call needed)
+// Financials tab — read-only summary from claim object + FSA cross-reference
 // ---------------------------------------------------------------------------
 
-function FinancialsTab({ claim }: { claim: Claim | null }) {
+function FinancialsTab({
+  claim,
+  fsaSummary,
+  fsaLoading,
+}: {
+  claim: Claim | null
+  fsaSummary: FsaCluSummary | null
+  fsaLoading: boolean
+}) {
   if (!claim) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -316,6 +353,15 @@ function FinancialsTab({ claim }: { claim: Claim | null }) {
       value: claim.deductible_amount != null ? formatCurrency(claim.deductible_amount) : '—',
     },
   ]
+
+  // Variance: insurance planted acres vs FSA confirmed acres
+  const insurancePlanted =
+    typeof claim['planted_acres'] === 'number' ? (claim['planted_acres'] as number) : null
+  const fsaConfirmed = fsaSummary?.confirmed_fsa_ac ?? null
+  const acreVariance =
+    insurancePlanted != null && fsaConfirmed != null
+      ? Math.round((insurancePlanted - fsaConfirmed) * 100) / 100
+      : null
 
   return (
     <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -352,6 +398,90 @@ function FinancialsTab({ claim }: { claim: Claim | null }) {
           )}
         </div>
       )}
+
+      {/* FSA Cross-Reference — pulled from clu_records, nothing manually entered */}
+      <div className="mt-4 pt-4 border-t border-glomalin-border">
+        <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3">
+          FSA Cross-Reference
+        </p>
+
+        {fsaLoading && (
+          <p className="text-xs font-mono text-glomalin-muted animate-pulse">
+            Loading FSA data...
+          </p>
+        )}
+
+        {!fsaLoading && !claim.policy_id && (
+          <p className="text-xs font-mono text-glomalin-muted">
+            No linked policy — FSA cross-reference unavailable.
+          </p>
+        )}
+
+        {!fsaLoading && claim.policy_id && !fsaSummary && (
+          <p className="text-xs font-mono text-glomalin-muted">
+            No FSA records found for this policy&apos;s farm + crop combination.
+          </p>
+        )}
+
+        {!fsaLoading && fsaSummary && (
+          <div className="font-mono">
+            <div className="flex justify-between py-2 border-b border-glomalin-border">
+              <span className="text-glomalin-muted text-xs">Farm</span>
+              <span className="text-glomalin-text text-xs">
+                {fsaSummary.farm_name ?? `Farm ${fsaSummary.farm_number ?? '—'}`}
+              </span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-glomalin-border">
+              <span className="text-glomalin-muted text-xs">Crop (FSA)</span>
+              <span className="text-glomalin-text text-xs">{fsaSummary.crop ?? '—'}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-glomalin-border">
+              <span className="text-glomalin-muted text-xs">Total FSA Acres</span>
+              <span className="text-glomalin-text text-xs">{fsaSummary.total_fsa_ac.toFixed(2)} ac</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-glomalin-border">
+              <span className="text-glomalin-muted text-xs">Confirmed FSA Acres</span>
+              <span
+                className={`text-xs ${
+                  fsaSummary.unconfirmed_count > 0 ? 'text-amber-400' : 'text-glomalin-green'
+                }`}
+              >
+                {fsaSummary.confirmed_fsa_ac.toFixed(2)} ac
+                {fsaSummary.unconfirmed_count > 0 && (
+                  <span className="text-glomalin-muted ml-1">
+                    ({fsaSummary.unconfirmed_count} unconfirmed)
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-glomalin-border">
+              <span className="text-glomalin-muted text-xs">CLUs Reported</span>
+              <span className="text-glomalin-text text-xs">
+                {fsaSummary.confirmed_count} / {fsaSummary.total_clu_count}
+              </span>
+            </div>
+            {acreVariance !== null && (
+              <div className="flex justify-between py-2 border-b border-glomalin-border">
+                <span className="text-glomalin-muted text-xs">Insurance vs FSA Variance</span>
+                <span
+                  className={`text-xs font-semibold ${
+                    Math.abs(acreVariance) <= 1
+                      ? 'text-glomalin-green'
+                      : Math.abs(acreVariance) <= 5
+                      ? 'text-amber-400'
+                      : 'text-red-400'
+                  }`}
+                >
+                  {acreVariance > 0 ? '+' : ''}{acreVariance.toFixed(2)} ac
+                </span>
+              </div>
+            )}
+            <p className="text-[10px] font-mono text-glomalin-muted mt-2">
+              Source: FSA Form 578 records (clu_records table) — not manually entered
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
