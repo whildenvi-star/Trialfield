@@ -15,10 +15,9 @@ import type {
   SaleInstrument,
   CbotPrice,
   CommodityPosition,
-  CommodityPricing,
   YieldSummary,
+  BudgetField,
 } from '@/lib/marketing/types'
-import type { BudgetField } from '@/app/(protected)/app/macro-rollup/page'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -29,7 +28,6 @@ export interface MarketingData {
   cropVariants: CropVariant[]
   saleInstruments: SaleInstrument[]
   initialCommodityPositions: CommodityPosition[]
-  initialPricingConfigs: CommodityPricing[]
   cbotPrices: CbotPrice[]
   priceSource: string
   priceTimestamp: string | null
@@ -244,7 +242,7 @@ export function MacroRollupView({
           initialVariants={marketingData.cropVariants}
           initialInstruments={marketingData.saleInstruments}
           initialCommodityPositions={marketingData.initialCommodityPositions}
-          initialPricingConfigs={marketingData.initialPricingConfigs}
+          initialPricingConfigs={[]}
           cbotPrices={marketingData.cbotPrices}
           priceSource={marketingData.priceSource}
           priceTimestamp={marketingData.priceTimestamp}

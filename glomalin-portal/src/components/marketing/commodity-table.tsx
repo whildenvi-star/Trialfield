@@ -3,28 +3,31 @@
 import { useState } from 'react'
 import type { CommodityPosition, VariantPosition, SaleInstrument, InstrumentType } from '@/lib/marketing/types'
 import { instrumentPricedBu } from '@/lib/marketing/queries'
+import { Badge } from '@/components/ui/badge'
+import { Empty } from '@/components/ui/empty'
+import { formatBu } from '@/lib/fmt'
+import { colors } from '@/lib/tokens'
 
 // ── Colors / labels ────────────────────────────────────────────────────────────
 
-const TYPE_COLORS: Record<InstrumentType, string> = {
-  cash:             'bg-[#14b8a6]/15 text-[#2dd4bf] border-[#14b8a6]/30',
-  forward_contract: 'bg-[#3b82f6]/15 text-[#93c5fd] border-[#3b82f6]/30',
-  option:           'bg-[#8b5cf6]/15 text-[#c4b5fd] border-[#8b5cf6]/30',
-  accumulator:      'bg-amber-900/20 text-amber-400 border-amber-700/40',
+// Maps instrument type to Badge variant. Option + HTA have no semantic token — use inline class override.
+const TYPE_BADGE_VARIANT: Record<InstrumentType, 'accent' | 'info' | 'warning' | 'default'> = {
+  cash:             'accent',
+  forward_contract: 'info',
+  hta:              'default',   // overridden with indigo below
+  option:           'default',   // overridden with violet below
+  accumulator:      'warning',
 }
 
 const TYPE_LABELS: Record<InstrumentType, string> = {
   cash:             'Cash',
   forward_contract: 'Forward',
+  hta:              'HTA',
   option:           'Option',
   accumulator:      'Accumulator',
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
-
-function fmtBu(n: number): string {
-  return n.toLocaleString('en-US', { maximumFractionDigits: 0 })
-}
 
 function fmtPrice(n: number | null): string {
   if (n == null) return '—'
@@ -66,10 +69,14 @@ function MiniBar({ pct, color = '#14b8a6' }: { pct: number; color?: string }) {
 // ── Type badge ─────────────────────────────────────────────────────────────────
 
 function TypeBadge({ type }: { type: InstrumentType }) {
+  const customClass =
+    type === 'option' ? 'bg-[#8b5cf6]/15 text-[#c4b5fd] border-[#8b5cf6]/30' :
+    type === 'hta'    ? 'bg-[#6366f1]/15 text-[#a5b4fc] border-[#6366f1]/30' :
+    undefined
   return (
-    <span className={`inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold ${TYPE_COLORS[type]}`}>
+    <Badge variant={TYPE_BADGE_VARIANT[type]} className={customClass}>
       {TYPE_LABELS[type]}
-    </span>
+    </Badge>
   )
 }
 
@@ -92,15 +99,57 @@ function InstrumentRow({
       case 'forward_contract':
         return (
           <>
-            <td className="px-3 py-1.5 text-right text-glomalin-text">{fmtBu(inst.bushels ?? 0)}</td>
+            <td className="px-3 py-1.5 text-right text-glomalin-text">{formatBu(inst.bushels ?? 0)}</td>
             <td className="px-3 py-1.5 text-right text-glomalin-text">{fmtPrice(inst.price_per_bushel)}</td>
-            <td className="px-3 py-1.5 text-right text-glomalin-muted">{fmtBasis(inst.basis)}</td>
+            <td className="px-3 py-1.5 text-right text-glomalin-muted">
+              {inst.basis != null ? (
+                <span className={inst.basis > 0 ? 'text-glomalin-accent' : ''}>
+                  {fmtBasis(inst.basis)}
+                </span>
+              ) : '—'}
+            </td>
             <td className="px-3 py-1.5 text-right text-glomalin-muted">
               {fmtDelivery(inst.delivery_start, inst.delivery_end)}
             </td>
             <td className="px-3 py-1.5 text-right text-glomalin-muted">
               {inst.delivered_bu > 0 ? (
-                <span className="text-[#14b8a6]">{fmtBu(inst.delivered_bu)} del.</span>
+                <span className="text-glomalin-accent tabular-nums">
+                  {formatBu(inst.delivered_bu)}
+                  {' del.'}
+                </span>
+              ) : '—'}
+            </td>
+          </>
+        )
+      case 'hta':
+        return (
+          <>
+            <td className="px-3 py-1.5 text-right text-glomalin-text">{formatBu(inst.bushels ?? 0)}</td>
+            <td className="px-3 py-1.5 text-right">
+              <span className="font-mono text-xs text-glomalin-text">
+                Fut: {fmtPrice(inst.futures_reference)}
+              </span>
+            </td>
+            <td className="px-3 py-1.5 text-right">
+              {inst.basis != null ? (
+                <span className={inst.basis > 0 ? 'text-glomalin-accent font-semibold' : 'text-glomalin-muted'}>
+                  {fmtBasis(inst.basis)}
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded border border-glomalin-warning/40 bg-glomalin-warning/10 px-1.5 py-0.5 font-mono text-[10px] text-glomalin-warning">
+                  Basis Open
+                </span>
+              )}
+            </td>
+            <td className="px-3 py-1.5 text-right text-glomalin-muted">
+              {fmtDelivery(inst.delivery_start, inst.delivery_end)}
+            </td>
+            <td className="px-3 py-1.5 text-right text-glomalin-muted">
+              {inst.delivered_bu > 0 ? (
+                <span className="text-glomalin-accent tabular-nums">
+                  {formatBu(inst.delivered_bu)}
+                  {' del.'}
+                </span>
               ) : '—'}
             </td>
           </>
@@ -108,7 +157,7 @@ function InstrumentRow({
       case 'option':
         return (
           <>
-            <td className="px-3 py-1.5 text-right text-glomalin-text">{fmtBu(inst.bushels ?? 0)}</td>
+            <td className="px-3 py-1.5 text-right text-glomalin-text">{formatBu(inst.bushels ?? 0)}</td>
             <td className="px-3 py-1.5 text-right">
               <span className="font-mono text-xs text-glomalin-muted">
                 {inst.option_side === 'long' ? 'Long' : 'Short'}{' '}
@@ -139,14 +188,21 @@ function InstrumentRow({
         return (
           <>
             <td className="px-3 py-1.5 text-right text-glomalin-text">
-              {inst.daily_bu != null
-                ? `${fmtBu(inst.daily_bu)}/day`
-                : inst.weekly_bu != null
-                ? `${fmtBu(inst.weekly_bu)}/wk`
-                : '—'}
+              {inst.daily_bu != null ? (
+                <span className="tabular-nums">
+                  {formatBu(inst.daily_bu)}
+                  <span className="text-glomalin-muted text-[10px]">/day</span>
+                </span>
+              ) : inst.weekly_bu != null ? (
+                <span className="tabular-nums">
+                  {formatBu(inst.weekly_bu)}
+                  <span className="text-glomalin-muted text-[10px]">/wk</span>
+                </span>
+              ) : '—'}
             </td>
             <td className="px-3 py-1.5 text-right text-glomalin-muted">
-              KO {fmtPrice(inst.ko_level)}
+              {'KO '}
+              {fmtPrice(inst.ko_level)}
               {inst.ki_level != null && ` / KI ${fmtPrice(inst.ki_level)}`}
             </td>
             <td className="px-3 py-1.5 text-right text-glomalin-muted">
@@ -154,7 +210,10 @@ function InstrumentRow({
             </td>
             <td className="px-3 py-1.5 text-right">
               {pricedBu > 0 ? (
-                <span className="font-mono text-xs text-[#14b8a6]">{fmtBu(pricedBu)} accum.</span>
+                <span className="font-mono text-xs text-glomalin-accent tabular-nums">
+                  {formatBu(pricedBu)}
+                  {' accum.'}
+                </span>
               ) : '—'}
             </td>
             <td className="px-3 py-1.5 text-right text-glomalin-muted">—</td>
@@ -183,7 +242,7 @@ function InstrumentRow({
           <span className="text-glomalin-border">|</span>
           <button
             onClick={() => onDelete(inst.id)}
-            className="font-mono text-xs text-glomalin-muted hover:text-red-400 transition-colors"
+            className="font-mono text-xs text-glomalin-muted hover:text-glomalin-danger transition-colors"
           >
             Delete
           </button>
@@ -224,21 +283,24 @@ function VariantRow({
             </span>
             <span className="font-mono text-sm text-glomalin-text">{variant.name}</span>
             {variant.is_contracted && (
-              <span className="inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold bg-[#3b82f6]/15 text-[#93c5fd] border-[#3b82f6]/30">
-                Pre-sold
-              </span>
+              <Badge variant="info">Pre-sold</Badge>
             )}
             <div className="flex-1" />
             {variant.estimated_bu != null && variant.estimated_bu > 0 ? (
               <>
                 <span className="font-mono text-xs text-glomalin-muted">
-                  {fmtBu(vp.priced_bu)} / {fmtBu(variant.estimated_bu)} bu
+                  <span className="tabular-nums">{formatBu(vp.priced_bu)}</span>
+                  {' / '}
+                  <span className="tabular-nums">{formatBu(variant.estimated_bu)}</span>
+                  {' bu'}
                 </span>
                 <MiniBar pct={vp.pct_priced} />
               </>
             ) : (
               <span className="font-mono text-xs text-glomalin-muted">
-                {vp.priced_bu > 0 ? `${fmtBu(vp.priced_bu)} bu priced` : 'No estimate set'}
+                {vp.priced_bu > 0 ? (
+                  <><span className="tabular-nums">{formatBu(vp.priced_bu)}</span>{' bu priced'}</>
+                ) : 'No estimate set'}
               </span>
             )}
             {vp.wap != null && (
@@ -287,11 +349,7 @@ function CommodityRow({
   const [expanded, setExpanded] = useState(false)
   const { commodity } = pos
 
-  const barColor = pos.pct_priced >= 80
-    ? '#14b8a6'
-    : pos.pct_priced >= 50
-    ? '#3b82f6'
-    : '#f59e0b'
+  const barColor = pos.pct_priced >= 80 ? colors.accent : pos.pct_priced >= 50 ? colors.info : colors.warning
 
   return (
     <>
@@ -318,18 +376,26 @@ function CommodityRow({
               <span className="font-mono text-xs text-glomalin-muted">({commodity.cbot_symbol})</span>
             )}
             {!commodity.is_hedgeable && (
-              <span className="inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold bg-[#3b82f6]/15 text-[#93c5fd] border-[#3b82f6]/30">
-                Specialty
-              </span>
+              <Badge variant="info">Specialty</Badge>
             )}
           </span>
         </td>
 
         {/* Bu priced / est */}
         <td className="px-4 py-3 text-right font-mono text-sm text-glomalin-muted">
-          {pos.total_estimated_bu > 0
-            ? `${fmtBu(pos.total_priced_bu)} / ${fmtBu(pos.total_estimated_bu)} bu`
-            : `${fmtBu(pos.total_priced_bu)} bu priced`}
+          {pos.total_estimated_bu > 0 ? (
+            <>
+              <span className="tabular-nums">{formatBu(pos.total_priced_bu)}</span>
+              {' / '}
+              <span className="tabular-nums">{formatBu(pos.total_estimated_bu)}</span>
+              {' bu'}
+            </>
+          ) : (
+            <>
+              <span className="tabular-nums">{formatBu(pos.total_priced_bu)}</span>
+              {' bu priced'}
+            </>
+          )}
         </td>
 
         {/* Progress bar */}
@@ -371,11 +437,16 @@ function CommodityRow({
         {/* Unpriced exposure */}
         <td className="px-4 py-3 text-right font-mono text-sm" colSpan={4}>
           {pos.unpriced_exposure_dollars != null ? (
-            <span className={pos.unpriced_exposure_dollars > 200_000 ? 'text-amber-400 font-semibold' : 'text-glomalin-muted'}>
-              {pos.unpriced_exposure_dollars > 0
-                ? `${fmtBu(pos.unpriced_bu)} bu · $${Math.round(pos.unpriced_exposure_dollars / 1000)}k`
-                : '✓ Fully priced'}
-            </span>
+            pos.unpriced_exposure_dollars > 0 ? (
+              <span className={pos.unpriced_exposure_dollars > 200_000 ? 'text-glomalin-warning font-semibold' : 'text-glomalin-muted'}>
+                <span className="tabular-nums">{formatBu(pos.unpriced_bu)}</span>
+                {' bu · $'}
+                <span className="tabular-nums">{Math.round(pos.unpriced_exposure_dollars / 1000)}</span>
+                {'k'}
+              </span>
+            ) : (
+              <span className="text-glomalin-accent">✓ Fully priced</span>
+            )
           ) : (
             <span className="text-glomalin-muted">—</span>
           )}
@@ -414,13 +485,7 @@ interface CommodityTableProps {
 
 export function CommodityTable({ positions, onEditInstrument, onDeleteInstrument }: CommodityTableProps) {
   if (positions.length === 0) {
-    return (
-      <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-6 py-12 text-center">
-        <p className="font-mono text-sm text-glomalin-muted">
-          No commodity positions for this crop year.
-        </p>
-      </div>
-    )
+    return <Empty title="No commodity positions" description="No positions for this crop year." />
   }
 
   return (

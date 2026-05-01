@@ -1,36 +1,31 @@
 'use client'
 
 import type { CommodityPosition, InstrumentType } from '@/lib/marketing/types'
+import { KpiStrip } from '@/components/ui/kpi-strip'
+import { StatCard } from '@/components/ui/stat-card'
+import { Empty } from '@/components/ui/empty'
+import { formatBu, formatUsd, formatPct } from '@/lib/fmt'
+import { colors } from '@/lib/tokens'
 
-// ── Colors by instrument type ──────────────────────────────────────────────────
+// ── Instrument display maps ────────────────────────────────────────────────────
 
 const INSTRUMENT_COLORS: Record<InstrumentType, string> = {
-  cash:             '#14b8a6',
-  forward_contract: '#3b82f6',
-  option:           '#8b5cf6',
-  accumulator:      '#f59e0b',
+  cash:             colors.accent,
+  forward_contract: colors.info,
+  hta:              '#6366f1',   // indigo — futures locked, basis open
+  option:           '#8b5cf6',   // violet
+  accumulator:      colors.warning,
 }
 
 const INSTRUMENT_LABELS: Record<InstrumentType, string> = {
   cash:             'Cash',
   forward_contract: 'Forward',
+  hta:              'HTA',
   option:           'Option',
   accumulator:      'Accum.',
 }
 
 // ── Formatters ─────────────────────────────────────────────────────────────────
-
-function fmtBu(n: number): string {
-  return n.toLocaleString('en-US', { maximumFractionDigits: 0 })
-}
-
-function fmtDollars(n: number): string {
-  return n.toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  })
-}
 
 function fmtPrice(n: number): string {
   return `$${n.toFixed(2)}`
@@ -40,66 +35,47 @@ function fmtPct(n: number): string {
   return `${Math.round(n)}%`
 }
 
-// ── Summary banner ─────────────────────────────────────────────────────────────
+// ── Summary banner → KpiStrip ─────────────────────────────────────────────────
 
 function SummaryBanner({ positions, cropYear }: { positions: CommodityPosition[]; cropYear: number }) {
   const hedgeable = positions.filter((p) => p.commodity.is_hedgeable)
   const totalEstimated = hedgeable.reduce((s, p) => s + p.total_estimated_bu, 0)
   const totalPriced = hedgeable.reduce((s, p) => s + p.total_priced_bu, 0)
-  const totalExposure = hedgeable.reduce(
-    (s, p) => s + (p.unpriced_exposure_dollars ?? 0),
-    0
-  )
+  const totalExposure = hedgeable.reduce((s, p) => s + (p.unpriced_exposure_dollars ?? 0), 0)
   const hasExposure = hedgeable.some((p) => p.unpriced_exposure_dollars != null)
   const pctPriced = totalEstimated > 0 ? Math.min(100, (totalPriced / totalEstimated) * 100) : 0
 
   const activeInstruments = positions.reduce(
-    (s, p) =>
-      s + p.variants.reduce((vs, vp) => vs + vp.instruments.length, 0),
+    (s, p) => s + p.variants.reduce((vs, vp) => vs + vp.instruments.length, 0),
     0
   )
 
   return (
-    <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-6 py-4 mb-6 flex flex-wrap items-center gap-6">
-      <div>
-        <p className="font-mono text-xs text-glomalin-muted uppercase tracking-widest mb-1">
-          {cropYear} Crop Year
-        </p>
-        <p className="font-mono text-xs text-glomalin-muted">
-          {activeInstruments} active instrument{activeInstruments !== 1 ? 's' : ''}
-        </p>
-      </div>
-
-      <div className="h-8 w-px bg-glomalin-border" />
-
-      <div>
-        <p className="font-mono text-xs text-glomalin-muted mb-0.5">Overall Priced</p>
-        <p className="font-mono text-xl font-semibold text-[#14b8a6]">
-          {totalEstimated > 0 ? fmtPct(pctPriced) : '—'}
-        </p>
-      </div>
-
-      <div className="h-8 w-px bg-glomalin-border" />
-
-      <div>
-        <p className="font-mono text-xs text-glomalin-muted mb-0.5">Total Priced</p>
-        <p className="font-mono text-xl font-semibold text-glomalin-text">
-          {fmtBu(totalPriced)} bu
-        </p>
-      </div>
-
+    <KpiStrip cols={hasExposure ? 4 : 3} className="mb-6">
+      <StatCard
+        label={`${cropYear} Crop Year`}
+        value={activeInstruments.toString()}
+        sublabel={activeInstruments === 1 ? 'active instrument' : 'active instruments'}
+      />
+      <StatCard
+        label="Overall Priced"
+        value={totalEstimated > 0 ? fmtPct(pctPriced) : '—'}
+        sublabel={totalEstimated > 0 ? `${formatBu(totalPriced)} bu` : undefined}
+        variant={pctPriced >= 80 ? 'success' : pctPriced >= 50 ? 'default' : 'warning'}
+      />
+      <StatCard
+        label="Total Priced"
+        value={`${formatBu(totalPriced)} bu`}
+        sublabel={totalEstimated > 0 ? formatPct(pctPriced / 100) : undefined}
+      />
       {hasExposure && (
-        <>
-          <div className="h-8 w-px bg-glomalin-border" />
-          <div>
-            <p className="font-mono text-xs text-glomalin-muted mb-0.5">Unpriced Exposure</p>
-            <p className={`font-mono text-xl font-semibold ${totalExposure > 500_000 ? 'text-amber-400' : 'text-glomalin-text'}`}>
-              {fmtDollars(totalExposure)}
-            </p>
-          </div>
-        </>
+        <StatCard
+          label="Unpriced Exposure"
+          value={formatUsd(totalExposure)}
+          variant={totalExposure > 500_000 ? 'warning' : 'default'}
+        />
       )}
-    </div>
+    </KpiStrip>
   )
 }
 
@@ -107,19 +83,13 @@ function SummaryBanner({ positions, cropYear }: { positions: CommodityPosition[]
 
 function ProgressBar({ pct }: { pct: number }) {
   const clamped = Math.min(100, Math.max(0, pct))
+  const barColor = clamped >= 80 ? colors.accent : clamped >= 50 ? colors.info : colors.warning
   return (
     <div className="flex items-center gap-3">
       <div className="flex-1 h-2 rounded-full bg-glomalin-bg overflow-hidden">
         <div
           className="h-2 rounded-full transition-all"
-          style={{
-            width: `${clamped}%`,
-            background: clamped >= 80
-              ? '#14b8a6'
-              : clamped >= 50
-              ? '#3b82f6'
-              : '#f59e0b',
-          }}
+          style={{ width: `${clamped}%`, background: barColor }}
         />
       </div>
       <span className="font-mono text-xs text-glomalin-text w-10 text-right">
@@ -157,7 +127,9 @@ function MixStrip({ mix }: { mix: Record<InstrumentType, number> }) {
               className="inline-block w-2 h-2 rounded-sm"
               style={{ backgroundColor: INSTRUMENT_COLORS[type] }}
             />
-            {INSTRUMENT_LABELS[type]} {fmtBu(mix[type])} bu
+            {INSTRUMENT_LABELS[type]}{' '}
+            <span className="tabular-nums">{formatBu(mix[type])}</span>
+            {' '}bu
           </span>
         ))}
       </div>
@@ -182,8 +154,13 @@ function CommodityCard({
 
   const wapDelta = wap != null && cbot_price != null ? wap - cbot_price : null
 
+  // Count HTAs with open basis (basis == null)
+  const openBasisCount = position.variants.reduce((total, vp) =>
+    total + vp.instruments.filter((i) => i.instrument_type === 'hta' && i.basis == null).length, 0
+  )
+
   return (
-    <div className="rounded-lg border border-glomalin-border bg-[#0c1015] p-5 flex flex-col gap-4">
+    <div className="rounded-lg border border-glomalin-border bg-glomalin-surface p-5 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -207,14 +184,14 @@ function CommodityCard({
       </div>
 
       {isSpecialty ? (
-        /* Pre-contracted / specialty — no hedging progress */
         <div>
-          <span className="inline-flex items-center rounded px-2 py-0.5 font-mono text-xs font-semibold bg-[#3b82f6]/15 text-[#93c5fd] border border-[#3b82f6]/30">
+          <span className="inline-flex items-center rounded border px-2 py-0.5 font-mono text-xs font-semibold bg-glomalin-info/15 text-glomalin-info border-glomalin-info/30">
             Pre-contracted
           </span>
           {position.total_priced_bu > 0 && (
             <p className="font-mono text-xs text-glomalin-muted mt-2">
-              {fmtBu(position.total_priced_bu)} bu committed
+              <span className="tabular-nums">{formatBu(position.total_priced_bu)}</span>
+              {' '}bu committed
             </p>
           )}
           {position.variants.length > 0 && (
@@ -230,7 +207,10 @@ function CommodityCard({
             <div className="flex justify-between mb-1.5">
               <span className="font-mono text-xs text-glomalin-muted">Priced</span>
               <span className="font-mono text-xs text-glomalin-muted">
-                {fmtBu(position.total_priced_bu)} / {fmtBu(position.total_estimated_bu)} bu
+                <span className="tabular-nums">{formatBu(position.total_priced_bu)}</span>
+                {' / '}
+                <span className="tabular-nums">{formatBu(position.total_estimated_bu)}</span>
+                {' bu'}
               </span>
             </div>
             <ProgressBar pct={pct_priced} />
@@ -244,9 +224,15 @@ function CommodityCard({
                 <span className="font-mono text-sm text-glomalin-text">{fmtPrice(wap)}</span>
                 {wapDelta != null && (
                   <span
-                    className={`ml-2 font-mono text-xs ${wapDelta >= 0 ? 'text-[#14b8a6]' : 'text-amber-400'}`}
+                    className={[
+                      'ml-2 font-mono text-xs',
+                      wapDelta >= 0 ? 'text-glomalin-accent' : 'text-glomalin-warning',
+                    ].join(' ')}
                   >
-                    ({wapDelta >= 0 ? '+' : ''}{fmtPrice(wapDelta)})
+                    {'('}
+                    {wapDelta >= 0 ? '+' : ''}
+                    {fmtPrice(wapDelta)}
+                    {')'}
                   </span>
                 )}
               </div>
@@ -256,20 +242,35 @@ function CommodityCard({
           {/* Instrument mix */}
           <MixStrip mix={instrument_mix} />
 
+          {/* Open basis HTA indicator */}
+          {openBasisCount > 0 && (
+            <div className="flex items-center gap-2 rounded border border-glomalin-warning/30 bg-glomalin-warning/10 px-2.5 py-1.5">
+              <span className="font-mono text-[10px] text-glomalin-warning">
+                {openBasisCount} HTA{openBasisCount > 1 ? 's' : ''} · basis open
+              </span>
+              <span className="font-mono text-[9px] text-glomalin-muted">— set at delivery</span>
+            </div>
+          )}
+
           {/* Unpriced exposure */}
           {unpriced_bu > 0 && (
             <div className="pt-1 border-t border-glomalin-border/50">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-xs text-glomalin-muted">
-                  {fmtBu(unpriced_bu)} bu unpriced
+                  <span className="tabular-nums">{formatBu(unpriced_bu)}</span>
+                  {' bu unpriced'}
                 </span>
                 {unpriced_exposure_dollars != null && (
                   <span
-                    className={`font-mono text-xs font-semibold ${
-                      unpriced_exposure_dollars > 200_000 ? 'text-amber-400' : 'text-glomalin-muted'
-                    }`}
+                    className={[
+                      'font-mono text-xs font-semibold',
+                      unpriced_exposure_dollars > 200_000
+                        ? 'text-glomalin-warning'
+                        : 'text-glomalin-muted',
+                    ].join(' ')}
                   >
-                    {fmtDollars(unpriced_exposure_dollars)} exposure
+                    {formatUsd(unpriced_exposure_dollars)}
+                    {' exposure'}
                   </span>
                 )}
               </div>
@@ -278,7 +279,7 @@ function CommodityCard({
 
           {unpriced_bu === 0 && position.total_estimated_bu > 0 && (
             <div className="pt-1 border-t border-glomalin-border/50">
-              <span className="font-mono text-xs text-[#14b8a6]">
+              <span className="font-mono text-xs text-glomalin-accent">
                 ✓ Fully priced
               </span>
             </div>
@@ -286,7 +287,6 @@ function CommodityCard({
         </>
       )}
 
-      {/* View contracts link */}
       <button
         onClick={onViewContracts}
         className="self-start font-mono text-xs text-glomalin-muted hover:text-glomalin-accent transition-colors -mt-1"
@@ -308,11 +308,10 @@ interface HedgingDashboardProps {
 export function HedgingDashboard({ positions, cropYear, onSwitchToContracts }: HedgingDashboardProps) {
   if (positions.length === 0) {
     return (
-      <div className="rounded-lg border border-glomalin-border bg-glomalin-surface px-6 py-12 text-center">
-        <p className="font-mono text-sm text-glomalin-muted">
-          No commodities configured. Run the migration and seed data to get started.
-        </p>
-      </div>
+      <Empty
+        title="No commodities configured"
+        description="Run the migration and seed data to get started."
+      />
     )
   }
 

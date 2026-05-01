@@ -1,6 +1,6 @@
 // ── Core instrument types ──────────────────────────────────────────────────────
 
-export type InstrumentType = 'cash' | 'forward_contract' | 'option' | 'accumulator'
+export type InstrumentType = 'cash' | 'forward_contract' | 'hta' | 'option' | 'accumulator'
 
 export interface Commodity {
   id: string
@@ -151,4 +151,23 @@ export interface MarketingPosition {
   cbot_price: number | null
   unpriced_exposure_dollars: number | null
   contracts: GrainContract[]
+}
+
+export interface BudgetField {
+  fieldId: string
+  fieldName: string
+  crop: string
+  acres: number
+  rentPerAcre: number
+  fertPerAcre: number
+  seedPerAcre: number
+  machineryPerAcre: number
+  laborPerAcre: number
+  fuelPerAcre: number
+  dryingPerAcre: number
+  interestPerAcre: number
+  insurancePerAcre: number
+  expPerAcre: number
+  cropIncomePerAcre: number
+  profitPerAcre: number
 }

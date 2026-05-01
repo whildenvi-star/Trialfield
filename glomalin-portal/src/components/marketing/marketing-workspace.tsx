@@ -10,7 +10,7 @@ import type {
   CommodityPricing,
   YieldSummary,
 } from '@/lib/marketing/types'
-import type { BudgetField } from '@/app/(protected)/app/macro-rollup/page'
+import type { BudgetField } from '@/lib/marketing/types'
 import { computeCommodityPositions } from '@/lib/marketing/queries'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { HedgingDashboard } from './hedging-dashboard'
@@ -18,6 +18,7 @@ import { CommodityTable } from './commodity-table'
 import { InstrumentForm } from './instrument-form'
 import { VariantSetupPanel } from './variant-setup-panel'
 import { CropTypesPanel } from './crop-types-panel'
+import { WhatIfPanel } from './what-if-panel'
 import { Tabs } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 
@@ -73,7 +74,7 @@ export function MarketingWorkspace({
   budgetFields,
   cropYear,
 }: MarketingWorkspaceProps) {
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'contracts' | 'crop-types'>('dashboard')
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'contracts' | 'crop-types' | 'what-if'>('dashboard')
   const [activeCropYear, setActiveCropYear] = useState(cropYear)
   const [variants, setVariants] = useState<CropVariant[]>(initialVariants)
   const [instruments, setInstruments] = useState<SaleInstrument[]>(initialInstruments)
@@ -216,8 +217,9 @@ export function MarketingWorkspace({
 
   const subTabs = [
     { id: 'dashboard' as const, label: 'Hedging Dashboard' },
+    { id: 'contracts' as const, label: 'Contracts' },
     { id: 'crop-types' as const, label: 'Crop Types' },
-    { id: 'contracts' as const, label: 'Contract Management' },
+    { id: 'what-if' as const, label: 'What-If' },
   ]
 
   return (
@@ -270,16 +272,18 @@ export function MarketingWorkspace({
             </button>
           </div>
 
-          {/* Actions for contract management tab */}
-          {activeSubTab === 'contracts' && (
+          {/* Actions — visible on dashboard and contracts tabs */}
+          {(activeSubTab === 'dashboard' || activeSubTab === 'contracts') && (
             <>
-              <button
-                onClick={() => setVariantSetupOpen(true)}
-                className="font-mono text-xs text-glomalin-muted hover:text-glomalin-text transition-colors border border-glomalin-border rounded px-3 py-1.5"
-                title="Manage crop variants"
-              >
-                ⚙ Variants
-              </button>
+              {activeSubTab === 'contracts' && (
+                <button
+                  onClick={() => setVariantSetupOpen(true)}
+                  className="font-mono text-xs text-glomalin-muted hover:text-glomalin-text transition-colors border border-glomalin-border rounded px-3 py-1.5"
+                  title="Manage crop variants"
+                >
+                  ⚙ Variants
+                </button>
+              )}
               <button
                 onClick={openNewInstrument}
                 className="font-mono text-sm font-bold bg-glomalin-accent text-glomalin-bg rounded px-4 py-1.5 hover:opacity-90 transition-opacity"
@@ -337,6 +341,10 @@ export function MarketingWorkspace({
           onEditInstrument={openEditInstrument}
           onDeleteInstrument={handleDeleteInstrument}
         />
+      )}
+
+      {activeSubTab === 'what-if' && (
+        <WhatIfPanel positions={positions} />
       )}
 
       {/* Instrument form drawer */}

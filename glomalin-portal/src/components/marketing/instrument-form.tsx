@@ -119,6 +119,7 @@ function instrumentToForm(inst: SaleInstrument): FormState {
 const INSTRUMENT_TYPES: Array<{ value: InstrumentType; label: string; desc: string }> = [
   { value: 'cash',             label: 'Cash Sale',          desc: 'Spot or deferred cash delivery' },
   { value: 'forward_contract', label: 'Forward Contract',   desc: 'Fixed-price forward with delivery window' },
+  { value: 'hta',              label: 'HTA',                desc: 'Futures locked, basis open at delivery' },
   { value: 'option',           label: 'Option',             desc: 'Call or put, long or short' },
   { value: 'accumulator',      label: 'Accumulator',        desc: 'Daily/weekly accumulation with KO/KI levels' },
 ]
@@ -221,6 +222,19 @@ export function InstrumentForm({
         if (form.instrument_type === 'forward_contract') {
           body.contract_number = form.contract_number.trim() || null
         }
+        break
+      }
+      case 'hta': {
+        const bu = parseFloat(form.bushels)
+        if (isNaN(bu) || bu <= 0) { setError('Bushels must be a positive number.'); return }
+        if (!form.futures_reference) { setError('Futures price (locked) is required for HTA.'); return }
+        body.bushels           = bu
+        body.futures_reference = parseFloat(form.futures_reference)
+        body.basis             = form.basis ? parseFloat(form.basis) : null
+        body.delivery_start    = form.delivery_start || null
+        body.delivery_end      = form.delivery_end || null
+        body.delivered_bu      = parseFloat(form.delivered_bu) || 0
+        body.contract_number   = form.contract_number.trim() || null
         break
       }
       case 'option': {
@@ -417,7 +431,7 @@ export function InstrumentForm({
           {/* ── Instrument type ───────────────────────────────────── */}
           <p className={`${secLabel} mt-4`}>Instrument Type</p>
 
-          <div className={`${fc} grid grid-cols-2 gap-2`}>
+          <div className={`${fc} grid grid-cols-3 gap-2`}>
             {INSTRUMENT_TYPES.map((t) => (
               <button
                 key={t.value}
@@ -445,7 +459,7 @@ export function InstrumentForm({
 
           <div className={fc}>
             <label className={lc}>
-              {form.instrument_type === 'option' ? 'Broker' : 'Buyer'}
+              {form.instrument_type === 'option' ? 'Broker' : form.instrument_type === 'hta' ? 'Elevator / Buyer' : 'Buyer'}
             </label>
             <input
               type="text"
@@ -456,18 +470,20 @@ export function InstrumentForm({
             />
           </div>
 
-          {form.instrument_type === 'forward_contract' && (
+          {(form.instrument_type === 'forward_contract' || form.instrument_type === 'hta') && (
             <>
-              <div className={fc}>
-                <label className={lc}>Counterparty</label>
-                <input
-                  type="text"
-                  value={form.counterparty}
-                  onChange={(e) => set('counterparty', e.target.value)}
-                  placeholder="e.g. Bunge"
-                  className={ic}
-                />
-              </div>
+              {form.instrument_type === 'forward_contract' && (
+                <div className={fc}>
+                  <label className={lc}>Counterparty</label>
+                  <input
+                    type="text"
+                    value={form.counterparty}
+                    onChange={(e) => set('counterparty', e.target.value)}
+                    placeholder="e.g. Bunge"
+                    className={ic}
+                  />
+                </div>
+              )}
               <div className={fc}>
                 <label className={lc}>Contract Number</label>
                 <input
@@ -498,15 +514,62 @@ export function InstrumentForm({
                     onChange={(e) => set('price_per_bushel', e.target.value)} className={ic} placeholder="e.g. 11.45" />
                 </div>
                 <div className={fc}>
-                  <label className={lc}>Basis</label>
+                  <label className={lc}>Basis (+ = premium)</label>
                   <input type="number" step="0.001" value={form.basis}
-                    onChange={(e) => set('basis', e.target.value)} className={ic} placeholder="e.g. -0.15" />
+                    onChange={(e) => set('basis', e.target.value)} className={ic} placeholder="e.g. +0.35 or -0.15" />
                 </div>
               </div>
               <div className={fc}>
                 <label className={lc}>Futures Reference</label>
                 <input type="number" step="0.001" value={form.futures_reference}
                   onChange={(e) => set('futures_reference', e.target.value)} className={ic} placeholder="e.g. 11.60" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className={fc}>
+                  <label className={lc}>Delivery Start</label>
+                  <input type="date" value={form.delivery_start}
+                    onChange={(e) => set('delivery_start', e.target.value)} className={ic} />
+                </div>
+                <div className={fc}>
+                  <label className={lc}>Delivery End</label>
+                  <input type="date" value={form.delivery_end}
+                    onChange={(e) => set('delivery_end', e.target.value)} className={ic} />
+                </div>
+              </div>
+              {isEdit && (
+                <div className={fc}>
+                  <label className={lc}>Delivered so far (bu)</label>
+                  <input type="number" step="1" min="0" value={form.delivered_bu}
+                    onChange={(e) => set('delivered_bu', e.target.value)} className={ic} />
+                </div>
+              )}
+            </>
+          )}
+
+          {form.instrument_type === 'hta' && (
+            <>
+              <p className={`${secLabel} mt-4`}>HTA Details</p>
+              <div className="mb-3 rounded border border-glomalin-info/30 bg-glomalin-info/10 px-3 py-2">
+                <p className="font-mono text-[10px] text-glomalin-info">
+                  Futures price is locked at contract signing. Basis is set later at delivery — leave blank if still open.
+                </p>
+              </div>
+              <div className={fc}>
+                <label className={lc}>Bushels <span className="text-glomalin-danger">*</span></label>
+                <input type="number" step="1" min="1" value={form.bushels}
+                  onChange={(e) => set('bushels', e.target.value)} className={ic} placeholder="e.g. 15000" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className={fc}>
+                  <label className={lc}>Futures Price (locked) <span className="text-glomalin-danger">*</span></label>
+                  <input type="number" step="0.001" min="0" value={form.futures_reference}
+                    onChange={(e) => set('futures_reference', e.target.value)} className={ic} placeholder="e.g. 11.60" />
+                </div>
+                <div className={fc}>
+                  <label className={lc}>Basis (+ = premium, open if blank)</label>
+                  <input type="number" step="0.001" value={form.basis}
+                    onChange={(e) => set('basis', e.target.value)} className={ic} placeholder="e.g. +0.35" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className={fc}>

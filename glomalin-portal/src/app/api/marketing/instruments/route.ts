@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 
-const VALID_TYPES = ['cash', 'forward_contract', 'option', 'accumulator'] as const
+const VALID_TYPES = ['cash', 'forward_contract', 'hta', 'option', 'accumulator'] as const
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'commodity_id is required' }, { status: 400 })
   }
   if (!b.instrument_type || !VALID_TYPES.includes(b.instrument_type as typeof VALID_TYPES[number])) {
-    return NextResponse.json({ error: 'instrument_type must be cash|forward_contract|option|accumulator' }, { status: 400 })
+    return NextResponse.json({ error: 'instrument_type must be cash|forward_contract|hta|option|accumulator' }, { status: 400 })
   }
 
   const cropYear = typeof b.crop_year === 'number' ? b.crop_year : CURRENT_CROP_YEAR

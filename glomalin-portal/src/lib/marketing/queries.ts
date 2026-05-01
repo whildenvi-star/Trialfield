@@ -16,7 +16,7 @@ import type {
  * - accumulator: delivered_bu if already accumulating, otherwise estimates from window progress
  */
 export function instrumentPricedBu(inst: SaleInstrument): number {
-  if (inst.instrument_type === 'cash' || inst.instrument_type === 'forward_contract') {
+  if (inst.instrument_type === 'cash' || inst.instrument_type === 'forward_contract' || inst.instrument_type === 'hta') {
     return inst.bushels ?? 0
   }
   if (inst.instrument_type === 'option') {
@@ -55,6 +55,11 @@ export function instrumentPricedBu(inst: SaleInstrument): number {
 function instrumentEffectivePrice(inst: SaleInstrument): number | null {
   if (inst.instrument_type === 'cash' || inst.instrument_type === 'forward_contract') {
     return inst.price_per_bushel ?? null
+  }
+  if (inst.instrument_type === 'hta') {
+    if (inst.futures_reference == null) return null
+    // If basis is set, return full net price; if basis still open, use futures as floor
+    return inst.futures_reference + (inst.basis ?? 0)
   }
   if (inst.instrument_type === 'option' && inst.option_side === 'long') {
     if (inst.strike_price == null) return null
@@ -193,6 +198,7 @@ export function computeCommodityPositions(
     const instrument_mix: Record<InstrumentType, number> = {
       cash: 0,
       forward_contract: 0,
+      hta: 0,
       option: 0,
       accumulator: 0,
     }
