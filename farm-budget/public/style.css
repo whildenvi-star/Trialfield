@@ -3907,6 +3907,8 @@ tr.fo-confirm-form-row td {
 .mkt-ki-badge { font-size: 0.7rem; font-weight: 600; padding: 1px 5px; border-radius: 3px; background: var(--border); color: var(--muted); }
 .mkt-ki-badge.active { background: #f59e0b22; color: #f59e0b; }
 .mkt-double-up-meta { color: var(--muted); font-size: 0.72rem; }
+.mkt-basis-open-row { font-size: 0.75rem; color: #f59e0b; margin-top: 0.35rem; display: flex; align-items: center; gap: 0.4rem; }
+.mkt-basis-open-badge { font-size: 0.7rem; font-weight: 600; padding: 1px 5px; border-radius: 3px; background: #f59e0b22; color: #f59e0b; }
 .mkt-card-stat { font-size: 0.82rem; color: var(--muted); }
 
 /* Mix strip */

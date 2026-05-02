@@ -186,7 +186,7 @@
         var cbotPrice = cbotMap[sym] || cbotMap[sym.slice(0, 2)] || ct.cbotPrice || 0;
 
         var pricedBu = 0, wapBu = 0, wapVal = 0;
-        var mix = { cash: 0, forward_contract: 0, option: 0, accumulator: 0 };
+        var mix = { cash: 0, forward_contract: 0, hta: 0, option: 0, accumulator: 0 };
 
         poolInst.forEach(function (inst) {
           var bu = instrumentPricedBu(inst, cbotPrice);
@@ -195,6 +195,10 @@
               inst.price_per_bushel && bu > 0) {
             wapBu += bu;
             wapVal += bu * Number(inst.price_per_bushel);
+          }
+          if (inst.instrument_type === 'hta' && inst.futures_reference != null && bu > 0) {
+            wapBu += bu;
+            wapVal += bu * (Number(inst.futures_reference) + (Number(inst.basis) || 0));
           }
           if (inst.instrument_type in mix) mix[inst.instrument_type]++;
         });
@@ -243,7 +247,7 @@
 
   function instrumentPricedBu(inst, cbotPrice) {
     var t = inst.instrument_type;
-    if (t === 'cash' || t === 'forward_contract') return Number(inst.bushels) || 0;
+    if (t === 'cash' || t === 'forward_contract' || t === 'hta') return Number(inst.bushels) || 0;
     if (t === 'option') {
       return (inst.option_type === 'put' && inst.option_side === 'long') ? (Number(inst.bushels) || 0) : 0;
     }
@@ -318,7 +322,7 @@
 
       var totalMix = Object.values(pool.mix).reduce(function (s, n) { return s + n; }, 0);
       if (totalMix > 0) {
-        var mixColors = { cash: '#14b8a6', forward_contract: '#3b82f6', option: '#8b5cf6', accumulator: '#f59e0b' };
+        var mixColors = { cash: '#14b8a6', forward_contract: '#3b82f6', hta: '#6366f1', option: '#8b5cf6', accumulator: '#f59e0b' };
         html += '<div class="mix-strip">';
         Object.keys(pool.mix).forEach(function (t) {
           if (!pool.mix[t]) return;
@@ -343,6 +347,17 @@
           (kiActive ? '&#9888; Double-up ACTIVE' : 'Double-up risk') +
           '</span> Max ' + util.formatNum(maxDoubleUpBu, 0) + ' bu' +
           '<span class="mkt-double-up-meta"> &middot; KI: ' + kiLevels + '</span>' +
+          '</div>';
+      }
+
+      var htasWithOpenBasis = pool.instruments.filter(function (i) {
+        return i.instrument_type === 'hta' && (i.basis == null || i.basis === '');
+      });
+      if (htasWithOpenBasis.length > 0) {
+        var openBu = htasWithOpenBasis.reduce(function (s, i) { return s + (Number(i.bushels) || 0); }, 0);
+        html += '<div class="mkt-basis-open-row">' +
+          '<span class="mkt-basis-open-badge">&#9675; Basis Open</span> ' +
+          util.formatNum(openBu, 0) + ' bu HTA — basis not yet set' +
           '</div>';
       }
 
@@ -415,8 +430,8 @@
         (grouped[k] = grouped[k] || []).push(i);
       });
 
-      var mixColors = { cash: '#14b8a6', forward_contract: '#3b82f6', option: '#8b5cf6', accumulator: '#f59e0b' };
-      var typeLabel = { cash: 'Cash', forward_contract: 'Fwd', option: 'Opt', accumulator: 'Accum' };
+      var mixColors = { cash: '#14b8a6', forward_contract: '#3b82f6', hta: '#6366f1', option: '#8b5cf6', accumulator: '#f59e0b' };
+      var typeLabel = { cash: 'Cash', forward_contract: 'Fwd', hta: 'HTA', option: 'Opt', accumulator: 'Accum' };
 
       pools.forEach(function (pool) {
         var group = grouped[pool.id] || [];
@@ -444,7 +459,8 @@
       root.innerHTML = html;
     }
 
-    root.querySelector('#mkt-add-inst-btn').addEventListener('click', function () { openInstrumentForm(null, null); });
+    var addBtn = root.querySelector('#mkt-add-inst-btn');
+    if (addBtn) addBtn.addEventListener('click', function () { openInstrumentForm(null, null); });
 
     root.querySelectorAll('.mkt-add-for-pool').forEach(function (a) {
       a.addEventListener('click', function (e) {
@@ -477,6 +493,14 @@
     var detail = '';
     if (inst.instrument_type === 'cash' || inst.instrument_type === 'forward_contract') {
       detail = util.formatNum(inst.bushels, 0) + ' bu @ ' + util.formatMoney(inst.price_per_bushel);
+      if (inst.delivery_start) detail += ' · ' + String(inst.delivery_start).slice(0, 7);
+    } else if (inst.instrument_type === 'hta') {
+      detail = util.formatNum(inst.bushels, 0) + ' bu · Fut ' + util.formatMoney(inst.futures_reference);
+      if (inst.basis != null && inst.basis !== '') {
+        detail += ' · Basis ' + (Number(inst.basis) >= 0 ? '+' : '') + util.formatMoney(inst.basis);
+      } else {
+        detail += ' · <span style="color:#f59e0b">[Basis Open]</span>';
+      }
       if (inst.delivery_start) detail += ' · ' + String(inst.delivery_start).slice(0, 7);
     } else if (inst.instrument_type === 'option') {
       detail = (inst.option_side || '') + ' ' + (inst.option_type || '') + ' · strike ' + util.formatMoney(inst.strike_price);
@@ -646,8 +670,8 @@
     var poolOpts = pools.map(function (p) {
       return '<option value="' + util.escHtml(p.id) + '"' + (p.id === selCtId ? ' selected' : '') + '>' + util.escHtml(p.name) + '</option>';
     }).join('');
-    var typeBtns = ['cash', 'forward_contract', 'option', 'accumulator'].map(function (t) {
-      var lbl = { cash: 'Cash', forward_contract: 'Forward', option: 'Option', accumulator: 'Accumulator' }[t];
+    var typeBtns = ['cash', 'forward_contract', 'hta', 'option', 'accumulator'].map(function (t) {
+      var lbl = { cash: 'Cash', forward_contract: 'Forward', hta: 'HTA', option: 'Option', accumulator: 'Accumulator' }[t];
       return '<button type="button" class="mkt-type-btn' + (t === curType ? ' active' : '') + '" data-type="' + t + '">' + lbl + '</button>';
     }).join('');
 
@@ -723,6 +747,14 @@
         fld('Delivery End', 'date', 'mkt-form-del-end', v.delivery_end) +
         (type === 'forward_contract' ? fld('Contract #', 'text', 'mkt-form-contract-no', v.contract_number) : '');
     }
+    if (type === 'hta') {
+      return fld('Bushels', 'number', 'mkt-form-bu', v.bushels, 'step="100"') +
+        fld('Futures Price (locked) $/bu', 'number', 'mkt-form-futures-ref', v.futures_reference, 'step="0.01"') +
+        fld('Basis (+ = premium, open if blank)', 'number', 'mkt-form-basis', v.basis, 'step="0.01"') +
+        fld('Delivery Start', 'date', 'mkt-form-del-start', v.delivery_start) +
+        fld('Delivery End', 'date', 'mkt-form-del-end', v.delivery_end) +
+        fld('Contract #', 'text', 'mkt-form-contract-no', v.contract_number);
+    }
     if (type === 'option') {
       return fld('Bushels', 'number', 'mkt-form-bu', v.bushels, 'step="100"') +
         tog('[data-opt-type]', [['call', 'Call', v.option_type === 'call'], ['put', 'Put', v.option_type !== 'call']]) +
@@ -794,6 +826,15 @@
       payload.delivery_start   = gv('mkt-form-del-start') || null;
       payload.delivery_end     = gv('mkt-form-del-end') || null;
       if (type === 'forward_contract') payload.contract_number = gv('mkt-form-contract-no') || null;
+    } else if (type === 'hta') {
+      payload.bushels           = gn('mkt-form-bu');
+      payload.futures_reference = gn('mkt-form-futures-ref');
+      payload.basis             = gn('mkt-form-basis');
+      payload.delivery_start    = gv('mkt-form-del-start') || null;
+      payload.delivery_end      = gv('mkt-form-del-end') || null;
+      payload.contract_number   = gv('mkt-form-contract-no') || null;
+      if (!payload.bushels) { util.showToast('Bushels required', 'error'); return; }
+      if (!payload.futures_reference) { util.showToast('Futures price required', 'error'); return; }
     } else if (type === 'option') {
       payload.bushels      = gn('mkt-form-bu');
       payload.option_type  = activeVal('[data-opt-type]', 'data-opt-type') || 'put';
