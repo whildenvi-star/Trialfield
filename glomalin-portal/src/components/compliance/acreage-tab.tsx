@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { CluWorkspace } from '@/components/fsa/clu-workspace'
 import { ZoneSetupPanel } from '@/components/fsa/zone-setup-panel'
 import { ReconciliationView } from '@/components/fsa/reconciliation-view'
@@ -8,6 +9,12 @@ import { CoverageImportPanel } from '@/components/fsa/coverage-import-panel'
 import { ActionButton } from '@/components/compliance/ui'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import type { CluRecord } from '@/lib/fsa/calc'
+
+// CRITICAL: ssr: false required — ReportingMap uses maplibre-gl which requires `window`
+const ReportingMap = dynamic(
+  () => import('@/components/fsa/reporting-map').then((m) => m.ReportingMap),
+  { ssr: false }
+)
 
 interface AcreageTabProps {
   records: CluRecord[]
@@ -18,7 +25,7 @@ interface AcreageTabProps {
 }
 
 export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigateTab }: AcreageTabProps) {
-  const [view, setView] = useState<'clu' | 'zones' | 'reconcile' | 'coverage'>('clu')
+  const [view, setView] = useState<'clu' | 'map' | 'zones' | 'reconcile' | 'coverage'>('clu')
 
   const filtered = useMemo(() => {
     let out = records
@@ -37,8 +44,8 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
     return out
   }, [records, farmFilter, cropFilter])
 
-  // Reconciliation view needs full height — remove max-w constraint for that view
-  const wrapClass = view === 'reconcile' ? 'h-[calc(100vh-220px)]' : 'max-w-7xl mx-auto px-0'
+  // Reconciliation and Map views need full height — remove max-w constraint
+  const wrapClass = (view === 'reconcile' || view === 'map') ? 'h-[calc(100vh-220px)]' : 'max-w-7xl mx-auto px-0'
 
   return (
     <div className={wrapClass}>
@@ -59,8 +66,8 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
           File PP Claim &rarr;
         </ActionButton>
         <div className="ml-auto flex rounded border border-glomalin-border overflow-hidden text-xs font-mono">
-          {(['clu', 'zones', 'reconcile', 'coverage'] as const).map((v, i) => {
-            const labels = { clu: 'CLU Records', zones: 'Zone Setup', reconcile: 'Reconcile', coverage: 'As-Applied' }
+          {(['map', 'clu', 'zones', 'reconcile', 'coverage'] as const).map((v, i) => {
+            const labels = { map: 'Map View', clu: 'CLU Records', zones: 'Zone Setup', reconcile: 'Reconcile', coverage: 'As-Applied' }
             return (
               <button
                 key={v}
@@ -73,6 +80,10 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
           })}
         </div>
       </div>
+
+      {view === 'map' && (
+        <ReportingMap />
+      )}
 
       {view === 'clu' && (
         <>
