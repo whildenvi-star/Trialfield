@@ -6,6 +6,7 @@ import type { CluRecord, ValidationWarning } from '@/lib/fsa/calc'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { FarmAccordion } from './farm-accordion'
 import { BulkActionBar } from './bulk-action-bar'
+import { AutoPopulatePanel } from './auto-populate-panel'
 
 // CRITICAL: ssr: false required — @react-pdf/renderer crashes Next.js App Router SSR
 // with "Component is not a constructor" if imported server-side.
@@ -126,6 +127,7 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
   const [warnings, setWarnings] = useState<ValidationWarning[]>([])
   // Track dismissed prevented planting prompt IDs — persists within a session across card expand/collapse
   const [dismissedPpIds, setDismissedPpIds] = useState<Set<string>>(new Set())
+  const [showAutoPopulate, setShowAutoPopulate] = useState(false)
   // Add CLU form state
   const [showAddForm, setShowAddForm] = useState(false)
   const [addDraft, setAddDraft] = useState<AddCluDraft>(EMPTY_ADD_DRAFT)
@@ -385,6 +387,16 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
           >
             {showAddForm ? 'Cancel' : 'Add CLU'}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowAutoPopulate((v) => !v)
+              setShowAddForm(false)
+            }}
+            className="bg-glomalin-surface border border-glomalin-border text-glomalin-text px-4 py-2 rounded font-mono text-sm hover:border-glomalin-accent"
+          >
+            Auto-Populate
+          </button>
           <AcreagePdfButton records={records} />
           <button
             type="button"
@@ -393,6 +405,13 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
           >
             Export CSV
           </button>
+          <a
+            href={`/api/fsa/export-shapefile?year=${CURRENT_CROP_YEAR}&confirmed_only=true`}
+            download
+            className="bg-glomalin-surface border border-glomalin-border text-glomalin-text px-4 py-2 rounded font-mono text-sm hover:border-glomalin-accent inline-block"
+          >
+            Download Shapefile
+          </a>
         </div>
       </div>
 
@@ -401,6 +420,17 @@ export function CluWorkspace({ initialRecords, loadError }: CluWorkspaceProps) {
         <div className="bg-glomalin-surface border border-red-800 rounded-lg px-4 py-3 mb-6 font-mono text-sm text-red-400">
           Failed to load CLU records: {loadError}
         </div>
+      )}
+
+      {/* Auto-populate panel */}
+      {showAutoPopulate && (
+        <AutoPopulatePanel
+          onClose={() => setShowAutoPopulate(false)}
+          onRecordsUpdated={(updated) => {
+            const updatedMap = new Map(updated.map((r) => [r.id, r]))
+            setRecords((prev) => prev.map((r) => updatedMap.get(r.id) ?? r))
+          }}
+        />
       )}
 
       {/* Add CLU form */}

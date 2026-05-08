@@ -3,6 +3,7 @@
 
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer'
 import type { CluRecord } from '@/lib/fsa/calc'
+import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 // ===== Styles =====
 
@@ -291,7 +292,7 @@ export function AcreagePdfDocument({ records }: AcreagePdfDocumentProps) {
     <Document>
       <Page size="LETTER" orientation="landscape" style={styles.page}>
         {/* Document header */}
-        <Text style={styles.title}>Acreage Reporting Summary — Crop Year 2026</Text>
+        <Text style={styles.title}>{`Acreage Reporting Summary — Crop Year ${records[0]?.crop_year ?? CURRENT_CROP_YEAR}`}</Text>
         <Text style={styles.subtitle}>Generated: {today}</Text>
         <Text style={styles.disclaimer}>
           This is a reporting summary for producer records. It is not an official FSA-578

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 import { isOrganicCrop } from '@/lib/fsa/calc'
 
-const EDITABLE_FIELDS = new Set(['crop', 'registry_crop_id', 'irrigated', 'organic', 'grain_plant_date', 'use', 'prevented_planting', 'registry_field_id', 'field_name'])
+const EDITABLE_FIELDS = new Set(['crop', 'registry_crop_id', 'irrigated', 'organic', 'grain_plant_date', 'use', 'prevented_planting', 'prevented_planting_acres', 'registry_field_id', 'field_name'])
 
 export async function PATCH(
   request: Request,

@@ -283,6 +283,8 @@ export function ZoneSetupPanel({ cropYear = CURRENT_CROP_YEAR }: ZoneSetupPanelP
   const [loading, setLoading] = useState(true)
   const [seeding, setSeeding] = useState(false)
   const [seedResult, setSeedResult] = useState<{ created: number; already_linked: number } | null>(null)
+  const [linking, setLinking] = useState(false)
+  const [linkResult, setLinkResult] = useState<{ linked: number; already_linked: number; no_geometry: number; no_zone_found: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -306,6 +308,7 @@ export function ZoneSetupPanel({ cropYear = CURRENT_CROP_YEAR }: ZoneSetupPanelP
   async function seedFromClus() {
     setSeeding(true)
     setSeedResult(null)
+    setError(null)
     try {
       const res = await fetch('/api/fsa/zones/seed', {
         method: 'POST',
@@ -324,6 +327,28 @@ export function ZoneSetupPanel({ cropYear = CURRENT_CROP_YEAR }: ZoneSetupPanelP
     }
   }
 
+  async function linkToSmsZones() {
+    setLinking(true)
+    setLinkResult(null)
+    setError(null)
+    try {
+      const res = await fetch('/api/fsa/zones/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ crop_year: cropYear }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'Link failed')
+      } else {
+        setLinkResult(data)
+        refresh()
+      }
+    } finally {
+      setLinking(false)
+    }
+  }
+
   return (
     <div className="max-w-4xl font-mono text-glomalin-text">
       {/* Header */}
@@ -336,19 +361,46 @@ export function ZoneSetupPanel({ cropYear = CURRENT_CROP_YEAR }: ZoneSetupPanelP
         </div>
         <div className="flex items-center gap-2">
           {unlinked.length > 0 && (
-            <span className="text-xs text-glomalin-warning font-mono">
+            <span className="text-xs text-amber-400 font-mono">
               {unlinked.length} unlinked CLU{unlinked.length !== 1 ? 's' : ''}
             </span>
           )}
           <button
+            onClick={linkToSmsZones}
+            disabled={linking || seeding}
+            title="Spatially match CLU boundaries to imported SMS farm boundaries (largest intersection wins)"
+            className="px-3 py-1.5 rounded border border-glomalin-green text-glomalin-green text-xs font-mono hover:bg-glomalin-green/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {linking ? 'Linking...' : 'Link to SMS Zones'}
+          </button>
+          <button
             onClick={seedFromClus}
-            disabled={seeding || unlinked.length === 0}
+            disabled={seeding || linking || unlinked.length === 0}
+            title="Create a new management zone for each unlinked CLU record"
             className="px-3 py-1.5 rounded bg-glomalin-accent text-black text-xs font-mono hover:bg-glomalin-accentLight disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {seeding ? 'Seeding...' : `Seed from CLUs (${unlinked.length})`}
           </button>
         </div>
       </div>
+
+      {/* Link result banner */}
+      {linkResult && (
+        <div className="mb-3 px-3 py-2 rounded border border-glomalin-green/40 bg-glomalin-green/10 text-xs font-mono text-glomalin-green">
+          Linked {linkResult.linked} CLU{linkResult.linked !== 1 ? 's' : ''} to SMS zones.
+          {linkResult.already_linked > 0 && ` ${linkResult.already_linked} already linked.`}
+          {linkResult.no_zone_found > 0 && (
+            <span className="text-amber-400 ml-2">
+              {linkResult.no_zone_found} CLU{linkResult.no_zone_found !== 1 ? 's' : ''} had no intersecting zone.
+            </span>
+          )}
+          {linkResult.no_geometry > 0 && (
+            <span className="text-glomalin-muted ml-2">
+              {linkResult.no_geometry} had no boundary geometry.
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Seed result banner */}
       {seedResult && (
