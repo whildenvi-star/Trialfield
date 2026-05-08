@@ -1,0 +1,42 @@
+{
+  "name": "caseih-fieldops-connector",
+  "version": "0.1.0",
+  "description": "Connector scaffold for Case IH FieldOps API — fetch and normalize field operations",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "jest --runInBand",
+    "lint": "echo 'no linter configured'"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nock": "^13.3.0"
+  }
+}
+{
+  "name": "caseih-fieldops-connector",
+  "version": "0.1.0",
+  "description": "Connector scaffold for Case IH FieldOps API — fetch and normalize field operations",
+  "main": "src/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/cli.js",
+    "test": "jest --runInBand",
+    "lint": "echo 'no linter configured'"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nock": "^13.3.0"
+  }
+}

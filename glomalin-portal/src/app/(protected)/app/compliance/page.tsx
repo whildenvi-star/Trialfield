@@ -22,7 +22,7 @@ export default async function CompliancePage() {
       .from('clu_records')
       .select('id', { count: 'exact', head: true })
       .eq('crop_year', CURRENT_CROP_YEAR)
-      .is('reported_date', null),
+      .eq('reported', false),
     supabase
       .from('insurance_policies')
       .select('id', { count: 'exact', head: true })

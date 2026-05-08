@@ -24,6 +24,12 @@ interface FarmSummary {
   bounds: [number, number, number, number]
 }
 
+interface FieldBoundaryFeature {
+  type: 'Feature'
+  geometry: Record<string, unknown>
+  properties: { registry_field_id: string; name: string }
+}
+
 interface MapResponse {
   type: 'FeatureCollection'
   features: Array<{
@@ -32,6 +38,10 @@ interface MapResponse {
     properties: CluMapProperties
   }>
   farms: FarmSummary[]
+  fieldBoundaries?: {
+    type: 'FeatureCollection'
+    features: FieldBoundaryFeature[]
+  }
 }
 
 function deriveStatus(props: Partial<CluMapProperties>): ReportingStatus {
@@ -51,7 +61,9 @@ export function ReportingMap() {
   const [farms, setFarms] = useState<FarmSummary[]>([])
   const [selectedClu, setSelectedClu] = useState<CluMapProperties | null>(null)
   const [activeFarm, setActiveFarm] = useState<string | null>(null)
-  const [bulkReporting, setBulkReporting] = useState<string | null>(null) // farm_number being bulk-reported
+  const [bulkReporting, setBulkReporting] = useState<string | null>(null)
+  const [showCluLayer, setShowCluLayer] = useState(true)
+  const [showFarmBounds, setShowFarmBounds] = useState(true)
 
   // Rebuild the GeoJSON source data from current featuresRef
   const refreshMapSource = useCallback(() => {
@@ -274,6 +286,36 @@ export function ReportingMap() {
             },
           })
 
+          // SMS farm boundary layer — blue outline only, no fill
+          if (data.fieldBoundaries && data.fieldBoundaries.features.length > 0) {
+            mapInstance.addSource('farm-bounds', {
+              type: 'geojson',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              data: data.fieldBoundaries as any,
+            })
+
+            mapInstance.addLayer({
+              id: 'farm-bounds-fill',
+              type: 'fill',
+              source: 'farm-bounds',
+              paint: {
+                'fill-color': '#60a5fa',
+                'fill-opacity': 0.08,
+              },
+            })
+
+            mapInstance.addLayer({
+              id: 'farm-bounds-stroke',
+              type: 'line',
+              source: 'farm-bounds',
+              paint: {
+                'line-color': '#60a5fa',
+                'line-width': 2.5,
+                'line-dasharray': [4, 2],
+              },
+            })
+          }
+
           // Popup for hover
           const popup = new maplibregl.Popup({
             closeButton: false,
@@ -348,8 +390,25 @@ export function ReportingMap() {
     }
   }, [])
 
-  // Recalculate the status color when refreshMapSource repaints
-  // (MapLibre paint expressions read from feature properties, so setData is enough)
+  // Toggle CLU layer visibility
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const vis = showCluLayer ? 'visible' : 'none'
+    for (const id of ['clu-fill', 'clu-stroke', 'clu-selected', 'clu-hover']) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis)
+    }
+  }, [showCluLayer])
+
+  // Toggle SMS farm boundary layer visibility
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    const vis = showFarmBounds ? 'visible' : 'none'
+    for (const id of ['farm-bounds-fill', 'farm-bounds-stroke']) {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis)
+    }
+  }, [showFarmBounds])
 
   const totalCLUs = farms.reduce((s, f) => s + f.total, 0)
   const totalGreen = farms.reduce((s, f) => s + f.green, 0)
@@ -382,7 +441,7 @@ export function ReportingMap() {
         </div>
 
         {/* Legend chips */}
-        <div className="flex gap-1.5 px-3 py-2 border-b border-glomalin-border">
+        <div className="flex gap-1.5 px-3 py-2 border-b border-glomalin-border flex-wrap">
           {(['orange', 'yellow', 'green'] as ReportingStatus[]).map((s) => {
             const labels = { orange: 'Undecl', yellow: 'Entered', green: 'Rpted' }
             const colors = { orange: 'bg-orange-500', yellow: 'bg-yellow-500', green: 'bg-green-500' }
@@ -393,6 +452,35 @@ export function ReportingMap() {
               </span>
             )
           })}
+        </div>
+
+        {/* Layer toggles */}
+        <div className="px-3 py-2 border-b border-glomalin-border space-y-1.5">
+          <p className="text-[10px] font-mono text-glomalin-muted uppercase tracking-wide">Layers</p>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showCluLayer}
+              onChange={(e) => setShowCluLayer(e.target.checked)}
+              className="accent-glomalin-accent w-3 h-3"
+            />
+            <span className="flex items-center gap-1.5 text-[11px] font-mono text-glomalin-text">
+              <span className="w-3 h-2 rounded-sm bg-orange-500 opacity-80" />
+              CLU Boundaries
+            </span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showFarmBounds}
+              onChange={(e) => setShowFarmBounds(e.target.checked)}
+              className="accent-[#60a5fa] w-3 h-3"
+            />
+            <span className="flex items-center gap-1.5 text-[11px] font-mono text-glomalin-text">
+              <span className="w-3 h-0.5 bg-blue-400" />
+              Farm Boundaries
+            </span>
+          </label>
         </div>
 
         {/* Farm list */}

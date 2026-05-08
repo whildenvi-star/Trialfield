@@ -585,32 +585,56 @@
       </div>
       </div><!-- /ref-sub-labor -->
 
-      <!-- Seeds Sub-section (merged from Seeds tab) -->
+      <!-- Seeds Sub-section — Seed Command Center -->
       <div id="ref-sub-seeds" class="ref-sub-content">
-      <h3>Seeds Manager</h3>
-      <p class="edit-hint">Double-click any cell to edit in place.</p>
-      <div class="filters">
-        <input type="text" id="seed-search" placeholder="Search seeds...">
-        <button id="seed-add" class="btn-primary btn-sm">+ Add Seed</button>
-      </div>
-      <div class="table-info"><span id="seed-count"></span></div>
-      <div class="table-wrap">
-        <table id="seed-table">
-          <thead>
-            <tr>
-              <th data-sort="crop">Crop</th>
-              <th data-sort="supplierId" title="Seed supplier">Supplier</th>
-              <th data-sort="brand">Brand</th>
-              <th data-sort="variety">Variety</th>
-              <th data-sort="pricePerUnit" title="Price per unit (bag)">Price/Unit</th>
-              <th data-sort="seedsPerUnit" title="Number of seeds per unit (bag)">Seeds/Unit</th>
-              <th title="Used on certified organic ground">OG</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="seed-tbody"></tbody>
-        </table>
-      </div>
+
+        <!-- Header row -->
+        <div class="scc-header">
+          <div>
+            <div class="scc-title">Seed Command Center</div>
+            <div class="scc-title-val">Season Inventory &amp; Demand</div>
+          </div>
+          <div id="scc-header-right" style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap"></div>
+        </div>
+
+        <!-- Stat cards (populated by JS) -->
+        <div id="seed-stat-cards"></div>
+
+        <!-- Demand panel (hero) -->
+        <div id="seed-demand-container"></div>
+
+        <!-- Variety Catalog — secondary, collapsible -->
+        <div class="scc-catalog-section">
+          <div class="scc-catalog-toggle" id="seed-catalog-toggle">
+            <span class="scc-catalog-caret">&#9654;</span>
+            <span>Variety Catalog</span>
+            <span id="seed-count" style="color:var(--text-light);font-weight:400"></span>
+            <span style="margin-left:auto;font-size:0.62rem;opacity:0.6">dbl-click to edit</span>
+          </div>
+          <div class="scc-catalog-body" id="seed-catalog-body">
+            <div class="filters" style="margin-bottom:0.5rem">
+              <input type="text" id="seed-search" placeholder="Search varieties...">
+              <button id="seed-add" class="btn-primary btn-sm">+ Add Seed</button>
+            </div>
+            <div class="table-wrap">
+              <table id="seed-table">
+                <thead>
+                  <tr>
+                    <th data-sort="crop">Crop</th>
+                    <th data-sort="supplierId" title="Seed supplier">Supplier</th>
+                    <th data-sort="brand">Brand</th>
+                    <th data-sort="variety">Variety</th>
+                    <th data-sort="pricePerUnit" title="Price per unit (bag)">Price/Unit</th>
+                    <th data-sort="seedsPerUnit" title="Number of seeds per unit (bag)">Seeds/Unit</th>
+                    <th title="Used on certified organic ground">OG</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="seed-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
 
       </div><!-- /ref-sub-seeds -->
 

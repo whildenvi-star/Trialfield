@@ -4051,3 +4051,366 @@ tr.fo-confirm-form-row td {
 
 /* Summary strip warning highlight */
 .mkt-summary-warn .mkt-summary-val { color: #f59e0b; }
+
+/* ============================================================
+   SEED COMMAND CENTER
+   ============================================================ */
+
+.scc-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+  flex-wrap: wrap;
+}
+
+.scc-title {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin: 0 0 0.25rem;
+}
+
+.scc-title-val {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 0;
+  text-transform: none;
+  font-family: var(--font-mono);
+}
+
+/* --- Stat cards --- */
+.scc-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.scc-stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.65rem 0.85rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.scc-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  border-radius: 0;
+}
+
+.scc-stat-card.risk::before   { background: var(--danger); }
+.scc-stat-card.transit::before { background: var(--amber); }
+.scc-stat-card.covered::before { background: var(--success); }
+.scc-stat-card.invest::before  { background: var(--primary); }
+
+.scc-stat-label {
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 0.3rem;
+}
+
+.scc-stat-value {
+  font-size: 1.65rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+
+.scc-stat-card.risk    .scc-stat-value { color: var(--danger); }
+.scc-stat-card.transit .scc-stat-value { color: var(--amber); }
+.scc-stat-card.covered .scc-stat-value { color: var(--success); }
+.scc-stat-card.invest  .scc-stat-value { color: var(--primary); }
+
+.scc-stat-sub {
+  font-size: 0.68rem;
+  color: var(--text-light);
+  font-family: var(--font-mono);
+}
+
+@keyframes scc-risk-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+.scc-stat-card.risk.has-risk .scc-stat-value {
+  animation: scc-risk-pulse 1.8s ease-in-out infinite;
+}
+
+/* --- Toggle group --- */
+.scc-toggle-group {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.scc-toggle-btn {
+  padding: 0.28rem 0.75rem;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  border-right: 1px solid var(--border);
+}
+.scc-toggle-btn:last-child { border-right: none; }
+.scc-toggle-btn.active {
+  background: var(--primary);
+  color: var(--bg);
+  font-weight: 600;
+}
+.scc-toggle-btn:not(.active):hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* --- Demand section controls row --- */
+.scc-demand-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.scc-demand-label {
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.scc-demand-search {
+  padding: 0.22rem 0.55rem;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 3px;
+  width: 190px;
+  transition: border-color 0.15s;
+}
+.scc-demand-search:focus {
+  outline: none;
+  border-color: var(--primary-dim);
+}
+
+/* --- Column header --- */
+.scc-col-header {
+  display: grid;
+  grid-template-columns: 1fr 105px 72px 72px 72px 40px;
+  padding: 0.28rem 0.75rem 0.28rem 0.85rem;
+  font-size: 0.6rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-light);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+
+/* --- Variety demand cards --- */
+.sd-variety-block { border-bottom: 1px solid var(--border); }
+.sd-variety-block:last-child { border-bottom: none; }
+
+.sd-card-main {
+  display: grid;
+  grid-template-columns: 1fr 105px 72px 72px 72px 40px;
+  padding: 0.6rem 0.75rem 0.6rem 0.85rem;
+  align-items: center;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.12s;
+  user-select: none;
+}
+
+.sd-card-main:hover { background: rgba(255,255,255,0.025); }
+
+.sd-card-main.level-0 {
+  border-left-color: var(--danger);
+  background: rgba(220, 38, 38, 0.04);
+}
+.sd-card-main.level-0:hover { background: rgba(220, 38, 38, 0.07); }
+
+.sd-card-main.level-1 { border-left-color: var(--amber); }
+.sd-card-main.level-2 {
+  border-left-color: var(--success);
+  opacity: 0.82;
+}
+.sd-card-main.level-2:hover { opacity: 1; }
+
+.sd-card-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-bright);
+  font-family: var(--font-mono);
+  line-height: 1.2;
+}
+
+.sd-card-meta {
+  font-size: 0.68rem;
+  color: var(--text-light);
+  margin-top: 0.18rem;
+  font-family: var(--font-mono);
+}
+
+.sd-stat-col {
+  text-align: right;
+  padding-right: 0.25rem;
+}
+
+.sd-stat-lbl {
+  font-size: 0.57rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-light);
+  font-family: var(--font-mono);
+  margin-bottom: 0.08rem;
+}
+
+.sd-stat-num {
+  font-size: 0.88rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sd-stat-num.danger  { color: var(--danger); }
+.sd-stat-num.success { color: var(--success); }
+.sd-stat-num.muted   { color: var(--text-light); font-weight: 400; }
+
+.sd-caret {
+  font-size: 0.6rem;
+  color: var(--text-light);
+  text-align: center;
+  transition: transform 0.15s;
+}
+.sd-caret.open { transform: rotate(90deg); }
+
+/* --- Field breakdown --- */
+.sd-field-breakdown {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 0.35rem 0 0.35rem 1.5rem;
+}
+
+.sd-field-hdr {
+  display: grid;
+  grid-template-columns: 1fr 68px 95px 80px;
+  padding: 0.15rem 0.75rem 0.15rem 0.4rem;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-light);
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border);
+}
+
+.sd-field-row {
+  display: grid;
+  grid-template-columns: 1fr 68px 95px 80px;
+  padding: 0.28rem 0.75rem 0.28rem 0.4rem;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: background 0.1s;
+}
+.sd-field-row:last-child { border-bottom: none; }
+.sd-field-row:hover { background: rgba(255,255,255,0.02); }
+
+.sd-field-name { color: var(--text); }
+.sd-field-acres { color: var(--text-light); }
+.sd-field-pop { color: var(--text-light); font-size: 0.72rem; }
+.sd-field-units { font-weight: 600; color: var(--text-bright); text-align: right; }
+
+/* --- Enterprise group header --- */
+.scc-ent-group {
+  padding: 0.38rem 0.75rem;
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--primary);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.scc-ent-group:first-child { margin-top: 0; }
+.scc-ent-badge {
+  font-size: 0.6rem;
+  color: var(--text-light);
+  background: var(--border);
+  border-radius: 10px;
+  padding: 0.05rem 0.4rem;
+}
+
+/* --- Demand container border --- */
+.scc-demand-wrap {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* --- Catalog section (secondary) --- */
+.scc-catalog-section {
+  margin-top: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.scc-catalog-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.07em;
+  color: var(--text-light);
+  background: var(--card);
+  user-select: none;
+  transition: background 0.12s, color 0.12s;
+}
+.scc-catalog-toggle:hover { background: var(--border); color: var(--text); }
+
+.scc-catalog-caret {
+  font-size: 0.6rem;
+  display: inline-block;
+  transition: transform 0.18s;
+}
+.scc-catalog-toggle.open .scc-catalog-caret { transform: rotate(90deg); }
+
+.scc-catalog-body {
+  display: none;
+  padding: 0.75rem;
+  background: var(--bg);
+}
+.scc-catalog-body.open { display: block; }

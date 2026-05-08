@@ -52,8 +52,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 })
   }
 
-  // Fetch CLU records and boundaries in parallel
-  const [recordsRes, boundariesRes] = await Promise.all([
+  // Fetch CLU records, CLU boundaries, and SMS field boundaries in parallel
+  const [recordsRes, boundariesRes, fieldBoundariesRes] = await Promise.all([
     supabase
       .from('clu_records')
       .select('*')
@@ -65,15 +65,30 @@ export async function GET(request: Request) {
       .from('clu_boundaries_geo')
       .select('farm_number, tract_number, clu_label, geojson')
       .eq('crop_year', year),
+    supabase
+      .from('field_boundaries')
+      .select('registry_field_id, name, geojson, centroid_lat, centroid_lng'),
   ])
 
   if (recordsRes.error) {
     return NextResponse.json({ error: 'Failed to fetch CLU records', details: recordsRes.error.message }, { status: 500 })
   }
 
-  // Boundary fetch errors are non-fatal — map renders with no polygons
+  // Boundary fetch errors are non-fatal — map renders without that layer
   const records: CluRecord[] = recordsRes.data ?? []
   const boundaries: BoundaryRow[] = (boundariesRes.data ?? []) as BoundaryRow[]
+
+  // Build SMS field boundaries GeoJSON FeatureCollection
+  const fieldBoundaryFeatures = (fieldBoundariesRes.data ?? [])
+    .filter((fb) => fb.geojson)
+    .map((fb) => ({
+      type: 'Feature' as const,
+      geometry: fb.geojson,
+      properties: {
+        registry_field_id: fb.registry_field_id,
+        name: fb.name,
+      },
+    }))
 
   // Build boundary lookup: "farmNumber|tractNumber|cluLabel" → GeoJSON geometry
   const boundaryMap = new Map<string, Record<string, unknown>>()
@@ -150,6 +165,10 @@ export async function GET(request: Request) {
     type: 'FeatureCollection',
     features,
     farms,
+    fieldBoundaries: {
+      type: 'FeatureCollection',
+      features: fieldBoundaryFeatures,
+    },
     year,
   })
 }

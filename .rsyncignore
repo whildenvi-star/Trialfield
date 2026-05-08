@@ -1,0 +1,19 @@
+node_modules
+.next
+.git
+.planning
+.vercel
+
+# CRITICAL: Never overwrite production data with local data
+# With-prefix: protects when syncing from project root (farm-budget/data/data.json)
+*/data/data.json
+*/data/data.json.bak.*
+*/data/photos
+# Bare: protects when syncing a single app subdirectory (data/data.json)
+data/data.json
+data/data.json.bak.*
+data/photos
+
+# Environment files
+*.env
+.env.*
