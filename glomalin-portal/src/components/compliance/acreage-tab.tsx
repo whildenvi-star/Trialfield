@@ -82,7 +82,7 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
       </div>
 
       {view === 'map' && (
-        <ReportingMap />
+        <ReportingMap farmFilter={farmFilter} />
       )}
 
       {view === 'clu' && (

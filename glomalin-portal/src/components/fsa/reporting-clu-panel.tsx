@@ -20,10 +20,26 @@ export interface CluMapProperties {
   status: ReportingStatus
 }
 
+export interface CluAnomalyResult {
+  clu_record_id: string
+  farm_number: string
+  tract_number: string
+  clu_label: string
+  field_name: string | null
+  fsa_acres: number
+  zone_count: number
+  zone_names: string[]
+  zone_crops: string[]
+  zone_organics: boolean[]
+  intersection_acs: number[]
+}
+
 interface ReportingCluPanelProps {
   clu: CluMapProperties
   onClose: () => void
   onRecordUpdated: (updated: Partial<CluMapProperties> & { id: string }) => void
+  onNavigateNext?: () => void
+  anomalyData?: CluAnomalyResult
 }
 
 const statusConfig: Record<ReportingStatus, { label: string; className: string }> = {
@@ -32,7 +48,7 @@ const statusConfig: Record<ReportingStatus, { label: string; className: string }
   green:  { label: 'Reported',   className: 'text-green-400  bg-green-950  border border-green-800'  },
 }
 
-export function ReportingCluPanel({ clu, onClose, onRecordUpdated }: ReportingCluPanelProps) {
+export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNext, anomalyData }: ReportingCluPanelProps) {
   const [crop, setCrop] = useState(clu.crop ?? '')
   const [plantDate, setPlantDate] = useState(clu.grain_plant_date ?? '')
   const [organic, setOrganic] = useState(clu.organic)
@@ -75,6 +91,15 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated }: ReportingCl
     const ok = await patchRecord({ reported: true })
     if (ok) {
       onRecordUpdated({ id: clu.id, reported: true })
+    }
+    setReporting(false)
+  }
+
+  async function handleMarkUnreported() {
+    setReporting(true)
+    const ok = await patchRecord({ reported: false })
+    if (ok) {
+      onRecordUpdated({ id: clu.id, reported: false })
     }
     setReporting(false)
   }
@@ -144,6 +169,32 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated }: ReportingCl
           </label>
         </div>
 
+        {anomalyData && (
+          <div className="rounded border border-red-800 bg-red-950/20 px-3 py-2.5 space-y-2">
+            <p className="text-xs font-mono text-red-400 font-semibold">⚠ Split Recommended</p>
+            <p className="text-[10px] font-mono text-glomalin-muted">
+              This CLU crosses {anomalyData.zone_count} zones with different attributes.
+            </p>
+            {anomalyData.zone_names.map((name, i) => (
+              <div key={name} className="flex items-center justify-between text-[10px] font-mono">
+                <span className="text-glomalin-text truncate mr-2">{name}</span>
+                <span className="text-glomalin-muted shrink-0">
+                  {anomalyData.zone_crops[i] ?? '(none)'}
+                  {anomalyData.zone_organics[i] ? ' · Org' : ''}
+                  {' · '}{anomalyData.intersection_acs[i]} ac
+                </span>
+              </div>
+            ))}
+            <p className="text-[10px] font-mono text-glomalin-muted/60 pt-1 border-t border-glomalin-border/50">
+              Suggested:{' '}
+              {anomalyData.zone_names.map((_, i) => {
+                const suffix = String.fromCharCode(65 + i)
+                return `CLU ${clu.clu}${suffix} (${anomalyData.intersection_acs[i]} ac)`
+              }).join(', ')}. Actual split requires FSA office action.
+            </p>
+          </div>
+        )}
+
         {error && (
           <p className="text-xs font-mono text-red-400">{error}</p>
         )}
@@ -154,7 +205,7 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated }: ReportingCl
         <button
           onClick={handleSave}
           disabled={saving || reporting}
-          className="w-full px-4 py-2 rounded bg-glomalin-accent text-black font-mono text-sm font-semibold hover:bg-glomalin-accentLight disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="w-full px-4 py-2 rounded bg-glomalin-accent text-black font-mono text-sm font-semibold hover:bg-glomalin-accent-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
@@ -168,9 +219,21 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated }: ReportingCl
           </button>
         )}
         {clu.reported && (
-          <p className="text-xs font-mono text-green-500 text-center py-1">
-            ✓ Reported to FSA
-          </p>
+          <button
+            onClick={handleMarkUnreported}
+            disabled={saving || reporting}
+            className="w-full px-4 py-2 rounded border border-glomalin-danger text-glomalin-danger font-mono text-sm hover:bg-glomalin-danger/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {reporting ? 'Undoing…' : '↩ Undo Report'}
+          </button>
+        )}
+        {onNavigateNext && (
+          <button
+            onClick={onNavigateNext}
+            className="w-full px-4 py-1.5 rounded border border-glomalin-border text-glomalin-muted font-mono text-xs hover:text-glomalin-text transition-colors"
+          >
+            Next Unreported →
+          </button>
         )}
       </div>
     </div>

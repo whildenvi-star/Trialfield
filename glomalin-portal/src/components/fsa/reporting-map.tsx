@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Map, Popup } from 'maplibre-gl'
-import { getSatelliteStyleUrl, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/map-config'
+import { getSatelliteStyle, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/map-config'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { ReportingCluPanel } from './reporting-clu-panel'
-import type { CluMapProperties, ReportingStatus } from './reporting-clu-panel'
+import type { CluMapProperties, ReportingStatus, CluAnomalyResult } from './reporting-clu-panel'
 
 // Status fill colors — visible against satellite imagery
 const STATUS_COLORS: Record<ReportingStatus, string> = {
@@ -50,7 +51,8 @@ function deriveStatus(props: Partial<CluMapProperties>): ReportingStatus {
   return 'orange'
 }
 
-export function ReportingMap() {
+export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
+  const router = useRouter()
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<Map | null>(null)
   const popupRef = useRef<Popup | null>(null)
@@ -60,10 +62,13 @@ export function ReportingMap() {
   const [error, setError] = useState<string | null>(null)
   const [farms, setFarms] = useState<FarmSummary[]>([])
   const [selectedClu, setSelectedClu] = useState<CluMapProperties | null>(null)
-  const [activeFarm, setActiveFarm] = useState<string | null>(null)
+  const [activeFarm, setActiveFarm] = useState<string | null>(farmFilter ?? null)
   const [bulkReporting, setBulkReporting] = useState<string | null>(null)
   const [showCluLayer, setShowCluLayer] = useState(true)
   const [showFarmBounds, setShowFarmBounds] = useState(true)
+  const [anomalies, setAnomalies] = useState<CluAnomalyResult[]>([])
+  const anomaliesRef = useRef<CluAnomalyResult[]>([])
+  const [splitSectionOpen, setSplitSectionOpen] = useState(true)
 
   // Rebuild the GeoJSON source data from current featuresRef
   const refreshMapSource = useCallback(() => {
@@ -154,6 +159,87 @@ export function ReportingMap() {
     setActiveFarm(farm.farm_number)
   }, [])
 
+  // Farm chip: update URL param + fly to farm
+  const handleFarmChipClick = useCallback((farmNumber: string) => {
+    const params = new URLSearchParams(window.location.search)
+    params.set('tab', 'acreage')
+    params.set('farm', farmNumber)
+    router.replace(`/app/compliance?${params.toString()}`)
+    const farm = farms.find((f) => f.farm_number === farmNumber)
+    if (farm) flyToFarm(farm)
+  }, [farms, flyToFarm, router])
+
+  // Navigate to next unreported CLU in current farm (or all farms)
+  const handleNavigateNext = useCallback(() => {
+    if (!selectedClu) return
+    const candidates = featuresRef.current
+      .filter((f) => !f.properties.reported && (!activeFarm || f.properties.farm_number === activeFarm))
+      .sort((a, b) => {
+        const fa = a.properties, fb = b.properties
+        if (fa.farm_number !== fb.farm_number) return String(fa.farm_number).localeCompare(String(fb.farm_number))
+        if (fa.tract_number !== fb.tract_number) return String(fa.tract_number).localeCompare(String(fb.tract_number))
+        return String(fa.clu).localeCompare(String(fb.clu))
+      })
+    if (candidates.length === 0) return
+    const idx = candidates.findIndex((f) => f.properties.id === selectedClu.id)
+    const next = candidates[(idx === -1 ? 0 : idx + 1) % candidates.length]
+    // Compute centroid by averaging all coordinate pairs
+    let lngSum = 0, latSum = 0, count = 0
+    const walk = (v: unknown): void => {
+      if (!Array.isArray(v)) return
+      if (typeof v[0] === 'number') { lngSum += v[0] as number; latSum += v[1] as number; count++; return }
+      for (const c of v) walk(c)
+    }
+    walk(next.geometry.coordinates)
+    if (count === 0) return
+    mapRef.current?.easeTo({ center: [lngSum / count, latSum / count], zoom: 16, duration: 600 })
+    mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], next.properties.id])
+    setSelectedClu(next.properties)
+  }, [selectedClu, activeFarm])
+
+  // Fly to an anomaly CLU and open its panel
+  const handleFlyToAnomaly = useCallback((a: CluAnomalyResult) => {
+    const feature = featuresRef.current.find((f) => f.properties.id === a.clu_record_id)
+    if (!feature) return
+    let lngSum = 0, latSum = 0, count = 0
+    const walk = (v: unknown): void => {
+      if (!Array.isArray(v)) return
+      if (typeof v[0] === 'number') { lngSum += v[0] as number; latSum += v[1] as number; count++; return }
+      for (const c of v) walk(c)
+    }
+    walk(feature.geometry.coordinates)
+    if (!count) return
+    mapRef.current?.easeTo({ center: [lngSum / count, latSum / count], zoom: 16, duration: 600 })
+    mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], a.clu_record_id])
+    setSelectedClu(feature.properties)
+  }, [])
+
+  // "All" chip: clear farm filter
+  const handleFarmClear = useCallback(() => {
+    const params = new URLSearchParams(window.location.search)
+    params.set('tab', 'acreage')
+    params.delete('farm')
+    router.replace(`/app/compliance?${params.toString()}`)
+    setActiveFarm(null)
+  }, [router])
+
+  // Apply/clear farm filter on map layers when activeFarm changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.getLayer('clu-fill')) return
+    if (activeFarm) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const f = ['==', ['get', 'farm_number'], activeFarm] as any
+      map.setFilter('clu-fill', f)
+      map.setFilter('clu-stroke', f)
+      map.setFilter('clu-hover', f)
+    } else {
+      map.setFilter('clu-fill', null)
+      map.setFilter('clu-stroke', null)
+      map.setFilter('clu-hover', null)
+    }
+  }, [activeFarm])
+
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
 
@@ -169,7 +255,8 @@ export function ReportingMap() {
 
         mapInstance = new maplibregl.Map({
           container: mapContainerRef.current,
-          style: getSatelliteStyleUrl(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          style: getSatelliteStyle() as any,
           center: DEFAULT_MAP_CENTER,
           zoom: DEFAULT_MAP_ZOOM,
           attributionControl: { compact: true },
@@ -193,6 +280,16 @@ export function ReportingMap() {
           featuresRef.current = data.features
           setFarms(data.farms)
           setLoading(false)
+
+          // Fetch CLU split candidates (non-blocking)
+          try {
+            const ar = await fetch(`/api/fsa/clu-anomalies?year=${CURRENT_CROP_YEAR}`)
+            if (ar.ok) {
+              const { anomalies: raw } = await ar.json()
+              anomaliesRef.current = raw ?? []
+              setAnomalies(raw ?? [])
+            }
+          } catch { /* non-blocking */ }
 
           // Auto-zoom to all CLU bounds
           let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity
@@ -226,7 +323,7 @@ export function ReportingMap() {
             promoteId: 'id',
           })
 
-          // Fill — status-based color
+          // Fill — status-based color, translucent over satellite
           mapInstance.addLayer({
             id: 'clu-fill',
             type: 'fill',
@@ -238,18 +335,18 @@ export function ReportingMap() {
                 'yellow', STATUS_COLORS.yellow,
                 STATUS_COLORS.orange,
               ],
-              'fill-opacity': 0.55,
+              'fill-opacity': 0.30,
             },
           })
 
-          // Standard stroke
+          // Standard stroke — white for satellite visibility
           mapInstance.addLayer({
             id: 'clu-stroke',
             type: 'line',
             source: 'clus',
             paint: {
-              'line-color': '#2a2218',
-              'line-width': 1.5,
+              'line-color': 'rgba(255,255,255,0.6)',
+              'line-width': 2,
             },
           })
 
@@ -262,6 +359,23 @@ export function ReportingMap() {
             paint: {
               'line-color': '#C8860A',
               'line-width': 3,
+            },
+          })
+
+          // Anomaly dashed outline — on top of all other CLU layers
+          const anomalyIds = anomaliesRef.current.map((a) => a.clu_record_id)
+          mapInstance.addLayer({
+            id: 'clu-anomaly-stroke',
+            type: 'line',
+            source: 'clus',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            filter: (anomalyIds.length > 0
+              ? ['in', ['get', 'id'], ['literal', anomalyIds]]
+              : ['==', ['get', 'id'], '']) as any,
+            paint: {
+              'line-color': '#ef4444',
+              'line-dasharray': [4, 3],
+              'line-width': 2.5,
             },
           })
 
@@ -280,7 +394,7 @@ export function ReportingMap() {
               'fill-opacity': [
                 'case',
                 ['boolean', ['feature-state', 'hover'], false],
-                0.80,
+                0.65,
                 0,
               ],
             },
@@ -395,10 +509,22 @@ export function ReportingMap() {
     const map = mapRef.current
     if (!map) return
     const vis = showCluLayer ? 'visible' : 'none'
-    for (const id of ['clu-fill', 'clu-stroke', 'clu-selected', 'clu-hover']) {
+    for (const id of ['clu-fill', 'clu-stroke', 'clu-selected', 'clu-hover', 'clu-anomaly-stroke']) {
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis)
     }
   }, [showCluLayer])
+
+  // Update anomaly dashed layer filter when anomalies state changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.getLayer('clu-anomaly-stroke')) return
+    const ids = anomalies.map((a) => a.clu_record_id)
+    map.setFilter(
+      'clu-anomaly-stroke',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (ids.length > 0 ? ['in', ['get', 'id'], ['literal', ids]] : ['==', ['get', 'id'], '']) as any
+    )
+  }, [anomalies])
 
   // Toggle SMS farm boundary layer visibility
   useEffect(() => {
@@ -439,6 +565,35 @@ export function ReportingMap() {
             )}
           </div>
         </div>
+
+        {/* Farm picker chips */}
+        {farms.length > 1 && (
+          <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-glomalin-border">
+            <button
+              onClick={handleFarmClear}
+              className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                !activeFarm
+                  ? 'border-glomalin-accent text-glomalin-accent'
+                  : 'border-glomalin-border text-glomalin-muted hover:text-glomalin-text'
+              }`}
+            >
+              All
+            </button>
+            {farms.map((f) => (
+              <button
+                key={f.farm_number}
+                onClick={() => handleFarmChipClick(f.farm_number)}
+                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
+                  activeFarm === f.farm_number
+                    ? 'border-glomalin-accent text-glomalin-accent'
+                    : 'border-glomalin-border text-glomalin-muted hover:text-glomalin-text'
+                }`}
+              >
+                {f.farm_number}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Legend chips */}
         <div className="flex gap-1.5 px-3 py-2 border-b border-glomalin-border flex-wrap">
@@ -484,7 +639,7 @@ export function ReportingMap() {
         </div>
 
         {/* Farm list */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0">
           {loading && (
             <p className="text-xs font-mono text-glomalin-muted px-3 py-4">Loading…</p>
           )}
@@ -529,6 +684,41 @@ export function ReportingMap() {
             )
           })}
         </div>
+
+        {/* Split Candidates section */}
+        {anomalies.length > 0 && (
+          <div className="border-t border-glomalin-border shrink-0">
+            <button
+              onClick={() => setSplitSectionOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-glomalin-bg transition-colors"
+            >
+              <span className="text-[10px] font-mono uppercase tracking-wide text-glomalin-muted">
+                Split Candidates
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-red-900/40 text-red-400">
+                {anomalies.length}
+              </span>
+            </button>
+            {splitSectionOpen && (
+              <div className="max-h-40 overflow-y-auto border-t border-glomalin-border/50">
+                {anomalies.map((a) => (
+                  <button
+                    key={a.clu_record_id}
+                    onClick={() => handleFlyToAnomaly(a)}
+                    className="w-full text-left px-3 py-1.5 border-b border-glomalin-border/40 hover:bg-glomalin-bg transition-colors"
+                  >
+                    <p className="text-[10px] font-mono text-glomalin-muted">
+                      F{a.farm_number}/T{a.tract_number}/CLU {a.clu_label}
+                    </p>
+                    <p className="text-[10px] font-mono text-red-400 truncate">
+                      {a.zone_crops.join(' + ')} · {a.fsa_acres} ac
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Map container */}
@@ -561,6 +751,8 @@ export function ReportingMap() {
               mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], ''])
             }}
             onRecordUpdated={handleRecordUpdated}
+            onNavigateNext={handleNavigateNext}
+            anomalyData={anomalies.find((a) => a.clu_record_id === selectedClu.id)}
           />
         )}
       </div>

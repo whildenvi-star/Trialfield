@@ -32,10 +32,10 @@ export const CROP_COLORS: Record<string, string> = {
 // ---------------------------------------------------------------------------
 
 /** Opacity for the polygon fill (0–1). Borders are always full opacity. */
-export const FILL_OPACITY = 0.55
+export const FILL_OPACITY = 0.30
 
 /** Opacity on hover — lighter to signal clickability */
-export const HOVER_FILL_OPACITY = 0.80
+export const HOVER_FILL_OPACITY = 0.65
 
 /** Selected field fill opacity — brightest state */
 export const SELECTED_FILL_OPACITY = 0.90
@@ -55,8 +55,8 @@ export const ORGANIC_BORDER_WIDTH = 2.5
 // ---------------------------------------------------------------------------
 // Standard polygon border (non-organic fields)
 // ---------------------------------------------------------------------------
-export const STANDARD_BORDER_COLOR = '#2A2218'
-export const STANDARD_BORDER_WIDTH = 1.5
+export const STANDARD_BORDER_COLOR = 'rgba(255,255,255,0.6)'
+export const STANDARD_BORDER_WIDTH = 2
 
 // ---------------------------------------------------------------------------
 // Default map view
@@ -90,6 +90,31 @@ export function getSatelliteStyleUrl(): string {
   if (maptilerKey) {
     return `https://api.maptiler.com/maps/satellite/style.json?key=${maptilerKey}`
   }
-  // Fallback: MapLibre demo tiles (no account required, suitable for dev preview)
   return 'https://demotiles.maplibre.org/style.json'
+}
+
+/**
+ * Returns a MapLibre satellite style — either a MapTiler style URL (if key set)
+ * or an inline ESRI World Imagery raster style (free, no API key required).
+ * MapLibre Map constructor accepts both string URLs and inline style objects.
+ */
+export function getSatelliteStyle(): string | object {
+  const maptilerKey = process.env.NEXT_PUBLIC_MAPTILER_KEY
+  if (maptilerKey) {
+    return `https://api.maptiler.com/maps/satellite/style.json?key=${maptilerKey}`
+  }
+  return {
+    version: 8,
+    sources: {
+      'esri-sat': {
+        type: 'raster',
+        tiles: [
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        ],
+        tileSize: 256,
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics',
+      },
+    },
+    layers: [{ id: 'sat', type: 'raster', source: 'esri-sat' }],
+  }
 }
