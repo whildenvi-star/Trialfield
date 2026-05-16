@@ -10,6 +10,7 @@ interface UserRow {
   fullName: string
   role: 'admin' | 'agronomist' | 'operator' | 'viewer'
   lastSignIn: string | null
+  certUserId: string | null
   modules: Record<string, boolean>
 }
 
@@ -166,6 +167,33 @@ export default function AdminPage() {
       setInviteError(err instanceof Error ? err.message : 'Failed to invite user')
     } finally {
       setInviting(false)
+    }
+  }
+
+  async function handleCertUserIdChange(userId: string, newValue: string) {
+    const trimmed = newValue.trim()
+    const current = users.find((u) => u.id === userId)?.certUserId ?? ''
+    if (trimmed === current) return
+    setSavingCell({ userId, field: 'cert_user_id' })
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/cert-user-id`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cert_user_id: trimmed || null }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Failed to update cert user id')
+      }
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === userId ? { ...u, certUserId: trimmed || null } : u
+        )
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update cert user id')
+    } finally {
+      setSavingCell(null)
     }
   }
 
@@ -349,8 +377,19 @@ export default function AdminPage() {
                       )}
                     </td>
 
-                    {/* Email */}
-                    <td className="px-4 py-3 text-glomalin-text">{user.email}</td>
+                    {/* Email + cert user id */}
+                    <td className="px-4 py-3">
+                      <div className="text-glomalin-text">{user.email}</div>
+                      <input
+                        key={`${user.id}-cert`}
+                        type="text"
+                        defaultValue={user.certUserId ?? ''}
+                        onBlur={(e) => handleCertUserIdChange(user.id, e.target.value)}
+                        placeholder="cert id…"
+                        disabled={isSaving(user.id, 'cert_user_id')}
+                        className="mt-0.5 w-full bg-transparent border-b border-glomalin-border/50 text-glomalin-muted text-xs font-mono focus:outline-none focus:border-glomalin-accent placeholder:text-glomalin-border/60 disabled:opacity-40"
+                      />
+                    </td>
 
                     {/* Role dropdown */}
                     <td className="px-4 py-3">

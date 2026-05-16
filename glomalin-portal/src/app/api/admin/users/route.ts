@@ -24,7 +24,7 @@ export async function GET() {
   // Fetch all profiles
   const { data: profiles, error: profilesError } = await supabase
     .from('profiles')
-    .select('id, full_name, role, created_at, updated_at')
+    .select('id, full_name, role, cert_user_id, created_at, updated_at')
 
   if (profilesError) {
     return NextResponse.json({ error: 'Failed to fetch profiles' }, { status: 500 })
@@ -81,6 +81,7 @@ export async function GET() {
     fullName: profile.full_name ?? '',
     role: profile.role,
     lastSignIn: authMap[profile.id]?.lastSignIn ?? null,
+    certUserId: profile.cert_user_id ?? null,
     modules: accessMap[profile.id] ?? {},
   }))
 
