@@ -40,9 +40,24 @@ export function AutoPopulatePanel({ onClose, onRecordsUpdated }: AutoPopulatePan
     setError(null)
     try {
       const res = await fetch('/api/fsa/auto-populate-preview')
-      const json = await res.json()
+      if (!res.ok && res.status === 401) {
+        setError('Session expired — please refresh the page and log in again')
+        return
+      }
+      if (!res.ok && res.status === 403) {
+        setError('Access denied — you need FSA-578 module access')
+        return
+      }
+      let json: Record<string, unknown>
+      try {
+        json = await res.json()
+      } catch {
+        const text = await res.text().catch(() => '')
+        setError(`Server returned status ${res.status} (non-JSON) — ${text.slice(0, 120) || 'empty response'}`)
+        return
+      }
       if (!res.ok) {
-        setError(json.error ?? 'Failed to load proposals')
+        setError((json.error as string) ?? `Server error ${res.status}`)
         return
       }
       const list: Proposal[] = json.proposals ?? []
