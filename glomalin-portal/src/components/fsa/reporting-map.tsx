@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Map, Popup } from 'maplibre-gl'
+import type { Map as MaplibreMap, Popup } from 'maplibre-gl'
 import { getSatelliteStyle, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/map-config'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { ReportingCluPanel } from './reporting-clu-panel'
@@ -31,18 +31,34 @@ interface FieldBoundaryFeature {
   properties: { registry_field_id: string; name: string }
 }
 
+interface PlantingPass {
+  op_date: string | null
+  product: string | null
+  applied_acres: number | null
+  source_adapter: string
+}
+
+type GeoJSONFeature = {
+  type: 'Feature'
+  geometry: Record<string, unknown>
+  properties: CluMapProperties
+}
+
 interface MapResponse {
   type: 'FeatureCollection'
-  features: Array<{
-    type: 'Feature'
-    geometry: Record<string, unknown>
-    properties: CluMapProperties
-  }>
+  features: GeoJSONFeature[]
   farms: FarmSummary[]
   fieldBoundaries?: {
     type: 'FeatureCollection'
     features: FieldBoundaryFeature[]
   }
+  smsBoundaryNames?: Record<string, string>
+  plantingPasses?: Record<string, PlantingPass[]>
+}
+
+type FarmTreeNode = {
+  farm: FarmSummary | undefined
+  tracts: Map<string, GeoJSONFeature[]>
 }
 
 function deriveStatus(props: Partial<CluMapProperties>): ReportingStatus {
@@ -51,10 +67,10 @@ function deriveStatus(props: Partial<CluMapProperties>): ReportingStatus {
   return 'orange'
 }
 
-export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
+export function ReportingMap({ farmFilter, className }: { farmFilter?: string; className?: string }) {
   const router = useRouter()
   const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<Map | null>(null)
+  const mapRef = useRef<MaplibreMap | null>(null)
   const popupRef = useRef<Popup | null>(null)
   const featuresRef = useRef<MapResponse['features']>([])
 
@@ -70,6 +86,12 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
   const [anomalies, setAnomalies] = useState<CluAnomalyResult[]>([])
   const anomaliesRef = useRef<CluAnomalyResult[]>([])
   const [splitSectionOpen, setSplitSectionOpen] = useState(true)
+  // Tree sidebar state
+  const [cluList, setCluList] = useState<GeoJSONFeature[]>([])
+  const [expandedFarms, setExpandedFarms] = useState<Set<string>>(new Set())
+  const [expandedTracts, setExpandedTracts] = useState<Set<string>>(new Set())
+  const [smsBoundaryNames, setSmsBoundaryNames] = useState<Record<string, string>>({})
+  const [plantingPasses, setPlantingPasses] = useState<Record<string, PlantingPass[]>>({})
 
   // Sync with app-level dark/light theme — watches the 'light' class on <html>
   useEffect(() => {
@@ -97,21 +119,21 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
   // Called by panel after save — patch the in-memory feature + refresh farm counts
   const handleRecordUpdated = useCallback(
     (updated: Partial<CluMapProperties> & { id: string }) => {
-      // Update the feature in featuresRef
-      featuresRef.current = featuresRef.current.map((f) => {
+      // Compute patched array once — drives both map source and sidebar tree
+      const next = featuresRef.current.map((f) => {
         if (f.properties.id !== updated.id) return f
         const newProps = { ...f.properties, ...updated }
         newProps.status = deriveStatus(newProps)
         return { ...f, properties: newProps }
       })
-
-      // Update paint expressions so the color changes immediately
+      featuresRef.current = next
+      setCluList(next)
       refreshMapSource()
 
-      // Update farms state counts
+      // Update farms state counts from next (already patched)
       setFarms((prev) =>
         prev.map((farm) => {
-          const farmFeatures = featuresRef.current.filter(
+          const farmFeatures = next.filter(
             (f) => f.properties.farm_number === farm.farm_number
           )
           return {
@@ -171,16 +193,6 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
     setActiveFarm(farm.farm_number)
   }, [])
 
-  // Farm chip: update URL param + fly to farm
-  const handleFarmChipClick = useCallback((farmNumber: string) => {
-    const params = new URLSearchParams(window.location.search)
-    params.set('tab', 'acreage')
-    params.set('farm', farmNumber)
-    router.replace(`/app/compliance?${params.toString()}`)
-    const farm = farms.find((f) => f.farm_number === farmNumber)
-    if (farm) flyToFarm(farm)
-  }, [farms, flyToFarm, router])
-
   // Navigate to next unreported CLU in current farm (or all farms)
   const handleNavigateNext = useCallback(() => {
     if (!selectedClu) return
@@ -235,6 +247,60 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
     setActiveFarm(null)
   }, [router])
 
+  // Select a CLU from the sidebar — fly to it + open detail panel
+  const handleSelectClu = useCallback((props: CluMapProperties) => {
+    const feat = featuresRef.current.find((f) => f.properties.id === props.id)
+    if (feat) {
+      let lngSum = 0, latSum = 0, count = 0
+      const walk = (v: unknown): void => {
+        if (!Array.isArray(v)) return
+        if (typeof v[0] === 'number') { lngSum += v[0] as number; latSum += v[1] as number; count++; return }
+        for (const c of v) walk(c)
+      }
+      walk(feat.geometry.coordinates)
+      if (count > 0) {
+        mapRef.current?.easeTo({ center: [lngSum / count, latSum / count], zoom: 16, duration: 600 })
+      }
+    }
+    mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], props.id])
+    setSelectedClu(props)
+  }, [])
+
+  const toggleFarm = useCallback((farmNumber: string) => {
+    setExpandedFarms((prev) => {
+      const next = new Set(prev)
+      if (next.has(farmNumber)) next.delete(farmNumber)
+      else next.add(farmNumber)
+      return next
+    })
+  }, [])
+
+  const toggleTract = useCallback((tractKey: string) => {
+    setExpandedTracts((prev) => {
+      const next = new Set(prev)
+      if (next.has(tractKey)) next.delete(tractKey)
+      else next.add(tractKey)
+      return next
+    })
+  }, [])
+
+  const farmTree = useMemo(() => {
+    const tree = new Map<string, FarmTreeNode>()
+    for (const feat of cluList) {
+      const p = feat.properties
+      if (!tree.has(p.farm_number)) {
+        tree.set(p.farm_number, {
+          farm: farms.find((f) => f.farm_number === p.farm_number),
+          tracts: new Map(),
+        })
+      }
+      const node = tree.get(p.farm_number)!
+      if (!node.tracts.has(p.tract_number)) node.tracts.set(p.tract_number, [])
+      node.tracts.get(p.tract_number)!.push(feat)
+    }
+    return tree
+  }, [cluList, farms])
+
   // Apply/clear farm filter on map layers when activeFarm changes
   useEffect(() => {
     const map = mapRef.current
@@ -255,7 +321,7 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
 
-    let mapInstance: Map | null = null
+    let mapInstance: MaplibreMap | null = null
 
     async function initMap() {
       try {
@@ -291,6 +357,9 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
 
           featuresRef.current = data.features
           setFarms(data.farms)
+          setCluList(data.features)
+          setSmsBoundaryNames(data.smsBoundaryNames ?? {})
+          setPlantingPasses(data.plantingPasses ?? {})
           setLoading(false)
 
           // Fetch CLU split candidates (non-blocking)
@@ -489,9 +558,7 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
           mapInstance.on('click', 'clu-fill', (e) => {
             if (!e.features?.length) return
             const props = e.features[0].properties as CluMapProperties
-            // Highlight selected CLU outline
-            mapInstance?.setFilter('clu-selected', ['==', ['get', 'id'], props.id])
-            setSelectedClu(props)
+            handleSelectClu(props)
           })
 
           // Sync overlay opacity to whatever theme is active at load time
@@ -520,6 +587,7 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
       mapInstance?.remove()
       mapRef.current = null
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Toggle CLU layer visibility
@@ -569,9 +637,9 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
   const totalGreen = farms.reduce((s, f) => s + f.green, 0)
 
   return (
-    <div className="relative flex h-[calc(100vh-240px)] min-h-[500px] border border-glomalin-border rounded overflow-hidden">
+    <div className={className ?? 'relative flex h-[calc(100vh-240px)] min-h-[500px] border border-glomalin-border rounded overflow-hidden'}>
       {/* Farm list sidebar */}
-      <div className="w-52 shrink-0 bg-glomalin-surface border-r border-glomalin-border flex flex-col overflow-hidden">
+      <div className="w-64 shrink-0 bg-glomalin-surface border-r border-glomalin-border flex flex-col overflow-hidden">
         {/* Overall progress header */}
         <div className="px-3 py-2.5 border-b border-glomalin-border">
           <p className="font-mono text-xs text-glomalin-muted">Overall Progress</p>
@@ -595,32 +663,16 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
           </div>
         </div>
 
-        {/* Farm picker chips */}
-        {farms.length > 1 && (
-          <div className="flex flex-wrap gap-1 px-3 py-2 border-b border-glomalin-border">
+        {/* Active farm filter indicator */}
+        {activeFarm && (
+          <div className="flex items-center gap-2 px-3 py-1.5 border-b border-glomalin-border bg-glomalin-accent/5">
+            <span className="text-[10px] font-mono text-glomalin-accent flex-1 truncate">Farm {activeFarm}</span>
             <button
               onClick={handleFarmClear}
-              className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
-                !activeFarm
-                  ? 'border-glomalin-accent text-glomalin-accent'
-                  : 'border-glomalin-border text-glomalin-muted hover:text-glomalin-text'
-              }`}
+              className="text-[10px] font-mono text-glomalin-muted hover:text-glomalin-text transition-colors shrink-0"
             >
-              All
+              Show all
             </button>
-            {farms.map((f) => (
-              <button
-                key={f.farm_number}
-                onClick={() => handleFarmChipClick(f.farm_number)}
-                className={`text-[10px] font-mono px-2 py-0.5 rounded border transition-colors ${
-                  activeFarm === f.farm_number
-                    ? 'border-glomalin-accent text-glomalin-accent'
-                    : 'border-glomalin-border text-glomalin-muted hover:text-glomalin-text'
-                }`}
-              >
-                {f.farm_number}
-              </button>
-            ))}
           </div>
         )}
 
@@ -667,48 +719,133 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
           </label>
         </div>
 
-        {/* Farm list */}
+        {/* Farm tree */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {loading && (
             <p className="text-xs font-mono text-glomalin-muted px-3 py-4">Loading…</p>
           )}
-          {farms.map((farm) => {
-            const isActive = activeFarm === farm.farm_number
+          {Array.from(farmTree.entries()).map(([farmNumber, { farm, tracts }]) => {
+            const isExpanded = expandedFarms.has(farmNumber)
             return (
-              <div
-                key={farm.farm_number}
-                className={`px-3 py-2.5 border-b border-glomalin-border cursor-pointer transition-colors ${isActive ? 'bg-glomalin-accent/10' : 'hover:bg-glomalin-bg'}`}
-                onClick={() => flyToFarm(farm)}
-              >
-                <p className="font-mono text-xs text-glomalin-text truncate">
-                  Farm {farm.farm_number}
-                </p>
-                {farm.farm_name && (
-                  <p className="font-mono text-[10px] text-glomalin-muted truncate">{farm.farm_name}</p>
+              <div key={farmNumber} className="border-b border-glomalin-border">
+                {/* Farm header */}
+                <div
+                  className={`flex items-start gap-1.5 px-3 py-2 cursor-pointer transition-colors ${
+                    activeFarm === farmNumber ? 'bg-glomalin-accent/10' : 'hover:bg-glomalin-bg'
+                  }`}
+                  onClick={() => {
+                    toggleFarm(farmNumber)
+                    if (farm) flyToFarm(farm)
+                  }}
+                >
+                  <span className={`text-[9px] font-mono text-glomalin-muted mt-0.5 shrink-0 inline-block transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}>
+                    ▶
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-mono text-xs text-glomalin-text">Farm {farmNumber}</p>
+                    {farm?.farm_name && (
+                      <p className="font-mono text-[10px] text-glomalin-muted truncate">{farm.farm_name}</p>
+                    )}
+                    {farm && farm.total > 0 && (
+                      <div className="flex h-0.5 rounded overflow-hidden bg-glomalin-border mt-1">
+                        <div style={{ width: `${(farm.green / farm.total) * 100}%` }} className="bg-green-500" />
+                        <div style={{ width: `${(farm.yellow / farm.total) * 100}%` }} className="bg-yellow-500" />
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      {farm && farm.orange > 0 && <span className="text-[9px] font-mono text-orange-400">{farm.orange}○</span>}
+                      {farm && farm.yellow > 0 && <span className="text-[9px] font-mono text-yellow-400">{farm.yellow}◑</span>}
+                      {farm && farm.green > 0 && <span className="text-[9px] font-mono text-green-400">{farm.green}●</span>}
+                      {farm && farm.yellow > 0 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleReportEntered(farmNumber) }}
+                          disabled={bulkReporting === farmNumber}
+                          className="text-[9px] font-mono text-green-400 hover:text-green-300 disabled:opacity-40 underline underline-offset-1 ml-auto"
+                        >
+                          {bulkReporting === farmNumber ? '…' : `Rpt ${farm.yellow}`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tracts (expanded) */}
+                {isExpanded && (
+                  <div className="bg-glomalin-bg/30">
+                    {Array.from(tracts.entries()).map(([tractNumber, tractFeatures]) => {
+                      const tractKey = `${farmNumber}|${tractNumber}`
+                      const isTractExpanded = expandedTracts.has(tractKey)
+                      return (
+                        <div key={tractKey} className="border-t border-glomalin-border/40">
+                          {/* Tract header */}
+                          <div
+                            className="flex items-center gap-1.5 px-4 py-1.5 cursor-pointer hover:bg-glomalin-bg transition-colors"
+                            onClick={() => toggleTract(tractKey)}
+                          >
+                            <span className={`text-[8px] font-mono text-glomalin-muted shrink-0 inline-block transition-transform duration-150 ${isTractExpanded ? 'rotate-90' : ''}`}>
+                              ▶
+                            </span>
+                            <span className="font-mono text-[11px] text-glomalin-muted">Tract {tractNumber}</span>
+                            <span className="font-mono text-[9px] text-glomalin-muted/50 ml-auto shrink-0">
+                              {tractFeatures.length}
+                            </span>
+                          </div>
+
+                          {/* CLU rows */}
+                          {isTractExpanded && tractFeatures.map((feat) => {
+                            const p = feat.properties
+                            const smsName = p.registry_field_id
+                              ? (smsBoundaryNames[p.registry_field_id] ?? p.field_name)
+                              : p.field_name
+                            const passes = p.registry_field_id
+                              ? (plantingPasses[p.registry_field_id] ?? [])
+                              : []
+                            const isSelected = selectedClu?.id === p.id
+                            return (
+                              <div key={p.id} className="border-t border-glomalin-border/30">
+                                <button
+                                  onClick={() => handleSelectClu(p)}
+                                  className={`w-full text-left flex items-center gap-1.5 px-5 py-1.5 transition-colors ${
+                                    isSelected ? 'bg-glomalin-accent/15' : 'hover:bg-glomalin-bg'
+                                  }`}
+                                >
+                                  <span
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: STATUS_COLORS[p.status] }}
+                                  />
+                                  <span className="font-mono text-[10px] text-glomalin-muted shrink-0">
+                                    {p.clu}
+                                  </span>
+                                  <span className="font-mono text-[10px] text-glomalin-text truncate flex-1">
+                                    {smsName ?? '—'}
+                                  </span>
+                                  <span className="font-mono text-[9px] text-glomalin-muted shrink-0">
+                                    {p.fsa_acres}
+                                  </span>
+                                </button>
+                                {p.crop && (
+                                  <div className="px-8 pb-0.5">
+                                    <span className="font-mono text-[9px] text-glomalin-muted truncate block">
+                                      {p.crop}{p.grain_plant_date ? ` · ${p.grain_plant_date}` : ''}
+                                    </span>
+                                  </div>
+                                )}
+                                {passes.map((pass, i) => (
+                                  <div key={i} className="flex items-center gap-1 px-8 pb-0.5">
+                                    <span className="font-mono text-[8px] text-blue-400/60 shrink-0">↳FV</span>
+                                    <span className="font-mono text-[9px] text-blue-400/80 truncate">
+                                      {pass.product ?? '—'}{pass.op_date ? ` · ${pass.op_date.slice(5)}` : ''}{pass.applied_acres ? ` · ${pass.applied_acres}ac` : ''}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+                  </div>
                 )}
-                {/* Segmented bar */}
-                <div className="flex h-1 rounded overflow-hidden bg-glomalin-border mt-1.5 mb-1">
-                  {farm.total > 0 && (
-                    <>
-                      <div style={{ width: `${(farm.green / farm.total) * 100}%` }} className="bg-green-500" />
-                      <div style={{ width: `${(farm.yellow / farm.total) * 100}%` }} className="bg-yellow-500" />
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <p className="font-mono text-[10px] text-glomalin-muted">
-                    {farm.green}/{farm.total} rptd
-                  </p>
-                  {farm.yellow > 0 && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleReportEntered(farm.farm_number) }}
-                      disabled={bulkReporting === farm.farm_number}
-                      className="text-[10px] font-mono text-green-400 hover:text-green-300 disabled:opacity-40 underline underline-offset-2"
-                    >
-                      {bulkReporting === farm.farm_number ? '…' : `Report ${farm.yellow}`}
-                    </button>
-                  )}
-                </div>
               </div>
             )
           })}

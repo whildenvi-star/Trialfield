@@ -5,6 +5,13 @@ import type { CluRecord } from '@/lib/fsa/calc'
 
 type ReportingStatus = 'orange' | 'yellow' | 'green'
 
+interface PlantingPass {
+  op_date: string | null
+  product: string | null
+  applied_acres: number | null
+  source_adapter: string
+}
+
 function deriveStatus(r: CluRecord): ReportingStatus {
   if (r.reported) return 'green'
   if (r.crop) return 'yellow'
@@ -52,8 +59,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 })
   }
 
-  // Fetch CLU records, CLU boundaries, and SMS field boundaries in parallel
-  const [recordsRes, boundariesRes, fieldBoundariesRes] = await Promise.all([
+  // Fetch all data in parallel
+  const [recordsRes, boundariesRes, fieldBoundariesRes, plantingRes, zonesRes] = await Promise.all([
     supabase
       .from('clu_records')
       .select('*')
@@ -68,6 +75,16 @@ export async function GET(request: Request) {
     supabase
       .from('field_boundaries')
       .select('registry_field_id, name, geojson, centroid_lat, centroid_lng'),
+    supabase
+      .from('coverage_events')
+      .select('zone_id, op_date, product, applied_acres, source_adapter')
+      .eq('crop_year', year)
+      .eq('operation_type', 'planting')
+      .not('zone_id', 'is', null),
+    supabase
+      .from('management_zones')
+      .select('id, registry_field_id')
+      .not('registry_field_id', 'is', null),
   ])
 
   if (recordsRes.error) {
@@ -89,6 +106,31 @@ export async function GET(request: Request) {
         name: fb.name,
       },
     }))
+
+  // Build SMS boundary name lookup: registry_field_id → common field name
+  const smsBoundaryNames: Record<string, string> = {}
+  for (const fb of fieldBoundariesRes.data ?? []) {
+    if (fb.registry_field_id && fb.name) smsBoundaryNames[fb.registry_field_id] = fb.name
+  }
+
+  // Build planting passes lookup: registry_field_id → PlantingPass[]
+  // Two-step: coverage_events.zone_id → management_zones.id → registry_field_id
+  const zoneToField = new Map<string, string>()
+  for (const z of zonesRes.data ?? []) {
+    if (z.id && z.registry_field_id) zoneToField.set(z.id, z.registry_field_id)
+  }
+  const plantingPasses: Record<string, PlantingPass[]> = {}
+  for (const ce of plantingRes.data ?? []) {
+    const rfid = ce.zone_id ? zoneToField.get(ce.zone_id) : null
+    if (!rfid) continue
+    if (!plantingPasses[rfid]) plantingPasses[rfid] = []
+    plantingPasses[rfid].push({
+      op_date: ce.op_date ?? null,
+      product: ce.product ?? null,
+      applied_acres: ce.applied_acres ?? null,
+      source_adapter: ce.source_adapter,
+    })
+  }
 
   // Build boundary lookup: "farmNumber|tractNumber|cluLabel" → GeoJSON geometry
   const boundaryMap = new Map<string, Record<string, unknown>>()
@@ -143,11 +185,13 @@ export async function GET(request: Request) {
           clu: r.clu,
           field_name: r.field_name,
           farm_name: r.farm_name,
+          registry_field_id: r.registry_field_id ?? null,
           crop: r.crop,
           grain_plant_date: r.grain_plant_date,
           fsa_acres: r.fsa_acres,
           reported: r.reported,
           organic: r.organic,
+          irrigated: r.irrigated ?? false,
           prevented_planting: r.prevented_planting,
           status,
         },
@@ -169,6 +213,8 @@ export async function GET(request: Request) {
       type: 'FeatureCollection',
       features: fieldBoundaryFeatures,
     },
+    smsBoundaryNames,
+    plantingPasses,
     year,
   })
 }

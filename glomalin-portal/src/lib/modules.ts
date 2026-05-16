@@ -51,6 +51,14 @@ export const MODULES: Module[] = [
     type: 'native',
   },
   {
+    id: 'weather',
+    label: 'Precipitation',
+    sublabel: 'Current · History · Forecast',
+    route: '/app/weather',
+    status: 'live',
+    type: 'native',
+  },
+  {
     id: 'compliance',
     label: 'Compliance',
     sublabel: 'FSA · Insurance · Claims',

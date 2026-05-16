@@ -60,7 +60,7 @@ export function AutoPopulatePanel({ onClose, onRecordsUpdated }: AutoPopulatePan
         setError((json.error as string) ?? `Server error ${res.status}`)
         return
       }
-      const list: Proposal[] = json.proposals ?? []
+      const list: Proposal[] = (json.proposals as Proposal[] | undefined) ?? []
       setProposals(list)
 
       // Pre-select exact matches; leave suggested unchecked

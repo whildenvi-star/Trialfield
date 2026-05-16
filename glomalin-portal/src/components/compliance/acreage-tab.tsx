@@ -25,7 +25,7 @@ interface AcreageTabProps {
 }
 
 export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigateTab }: AcreageTabProps) {
-  const [view, setView] = useState<'clu' | 'map' | 'zones' | 'reconcile' | 'coverage'>('clu')
+  const [view, setView] = useState<'clu' | 'map' | 'zones' | 'reconcile' | 'coverage'>('map')
 
   const filtered = useMemo(() => {
     let out = records

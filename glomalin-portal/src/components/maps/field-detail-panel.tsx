@@ -8,6 +8,9 @@ export interface FieldProperties {
   reportingAcres: number
   centroid_lat: number | null
   centroid_lng: number | null
+  fsa_reported: boolean | null
+  last_7d_in:  number | null
+  last_30d_in: number | null
 }
 
 interface FieldDetailPanelProps {
@@ -109,7 +112,39 @@ export function FieldDetailPanel({ field, onClose }: FieldDetailPanelProps) {
                   {field.organic ? 'Certified' : 'Conventional'}
                 </span>
               </div>
+              {field.fsa_reported !== null && (
+                <div className="flex justify-between">
+                  <span className="text-[#6a5a4a]">FSA 578</span>
+                  <span className={field.fsa_reported ? 'text-[#7A9E7E]' : 'text-[#C8860A]'}>
+                    {field.fsa_reported ? '● Reported' : '○ Not reported'}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Rainfall — only shown when precip data is available */}
+            {field.last_7d_in != null && (
+              <>
+                <div className="my-5 border-t border-[#2a2218]" />
+                <div className="space-y-1 mb-1">
+                  <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-[#6a5a4a]">
+                    Rainfall
+                  </span>
+                </div>
+                <div className="space-y-3 font-mono text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#6a5a4a]">Last 7 days</span>
+                    <span className="text-[#7BAFD4]">{field.last_7d_in.toFixed(2)}&Prime;</span>
+                  </div>
+                  {field.last_30d_in != null && (
+                    <div className="flex justify-between">
+                      <span className="text-[#6a5a4a]">Last 30 days</span>
+                      <span className="text-[#7BAFD4]">{field.last_30d_in.toFixed(2)}&Prime;</span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Divider */}
             <div className="my-5 border-t border-[#2a2218]" />

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import {
   CROP_COLORS,
   FILL_OPACITY,
@@ -16,10 +16,11 @@ import {
 } from '@/lib/map-config'
 import { FieldDetailPanel, type FieldProperties } from './field-detail-panel'
 import { MapLegend } from './map-legend'
+import { ViewSwitcher } from './view-switcher'
 
-// MapLibre GL JS types only — the actual library is loaded dynamically inside
-// useEffect to avoid SSR issues (MapLibre requires the browser `window` global).
 import type { Map, Popup, ExpressionSpecification } from 'maplibre-gl'
+
+export type MapView = 'enterprise' | 'fsa'
 
 interface GeoJSONGeometry {
   type: string
@@ -32,112 +33,163 @@ interface GeoJSONFeature {
   properties: FieldProperties & Record<string, unknown>
 }
 
-interface FeatureCollection {
-  type: 'FeatureCollection'
-  features: GeoJSONFeature[]
+interface MapMeta {
+  total_acres:          number
+  organic_acres:        number
+  precip_configured:    boolean
+  precip_avg_7d:        number | null
+  precip_last_fetched:  string | null
 }
 
-/**
- * Flatten all polygon/multipolygon coordinates into [lng, lat] pairs.
- * Used to compute the bounding box for fitBounds().
- */
+interface BoundaryResponse {
+  type:     'FeatureCollection'
+  features: GeoJSONFeature[]
+  meta?:    MapMeta
+}
+
+// Module-level color expressions — static, derived from map-config constants.
+const CROP_COLOR_EXPR: ExpressionSpecification = [
+  'match', ['get', 'crop'],
+  ...Object.entries(CROP_COLORS)
+    .filter(([k]) => !k.startsWith('__'))
+    .flatMap(([crop, color]) => [crop, color]),
+  CROP_COLORS.__unassigned,
+] as unknown as ExpressionSpecification
+
+// FSA status view: green = all CLUs reported, orange = any unreported, dark = no FSA data
+const FSA_COLOR_EXPR: ExpressionSpecification = [
+  'case',
+  ['==', ['get', 'fsa_reported'], true],  '#7A9E7E',
+  ['==', ['get', 'fsa_reported'], false], '#C8860A',
+  '#3a3028',
+] as unknown as ExpressionSpecification
+
+const DEFAULT_PITCH   = 25
+const DEFAULT_BEARING = -8
+
 function flattenCoordinates(geometry: GeoJSONGeometry): [number, number][] {
   const result: [number, number][] = []
-
   function walk(coords: unknown) {
     if (!Array.isArray(coords)) return
-    if (typeof coords[0] === 'number') {
-      result.push([coords[0] as number, coords[1] as number])
-    } else {
-      for (const c of coords) walk(c)
-    }
+    if (typeof coords[0] === 'number') result.push([coords[0] as number, coords[1] as number])
+    else for (const c of coords) walk(c)
   }
-
   if (geometry.type === 'Polygon') {
-    // Only outer ring (index 0) is enough for bbox
     const rings = geometry.coordinates as unknown[][]
     if (rings.length > 0) walk(rings[0])
   } else if (geometry.type === 'MultiPolygon') {
     const polys = geometry.coordinates as unknown[][][]
-    for (const poly of polys) {
-      if (poly.length > 0) walk(poly[0])
-    }
+    for (const poly of polys) { if (poly.length > 0) walk(poly[0]) }
   }
-
   return result
 }
 
-/**
- * FieldMap — interactive satellite map with all 56 farm fields.
- *
- * Key behaviors:
- * - MapLibre GL JS loaded dynamically (no SSR — requires window)
- * - Fetches /api/maps/boundaries on load (GeoJSON FeatureCollection with crop+organic+acres)
- * - Auto-zooms to fit all field polygons using fitBounds() — NOT a hardcoded center
- * - Fields color-coded by crop (CROP_COLORS), organic fields get dashed border overlay
- * - Hover: brightens fill + shows field name tooltip
- * - Click: opens FieldDetailPanel with field data
- * - MapLegend always visible at bottom-left
- * - NO layer switcher, NO basemap toggle — satellite only (per CONTEXT.md locked decision)
- */
-export function FieldMap() {
-  const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<Map | null>(null)
-  const popupRef = useRef<Popup | null>(null)
-  const hoveredIdRef = useRef<string | number | null>(null)
+function formatTimeAgo(isoString: string | null): string {
+  if (!isoString) return 'never'
+  const diffMs = Date.now() - new Date(isoString).getTime()
+  const diffH = Math.floor(diffMs / 3_600_000)
+  if (diffH < 1) {
+    const diffM = Math.floor(diffMs / 60_000)
+    return diffM < 2 ? 'just now' : `${diffM}m ago`
+  }
+  if (diffH < 24) return `${diffH}h ago`
+  return `${Math.floor(diffH / 24)}d ago`
+}
 
-  const [selectedField, setSelectedField] = useState<FieldProperties | null>(null)
-  const [activeCrops, setActiveCrops] = useState<string[]>([])
-  const [mapError, setMapError] = useState<string | null>(null)
+function getColorExpr(view: MapView): ExpressionSpecification {
+  return view === 'fsa' ? FSA_COLOR_EXPR : CROP_COLOR_EXPR
+}
+
+export function FieldMap() {
+  const mapContainerRef  = useRef<HTMLDivElement>(null)
+  const mapRef           = useRef<Map | null>(null)
+  const popupRef         = useRef<Popup | null>(null)
+  const hoveredIdRef     = useRef<string | number | null>(null)
+  const viewRef          = useRef<MapView>('enterprise')
+
+  const [selectedField, setSelectedField]   = useState<FieldProperties | null>(null)
+  const [activeCrops, setActiveCrops]       = useState<string[]>([])
+  const [mapMeta, setMapMeta]               = useState<MapMeta | null>(null)
+  const [showPrecip, setShowPrecip]         = useState(false)
+  const [isRefreshing, setIsRefreshing]     = useState(false)
+  const [mapError, setMapError]             = useState<string | null>(null)
+  const [view, setView]                     = useState<MapView>('enterprise')
+
+  // Sync view ref so the async map init closure can read the current view.
+  useEffect(() => { viewRef.current = view }, [view])
+
+  // Switch fill colors when view changes (after map is initialized).
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map?.getLayer('fields-fill')) return
+    const expr = getColorExpr(view)
+    map.setPaintProperty('fields-fill', 'fill-color', expr)
+    map.setPaintProperty('fields-hover', 'fill-color', expr)
+  }, [view])
+
+  // Toggle the precip-fill layer visibility whenever showPrecip changes.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.getLayer('precip-fill')) return
+    map.setLayoutProperty('precip-fill', 'visibility', showPrecip ? 'visible' : 'none')
+  }, [showPrecip])
+
+  const handlePrecipRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    try {
+      const res = await fetch('/api/weather/precip/refresh', { method: 'POST' })
+      if (res.ok) {
+        const boundaryRes = await fetch('/api/maps/boundaries')
+        if (boundaryRes.ok) {
+          const fc: BoundaryResponse = await boundaryRes.json()
+          const source = mapRef.current?.getSource('fields') as { setData?: (d: unknown) => void } | undefined
+          source?.setData?.(fc)
+          if (fc.meta) setMapMeta(fc.meta)
+        }
+      }
+    } catch {/* non-blocking */} finally {
+      setIsRefreshing(false)
+    }
+  }, [])
 
   useEffect(() => {
-    if (!mapContainerRef.current) return
-    // Guard: only initialize once
-    if (mapRef.current) return
+    if (!mapContainerRef.current || mapRef.current) return
 
     let mapInstance: Map | null = null
 
     async function initMap() {
       try {
-        // Dynamic import avoids SSR — MapLibre requires `window`
         const maplibregl = await import('maplibre-gl')
-        // @ts-expect-error — CSS module import (handled by Next.js/webpack at runtime)
+        // @ts-expect-error — CSS module import
         await import('maplibre-gl/dist/maplibre-gl.css')
 
         if (!mapContainerRef.current) return
 
         mapInstance = new maplibregl.Map({
-          container: mapContainerRef.current,
-          style: getSatelliteStyleUrl(),
-          center: DEFAULT_MAP_CENTER,
-          zoom: DEFAULT_MAP_ZOOM,
-          // Attribution is required for satellite tile providers
+          container:          mapContainerRef.current,
+          style:              getSatelliteStyleUrl(),
+          center:             DEFAULT_MAP_CENTER,
+          zoom:               DEFAULT_MAP_ZOOM,
+          pitch:              DEFAULT_PITCH,
+          bearing:            DEFAULT_BEARING,
           attributionControl: { compact: true },
         })
-
         mapRef.current = mapInstance
 
         mapInstance.on('load', async () => {
-          // Fetch field boundaries (enriched with crop + organic + reportingAcres server-side)
-          let featureCollection: FeatureCollection = { type: 'FeatureCollection', features: [] }
+          let fc: BoundaryResponse = { type: 'FeatureCollection', features: [] }
           try {
             const res = await fetch('/api/maps/boundaries')
-            if (res.ok) {
-              featureCollection = await res.json()
-            }
-          } catch {
-            // Graceful degradation: map renders, fields just won't appear
-          }
+            if (res.ok) fc = await res.json()
+          } catch {/* graceful degradation */}
 
           if (!mapInstance) return
+          if (fc.meta) setMapMeta(fc.meta)
 
-          // ----------------------------------------------------------------
-          // Auto-zoom: fitBounds to all field polygons (per CONTEXT.md)
-          // ----------------------------------------------------------------
+          // Auto-zoom to all fields, preserving tilt
           let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity
-          for (const feature of featureCollection.features) {
-            const coords = flattenCoordinates(feature.geometry)
-            for (const [lng, lat] of coords) {
+          for (const feature of fc.features) {
+            for (const [lng, lat] of flattenCoordinates(feature.geometry)) {
               if (lng < minLng) minLng = lng
               if (lng > maxLng) maxLng = lng
               if (lat < minLat) minLat = lat
@@ -145,70 +197,58 @@ export function FieldMap() {
             }
           }
           if (isFinite(minLng)) {
-            mapInstance.fitBounds([[minLng, minLat], [maxLng, maxLat]], {
-              padding: 40,
-              animate: false,
-            })
+            mapInstance.fitBounds(
+              [[minLng, minLat], [maxLng, maxLat]],
+              { padding: 40, animate: false, pitch: DEFAULT_PITCH, bearing: DEFAULT_BEARING }
+            )
           }
 
-          // Collect unique crop names present on the map for legend
           const cropSet = new Set<string>()
-          for (const f of featureCollection.features) {
+          for (const f of fc.features) {
             const crop = f.properties?.crop
             if (crop && typeof crop === 'string') cropSet.add(crop)
           }
           setActiveCrops(Array.from(cropSet).sort())
 
-          // ----------------------------------------------------------------
-          // Layer setup
-          // ----------------------------------------------------------------
-          mapInstance.addSource('fields', {
-            type: 'geojson',
-            // Cast to any to satisfy strict GeoJSON typing — our FeatureCollection is valid GeoJSON
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            data: featureCollection as any,
-            // Promote id so feature-state works for hover
-            promoteId: 'registry_field_id',
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          mapInstance.addSource('fields', { type: 'geojson', data: fc as any, promoteId: 'registry_field_id' })
+
+          // Use current view from ref (may have changed before map finished loading)
+          const colorExpr = getColorExpr(viewRef.current)
+
+          // Layer 1: crop/fsa fill
+          mapInstance.addLayer({
+            id: 'fields-fill', type: 'fill', source: 'fields',
+            paint: { 'fill-color': colorExpr, 'fill-opacity': FILL_OPACITY },
           })
 
-          // Build match expression for fill color from CROP_COLORS.
-          // Cast to ExpressionSpecification — dynamically built from CROP_COLORS at runtime.
-          const colorExpression = [
-            'match',
-            ['get', 'crop'],
-            ...Object.entries(CROP_COLORS)
-              .filter(([k]) => !k.startsWith('__'))
-              .flatMap(([crop, color]) => [crop, color]),
-            CROP_COLORS.__unassigned, // fallback for null / unknown crop
-          ] as unknown as ExpressionSpecification
-
-          // Layer 1: crop fill
+          // Layer 2: precip overlay (hidden by default)
           mapInstance.addLayer({
-            id: 'fields-fill',
-            type: 'fill',
-            source: 'fields',
+            id: 'precip-fill', type: 'fill', source: 'fields',
+            layout: { visibility: 'none' },
             paint: {
-              'fill-color': colorExpression,
-              'fill-opacity': FILL_OPACITY,
+              'fill-color': [
+                'step',
+                ['coalesce', ['get', 'last_7d_in'], -1],
+                'rgba(0,0,0,0)',
+                0.01, 'rgba(180,210,255,0.30)',
+                0.5,  'rgba(100,165,240,0.48)',
+                1.5,  'rgba(50,120,220,0.60)',
+                3.0,  'rgba(20,80,200,0.72)',
+              ] as unknown as ExpressionSpecification,
+              'fill-opacity': 1,
             },
           })
 
-          // Layer 2: standard border (all fields)
+          // Layer 3: standard border
           mapInstance.addLayer({
-            id: 'fields-border',
-            type: 'line',
-            source: 'fields',
-            paint: {
-              'line-color': STANDARD_BORDER_COLOR,
-              'line-width': STANDARD_BORDER_WIDTH,
-            },
+            id: 'fields-border', type: 'line', source: 'fields',
+            paint: { 'line-color': STANDARD_BORDER_COLOR, 'line-width': STANDARD_BORDER_WIDTH },
           })
 
-          // Layer 3: organic dashed border overlay (organic fields only)
+          // Layer 4: organic dashed border
           mapInstance.addLayer({
-            id: 'fields-organic-border',
-            type: 'line',
-            source: 'fields',
+            id: 'fields-organic-border', type: 'line', source: 'fields',
             filter: ['==', ['get', 'organic'], true],
             paint: {
               'line-color': ORGANIC_BORDER_COLOR,
@@ -217,87 +257,70 @@ export function FieldMap() {
             },
           })
 
-          // Layer 4: hover highlight (feature-state based)
+          // Layer 5: hover highlight
           mapInstance.addLayer({
-            id: 'fields-hover',
-            type: 'fill',
-            source: 'fields',
+            id: 'fields-hover', type: 'fill', source: 'fields',
             paint: {
-              'fill-color': colorExpression,
+              'fill-color': colorExpr,
               'fill-opacity': [
-                'case',
-                ['boolean', ['feature-state', 'hover'], false],
-                HOVER_FILL_OPACITY,
-                0,
+                'case', ['boolean', ['feature-state', 'hover'], false],
+                HOVER_FILL_OPACITY, 0,
               ],
             },
           })
 
-          // ----------------------------------------------------------------
-          // Hover interaction
-          // ----------------------------------------------------------------
-          const popup = new maplibregl.Popup({
-            closeButton: false,
-            closeOnClick: false,
-            className: 'field-map-popup',
-          })
+          // Hover interactions
+          const popup = new maplibregl.Popup({ closeButton: false, closeOnClick: false, className: 'field-map-popup' })
           popupRef.current = popup
 
           mapInstance.on('mousemove', 'fields-fill', (e) => {
-            if (!mapInstance || !e.features || e.features.length === 0) return
-
+            if (!mapInstance || !e.features?.length) return
             mapInstance.getCanvas().style.cursor = 'pointer'
-
-            const feature = e.features[0]
+            const feature   = e.features[0]
             const featureId = feature.id
-
-            // Clear previous hover state
             if (hoveredIdRef.current !== null && hoveredIdRef.current !== featureId) {
-              mapInstance.setFeatureState(
-                { source: 'fields', id: hoveredIdRef.current },
-                { hover: false }
-              )
+              mapInstance.setFeatureState({ source: 'fields', id: hoveredIdRef.current }, { hover: false })
             }
-
             hoveredIdRef.current = featureId ?? null
-
-            if (featureId !== undefined && featureId !== null) {
-              mapInstance.setFeatureState(
-                { source: 'fields', id: featureId },
-                { hover: true }
-              )
+            if (featureId != null) {
+              mapInstance.setFeatureState({ source: 'fields', id: featureId }, { hover: true })
             }
-
-            // Tooltip: field name only
             const name = feature.properties?.name ?? 'Unknown field'
-            popup
-              .setLngLat(e.lngLat)
-              .setHTML(`<span>${name}</span>`)
-              .addTo(mapInstance)
+            popup.setLngLat(e.lngLat).setHTML(`<span>${name}</span>`).addTo(mapInstance)
           })
 
           mapInstance.on('mouseleave', 'fields-fill', () => {
             if (!mapInstance) return
             mapInstance.getCanvas().style.cursor = ''
-
             if (hoveredIdRef.current !== null) {
-              mapInstance.setFeatureState(
-                { source: 'fields', id: hoveredIdRef.current },
-                { hover: false }
-              )
+              mapInstance.setFeatureState({ source: 'fields', id: hoveredIdRef.current }, { hover: false })
               hoveredIdRef.current = null
             }
-
             popup.remove()
           })
 
-          // ----------------------------------------------------------------
-          // Click interaction — open detail panel
-          // ----------------------------------------------------------------
+          // Click → fly to field centroid, open detail panel
           mapInstance.on('click', 'fields-fill', (e) => {
-            if (!e.features || e.features.length === 0) return
+            if (!mapInstance || !e.features?.length) return
             const props = e.features[0].properties as FieldProperties
-            setSelectedField(props)
+
+            const lng = (props.centroid_lng ?? e.lngLat.lng) as number
+            const lat = (props.centroid_lat ?? e.lngLat.lat) as number
+            mapInstance.flyTo({
+              center:   [lng, lat],
+              zoom:     Math.max(mapInstance.getZoom(), 14),
+              pitch:    30,
+              bearing:  DEFAULT_BEARING,
+              duration: 1000,
+              essential: true,
+            })
+
+            setSelectedField({
+              ...props,
+              fsa_reported: props.fsa_reported ?? null,
+              last_7d_in:   props.last_7d_in  ?? null,
+              last_30d_in:  props.last_30d_in ?? null,
+            })
           })
         })
 
@@ -313,16 +336,14 @@ export function FieldMap() {
     }
 
     initMap()
-
-    return () => {
-      mapInstance?.remove()
-      mapRef.current = null
-    }
+    return () => { mapInstance?.remove(); mapRef.current = null }
   }, [])
+
+  const precipAvg     = mapMeta?.precip_avg_7d
+  const precipUpdated = mapMeta?.precip_last_fetched
 
   return (
     <div className="relative w-full h-full">
-      {/* MapLibre map container */}
       <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* Error state */}
@@ -335,16 +356,69 @@ export function FieldMap() {
         </div>
       )}
 
-      {/* Legend — always visible, bottom-left, positioned inside the map container */}
-      <MapLegend crops={activeCrops} />
+      {/* Summary bar */}
+      {mapMeta && (
+        <div
+          className="absolute top-0 left-0 right-0 z-10 flex items-center gap-5 px-4 h-10 font-mono text-xs"
+          style={{ backgroundColor: 'rgba(8, 6, 4, 0.82)', backdropFilter: 'blur(4px)', borderBottom: '1px solid #2a2218' }}
+        >
+          <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Farm</span>
+          <span className="text-[#e8d8c0]">{mapMeta.total_acres.toLocaleString()} ac</span>
+          <span className="text-[#2a2218]">·</span>
+          <span className="text-[#7A9E7E]">{mapMeta.organic_acres.toLocaleString()} organic</span>
 
-      {/* Detail panel — slide in from right when a field is selected */}
+          {mapMeta.precip_configured && precipAvg != null && (
+            <>
+              <span className="text-[#2a2218]">·</span>
+              <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Precip (7d avg)</span>
+              <span className="text-[#7BAFD4]">{precipAvg.toFixed(2)}&Prime;</span>
+              <span className="text-[#2a2218]">·</span>
+              <span className="text-[#6a5a4a]">Updated {formatTimeAgo(precipUpdated ?? null)}</span>
+            </>
+          )}
+
+          <div className="flex-1" />
+
+          {mapMeta.precip_configured && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowPrecip((v) => !v)}
+                className={[
+                  'px-2.5 py-1 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
+                  showPrecip
+                    ? 'border-[#7BAFD4] text-[#7BAFD4] bg-[#7BAFD4]/10'
+                    : 'border-[#2a2218] text-[#6a5a4a] hover:border-[#6a5a4a] hover:text-[#e8d8c0]',
+                ].join(' ')}
+              >
+                ☁ Precip
+              </button>
+              <button
+                onClick={handlePrecipRefresh}
+                disabled={isRefreshing}
+                title="Refresh precipitation data"
+                className="text-[#6a5a4a] hover:text-[#e8d8c0] disabled:opacity-40 transition-colors text-xs px-1"
+              >
+                {isRefreshing ? '…' : '↻'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Legend — hidden in FSA view (crop colors don't apply) */}
+      {view === 'enterprise' && (
+        <MapLegend crops={activeCrops} showPrecip={showPrecip} />
+      )}
+
+      {/* View switcher */}
+      <ViewSwitcher view={view} onChange={setView} />
+
+      {/* Field detail panel */}
       <FieldDetailPanel
         field={selectedField}
         onClose={() => setSelectedField(null)}
       />
 
-      {/* MapLibre popup tooltip styles */}
       <style>{`
         .maplibregl-popup .maplibregl-popup-content,
         .field-map-popup .maplibregl-popup-content {

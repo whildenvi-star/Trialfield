@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export type ReportingStatus = 'orange' | 'yellow' | 'green'
 
@@ -11,11 +11,13 @@ export interface CluMapProperties {
   clu: string
   field_name: string | null
   farm_name: string | null
+  registry_field_id: string | null
   crop: string | null
   grain_plant_date: string | null
   fsa_acres: number
   reported: boolean
   organic: boolean
+  irrigated: boolean
   prevented_planting: boolean
   status: ReportingStatus
 }
@@ -52,7 +54,16 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNex
   const [crop, setCrop] = useState(clu.crop ?? '')
   const [plantDate, setPlantDate] = useState(clu.grain_plant_date ?? '')
   const [organic, setOrganic] = useState(clu.organic)
+  const [irrigated, setIrrigated] = useState(clu.irrigated)
+  const [cropChoices, setCropChoices] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/fsa/crop-choices')
+      .then((r) => r.json())
+      .then((d) => setCropChoices(d.crops ?? []))
+      .catch(() => {})
+  }, [])
   const [reporting, setReporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -79,9 +90,10 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNex
       crop: crop.trim() || null,
       grain_plant_date: plantDate || null,
       organic,
+      irrigated,
     })
     if (ok) {
-      onRecordUpdated({ id: clu.id, crop: crop.trim() || null, grain_plant_date: plantDate || null, organic })
+      onRecordUpdated({ id: clu.id, crop: crop.trim() || null, grain_plant_date: plantDate || null, organic, irrigated })
     }
     setSaving(false)
   }
@@ -139,11 +151,15 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNex
           <label className="block text-xs font-mono text-glomalin-muted mb-1">Crop</label>
           <input
             type="text"
+            list="clu-crop-choices"
             value={crop}
             onChange={(e) => setCrop(e.target.value)}
-            placeholder="e.g. Yellow Corn"
+            placeholder="e.g. Corn"
             className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 text-sm font-mono text-glomalin-text placeholder:text-glomalin-muted focus:outline-none focus:border-glomalin-accent"
           />
+          <datalist id="clu-crop-choices">
+            {cropChoices.map((c) => <option key={c} value={c} />)}
+          </datalist>
         </div>
 
         <div>
@@ -156,17 +172,31 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNex
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            id="organic-check"
-            type="checkbox"
-            checked={organic}
-            onChange={(e) => setOrganic(e.target.checked)}
-            className="accent-glomalin-accent"
-          />
-          <label htmlFor="organic-check" className="text-sm font-mono text-glomalin-text cursor-pointer">
-            Organic
-          </label>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <input
+              id="organic-check"
+              type="checkbox"
+              checked={organic}
+              onChange={(e) => setOrganic(e.target.checked)}
+              className="accent-glomalin-accent"
+            />
+            <label htmlFor="organic-check" className="text-sm font-mono text-glomalin-text cursor-pointer">
+              Organic
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              id="irrigated-check"
+              type="checkbox"
+              checked={irrigated}
+              onChange={(e) => setIrrigated(e.target.checked)}
+              className="accent-glomalin-accent"
+            />
+            <label htmlFor="irrigated-check" className="text-sm font-mono text-glomalin-text cursor-pointer">
+              Irrigated
+            </label>
+          </div>
         </div>
 
         {anomalyData && (

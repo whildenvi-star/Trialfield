@@ -106,8 +106,10 @@ export function ComplianceShell({
           unreportedCount={unreportedCount}
           activePoliciesCount={activePoliciesCount}
           openClaimsCount={openClaimsCount}
-          claims={claimsData as Record<string, unknown>[]}
+          claims={claimsData}
           cluRecords={cluRecords}
+          policies={policies}
+          farmFilter={farmInput || undefined}
           navigateTab={navigateTab}
         />
       )
@@ -247,7 +249,7 @@ export function ComplianceShell({
       </div>
 
       {/* ── Tab content ────────────────────────────────────────────── */}
-      <div className="mt-5">
+      <div className={activeTab === 'overview' ? '' : 'mt-5'}>
         {renderTabContent()}
       </div>
     </div>

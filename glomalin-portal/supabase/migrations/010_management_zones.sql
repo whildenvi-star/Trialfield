@@ -118,10 +118,16 @@ CREATE TABLE rotation_rules (
 
 -- ── Backward Compat: zone_id on clu_records ──────────────────────────────────
 
-ALTER TABLE clu_records
-  ADD COLUMN IF NOT EXISTS zone_id uuid REFERENCES management_zones (id) ON DELETE SET NULL;
-
-CREATE INDEX IF NOT EXISTS idx_clu_zone ON clu_records (zone_id) WHERE zone_id IS NOT NULL;
+DO $$ BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'clu_records'
+  ) THEN
+    ALTER TABLE clu_records
+      ADD COLUMN IF NOT EXISTS zone_id uuid REFERENCES management_zones (id) ON DELETE SET NULL;
+    CREATE INDEX IF NOT EXISTS idx_clu_zone ON clu_records (zone_id) WHERE zone_id IS NOT NULL;
+  END IF;
+END $$;
 
 -- ── RLS Policies ──────────────────────────────────────────────────────────────
 
