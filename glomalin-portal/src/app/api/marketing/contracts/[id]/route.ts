@@ -37,17 +37,20 @@ export async function PATCH(
     updated_at: new Date().toISOString(),
   }
 
-  if (typeof body.crop === 'string') {
-    updateData.crop = body.crop.trim()
-  }
   if (typeof body.registry_crop_id === 'string' || body.registry_crop_id === null) {
-    updateData.registry_crop_id = body.registry_crop_id
+    updateData.commodity_id = body.registry_crop_id
+  }
+  if (typeof body.commodity_id === 'string' || body.commodity_id === null) {
+    updateData.commodity_id = body.commodity_id
   }
   if (
     typeof body.contract_type === 'string' &&
     VALID_CONTRACT_TYPES.includes(body.contract_type as ContractType)
   ) {
-    updateData.contract_type = body.contract_type
+    updateData.instrument_type = body.contract_type
+  }
+  if (typeof body.instrument_type === 'string') {
+    updateData.instrument_type = body.instrument_type
   }
   if (typeof body.bushels === 'number') {
     updateData.bushels = body.bushels
@@ -78,7 +81,7 @@ export async function PATCH(
   }
 
   const { data: contract, error } = await supabase
-    .from('grain_contracts')
+    .from('sale_instruments')
     .update(updateData)
     .eq('id', id)
     .select()
@@ -108,7 +111,7 @@ export async function DELETE(
   const { id } = params
 
   const { data, error } = await supabase
-    .from('grain_contracts')
+    .from('sale_instruments')
     .delete()
     .eq('id', id)
     .select('id')

@@ -31,14 +31,14 @@ export async function GET(request: Request) {
   const cropFilter = searchParams.get('crop')
 
   let query = supabase
-    .from('grain_contracts')
+    .from('sale_instruments')
     .select('*')
     .eq('crop_year', year)
-    .order('crop')
+    .order('instrument_type')
     .order('created_at')
 
   if (cropFilter) {
-    query = query.ilike('crop', cropFilter)
+    query = query.ilike('instrument_type', `%${cropFilter}%`)
   }
 
   const { data, error } = await query
@@ -72,12 +72,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  // Validate required fields
-  const crop = typeof body.crop === 'string' ? body.crop.trim() : null
-  if (!crop) {
-    return NextResponse.json({ error: 'crop is required' }, { status: 400 })
-  }
-
   const contractType = body.contract_type as ContractType
   if (!contractType || !VALID_CONTRACT_TYPES.includes(contractType)) {
     return NextResponse.json(
@@ -100,10 +94,10 @@ export async function POST(request: Request) {
     typeof body.crop_year === 'number' ? body.crop_year : CURRENT_CROP_YEAR
 
   const insertData = {
-    crop,
-    registry_crop_id: typeof body.registry_crop_id === 'string' ? body.registry_crop_id : null,
-    contract_type: contractType,
+    commodity_id: typeof body.registry_crop_id === 'string' ? body.registry_crop_id : null,
+    instrument_type: contractType,
     bushels,
+    delivered_bu: 0,
     price_per_bushel:
       typeof body.price_per_bushel === 'number' ? body.price_per_bushel : null,
     basis: typeof body.basis === 'number' ? body.basis : null,
@@ -119,7 +113,7 @@ export async function POST(request: Request) {
   }
 
   const { data: contract, error } = await supabase
-    .from('grain_contracts')
+    .from('sale_instruments')
     .insert(insertData)
     .select()
     .single()
