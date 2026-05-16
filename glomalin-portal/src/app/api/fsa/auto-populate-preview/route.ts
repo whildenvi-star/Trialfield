@@ -22,8 +22,9 @@ type BudgetCrop = { displayName: string; budgetAcres: number }
 
 // ===== Helpers =====
 
-function normName(s: string): string {
-  return (s || '').toLowerCase().replace(/[^a-z0-9]/g, '').trim()
+function normName(s: unknown): string {
+  const str = typeof s === 'string' ? s : ''
+  return str.toLowerCase().replace(/[^a-z0-9]/g, '').trim()
 }
 
 function buildAutoPopulateProposals(
@@ -49,29 +50,42 @@ function buildAutoPopulateProposals(
     if (!enterprise || typeof enterprise !== 'object') continue
     const ent = enterprise as Record<string, unknown>
 
-    // Extract crop name — various field names used by farm-budget API
-    const name =
-      (ent.cropName as string) ||
-      (ent.name as string) ||
-      (ent.crop as string) ||
-      (ent.enterprise as string) ||
-      ''
-    if (!name) continue
+    // farm-budget dashboard structure:
+    // { enterprise: { name, ... }, cropRows: [{ crop, acres, ... }], totals: {...} }
+    // Iterate cropRows to get individual crop names and acres.
+    const cropRows = Array.isArray(ent.cropRows)
+      ? (ent.cropRows as Record<string, unknown>[])
+      : []
 
-    const acres =
-      typeof ent.totalAcres === 'number'
-        ? ent.totalAcres
-        : typeof ent.acres === 'number'
-          ? ent.acres
-          : 0
-
-    const key = normName(name)
-    if (!budgetCrops.has(key)) {
-      budgetCrops.set(key, { displayName: name, budgetAcres: acres })
+    if (cropRows.length > 0) {
+      for (const row of cropRows) {
+        const name = typeof row.crop === 'string' ? row.crop : ''
+        if (!name) continue
+        const acres = typeof row.acres === 'number' ? row.acres : 0
+        const key = normName(name)
+        if (!budgetCrops.has(key)) {
+          budgetCrops.set(key, { displayName: name, budgetAcres: acres })
+        } else {
+          budgetCrops.get(key)!.budgetAcres += acres
+        }
+      }
     } else {
-      // Accumulate acres across multiple enterprise entries for the same crop
-      const existing = budgetCrops.get(key)!
-      existing.budgetAcres += acres
+      // Fallback for flat structures (non-dashboard endpoints)
+      const rawName = ent.cropName ?? ent.name ?? ent.crop
+      const name = typeof rawName === 'string' ? rawName : ''
+      if (!name) continue
+      const acres =
+        typeof ent.totalAcres === 'number'
+          ? ent.totalAcres
+          : typeof ent.acres === 'number'
+            ? ent.acres
+            : 0
+      const key = normName(name)
+      if (!budgetCrops.has(key)) {
+        budgetCrops.set(key, { displayName: name, budgetAcres: acres })
+      } else {
+        budgetCrops.get(key)!.budgetAcres += acres
+      }
     }
   }
 
