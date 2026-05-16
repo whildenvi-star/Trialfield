@@ -697,7 +697,7 @@
     var grandFieldEl = document.getElementById('fo-grand-total-field');
     if (!container || !currentField) return;
 
-    var acres = currentField.acres || currentField.plantedAcres || 0;
+    var acres = (currentField.plantedAcres > 0 ? currentField.plantedAcres : currentField.acres) || 0;
 
     // Build unified item list
     var allItems = [];
@@ -1076,7 +1076,7 @@
           });
           perFieldCr    = pfProduct ? (pfProduct.conversionRate || 1) : 1;
           var pfUnit    = pfProduct ? (pfProduct.purchaseUnit || pfProduct.unit || '') : '';
-          perFieldAcres = currentField.acres || 0;
+          perFieldAcres = (currentField.plantedAcres > 0 ? currentField.plantedAcres : currentField.acres) || 0;
           var rawFQ     = Calc.round2((sourceItem.quantity || 0) * perFieldAcres);
           currentVal    = Math.round(rawFQ / perFieldCr * 1000) / 1000;
           label         = pfUnit || 'total';
@@ -1226,7 +1226,7 @@
         var cropAcresForForm = currentField.plantedAcres > 0 ? currentField.plantedAcres : fieldAcresForForm;
         var sourcePurchaseUnit = sourceProduct ? (sourceProduct.purchaseUnit || sourceUnit) : sourceUnit;
         var sourceConvRate = sourceProduct ? (sourceProduct.conversionRate || 1) : 1;
-        var hintQtyRaw = isInputType ? Calc.round2((sourceItem.quantity || 0) * fieldAcresForForm) : 0;
+        var hintQtyRaw = isInputType ? Calc.round2((sourceItem.quantity || 0) * cropAcresForForm) : 0;
         var hintQtyTotal = sourceConvRate !== 1 ? Math.round(hintQtyRaw / sourceConvRate * 1000) / 1000 : hintQtyRaw;
         var hintUnit = sourcePurchaseUnit;
 
@@ -1242,7 +1242,7 @@
             var eNote   = sourceItem.statusNote || '';
             var eInvNum = sourceItem.invoiceNumber || '';
             var eVendor = sourceItem.invoiceVendor || '';
-            var eAcres  = sourceItem.invoiceAcres != null ? sourceItem.invoiceAcres : fieldAcresForForm;
+            var eAcres  = sourceItem.invoiceAcres != null ? sourceItem.invoiceAcres : cropAcresForForm;
             var eQty    = sourceItem.invoiceQtyTotal != null ? sourceItem.invoiceQtyTotal : (hintQtyTotal || '');
             var eCost   = sourceItem.invoiceCostTotal != null ? sourceItem.invoiceCostTotal : '';
             var eUnit   = sourceItem.invoiceUnit || sourcePurchaseUnit || sourceUnit;
@@ -1283,8 +1283,7 @@
             '<span style="font-size:0.72rem;color:var(--text-light)">Vendor:</span>' +
             '<input type="text" class="fo-cf-inv-vendor" placeholder="optional" style="font-size:0.75rem;width:80px;padding:0.15rem">' +
             '<span style="font-size:0.72rem;color:var(--text-light)">Inv. Acres:</span>' +
-            '<input type="number" class="fo-cf-inv-acres" value="' + fieldAcresForForm + '" step="0.1" style="font-size:0.75rem;width:55px;padding:0.15rem">' +
-            '<span style="font-size:0.7rem;color:var(--text-light)">(crop ac: ' + cropAcresForForm + ')</span>' +
+            '<input type="number" class="fo-cf-inv-acres" value="' + cropAcresForForm + '" step="0.1" style="font-size:0.75rem;width:55px;padding:0.15rem">' +
             '<span style="font-size:0.72rem;color:var(--text-light)">Field Qty:</span>' +
             '<input type="number" class="fo-cf-inv-qty" value="' + (hintQtyTotal || '') + '" step="0.001" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
             '<span style="font-size:0.8rem;font-weight:600;margin-left:2px;min-width:28px;display:inline-block">' + util.escHtml(hintUnit || '') + '</span>' +
@@ -2583,6 +2582,7 @@
       document.querySelectorAll('.editor-section-panel').forEach(function (p) { p.classList.remove('active'); });
       var panel = document.querySelector('.editor-section-panel[data-section="' + section + '"]');
       if (panel) panel.classList.add('active');
+      if (section === 'fieldops-unified') renderFieldOpsPanel();
     });
   })();
 
