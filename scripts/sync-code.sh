@@ -65,8 +65,23 @@ rsync -azP --delete \
 
 echo ""
 echo "  ✓ Code synced (data files untouched)"
-echo ""
-echo "  Next steps:"
-echo "    ssh ${VPS_USER}@${VPS_IP}"
-echo "    cd ${REMOTE_DIR}"
-echo "    pm2 restart ecosystem.config.js"
+
+# glomalin-portal needs a server-side build after every source sync.
+# Syncing source without building serves a stale or missing .next — PM2 crash-loops.
+if [ "$APP_FILTER" = "glomalin-portal" ] || [ -z "$APP_FILTER" ]; then
+  echo ""
+  echo "  ╔══════════════════════════════════════════════════════╗"
+  echo "  ║  PORTAL BUILD REQUIRED                               ║"
+  echo "  ║  glomalin-portal source was synced but .next was NOT.║"
+  echo "  ║  Run deploy.sh to build and restart the portal:      ║"
+  echo "  ║    bash scripts/deploy.sh                            ║"
+  echo "  ║  Restarting PM2 without building = crash-loop.       ║"
+  echo "  ╚══════════════════════════════════════════════════════╝"
+  echo ""
+else
+  echo ""
+  echo "  Next steps:"
+  echo "    ssh ${VPS_USER}@${VPS_IP}"
+  echo "    cd ${REMOTE_DIR}"
+  echo "    pm2 restart ecosystem.config.js"
+fi

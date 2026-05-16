@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --check *)",
+      "Bash(npx tsc --noEmit *)",
+      "Bash(rm -rf /Users/glomalinguild/Desktop/my-project-one/glomalin-portal/.next*)",
+      "Bash(rsync -az --delete --exclude=.next/cache * root@165.22.6.194:*)",
+      "Bash(rsync -azP --delete * root@165.22.6.194:*)"
+    ]
+  }
+}

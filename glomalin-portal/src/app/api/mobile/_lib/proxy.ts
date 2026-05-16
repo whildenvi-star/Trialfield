@@ -1,9 +1,9 @@
 const EMBED_TOKEN = process.env.EMBED_TOKEN ?? ''
-const BUDGET_BASE = 'http://localhost:3001'
-const SEED_BASE = 'http://localhost:3006'
-const CERT_BASE = 'http://localhost:3004'
-const REGISTRY_BASE = 'http://localhost:3005'
-const GT_BASE = 'http://localhost:3007'
+const BUDGET_BASE   = process.env.BUDGET_SERVICE_URL   ?? 'http://localhost:3001'
+const SEED_BASE     = process.env.SEED_SERVICE_URL     ?? 'http://localhost:3006'
+const CERT_BASE     = process.env.CERT_SERVICE_URL     ?? 'http://localhost:3004'
+const REGISTRY_BASE = process.env.REGISTRY_SERVICE_URL ?? 'http://localhost:3005'
+const GT_BASE       = process.env.GT_SERVICE_URL       ?? 'http://localhost:3007'
 
 const defaultOptions = {
   signal: AbortSignal.timeout(8000),

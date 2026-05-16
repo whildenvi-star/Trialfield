@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --port 3010",
     "build": "next build",
-    "start": "next start",
+    "start": "node -e \"const fs=require('fs'),p='.next/server/next-font-manifest.json';try{fs.statSync(p)}catch(e){fs.mkdirSync('.next/server',{recursive:true});fs.writeFileSync(p,JSON.stringify({pages:{},app:{},appUsingSizeAdjust:false,pagesUsingSizeAdjust:false}))}\" && next start",
     "prod": "next build && next start",
     "lint": "next lint",
     "test": "vitest run",

@@ -53,16 +53,34 @@ set -euo pipefail
 cd /srv/farm-ops/glomalin-portal
 npm install --prefer-offline 2>&1 | tail -1
 NODE_OPTIONS='--max-old-space-size=1536' npm run build 2>&1 | tail -5
-echo "  ✓ Build complete"
+
+# Verify build produced artifacts before restarting PM2
+if [ ! -f .next/BUILD_ID ]; then
+  echo "ERROR: .next/BUILD_ID not found — build failed or incomplete. Aborting restart."
+  exit 1
+fi
+echo "  ✓ Build verified ($(cat .next/BUILD_ID))"
 EOF
 
 # ── Step 3: Restart PM2 ───────────────────────────────────────────
+# Always use ecosystem.config.js — if portal was started ad-hoc (pm2 show glomalin-portal
+# shows exec interpreter = /usr/bin/npm), delete and re-register to pick up crash-loop guards.
 echo ""
 echo "[3/3] Restarting apps..."
 ssh $VPS 'bash -s' << 'EOF'
 set -euo pipefail
 cd /srv/farm-ops
-pm2 restart ecosystem.config.js
+
+# Re-register glomalin-portal from ecosystem config if it was started ad-hoc
+INTERP=$(pm2 show glomalin-portal 2>/dev/null | grep "exec interpreter" | awk '{print $NF}' || echo "")
+if [ "$INTERP" = "/usr/bin/npm" ] || [ "$INTERP" = "/usr/bin/node" ]; then
+  echo "  Re-registering glomalin-portal from ecosystem.config.js (was started ad-hoc)..."
+  pm2 delete glomalin-portal 2>/dev/null || true
+  pm2 start ecosystem.config.js --only glomalin-portal
+else
+  pm2 restart ecosystem.config.js
+fi
+
 pm2 save
 echo ""
 pm2 status
