@@ -3,6 +3,8 @@ import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import {
   FieldOpsAdapter,
+  createFieldViewAdapter,
+  isFieldViewConfigured,
   normalizeGeoJsonCollection,
   type NormalizedCoverageEvent,
   type GeoJSONFeatureCollection,
@@ -38,9 +40,9 @@ export async function POST(request: Request) {
   const yearParam = body['crop_year'] as number | string | undefined
   const cropYear  = yearParam ? Number(yearParam) : CURRENT_CROP_YEAR
 
-  if (!source || !['fieldops', 'geojson'].includes(source)) {
+  if (!source || !['fieldops', 'geojson', 'fieldview'].includes(source)) {
     return NextResponse.json(
-      { error: 'source must be "fieldops" or "geojson"' },
+      { error: 'source must be "fieldops", "geojson", or "fieldview"' },
       { status: 400 }
     )
   }
@@ -71,6 +73,37 @@ export async function POST(request: Request) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       return NextResponse.json({ error: `FieldOps fetch failed: ${msg}` }, { status: 502 })
+    }
+  } else if (source === 'fieldview') {
+    const { data: tokenRow } = await supabase
+      .from('fieldview_tokens')
+      .select('access_token, refresh_token, expires_at')
+      .eq('user_id', guard.user.id)
+      .maybeSingle()
+
+    if (!tokenRow) {
+      return NextResponse.json(
+        { error: 'FieldView not connected', detail: 'Connect your FieldView account from the Acreage tab.' },
+        { status: 422 }
+      )
+    }
+
+    const adapter = createFieldViewAdapter(tokenRow)
+    if (!adapter.isConfigured()) {
+      return NextResponse.json(
+        {
+          error:  'FieldView credentials not configured on server',
+          detail: 'Set FIELDVIEW_CLIENT_ID, FIELDVIEW_CLIENT_SECRET, and FIELDVIEW_API_KEY in your environment.',
+        },
+        { status: 422 }
+      )
+    }
+
+    try {
+      events = await adapter.fetchEvents(cropYear)
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      return NextResponse.json({ error: `FieldView fetch failed: ${msg}` }, { status: 502 })
     }
   } else {
     // geojson upload
@@ -172,18 +205,20 @@ export async function GET(request: Request) {
   const yearParam = searchParams.get('year')
   const cropYear  = yearParam ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
 
-  const { data, error } = await supabase
-    .from('coverage_events_summary')
-    .select('*')
-    .eq('crop_year', cropYear)
+  const [summaryResult, fvTokenResult] = await Promise.all([
+    supabase.from('coverage_events_summary').select('*').eq('crop_year', cropYear),
+    supabase.from('fieldview_tokens').select('user_id').eq('user_id', guard.user.id).maybeSingle(),
+  ])
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (summaryResult.error) {
+    return NextResponse.json({ error: summaryResult.error.message }, { status: 500 })
   }
 
   return NextResponse.json({
-    crop_year: cropYear,
-    summary:   data ?? [],
-    fieldops_configured: FieldOpsAdapter.isConfigured(),
+    crop_year:            cropYear,
+    summary:              summaryResult.data ?? [],
+    fieldops_configured:  FieldOpsAdapter.isConfigured(),
+    fieldview_connected:  !!fvTokenResult.data,
+    fieldview_configured: isFieldViewConfigured(),
   })
 }

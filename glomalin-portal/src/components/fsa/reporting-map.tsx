@@ -66,9 +66,21 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
   const [bulkReporting, setBulkReporting] = useState<string | null>(null)
   const [showCluLayer, setShowCluLayer] = useState(true)
   const [showFarmBounds, setShowFarmBounds] = useState(true)
+  const [isLightTheme, setIsLightTheme] = useState(false)
   const [anomalies, setAnomalies] = useState<CluAnomalyResult[]>([])
   const anomaliesRef = useRef<CluAnomalyResult[]>([])
   const [splitSectionOpen, setSplitSectionOpen] = useState(true)
+
+  // Sync with app-level dark/light theme — watches the 'light' class on <html>
+  useEffect(() => {
+    const update = () => setIsLightTheme(document.documentElement.classList.contains('light'))
+    update()
+    const observer = new MutationObserver(update)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
+  const nightMode = !isLightTheme
 
   // Rebuild the GeoJSON source data from current featuresRef
   const refreshMapSource = useCallback(() => {
@@ -368,10 +380,9 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
             id: 'clu-anomaly-stroke',
             type: 'line',
             source: 'clus',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             filter: (anomalyIds.length > 0
               ? ['in', ['get', 'id'], ['literal', anomalyIds]]
-              : ['==', ['get', 'id'], '']) as any,
+              : ['==', ['get', 'id'], '']) as never,
             paint: {
               'line-color': '#ef4444',
               'line-dasharray': [4, 3],
@@ -482,6 +493,13 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
             mapInstance?.setFilter('clu-selected', ['==', ['get', 'id'], props.id])
             setSelectedClu(props)
           })
+
+          // Sync overlay opacity to whatever theme is active at load time
+          if (!document.documentElement.classList.contains('light')) {
+            mapInstance.setPaintProperty('clu-fill',   'fill-opacity', 0.50)
+            mapInstance.setPaintProperty('clu-stroke', 'line-color',   'rgba(255,255,255,0.80)')
+            mapInstance.setPaintProperty('clu-stroke', 'line-width',   2.5)
+          }
         })
 
         mapInstance.on('error', (e) => {
@@ -535,6 +553,17 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis)
     }
   }, [showFarmBounds])
+
+  // Night mode: boost CLU overlay opacity so fills stay legible on the darkened satellite
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.getLayer('clu-fill')) return
+    map.setPaintProperty('clu-fill', 'fill-opacity', nightMode ? 0.50 : 0.30)
+    map.setPaintProperty('clu-stroke', 'line-color',
+      nightMode ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.60)'
+    )
+    map.setPaintProperty('clu-stroke', 'line-width', nightMode ? 2.5 : 2)
+  }, [nightMode])
 
   const totalCLUs = farms.reduce((s, f) => s + f.total, 0)
   const totalGreen = farms.reduce((s, f) => s + f.green, 0)
@@ -723,7 +752,11 @@ export function ReportingMap({ farmFilter }: { farmFilter?: string }) {
 
       {/* Map container */}
       <div className="relative flex-1">
-        <div ref={mapContainerRef} className="w-full h-full" />
+        <div
+          ref={mapContainerRef}
+          className="w-full h-full transition-[filter] duration-700"
+          style={nightMode ? { filter: 'brightness(0.48) saturate(0.60) contrast(1.20)' } : undefined}
+        />
 
         {/* Loading overlay */}
         {loading && (

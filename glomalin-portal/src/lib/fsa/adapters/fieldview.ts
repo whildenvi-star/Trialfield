@@ -215,6 +215,118 @@ export function normalizeGeoJsonCollection(
   })
 }
 
+// ── Climate FieldView adapter ─────────────────────────────────────────────────
+// FieldView uses user-authorization OAuth2 (authorization code flow), not
+// client_credentials. Tokens are per-user and stored in the fieldview_tokens
+// Supabase table. The route handler loads them and passes them to this factory.
+//
+// API base: https://platform.climate.com
+// Token endpoint: https://api.climate.com/api/oauth/token
+// Auth endpoint:  https://api.climate.com/api/oauth/authorize
+
+export const ADAPTER_FIELDVIEW = 'climate-fieldview'
+
+export interface FieldViewTokens {
+  access_token:  string
+  refresh_token: string
+  expires_at:    string   // ISO timestamptz from Supabase
+}
+
+export function isFieldViewConfigured(): boolean {
+  return !!(
+    process.env.FIELDVIEW_CLIENT_ID &&
+    process.env.FIELDVIEW_CLIENT_SECRET &&
+    process.env.FIELDVIEW_API_KEY
+  )
+}
+
+export function createFieldViewAdapter(tokens: FieldViewTokens): CoverageAdapter {
+  const FIELDVIEW_BASE = 'https://platform.climate.com'
+
+  async function fvGet<T>(path: string): Promise<T> {
+    const res = await fetch(`${FIELDVIEW_BASE}${path}`, {
+      signal: AbortSignal.timeout(15000),
+      headers: {
+        'Authorization': `Bearer ${tokens.access_token}`,
+        'X-Api-Key':     process.env.FIELDVIEW_API_KEY ?? '',
+        'Accept':        'application/json',
+      },
+    })
+    if (!res.ok) throw new Error(`FieldView API ${res.status} on ${path}`)
+    return res.json() as Promise<T>
+  }
+
+  return {
+    id:           ADAPTER_FIELDVIEW,
+    name:         'Climate FieldView',
+    isConfigured: isFieldViewConfigured,
+
+    async fetchEvents(cropYear: number): Promise<NormalizedCoverageEvent[]> {
+      const events: NormalizedCoverageEvent[] = []
+
+      const [applied, planted, harvested] = await Promise.allSettled([
+        fvGet<Record<string, unknown>[]>(`/v4/asApplied?cropYear=${cropYear}`),
+        fvGet<Record<string, unknown>[]>(`/v4/asPlanted?cropYear=${cropYear}`),
+        fvGet<Record<string, unknown>[]>(`/v4/asHarvested?cropYear=${cropYear}`),
+      ])
+
+      if (applied.status === 'fulfilled') {
+        for (const r of applied.value ?? []) {
+          const geom = r['geometry'] as Record<string, unknown> | null | undefined
+          events.push({
+            crop_year:      cropYear,
+            source_adapter: ADAPTER_FIELDVIEW,
+            operation_type: 'application',
+            op_date:        parseStr(r['date'] ?? r['startTime']) ?? null,
+            geojson:        geom ? JSON.stringify(geom) : null,
+            applied_acres:  parseNum(r['area'] ?? r['appliedAcres']),
+            product:        parseStr(r['product'] ?? r['productName']),
+            rate:           parseNum(r['rate']),
+            rate_unit:      parseStr(r['rateUnit']),
+            raw_payload:    r,
+          })
+        }
+      }
+
+      if (planted.status === 'fulfilled') {
+        for (const r of planted.value ?? []) {
+          const geom = r['geometry'] as Record<string, unknown> | null | undefined
+          events.push({
+            crop_year:      cropYear,
+            source_adapter: ADAPTER_FIELDVIEW,
+            operation_type: 'planting',
+            op_date:        parseStr(r['date'] ?? r['startTime']) ?? null,
+            geojson:        geom ? JSON.stringify(geom) : null,
+            applied_acres:  parseNum(r['area'] ?? r['plantedAcres']),
+            product:        parseStr(r['crop'] ?? r['variety']),
+            rate:           parseNum(r['seedingRate']),
+            rate_unit:      parseStr(r['seedingRateUnit']),
+            raw_payload:    r,
+          })
+        }
+      }
+
+      if (harvested.status === 'fulfilled') {
+        for (const r of harvested.value ?? []) {
+          const geom = r['geometry'] as Record<string, unknown> | null | undefined
+          events.push({
+            crop_year:      cropYear,
+            source_adapter: ADAPTER_FIELDVIEW,
+            operation_type: 'harvest',
+            op_date:        parseStr(r['date'] ?? r['harvestDate']) ?? null,
+            geojson:        geom ? JSON.stringify(geom) : null,
+            applied_acres:  parseNum(r['area'] ?? r['harvestedAcres']),
+            product:        parseStr(r['crop']),
+            raw_payload:    r,
+          })
+        }
+      }
+
+      return events
+    },
+  }
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function parseNum(v: unknown): number | null {

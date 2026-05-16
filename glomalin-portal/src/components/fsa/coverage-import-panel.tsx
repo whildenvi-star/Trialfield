@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 interface CoverageSummaryRow {
@@ -26,9 +26,11 @@ interface CoverageImportPanelProps {
 }
 
 const ADAPTER_LABELS: Record<string, string> = {
-  'cnhind-fieldops': 'CNH FieldOps',
-  'geojson-upload':  'GeoJSON Upload',
-  'manual':          'Manual',
+  'cnhind-fieldops':   'CNH FieldOps',
+  'climate-fieldview': 'FieldView (API)',
+  'geojson-upload':    'GeoJSON Upload',
+  'fieldview-dat':     'FieldView DAT',
+  'manual':            'Manual',
 }
 
 const OP_LABELS: Record<string, string> = {
@@ -38,17 +40,29 @@ const OP_LABELS: Record<string, string> = {
   tillage:     'Tillage',
 }
 
-export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageImportPanelProps) {
-  const [summary, setSummary]             = useState<CoverageSummaryRow[]>([])
-  const [fieldopsConfigured, setFieldopsConfigured] = useState(false)
-  const [loading, setLoading]             = useState(true)
-  const [syncing, setSyncing]             = useState(false)
-  const [uploading, setUploading]         = useState(false)
-  const [result, setResult]               = useState<ImportResult | null>(null)
-  const [error, setError]                 = useState<string | null>(null)
-  const fileInputRef                      = useRef<HTMLInputElement>(null)
+interface FieldViewStatus {
+  fieldview_configured: boolean
+  connected:            boolean
+  expires_at:           string | null
+  connected_at:         string | null
+}
 
-  function fetchSummary() {
+export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageImportPanelProps) {
+  const [summary, setSummary]                   = useState<CoverageSummaryRow[]>([])
+  const [fieldopsConfigured, setFieldopsConfigured] = useState(false)
+  const [fvStatus, setFvStatus]                 = useState<FieldViewStatus | null>(null)
+  const [loading, setLoading]                   = useState(true)
+  const [syncing, setSyncing]                   = useState(false)
+  const [fvSyncing, setFvSyncing]               = useState(false)
+  const [fvDisconnecting, setFvDisconnecting]   = useState(false)
+  const [uploading, setUploading]               = useState(false)
+  const [datUploading, setDatUploading]         = useState(false)
+  const [result, setResult]                     = useState<ImportResult | null>(null)
+  const [error, setError]                       = useState<string | null>(null)
+  const fileInputRef                            = useRef<HTMLInputElement>(null)
+  const datFileInputRef                         = useRef<HTMLInputElement>(null)
+
+  const fetchSummary = useCallback(() => {
     setLoading(true)
     fetch(`/api/fsa/coverage-import?year=${cropYear}`)
       .then((r) => r.json())
@@ -58,9 +72,50 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
       })
       .catch(() => setError('Failed to load coverage summary'))
       .finally(() => setLoading(false))
+  }, [cropYear])
+
+  function fetchFvStatus() {
+    fetch('/api/fsa/fieldview/status')
+      .then((r) => r.json())
+      .then((d) => setFvStatus(d as FieldViewStatus))
+      .catch(() => {/* non-blocking */})
   }
 
-  useEffect(() => { fetchSummary() }, [cropYear]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchSummary(); fetchFvStatus() }, [fetchSummary])
+
+  async function handleFieldViewSync() {
+    setFvSyncing(true)
+    setResult(null)
+    setError(null)
+    try {
+      const res  = await fetch('/api/fsa/coverage-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source: 'fieldview', crop_year: cropYear }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? 'FieldView sync failed')
+      } else {
+        setResult(data)
+        fetchSummary()
+      }
+    } catch {
+      setError('Network error during FieldView sync')
+    } finally {
+      setFvSyncing(false)
+    }
+  }
+
+  async function handleFieldViewDisconnect() {
+    setFvDisconnecting(true)
+    try {
+      await fetch('/api/fsa/fieldview/connect', { method: 'DELETE' })
+      fetchFvStatus()
+    } catch {/* ignore */} finally {
+      setFvDisconnecting(false)
+    }
+  }
 
   async function handleFieldOpsSync() {
     setSyncing(true)
@@ -85,6 +140,36 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
       setSyncing(false)
     }
   }
+
+  const handleDatUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setDatUploading(true)
+    setResult(null)
+    setError(null)
+
+    try {
+      const body = new FormData()
+      body.append('file', file)
+      body.append('crop_year', String(cropYear))
+
+      const res  = await fetch('/api/fsa/fieldview/dat-import', { method: 'POST', body })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error ?? 'DAT import failed')
+      } else {
+        setResult({ imported: data.imported, zone_matched: 0, unmatched: data.unmatched, warnings: data.warnings ?? [], errors: data.errors ?? [] })
+        fetchSummary()
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload ZIP')
+    } finally {
+      setDatUploading(false)
+      if (datFileInputRef.current) datFileInputRef.current.value = ''
+    }
+  }, [cropYear, fetchSummary])
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -146,9 +231,25 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
             {syncing ? 'Syncing...' : 'Sync FieldOps'}
           </button>
 
+          {/* FieldView DAT export ZIP */}
+          <label
+            className={`px-3 py-1.5 rounded border border-glomalin-accent text-glomalin-accent text-xs font-mono cursor-pointer hover:bg-glomalin-accent/10 transition-colors ${datUploading ? 'opacity-50 pointer-events-none' : ''}`}
+            title="Upload a FieldView manual export ZIP containing .dat files"
+          >
+            {datUploading ? 'Importing...' : 'Upload FieldView ZIP'}
+            <input
+              ref={datFileInputRef}
+              type="file"
+              accept=".zip"
+              className="sr-only"
+              onChange={handleDatUpload}
+              disabled={datUploading}
+            />
+          </label>
+
           {/* GeoJSON file upload */}
           <label
-            className={`px-3 py-1.5 rounded border border-glomalin-accent text-glomalin-accent text-xs font-mono cursor-pointer hover:bg-glomalin-accent/10 transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+            className={`px-3 py-1.5 rounded border border-glomalin-border text-glomalin-muted text-xs font-mono cursor-pointer hover:text-glomalin-text transition-colors ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
           >
             {uploading ? 'Uploading...' : 'Upload GeoJSON'}
             <input
@@ -162,6 +263,69 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
           </label>
         </div>
       </div>
+
+      {/* Climate FieldView section */}
+      {fvStatus && (
+        <div className="rounded border border-glomalin-border bg-glomalin-surface px-3 py-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-glomalin-muted">
+              Climate FieldView
+            </span>
+            {fvStatus.fieldview_configured && fvStatus.connected && (
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs font-mono text-glomalin-green">
+                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-glomalin-green" />
+                  Connected
+                </span>
+                <button
+                  onClick={handleFieldViewSync}
+                  disabled={fvSyncing}
+                  className="px-3 py-1 rounded border border-glomalin-accent text-glomalin-accent text-xs font-mono hover:bg-glomalin-accent/10 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {fvSyncing ? 'Syncing...' : `Sync ${cropYear}`}
+                </button>
+                <button
+                  onClick={handleFieldViewDisconnect}
+                  disabled={fvDisconnecting}
+                  className="text-xs font-mono text-glomalin-muted hover:text-red-400 disabled:opacity-40 transition-colors"
+                >
+                  {fvDisconnecting ? 'Disconnecting...' : 'Disconnect'}
+                </button>
+              </div>
+            )}
+            {fvStatus.fieldview_configured && !fvStatus.connected && (
+              <a
+                href="/api/fsa/fieldview/connect"
+                className="px-3 py-1 rounded border border-glomalin-accent text-glomalin-accent text-xs font-mono hover:bg-glomalin-accent/10 transition-colors"
+              >
+                Connect FieldView
+              </a>
+            )}
+          </div>
+          {!fvStatus.fieldview_configured && (
+            <p className="text-xs font-mono text-glomalin-muted">
+              FieldView API credentials not set.{' '}
+              Register at <span className="text-glomalin-accent">dev.fieldview.com</span> and set{' '}
+              <code className="text-glomalin-accent">FIELDVIEW_CLIENT_ID</code>,{' '}
+              <code className="text-glomalin-accent">FIELDVIEW_CLIENT_SECRET</code>, and{' '}
+              <code className="text-glomalin-accent">FIELDVIEW_API_KEY</code>.
+            </p>
+          )}
+          {fvStatus.fieldview_configured && fvStatus.connected && fvStatus.connected_at && (
+            <p className="text-[10px] font-mono text-glomalin-muted">
+              Connected {new Date(fvStatus.connected_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              {fvStatus.expires_at && (
+                <> · token expires {new Date(fvStatus.expires_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</>
+              )}
+            </p>
+          )}
+          {fvStatus.fieldview_configured && !fvStatus.connected && (
+            <p className="text-xs font-mono text-glomalin-muted">
+              Connect your FieldView account to pull as-applied, planting, and harvest records automatically.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (
@@ -259,7 +423,7 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
       {!loading && summary.length === 0 && (
         <p className="text-xs font-mono text-glomalin-muted">
           No coverage events imported for {cropYear} yet.
-          Sync from CNH FieldOps or upload a GeoJSON export from FieldView, JD Operations Center, Trimble, or Ag Leader.
+          Connect FieldView or CNH FieldOps above, or upload a GeoJSON export from any precision ag platform.
         </p>
       )}
     </div>
