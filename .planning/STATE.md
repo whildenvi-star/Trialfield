@@ -243,7 +243,11 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 
 ### Pending Todos
 
-None active.
+4 pending todos:
+- Fix field registry acres and ownership save bug (farm-registry)
+- Add field editor category totals and red negative profit (farm-budget)
+- Complete phases 55-57 actionable dashboard APH grain marketing (planning)
+- Add CLU sub-field splitting tool and map legend to FSA map view (ui) — 2026-05-16
 
 ### Blockers/Concerns
 
