@@ -32,6 +32,12 @@ CREATE TABLE IF NOT EXISTS clu_records (
   updated_at               timestamptz NOT NULL DEFAULT now()
 );
 
+-- Backfill columns that earlier migrations may not have applied
+ALTER TABLE clu_records ADD COLUMN IF NOT EXISTS registry_field_id text;
+ALTER TABLE clu_records ADD COLUMN IF NOT EXISTS registry_crop_id  text;
+ALTER TABLE clu_records ADD COLUMN IF NOT EXISTS zone_id uuid REFERENCES management_zones (id) ON DELETE SET NULL;
+ALTER TABLE clu_records ADD COLUMN IF NOT EXISTS prevented_planting_acres numeric(10, 2);
+
 -- Natural unique key: one record per CLU per crop year
 CREATE UNIQUE INDEX IF NOT EXISTS idx_clu_records_unique
   ON clu_records (farm_number, tract_number, clu, crop_year);
