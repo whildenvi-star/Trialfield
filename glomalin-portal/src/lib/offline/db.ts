@@ -2,7 +2,7 @@ import { openDB, IDBPDatabase } from 'idb'
 import type { QueuedOperation, CachedCropPlan, OfflineDB } from './types'
 
 const DB_NAME = 'glomalin-offline'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 // Singleton db promise — reuse connection across calls
 let dbPromise: Promise<IDBPDatabase<OfflineDB>> | null = null
@@ -40,6 +40,15 @@ export function getDb(): Promise<IDBPDatabase<OfflineDB>> {
         if (oldVersion < 3) {
           db.createObjectStore('sync-config', { keyPath: 'key' })
         }
+
+        // Version 4: conflicts store for conflict resolution UI
+        if (oldVersion < 4) {
+          const conflictStore = db.createObjectStore('conflicts', { keyPath: 'id' })
+          conflictStore.createIndex('by-resolved', 'resolved')
+        }
+      },
+      blocked() {
+        window.location.reload()
       },
     })
   }

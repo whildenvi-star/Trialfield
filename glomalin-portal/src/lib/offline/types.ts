@@ -53,6 +53,18 @@ export interface PendingObservation {
   createdAt: number;         // Date.now()
 }
 
+// Conflict record — captured when processQueue encounters a true data conflict
+export interface ConflictRecord {
+  id: string              // crypto.randomUUID()
+  type: 'confirm-pass' | 'add-pass' | 'observation'
+  fieldId: string
+  operationDate: string
+  localPayload: Record<string, unknown>
+  serverPayload: Record<string, unknown>
+  createdAt: string       // ISO timestamp
+  resolved: 0 | 1        // 0 = unresolved, 1 = resolved (number not boolean — IDB index reliability)
+}
+
 // DB schema type for idb
 export interface OfflineDB {
   'operation-queue': {
@@ -72,5 +84,10 @@ export interface OfflineDB {
   'sync-config': {
     key: string;
     value: { key: string; value: string };
+  };
+  'conflicts': {
+    key: string;
+    value: ConflictRecord;
+    indexes: { 'by-resolved': 0 | 1 };
   };
 }
