@@ -10,7 +10,7 @@
  */
 
 import { offlineQueue, getDb } from './db'
-import type { QueuedOperation } from './types'
+import type { QueuedOperation, ConflictRecord } from './types'
 
 // ─── Result types ────────────────────────────────────────────────────────────
 
@@ -33,6 +33,7 @@ export interface SyncResult {
   synced: number
   skipped: SyncSkip[]
   failed: SyncFailure[]
+  conflicts: ConflictRecord[]
   total: number
 }
 
@@ -242,7 +243,7 @@ export async function replayOperation(
 export async function processQueue(
   getToken: () => Promise<string | null>
 ): Promise<SyncResult> {
-  const result: SyncResult = { synced: 0, skipped: [], failed: [], total: 0 }
+  const result: SyncResult = { synced: 0, skipped: [], failed: [], conflicts: [], total: 0 }
 
   const pending = await offlineQueue.getPending()
   // Sort FIFO by creation time
