@@ -41,6 +41,8 @@ export interface ReplayResult {
   status: 'synced' | 'conflict' | 'error'
   errorMessage?: string
   httpStatus?: number
+  /** Present when status === 'conflict' and the 409 body contains a competing server write. */
+  serverPayload?: Record<string, unknown>
 }
 
 // ─── Background Sync registration ────────────────────────────────────────────
@@ -191,10 +193,23 @@ export async function replayOperation(
     }
 
     if (res.status === 409) {
+      // Try to parse the body to distinguish a true data conflict from an "already confirmed" skip.
+      // A true data conflict has a serverPayload or serverVersion key in the body.
+      let body: Record<string, unknown> | null = null
+      try {
+        body = (await res.json()) as Record<string, unknown>
+      } catch {
+        body = null
+      }
+      if (body && (body.serverPayload || body.serverVersion)) {
+        const serverPayload = (body.serverPayload ?? body.serverVersion ?? body) as Record<string, unknown>
+        return { status: 'conflict', httpStatus: 409, serverPayload }
+      }
+      // No serverPayload in body — treat as "already confirmed" skip (existing behavior)
       return { status: 'conflict', httpStatus: 409 }
     }
 
-    // Check response body for "already confirmed" indicator
+    // Check response body for "already confirmed" indicator (non-409 responses)
     let bodyText = ''
     try {
       bodyText = await res.text()
@@ -286,14 +301,52 @@ export async function processQueue(
     }
 
     if (replay.status === 'conflict') {
-      // Already confirmed server-side — skip silently
-      await offlineQueue.delete(op.id)
-      result.skipped.push({
-        operationId: op.id,
-        fieldId: op.fieldId,
-        type: op.type,
-        reason: 'Already confirmed — skipped',
-      })
+      if (replay.serverPayload) {
+        // True data conflict: 409 with a competing server write payload.
+        // Persist a ConflictRecord to IDB so the conflict drawer can surface it.
+        const conflict: ConflictRecord = {
+          id: crypto.randomUUID(),
+          type: op.type as ConflictRecord['type'],
+          fieldId: op.fieldId ?? '',
+          operationDate: op.operationDate ?? new Date().toISOString(),
+          localPayload: {
+            fieldId: op.fieldId,
+            passId: op.passId,
+            passType: op.passType,
+            operationType: op.operationType,
+            operationDate: op.operationDate,
+            operatorId: op.operatorId,
+            description: op.description,
+          } as Record<string, unknown>,
+          serverPayload: replay.serverPayload,
+          createdAt: new Date().toISOString(),
+          resolved: 0,
+        }
+        try {
+          const db = await getDb()
+          await db.put('conflicts', conflict)
+          result.conflicts.push(conflict)
+        } catch {
+          // Non-fatal: conflict persisted in memory even if IDB write fails
+        }
+        // Remove from queue so it doesn't retry (it's now tracked as a conflict)
+        await offlineQueue.delete(op.id)
+        result.skipped.push({
+          operationId: op.id,
+          fieldId: op.fieldId,
+          type: op.type,
+          reason: 'conflict',
+        })
+      } else {
+        // Already confirmed server-side — skip silently (existing behavior unchanged)
+        await offlineQueue.delete(op.id)
+        result.skipped.push({
+          operationId: op.id,
+          fieldId: op.fieldId,
+          type: op.type,
+          reason: 'Already confirmed — skipped',
+        })
+      }
       continue
     }
 
@@ -337,8 +390,35 @@ export async function processQueue(
           operationId: op.id,
           fieldId: op.fieldId,
           type: op.type,
-          reason: 'Already confirmed — skipped',
+          reason: retry.serverPayload ? 'conflict' : 'Already confirmed — skipped',
         })
+        if (retry.serverPayload) {
+          const conflict: ConflictRecord = {
+            id: crypto.randomUUID(),
+            type: op.type as ConflictRecord['type'],
+            fieldId: op.fieldId ?? '',
+            operationDate: op.operationDate ?? new Date().toISOString(),
+            localPayload: {
+              fieldId: op.fieldId,
+              passId: op.passId,
+              passType: op.passType,
+              operationType: op.operationType,
+              operationDate: op.operationDate,
+              operatorId: op.operatorId,
+              description: op.description,
+            } as Record<string, unknown>,
+            serverPayload: retry.serverPayload,
+            createdAt: new Date().toISOString(),
+            resolved: 0,
+          }
+          try {
+            const db = await getDb()
+            await db.put('conflicts', conflict)
+            result.conflicts.push(conflict)
+          } catch {
+            // Non-fatal
+          }
+        }
       } else {
         await offlineQueue.update(op.id, {
           status: 'failed',
