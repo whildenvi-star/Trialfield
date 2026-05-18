@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 01-mobile-shell — COMPLETE (3/3 plans done)
-Plan: 01-03 complete — all native module pages audited and fixed; human verification approved on portal.whughesfarms.com
-Status: Phase 1 complete — ready for Phase 2 (Offline Sync)
-Last activity: 2026-05-18 — 01-03 complete; human verification approved; phase 01 done
+Phase: 02-offline-sync — IN PROGRESS (1/4 plans done)
+Plan: 02-01 complete — IDB schema v4 with conflicts store; useSyncStatus hook created
+Status: Phase 2 in progress — plan 02-01 done
+Last activity: 2026-05-18 — 02-01 complete; IDB v4 + useSyncStatus hook committed
 
-Progress: [>>>>      ] 33% (phase 1: 3/3 plans done — complete)
+Progress: [>>>>>     ] 38% (phase 1: 3/3 complete; phase 2: 1/4 in progress)
 
 ## Performance Metrics
 
@@ -77,6 +77,12 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - filter_weeds_for_actuation returns (actionable, suppressed) tuple so caller can log suppressed weeds
 - frame_quality_ok checks darkness before blur: dark frames skip the more expensive Laplacian computation
 
+**02-01 decisions:**
+- pendingCount sums offlineQueue + observationQueue — banner reflects full outstanding work across both queue types
+- observationQueue imported from @/lib/offline/observation-queue (not db.ts — it is not re-exported from there)
+- SyncResult extended with conflicts: ConflictRecord[] in sync-engine.ts — required for hook to reference result.conflicts
+- CustomEvent dispatch pattern (sync:completed, sync:conflicts) keeps useSyncStatus decoupled from drawer/banner components
+
 **05-03 decisions:**
 - Corn-specific INI sections (CornDetector, StemAvoidance, FrameLogging) validated only when algorithm=corn via CORN_REQUIRED_CONFIG merged into working_config
 - corn_brightness_min local variable used in hoot() corn branch to avoid shadowing self.brightness_min (GreenOnBrown threshold)
@@ -104,5 +110,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-05-18
-Stopped at: Phase 01 complete — 01-03 SUMMARY.md created, human verification approved, STATE.md + ROADMAP.md updated
+Stopped at: 02-01 complete — IDB schema v4 with ConflictRecord + useSyncStatus hook; STATE.md + ROADMAP.md updated
 Resume file: None
