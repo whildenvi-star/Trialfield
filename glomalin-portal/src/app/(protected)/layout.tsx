@@ -7,6 +7,7 @@ import DeniedToast from '@/components/denied-toast'
 import { MobileHeader } from '@/components/layout/mobile-header'
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 import { SyncStatusProvider } from '@/components/pwa/sync-status-provider'
+import { ConflictDrawer } from '@/components/offline/conflict-drawer'
 
 export default async function ProtectedLayout({
   children,
@@ -58,6 +59,7 @@ export default async function ProtectedLayout({
       <div className="md:hidden">
         <MobileHeader pageTitle="Portal" />
         <SyncStatusProvider />
+        <ConflictDrawer />
       </div>
 
       {/* Content area: offset on desktop, bottom-padded on mobile */}
