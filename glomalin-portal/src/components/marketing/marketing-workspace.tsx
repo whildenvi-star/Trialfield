@@ -225,7 +225,7 @@ export function MarketingWorkspace({
   return (
     <div>
       {/* Header: price badge + year selector + actions */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-y-2 mb-5">
         <div className="flex items-center gap-3">
           {activeSubTab !== 'crop-types' && (
             <>

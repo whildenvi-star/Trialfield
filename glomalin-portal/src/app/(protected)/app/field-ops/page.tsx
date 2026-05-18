@@ -40,7 +40,7 @@ export default async function FieldOpsPage({
   }
 
   return (
-    <div className="flex h-screen bg-glomalin-bg text-glomalin-text overflow-hidden">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-56px)] md:h-screen bg-glomalin-bg text-glomalin-text overflow-hidden">
       <div className="sr-only">Field Ops TC Log</div>
 
       {fetchError ? (

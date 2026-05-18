@@ -155,7 +155,7 @@ export function ComplianceShell({
   return (
     <div>
       {/* ── Module header ──────────────────────────────────────────── */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-y-2 mb-6">
         <div>
           <h1 className="font-heading text-2xl font-bold tracking-wide text-glomalin-bright uppercase leading-tight">
             Compliance Hub
@@ -173,8 +173,8 @@ export function ComplianceShell({
       </div>
 
       {/* ── Tab navigation ─────────────────────────────────────────── */}
-      <div className="relative border-b border-glomalin-border">
-        <div className="flex gap-0">
+      <div className="relative border-b border-glomalin-border overflow-x-auto">
+        <div className="flex gap-0 min-w-max sm:min-w-0">
           {TABS.map((tab) => {
             const isActive = tab.id === activeTab
             return (
@@ -182,7 +182,7 @@ export function ComplianceShell({
                 key={tab.id}
                 onClick={() => navigateTab(tab.id)}
                 className={[
-                  'relative flex flex-col items-center px-5 pt-2.5 pb-3 transition-colors',
+                  'relative flex flex-col items-center px-3 sm:px-5 pt-2.5 pb-3 min-h-[44px] justify-center transition-colors',
                   isActive
                     ? 'text-glomalin-accent'
                     : 'text-glomalin-muted hover:text-glomalin-text',
@@ -204,7 +204,7 @@ export function ComplianceShell({
       </div>
 
       {/* ── Filter bar ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 py-2.5 border-b border-glomalin-border/50">
+      <div className="flex flex-wrap items-center gap-3 py-2.5 border-b border-glomalin-border/50">
         <span className="text-[9px] font-mono uppercase tracking-[0.2em] text-glomalin-muted/50">
           Filter
         </span>

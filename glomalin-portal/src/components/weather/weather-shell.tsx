@@ -83,9 +83,9 @@ export default function WeatherShell({ initialSummary }: WeatherShellProps) {
   ]
 
   return (
-    <div className="flex h-[calc(100vh-56px)] min-h-[500px] overflow-hidden">
+    <div className="flex flex-col md:flex-row h-auto md:h-[calc(100vh-56px)] min-h-[500px] overflow-hidden">
       {/* Left: field list */}
-      <div className="w-64 shrink-0 border-r border-glomalin-border overflow-hidden flex flex-col">
+      <div className="w-full md:w-64 shrink-0 border-b md:border-b-0 md:border-r border-glomalin-border overflow-hidden flex flex-col max-h-48 md:max-h-none">
         <FieldList
           fields={summary}
           selectedId={selectedId}
@@ -105,7 +105,7 @@ export default function WeatherShell({ initialSummary }: WeatherShellProps) {
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
                 className={[
-                  'relative px-4 py-3 font-mono text-xs transition-colors duration-100',
+                  'relative px-4 py-3 min-h-[44px] font-mono text-xs transition-colors duration-100',
                   activeTab === tab.id
                     ? 'text-glomalin-accent'
                     : 'text-glomalin-muted hover:text-glomalin-text',

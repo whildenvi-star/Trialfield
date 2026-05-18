@@ -304,9 +304,9 @@ export function FieldOpsClient({ fields, initialFieldId }: FieldOpsClientProps) 
   const selectedField = fields.find((f) => f.id === selectedFieldId) ?? null
 
   return (
-    <div className="flex w-full h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row w-full h-full overflow-hidden">
       {/* Left sidebar — field list */}
-      <aside className="w-72 flex-shrink-0 border-r border-glomalin-border bg-glomalin-surface flex flex-col overflow-hidden">
+      <aside className="w-full md:w-72 flex-shrink-0 border-b md:border-b-0 md:border-r border-glomalin-border bg-glomalin-surface flex flex-col overflow-hidden max-h-48 md:max-h-none">
         <div className="px-4 py-3 border-b border-glomalin-border">
           <h1 className="text-sm font-mono font-semibold text-glomalin-text">Field Ops TC Log</h1>
           <p className="text-xs font-mono text-glomalin-muted mt-0.5">TC Sign-off Log</p>
@@ -403,7 +403,7 @@ export function FieldOpsClient({ fields, initialFieldId }: FieldOpsClientProps) 
             {addFormOpen && (
               <div className="px-6 py-4 bg-glomalin-surface border-b border-glomalin-border flex-shrink-0">
                 <p className="text-xs font-mono font-semibold text-glomalin-text mb-3">New TC Record</p>
-                <div className="grid grid-cols-2 gap-3 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   {/* Operation Type */}
                   <div>
                     <label className="block text-xs font-mono text-glomalin-muted mb-1">
@@ -519,65 +519,119 @@ export function FieldOpsClient({ fields, initialFieldId }: FieldOpsClientProps) 
                 </p>
               )}
               {!loadingTcs && !tcsError && tcs.length > 0 && (
-                <table className="w-full text-xs font-mono">
-                  <thead>
-                    <tr className="border-b border-glomalin-border">
-                      <th className="text-left py-2 px-3 text-glomalin-muted font-normal">Date</th>
-                      <th className="text-left py-2 px-3 text-glomalin-muted font-normal">Operation</th>
-                      <th className="text-left py-2 px-3 text-glomalin-muted font-normal">TC&apos;d By</th>
-                      <th className="text-left py-2 px-3 text-glomalin-muted font-normal">Notes</th>
-                      <th className="py-2 px-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                <>
+                  {/* Mobile card view */}
+                  <div className="md:hidden space-y-2">
                     {tcs.map((tc) => (
-                      <tr
+                      <div
                         key={tc.id}
-                        className="border-b border-glomalin-border hover:bg-glomalin-surface transition-colors"
+                        className="bg-glomalin-surface border border-glomalin-border rounded p-3"
                       >
-                        <td className="py-2 px-3 text-glomalin-text whitespace-nowrap">
-                          {formatDate(tc.operationDate)}
-                        </td>
-                        <td className="py-2 px-3 text-glomalin-text">{tc.operationType}</td>
-                        <td className="py-2 px-3 text-glomalin-text">
-                          {tc.tcByName ?? 'Unknown'}
-                        </td>
-                        <td className="py-2 px-3 text-glomalin-muted max-w-xs truncate">
-                          {tc.notes ?? ''}
-                        </td>
-                        <td className="py-2 px-3 text-right whitespace-nowrap">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-xs font-mono font-semibold text-glomalin-text">{tc.operationType}</p>
+                            <p className="text-xs font-mono text-glomalin-muted mt-0.5">{formatDate(tc.operationDate)}</p>
+                            {tc.tcByName && (
+                              <p className="text-xs font-mono text-glomalin-muted">TC&apos;d by {tc.tcByName}</p>
+                            )}
+                            {tc.notes && (
+                              <p className="text-xs font-mono text-glomalin-muted mt-1 line-clamp-2">{tc.notes}</p>
+                            )}
+                          </div>
                           {canDelete(tc) && deleteConfirmId !== tc.id && (
                             <button
                               onClick={() => handleDeleteClick(tc.id)}
                               disabled={deleting === tc.id}
-                              className="text-glomalin-muted hover:text-red-400 transition-colors disabled:opacity-40"
+                              className="text-glomalin-muted hover:text-red-400 transition-colors disabled:opacity-40 shrink-0 p-1 min-h-[44px] min-w-[44px] flex items-center justify-center"
                               title="Delete TC"
                             >
                               <TrashIcon />
                             </button>
                           )}
                           {canDelete(tc) && deleteConfirmId === tc.id && (
-                            <span className="flex items-center gap-2 justify-end">
-                              <span className="text-glomalin-muted">Delete this TC?</span>
-                              <button
-                                onClick={() => handleDeleteConfirm(tc)}
-                                className="text-red-400 hover:text-red-300 font-semibold"
-                              >
-                                Yes
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(null)}
-                                className="text-glomalin-muted hover:text-glomalin-text"
-                              >
-                                Cancel
-                              </button>
+                            <span className="flex flex-col items-end gap-1 shrink-0">
+                              <span className="text-xs font-mono text-glomalin-muted">Delete?</span>
+                              <span className="flex gap-2">
+                                <button
+                                  onClick={() => handleDeleteConfirm(tc)}
+                                  className="text-xs font-mono text-red-400 hover:text-red-300 font-semibold min-h-[44px] px-2"
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirmId(null)}
+                                  className="text-xs font-mono text-glomalin-muted hover:text-glomalin-text min-h-[44px] px-2"
+                                >
+                                  No
+                                </button>
+                              </span>
                             </span>
                           )}
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                  {/* Desktop table */}
+                  <table className="hidden md:table w-full text-xs font-mono">
+                    <thead>
+                      <tr className="border-b border-glomalin-border">
+                        <th className="text-left py-2 px-3 text-glomalin-muted font-normal">Date</th>
+                        <th className="text-left py-2 px-3 text-glomalin-muted font-normal">Operation</th>
+                        <th className="text-left py-2 px-3 text-glomalin-muted font-normal">TC&apos;d By</th>
+                        <th className="text-left py-2 px-3 text-glomalin-muted font-normal">Notes</th>
+                        <th className="py-2 px-3"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tcs.map((tc) => (
+                        <tr
+                          key={tc.id}
+                          className="border-b border-glomalin-border hover:bg-glomalin-surface transition-colors"
+                        >
+                          <td className="py-2 px-3 text-glomalin-text whitespace-nowrap">
+                            {formatDate(tc.operationDate)}
+                          </td>
+                          <td className="py-2 px-3 text-glomalin-text">{tc.operationType}</td>
+                          <td className="py-2 px-3 text-glomalin-text">
+                            {tc.tcByName ?? 'Unknown'}
+                          </td>
+                          <td className="py-2 px-3 text-glomalin-muted max-w-xs truncate">
+                            {tc.notes ?? ''}
+                          </td>
+                          <td className="py-2 px-3 text-right whitespace-nowrap">
+                            {canDelete(tc) && deleteConfirmId !== tc.id && (
+                              <button
+                                onClick={() => handleDeleteClick(tc.id)}
+                                disabled={deleting === tc.id}
+                                className="text-glomalin-muted hover:text-red-400 transition-colors disabled:opacity-40"
+                                title="Delete TC"
+                              >
+                                <TrashIcon />
+                              </button>
+                            )}
+                            {canDelete(tc) && deleteConfirmId === tc.id && (
+                              <span className="flex items-center gap-2 justify-end">
+                                <span className="text-glomalin-muted">Delete this TC?</span>
+                                <button
+                                  onClick={() => handleDeleteConfirm(tc)}
+                                  className="text-red-400 hover:text-red-300 font-semibold"
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => setDeleteConfirmId(null)}
+                                  className="text-glomalin-muted hover:text-glomalin-text"
+                                >
+                                  Cancel
+                                </button>
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
               )}
             </div>
           </>
