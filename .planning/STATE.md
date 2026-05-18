@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 02-offline-sync — IN PROGRESS (1/4 plans done)
-Plan: 02-01 complete — IDB schema v4 with conflicts store; useSyncStatus hook created
-Status: Phase 2 in progress — plan 02-01 done
-Last activity: 2026-05-18 — 02-01 complete; IDB v4 + useSyncStatus hook committed
+Phase: 02-offline-sync — IN PROGRESS (2/4 plans done)
+Plan: 02-02 complete — SyncStatusBanner, QueueDetailSheet, SyncStatusProvider; banner mounted in layout
+Status: Phase 2 in progress — plan 02-02 done
+Last activity: 2026-05-18 — 02-02 complete; sync status UI components committed; banner visible from all protected pages
 
-Progress: [>>>>>     ] 38% (phase 1: 3/3 complete; phase 2: 1/4 in progress)
+Progress: [>>>>>>    ] 43% (phase 1: 3/3 complete; phase 2: 2/4 in progress)
 
 ## Performance Metrics
 
@@ -83,6 +83,12 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - SyncResult extended with conflicts: ConflictRecord[] in sync-engine.ts — required for hook to reference result.conflicts
 - CustomEvent dispatch pattern (sync:completed, sync:conflicts) keeps useSyncStatus decoupled from drawer/banner components
 
+**02-02 decisions:**
+- QueueDetailSheet implemented as native fixed bottom sheet — @radix-ui/react-dialog not in project dependencies
+- SyncStatusProvider uses useRef(createClient()) for stable Supabase browser client across renders
+- getToken uses getUser() + getSession() pattern (validate session, then read token) — consistent with crop-plans page
+- Banner placed after MobileHeader inside md:hidden div — banner below header, above content on mobile
+
 **05-03 decisions:**
 - Corn-specific INI sections (CornDetector, StemAvoidance, FrameLogging) validated only when algorithm=corn via CORN_REQUIRED_CONFIG merged into working_config
 - corn_brightness_min local variable used in hoot() corn branch to avoid shadowing self.brightness_min (GreenOnBrown threshold)
@@ -110,5 +116,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-05-18
-Stopped at: 02-01 complete — IDB schema v4 with ConflictRecord + useSyncStatus hook; STATE.md + ROADMAP.md updated
+Stopped at: 02-02 complete — SyncStatusBanner, QueueDetailSheet, SyncStatusProvider + layout mount; STATE.md + ROADMAP.md updated
 Resume file: None

@@ -100,7 +100,7 @@ v1.0 phases paused. v2.0 phases shipped.
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Mobile Shell | v1.0 | 3/3 | Complete | 2026-05-18 |
-| 2. Offline Sync | 1/4 | In Progress|  | - |
+| 2. Offline Sync | 2/4 | In Progress|  | - |
 | 3. Mobile Dashboard | v1.0 | 0/0 | Paused | - |
 | 4. Field Data Entry | 2/2 | Complete | 2026-03-22 |
 | 5. Corn Detection (OWL) | 3/3 | Complete | 2026-03-23 |
@@ -120,7 +120,7 @@ v1.0 phases paused. v2.0 phases shipped.
   3. Weed detections inside configurable buffer zones around corn stems are suppressed before actuation
   4. Blurry or dark frames pause actuation and alert the operator instead of running blind
   5. Annotated detection frames are logged at configurable intervals with automatic rotation/purge
-**Plans:** 1/4 plans executed
+**Plans:** 2/4 plans executed
 
 Plans:
 - [x] 05-01-PLAN.md — Training pipeline: Roboflow download, YOLOv8n training, TensorRT export
