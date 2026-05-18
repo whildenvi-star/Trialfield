@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 01-mobile-shell — Plan 1/3 complete
-Plan: 01-01 complete (UX-01, UX-02 satisfied) — MobileHeader and MobileBottomNav components created
-Status: Phase 1 in progress — plan 1 of 3 executed
-Last activity: 2026-05-18 — 01-01 complete (mobile-header.tsx, mobile-bottom-nav.tsx)
+Phase: 01-mobile-shell — Plan 2/3 complete
+Plan: 01-02 complete (UX-01, UX-02 satisfied) — Layout integration, maps fix, iframe fallback, enterprise-summary card view
+Status: Phase 1 in progress — plan 2 of 3 executed
+Last activity: 2026-05-18 — 01-02 complete (layout.tsx, maps/page.tsx, [module]/page.tsx, enterprise-summary/page.tsx)
 
-Progress: [>         ] 10% (phase 1: 1/3 plans done)
+Progress: [>>        ] 20% (phase 1: 2/3 plans done)
 
 ## Performance Metrics
 
@@ -32,6 +32,12 @@ Progress: [>         ] 10% (phase 1: 1/3 plans done)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 All v2.0 decisions marked with outcomes — see PROJECT.md.
+
+**01-02 decisions:**
+- grantedModules null (admin) mapped to all MODULES IDs for MobileBottomNav — avoids null prop in client component
+- enterprise-summary fetches role via Supabase inline — standalone server component, no prop drilling needed
+- Financial columns crew-gated in mobile cards using role === 'admin' || role === 'office'
+- Mobile fallback for embed modules uses CSS-only md:hidden (Option A) — avoids UA detection
 
 **01-01 decisions:**
 - Purely presentational MobileHeader — no pathname reading inside component; layout derives pageTitle from pathname
@@ -98,5 +104,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-05-18
-Stopped at: Completed 01-01-PLAN.md — MobileHeader and MobileBottomNav components; npx tsc --noEmit passes
+Stopped at: Completed 01-02-PLAN.md — Layout integration, maps fix, iframe fallback, enterprise-summary card view; npx tsc --noEmit passes
 Resume file: None
