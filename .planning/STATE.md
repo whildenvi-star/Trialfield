@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 05-corn-specialized-weed-detection-with-stem-avoidance-training — Plan 3/3 complete
-Plan: 05-03 complete (CORN-05, CORN-06 satisfied) — algorithm=corn wired into hoot(), CORN_DETECT.ini, LogManager frame logging
-Status: Phase 5 complete — all 3 plans executed
-Last activity: 2026-03-23 — 05-03 complete (CORN_DETECT.ini, config_manager.py, owl.py, log_manager.py)
+Phase: 01-mobile-shell — Plan 1/3 complete
+Plan: 01-01 complete (UX-01, UX-02 satisfied) — MobileHeader and MobileBottomNav components created
+Status: Phase 1 in progress — plan 1 of 3 executed
+Last activity: 2026-05-18 — 01-01 complete (mobile-header.tsx, mobile-bottom-nav.tsx)
 
-Progress: [##########] 100% (phase 5: 3/3 plans done)
+Progress: [>         ] 10% (phase 1: 1/3 plans done)
 
 ## Performance Metrics
 
@@ -32,6 +32,13 @@ Progress: [##########] 100% (phase 5: 3/3 plans done)
 
 Decisions are logged in PROJECT.md Key Decisions table.
 All v2.0 decisions marked with outcomes — see PROJECT.md.
+
+**01-01 decisions:**
+- Purely presentational MobileHeader — no pathname reading inside component; layout derives pageTitle from pathname
+- More sheet uses translate-y transition matching SideNav animation pattern — no custom CSS keyframes
+- Sheet closes on navigation via pathname useEffect as well as explicit close button and backdrop tap
+- --sidebar-w set to 0px in MobileBottomNav useEffect as belt-and-suspenders per Pitfall 6
+- Farm Info = /app/field-history, Field Passes = /app/field-ops per Claude discretion in RESEARCH.md open questions
 
 **04-01 decisions:**
 - Used (app) route group for observations page (not (protected) as plan stated — doesn't exist in this codebase)
@@ -90,6 +97,6 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: Completed 05-03-PLAN.md — algorithm=corn wired into hoot() loop, CORN_DETECT.ini valid, frame logging added to LogManager
+Last session: 2026-05-18
+Stopped at: Completed 01-01-PLAN.md — MobileHeader and MobileBottomNav components; npx tsc --noEmit passes
 Resume file: None
