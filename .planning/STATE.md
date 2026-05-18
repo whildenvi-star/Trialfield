@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 02-offline-sync — IN PROGRESS (2/4 plans done)
-Plan: 02-02 complete — SyncStatusBanner, QueueDetailSheet, SyncStatusProvider; banner mounted in layout
-Status: Phase 2 in progress — plan 02-02 done
-Last activity: 2026-05-18 — 02-02 complete; sync status UI components committed; banner visible from all protected pages
+Phase: 02-offline-sync — IN PROGRESS (3/4 plans done)
+Plan: 02-03 complete — conflict detection in sync-engine, ConflictDrawer component, layout mount
+Status: Phase 2 in progress — plan 02-03 done
+Last activity: 2026-05-18 — 02-03 complete; ConflictDrawer deployed; MSYNC-02 fulfilled
 
-Progress: [>>>>>>    ] 43% (phase 1: 3/3 complete; phase 2: 2/4 in progress)
+Progress: [>>>>>>>   ] 57% (phase 1: 3/3 complete; phase 2: 3/4 in progress)
 
 ## Performance Metrics
 
@@ -94,6 +94,11 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - corn_brightness_min local variable used in hoot() corn branch to avoid shadowing self.brightness_min (GreenOnBrown threshold)
 - log_detection() extended with optional frame/log_frames_dir params; image_path key always present in detection queue (None for non-corn)
 
+**02-03 decisions:**
+- 409 body parsed in replayOperation: serverPayload/serverVersion key presence distinguishes true conflict from already-confirmed 409 skip
+- serverPayload returned in ReplayResult so processQueue can write ConflictRecord without re-reading consumed response body
+- Resolution marks resolved:1 locally only — no server reconciliation call in Phase 2 (field observations rarely conflict; safety net not merge engine)
+
 ### Roadmap Evolution
 
 - Phase 5 added: Corn-specialized weed detection with stem avoidance training
@@ -116,5 +121,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-05-18
-Stopped at: 02-02 complete — SyncStatusBanner, QueueDetailSheet, SyncStatusProvider + layout mount; STATE.md + ROADMAP.md updated
+Stopped at: 02-03 complete — conflict detection in sync-engine, ConflictDrawer + layout mount; MSYNC-02 fulfilled
 Resume file: None
