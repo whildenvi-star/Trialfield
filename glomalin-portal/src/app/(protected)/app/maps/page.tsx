@@ -12,7 +12,7 @@ import { FieldMap } from '@/components/maps/field-map'
  */
 export default async function MapsPage() {
   return (
-    <div className="fixed top-0 bottom-0 right-0 left-[220px]">
+    <div className="fixed top-0 bottom-0 right-0 left-0 md:left-[220px]">
       <Suspense fallback={<div className="w-full h-full bg-[#080604] animate-pulse" />}>
         <FieldMap />
       </Suspense>

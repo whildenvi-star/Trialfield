@@ -70,8 +70,24 @@ export default async function ModulePage({ params }: ModulePageProps) {
 
     return (
       <>
-        <EmbedBreadcrumb moduleLabel={mod.label} moduleSublabel={mod.sublabel} />
-        <EmbedFrame src={roleUrl} title={mod.label} />
+        {/* Mobile fallback — shown on screens below md (768px) */}
+        <div className="md:hidden flex flex-col items-center justify-center min-h-[60vh] text-center px-6 py-12">
+          <p className="text-glomalin-text font-mono text-sm font-semibold mb-2">
+            {mod.label}
+          </p>
+          <p className="text-glomalin-muted font-mono text-xs leading-relaxed">
+            This module works best on desktop.
+          </p>
+          <p className="text-glomalin-muted font-mono text-xs mt-1 leading-relaxed">
+            Open portal.whughesfarms.com on a computer for full access.
+          </p>
+        </div>
+
+        {/* Desktop embed — shown on md+ */}
+        <div className="hidden md:block">
+          <EmbedBreadcrumb moduleLabel={mod.label} moduleSublabel={mod.sublabel} />
+          <EmbedFrame src={roleUrl} title={mod.label} />
+        </div>
       </>
     )
   }

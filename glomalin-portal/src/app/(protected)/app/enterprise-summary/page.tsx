@@ -2,6 +2,7 @@ import { fetchBudgetService, fetchGrainService } from '@/app/api/mobile/_lib/pro
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { Badge } from '@/components/ui/badge'
 import { Empty } from '@/components/ui/empty'
+import { createClient } from '@/lib/supabase/server'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -76,6 +77,19 @@ function subtotal(rows: SummaryRow[]) {
 // ── Page (Server Component) ───────────────────────────────────────────────────
 
 export default async function EnterpriseSummaryPage() {
+  // 0. Resolve role for role-gated financial data on mobile
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  let role = 'viewer'
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    role = profile?.role ?? 'viewer'
+  }
+
   // 1. Budget costs from farm-budget
   let budgetFields: BudgetField[] = []
   let budgetOffline = false
@@ -191,8 +205,40 @@ export default async function EnterpriseSummaryPage() {
                   <span className="text-sm text-glomalin-muted">{sub.acres.toFixed(1)} ac</span>
                 </div>
 
-                {/* Table */}
-                <div className="overflow-x-auto rounded border border-glomalin-border">
+                {/* Mobile card view — shown below md (768px) */}
+                <div className="md:hidden space-y-2 mb-2">
+                  {entRows.map((row, i) => (
+                    <div key={i} className="bg-glomalin-surface border border-glomalin-border rounded p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-mono text-glomalin-text font-semibold">
+                          {row.fieldName}
+                        </span>
+                        <span className="text-xs font-mono text-glomalin-muted">
+                          {row.acres.toFixed(1)} ac
+                        </span>
+                      </div>
+                      <div className="text-xs font-mono text-glomalin-muted">
+                        {row.crop}
+                      </div>
+                      {(role === 'admin' || role === 'office') && (
+                        <div className="text-xs font-mono text-glomalin-muted mt-1">
+                          Cost: {fmt(row.totalCostPerAcre)}/ac
+                          {row.revenuePerAcre != null && (
+                            <span className="ml-3 text-glomalin-success">
+                              Rev: {fmt(row.revenuePerAcre)}/ac
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <p className="text-xs font-mono text-glomalin-accent mt-2">
+                        Open on desktop for full detail
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop table — shown on md+ */}
+                <div className="hidden md:block overflow-x-auto rounded border border-glomalin-border">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-glomalin-surface border-b border-glomalin-border text-glomalin-muted text-xs">
