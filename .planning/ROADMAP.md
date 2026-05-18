@@ -29,7 +29,7 @@ Phases 1–4 defined but not started. Paused in favor of v2.0 milestone. Phases 
 ### Phases (Paused)
 
 - [x] **Phase 1: Mobile Shell** - Navigable, touch-friendly mobile layout foundation — completed 2026-05-18
-- [ ] **Phase 2: Offline Sync** - Hardened offline layer with visible sync status (paused)
+- [x] **Phase 2: Offline Sync** - Hardened offline layer with visible sync status — completed 2026-05-18
 - [ ] **Phase 3: Mobile Dashboard** - Phone-optimized dashboard with module-aware data (paused)
 - [x] **Phase 4: Field Data Entry** - Field observation submission with offline queue (gap closure replan) — completed 2026-03-22
 
@@ -61,10 +61,10 @@ Plans:
   4. Sync does not silently overwrite data — conflicts surface visibly rather than failing silently
 **Plans**: 4 plans
 Plans:
-- [ ] 02-01-PLAN.md — IDB schema v4 (conflicts store) + useSyncStatus hook foundation
-- [ ] 02-02-PLAN.md — SyncStatusBanner, QueueDetailSheet, SyncStatusProvider + layout mount
-- [ ] 02-03-PLAN.md — Conflict engine extension (sync-engine.ts) + conflict-drawer.tsx + layout mount
-- [ ] 02-04-PLAN.md — Production deploy + human visual verification
+- [x] 02-01-PLAN.md — IDB schema v4 (conflicts store) + useSyncStatus hook foundation
+- [x] 02-02-PLAN.md — SyncStatusBanner, QueueDetailSheet, SyncStatusProvider + layout mount
+- [x] 02-03-PLAN.md — Conflict engine extension (sync-engine.ts) + conflict-drawer.tsx + layout mount
+- [x] 02-04-PLAN.md — Production deploy + human visual verification
 
 #### Phase 3: Mobile Dashboard
 **Goal**: Farm team members open the portal and immediately see the data most relevant to their work, filtered to the modules they can access, in a layout designed for a phone screen
@@ -100,7 +100,7 @@ v1.0 phases paused. v2.0 phases shipped.
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1. Mobile Shell | v1.0 | 3/3 | Complete | 2026-05-18 |
-| 2. Offline Sync | 2/4 | In Progress|  | - |
+| 2. Offline Sync | v1.0 | 4/4 | Complete | 2026-05-18 |
 | 3. Mobile Dashboard | v1.0 | 0/0 | Paused | - |
 | 4. Field Data Entry | 2/2 | Complete | 2026-03-22 |
 | 5. Corn Detection (OWL) | 3/3 | Complete | 2026-03-23 |
