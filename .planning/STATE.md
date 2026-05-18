@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 01-mobile-shell — Plan 2/3 complete
-Plan: 01-02 complete (UX-01, UX-02 satisfied) — Layout integration, maps fix, iframe fallback, enterprise-summary card view
-Status: Phase 1 in progress — plan 2 of 3 executed
-Last activity: 2026-05-18 — 01-02 complete (layout.tsx, maps/page.tsx, [module]/page.tsx, enterprise-summary/page.tsx)
+Phase: 01-mobile-shell — Plan 3/3 in progress (at checkpoint)
+Plan: 01-03 Task 1 complete (8124a9c) — remaining pages audited and fixed; awaiting deploy + human visual verification
+Status: Phase 1 in progress — plan 3 of 3 at checkpoint:human-verify
+Last activity: 2026-05-18 — 01-03 Task 1 complete; deploy blocked (SSH port 22 refused on droplet — connection dropped mid-transfer)
 
-Progress: [>>        ] 20% (phase 1: 2/3 plans done)
+Progress: [>>>       ] 25% (phase 1: 2/3 plans done, plan 3 at checkpoint)
 
 ## Performance Metrics
 
@@ -92,7 +92,7 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 
 ### Blockers/Concerns
 
-(Cleared — v2.0 complete)
+- **01-03 deploy blocked**: SSH port 22 refused on droplet 165.22.6.194 mid-transfer. Ping responds (droplet alive), SSH rejected. 3 of 7 changed files transferred before connection dropped. Remaining: field-ops-client.tsx, field-ops/page.tsx, field-timeline-client.tsx, field-timeline/page.tsx. Must complete rsync + npm run build + pm2 restart before checkpoint can be verified.
 
 ### Tech Debt Carried Forward
 
@@ -104,5 +104,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-05-18
-Stopped at: Completed 01-02-PLAN.md — Layout integration, maps fix, iframe fallback, enterprise-summary card view; npx tsc --noEmit passes
+Stopped at: 01-03 Task 1 committed (8124a9c); deploy attempted but SSH dropped mid-transfer; awaiting SSH recovery + remaining rsync + build + human-verify checkpoint
 Resume file: None
