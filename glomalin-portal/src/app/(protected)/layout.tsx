@@ -6,6 +6,7 @@ import SideNav from '@/components/layout/side-nav'
 import DeniedToast from '@/components/denied-toast'
 import { MobileHeader } from '@/components/layout/mobile-header'
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
+import { SyncStatusProvider } from '@/components/pwa/sync-status-provider'
 
 export default async function ProtectedLayout({
   children,
@@ -53,9 +54,10 @@ export default async function ProtectedLayout({
         />
       </div>
 
-      {/* Mobile: Header — visible on mobile only */}
+      {/* Mobile: Header + sync banner — visible on mobile only */}
       <div className="md:hidden">
         <MobileHeader pageTitle="Portal" />
+        <SyncStatusProvider />
       </div>
 
       {/* Content area: offset on desktop, bottom-padded on mobile */}
