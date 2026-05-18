@@ -44,7 +44,11 @@ Phases 1–4 defined but not started. Paused in favor of v2.0 milestone. Phases 
   2. User can navigate between all native module pages using a bottom nav or equivalent mobile-first pattern
   3. All native module pages render in a single-column layout without horizontal scrolling on a 375px viewport
   4. Embedded iframe modules (FSA 578, Insurance, Claims, Macro Rollup) show a graceful fallback on mobile rather than a broken iframe
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — MobileHeader and MobileBottomNav components (4-tab bar with More overflow sheet)
+- [ ] 01-02-PLAN.md — Protected layout switch, maps fix, iframe fallback, enterprise-summary card conversion
+- [ ] 01-03-PLAN.md — Remaining native module audit and fixes, human visual verification checkpoint
 
 #### Phase 2: Offline Sync
 **Goal**: Users can see whether they are online or offline and trust that any actions taken offline will sync when connectivity returns
@@ -90,7 +94,7 @@ v1.0 phases paused. v2.0 phases shipped.
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1. Mobile Shell | v1.0 | 0/0 | Paused | - |
+| 1. Mobile Shell | v1.0 | 0/3 | Planned | - |
 | 2. Offline Sync | v1.0 | 0/0 | Paused | - |
 | 3. Mobile Dashboard | v1.0 | 0/0 | Paused | - |
 | 4. Field Data Entry | 2/2 | Complete | 2026-03-22 |
