@@ -28,7 +28,7 @@ export function FieldOpsCard({ plans, role: _role }: FieldOpsCardProps) {
     // 1. Write to offline queue first
     await offlineQueue.add({
       type: 'confirm-pass',
-      fieldId: plan.fieldName,
+      fieldId: plan.fieldId,
       passId: pass.id,
       passType: pass.type,
       operationDate: new Date().toISOString().split('T')[0],
