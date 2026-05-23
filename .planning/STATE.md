@@ -9,10 +9,10 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 03-mobile-dashboard — IN PROGRESS (2/? plans done)
-Plan: 03-02 complete — dashboard card components (DashboardCard, DashboardCardSkeleton, CropPlanCard, FieldOpsCard)
-Status: Phase 3 in progress — 03-02 complete; DASH-01 and DASH-03 satisfied
-Last activity: 2026-05-23 — 03-02 complete; all four card components built and TypeScript-verified
+Phase: 03-mobile-dashboard — IN PROGRESS (3/? plans done)
+Plan: 03-01 complete — IDB-first useDashboardData hook + DashboardGrid + mobile/desktop page split
+Status: Phase 3 in progress — 03-01 complete; DASH-01, DASH-02, DASH-03 satisfied; mobile card grid foundation in place
+Last activity: 2026-05-23 — 03-01 complete; use-dashboard-data hook, DashboardGrid, and updated dashboard/page.tsx committed
 
 Progress: [>>>>>>>>  ] 64% (phase 1: 3/3 complete; phase 2: 4/4 complete; phase 3: 2/? in progress)
 
@@ -107,6 +107,12 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - operatorId/operatorName set to empty string in FieldOpsCard — client component has no user prop; sync engine fills in from auth session on replay
 - PendingPass typed as interface with plan + pass tuple — avoids any, gives handleMarkDone full type context for both plan.fieldId and pass.id/type
 
+**03-01 decisions:**
+- Module order fixed at ['field-ops','field-history','weather','maps','observations','enterprise-summary','compliance','marketing','farm-budget'] — consistent and predictable for daily use
+- module.route used for href prop (Module interface has route, not href — plan had a typo; auto-fixed)
+- Admin role short-circuits module_access query: admin gets all MODULES.map(m=>m.id) without a DB filter
+- Background sync wrapped in silent catch {} — IDB data always shown; refresh failure is non-fatal
+
 ### Roadmap Evolution
 
 - Phase 5 added: Corn-specialized weed detection with stem avoidance training
@@ -129,5 +135,5 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 ## Session Continuity
 
 Last session: 2026-05-23
-Stopped at: 03-02 complete — dashboard card components built; DashboardCard, DashboardCardSkeleton, CropPlanCard, FieldOpsCard all TypeScript-verified
+Stopped at: 03-01 complete — useDashboardData hook + DashboardGrid + mobile/desktop dashboard/page.tsx split committed
 Resume file: None
