@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { getMobileUser, isErrorResponse } from '../_lib/auth'
 import { fetchBudgetService } from '../_lib/proxy'
 
 interface BudgetProduct {
@@ -44,9 +44,9 @@ export interface SupplyResponse {
   }
 }
 
-export async function GET() {
-  const guard = await requireModuleAccess('fsa-578')
-  if (isGuardError(guard)) return guard
+export async function GET(request: Request) {
+  const user = await getMobileUser(request)
+  if (isErrorResponse(user)) return user
 
   try {
     const res = await fetchBudgetService('/api/forecast')
@@ -93,10 +93,11 @@ export async function GET() {
       categories,
       summary: { totalProducts, fullyDelivered, partiallyOrdered, notStarted },
     } satisfies SupplyResponse)
-  } catch {
+  } catch (err) {
+    console.error('[supply]', err)
     return NextResponse.json(
-      { categories: [], summary: { totalProducts: 0, fullyDelivered: 0, partiallyOrdered: 0, notStarted: 0 } },
-      { status: 500 }
+      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 502 }
     )
   }
 }
