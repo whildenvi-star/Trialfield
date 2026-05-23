@@ -74,7 +74,11 @@ Plans:
   1. User sees a dashboard page on their phone with data cards from their accessible modules
   2. User only sees module cards for modules their account has access to
   3. User can tap a quick-action on a dashboard card (e.g., mark task done) without navigating away
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 03-01-PLAN.md — Dashboard page.tsx + DashboardGrid client component + use-dashboard-data IDB hook
+- [ ] 03-02-PLAN.md — DashboardCard, CropPlanCard, FieldOpsCard with Mark Done quick-action, skeleton
+- [ ] 03-03-PLAN.md — Production deploy + human visual verification checkpoint
 
 #### Phase 4: Field Data Entry
 **Goal**: Farm crew can submit field observations from their phones in the field, including photos, and those submissions reach the office even when connectivity is spotty
