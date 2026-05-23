@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 
 ## Current Position
 
-Phase: 02-offline-sync — COMPLETE (4/4 plans done)
-Plan: 02-04 complete — production deploy + human visual verification approved
-Status: Phase 2 complete — all four plans done; MSYNC-01 and MSYNC-02 satisfied
-Last activity: 2026-05-18 — 02-04 complete; human verification approved on portal.whughesfarms.com
+Phase: 03-mobile-dashboard — IN PROGRESS (2/? plans done)
+Plan: 03-02 complete — dashboard card components (DashboardCard, DashboardCardSkeleton, CropPlanCard, FieldOpsCard)
+Status: Phase 3 in progress — 03-02 complete; DASH-01 and DASH-03 satisfied
+Last activity: 2026-05-23 — 03-02 complete; all four card components built and TypeScript-verified
 
-Progress: [>>>>>>>>  ] 64% (phase 1: 3/3 complete; phase 2: 4/4 complete)
+Progress: [>>>>>>>>  ] 64% (phase 1: 3/3 complete; phase 2: 4/4 complete; phase 3: 2/? in progress)
 
 ## Performance Metrics
 
@@ -102,6 +102,11 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 **02-04 decisions:**
 - Human approval on portal.whughesfarms.com accepted after visual inspection — all five test scenarios passed; no gap closure needed
 
+**03-02 decisions:**
+- plan.fieldId used as fieldId in offlineQueue.add — CachedCropPlan.fieldId is the farm-registry ID needed for server replay; fieldName is display only
+- operatorId/operatorName set to empty string in FieldOpsCard — client component has no user prop; sync engine fills in from auth session on replay
+- PendingPass typed as interface with plan + pass tuple — avoids any, gives handleMarkDone full type context for both plan.fieldId and pass.id/type
+
 ### Roadmap Evolution
 
 - Phase 5 added: Corn-specialized weed detection with stem avoidance training
@@ -123,6 +128,6 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 
 ## Session Continuity
 
-Last session: 2026-05-18
-Stopped at: 02-04 complete — human verification approved on portal.whughesfarms.com; Phase 2 fully complete
+Last session: 2026-05-23
+Stopped at: 03-02 complete — dashboard card components built; DashboardCard, DashboardCardSkeleton, CropPlanCard, FieldOpsCard all TypeScript-verified
 Resume file: None
