@@ -9,8 +9,8 @@
 
 // ── Colors (camelCase — for direct JS/TS imports) ──────────────────
 export const colors = {
-  bg:          '#080a0f',
-  surface:     '#0c1015',
+  bg:          '#06080d',
+  surface:     '#111620',
   border:      '#1e293b',
   borderLight: '#334155',
   accent:      '#14b8a6',
@@ -24,6 +24,9 @@ export const colors = {
   danger:      '#ff3b30',
   warning:     '#ffb800',
   info:        '#38bdf8',
+  // Agricultural semantic
+  field:       '#589054',
+  earth:       '#b28a4a',
   // Legacy alias
   green:       '#7A9E7E',
 } as const
@@ -82,6 +85,10 @@ export const tailwindColors: Record<string, string> = {
   'tier-inferred':    'rgb(var(--c-primary) / <alpha-value>)',
   'tier-manual':      'rgb(var(--c-warning) / <alpha-value>)',
   'tier-unverified':  'rgb(var(--c-text-light) / <alpha-value>)',
+
+  // Agricultural semantic
+  field:            'rgb(var(--c-field) / <alpha-value>)',
+  earth:            'rgb(var(--c-earth) / <alpha-value>)',
 
   // Legacy alias — keep so existing `text-glomalin-green` still works
   green:            'rgb(var(--c-success) / <alpha-value>)',

@@ -1,5 +1,7 @@
 import Link from 'next/link'
-import FarmNodeMap from '@/components/farm-node-map'
+import dynamic from 'next/dynamic'
+
+const FarmNodeMap = dynamic(() => import('@/components/farm-node-map'), { ssr: false })
 
 export default function Home() {
   return (

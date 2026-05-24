@@ -34,7 +34,7 @@
   }
 
   body {
-    @apply bg-glomalin-bg text-glomalin-text font-mono;
+    @apply bg-glomalin-bg text-glomalin-text font-sans;
     font-size: var(--size-base);
   }
 }
@@ -46,10 +46,10 @@
 
 :root {
   /* Base surfaces */
-  --c-bg:           8 10 15;
-  --c-bg-raised:    14 17 24;
-  --c-card:         12 16 21;
-  --c-elevated:     20 27 36;
+  --c-bg:           6 8 13;
+  --c-bg-raised:    11 15 22;
+  --c-card:         17 22 32;
+  --c-elevated:     26 33 46;
 
   /* Brand accent */
   --c-primary:      20 184 166;
@@ -77,6 +77,10 @@
 
   /* Focus ring */
   --c-ring:         20 184 166;
+
+  /* Agricultural semantic colors */
+  --c-field:   88 150 84;    /* muted sage — ground condition / operator data */
+  --c-earth:   178 138 74;   /* warm amber-wheat — crop / harvest / season data */
 }
 
 /* Day mode — .light on body or html flips all colors */

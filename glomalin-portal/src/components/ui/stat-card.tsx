@@ -50,7 +50,7 @@ export function StatCard({
         className
       )}
     >
-      <p className="text-xs text-glomalin-muted font-mono uppercase tracking-wider mb-1">
+      <p className="text-xs text-glomalin-muted font-sans font-medium uppercase tracking-wider mb-1">
         {label}
       </p>
       <p className={cn('text-2xl font-mono font-bold leading-none', valueColors[variant])}>
@@ -60,13 +60,13 @@ export function StatCard({
         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
           {trend && <TrendIcon trend={trend} />}
           {delta != null && (
-            <span className="text-xs font-mono text-glomalin-muted">{delta}</span>
+            <span className="text-xs font-sans text-glomalin-muted">{delta}</span>
           )}
           {deltaLabel && (
-            <span className="text-xs font-mono text-glomalin-muted/70">{deltaLabel}</span>
+            <span className="text-xs font-sans text-glomalin-muted/70">{deltaLabel}</span>
           )}
           {sublabel && !delta && (
-            <span className="text-xs font-mono text-glomalin-muted">{sublabel}</span>
+            <span className="text-xs font-sans text-glomalin-muted">{sublabel}</span>
           )}
         </div>
       )}

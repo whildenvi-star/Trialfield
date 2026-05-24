@@ -29,7 +29,7 @@ interface DashboardCardProps {
   children?: React.ReactNode
 }
 
-export function DashboardCard({ moduleId: _moduleId, moduleName, href, subtitle, children }: DashboardCardProps) {
+export function DashboardCard({ moduleName, href, subtitle, children }: DashboardCardProps) {
   return (
     <Link href={href} className="block">
       <div className="bg-glomalin-surface border border-glomalin-border rounded p-3">

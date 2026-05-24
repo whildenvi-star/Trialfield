@@ -15,7 +15,7 @@ interface PendingPass {
   pass: CachedCropPlan['passes'][number]
 }
 
-export function FieldOpsCard({ plans, role: _role }: FieldOpsCardProps) {
+export function FieldOpsCard({ plans }: FieldOpsCardProps) {
   const [localPlans, setLocalPlans] = useState<CachedCropPlan[]>(plans)
 
   const pendingPasses: PendingPass[] = localPlans.flatMap((plan) =>

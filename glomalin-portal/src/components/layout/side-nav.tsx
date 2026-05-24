@@ -127,7 +127,7 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
 
             return (
               <div key={group.label} className="mt-1">
-                <p className="px-4 pt-3 pb-1 text-[10px] font-mono uppercase tracking-[0.12em] text-glomalin-muted select-none">
+                <p className="px-4 pt-3 pb-1 text-[11px] font-sans font-medium uppercase tracking-wider text-glomalin-muted select-none">
                   {group.label}
                 </p>
                 {groupMods.map((mod) => (
@@ -154,10 +154,10 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
               </span>
             </div>
             <div className="min-w-0">
-              <p className="text-glomalin-text font-mono text-xs truncate leading-tight">
+              <p className="text-glomalin-text font-sans text-sm truncate leading-tight">
                 {displayName}
               </p>
-              <p className="text-glomalin-muted font-mono text-[10px] uppercase tracking-wider leading-tight">
+              <p className="text-glomalin-muted font-sans text-[11px] uppercase tracking-wider leading-tight">
                 {user.role}
               </p>
             </div>
@@ -167,7 +167,7 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
           <button
             type="button"
             onClick={toggleBanner}
-            className="w-full flex items-center justify-between px-4 py-2 text-xs font-mono text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2 text-xs font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
           >
             <span>ASCII</span>
             <span className={bannerDisabled ? 'text-glomalin-muted' : 'text-glomalin-accent'}>
@@ -180,7 +180,7 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
             <button
               type="button"
               onClick={cycleScene}
-              className="w-full flex items-center justify-between px-4 py-1.5 text-[10px] font-mono text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-1.5 text-[10px] font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
             >
               <span>scene</span>
               <span className="text-glomalin-accent">{scene}</span>
@@ -190,7 +190,7 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
           {user.role === 'admin' && (
             <Link
               href="/admin"
-              className="block w-full px-4 py-2 text-xs font-mono text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+              className="block w-full px-4 py-2 text-xs font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
             >
               User Management
             </Link>
@@ -199,7 +199,7 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
           <form action={logout} className="border-t border-glomalin-border">
             <button
               type="submit"
-              className="w-full text-left px-4 py-2.5 text-xs font-mono text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+              className="w-full text-left px-4 py-2.5 text-xs font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
             >
               Log out
             </button>
@@ -244,7 +244,7 @@ function NavItem({
     <Link
       href={href}
       className={[
-        'relative flex items-center px-4 py-2 text-xs font-mono transition-colors duration-100',
+        'relative flex items-center px-4 py-2 text-sm font-sans transition-colors duration-100',
         active
           ? 'text-glomalin-accent bg-glomalin-highlight'
           : 'text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40',
