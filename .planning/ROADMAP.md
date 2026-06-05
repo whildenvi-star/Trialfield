@@ -30,67 +30,83 @@ Phases 1–4 defined but not started. Paused in favor of v2.0 milestone. Phases 
 
 - [x] **Phase 1: Mobile Shell** - Navigable, touch-friendly mobile layout foundation — completed 2026-05-18
 - [x] **Phase 2: Offline Sync** - Hardened offline layer with visible sync status — completed 2026-05-18
-- [ ] **Phase 3: Mobile Dashboard** - Phone-optimized dashboard with module-aware data (paused)
+- [x] **Phase 3: Mobile Dashboard** - Phone-optimized dashboard with module-aware data — completed 2026-06-05
 - [x] **Phase 4: Field Data Entry** - Field observation submission with offline queue (gap closure replan) — completed 2026-03-22
 
 ### Phase Details (Paused)
 
 #### Phase 1: Mobile Shell
+
 **Goal**: Farm team members can open the portal on a phone and navigate between modules without layout breakage or unusably small touch targets
 **Depends on**: Nothing (first phase)
 **Requirements**: UX-01, UX-02
 **Success Criteria** (what must be TRUE):
+
   1. User can tap any navigation item from their phone without mis-tapping adjacent items (44px+ targets)
   2. User can navigate between all native module pages using a bottom nav or equivalent mobile-first pattern
   3. All native module pages render in a single-column layout without horizontal scrolling on a 375px viewport
   4. Embedded iframe modules (FSA 578, Insurance, Claims, Macro Rollup) show a graceful fallback on mobile rather than a broken iframe
+
 **Plans**: 3 plans
 Plans:
+
 - [x] 01-01-PLAN.md — MobileHeader and MobileBottomNav components (4-tab bar with More overflow sheet)
 - [x] 01-02-PLAN.md — Protected layout switch, maps fix, iframe fallback, enterprise-summary card conversion
 - [x] 01-03-PLAN.md — Remaining native module audit and fixes, human visual verification checkpoint
 
 #### Phase 2: Offline Sync
+
 **Goal**: Users can see whether they are online or offline and trust that any actions taken offline will sync when connectivity returns
 **Depends on**: Phase 1
 **Requirements**: MSYNC-01, MSYNC-02
 **Success Criteria** (what must be TRUE):
+
   1. User sees a clear online/offline status indicator that updates when connectivity changes
   2. User sees a count of items queued but not yet synced to the server
   3. Queued items drain automatically when connectivity is restored without user action
   4. Sync does not silently overwrite data — conflicts surface visibly rather than failing silently
+
 **Plans**: 4 plans
 Plans:
+
 - [x] 02-01-PLAN.md — IDB schema v4 (conflicts store) + useSyncStatus hook foundation
 - [x] 02-02-PLAN.md — SyncStatusBanner, QueueDetailSheet, SyncStatusProvider + layout mount
 - [x] 02-03-PLAN.md — Conflict engine extension (sync-engine.ts) + conflict-drawer.tsx + layout mount
 - [x] 02-04-PLAN.md — Production deploy + human visual verification
 
 #### Phase 3: Mobile Dashboard
+
 **Goal**: Farm team members open the portal and immediately see the data most relevant to their work, filtered to the modules they can access, in a layout designed for a phone screen
 **Depends on**: Phase 2
 **Requirements**: DASH-01, DASH-02, DASH-03
 **Success Criteria** (what must be TRUE):
+
   1. User sees a dashboard page on their phone with data cards from their accessible modules
   2. User only sees module cards for modules their account has access to
   3. User can tap a quick-action on a dashboard card (e.g., mark task done) without navigating away
+
 **Plans**: 3 plans
 Plans:
-- [ ] 03-01-PLAN.md — Dashboard page.tsx + DashboardGrid client component + use-dashboard-data IDB hook
-- [ ] 03-02-PLAN.md — DashboardCard, CropPlanCard, FieldOpsCard with Mark Done quick-action, skeleton
-- [ ] 03-03-PLAN.md — Production deploy + human visual verification checkpoint
+
+- [x] 03-01-PLAN.md — Dashboard page.tsx + DashboardGrid client component + use-dashboard-data IDB hook
+- [x] 03-02-PLAN.md — DashboardCard, CropPlanCard, FieldOpsCard with Mark Done quick-action, skeleton
+- [x] 03-03-PLAN.md — Production deploy + human visual verification checkpoint
 
 #### Phase 4: Field Data Entry
+
 **Goal**: Farm crew can submit field observations from their phones in the field, including photos, and those submissions reach the office even when connectivity is spotty
 **Depends on**: Phase 3
 **Requirements**: FIELD-01, FIELD-02, FIELD-03
 **Success Criteria** (what must be TRUE):
+
   1. User can submit a field observation with a text note from their phone
   2. User can attach a photo to a field observation before submitting
   3. Observations submitted while offline queue locally and sync automatically when connectivity returns
   4. User receives confirmation when a queued observation successfully syncs
+
 **Plans**: 2 plans
 Plans:
+
 - [x] 04-01-PLAN.md — Supabase table, API routes, and mobile form with photo capture
 - [x] 04-02-PLAN.md — IndexedDB offline queue with automatic sync on reconnect
 
@@ -105,7 +121,7 @@ v1.0 phases paused. v2.0 phases shipped.
 |-------|-----------|----------------|--------|-----------|
 | 1. Mobile Shell | v1.0 | 3/3 | Complete | 2026-05-18 |
 | 2. Offline Sync | v1.0 | 4/4 | Complete | 2026-05-18 |
-| 3. Mobile Dashboard | 2/3 | In Progress|  | - |
+| 3. Mobile Dashboard | 2/3 | 3/3 | Complete   | 2026-06-05 |
 | 4. Field Data Entry | 2/2 | Complete | 2026-03-22 |
 | 5. Corn Detection (OWL) | 3/3 | Complete | 2026-03-23 |
 | 6. Actuals Entry and Enterprise Budget View | v2.0 | 3/3 | Complete | 2026-03-21 |
@@ -119,14 +135,17 @@ v1.0 phases paused. v2.0 phases shipped.
 **Depends on:** Phase 4
 **Requirements:** CORN-01, CORN-02, CORN-03, CORN-04, CORN-05, CORN-06, CORN-07
 **Success Criteria** (what must be TRUE):
+
   1. Training pipeline produces a corn_detector.pt from a Roboflow dataset with corn-specific augmentation
   2. CornDetector replaces GreenOnGreen when algorithm=corn, with matching inference return signature
   3. Weed detections inside configurable buffer zones around corn stems are suppressed before actuation
   4. Blurry or dark frames pause actuation and alert the operator instead of running blind
   5. Annotated detection frames are logged at configurable intervals with automatic rotation/purge
-**Plans:** 2/3 plans executed
+
+**Plans:** 3/3 plans complete
 
 Plans:
+
 - [x] 05-01-PLAN.md — Training pipeline: Roboflow download, YOLOv8n training, TensorRT export
 - [x] 05-02-PLAN.md — Detection modules: CornDetector, stem avoidance, frame quality gate
 - [x] 05-03-PLAN.md — OWL integration: config, hoot() wiring, log extension, requirements
