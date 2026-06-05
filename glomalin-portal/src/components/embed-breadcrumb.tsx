@@ -10,7 +10,7 @@ interface EmbedBreadcrumbProps {
 export function EmbedBreadcrumb({ moduleLabel }: EmbedBreadcrumbProps) {
   return (
     <div
-      className="fixed left-0 right-0 z-40 flex items-center justify-between px-4 sm:px-6 border-b border-glomalin-border bg-glomalin-surface"
+      className="fixed right-0 z-40 flex items-center justify-between px-4 sm:px-6 border-b border-glomalin-border bg-glomalin-surface"
       style={{
         top: 0,
         left: 'var(--sidebar-w, 220px)',

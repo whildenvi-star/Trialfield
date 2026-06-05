@@ -117,9 +117,12 @@ export function MobileBottomNav({ grantedModuleIds }: MobileBottomNavProps) {
   const pathname = usePathname()
   const [sheetOpen, setSheetOpen] = useState(false)
 
-  // Belt-and-suspenders: ensure --sidebar-w is 0px on mobile (SideNav sets 220px on desktop)
+  // Only zero out --sidebar-w on mobile; on md+ SideNav sets it to 220px and this
+  // component is hidden (md:hidden) but still mounted, so guard against overwriting it.
   useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-w', '0px')
+    if (window.innerWidth < 768) {
+      document.documentElement.style.setProperty('--sidebar-w', '0px')
+    }
   }, [])
 
   // Close sheet on navigation
