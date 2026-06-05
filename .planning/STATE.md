@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: — Mobile PWA
-status: planning
-stopped_at: 03-03 complete — mobile dashboard production deploy verified; phase 3 done
-last_updated: "2026-06-05T16:34:21.131Z"
+milestone_name: Mobile PWA
+status: shipped
+stopped_at: v1.0 milestone archived — all 5 phases complete, git tagged
+last_updated: "2026-06-05T00:00:00.000Z"
 last_activity: 2026-06-05
 progress:
   total_phases: 5
@@ -18,19 +18,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-22)
+See: .planning/PROJECT.md (updated 2026-06-05)
 
 **Core value:** Farm operations data flows accurately from planning through execution — the farm manager plans, the office team records reality, and the full picture is always available to those who need it
-**Current focus:** Planning next milestone
+**Current focus:** v1.0 shipped — start next milestone with /gsd:new-milestone
 
 ## Current Position
 
-Phase: 04
-Plan: Not started
-Status: Ready to plan
+Phase: All 5 complete
+Plan: All 15 complete
+Status: Milestone shipped
 Last activity: 2026-06-05
 
-Progress: [>>>>>>>>>  ] 72% (phase 1: 3/3 complete; phase 2: 4/4 complete; phase 3: 3/3 complete)
+Progress: [>>>>>>>>>>] 100% (all phases complete)
 
 ## Performance Metrics
 
@@ -165,6 +165,14 @@ All v2.0 decisions marked with outcomes — see PROJECT.md.
 - Sidebar budget-summary link visible to CREW (low)
 - Seed ActualCell label mismatch (cosmetic)
 - SUMMARY frontmatter missing requirements-completed (documentation)
+
+## Deferred Items
+
+Items acknowledged and deferred at milestone close on 2026-06-05:
+
+| Category | Item | Status |
+|----------|------|--------|
+| debug | acres-budget-math-wrong | investigating |
 
 ## Session Continuity
 

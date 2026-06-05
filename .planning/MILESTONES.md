@@ -1,5 +1,36 @@
 # Milestones
 
+## v1.0 — Mobile PWA
+
+**Shipped:** 2026-06-05
+**Phases:** 1–5 | **Plans:** 15
+**Portal code:** 42 files modified, +1,601 / -123 TypeScript/TSX
+**OWL Orin code:** 15 files modified, +1,250 / -5 Python
+**Planning commits:** 28
+**Timeline:** 2026-03-22 → 2026-06-05 (75 days, non-contiguous — v2.0 built in the gap)
+**Requirements:** UX-01/02, MSYNC-01/02, DASH-01/02/03, FIELD-01/02/03, CORN-01–07 — all delivered
+**Known deferred items at close:** 1 (see STATE.md Deferred Items — acres-budget-math-wrong, v2.0 budget concern, unrelated to v1.0)
+
+**Delivered:** Farm team members can open portal.whughesfarms.com on a phone and navigate with a bottom tab bar, work offline with visible sync status and conflict resolution, submit field observations with photos from the field, and see a role-gated mobile dashboard with quick-actions; OWL Orin gains a corn-specialized weed detector with stem avoidance buffer zones and frame quality gating.
+
+**Key Accomplishments:**
+1. MobileHeader + MobileBottomNav with 4-tab bar and More overflow sheet — zero new dependencies, live on portal
+2. All native module pages audited for 375px single-column layout with 44px+ touch targets — human-verified
+3. Offline sync layer with conflict detection, ConflictDrawer, and queue count badge — human-verified on mobile
+4. Phone-optimized dashboard with module-gated CropPlanCard and FieldOpsCard with Mark Done quick-actions — human-verified
+5. Field observation form with photo capture (1200px JPEG resize) and offline-first IDB queue with sync-on-reconnect
+6. YOLOv8n corn detection pipeline for OWL Orin: training → TensorRT FP16 → stem avoidance → frame quality gating
+
+**Tech Debt Carried Forward:**
+- sync-macro endpoint unguarded (medium)
+- Sidebar budget-summary link visible to CREW (low)
+- Phase 4 field observations: no production deploy/verification plan
+- ConflictDrawer resolution local-only — no server reconciliation
+
+**Archive:** [v1.0-ROADMAP.md](milestones/v1.0-ROADMAP.md)
+
+---
+
 ## v2.0 — Projected vs Actual Farm Budget
 
 **Shipped:** 2026-03-22
