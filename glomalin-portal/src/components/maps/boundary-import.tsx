@@ -13,7 +13,7 @@ interface ImportResult {
 
 type ImportStatus = 'idle' | 'uploading' | 'complete' | 'error'
 
-export function BoundaryImport() {
+export function BoundaryImport({ onSuccess }: { onSuccess?: () => void }) {
   const [status, setStatus] = useState<ImportStatus>('idle')
   const [result, setResult] = useState<ImportResult | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -43,6 +43,7 @@ export function BoundaryImport() {
       }
       setResult(data)
       setStatus('complete')
+      onSuccess?.()
     } catch {
       setErrorMessage('Network error — import failed')
       setStatus('error')

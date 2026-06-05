@@ -136,11 +136,13 @@ export async function GET() {
     type: 'FeatureCollection',
     features,
     meta: {
-      total_acres:          Math.round(totalAcres   * 10) / 10,
-      organic_acres:        Math.round(organicAcres * 10) / 10,
-      precip_configured:    PrecipAppAdapter.isConfigured(),
-      precip_avg_7d:        precipCount > 0 ? Math.round((precipSum / precipCount) * 100) / 100 : null,
-      precip_last_fetched:  precipLastFetched,
+      total_acres:            Math.round(totalAcres   * 10) / 10,
+      organic_acres:          Math.round(organicAcres * 10) / 10,
+      precip_configured:      PrecipAppAdapter.isConfigured(),
+      precip_avg_7d:          precipCount > 0 ? Math.round((precipSum / precipCount) * 100) / 100 : null,
+      precip_last_fetched:    precipLastFetched,
+      total_registry_fields:  registryById.size > 0 ? registryById.size : null,
+      fields_with_boundaries: features.length,
     },
   })
 }

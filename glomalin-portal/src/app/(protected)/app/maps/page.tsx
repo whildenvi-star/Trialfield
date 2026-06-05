@@ -1,20 +1,25 @@
 import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import { FieldMap } from '@/components/maps/field-map'
 
-/**
- * /app/maps — Interactive Field Map
- *
- * Server component. Renders the FieldMap client component in a full-viewport
- * container that fills below the portal's sticky top bar (h-14 = 56px).
- *
- * No initial center/zoom props — fitBounds() on the fetched field polygons
- * is the canonical initial view (per CONTEXT.md locked decision).
- */
 export default async function MapsPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  const isAdmin = profile?.role === 'admin'
+
   return (
     <div className="fixed top-0 bottom-0 right-0 left-0 md:left-[220px]">
       <Suspense fallback={<div className="w-full h-full bg-[#080604] animate-pulse" />}>
-        <FieldMap />
+        <FieldMap isAdmin={isAdmin} />
       </Suspense>
     </div>
   )

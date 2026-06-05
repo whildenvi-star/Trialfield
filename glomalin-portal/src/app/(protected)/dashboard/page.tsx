@@ -31,7 +31,7 @@ export default async function DashboardPage() {
       <div className="hidden md:block h-full">
         <div className="fixed inset-0 md:left-[220px]">
           <Suspense fallback={<div className="w-full h-full bg-[#080604] animate-pulse" />}>
-            <FieldMap />
+            <FieldMap isAdmin={role === 'admin'} />
           </Suspense>
         </div>
       </div>

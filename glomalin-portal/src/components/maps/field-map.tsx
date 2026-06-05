@@ -15,6 +15,7 @@ import {
   getSatelliteStyleUrl,
 } from '@/lib/map-config'
 import { FieldDetailPanel, type FieldProperties } from './field-detail-panel'
+import { BoundaryImport } from './boundary-import'
 import { MapLegend } from './map-legend'
 import { ViewSwitcher } from './view-switcher'
 
@@ -34,11 +35,13 @@ interface GeoJSONFeature {
 }
 
 interface MapMeta {
-  total_acres:          number
-  organic_acres:        number
-  precip_configured:    boolean
-  precip_avg_7d:        number | null
-  precip_last_fetched:  string | null
+  total_acres:             number
+  organic_acres:           number
+  precip_configured:       boolean
+  precip_avg_7d:           number | null
+  precip_last_fetched:     string | null
+  total_registry_fields:   number | null
+  fields_with_boundaries:  number
 }
 
 interface BoundaryResponse {
@@ -100,7 +103,7 @@ function getColorExpr(view: MapView): ExpressionSpecification {
   return view === 'fsa' ? FSA_COLOR_EXPR : CROP_COLOR_EXPR
 }
 
-export function FieldMap() {
+export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
   const mapContainerRef  = useRef<HTMLDivElement>(null)
   const mapRef           = useRef<Map | null>(null)
   const popupRef         = useRef<Popup | null>(null)
@@ -114,6 +117,7 @@ export function FieldMap() {
   const [isRefreshing, setIsRefreshing]     = useState(false)
   const [mapError, setMapError]             = useState<string | null>(null)
   const [view, setView]                     = useState<MapView>('enterprise')
+  const [showImportPanel, setShowImportPanel] = useState(false)
 
   // Sync view ref so the async map init closure can read the current view.
   useEffect(() => { viewRef.current = view }, [view])
@@ -134,23 +138,26 @@ export function FieldMap() {
     map.setLayoutProperty('precip-fill', 'visibility', showPrecip ? 'visible' : 'none')
   }, [showPrecip])
 
+  const refreshBoundaries = useCallback(async () => {
+    try {
+      const res = await fetch('/api/maps/boundaries')
+      if (!res.ok) return
+      const fc: BoundaryResponse = await res.json()
+      const source = mapRef.current?.getSource('fields') as { setData?: (d: unknown) => void } | undefined
+      source?.setData?.(fc)
+      if (fc.meta) setMapMeta(fc.meta)
+    } catch {/* non-blocking */}
+  }, [])
+
   const handlePrecipRefresh = useCallback(async () => {
     setIsRefreshing(true)
     try {
       const res = await fetch('/api/weather/precip/refresh', { method: 'POST' })
-      if (res.ok) {
-        const boundaryRes = await fetch('/api/maps/boundaries')
-        if (boundaryRes.ok) {
-          const fc: BoundaryResponse = await boundaryRes.json()
-          const source = mapRef.current?.getSource('fields') as { setData?: (d: unknown) => void } | undefined
-          source?.setData?.(fc)
-          if (fc.meta) setMapMeta(fc.meta)
-        }
-      }
+      if (res.ok) await refreshBoundaries()
     } catch {/* non-blocking */} finally {
       setIsRefreshing(false)
     }
-  }, [])
+  }, [refreshBoundaries])
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) return
@@ -356,30 +363,34 @@ export function FieldMap() {
         </div>
       )}
 
-      {/* Summary bar */}
-      {mapMeta && (
+      {/* Summary bar — always visible for admins, conditionally for others once mapMeta loads */}
+      {(mapMeta || isAdmin) && (
         <div
           className="absolute top-0 left-0 right-0 z-10 flex items-center gap-5 px-4 h-10 font-mono text-xs"
           style={{ backgroundColor: 'rgba(8, 6, 4, 0.82)', backdropFilter: 'blur(4px)', borderBottom: '1px solid #2a2218' }}
         >
-          <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Farm</span>
-          <span className="text-[#e8d8c0]">{mapMeta.total_acres.toLocaleString()} ac</span>
-          <span className="text-[#2a2218]">·</span>
-          <span className="text-[#7A9E7E]">{mapMeta.organic_acres.toLocaleString()} organic</span>
-
-          {mapMeta.precip_configured && precipAvg != null && (
+          {mapMeta && (
             <>
+              <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Farm</span>
+              <span className="text-[#e8d8c0]">{mapMeta.total_acres.toLocaleString()} ac</span>
               <span className="text-[#2a2218]">·</span>
-              <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Precip (7d avg)</span>
-              <span className="text-[#7BAFD4]">{precipAvg.toFixed(2)}&Prime;</span>
-              <span className="text-[#2a2218]">·</span>
-              <span className="text-[#6a5a4a]">Updated {formatTimeAgo(precipUpdated ?? null)}</span>
+              <span className="text-[#7A9E7E]">{mapMeta.organic_acres.toLocaleString()} organic</span>
+
+              {mapMeta.precip_configured && precipAvg != null && (
+                <>
+                  <span className="text-[#2a2218]">·</span>
+                  <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Precip (7d avg)</span>
+                  <span className="text-[#7BAFD4]">{precipAvg.toFixed(2)}&Prime;</span>
+                  <span className="text-[#2a2218]">·</span>
+                  <span className="text-[#6a5a4a]">Updated {formatTimeAgo(precipUpdated ?? null)}</span>
+                </>
+              )}
             </>
           )}
 
           <div className="flex-1" />
 
-          {mapMeta.precip_configured && (
+          {mapMeta?.precip_configured && (
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowPrecip((v) => !v)}
@@ -402,6 +413,64 @@ export function FieldMap() {
               </button>
             </div>
           )}
+
+          {isAdmin && (
+            <button
+              onClick={() => setShowImportPanel((v) => !v)}
+              className={[
+                'px-2.5 py-1 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
+                showImportPanel
+                  ? 'border-[#C8860A] text-[#C8860A] bg-[#C8860A]/10'
+                  : 'border-[#2a2218] text-[#6a5a4a] hover:border-[#6a5a4a] hover:text-[#e8d8c0]',
+              ].join(' ')}
+            >
+              ⬆ Boundaries
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Boundary import panel — admin only, slides in from right */}
+      {isAdmin && showImportPanel && (
+        <div
+          className="absolute top-10 right-0 bottom-0 z-30 w-[400px] overflow-y-auto"
+          style={{ backgroundColor: 'rgba(8, 6, 4, 0.96)', borderLeft: '1px solid #2a2218', backdropFilter: 'blur(6px)' }}
+        >
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="font-mono text-sm text-[#C8860A] uppercase tracking-wider">
+                Import Boundaries
+              </h2>
+              <button
+                onClick={() => setShowImportPanel(false)}
+                className="text-[#6a5a4a] hover:text-[#e8d8c0] font-mono text-sm transition-colors px-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            {mapMeta && mapMeta.total_registry_fields != null && (
+              <div className="mb-5 p-3 border border-[#2a2218] rounded bg-[#0a0805]">
+                <p className="font-mono text-[10px] text-[#6a5a4a] uppercase tracking-wider mb-1">
+                  Boundary Coverage
+                </p>
+                <p className="font-mono text-sm text-[#e8d8c0]">
+                  {mapMeta.fields_with_boundaries}{' '}
+                  <span className="text-[#6a5a4a]">of</span>{' '}
+                  {mapMeta.total_registry_fields} registry fields
+                </p>
+              </div>
+            )}
+
+            <p className="font-mono text-xs text-[#6a5a4a] mb-5 leading-relaxed">
+              Upload a .zip shapefile export from SMS. Feature names are matched
+              to field names and aliases in the Farm Registry via{' '}
+              <span className="text-[#e8d8c0]">registry_field_id</span>.
+              Import replaces all existing boundaries.
+            </p>
+
+            <BoundaryImport onSuccess={refreshBoundaries} />
+          </div>
         </div>
       )}
 
