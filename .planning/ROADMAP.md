@@ -121,7 +121,7 @@ v1.0 phases paused. v2.0 phases shipped.
 |-------|-----------|----------------|--------|-----------|
 | 1. Mobile Shell | v1.0 | 3/3 | Complete | 2026-05-18 |
 | 2. Offline Sync | v1.0 | 4/4 | Complete | 2026-05-18 |
-| 3. Mobile Dashboard | 2/3 | 3/3 | Complete   | 2026-06-05 |
+| 3. Mobile Dashboard | 2/3 | 3/3 | Complete    | 2026-06-05 |
 | 4. Field Data Entry | 2/2 | Complete | 2026-03-22 |
 | 5. Corn Detection (OWL) | 3/3 | Complete | 2026-03-23 |
 | 6. Actuals Entry and Enterprise Budget View | v2.0 | 3/3 | Complete | 2026-03-21 |
