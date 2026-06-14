@@ -890,7 +890,7 @@
           return;
         }
         var field = fieldsData.find(function (f) { return f.id === fid; });
-        if (field) window.openFieldEditor(field);
+        if (field) window.openFieldEditor(field, null, null, null, fieldsData);
       });
     });
 
@@ -1001,7 +1001,7 @@
       th.addEventListener('click', function () {
         var fid = th.getAttribute('data-field-id');
         var field = fieldsData.find(function (f) { return f.id === fid; });
-        if (field) window.openFieldEditor(field);
+        if (field) window.openFieldEditor(field, null, null, null, fieldsData);
       });
     });
 
@@ -1288,7 +1288,7 @@
         var card = header.closest('.module-field-card');
         var fid = card.getAttribute('data-field-id');
         var field = fieldsData.find(function (f) { return f.id === fid; });
-        if (field) window.openFieldEditor(field);
+        if (field) window.openFieldEditor(field, null, null, null, fieldsData);
       });
     });
   }

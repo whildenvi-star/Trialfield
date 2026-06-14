@@ -2354,6 +2354,8 @@ tr.drag-over-bottom { box-shadow: inset 0 -3px 0 var(--primary); }
 .prev-item .val-total { color: var(--text-light); font-weight: 500; font-size: 0.68rem; }
 .prev-item.highlight .val { color: var(--primary); font-weight: 700; text-shadow: var(--glow); }
 .prev-item.highlight .val-total { color: var(--primary); font-weight: 600; font-size: 0.75rem; }
+.prev-item.outlier .val { color: var(--orange); font-weight: 600; }
+.prev-item.outlier .label::after { content: ' ⚠'; font-size: 0.7em; color: var(--orange); }
 .prev-item.profit-neg .val,
 .prev-item.profit-neg .val-total { color: var(--danger) !important; text-shadow: none; }
 .prev-item.profit-pos .val,

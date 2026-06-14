@@ -7,8 +7,9 @@
   var isNew = false;
   var foActiveFilter = 'all'; // 'all' | 'planned' | 'confirmed' | 'disregarded'
   var foViewMode = 'perAcre'; // 'perAcre' | 'perField'
+  var enterpriseStats = null; // per-line medians for outlier detection, computed at editor open
 
-  window.openFieldEditor = function (field, enterpriseId, defaultSystemCode, defaultSection) {
+  window.openFieldEditor = function (field, enterpriseId, defaultSystemCode, defaultSection, peerFields) {
     if (field) {
       currentField = JSON.parse(JSON.stringify(field)); // deep copy
       isNew = false;
@@ -37,6 +38,9 @@
       isNew = true;
       document.getElementById('editor-title').textContent = 'New Field';
     }
+    enterpriseStats = (field && peerFields && peerFields.length >= 3)
+      ? computeEnterpriseStats(peerFields)
+      : null;
     // Ensure crop & seed dropdowns are populated (guards against cached JS or event timing)
     populateDropdowns();
     populateForm();
@@ -2210,6 +2214,49 @@
     updatePreview();
   }
 
+  function computeEnterpriseStats(fields) {
+    var refs = {
+      products: window.refData.products,
+      implements: window.refData.implements,
+      cropPricing: window.refData.cropPricing,
+      cropTypes: window.refData.cropTypes,
+      laborOverhead: window.refData.laborOverhead,
+      seeds: window.refData.seeds,
+      buyers: window.refData.buyers || []
+    };
+    var settings = window.refData.settings;
+    var keys = ['springFertTotal', 'fallFertTotal', 'seedTotal', 'machineryTotal'];
+    var vals = {};
+    keys.forEach(function(k) { vals[k] = []; });
+
+    fields.forEach(function(f) {
+      if (!f) return;
+      var pf = JSON.parse(JSON.stringify(f));
+      (pf.inputs || []).forEach(function(inp) { delete inp.invoiceCostTotal; delete inp.actualQuantity; });
+      var b = Calc.computeFieldBudget(pf, refs, settings);
+      var acres = b.rentAcres;
+      if (!acres) return;
+      keys.forEach(function(k) {
+        var v = Calc.round2((b[k] || 0) / acres);
+        if (v > 0) vals[k].push(v);
+      });
+    });
+
+    function median(arr) {
+      if (arr.length < 3) return null;
+      var sorted = arr.slice().sort(function(a, b) { return a - b; });
+      var mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+    }
+
+    return {
+      springFert: median(vals.springFertTotal),
+      fallFert:   median(vals.fallFertTotal),
+      seed:       median(vals.seedTotal),
+      machinery:  median(vals.machineryTotal)
+    };
+  }
+
   function updatePreview() {
     if (!currentField) return;
     var refs = {
@@ -2225,6 +2272,22 @@
     (previewField.inputs || []).forEach(function(inp) { delete inp.invoiceCostTotal; delete inp.actualQuantity; });
     var budget = Calc.computeFieldBudget(previewField, refs, window.refData.settings);
 
+    // Outlier detection — flag line items more than 2× the enterprise median
+    var outliers = {};
+    if (enterpriseStats) {
+      var _ac = budget.rentAcres;
+      [['springFertTotal', 'springFert'], ['fallFertTotal', 'fallFert'],
+       ['seedTotal', 'seed'], ['machineryTotal', 'machinery']].forEach(function(pair) {
+        var val = _ac > 0 ? Calc.round2(budget[pair[0]] / _ac) : 0;
+        var med = enterpriseStats[pair[1]];
+        if (med && val > med * 2.0) {
+          outliers[pair[1]] = {
+            tooltip: 'Group median: $' + Math.round(med) + '/ac — this field: $' + Math.round(val) + '/ac (' + (val / med).toFixed(1) + '×)'
+          };
+        }
+      });
+    }
+
     // Labor detail string
     var laborDetail = '';
     if (budget.laborHoursPerAcre > 0) {
@@ -2237,10 +2300,14 @@
       dryingDetail = ' (' + currentField.harvestMoisture + '% FM)';
     }
 
-    function renderItem(label, perAcre, total, cls) {
+    function renderItem(label, perAcre, total, cls, outlierInfo) {
       var c = cls ? ' ' + cls : '';
+      if (outlierInfo) c += ' outlier';
+      var labelSpan = outlierInfo
+        ? '<span class="label" title="' + outlierInfo.tooltip + '">' + label + '</span>'
+        : '<span class="label">' + label + '</span>';
       return '<div class="prev-item' + c + '">' +
-        '<span class="label">' + label + '</span>' +
+        labelSpan +
         '<span class="val">' + util.formatMoney(perAcre) + '</span>' +
         '<span class="val val-total">' + util.formatMoney(total) + '</span>' +
         '</div>';
@@ -2269,13 +2336,13 @@
 
     // Build inputs items — include unassigned fert if any exist
     var inputItems = [
-      renderItem('Spring Fert', dispAc(budget.springFertTotal), budget.springFertTotal),
-      renderItem('Fall Fert', dispAc(budget.fallFertTotal), budget.fallFertTotal)
+      renderItem('Spring Fert', dispAc(budget.springFertTotal), budget.springFertTotal, null, outliers.springFert),
+      renderItem('Fall Fert', dispAc(budget.fallFertTotal), budget.fallFertTotal, null, outliers.fallFert)
     ];
     if (budget.unassignedFertPerAcre > 0) {
       inputItems.push(renderItem('Other Inputs', dispAc(unassignedFertTotal), unassignedFertTotal));
     }
-    inputItems.push(renderItem('Seed', dispAc(budget.seedTotal), budget.seedTotal));
+    inputItems.push(renderItem('Seed', dispAc(budget.seedTotal), budget.seedTotal, null, outliers.seed));
 
     var inputsSubtotal = budget.totalFertCost + budget.seedTotal;
     var opsSubtotal = budget.machineryTotal + budget.laborTotal + budget.overheadTotal + budget.fuelTotal;
@@ -2289,7 +2356,7 @@
         subtotalPerAcre: dispAc(inputsSubtotal),
         subtotalTotal: inputsSubtotal },
       { name: 'Operations', items: [
-        renderItem('Machinery', dispAc(budget.machineryTotal), budget.machineryTotal),
+        renderItem('Machinery', dispAc(budget.machineryTotal), budget.machineryTotal, null, outliers.machinery),
         renderItem('Labor' + laborDetail, dispAc(budget.laborTotal), budget.laborTotal),
         renderItem('Overhead', dispAc(budget.overheadTotal), budget.overheadTotal),
         renderItem('Fuel (' + budget.fuelGallonsPerAcre + ' gal)', dispAc(budget.fuelTotal), budget.fuelTotal)
