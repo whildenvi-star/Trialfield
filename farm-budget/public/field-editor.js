@@ -2222,7 +2222,7 @@
       buyers: window.refData.buyers || []
     };
     var previewField = JSON.parse(JSON.stringify(currentField));
-    (previewField.inputs || []).forEach(function(inp) { delete inp.invoiceCostTotal; });
+    (previewField.inputs || []).forEach(function(inp) { delete inp.invoiceCostTotal; delete inp.actualQuantity; });
     var budget = Calc.computeFieldBudget(previewField, refs, window.refData.settings);
 
     // Labor detail string
