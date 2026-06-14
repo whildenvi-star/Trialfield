@@ -20,6 +20,8 @@ const SOURCE_LABELS: Record<TimelineSource, string> = {
   cert: 'Organic',
   fieldops: 'FieldOps',
   grain: 'Grain',
+  observation: 'Observations',
+  claim: 'Claims',
 }
 
 const SOURCE_COLORS: Record<TimelineSource, string> = {
@@ -27,6 +29,8 @@ const SOURCE_COLORS: Record<TimelineSource, string> = {
   cert: '#7A9E7E',
   fieldops: '#6A8CAF',
   grain: '#B87333',
+  observation: '#14b8a6',
+  claim: '#a78bfa',
 }
 
 function SmallSpinner() {

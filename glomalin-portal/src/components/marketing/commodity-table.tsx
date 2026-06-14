@@ -1,12 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import type { CommodityPosition, VariantPosition, SaleInstrument, InstrumentType } from '@/lib/marketing/types'
+import type { CommodityPosition, VariantPosition, SaleInstrument, InstrumentType, YieldSummary } from '@/lib/marketing/types'
 import { instrumentPricedBu } from '@/lib/marketing/queries'
 import { Badge } from '@/components/ui/badge'
 import { Empty } from '@/components/ui/empty'
 import { formatBu } from '@/lib/fmt'
 import { colors } from '@/lib/tokens'
+
+// ── Yield / delivery helpers ───────────────────────────────────────────────────
+
+function findSettledBu(yieldSummaries: YieldSummary[], commodityName: string): number | null {
+  const needle = commodityName.toLowerCase().trim()
+  const match = yieldSummaries.find((s) => s.cropName.toLowerCase().trim() === needle)
+  return match != null ? match.totalNetBU : null
+}
+
+function isDeliverySoon(deliveryEnd: string | null): boolean {
+  if (!deliveryEnd) return false
+  const end = new Date(deliveryEnd)
+  const now = new Date()
+  const diffMs = end.getTime() - now.getTime()
+  const diffDays = diffMs / (1000 * 60 * 60 * 24)
+  return diffDays >= 0 && diffDays <= 30
+}
 
 // ── Colors / labels ────────────────────────────────────────────────────────────
 
@@ -92,6 +109,7 @@ function InstrumentRow({
   onDelete: (id: string) => void
 }) {
   const pricedBu = instrumentPricedBu(inst)
+  const deliverySoon = isDeliverySoon(inst.delivery_end)
 
   function renderDetail() {
     switch (inst.instrument_type) {
@@ -108,8 +126,13 @@ function InstrumentRow({
                 </span>
               ) : '—'}
             </td>
-            <td className="px-3 py-1.5 text-right text-glomalin-muted">
-              {fmtDelivery(inst.delivery_start, inst.delivery_end)}
+            <td className="px-3 py-1.5 text-right">
+              <span className={deliverySoon ? 'text-amber-400' : 'text-glomalin-muted'}>
+                {fmtDelivery(inst.delivery_start, inst.delivery_end)}
+              </span>
+              {deliverySoon && (
+                <span className="ml-1.5 font-mono text-[10px] text-amber-400">⚠ due soon</span>
+              )}
             </td>
             <td className="px-3 py-1.5 text-right text-glomalin-muted">
               {inst.delivered_bu > 0 ? (
@@ -141,8 +164,13 @@ function InstrumentRow({
                 </span>
               )}
             </td>
-            <td className="px-3 py-1.5 text-right text-glomalin-muted">
-              {fmtDelivery(inst.delivery_start, inst.delivery_end)}
+            <td className="px-3 py-1.5 text-right">
+              <span className={deliverySoon ? 'text-amber-400' : 'text-glomalin-muted'}>
+                {fmtDelivery(inst.delivery_start, inst.delivery_end)}
+              </span>
+              {deliverySoon && (
+                <span className="ml-1.5 font-mono text-[10px] text-amber-400">⚠ due soon</span>
+              )}
             </td>
             <td className="px-3 py-1.5 text-right text-glomalin-muted">
               {inst.delivered_bu > 0 ? (
@@ -272,7 +300,7 @@ function VariantRow({
         onClick={() => setExpanded((v) => !v)}
         className="border-t border-glomalin-border/30 cursor-pointer hover:bg-glomalin-surface/40 transition-colors"
       >
-        <td colSpan={9} className="px-0 py-0">
+        <td colSpan={10} className="px-0 py-0">
           <div className="flex items-center gap-3 pl-5 pr-4 py-2">
             <span
               className={`text-glomalin-muted text-xs transition-transform inline-block ${
@@ -317,7 +345,7 @@ function VariantRow({
 
       {expanded && vp.instruments.length === 0 && (
         <tr className="border-t border-glomalin-border/20">
-          <td colSpan={9} className="pl-16 pr-4 py-2">
+          <td colSpan={10} className="pl-16 pr-4 py-2">
             <p className="font-mono text-xs text-glomalin-muted">No instruments for this variant.</p>
           </td>
         </tr>
@@ -339,15 +367,25 @@ function VariantRow({
 
 function CommodityRow({
   pos,
+  yieldSummaries,
+  yieldAvailable,
   onEdit,
   onDelete,
 }: {
   pos: CommodityPosition
+  yieldSummaries: YieldSummary[]
+  yieldAvailable: boolean
   onEdit: (inst: SaleInstrument) => void
   onDelete: (id: string) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   const { commodity } = pos
+
+  const settledBu = yieldAvailable ? findSettledBu(yieldSummaries, commodity.name) : null
+  const settledPct =
+    settledBu != null && pos.total_estimated_bu > 0
+      ? (settledBu / pos.total_estimated_bu) * 100
+      : null
 
   const barColor = pos.pct_priced >= 80 ? colors.accent : pos.pct_priced >= 50 ? colors.info : colors.warning
 
@@ -434,8 +472,27 @@ function CommodityRow({
           )}
         </td>
 
+        {/* Settled (grain-tickets) */}
+        <td className="px-4 py-3 text-right font-mono text-sm">
+          {yieldAvailable ? (
+            settledBu != null ? (
+              <span style={{ color: '#7A9E7E' }}>
+                <span className="tabular-nums">{settledBu.toLocaleString()}</span>
+                {' bu'}
+                {settledPct != null && (
+                  <span className="text-xs ml-1 opacity-75">({settledPct.toFixed(0)}%)</span>
+                )}
+              </span>
+            ) : (
+              <span className="text-glomalin-muted">—</span>
+            )
+          ) : (
+            <span className="text-glomalin-muted text-[10px]">offline</span>
+          )}
+        </td>
+
         {/* Unpriced exposure */}
-        <td className="px-4 py-3 text-right font-mono text-sm" colSpan={4}>
+        <td className="px-4 py-3 text-right font-mono text-sm" colSpan={3}>
           {pos.unpriced_exposure_dollars != null ? (
             pos.unpriced_exposure_dollars > 0 ? (
               <span className={pos.unpriced_exposure_dollars > 200_000 ? 'text-glomalin-warning font-semibold' : 'text-glomalin-muted'}>
@@ -455,7 +512,7 @@ function CommodityRow({
 
       {expanded && pos.variants.length === 0 && (
         <tr className="border-b border-glomalin-border/50">
-          <td colSpan={9} className="pl-10 pr-4 py-3">
+          <td colSpan={10} className="pl-10 pr-4 py-3">
             <p className="font-mono text-xs text-glomalin-muted">
               No variants configured for this commodity. Use ⚙ Variants to add them.
             </p>
@@ -479,11 +536,19 @@ function CommodityRow({
 
 interface CommodityTableProps {
   positions: CommodityPosition[]
+  yieldSummaries?: YieldSummary[]
+  yieldAvailable?: boolean
   onEditInstrument: (inst: SaleInstrument) => void
   onDeleteInstrument: (id: string) => void
 }
 
-export function CommodityTable({ positions, onEditInstrument, onDeleteInstrument }: CommodityTableProps) {
+export function CommodityTable({
+  positions,
+  yieldSummaries = [],
+  yieldAvailable = false,
+  onEditInstrument,
+  onDeleteInstrument,
+}: CommodityTableProps) {
   if (positions.length === 0) {
     return <Empty title="No commodity positions" description="No positions for this crop year." />
   }
@@ -500,6 +565,9 @@ export function CommodityTable({ positions, onEditInstrument, onDeleteInstrument
             <th className="px-4 py-3 text-right text-glomalin-accent font-semibold w-40">%</th>
             <th className="px-4 py-3 text-right text-glomalin-accent font-semibold">CBOT</th>
             <th className="px-4 py-3 text-right text-glomalin-accent font-semibold">WAP</th>
+            <th className="px-4 py-3 text-right font-semibold" style={{ color: '#7A9E7E' }}>
+              Settled
+            </th>
             <th className="px-4 py-3 text-right text-glomalin-accent font-semibold" colSpan={4}>
               Unpriced / Detail
             </th>
@@ -510,6 +578,8 @@ export function CommodityTable({ positions, onEditInstrument, onDeleteInstrument
             <CommodityRow
               key={pos.commodity.id}
               pos={pos}
+              yieldSummaries={yieldSummaries}
+              yieldAvailable={yieldAvailable}
               onEdit={onEditInstrument}
               onDelete={onDeleteInstrument}
             />

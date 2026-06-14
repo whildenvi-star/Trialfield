@@ -71,6 +71,7 @@ export function MarketingWorkspace({
   priceSource: initialPriceSource,
   priceTimestamp: initialPriceTimestamp,
   yieldAvailable,
+  yieldSummaries,
   budgetFields,
   cropYear,
 }: MarketingWorkspaceProps) {
@@ -321,6 +322,8 @@ export function MarketingWorkspace({
         <HedgingDashboard
           positions={positions}
           cropYear={activeCropYear}
+          yieldAvailable={yieldAvailable}
+          yieldSummaries={yieldSummaries}
           onSwitchToContracts={() => setActiveSubTab('contracts')}
         />
       )}
@@ -338,6 +341,8 @@ export function MarketingWorkspace({
       {activeSubTab === 'contracts' && (
         <CommodityTable
           positions={positions}
+          yieldSummaries={yieldSummaries}
+          yieldAvailable={yieldAvailable}
           onEditInstrument={openEditInstrument}
           onDeleteInstrument={handleDeleteInstrument}
         />

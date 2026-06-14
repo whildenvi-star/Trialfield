@@ -10,6 +10,9 @@ async function uploadObservation(obs: PendingObservation): Promise<void> {
     const formData = new FormData()
     formData.append('note', obs.note)
     formData.append('photo', new File([obs.photoBlob], 'photo.jpg', { type: 'image/jpeg' }))
+    if (obs.registryFieldId) {
+      formData.append('registry_field_id', obs.registryFieldId)
+    }
     // Do NOT set Content-Type — browser sets it with boundary for multipart
     response = await fetch('/api/observations', {
       method: 'POST',
@@ -19,7 +22,10 @@ async function uploadObservation(obs: PendingObservation): Promise<void> {
     response = await fetch('/api/observations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ note: obs.note }),
+      body: JSON.stringify({
+        note: obs.note,
+        ...(obs.registryFieldId ? { registry_field_id: obs.registryFieldId } : {}),
+      }),
     })
   }
 
@@ -81,12 +87,12 @@ export function useObservationQueue() {
 
   // Queue-first submit: write to IDB first, then attempt upload immediately
   const submitObservation = useCallback(
-    async (note: string, photoBlob?: Blob): Promise<void> => {
+    async (note: string, photoBlob?: Blob, registryFieldId?: string): Promise<void> => {
       if (idbAvailable.current) {
         // Queue-first path: save to IDB, then try upload
         let localId: number | undefined
         try {
-          localId = await observationQueue.add({ note, photoBlob })
+          localId = await observationQueue.add({ note, photoBlob, registryFieldId })
         } catch {
           // IDB failed — fall through to direct upload
           idbAvailable.current = false
@@ -99,6 +105,7 @@ export function useObservationQueue() {
               localId,
               note,
               photoBlob,
+              registryFieldId,
               synced: 0,
               createdAt: Date.now(),
             }
@@ -113,7 +120,7 @@ export function useObservationQueue() {
       }
 
       // Direct upload fallback (Safari Private Mode or IDB unavailable)
-      const obs: PendingObservation = { note, photoBlob, synced: 0, createdAt: Date.now() }
+      const obs: PendingObservation = { note, photoBlob, registryFieldId, synced: 0, createdAt: Date.now() }
       await uploadObservation(obs)
     },
     [refreshPendingCount]

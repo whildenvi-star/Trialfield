@@ -9,12 +9,13 @@ import { type SceneType, nextScene } from '@/components/layout/scene-types'
 
 const BANNER_KEY = 'glomalin-banner-disabled'
 const SCENE_KEY = 'glomalin-scene'
+const SIDEBAR_COLLAPSED_KEY = 'glomalin-sidebar-collapsed'
 const VALID_SCENES: SceneType[] = ['mycelium', 'drone', 'seasonal']
 
 const MODULE_GROUPS: { label: string; ids: string[] }[] = [
   { label: 'Field', ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
   { label: 'Operations', ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
-  { label: 'Finance', ids: ['enterprise-summary', 'farm-budget', 'grain-tickets'] },
+  { label: 'Finance', ids: ['performance', 'enterprise-summary', 'farm-budget', 'grain-tickets'] },
   { label: 'Inputs', ids: ['seed-inventory', 'meristem-malt'] },
 ]
 
@@ -24,6 +25,11 @@ function readBannerPref(): boolean {
     const v = localStorage.getItem(BANNER_KEY)
     return v === null ? true : v === 'true'
   } catch { return true }
+}
+
+function readCollapsedPref(): boolean {
+  if (typeof window === 'undefined') return false
+  try { return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true' } catch { return false }
 }
 
 function readScenePref(): SceneType {
@@ -43,6 +49,7 @@ interface SideNavProps {
 export default function SideNav({ user, grantedModules }: SideNavProps) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState<boolean>(readCollapsedPref)
   const [bannerDisabled, setBannerDisabled] = useState<boolean>(readBannerPref)
   const [scene, setScene] = useState<SceneType>(readScenePref)
   const navRef = useRef<HTMLElement>(null)
@@ -50,9 +57,9 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
   const avatarChar = displayName.charAt(0).toUpperCase()
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-w', '220px')
+    document.documentElement.style.setProperty('--sidebar-w', collapsed ? '0px' : '220px')
     document.documentElement.style.setProperty('--portal-header-h', '0px')
-  }, [])
+  }, [collapsed])
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
 
@@ -66,6 +73,14 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [mobileOpen])
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev
+      try { localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? 'true' : 'false') } catch {}
+      return next
+    })
+  }, [])
 
   const toggleBanner = useCallback(() => {
     setBannerDisabled((prev) => {
@@ -98,9 +113,9 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
         className={[
           'fixed left-0 inset-y-0 z-50 w-[220px] flex flex-col',
           'bg-glomalin-surface border-r border-glomalin-border',
-          'transition-transform duration-200',
+          'transition-transform duration-300',
           mobileOpen ? 'translate-x-0' : '-translate-x-full',
-          'md:translate-x-0',
+          collapsed ? 'md:-translate-x-full' : 'md:translate-x-0',
         ].join(' ')}
         aria-label="Main navigation"
       >
@@ -206,6 +221,24 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
           </form>
         </div>
       </nav>
+
+      {/* Desktop collapse/expand tab */}
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        className={[
+          'fixed z-50 top-1/2 -translate-y-1/2 hidden md:flex items-center justify-center',
+          collapsed ? 'left-0' : 'left-[220px]',
+          'w-3 h-14 hover:w-5 hover:h-20 hover:translate-x-1',
+          'bg-glomalin-surface border border-l-0 border-glomalin-border rounded-r-md',
+          'transition-all duration-300 group cursor-pointer',
+        ].join(' ')}
+      >
+        <span className="text-[10px] text-glomalin-muted group-hover:text-glomalin-accent transition-colors select-none">
+          {collapsed ? '›' : '‹'}
+        </span>
+      </button>
 
       {/* Mobile backdrop */}
       {mobileOpen && (

@@ -91,6 +91,14 @@ export const MODULES: Module[] = [
     type: 'native',
   },
   {
+    id: 'performance',
+    label: 'Farm Performance',
+    sublabel: 'Season Overview & Health',
+    route: '/app/performance',
+    status: 'live',
+    type: 'native',
+  },
+  {
     id: 'enterprise-summary',
     label: 'Enterprise Summary',
     sublabel: 'Costs & Revenue by Crop',

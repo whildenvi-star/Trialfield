@@ -5,12 +5,14 @@ import {
   fetchCertActivities,
   fetchFieldOpsActivities,
   fetchGrainActivities,
+  fetchObservationActivities,
+  fetchClaimActivities,
 } from '@/lib/timeline/fetch-sources'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import type { SingleSourceResponse, TimelineEntry, TimelineSource } from '@/lib/timeline/types'
 
 /** Valid source values for the :source path param. */
-const VALID_SOURCES: TimelineSource[] = ['budget', 'cert', 'fieldops', 'grain']
+const VALID_SOURCES: TimelineSource[] = ['budget', 'cert', 'fieldops', 'grain', 'observation', 'claim']
 
 /**
  * GET /api/timeline/:fieldId/:source
@@ -61,6 +63,8 @@ export async function GET(
     cert: () => fetchCertActivities(fieldId),
     fieldops: () => fetchFieldOpsActivities(fieldId),
     grain: () => fetchGrainActivities(fieldId, year),
+    observation: () => fetchObservationActivities(fieldId),
+    claim: () => fetchClaimActivities(fieldId),
   }
 
   try {

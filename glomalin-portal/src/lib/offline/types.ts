@@ -49,6 +49,7 @@ export interface PendingObservation {
   localId?: number;          // autoIncrement key
   note: string;
   photoBlob?: Blob;          // resized JPEG blob stored in IDB
+  registryFieldId?: string;  // farm-registry field ID, optional
   synced: 0 | 1;             // 0 = pending, 1 = synced (number for reliable IDB indexing)
   createdAt: number;         // Date.now()
 }

@@ -35,4 +35,5 @@ export const MODULE_SOURCES: Record<string, { label: string; badge: string }> = 
   claims: { label: 'Claims', badge: 'CLM' },             // keep — still used by route.ts group keys
   'grain-tickets': { label: 'Grain Tickets', badge: 'GT' },
   'farm-budget': { label: 'Farm Budget', badge: 'BUDG' },
+  marketing: { label: 'Marketing', badge: 'MKT' },
 }

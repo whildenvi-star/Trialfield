@@ -16,6 +16,7 @@ export async function POST(request: Request) {
 
   let note: string | undefined
   let photoPath: string | undefined
+  let registryFieldId: string | undefined
 
   const contentType = request.headers.get('content-type') ?? ''
 
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
     }
 
     note = formData.get('note') as string | undefined
+    registryFieldId = (formData.get('registry_field_id') as string | null) ?? undefined
     const photo = formData.get('photo') as File | null
 
     if (photo && photo.size > 0) {
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
     }
     note = body.note as string | undefined
+    registryFieldId = typeof body.registry_field_id === 'string' ? body.registry_field_id : undefined
   }
 
   if (!note || typeof note !== 'string' || !note.trim()) {
@@ -59,6 +62,7 @@ export async function POST(request: Request) {
       submitted_by: user.id,
       note: note.trim(),
       photo_path: photoPath ?? null,
+      registry_field_id: registryFieldId ?? null,
     })
     .select()
     .single()

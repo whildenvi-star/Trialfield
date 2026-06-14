@@ -1,11 +1,19 @@
 'use client'
 
-import type { CommodityPosition, InstrumentType } from '@/lib/marketing/types'
+import type { CommodityPosition, InstrumentType, YieldSummary } from '@/lib/marketing/types'
 import { KpiStrip } from '@/components/ui/kpi-strip'
 import { StatCard } from '@/components/ui/stat-card'
 import { Empty } from '@/components/ui/empty'
 import { formatBu, formatUsd, formatPct } from '@/lib/fmt'
 import { colors } from '@/lib/tokens'
+
+// ── Yield summary helpers ──────────────────────────────────────────────────────
+
+function findSettledBu(yieldSummaries: YieldSummary[], commodityName: string): number | null {
+  const needle = commodityName.toLowerCase().trim()
+  const match = yieldSummaries.find((s) => s.cropName.toLowerCase().trim() === needle)
+  return match != null ? match.totalNetBU : null
+}
 
 // ── Instrument display maps ────────────────────────────────────────────────────
 
@@ -141,12 +149,22 @@ function MixStrip({ mix }: { mix: Record<InstrumentType, number> }) {
 
 function CommodityCard({
   position,
+  yieldSummaries,
+  yieldAvailable,
   onViewContracts,
 }: {
   position: CommodityPosition
+  yieldSummaries: YieldSummary[]
+  yieldAvailable: boolean
   onViewContracts: () => void
 }) {
   const { commodity, pct_priced, wap, cbot_price, unpriced_bu, unpriced_exposure_dollars, instrument_mix } = position
+  const settledBu = yieldAvailable ? findSettledBu(yieldSummaries, commodity.name) : null
+  const settledPct =
+    settledBu != null && position.total_estimated_bu > 0
+      ? (settledBu / position.total_estimated_bu) * 100
+      : null
+
   const allPreContracted =
     position.variants.length > 0 &&
     position.variants.every((vp) => vp.variant.is_contracted)
@@ -242,6 +260,28 @@ function CommodityCard({
           {/* Instrument mix */}
           <MixStrip mix={instrument_mix} />
 
+          {/* Settled bushels (grain-tickets) */}
+          {yieldAvailable && (
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-xs text-glomalin-muted">Settled</span>
+              <div className="text-right">
+                {settledBu != null ? (
+                  <span className="font-mono text-sm" style={{ color: '#7A9E7E' }}>
+                    <span className="tabular-nums">{settledBu.toLocaleString()}</span>
+                    {' bu'}
+                    {settledPct != null && (
+                      <span className="text-xs ml-1.5 opacity-75">
+                        ({settledPct.toFixed(0)}%)
+                      </span>
+                    )}
+                  </span>
+                ) : (
+                  <span className="font-mono text-sm text-glomalin-muted">—</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Open basis HTA indicator */}
           {openBasisCount > 0 && (
             <div className="flex items-center gap-2 rounded border border-glomalin-warning/30 bg-glomalin-warning/10 px-2.5 py-1.5">
@@ -302,10 +342,12 @@ function CommodityCard({
 interface HedgingDashboardProps {
   positions: CommodityPosition[]
   cropYear: number
+  yieldAvailable: boolean
+  yieldSummaries: YieldSummary[]
   onSwitchToContracts: () => void
 }
 
-export function HedgingDashboard({ positions, cropYear, onSwitchToContracts }: HedgingDashboardProps) {
+export function HedgingDashboard({ positions, cropYear, yieldAvailable, yieldSummaries, onSwitchToContracts }: HedgingDashboardProps) {
   if (positions.length === 0) {
     return (
       <Empty
@@ -323,6 +365,8 @@ export function HedgingDashboard({ positions, cropYear, onSwitchToContracts }: H
           <CommodityCard
             key={pos.commodity.id}
             position={pos}
+            yieldSummaries={yieldSummaries}
+            yieldAvailable={yieldAvailable}
             onViewContracts={onSwitchToContracts}
           />
         ))}

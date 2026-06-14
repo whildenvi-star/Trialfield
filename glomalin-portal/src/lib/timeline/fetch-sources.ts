@@ -11,6 +11,7 @@ import {
   fetchGrainService,
 } from '@/app/api/mobile/_lib/proxy'
 import { resolveFieldEnterpriseId } from '@/app/api/mobile/_lib/cert-bridge'
+import { createClient } from '@/lib/supabase/server'
 import type { TimelineEntry, TimelineSource } from './types'
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -321,14 +322,120 @@ export async function fetchGrainActivities(
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// Field observations source
+// ────────────────────────────────────────────────────────────────────────────
+
+export async function fetchObservationActivities(
+  registryFieldId: string
+): Promise<TimelineEntry[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('field_observations')
+    .select('id, note, photo_path, submitted_by, created_at')
+    .eq('registry_field_id', registryFieldId)
+
+  if (error) throw new Error(`field_observations query failed: ${error.message}`)
+  if (!data || data.length === 0) return []
+
+  return data.map((row): TimelineEntry => {
+    const rawDate: string | null = row.created_at
+      ? new Date(row.created_at).toISOString().split('T')[0]
+      : null
+    const noteText: string = row.note ?? ''
+    const truncated = noteText.length > 60 ? noteText.slice(0, 60) + '…' : noteText
+    const summaryBody = truncated || 'Photo'
+    return {
+      id: `observation-${row.id}`,
+      source: 'observation',
+      date: rawDate,
+      sortDate: rawDate ?? '9999-12-31',
+      activityType: 'Field Observation',
+      summary: `[Observation] ${summaryBody}`,
+      detail: {
+        notes: row.note ?? null,
+        photo_path: row.photo_path ?? null,
+        submitted_by: row.submitted_by ?? null,
+      },
+      status: 'completed',
+      pairedWith: null,
+      sourceLink: '/app/observations',
+    }
+  })
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Insurance claims source
+// ────────────────────────────────────────────────────────────────────────────
+
+export async function fetchClaimActivities(
+  registryFieldId: string
+): Promise<TimelineEntry[]> {
+  const supabase = await createClient()
+
+  const { data: boundary } = await supabase
+    .from('field_boundaries')
+    .select('name')
+    .eq('registry_field_id', registryFieldId)
+    .maybeSingle()
+
+  if (!boundary) return []
+
+  const boundaryName: string = boundary.name ?? ''
+
+  const { data: policies, error: policiesError } = await supabase
+    .from('insurance_policies')
+    .select('id')
+    .eq('farm_name', boundaryName)
+
+  if (policiesError) throw new Error(`insurance_policies query failed: ${policiesError.message}`)
+  if (!policies || policies.length === 0) return []
+
+  const policyIds = policies.map((p) => p.id)
+
+  const { data: claims, error: claimsError } = await supabase
+    .from('claims')
+    .select('id, stage, crop, date_of_loss, description, deadline_at')
+    .in('policy_id', policyIds)
+
+  if (claimsError) throw new Error(`claims query failed: ${claimsError.message}`)
+  if (!claims || claims.length === 0) return []
+
+  return claims.map((row): TimelineEntry => {
+    const rawDate: string | null = row.date_of_loss
+      ? new Date(row.date_of_loss).toISOString().split('T')[0]
+      : null
+    const descPart = row.description
+      ? ' · ' + (row.description as string).slice(0, 40)
+      : ''
+    return {
+      id: `claim-${row.id}`,
+      source: 'claim',
+      date: rawDate,
+      sortDate: rawDate ?? '9999-12-31',
+      activityType: 'Insurance Claim',
+      summary: `[Claim] ${row.crop ?? 'Crop'} — ${row.stage}${descPart}`,
+      detail: {
+        stage: row.stage ?? null,
+        crop: row.crop ?? null,
+        deadline_at: row.deadline_at ?? null,
+      },
+      status: row.stage === 'closed' ? 'completed' : 'confirmed',
+      pairedWith: null,
+      sourceLink: '/app/compliance?tab=claims',
+    }
+  })
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // Merge aggregator
 // ────────────────────────────────────────────────────────────────────────────
 
 /** Source priority for same-date tie-breaking (lower index = higher priority). */
-const SOURCE_PRIORITY: TimelineSource[] = ['cert', 'fieldops', 'budget', 'grain']
+const SOURCE_PRIORITY: TimelineSource[] = ['cert', 'fieldops', 'budget', 'grain', 'observation', 'claim']
 
 /**
- * Merge results from Promise.allSettled across all 4 sources into a unified
+ * Merge results from Promise.allSettled across all sources into a unified
  * sorted entry list with a warnings array for failed sources.
  *
  * - Fulfilled results contribute their entries.

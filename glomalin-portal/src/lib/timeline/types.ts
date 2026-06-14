@@ -3,10 +3,11 @@
  * These types are used across the data layer (fetch-sources.ts),
  * the aggregated route (/api/timeline/[fieldId]), and the per-source
  * progressive-loading routes (/api/timeline/[fieldId]/[source]).
+ * Sources: budget, cert, fieldops, grain, observation, claim.
  */
 
-/** The 4 data sources that contribute to a field's activity timeline. */
-export type TimelineSource = 'budget' | 'cert' | 'fieldops' | 'grain'
+/** The 6 data sources that contribute to a field's activity timeline. */
+export type TimelineSource = 'budget' | 'cert' | 'fieldops' | 'grain' | 'observation' | 'claim'
 
 /**
  * A unified activity record in the timeline, regardless of source.

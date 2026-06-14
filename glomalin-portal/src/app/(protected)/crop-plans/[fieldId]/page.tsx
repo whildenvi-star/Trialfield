@@ -55,6 +55,20 @@ function sortKeyForType(type: string): number {
   return OP_SORT_ORDER[upper] ?? OP_SORT_ORDER.OTHER
 }
 
+// ─── marketing position types ─────────────────────────────────────────────────
+
+interface MarketingVariant {
+  id: string
+  name: string
+  estimated_bu: number | null
+  priced_bu: number
+  pct_priced: number
+}
+
+interface MarketingPos {
+  variants: MarketingVariant[]
+}
+
 // ─── pass shape used locally (extends CachedCropPlan pass) ────────────────────
 
 interface PassState {
@@ -369,6 +383,7 @@ export default function CropPlanDetailPage() {
   const [plan, setPlan] = useState<CachedCropPlan | null>(null)
   const [passes, setPasses] = useState<PassState[]>([])
   const [operators, setOperators] = useState<OperatorRecord[]>([])
+  const [marketingPos, setMarketingPos] = useState<MarketingPos | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toastError, setToastError] = useState<string | null>(null)
@@ -591,6 +606,15 @@ export default function CropPlanDetailPage() {
         }
 
         setPlan(loadedPlan)
+
+        // Fetch marketing position non-critically (fire-and-forget)
+        if (loadedPlan.crop) {
+          fetch(`/api/crop-plans/${fieldId}/marketing?crop=${encodeURIComponent(loadedPlan.crop)}`)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d: MarketingPos | null) => d && setMarketingPos(d))
+            .catch(() => {})
+        }
+
         // Initialize mutable passes array from plan
         setPasses(
           loadedPlan.passes.map((p) => ({
@@ -1045,6 +1069,53 @@ export default function CropPlanDetailPage() {
           </div>
         </dl>
       </div>
+
+      {/* ── Marketing Position ───────────────────────────────────────────────── */}
+      {marketingPos && marketingPos.variants.length > 0 && (
+        <div className="mt-4 rounded-lg border bg-card p-4" style={{ borderColor: '#2a2218' }}>
+          <h2 className="mb-3 text-lg font-semibold">Marketing Position</h2>
+          <div className="space-y-4">
+            {marketingPos.variants.map((variant) => {
+              const pct = Math.min(100, Math.max(0, variant.pct_priced))
+              return (
+                <div key={variant.id}>
+                  <p className="mb-1 text-sm font-medium" style={{ color: '#e8d8c0' }}>
+                    {variant.name}
+                  </p>
+                  <div className="flex gap-2 text-sm">
+                    <span style={{ color: '#6a5a4a' }}>Estimated:</span>
+                    <span>{variant.estimated_bu != null ? variant.estimated_bu.toLocaleString() : '—'} bu</span>
+                  </div>
+                  <div className="flex gap-2 text-sm">
+                    <span style={{ color: '#6a5a4a' }}>Priced:</span>
+                    <span>
+                      {variant.priced_bu.toLocaleString()} bu ({pct.toFixed(0)}%)
+                    </span>
+                  </div>
+                  {/* Progress bar */}
+                  <div
+                    className="mt-2 h-1.5 w-full overflow-hidden rounded-full"
+                    style={{ backgroundColor: '#2a2218' }}
+                    role="progressbar"
+                    aria-valuenow={Math.round(pct)}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`${pct.toFixed(0)}% of ${variant.name} priced`}
+                  >
+                    <div
+                      className="h-full rounded-full transition-all duration-300"
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: '#C8860A',
+                      }}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Inputs ───────────────────────────────────────────────────────────── */}
       <div className="mt-6">

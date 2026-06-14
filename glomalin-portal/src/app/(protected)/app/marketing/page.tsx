@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { MarketingWorkspace } from '@/components/marketing/marketing-workspace'
+import { YearSelector } from '@/components/ui/year-selector'
 import { computeCommodityPositions } from '@/lib/marketing/queries'
 import {
   fetchBudgetService,
@@ -15,9 +16,14 @@ const COMMODITY_MAP = [
   { symbol: 'ZOZ26', commodity: 'Oats',     fallbackPrice: 3.5 },
 ]
 
-export default async function MarketingPage() {
+export default async function MarketingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string }>
+}) {
+  const { year: yearParam } = await searchParams
+  const cropYear = yearParam ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
   const supabase = await createClient()
-  const cropYear = CURRENT_CROP_YEAR
 
   const [
     { data: commodities },
@@ -104,19 +110,24 @@ export default async function MarketingPage() {
   )
 
   return (
-    <MarketingWorkspace
-      commodities={commodities ?? []}
-      initialVariants={variants ?? []}
-      initialInstruments={instruments ?? []}
-      initialCommodityPositions={positions}
-      initialPricingConfigs={pricingConfigs ?? []}
-      cbotPrices={cbotPrices}
-      priceSource={priceSource}
-      priceTimestamp={priceTimestamp}
-      yieldAvailable={yieldAvailable}
-      yieldSummaries={yieldSummaries}
-      budgetFields={budgetFields}
-      cropYear={cropYear}
-    />
+    <div className="flex flex-col min-h-0">
+      <div className="flex items-center justify-end px-4 pt-4 pb-0">
+        <YearSelector currentYear={cropYear} />
+      </div>
+      <MarketingWorkspace
+        commodities={commodities ?? []}
+        initialVariants={variants ?? []}
+        initialInstruments={instruments ?? []}
+        initialCommodityPositions={positions}
+        initialPricingConfigs={pricingConfigs ?? []}
+        cbotPrices={cbotPrices}
+        priceSource={priceSource}
+        priceTimestamp={priceTimestamp}
+        yieldAvailable={yieldAvailable}
+        yieldSummaries={yieldSummaries}
+        budgetFields={budgetFields}
+        cropYear={cropYear}
+      />
+    </div>
   )
 }

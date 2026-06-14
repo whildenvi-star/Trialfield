@@ -22,7 +22,11 @@ interface Feedback {
   message: string
 }
 
-export function ObservationForm() {
+interface ObservationFormProps {
+  registryFieldId?: string
+}
+
+export function ObservationForm({ registryFieldId }: ObservationFormProps) {
   const photoRef = useRef<HTMLInputElement>(null)
   const [note, setNote] = useState('')
   const [photoBlob, setPhotoBlob] = useState<Blob | null>(null)
@@ -77,7 +81,7 @@ export function ObservationForm() {
     setFeedback(null)
 
     try {
-      await submitObservation(note.trim(), photoBlob ?? undefined)
+      await submitObservation(note.trim(), photoBlob ?? undefined, registryFieldId)
       setNote('')
       setPhotoBlob(null)
       if (previewUrl) {

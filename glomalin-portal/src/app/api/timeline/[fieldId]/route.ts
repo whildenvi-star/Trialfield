@@ -5,6 +5,8 @@ import {
   fetchCertActivities,
   fetchFieldOpsActivities,
   fetchGrainActivities,
+  fetchObservationActivities,
+  fetchClaimActivities,
   mergeTimeline,
 } from '@/lib/timeline/fetch-sources'
 import { fetchRegistryService } from '@/app/api/mobile/_lib/proxy'
@@ -14,7 +16,7 @@ import type { TimelineResponse } from '@/lib/timeline/types'
 /**
  * GET /api/timeline/:fieldId
  *
- * Aggregated timeline endpoint — fetches all 4 sources in parallel via
+ * Aggregated timeline endpoint — fetches all sources in parallel via
  * Promise.allSettled, merges entries into a single chronological list,
  * and returns a TimelineResponse with partial data + warnings if any
  * source is unavailable.
@@ -69,12 +71,14 @@ export async function GET(
 
     const fieldName: string = registryField.name ?? fieldId
 
-    // Fetch all 4 sources in parallel — partial failures produce warnings, not errors
+    // Fetch all sources in parallel — partial failures produce warnings, not errors
     const results = await Promise.allSettled([
       fetchBudgetActivities(fieldId),
       fetchCertActivities(fieldId),
       fetchFieldOpsActivities(fieldId),
       fetchGrainActivities(fieldId, year),
+      fetchObservationActivities(fieldId),
+      fetchClaimActivities(fieldId),
     ])
 
     const { entries, warnings } = mergeTimeline(results, [
@@ -82,6 +86,8 @@ export async function GET(
       'cert',
       'fieldops',
       'grain',
+      'observation',
+      'claim',
     ])
 
     const response: TimelineResponse = {

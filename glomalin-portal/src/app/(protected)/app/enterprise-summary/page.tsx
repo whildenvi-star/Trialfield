@@ -2,6 +2,7 @@ import { fetchBudgetService, fetchGrainService } from '@/app/api/mobile/_lib/pro
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { Badge } from '@/components/ui/badge'
 import { Empty } from '@/components/ui/empty'
+import { YearSelector } from '@/components/ui/year-selector'
 import { createClient } from '@/lib/supabase/server'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -76,8 +77,14 @@ function subtotal(rows: SummaryRow[]) {
 
 // ── Page (Server Component) ───────────────────────────────────────────────────
 
-export default async function EnterpriseSummaryPage() {
-  // 0. Resolve role for role-gated financial data on mobile
+export default async function EnterpriseSummaryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string }>
+}) {
+  const { year: yearParam } = await searchParams
+  const cropYear = yearParam ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   let role = 'viewer'
@@ -109,7 +116,7 @@ export default async function EnterpriseSummaryPage() {
   let settlementRows: SettlementRow[] = []
   let settlementAvailable = false
   try {
-    const res = await fetchGrainService(`/api/settlement-summary?cropYear=${CURRENT_CROP_YEAR}`)
+    const res = await fetchGrainService(`/api/settlement-summary?cropYear=${cropYear}`)
     if (res.ok) {
       const data = await res.json() as { summary?: SettlementRow[] }
       settlementRows = data.summary ?? []
@@ -170,9 +177,12 @@ export default async function EnterpriseSummaryPage() {
   return (
     <div className="p-4 md:p-6 max-w-6xl">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-glomalin-text mb-1">Enterprise Summary</h1>
-        <p className="text-sm text-glomalin-muted">{CURRENT_CROP_YEAR} crop year · seed, inputs, drying &amp; insurance costs</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-glomalin-text mb-1">Enterprise Summary</h1>
+          <p className="text-sm text-glomalin-muted">{cropYear} crop year · seed, inputs, drying &amp; insurance costs</p>
+        </div>
+        <YearSelector currentYear={cropYear} />
       </div>
 
       {/* Banners */}
@@ -183,7 +193,7 @@ export default async function EnterpriseSummaryPage() {
       )}
       {!settlementAvailable && !budgetOffline && (
         <div className="mb-4 px-4 py-3 bg-glomalin-surface border border-glomalin-border text-glomalin-muted text-sm rounded">
-          Revenue shows budget estimates — no settlement data on record for {CURRENT_CROP_YEAR}
+          Revenue shows budget estimates — no settlement data on record for {cropYear}
         </div>
       )}
 

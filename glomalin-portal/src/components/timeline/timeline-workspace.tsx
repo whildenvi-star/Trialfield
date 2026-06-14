@@ -7,13 +7,15 @@ import { TimelineFilters } from './timeline-filters'
 import { TimelineEntryCard } from './timeline-entry-card'
 import { TimelineExport } from './timeline-export'
 
-const ALL_SOURCES: TimelineSource[] = ['budget', 'cert', 'fieldops', 'grain']
+const ALL_SOURCES: TimelineSource[] = ['budget', 'cert', 'fieldops', 'grain', 'observation', 'claim']
 
 export const SOURCE_COLORS: Record<TimelineSource, string> = {
   budget: '#C8860A',
   cert: '#7A9E7E',
   fieldops: '#6A8CAF',
   grain: '#B87333',
+  observation: '#14b8a6',
+  claim: '#a78bfa',
 }
 
 /** Sort entries by sortDate ascending, then by source priority (cert before budget for same date). */
@@ -22,6 +24,8 @@ const SOURCE_PRIORITY: Record<TimelineSource, number> = {
   fieldops: 1,
   budget: 2,
   grain: 3,
+  observation: 4,
+  claim: 5,
 }
 
 function sortByDate(entries: TimelineEntry[]): TimelineEntry[] {
@@ -72,6 +76,8 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
     cert: false,
     fieldops: false,
     grain: false,
+    observation: false,
+    claim: false,
   })
   const [activeSources, setActiveSources] = useState<Set<TimelineSource>>(
     new Set(ALL_SOURCES)
@@ -94,9 +100,9 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
     setEntries([])
     setWarnings([])
     setExpandedIds(new Set())
-    setSourceLoading({ budget: true, cert: true, fieldops: true, grain: true })
+    setSourceLoading({ budget: true, cert: true, fieldops: true, grain: true, observation: true, claim: true })
 
-    // Fire 4 independent parallel fetches — each resolves/fails independently
+    // Fire independent parallel fetches per source — each resolves/fails independently
     ALL_SOURCES.forEach((source) => {
       fetch(`/api/timeline/${fieldId}/${source}?year=${year}`, {
         signal: controller.signal,

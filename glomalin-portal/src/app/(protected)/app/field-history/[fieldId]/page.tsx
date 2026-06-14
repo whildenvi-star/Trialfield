@@ -6,6 +6,13 @@ import Link from 'next/link'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+interface AphRecord {
+  crop: string
+  crop_year: number
+  actual_yield: number
+  is_disaster_year: boolean
+}
+
 interface TillageOp {
   id: string
   operationDate: string | null
@@ -89,11 +96,17 @@ function fertilityLabel(type: string) {
 
 // ── Year Card ─────────────────────────────────────────────────────────────────
 
-function YearCard({ ent }: { ent: Enterprise }) {
+function YearCard({ ent, aphRecords }: { ent: Enterprise; aphRecords: AphRecord[] }) {
   const [open, setOpen] = useState(false)
   const isImported =
     ent.fieldOperations.some((o) => o.dataSource === 'IMPORTED') ||
     ent.harvestEvents.some((h) => h.dataSource === 'IMPORTED')
+
+  const matchingAph = aphRecords.filter(
+    (r) =>
+      r.crop_year === ent.cropYear &&
+      r.crop.toLowerCase() === ent.crop.toLowerCase()
+  )
 
   const fertilityByType = ent.fertilityEvents.reduce<Record<string, FertilityEvent[]>>(
     (acc, f) => {
@@ -238,6 +251,26 @@ function YearCard({ ent }: { ent: Enterprise }) {
             </div>
           )}
 
+          {/* APH yield */}
+          {matchingAph.length > 0 && (
+            <div>
+              <div className="text-[10px] text-glomalin-muted uppercase tracking-wider mb-1.5">
+                APH yield
+              </div>
+              <div className="space-y-1">
+                {matchingAph.map((record) => (
+                  <div key={record.crop_year} className="flex items-start gap-2 text-xs">
+                    <span className="text-glomalin-muted w-24 shrink-0">{record.crop_year}</span>
+                    <span className="text-green-400">{record.actual_yield.toFixed(1)} bu/ac</span>
+                    {record.is_disaster_year && (
+                      <span className="text-amber-400 text-[10px]">disaster yr</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Lot number */}
           {ent.lotNumber && (
             <div className="text-xs text-glomalin-muted">
@@ -257,6 +290,7 @@ export default function FieldHistoryDetailPage() {
   const [field, setField] = useState<FieldDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [aphRecords, setAphRecords] = useState<AphRecord[]>([])
 
   useEffect(() => {
     if (!fieldId) return
@@ -268,6 +302,10 @@ export default function FieldHistoryDetailPage() {
       .then((d) => setField(d.field))
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false))
+    fetch(`/api/field-history/${fieldId}/aph`)
+      .then((r) => (r.ok ? r.json() : { records: [] }))
+      .then((d) => setAphRecords(d.records ?? []))
+      .catch(() => {})
   }, [fieldId])
 
   if (loading) {
@@ -341,7 +379,7 @@ export default function FieldHistoryDetailPage() {
       ) : (
         <div className="space-y-1">
           {field.enterprises.map((ent) => (
-            <YearCard key={ent.id} ent={ent} />
+            <YearCard key={ent.id} ent={ent} aphRecords={aphRecords} />
           ))}
         </div>
       )}
