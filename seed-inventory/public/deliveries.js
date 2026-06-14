@@ -354,7 +354,7 @@
           saveBtn.disabled = false;
           selectProduct(created.id);
         });
-        statusEl.textContent = 'Syncing to Enterprise Planner…';
+        statusEl.textContent = 'Saved to inventory…';
       }).catch(function (err) {
         saveBtn.disabled = false;
         statusEl.textContent = 'Error: ' + (err.message || 'Save failed');
