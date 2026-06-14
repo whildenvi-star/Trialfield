@@ -18,7 +18,6 @@ const MODULE_ORDER = [
   'field-history',
   'weather',
   'maps',
-  'observations',
   'enterprise-summary',
   'compliance',
   'marketing',
@@ -48,6 +47,10 @@ export function DashboardGrid({ role, grantedModuleIds }: DashboardGridProps) {
     )
   }
 
+  const fullWidthIds = new Set(['field-ops', 'field-history'])
+  const fullWidthModules = visibleModules.filter(m => fullWidthIds.has(m.id))
+  const gridModules = visibleModules.filter(m => !fullWidthIds.has(m.id))
+
   return (
     <div className="flex flex-col gap-3 px-4 py-4">
       {!isOnline && lastSyncAt && (
@@ -55,24 +58,26 @@ export function DashboardGrid({ role, grantedModuleIds }: DashboardGridProps) {
           Offline — showing data from {lastSyncAt}
         </p>
       )}
-      {visibleModules.map((m) => {
-        switch (m.id) {
-          case 'field-ops':
-            return <FieldOpsCard key={m.id} plans={plans} role={role} />
-          case 'field-history':
-            return <CropPlanCard key={m.id} plans={plans} />
-          default:
-            return (
-              <DashboardCard
-                key={m.id}
-                moduleId={m.id}
-                moduleName={m.label}
-                href={m.route}
-                subtitle={m.sublabel}
-              />
-            )
-        }
+      {/* Full-width data cards */}
+      {fullWidthModules.map((m) => {
+        if (m.id === 'field-ops') return <FieldOpsCard key={m.id} plans={plans} role={role} />
+        if (m.id === 'field-history') return <CropPlanCard key={m.id} plans={plans} />
+        return null
       })}
+      {/* 2-column grid for generic module cards */}
+      {gridModules.length > 0 && (
+        <div className="grid grid-cols-2 gap-3">
+          {gridModules.map((m) => (
+            <DashboardCard
+              key={m.id}
+              moduleId={m.id}
+              moduleName={m.label}
+              href={m.route}
+              subtitle={m.sublabel}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
