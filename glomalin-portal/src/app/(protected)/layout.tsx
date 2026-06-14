@@ -8,6 +8,8 @@ import { MobileHeader } from '@/components/layout/mobile-header'
 import { MobileBottomNav } from '@/components/layout/mobile-bottom-nav'
 import { SyncStatusProvider } from '@/components/pwa/sync-status-provider'
 import { ConflictDrawer } from '@/components/offline/conflict-drawer'
+import { CommandPalette } from '@/components/layout/command-palette'
+import { TransitionWrapper } from '@/components/layout/transition-wrapper'
 
 export default async function ProtectedLayout({
   children,
@@ -63,19 +65,27 @@ export default async function ProtectedLayout({
       </div>
 
       {/* Content area: offset on desktop, bottom-padded on mobile */}
-      <div className="md:ml-[220px] pb-[56px] md:pb-0">
+      <div
+        className="md:ml-[var(--sidebar-w)] pb-[56px] md:pb-0"
+        style={{ transition: 'margin-left 300ms cubic-bezier(0.4,0,0.2,1)' }}
+      >
         <Suspense fallback={null}>
           <DeniedToast />
         </Suspense>
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </main>
+        <TransitionWrapper>
+          <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            {children}
+          </main>
+        </TransitionWrapper>
       </div>
 
       {/* Mobile: BottomNav — visible on mobile only */}
       <div className="md:hidden">
         <MobileBottomNav grantedModuleIds={grantedModuleIds} />
       </div>
+
+      {/* Command palette — global, above everything */}
+      <CommandPalette grantedModules={grantedModules} />
     </div>
   )
 }

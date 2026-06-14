@@ -9,6 +9,13 @@ interface MobileBottomNavProps {
   grantedModuleIds: string[]
 }
 
+const MODULE_GROUPS: { label: string; ids: string[] }[] = [
+  { label: 'Field',      ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
+  { label: 'Operations', ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
+  { label: 'Finance',    ids: ['performance', 'enterprise-summary', 'farm-budget', 'grain-tickets'] },
+  { label: 'Inputs',     ids: ['seed-inventory', 'meristem-malt'] },
+]
+
 const MAIN_TABS = [
   { label: 'Home',         href: '/dashboard',          action: undefined,      icon: 'home'  as const },
   { label: 'Farm Info',    href: '/app/field-history',  action: undefined,      icon: 'field' as const },
@@ -130,13 +137,7 @@ export function MobileBottomNav({ grantedModuleIds }: MobileBottomNavProps) {
     setSheetOpen(false)
   }, [pathname])
 
-  // Modules shown in the "More" sheet: granted + not already in main tabs
-  const moreModules = MODULES.filter(
-    (mod) =>
-      grantedModuleIds.includes(mod.id) &&
-      !MAIN_TAB_HREFS.has(mod.route) &&
-      mod.route !== '/dashboard'
-  )
+  const moduleById = Object.fromEntries(MODULES.map((m) => [m.id, m]))
 
   function isTabActive(href: string | undefined): boolean {
     if (!href) return false
@@ -180,24 +181,36 @@ export function MobileBottomNav({ grantedModuleIds }: MobileBottomNavProps) {
           </button>
         </div>
 
-        {/* Module list */}
+        {/* Grouped module list */}
         <div className="overflow-y-auto max-h-[60vh] pb-[56px]">
-          {moreModules.length === 0 ? (
-            <p className="px-4 py-6 text-sm font-mono text-glomalin-muted text-center">
-              No additional modules available.
-            </p>
-          ) : (
-            moreModules.map((mod) => (
-              <Link
-                key={mod.id}
-                href={`/app/${mod.id}`}
-                onClick={() => setSheetOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm font-mono text-glomalin-text border-b border-glomalin-border last:border-0 hover:bg-glomalin-border/40 transition-colors"
-              >
-                {mod.label}
-              </Link>
-            ))
-          )}
+          {MODULE_GROUPS.map((group) => {
+            const mods = group.ids
+              .map((id) => moduleById[id])
+              .filter((m) => m && grantedModuleIds.includes(m.id) && !MAIN_TAB_HREFS.has(m.route))
+            if (mods.length === 0) return null
+            return (
+              <div key={group.label}>
+                <p className="px-4 pt-4 pb-1.5 text-[10px] font-mono font-medium uppercase tracking-widest text-glomalin-muted select-none">
+                  {group.label}
+                </p>
+                {mods.map((mod) => (
+                  <Link
+                    key={mod!.id}
+                    href={mod!.route}
+                    onClick={() => setSheetOpen(false)}
+                    className={[
+                      'flex items-center px-4 py-3 text-sm font-sans transition-colors',
+                      pathname.startsWith(mod!.route)
+                        ? 'text-glomalin-accent bg-glomalin-highlight'
+                        : 'text-glomalin-text hover:bg-glomalin-border/40',
+                    ].join(' ')}
+                  >
+                    {mod!.label}
+                  </Link>
+                ))}
+              </div>
+            )
+          })}
         </div>
       </div>
 

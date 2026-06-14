@@ -35,6 +35,15 @@ const config: Config = {
         'xl':  '12px',
         '2xl': '16px',
       },
+      keyframes: {
+        'page-enter': {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to:   { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'page-enter': 'page-enter 200ms ease-out',
+      },
     },
   },
   plugins: [],

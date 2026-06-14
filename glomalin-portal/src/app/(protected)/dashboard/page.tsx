@@ -1,11 +1,11 @@
-import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MODULES } from '@/lib/modules'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+import { DashboardDesktop } from '@/components/dashboard/DashboardDesktop'
 import { FieldMap } from '@/components/maps/field-map'
 
-// Preserve FieldMap for desktop; render mobile card grid on small screens
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -17,9 +17,13 @@ export default async function DashboardPage() {
   ])
 
   const role = profile?.role ?? 'viewer'
-  const grantedModuleIds: string[] = role === 'admin'
-    ? MODULES.map((m) => m.id)
+  const grantedModules: string[] | null = role === 'admin'
+    ? null
     : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)
+
+  const grantedModuleIds: string[] = grantedModules === null
+    ? MODULES.map((m) => m.id)
+    : grantedModules
 
   return (
     <>
@@ -27,13 +31,14 @@ export default async function DashboardPage() {
       <div className="md:hidden overflow-y-auto h-full">
         <DashboardGrid role={role} grantedModuleIds={grantedModuleIds} />
       </div>
-      {/* Desktop: existing FieldMap */}
-      <div className="hidden md:block h-full">
-        <div className="fixed inset-0 md:left-[220px]">
-          <Suspense fallback={<div className="w-full h-full bg-[#080604] animate-pulse" />}>
+
+      {/* Desktop: map + command panel */}
+      <div className="hidden md:block">
+        <DashboardDesktop grantedModules={grantedModules}>
+          <Suspense fallback={<div className="w-full h-full bg-glomalin-bg animate-pulse" />}>
             <FieldMap isAdmin={role === 'admin'} />
           </Suspense>
-        </div>
+        </DashboardDesktop>
       </div>
     </>
   )
