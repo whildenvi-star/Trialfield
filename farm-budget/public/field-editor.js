@@ -2221,7 +2221,9 @@
       seeds: window.refData.seeds,
       buyers: window.refData.buyers || []
     };
-    var budget = Calc.computeFieldBudget(currentField, refs, window.refData.settings);
+    var previewField = JSON.parse(JSON.stringify(currentField));
+    (previewField.inputs || []).forEach(function(inp) { delete inp.invoiceCostTotal; });
+    var budget = Calc.computeFieldBudget(previewField, refs, window.refData.settings);
 
     // Labor detail string
     var laborDetail = '';
