@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v12.0 milestone complete — all phases 68–71 done. Planning Phase 72: As-Applied Data Overlay.
+**Current focus:** v13.0 — Phase 72: Acreage Reconciliation Tool. Context gathered, ready for planning.
 
 ## Current Position
 
-Phase: 71 of 71 (Unified Field Operations View) — COMPLETE
-Plan: 3 of 3 complete
-Status: v12.0 fully complete. Phase 70 deployed to production (build ID BVUnIDLlxYo1-m8S-qAHz, PM2 online). Phase 70 browser verify deferred. Ready to plan Phase 72: As-Applied Data Overlay on field map.
-Last activity: 2026-06-14 - Phase 70 Plan 05 executed: synced build to droplet, PM2 restarted, /app/maps live at 200 OK
+Phase: 72 (Acreage Reconciliation Tool) — CONTEXT GATHERED
+Plan: 0 of 0 (planning next)
+Status: Phase 72 context gathered 2026-06-14. Replaces Compliance Hub Acreage tab with full spatial reconciliation tool (FSA CLU + FieldView as-planted + Glomalin registry, PostGIS spatial engine, manual editing hard requirement). Ready to plan.
+Last activity: 2026-06-14 - Phase 72 context gathered: acreage reconciliation tool spec locked
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | v12.0 [██████████] COMPLETE
 
