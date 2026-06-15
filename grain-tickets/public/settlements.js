@@ -1570,6 +1570,7 @@
       } else {
         varianceClass = Math.abs(variancePct) <= 1 ? 'variance-ok' : 'variance-warn';
       }
+      tr.className = varianceClass === 'variance-ok' ? 'row-matched' : 'row-disputed';
       var varianceLbs = row.varianceLbs || 0;
       var varianceSign = varianceLbs >= 0 ? '+' : '';
       var varianceDisplay = varianceSign + Math.round(varianceLbs).toLocaleString() + ' lbs (' + varianceSign + variancePct.toFixed(2) + '%)';
@@ -2045,6 +2046,12 @@
 
   // --- Build a single matched line row (normal or dispute-editing mode) ---
   function buildMatchedLineRow(tr, line) {
+    // Color-code row by match status
+    var rowClass = line.matchStatus === 'disputed' ? 'row-disputed'
+      : (line.matchStatus === 'matched' || line.matchStatus === 'manual') ? 'row-matched'
+      : '';
+    tr.className = rowClass;
+
     var statusClass = 'badge-' + (line.matchStatus || 'unreconciled');
     var statusLabel = { matched: 'Matched', manual: 'Manual', disputed: 'Disputed' }[line.matchStatus] || line.matchStatus;
 

@@ -159,6 +159,7 @@
 - [x] Phase 69: Field Operations TC Log (0/0 plans) (completed 2026-04-18)
 - [ ] Phase 70: Interactive Field Map (0/0 plans)
 - [x] Phase 71: Unified Field Operations View (0/0 plans) (completed 2026-04-20)
+- [ ] Phase 72: As-Applied Data Overlay (0/0 plans)
 
 </details>
 
@@ -554,4 +555,23 @@ Plans:
 - [ ] 71-01-PLAN.md — Group classifier module (field-ops-groups.js) + Field Ops panel HTML skeleton in index.html
 - [ ] 71-02-PLAN.md — renderFieldOpsPanel() rendering with grouped items, type badges, subtotals, grand total; remove Inputs/Machinery nav items; add CSS
 - [ ] 71-03-PLAN.md — Cross-group drag-and-drop + inline add-item form + human verify checkpoint
+
+### Phase 72: As-Applied Data Overlay
+
+**Goal:** Overlay as-applied field operation data on the interactive field map — showing prescription vs. actual application data for each field polygon, sourced from Case IH API exports or manual upload, so farm managers can visually verify coverage and identify missed areas.
+
+**Milestone:** v13.0
+
+**Depends on**: Phase 70 (Interactive Field Map — field boundaries, basemap, and FieldDetailPanel foundation)
+
+**Success Criteria** (what must be TRUE):
+  1. The `/app/maps` page can display as-applied data as a visual overlay on field polygons
+  2. As-applied data can be imported (Case IH export or manual upload)
+  3. A user can select which operation/layer to view (e.g., herbicide application, fertilizer, seeding)
+  4. The detail panel for a selected field shows as-applied summary (product, rate, date, coverage %)
+  5. Missing coverage or off-target areas are visually distinguishable
+
+**Requirements:** AAD-01, AAD-02, AAD-03, AAD-04, AAD-05
+
+**Plans:** 0/0 plans complete
 

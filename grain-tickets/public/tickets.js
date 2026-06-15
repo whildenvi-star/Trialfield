@@ -698,6 +698,19 @@
     });
   }
 
+  // Column visibility toggle
+  var showAllCols = false;
+  var toggleColsBtn = document.getElementById('toggle-cols-btn');
+  if (toggleColsBtn) {
+    toggleColsBtn.addEventListener('click', function () {
+      showAllCols = !showAllCols;
+      document.body.classList.toggle('show-all-cols', showAllCols);
+      toggleColsBtn.textContent = showAllCols ? 'Show fewer columns' : 'Show all columns';
+    });
+  }
+
+  var TOTAL_COLS = 16; // primary (7) + secondary (8) + actions = 16
+
   // Sort headers
   document.querySelectorAll('#ticket-table th[data-sort]').forEach(function (th) {
     th.addEventListener('click', function () {
@@ -766,7 +779,6 @@
 
     // --- Render pending/conflict tickets first (page 1 only) ---
     if (currentPage === 0 && pendingTickets.length > 0) {
-      // Sort: conflicts first, then pending by createdAt desc
       var conflicts = pendingTickets.filter(function (e) { return e.status === 'conflict'; });
       var pending = pendingTickets.filter(function (e) { return e.status === 'pending' || e.status === 'failed'; });
       var allPending = conflicts.concat(pending).sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
@@ -780,9 +792,9 @@
         if (isConflict) {
           statusBadge = '<span class="conflict-badge" onclick="toggleConflictPanel(\'' + escapeHtml(entry.id) + '\')">Duplicate \u2014 tap to resolve</span>';
         } else if (isFailed) {
-          statusBadge = '<span class="pending-sync-badge" style="border-color:var(--danger);color:var(--danger)">Failed \u2014 tap to retry</span>';
+          statusBadge = '<span class="pending-sync-badge" style="border-color:var(--danger);color:var(--danger)">Failed</span>';
         } else {
-          statusBadge = '<span class="pending-sync-badge">\u23F3 Pending sync</span>';
+          statusBadge = '<span class="pending-sync-badge">\u23F3 Pending</span>';
         }
 
         var destName = '';
@@ -797,18 +809,17 @@
         var ticketLabel = b.ticketNo ? escapeHtml(b.ticketNo) : '<em style="color:var(--text-light)">no #</em>';
 
         html += '<tr class="' + rowClass + '" data-pending-id="' + escapeHtml(entry.id) + '">';
-        html += '<td></td>'; // no checkbox for pending
+        html += '<td></td>';
         html += '<td>' + escapeHtml(b.date || '') + '</td>';
         html += '<td>' + escapeHtml(b.farm || '') + '</td>';
-        html += '<td class="number">' + util.formatNum(b.netWeight, 0) + '</td>';
+        html += '<td>' + escapeHtml((b.crop || '').trim()) + '</td>';
+        html += '<td class="net-bu-cell"><span style="color:var(--text-light);font-size:var(--size-xs)">pending</span></td>';
         html += '<td class="number">' + util.formatNum(b.moisture, 1) + '</td>';
-        html += '<td>' + escapeHtml(b.crop || '') + '</td>';
-        html += '<td>' + ticketLabel + '</td>';
         html += '<td>' + statusBadge + '</td>';
-        html += '<td>' + escapeHtml(b.notes || '') + '</td>';
-        html += '<td>' + escapeHtml(destName) + '</td>';
-        html += '<td class="number">' + util.formatNum(b.fm, 2) + '</td>';
-        html += '<td colspan="4" style="color:var(--text-light);font-size:0.75rem">not yet synced</td>';
+        html += '<td class="col-secondary">' + ticketLabel + '</td>';
+        html += '<td class="col-secondary number">' + util.formatNum(b.netWeight, 0) + '</td>';
+        html += '<td class="col-secondary number">' + util.formatNum(b.fm, 2) + '</td>';
+        html += '<td class="col-secondary" colspan="4" style="color:var(--text-light);font-size:var(--size-xs)">not yet synced</td>';
         html += '<td>';
         if (!isConflict) {
           html += '<button class="btn-edit" onclick="openPendingEditModal(\'' + escapeHtml(entry.id) + '\')">Edit</button> ';
@@ -820,47 +831,76 @@
         html += '</td>';
         html += '</tr>';
 
-        // Conflict panel row (initially hidden)
         if (isConflict) {
-          html += '<tr class="conflict-panel-row" id="conflict-panel-' + escapeHtml(entry.id) + '" style="display:none"><td colspan="17">';
+          html += '<tr class="conflict-panel-row" id="conflict-panel-' + escapeHtml(entry.id) + '" style="display:none"><td colspan="' + TOTAL_COLS + '">';
           html += renderConflictPanel(entry);
           html += '</td></tr>';
         }
       });
     }
 
-    // --- Render normal API tickets ---
+    // --- Render normal API tickets, grouped by date ---
+    var dateGroups = {};
+    var dateOrder = [];
     page.forEach(function (t) {
-      var c = t._computed || {};
-      var destName = resolveDestName(t);
-
-      html += '<tr data-id="' + escapeHtml(String(t.id)) + '">';
-      html += '<td><input type="checkbox" class="ticket-checkbox" data-id="' + escapeHtml(String(t.id)) + '"></td>';
-      html += '<td class="editable" data-field="date">' + escapeHtml(t.date || '') + '</td>';
-      html += '<td class="editable" data-field="farm">' + escapeHtml(t.farm || '') + '</td>';
-      html += '<td class="editable number" data-field="netWeight">' + util.formatNum(t.netWeight, 0) + '</td>';
-      html += '<td class="editable number" data-field="moisture">' + util.formatNum(t.moisture, 1) + '</td>';
-      html += '<td class="editable" data-field="crop">' + escapeHtml((t.crop || '').trim()) + '</td>';
-      html += '<td class="editable" data-field="ticketNo">' + escapeHtml(t.ticketNo || '') + '</td>';
-
-      // Reconciliation status badge
-      var reconStatus = (t._reconciliation && t._reconciliation.status) ? t._reconciliation.status : 'unreconciled';
-      var reconLabels = { unreconciled: 'Unreconciled', matched: 'Matched', disputed: 'Disputed', manual: 'Manual' };
-      var reconLabel = reconLabels[reconStatus] || 'Unreconciled';
-      html += '<td><span class="badge badge-' + reconStatus + '">' + reconLabel + '</span></td>';
-
-      html += '<td class="editable" data-field="notes">' + escapeHtml(t.notes || '') + '</td>';
-      html += '<td>' + escapeHtml(destName) + '</td>';
-      html += '<td class="editable number" data-field="fm">' + util.formatNum(t.fm, 2) + '</td>';
-      html += '<td class="number">' + util.formatNum(c.grossBU, 2) + '</td>';
-      html += '<td class="number" style="font-weight:600">' + util.formatNum(c.netBU, 2) + '</td>';
-      html += '<td class="number">' + util.formatNum(c.discount, 2) + '</td>';
-      html += '<td class="number">' + util.formatNum(c.testWeight, 0) + '</td>';
-      html += '<td class="number">' + util.formatNum(c.moistureShrink, 0) + '</td>';
-      html += '<td><button class="btn-edit" onclick="openEditModal(\'' + escapeHtml(String(t.id)) + '\')">Edit</button> <button class="btn-danger" onclick="deleteTicket(\'' + escapeHtml(String(t.id)) + '\')">Del</button></td>';
-      html += '</tr>';
+      var d = t.date || 'Unknown';
+      if (!dateGroups[d]) { dateGroups[d] = []; dateOrder.push(d); }
+      dateGroups[d].push(t);
     });
+
+    dateOrder.forEach(function (date) {
+      var group = dateGroups[date];
+      var chevronSvg = '<svg class="dg-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+
+      html += '<tr class="date-group-header-row"><td colspan="' + TOTAL_COLS + '">';
+      html += '<button class="date-group-toggle" data-date-group="' + escapeHtml(date) + '">';
+      html += '<span class="dg-date">' + escapeHtml(date) + '</span>';
+      html += '<span class="dg-count">' + group.length + ' ticket' + (group.length !== 1 ? 's' : '') + '</span>';
+      html += chevronSvg;
+      html += '</button></td></tr>';
+
+      group.forEach(function (t) {
+        var c = t._computed || {};
+        var destName = resolveDestName(t);
+        var reconStatus = (t._reconciliation && t._reconciliation.status) ? t._reconciliation.status : 'unreconciled';
+        var reconLabels = { unreconciled: 'Unreconciled', matched: 'Matched', disputed: 'Disputed', manual: 'Manual' };
+        var reconLabel = reconLabels[reconStatus] || 'Unreconciled';
+
+        html += '<tr data-id="' + escapeHtml(String(t.id)) + '" data-date-group="' + escapeHtml(date) + '">';
+        html += '<td><input type="checkbox" class="ticket-checkbox" data-id="' + escapeHtml(String(t.id)) + '"></td>';
+        html += '<td class="editable" data-field="date">' + escapeHtml(t.date || '') + '</td>';
+        html += '<td class="editable" data-field="farm">' + escapeHtml(t.farm || '') + '</td>';
+        html += '<td class="editable" data-field="crop">' + escapeHtml((t.crop || '').trim()) + '</td>';
+        html += '<td class="net-bu-cell">' + util.formatNum(c.netBU, 2) + '</td>';
+        html += '<td class="editable number" data-field="moisture">' + util.formatNum(t.moisture, 1) + '</td>';
+        html += '<td><span class="status-pill badge badge-' + reconStatus + '">' + reconLabel + '</span></td>';
+
+        // Secondary columns
+        html += '<td class="col-secondary editable" data-field="ticketNo">' + escapeHtml(t.ticketNo || '') + '</td>';
+        html += '<td class="col-secondary editable number" data-field="netWeight">' + util.formatNum(t.netWeight, 0) + '</td>';
+        html += '<td class="col-secondary editable number" data-field="fm">' + util.formatNum(t.fm, 2) + '</td>';
+        html += '<td class="col-secondary number">' + util.formatNum(c.testWeight, 0) + '</td>';
+        html += '<td class="col-secondary number">' + util.formatNum(c.grossBU, 2) + '</td>';
+        html += '<td class="col-secondary number">' + util.formatNum(c.discount, 2) + '</td>';
+        html += '<td class="col-secondary">' + escapeHtml(destName) + '</td>';
+        html += '<td class="col-secondary editable" data-field="notes">' + escapeHtml(t.notes || '') + '</td>';
+
+        html += '<td><button class="btn-edit" onclick="openEditModal(\'' + escapeHtml(String(t.id)) + '\')">Edit</button> <button class="btn-danger" onclick="deleteTicket(\'' + escapeHtml(String(t.id)) + '\')">Del</button></td>';
+        html += '</tr>';
+      });
+    });
+
     tbody.innerHTML = html;
+
+    // Wire date group collapse toggles
+    document.querySelectorAll('.date-group-toggle').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var date = btn.getAttribute('data-date-group');
+        var rows = document.querySelectorAll('tr[data-date-group="' + date + '"]');
+        var collapsed = btn.classList.toggle('collapsed');
+        rows.forEach(function (r) { r.style.display = collapsed ? 'none' : ''; });
+      });
+    });
 
     // Pagination
     document.getElementById('page-info').textContent = 'Page ' + (currentPage + 1) + ' of ' + totalPages;

@@ -85,7 +85,14 @@ app.get('/', (req, res) => {
 });
 
 // Serve static files before API auth so pages always load
-app.use(express.static(path.join(__dirname, 'public')));
+// No-cache for CSS/JS so browser always fetches the latest after deploys
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    }
+  }
+}));
 
 // API auth gate — agent routes exempted (have own kill-switch + daily cap)
 if (process.env.EMBED_TOKEN) {

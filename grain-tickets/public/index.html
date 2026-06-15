@@ -6,9 +6,9 @@
   <title>Grain Ticket Entry</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="platform-tokens.css">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="platform-tokens.css?v=2">
+  <link rel="stylesheet" href="style.css?v=2">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#080a0f">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -25,26 +25,95 @@
 </head>
 <body>
   <script>
-    if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+    (function(){
+      var t=localStorage.getItem('mru-theme');
+      if(t==='light'){document.body.classList.add('light');}
+      else if(t==='harvest'){document.body.classList.add('harvest');}
+      document.documentElement.classList.remove('light-pending');
+    })();
   </script>
-  <header>
-    <div class="header-top">
-      <h1>grain-tickets</h1>
-      <button id="theme-toggle" class="theme-toggle">[day]</button>
+  <!-- Sidebar navigation (desktop) -->
+  <aside class="app-sidebar" id="app-sidebar">
+    <div class="sidebar-brand">grain-tickets</div>
+    <div class="harvest-banner" id="harvest-banner">
+      <span class="harvest-banner-year" id="harvest-year">--</span>
+      <span class="harvest-banner-bu" id="harvest-bu">-- BU</span>
+      <span class="harvest-banner-label">season total</span>
     </div>
-    <nav>
-      <button class="tab-btn active" data-tab="home">Views</button>
-      <button class="tab-btn" data-tab="entry">New Ticket</button>
-      <button class="tab-btn" data-tab="list">Ticket Log</button>
-      <button class="tab-btn" data-tab="farms">Farm Summary</button>
-      <button class="tab-btn" data-tab="settlements">Settlements</button>
+    <nav class="sidebar-nav">
+      <button class="tab-btn active" data-tab="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </button>
+      <button class="tab-btn" data-tab="entry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        New Ticket
+      </button>
+      <button class="tab-btn" data-tab="list">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Ticket Log
+      </button>
+      <button class="tab-btn" data-tab="farms">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Farms
+      </button>
+      <button class="tab-btn" data-tab="settlements">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Settlements
+      </button>
     </nav>
-  </header>
+    <div class="sidebar-footer">
+      <button id="theme-toggle" class="theme-toggle" style="display:none">[day]</button>
+    </div>
+  </aside>
 
+  <!-- Bottom navigation (mobile) -->
+  <nav class="app-bottom-nav" aria-label="Primary navigation">
+    <button class="tab-btn active" data-tab="home" aria-label="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Home
+    </button>
+    <button class="tab-btn" data-tab="entry" aria-label="New Ticket">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Add
+    </button>
+    <button class="tab-btn" data-tab="list" aria-label="Ticket Log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Log
+    </button>
+    <button class="tab-btn" data-tab="farms" aria-label="Farms">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      Farms
+    </button>
+    <button class="tab-btn" data-tab="settlements" aria-label="Settlements">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Pay
+    </button>
+  </nav>
+
+  <div class="app-main">
   <main>
     <!-- HOME / VIEWS TAB -->
     <section id="tab-home" class="tab-content active">
-      <h2>Views</h2>
+      <h2>Dashboard</h2>
+      <div class="dashboard-grid" id="dashboard-kpis">
+        <div class="kpi-card">
+          <div class="kpi-card-value" id="kpi-season-bu">--</div>
+          <div class="kpi-card-label">Season Net BU</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-value" id="kpi-ticket-count">--</div>
+          <div class="kpi-card-label">Tickets</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-value" id="kpi-avg-moisture">--</div>
+          <div class="kpi-card-label">Avg Moisture %</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-card-value" id="kpi-avg-fm">--</div>
+          <div class="kpi-card-label">Avg FM %</div>
+        </div>
+      </div>
       <div class="home-grid">
         <button class="home-card" onclick="document.querySelector('.tab-btn[data-tab=entry]').click()">
           <div class="home-card-icon">
@@ -90,64 +159,101 @@
     <section id="tab-entry" class="tab-content">
       <h2>New Scale Ticket</h2>
       <div class="scan-section">
-        <button type="button" id="scan-btn" class="btn-primary btn-scan">Scan Ticket (Camera)</button>
+        <button type="button" id="scan-btn" class="btn-scan">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Scan Ticket
+        </button>
         <input type="file" id="scan-input" accept="image/*,.pdf" capture="environment" style="display:none">
         <div id="scan-status" class="scan-status hidden"></div>
       </div>
-      <form id="ticket-form">
-        <div class="form-grid">
-          <div class="form-group">
-            <label for="entry-date">Date</label>
-            <input type="date" id="entry-date" name="date" required>
-          </div>
-          <div class="form-group">
-            <label for="entry-farm">Farm</label>
-            <input type="text" id="entry-farm" name="farm" list="farm-list" required placeholder="Type to search...">
-            <datalist id="farm-list"></datalist>
-          </div>
-          <div class="form-group">
-            <label for="entry-netWeight">Net Weight (lbs)</label>
-            <input type="number" id="entry-netWeight" name="netWeight" required min="0" max="200000" step="1" inputmode="decimal" placeholder="e.g. 55480">
-          </div>
-          <div class="form-group">
-            <label for="entry-moisture">Moisture %</label>
-            <input type="number" id="entry-moisture" name="moisture" step="0.1" min="0" max="50" inputmode="decimal" placeholder="e.g. 12.9">
-          </div>
-          <div class="form-group">
-            <label for="entry-crop">Crop</label>
-            <input type="text" id="entry-crop" name="crop" required placeholder="Start typing crop..." autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label for="entry-ticketNo">Ticket Number</label>
-            <input type="text" id="entry-ticketNo" name="ticketNo" required placeholder="e.g. H066666">
-          </div>
-          <div class="form-group">
-            <label for="entry-destination">Destination</label>
-            <select id="entry-destination" name="destination" required>
-              <option value="">Select destination...</option>
-            </select>
-          </div>
-          <div class="form-group full-width">
-            <label for="entry-notes">Notes</label>
-            <input type="text" id="entry-notes" name="notes" placeholder="e.g. HBT# 5652 WR Trk# 41">
-          </div>
-          <div class="form-group">
-            <label for="entry-fm">FM (Foreign Matter)</label>
-            <input type="number" id="entry-fm" name="fm" step="0.01" min="0" max="100" inputmode="decimal" value="0" placeholder="e.g. 0.1">
-          </div>
-        </div>
 
-        <!-- Live Preview -->
-        <div id="live-preview" class="preview-panel">
-          <h3>Calculated Values</h3>
-          <div class="preview-grid">
-            <div><span class="label">Test Weight:</span> <span id="prev-testWeight">--</span></div>
-            <div><span class="label">Moisture Shrink Baseline:</span> <span id="prev-moistureShrink">--</span></div>
-            <div><span class="label">Discount:</span> <span id="prev-discount">--</span></div>
-            <div><span class="label">FM Discount Factor:</span> <span id="prev-fmDiscount">--</span></div>
-            <div class="highlight"><span class="label">Gross BU:</span> <span id="prev-grossBU">--</span></div>
-            <div class="highlight"><span class="label">Net BU If Sold:</span> <span id="prev-netBU">--</span></div>
+      <form id="ticket-form">
+        <div class="entry-layout">
+          <div class="entry-inputs">
+            <!-- Measurement group -->
+            <div class="field-group-card">
+              <h4>Measurement</h4>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="entry-netWeight">Net Weight (lbs)</label>
+                  <input type="number" id="entry-netWeight" name="netWeight" required min="0" max="200000" step="1" inputmode="decimal" placeholder="e.g. 55480">
+                </div>
+                <div class="form-group">
+                  <label for="entry-moisture">Moisture %</label>
+                  <input type="number" id="entry-moisture" name="moisture" step="0.1" min="0" max="50" inputmode="decimal" placeholder="e.g. 12.9">
+                </div>
+                <div class="form-group">
+                  <label for="entry-fm">FM %</label>
+                  <input type="number" id="entry-fm" name="fm" step="0.01" min="0" max="100" inputmode="decimal" value="0" placeholder="0.0">
+                </div>
+              </div>
+            </div>
+
+            <!-- Identification group -->
+            <div class="field-group-card">
+              <h4>Identification</h4>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="entry-date">Date</label>
+                  <input type="date" id="entry-date" name="date" required>
+                </div>
+                <div class="form-group">
+                  <label for="entry-ticketNo">Ticket Number</label>
+                  <input type="text" id="entry-ticketNo" name="ticketNo" required placeholder="e.g. H066666">
+                </div>
+                <div class="form-group">
+                  <label for="entry-farm">Farm</label>
+                  <input type="text" id="entry-farm" name="farm" list="farm-list" required placeholder="Type to search...">
+                  <datalist id="farm-list"></datalist>
+                </div>
+                <div class="form-group">
+                  <label for="entry-crop">Crop</label>
+                  <input type="text" id="entry-crop" name="crop" required placeholder="Start typing..." autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="entry-destination">Destination</label>
+                  <select id="entry-destination" name="destination" required>
+                    <option value="">Select destination...</option>
+                  </select>
+                </div>
+                <div class="form-group full-width">
+                  <label for="entry-notes">Notes</label>
+                  <input type="text" id="entry-notes" name="notes" placeholder="e.g. HBT# 5652 WR Trk# 41">
+                </div>
+              </div>
+            </div>
           </div>
+
+          <!-- Live Preview panel -->
+          <aside id="live-preview" class="entry-preview">
+            <h3>Calculated Values</h3>
+            <div class="preview-hero">
+              <div class="preview-hero-label">Net BU If Sold</div>
+              <div class="preview-hero-value"><span id="prev-netBU">--</span><span class="preview-hero-unit">bu</span></div>
+            </div>
+            <div class="preview-secondary">
+              <div class="preview-field">
+                <span class="label">Gross BU</span>
+                <span class="value highlight" id="prev-grossBU">--</span>
+              </div>
+              <div class="preview-field">
+                <span class="label">Test Weight</span>
+                <span class="value" id="prev-testWeight">--</span>
+              </div>
+              <div class="preview-field">
+                <span class="label">Moist Shrink</span>
+                <span class="value" id="prev-moistureShrink">--</span>
+              </div>
+              <div class="preview-field">
+                <span class="label">Discount</span>
+                <span class="value" id="prev-discount">--</span>
+              </div>
+              <div class="preview-field">
+                <span class="label">FM Factor</span>
+                <span class="value" id="prev-fmDiscount">--</span>
+              </div>
+            </div>
+          </aside>
         </div>
 
         <button type="submit" class="btn-primary">Submit Ticket</button>
@@ -158,8 +264,8 @@
     <!-- TICKET LOG TAB -->
     <section id="tab-list" class="tab-content">
       <h2>Ticket Log</h2>
-      <div class="filters">
-        <input type="text" id="filter-search" placeholder="Search all fields...">
+      <div class="filter-bar">
+        <input type="text" id="filter-search" placeholder="Search...">
         <input type="text" id="filter-farm" placeholder="All Farms" autocomplete="off">
         <input type="text" id="filter-crop" placeholder="All Crops" autocomplete="off">
         <select id="filter-destination"><option value="">All Destinations</option></select>
@@ -176,6 +282,7 @@
       <div class="table-info">
         <span id="ticket-count">0 tickets</span>
         <span id="ticket-total-bu">Total Net BU: 0</span>
+        <button id="toggle-cols-btn" class="btn-sm">Show all columns</button>
         <button id="export-tickets-btn" class="btn-sm" title="Export current filtered view as CSV">Export CSV</button>
       </div>
       <div id="filter-stats" class="filter-stats">
@@ -191,22 +298,21 @@
         <table id="ticket-table">
           <thead>
             <tr>
-              <th><input type="checkbox" id="select-all-tickets" title="Select all"></th>
+              <th></th>
               <th data-sort="date">Date</th>
               <th data-sort="farm">Farm</th>
-              <th data-sort="netWeight">Net Wt</th>
-              <th data-sort="moisture">Moist%</th>
               <th data-sort="crop">Crop</th>
-              <th data-sort="ticketNo">Ticket No.</th>
-              <th>Status</th>
-              <th>Notes</th>
-              <th data-sort="destination">Dest</th>
-              <th data-sort="fm">FM</th>
-              <th data-sort="_computed.grossBU">Gross BU</th>
               <th data-sort="_computed.netBU">Net BU</th>
-              <th data-sort="_computed.discount">Disc</th>
-              <th data-sort="_computed.testWeight">Test Wt</th>
-              <th data-sort="_computed.moistureShrink">Moist Shrink</th>
+              <th data-sort="moisture">Moisture</th>
+              <th>Status</th>
+              <th class="col-secondary" data-sort="ticketNo">Ticket #</th>
+              <th class="col-secondary" data-sort="netWeight">Net Wt</th>
+              <th class="col-secondary" data-sort="fm">FM</th>
+              <th class="col-secondary" data-sort="_computed.testWeight">Test Wt</th>
+              <th class="col-secondary" data-sort="_computed.grossBU">Gross BU</th>
+              <th class="col-secondary" data-sort="_computed.discount">Disc</th>
+              <th class="col-secondary" data-sort="destination">Dest</th>
+              <th class="col-secondary">Notes</th>
               <th></th>
             </tr>
           </thead>
@@ -254,40 +360,26 @@
 
     <!-- FARM SUMMARY TAB -->
     <section id="tab-farms" class="tab-content">
-      <h2>Farm Summary</h2>
-      <div class="filters">
-        <input type="text" id="farm-filter-search" placeholder="Search farms...">
-        <select id="farm-filter-type">
+      <h2>Farms</h2>
+      <div class="farm-controls">
+        <input type="text" id="farm-filter-search" placeholder="Search farms..." style="border-radius:6px;padding:0.4rem 0.65rem;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:var(--size-sm);">
+        <select id="farm-filter-type" style="border-radius:6px;padding:0.4rem 0.65rem;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:var(--size-sm);">
           <option value="">All Types</option>
           <option value="Conventional">Conventional</option>
           <option value="Organic">Organic</option>
         </select>
+        <select id="farm-sort-select" class="farm-sort-select">
+          <option value="farm:asc">Name A–Z</option>
+          <option value="farm:desc">Name Z–A</option>
+          <option value="totalBU:desc">Highest BU</option>
+          <option value="totalBU:asc">Lowest BU</option>
+          <option value="yieldPerAcre:desc">Highest Yield/AC</option>
+          <option value="acres:desc">Most Acres</option>
+        </select>
         <button id="export-farms-btn" class="btn-sm" title="Export farm summary as CSV">Export CSV</button>
       </div>
-      <div class="table-wrap">
-        <table id="farm-table">
-          <thead>
-            <tr>
-              <th data-sort="acres">Acres</th>
-              <th data-sort="crop">Crop</th>
-              <th data-sort="farm">Farm</th>
-              <th data-sort="totalBU">Total BU</th>
-              <th data-sort="unit">Unit</th>
-              <th data-sort="yieldPerAcre">Yield/AC</th>
-              <th data-sort="type">Type</th>
-              <th>Destinations</th>
-              <th data-sort="budgetCrop">Budget Crop</th>
-              <th data-sort="budgetYield">Est. Yield</th>
-              <th data-sort="guarantee">Guarantee</th>
-              <th data-sort="coverage">Coverage</th>
-              <th data-sort="claimThreshold">Claim Thr.</th>
-              <th data-sort="discount">Discount</th>
-              <th data-sort="testWeight">Test Wt</th>
-            </tr>
-          </thead>
-          <tbody id="farm-tbody"></tbody>
-        </table>
-      </div>
+      <div class="farm-totals-strip" id="farm-totals-strip"></div>
+      <div id="farm-card-grid" class="farm-card-grid"></div>
     </section>
 
     <!-- SETTLEMENTS TAB -->
@@ -362,6 +454,7 @@
       <div id="settlement-season-summary" class="settlement-view hidden"></div>
     </section>
   </main>
+  </div><!-- /.app-main -->
 
   <link rel="stylesheet" href="glomalin.css">
   <script src="chart.min.js" defer></script>
@@ -378,26 +471,6 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
-  </script>
-  <!-- Theme toggle -->
-  <script>
-  (function () {
-    var btn = document.getElementById('theme-toggle');
-    var meta = document.querySelector('meta[name="theme-color"]');
-    function update() {
-      var isLight = document.body.classList.contains('light');
-      btn.textContent = isLight ? '[night]' : '[day]';
-      if (meta) meta.content = isLight ? '#ffffff' : '#080a0f';
-    }
-    update();
-    btn.addEventListener('click', function () {
-      document.body.classList.toggle('light');
-      var isLight = document.body.classList.contains('light');
-      localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
-      update();
-      window.dispatchEvent(new Event('theme-change'));
-    });
-  })();
   </script>
   <script src="settings-panel.js"></script>
   <script src="formatting-agent.js"></script>

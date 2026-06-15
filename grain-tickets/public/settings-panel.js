@@ -43,6 +43,8 @@
   if (savedTheme === 'light') {
     document.documentElement.classList.add('light');
     document.body ? document.body.classList.add('light') : document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('light'); });
+  } else if (savedTheme === 'harvest') {
+    document.body ? document.body.classList.add('harvest') : document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('harvest'); });
   }
 
   // --- Skip UI when running inside an iframe (portal embeds these apps) ---
@@ -98,9 +100,10 @@
     document.body.appendChild(panel);
 
     // --- References ---
-    var closeBtn = panel.querySelector('.sp-close');
-    var dayBtn   = panel.querySelector('[data-theme="day"]');
-    var nightBtn = panel.querySelector('[data-theme="night"]');
+    var closeBtn     = panel.querySelector('.sp-close');
+    var dayBtn       = panel.querySelector('[data-theme="day"]');
+    var nightBtn     = panel.querySelector('[data-theme="night"]');
+    var harvestBtn   = panel.querySelector('[data-theme="harvest"]');
     var sizeBtns = panel.querySelectorAll('.sp-size-btn');
     var preview  = panel.querySelector('.sp-preview');
     var resetBtn = panel.querySelector('.sp-reset');
@@ -143,18 +146,23 @@
     // --- Theme Control ---
     function applyTheme(theme) {
       var meta = document.querySelector('meta[name="theme-color"]');
+      // Clear all theme classes first
+      document.documentElement.classList.remove('light');
+      document.body.classList.remove('light', 'harvest');
+      [dayBtn, nightBtn, harvestBtn].forEach(function(b) { if (b) b.classList.remove('active'); });
+
       if (theme === 'light') {
         document.documentElement.classList.add('light');
         document.body.classList.add('light');
         if (meta) meta.content = '#f8fafc';
-        dayBtn.classList.add('active');
-        nightBtn.classList.remove('active');
+        if (dayBtn) dayBtn.classList.add('active');
+      } else if (theme === 'harvest') {
+        document.body.classList.add('harvest');
+        if (meta) meta.content = '#f7f3eb';
+        if (harvestBtn) harvestBtn.classList.add('active');
       } else {
-        document.documentElement.classList.remove('light');
-        document.body.classList.remove('light');
         if (meta) meta.content = '#080a0f';
-        nightBtn.classList.add('active');
-        dayBtn.classList.remove('active');
+        if (nightBtn) nightBtn.classList.add('active');
       }
       localStorage.setItem(THEME_KEY, theme);
 
@@ -176,20 +184,19 @@
     }
 
     function getCurrentTheme() {
+      if (document.body.classList.contains('harvest')) return 'harvest';
       return document.body.classList.contains('light') ? 'light' : 'dark';
     }
 
     dayBtn.addEventListener('click', function () { applyTheme('light'); });
     nightBtn.addEventListener('click', function () { applyTheme('dark'); });
+    if (harvestBtn) harvestBtn.addEventListener('click', function () { applyTheme('harvest'); });
 
     // Sync initial state
-    if (getCurrentTheme() === 'light') {
-      dayBtn.classList.add('active');
-      nightBtn.classList.remove('active');
-    } else {
-      nightBtn.classList.add('active');
-      dayBtn.classList.remove('active');
-    }
+    var initTheme = getCurrentTheme();
+    if (initTheme === 'harvest' && harvestBtn) harvestBtn.classList.add('active');
+    else if (initTheme === 'light') dayBtn.classList.add('active');
+    else nightBtn.classList.add('active');
 
     // --- Text Size Control ---
     function applyScale(value) {
@@ -336,12 +343,9 @@
       '<div class="sp-section">' +
         '<span class="sp-label">Theme</span>' +
         '<div class="sp-theme-row">' +
-          '<button class="sp-theme-btn" data-theme="day" aria-label="Day theme">' +
-            '&#9788; Day' +
-          '</button>' +
-          '<button class="sp-theme-btn" data-theme="night" aria-label="Night theme">' +
-            '&#9790; Night' +
-          '</button>' +
+          '<button class="sp-theme-btn" data-theme="day" aria-label="Day theme">&#9788; Day</button>' +
+          '<button class="sp-theme-btn" data-theme="night" aria-label="Night theme">&#9790; Night</button>' +
+          '<button class="sp-theme-btn" data-theme="harvest" aria-label="Harvest theme">&#127807; Field</button>' +
         '</div>' +
       '</div>' +
 

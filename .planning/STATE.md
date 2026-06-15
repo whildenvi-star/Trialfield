@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** Phase 71: Unified Field Operations View — COMPLETE (all 3 plans done).
+**Current focus:** v12.0 milestone complete — all phases 68–71 done. Planning Phase 72: As-Applied Data Overlay.
 
 ## Current Position
 
 Phase: 71 of 71 (Unified Field Operations View) — COMPLETE
 Plan: 3 of 3 complete
-Status: Phase 71 Plan 03 complete — cross-group DnD (makeFoGroupsDraggable) + inline add-item forms within each group. Phase 71 fully complete.
-Last activity: 2026-04-23 - Completed quick task 1: Fix 3 Field Ops bugs: program apply button unreachable, budget ignores passStatus, actualQuantity not used in budget
+Status: v12.0 fully complete. Phase 70 deployed to production (build ID BVUnIDLlxYo1-m8S-qAHz, PM2 online). Phase 70 browser verify deferred. Ready to plan Phase 72: As-Applied Data Overlay on field map.
+Last activity: 2026-06-14 - Phase 70 Plan 05 executed: synced build to droplet, PM2 restarted, /app/maps live at 200 OK
 
-Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | Phase 71 [██████████] COMPLETE
+Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | v12.0 [██████████] COMPLETE
 
 ## Performance Metrics
 

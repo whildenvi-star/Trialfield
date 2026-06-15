@@ -9,8 +9,10 @@
   function activateTab(tabName) {
     tabs.forEach(function (b) { b.classList.remove('active'); });
     contents.forEach(function (c) { c.classList.remove('active'); });
-    var btn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
-    if (btn) btn.classList.add('active');
+    // Activate ALL nav buttons with this tab name (sidebar + bottom nav)
+    document.querySelectorAll('.tab-btn[data-tab="' + tabName + '"]').forEach(function (b) {
+      b.classList.add('active');
+    });
     var panel = document.getElementById('tab-' + tabName);
     if (panel) panel.classList.add('active');
     window.dispatchEvent(new CustomEvent('tab-activate', { detail: tabName }));
@@ -121,6 +123,55 @@
       window.ticketQueue.cacheRef('destinations', results[2]);
       window.ticketQueue.cacheRef('cropTypes', results[3]);
     }
+
+    // Load dashboard KPIs
+    loadDashboard();
+  });
+
+  function getCropYear() {
+    var now = new Date();
+    var month = now.getMonth() + 1;
+    return month <= 5 ? now.getFullYear() - 1 : now.getFullYear();
+  }
+
+  function loadDashboard() {
+    var cropYear = getCropYear();
+    // Update banner year
+    var yearEl = document.getElementById('harvest-year');
+    if (yearEl) yearEl.textContent = cropYear + ' Harvest';
+
+    api.get('/api/tickets?cropYear=' + cropYear).then(function (tickets) {
+      if (!Array.isArray(tickets)) return;
+      var totalBU = 0;
+      var totalMoisture = 0;
+      var totalFm = 0;
+      tickets.forEach(function (t) {
+        if (t._computed) totalBU += (t._computed.netBU || 0);
+        totalMoisture += (t.moisture || 0);
+        totalFm += (t.fm || 0);
+      });
+      var n = tickets.length;
+
+      var buEl = document.getElementById('harvest-bu');
+      if (buEl) buEl.textContent = util.formatNum(totalBU, 0) + ' BU';
+
+      var kpiBU = document.getElementById('kpi-season-bu');
+      if (kpiBU) kpiBU.textContent = util.formatNum(totalBU, 0);
+
+      var kpiCount = document.getElementById('kpi-ticket-count');
+      if (kpiCount) kpiCount.textContent = n;
+
+      var kpiMoist = document.getElementById('kpi-avg-moisture');
+      if (kpiMoist) kpiMoist.textContent = n > 0 ? util.formatNum(totalMoisture / n, 1) + '%' : '--';
+
+      var kpiFm = document.getElementById('kpi-avg-fm');
+      if (kpiFm) kpiFm.textContent = n > 0 ? util.formatNum(totalFm / n, 2) + '%' : '--';
+    }).catch(function () {});
+  }
+
+  // Reload dashboard when switching to home tab
+  window.addEventListener('tab-activate', function (e) {
+    if (e.detail === 'home') loadDashboard();
   });
 
   // --- Offline Banner ---

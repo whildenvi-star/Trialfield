@@ -34,7 +34,7 @@
         }
       });
 
-      // Build buyer/destination breakdown per farm: group tickets by farm name + destination
+      // Build buyer/destination breakdown per farm
       var farmTicketMap = {};
       allTickets.forEach(function (t) {
         var farmKey = (t.farm || '').trim().toLowerCase();
@@ -76,7 +76,7 @@
           return b.netBU - a.netBU;
         });
 
-        // Attach budget estimate (crop + yield) from macro rollup
+        // Attach budget estimate from macro rollup
         var budgetKey = farmKey;
         var match = budgetLookup[budgetKey];
         f.budgetCrop = match ? match.crop : '';
@@ -84,7 +84,6 @@
       });
 
       loaded = true;
-      // Overlay registry acres if FarmRegistry is available
       overlayRegistryAcres(function () {
         applyFilters();
       });
@@ -96,7 +95,6 @@
     if (typeof FarmRegistry === 'undefined') return cb();
     FarmRegistry.getFields().then(function (fields) {
       if (!fields || !fields.length) return cb();
-      // Build lookup: lowercase name + aliases → reportingAcres
       var lookup = {};
       fields.forEach(function (f) {
         lookup[f.name.toLowerCase()] = f.reportingAcres;
@@ -104,7 +102,6 @@
           lookup[a.toLowerCase()] = f.reportingAcres;
         });
       });
-      // Overlay acres and recompute yield
       allFarms.forEach(function (f) {
         var key = (f.farm || '').trim().toLowerCase();
         if (lookup[key] !== undefined) {
@@ -137,7 +134,7 @@
     });
 
     sortFarms();
-    renderTable();
+    renderCards();
   }
 
   function sortFarms() {
@@ -156,82 +153,110 @@
     });
   }
 
-  // Sort headers
-  document.querySelectorAll('#farm-table th[data-sort]').forEach(function (th) {
-    th.addEventListener('click', function () {
-      var col = th.getAttribute('data-sort');
-      if (sortCol === col) {
-        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-      } else {
-        sortCol = col;
-        sortDir = 'asc';
-      }
-      document.querySelectorAll('#farm-table th').forEach(function (h) {
-        h.classList.remove('sort-asc', 'sort-desc');
-      });
-      th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  // Sort via select dropdown
+  var farmSortSelect = document.getElementById('farm-sort-select');
+  if (farmSortSelect) {
+    farmSortSelect.addEventListener('change', function () {
+      var parts = this.value.split(':');
+      sortCol = parts[0];
+      sortDir = parts[1] || 'asc';
       sortFarms();
-      renderTable();
+      renderCards();
     });
-  });
+  }
 
-  function renderTable() {
-    var tbody = document.getElementById('farm-tbody');
+  function renderCards() {
+    var grid = document.getElementById('farm-card-grid');
+    var totalsStrip = document.getElementById('farm-totals-strip');
+    if (!grid) return;
+
     var totalAcres = 0;
     var totalBU = 0;
-
-    var html = '';
     filteredFarms.forEach(function (f) {
       totalAcres += (f.acres || 0);
       totalBU += (f.totalBU || 0);
-
-      // Build destinations summary text: "UE — 1,234.56 BU (15) | ADM — 2,345.67 BU (22)"
-      var destSummary = '';
-      if (f.buyerBreakdown && f.buyerBreakdown.length) {
-        destSummary = f.buyerBreakdown.map(function (d) {
-          return d.label + ' \u2014 ' + util.formatNum(d.netBU, 1) + ' BU (' + d.count + ')';
-        }).join(' | ');
-      }
-
-      html += '<tr>';
-      html += '<td class="number">' + util.formatNum(f.acres, 1) + (f._registryAcres ? ' <span style="color:#2d5a27;font-size:0.7rem;" title="From Farm Registry">R</span>' : '') + '</td>';
-      html += '<td>' + (f.crop || '').trim() + '</td>';
-      html += '<td><a href="#" class="farm-link" data-farm="' + (f.farm || '') + '">' + (f.farm || '').trim() + '</a></td>';
-      html += '<td class="number" style="font-weight:600">' + util.formatNum(f.totalBU, 2) + '</td>';
-      html += '<td>' + (f.unit || 'BU') + '</td>';
-      html += '<td class="number">' + util.formatNum(f.yieldPerAcre, 2) + '</td>';
-      html += '<td>' + (f.type || '') + '</td>';
-      html += '<td style="font-size:0.75rem; color:#555;">' + destSummary + '</td>';
-      html += '<td style="font-size:0.8rem;">' + (f.budgetCrop || '<span style="color:#888;">—</span>') + '</td>';
-      html += '<td class="number" style="font-size:0.8rem;">' + (f.budgetYield ? util.formatNum(f.budgetYield, 1) : '<span style="color:#888;">—</span>') + '</td>';
-      html += '<td class="number">' + util.formatNum(f.guarantee, 0) + '</td>';
-      html += '<td class="number">' + util.formatNum(f.coverage, 0) + '</td>';
-      html += '<td class="number">' + util.formatNum(f.claimThreshold, 0) + '</td>';
-      html += '<td class="number">' + util.formatNum(f.discount, 2) + '</td>';
-      html += '<td class="number">' + util.formatNum(f.testWeight, 0) + '</td>';
-      html += '</tr>';
     });
 
-    // Totals row
-    html += '<tr style="font-weight:700; background:#f0f0ea;">';
-    html += '<td class="number">' + util.formatNum(totalAcres, 1) + '</td>';
-    html += '<td></td>';
-    html += '<td>TOTALS (' + filteredFarms.length + ' farms)</td>';
-    html += '<td class="number">' + util.formatNum(totalBU, 2) + '</td>';
-    html += '<td colspan="11"></td>';
-    html += '</tr>';
+    if (totalsStrip) {
+      totalsStrip.innerHTML =
+        '<strong>' + filteredFarms.length + '</strong> farms &nbsp;|&nbsp; ' +
+        '<strong>' + util.formatNum(totalAcres, 1) + '</strong> acres &nbsp;|&nbsp; ' +
+        'Total: <strong>' + util.formatNum(totalBU, 2) + ' BU</strong>';
+    }
 
-    tbody.innerHTML = html;
+    if (filteredFarms.length === 0) {
+      grid.innerHTML = '<p style="color:var(--text-light);padding:1rem;">No farms match the current filter.</p>';
+      return;
+    }
+
+    var html = '';
+    filteredFarms.forEach(function (f) {
+      var yieldPct = (f.budgetYield && f.budgetYield > 0 && f.yieldPerAcre != null)
+        ? Math.min(100, Math.round((f.yieldPerAcre / f.budgetYield) * 100))
+        : 0;
+      var hasEstimate = !!(f.budgetYield && f.budgetYield > 0);
+
+      var destHtml = '';
+      if (f.buyerBreakdown && f.buyerBreakdown.length) {
+        destHtml = f.buyerBreakdown.map(function (d) {
+          return '<span>' + d.label + ' — ' + util.formatNum(d.netBU, 0) + ' BU</span>';
+        }).join('<br>');
+      }
+
+      var typeBadge = '<span class="type-badge' + (f.type === 'Organic' ? ' organic' : '') + '">' + (f.type || 'Conv') + '</span>';
+      var registryBadge = f._registryAcres ? '<span class="registry-badge" title="Acres from Farm Registry">R</span>' : '';
+
+      html += '<div class="farm-card">';
+      html += '<div class="farm-card-header">';
+      html += '<div>';
+      html += '<div class="farm-card-name"><a href="#" class="farm-link" data-farm="' + (f.farm || '') + '">' + (f.farm || '').trim() + '</a></div>';
+      html += '<div class="farm-card-crop">' + (f.crop || '').trim() + '</div>';
+      html += '</div>';
+      html += '<div class="farm-card-badges">' + typeBadge + registryBadge + '</div>';
+      html += '</div>';
+
+      if (hasEstimate) {
+        html += '<div class="yield-bar-wrap">';
+        html += '<div class="yield-bar-label"><span>Yield vs. estimate</span><span class="yield-bar-pct">' + yieldPct + '%</span></div>';
+        html += '<div class="yield-bar-track"><div class="yield-bar-fill" style="width:' + yieldPct + '%"></div></div>';
+        html += '</div>';
+      }
+
+      html += '<div class="farm-card-stats">';
+      html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.acres, 1) + '</span><span class="farm-stat-label">Acres</span></div>';
+      html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.totalBU, 0) + '</span><span class="farm-stat-label">Total BU</span></div>';
+      html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.yieldPerAcre, 1) + '</span><span class="farm-stat-label">BU/AC</span></div>';
+      html += '</div>';
+
+      if (destHtml) {
+        html += '<div class="farm-card-destinations">' + destHtml + '</div>';
+      }
+
+      var hasInsurance = f.guarantee || f.coverage || f.claimThreshold;
+      if (hasInsurance) {
+        html += '<details class="farm-card-insurance">';
+        html += '<summary>Insurance &amp; Overrides</summary>';
+        html += '<div class="farm-insurance-grid">';
+        if (f.guarantee) html += '<div class="farm-insurance-row"><span class="farm-insurance-label">Guarantee</span><span class="farm-insurance-value">' + f.guarantee + '</span></div>';
+        if (f.coverage) html += '<div class="farm-insurance-row"><span class="farm-insurance-label">Coverage</span><span class="farm-insurance-value">' + f.coverage + '%</span></div>';
+        if (f.claimThreshold) html += '<div class="farm-insurance-row"><span class="farm-insurance-label">Claim Thr.</span><span class="farm-insurance-value">' + f.claimThreshold + '</span></div>';
+        if (f.discount) html += '<div class="farm-insurance-row"><span class="farm-insurance-label">Discount</span><span class="farm-insurance-value">' + f.discount + '</span></div>';
+        if (f.testWeight) html += '<div class="farm-insurance-row"><span class="farm-insurance-label">Test Wt</span><span class="farm-insurance-value">' + f.testWeight + '</span></div>';
+        html += '</div></details>';
+      }
+
+      html += '</div>';
+    });
+
+    grid.innerHTML = html;
   }
 
-  // Click farm name to switch to ticket log filtered by that farm
-  document.getElementById('farm-tbody').addEventListener('click', function (e) {
+  // Click farm name card to switch to ticket log filtered by that farm
+  document.getElementById('farm-card-grid').addEventListener('click', function (e) {
     var link = e.target.closest('.farm-link');
     if (!link) return;
     e.preventDefault();
     var farmName = link.getAttribute('data-farm');
-
-    // Switch to ticket list tab and set farm filter
     document.querySelector('.tab-btn[data-tab="list"]').click();
     document.getElementById('filter-farm').value = farmName;
     document.getElementById('filter-farm').dispatchEvent(new Event('change'));
@@ -242,10 +267,10 @@
     window.location.href = '/api/export/farms';
   });
 
-  // Invalidate cache when tickets change
+  // Always reload for fresh data when tab activates
   window.addEventListener('tab-activate', function (e) {
     if (e.detail === 'farms') {
-      loadFarms(); // Always reload for fresh data
+      loadFarms();
     }
   });
 
