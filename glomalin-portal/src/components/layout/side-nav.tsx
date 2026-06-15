@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logout } from '@/app/actions/auth'
@@ -127,6 +127,9 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
   const [bannerDisabled, setBannerDisabled] = useState<boolean>(readBannerPref)
   const [scene, setScene] = useState<SceneType>(readScenePref)
   const navRef = useRef<HTMLElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const menuId = useId()
   const displayName = user.fullName || user.email
   const avatarChar = displayName.charAt(0).toUpperCase()
 
@@ -136,6 +139,8 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
   }, [collapsed])
 
   useEffect(() => { setMobileOpen(false) }, [pathname])
+  useEffect(() => { if (!collapsed) setUserMenuOpen(false) }, [collapsed])
+  useEffect(() => { setUserMenuOpen(false) }, [pathname])
 
   useEffect(() => {
     if (!mobileOpen) return
@@ -147,6 +152,17 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [mobileOpen])
+
+  useEffect(() => {
+    if (!userMenuOpen) return
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [userMenuOpen])
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -303,10 +319,80 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
 
           {/* Condensed avatar — desktop collapsed only */}
           {collapsed && (
-            <div className="hidden md:flex justify-center py-3">
-              <div className="w-7 h-7 rounded bg-glomalin-highlight border border-glomalin-border flex items-center justify-center">
+            <div ref={userMenuRef} className="hidden md:flex justify-center py-3 relative">
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((p) => !p)}
+                aria-label="User menu"
+                aria-expanded={userMenuOpen}
+                aria-controls={menuId}
+                className="w-7 h-7 rounded bg-glomalin-highlight border border-glomalin-border flex items-center justify-center hover:border-glomalin-accent/60 transition-colors"
+              >
                 <span className="text-glomalin-accent font-mono text-xs font-bold">{avatarChar}</span>
-              </div>
+              </button>
+
+              {/* User menu popover */}
+              {userMenuOpen && (
+                <div
+                  id={menuId}
+                  role="menu"
+                  className="fixed left-12 bottom-0 mb-2 w-56 bg-glomalin-surface border border-glomalin-border rounded-lg shadow-2xl z-[55] overflow-hidden"
+                >
+                  {/* Identity header */}
+                  <div className="px-4 py-3 border-b border-glomalin-border">
+                    <p className="text-sm font-sans text-glomalin-text truncate leading-tight">{displayName}</p>
+                    <p className="text-[11px] font-mono text-glomalin-muted uppercase tracking-wider mt-0.5">{user.role}</p>
+                  </div>
+
+                  {/* Options */}
+                  <div className="py-1">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={toggleBanner}
+                      className="w-full flex items-center justify-between px-4 py-2 text-xs font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+                    >
+                      <span>ASCII banner</span>
+                      <span className={bannerDisabled ? 'text-glomalin-muted' : 'text-glomalin-accent'}>
+                        {bannerDisabled ? 'off' : scene}
+                      </span>
+                    </button>
+
+                    {!bannerDisabled && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={cycleScene}
+                        className="w-full flex items-center justify-between px-4 py-2 text-xs font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+                      >
+                        <span>cycle scene</span>
+                        <span className="text-glomalin-accent">{scene}</span>
+                      </button>
+                    )}
+
+                    {user.role === 'admin' && (
+                      <Link
+                        href="/admin"
+                        role="menuitem"
+                        className="flex items-center px-4 py-2 text-xs font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+                      >
+                        User management
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Log out */}
+                  <form action={logout} className="border-t border-glomalin-border">
+                    <button
+                      type="submit"
+                      role="menuitem"
+                      className="w-full text-left px-4 py-2.5 text-xs font-sans text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors"
+                    >
+                      Log out
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
           )}
 
