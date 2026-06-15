@@ -53,7 +53,13 @@ if (process.env.EMBED_TOKEN) {
 }
 
 // Static files served before API auth so pages always load
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, etag: true }));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    }
+  }
+}));
 
 // API auth gate
 if (process.env.EMBED_TOKEN) {
@@ -1318,6 +1324,21 @@ app.post('/api/fields/batch-variety', async (req, res) => {
   res.json({ updated: updated });
 });
 
+// Batch enterprise reassignment — move all fields using a given crop to a new enterprise
+app.post('/api/fields/batch-enterprise', async (req, res) => {
+  const { cropName, enterpriseId } = req.body;
+  if (!cropName) return res.status(400).json({ error: 'cropName required' });
+  var updated = 0;
+  store.fields.forEach(function (f) {
+    if (f.crop === cropName) {
+      f.enterpriseId = enterpriseId || null;
+      updated++;
+    }
+  });
+  if (updated > 0) await saveData();
+  res.json({ updated: updated });
+});
+
 // Create program from existing field
 app.post('/api/programs/from-field/:fieldId', async (req, res) => {
   const field = store.fields.find(f => f.id === req.params.fieldId);
@@ -1494,14 +1515,16 @@ app.get('/api/forecast', async function (req, res) {
   var orderedMap = {};
   var deliveredMap = {};
   try {
-    var siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation';
+    var siCropYear = (store.settings && store.settings.cropYear) ? store.settings.cropYear : 2026;
+    var siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation?cropYear=' + siCropYear;
     var siResp = await fetch(siUrl);
     if (siResp.ok) {
       var recon = await siResp.json();
       recon.forEach(function (row) {
-        // Match by variety for seeds, productName for inputs
-        var key = row.type === 'SEED' ? row.variety : row.productName;
+        // Normalize to lowercase so casing differences between services don't break matching
+        var key = (row.type === 'SEED' ? row.variety : row.productName);
         if (!key) return;
+        key = key.trim().toLowerCase();
         orderedMap[key] = (orderedMap[key] || 0) + (row.totalOrdered || 0);
         deliveredMap[key] = (deliveredMap[key] || 0) + (row.totalDelivered || 0);
       });
@@ -1523,8 +1546,8 @@ app.get('/api/forecast', async function (req, res) {
     if (row.totalQty <= 0) return; // filter zero-qty
     var cat = row.category || 'Other';
     if (!grouped[cat]) grouped[cat] = [];
-    var ordered = orderedMap[row.productName] || 0;
-    var delivered = deliveredMap[row.productName] || 0;
+    var ordered = orderedMap[(row.productName || '').trim().toLowerCase()] || 0;
+    var delivered = deliveredMap[(row.productName || '').trim().toLowerCase()] || 0;
     // Convert forecast to billed (purchase) units so forecast/ordered/delivered all match
     var conv = row.conversionRate || 1;
     var billedQty = row.isSeedVariety ? row.totalQty : Math.ceil(row.totalQty / conv * 100) / 100;

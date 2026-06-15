@@ -80,7 +80,13 @@ if (process.env.EMBED_TOKEN) {
   });
 }
 
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: 0, etag: false }));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    }
+  }
+}));
 app.use('/photos', express.static(PHOTO_DIR));
 
 // API auth gate
@@ -249,16 +255,53 @@ app.put('/api/products/:id', async function (req, res) {
   Object.assign(store.products[idx], req.body, { updatedAt: new Date().toISOString() });
   await saveData();
   res.json(store.products[idx]);
+
+  // Write-back to farm-budget for linked products (fire-and-forget)
+  var updated = store.products[idx];
+  if (updated.budgetProductId) {
+    var isSeed = updated.type === 'SEED';
+    var budgetPath = isSeed ? '/api/seeds/' + updated.budgetProductId : '/api/products/' + updated.budgetProductId;
+    var payload = isSeed ? {
+      crop: updated.crop || '',
+      brand: updated.brand || '',
+      variety: updated.variety || '',
+      organicGround: !!updated.organicGround
+    } : {
+      name: updated.productName || '',
+      category: mapInputCategoryToBudget(updated.inputCategory),
+      unit: updated.unitType || 'lbs',
+      purchaseUnit: updated.purchaseUnit || '',
+      conversionRate: updated.conversionRate || 1,
+      organicGround: !!updated.organicGround
+    };
+    fetch(budgetUrl(budgetPath), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(function (e) {
+      console.warn('[write-back] Product update to farm-budget failed:', e.message);
+    });
+  }
 });
 
 app.delete('/api/products/:id', async function (req, res) {
   var idx = store.products.findIndex(function (p) { return p.id === req.params.id; });
   if (idx === -1) return res.status(404).json({ error: 'Product not found' });
+  var toDelete = store.products[idx];
   // Soft delete
   store.products[idx].active = false;
   store.products[idx].updatedAt = new Date().toISOString();
   await saveData();
   res.json({ ok: true });
+
+  // Write-back: deactivate in farm-budget (fire-and-forget)
+  if (toDelete.budgetProductId) {
+    var isSeed = toDelete.type === 'SEED';
+    var budgetPath = isSeed ? '/api/seeds/' + toDelete.budgetProductId : '/api/products/' + toDelete.budgetProductId;
+    fetch(budgetUrl(budgetPath), { method: 'DELETE' }).catch(function (e) {
+      console.warn('[write-back] Product delete from farm-budget failed:', e.message);
+    });
+  }
 });
 
 // ─── Suppliers CRUD ─────────────────────────────────────────────────
@@ -305,14 +348,44 @@ app.put('/api/suppliers/:id', async function (req, res) {
   Object.assign(store.suppliers[idx], req.body, { updatedAt: new Date().toISOString() });
   await saveData();
   res.json(store.suppliers[idx]);
+
+  // Write-back to farm-budget if a mapping exists (fire-and-forget)
+  var updatedSup = store.suppliers[idx];
+  var mapping = (store.supplierMappings || []).find(function (m) { return m.localSupplierId === updatedSup.id; });
+  if (mapping) {
+    fetch(budgetUrl('/api/suppliers/' + mapping.budgetSupplierId), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: updatedSup.name,
+        contact: updatedSup.contactName || updatedSup.email || '',
+        notes: updatedSup.notes || ''
+      })
+    }).catch(function (e) {
+      console.warn('[write-back] Supplier update to farm-budget failed:', e.message);
+    });
+  }
 });
 
 app.delete('/api/suppliers/:id', async function (req, res) {
   var idx = store.suppliers.findIndex(function (s) { return s.id === req.params.id; });
   if (idx === -1) return res.status(404).json({ error: 'Supplier not found' });
+  var toDelete = store.suppliers[idx];
+  var mapping = (store.supplierMappings || []).find(function (m) { return m.localSupplierId === toDelete.id; });
   store.suppliers.splice(idx, 1);
+  // Clean up the mapping entry too
+  if (mapping && store.supplierMappings) {
+    store.supplierMappings = store.supplierMappings.filter(function (m) { return m.localSupplierId !== toDelete.id; });
+  }
   await saveData();
   res.json({ ok: true });
+
+  // Write-back: remove from farm-budget (fire-and-forget)
+  if (mapping) {
+    fetch(budgetUrl('/api/suppliers/' + mapping.budgetSupplierId), { method: 'DELETE' }).catch(function (e) {
+      console.warn('[write-back] Supplier delete from farm-budget failed:', e.message);
+    });
+  }
 });
 
 // ─── Forecasts CRUD ─────────────────────────────────────────────────

@@ -11,7 +11,7 @@
       var target = btn.getAttribute('data-tab');
       tabs.forEach(function (b) { b.classList.remove('active'); });
       contents.forEach(function (c) { c.classList.remove('active'); });
-      btn.classList.add('active');
+      document.querySelectorAll('.tab-btn[data-tab="' + target + '"]').forEach(function(b){ b.classList.add('active'); });
       document.getElementById('tab-' + target).classList.add('active');
       window.dispatchEvent(new CustomEvent('tab-activate', { detail: target }));
     });

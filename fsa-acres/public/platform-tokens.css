@@ -54,7 +54,7 @@
      --text-scale is set via JS (settings-panel.js) and persisted to localStorage
   */
   --text-scale: 1;
-  --base-size: 14px;
+  --base-size: 18px;
 
   /* Semantic size tokens — all typography should reference these */
   --size-xs:   calc(var(--base-size) * 0.78 * var(--text-scale));  /* ~10.9px at M */
@@ -105,6 +105,44 @@ h4 { font-size: var(--size-md) !important; }
 /* Small/muted helper text stays proportionally smaller */
 small, .text-xs, .text-muted, .sub {
   font-size: var(--size-xs) !important;
+}
+
+/* Harvest theme — earthy agricultural palette */
+body.harvest {
+  --bg: #f7f3eb;
+  --bg-raised: #ffffff;
+  --card: #ffffff;
+  --card-alt: #f0ede4;
+  --primary: #2d5a27;
+  --primary-dim: #1e3d1a;
+  --primary-light: #4a7c3f;
+  --text: #2c1a0e;
+  --text-light: #7a5c3a;
+  --text-bright: #1a0f05;
+  --border: #d4c4a8;
+  --border-light: #e8dcc8;
+  --highlight: #f0ede4;
+  --danger: #9b1c1c;
+  --success: #2d5a27;
+  --amber: #b87d0a;
+  --blue: #1a5276;
+  --orange: #a04000;
+  --glow: none;
+  --shadow-hover: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Status pill tokens — used in ticket log */
+:root {
+  --pill-matched-bg:        rgba(45, 90, 39, 0.12);
+  --pill-matched-text:      #2d5a27;
+  --pill-disputed-bg:       rgba(155, 28, 28, 0.12);
+  --pill-disputed-text:     #9b1c1c;
+  --pill-pending-bg:        rgba(184, 125, 10, 0.15);
+  --pill-pending-text:      #b87d0a;
+  --pill-unreconciled-bg:   rgba(100, 116, 139, 0.12);
+  --pill-unreconciled-text: #64748b;
+  --pill-manual-bg:         rgba(255, 149, 0, 0.15);
+  --pill-manual-text:       #7a4500;
 }
 
 /* Hide legacy theme toggles — settings panel is the single source */

@@ -402,6 +402,10 @@
     var btn = document.querySelector('.nav-primary > .tab-btn[data-tab="' + tabName + '"]');
     if (btn) btn.classList.add('active');
 
+    // Sync bottom nav
+    document.querySelectorAll('.app-bottom-nav .tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.querySelectorAll('.app-bottom-nav .tab-btn[data-tab="' + tabName + '"]').forEach(function(b){ b.classList.add('active'); });
+
     document.getElementById('nav-enterprise-bar').classList.remove('visible');
 
     tabSections.forEach(function (sec) {
@@ -414,8 +418,8 @@
     }));
   }
 
-  // Regular tab buttons (non-enterprise)
-  document.querySelectorAll('.nav-primary > .tab-btn[data-tab]').forEach(function (btn) {
+  // Regular tab buttons (non-enterprise) — sidebar and bottom nav
+  document.querySelectorAll('.nav-primary > .tab-btn[data-tab], .app-bottom-nav .tab-btn[data-tab]').forEach(function (btn) {
     btn.addEventListener('click', function () {
       var tabName = btn.getAttribute('data-tab');
       location.hash = tabName;

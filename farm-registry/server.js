@@ -173,7 +173,13 @@ if (process.env.EMBED_TOKEN) {
   });
 }
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), {
+  setHeaders(res, filePath) {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'no-cache, must-revalidate');
+    }
+  }
+}));
 app.use('/client', express.static(path.join(__dirname, 'client')));
 
 // API auth gate

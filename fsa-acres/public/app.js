@@ -89,8 +89,7 @@
   function activateTab(tabName) {
     tabs.forEach(function (b) { b.classList.remove('active'); });
     contents.forEach(function (c) { c.classList.remove('active'); });
-    var btn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
-    if (btn) btn.classList.add('active');
+    document.querySelectorAll('.tab-btn[data-tab="' + tabName + '"]').forEach(function(b){ b.classList.add('active'); });
     var tabEl = util.$('tab-' + tabName);
     if (tabEl) tabEl.classList.add('active');
     document.dispatchEvent(new CustomEvent('tab-activate', { detail: { tab: tabName } }));

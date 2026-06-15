@@ -26,7 +26,7 @@ html.in-iframe header { display: none !important; }
 }
 
 body {
-  font-family: var(--font-mono);
+  font-family: var(--font-body, var(--font-mono));
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
@@ -65,8 +65,7 @@ header h1 {
 }
 
 header h1::before {
-  content: '~/farm $ ';
-  color: var(--text-light);
+  content: none;
 }
 
 header .subtitle {
@@ -721,3 +720,23 @@ body.light ::-webkit-scrollbar-thumb:hover { background: #999; }
 
 body.light header { background: #fafafa; border-bottom-color: #e0e0e0; }
 body.light .stat-card .value { color: #333; }
+
+/* ============================================================
+   CLEAN VIBE POLISH
+   ============================================================ */
+.stat-card { border-radius: 6px; }
+.edit-panel { border-radius: 8px; }
+
+h2 {
+  font-family: var(--font-heading, var(--font-sans));
+  font-weight: 700;
+  font-size: var(--size-lg);
+  letter-spacing: -0.01em;
+  color: var(--text-bright);
+}
+
+h3 {
+  font-family: var(--font-heading, var(--font-sans));
+  font-weight: 600;
+  color: var(--text-bright);
+}
