@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { MODULES } from '@/lib/modules'
 
@@ -19,6 +20,14 @@ interface DashboardDesktopProps {
 
 export function DashboardDesktop({ children, grantedModules, farmName = 'W. HUGHES FARMS' }: DashboardDesktopProps) {
   const pathname = usePathname()
+  const [actionCount, setActionCount] = useState(0)
+
+  useEffect(() => {
+    fetch('/api/dashboard/action-items')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.totalCount) setActionCount(d.totalCount) })
+      .catch(() => {})
+  }, [])
 
   const visibleIds = new Set(
     MODULES
@@ -52,6 +61,15 @@ export function DashboardDesktop({ children, grantedModules, farmName = 'W. HUGH
             <h1 className="text-sm font-mono font-bold text-glomalin-text tracking-wide">
               {farmName}
             </h1>
+            {actionCount > 0 && (
+              <Link
+                href="/app/compliance"
+                className="inline-flex items-center gap-1.5 mt-2 text-[11px] font-mono text-amber-400 hover:text-amber-300 transition-colors"
+              >
+                <span aria-hidden="true">⚠</span>
+                {actionCount} item{actionCount !== 1 ? 's' : ''} need{actionCount === 1 ? 's' : ''} attention
+              </Link>
+            )}
           </div>
 
           {/* Module groups */}

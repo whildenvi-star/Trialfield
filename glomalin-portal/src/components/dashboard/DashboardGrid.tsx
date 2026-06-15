@@ -5,6 +5,7 @@ import { DashboardCardSkeleton } from './dashboard-card-skeleton'
 import { DashboardCard } from './DashboardCard'
 import { CropPlanCard } from './CropPlanCard' // Created in 03-02-PLAN
 import { FieldOpsCard } from './FieldOpsCard' // Created in 03-02-PLAN
+import { ActionItemsStrip } from './ActionItemsStrip'
 import { MODULES } from '@/lib/modules'
 
 interface DashboardGridProps {
@@ -58,6 +59,7 @@ export function DashboardGrid({ role, grantedModuleIds }: DashboardGridProps) {
           Offline — showing data from {lastSyncAt}
         </p>
       )}
+      <ActionItemsStrip />
       {/* Full-width data cards */}
       {fullWidthModules.map((m) => {
         if (m.id === 'field-ops') return <FieldOpsCard key={m.id} plans={plans} role={role} />
