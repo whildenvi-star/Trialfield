@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: trialfield-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt && pip install -e . --no-deps
+    startCommand: uvicorn trialfield_api.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false        # set manually in Render dashboard
+      - key: CORS_ORIGINS
+        sync: false        # set to your Vercel URL after first deploy
+      - key: PYTHON_VERSION
+        value: "3.12"
+      # ── Payments (set manually in Render dashboard) ──────────────────────────
+      - key: PAYMENT_REQUIRED
+        value: "false"     # flip to "true" when ready to charge
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_STARTER_PRICE_ID
+        sync: false
+      - key: STRIPE_PRO_PRICE_ID
+        sync: false
+      - key: FRONTEND_URL
+        sync: false        # set to https://trialfield.vercel.app

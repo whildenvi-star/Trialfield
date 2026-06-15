@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+<n>Schultz N-rate Trial 2026 (aligned to AB swath)</n>
+<description>4 reps × 6 N rates · 60ft × 400ft plots · all strip edges on AB swath grid</description>
+<Style id="r0"><LineStyle><color>ff000000</color><width>1.5</width></LineStyle><PolyStyle><color>7fcccccc</color></PolyStyle></Style>
+<Style id="r50"><LineStyle><color>ff000000</color><width>1.5</width></LineStyle><PolyStyle><color>7f0c8cff</color></PolyStyle></Style>
+<Style id="r100"><LineStyle><color>ff000000</color><width>1.5</width></LineStyle><PolyStyle><color>7fb47f1f</color></PolyStyle></Style>
+<Style id="r150"><LineStyle><color>ff000000</color><width>1.5</width></LineStyle><PolyStyle><color>7f2cca2c</color></PolyStyle></Style>
+<Style id="r200"><LineStyle><color>ff000000</color><width>1.5</width></LineStyle><PolyStyle><color>7f8a4d0a</color></PolyStyle></Style>
+<Style id="r250"><LineStyle><color>ff000000</color><width>1.5</width></LineStyle><PolyStyle><color>7fbd6794</color></PolyStyle></Style>
+<Placemark>
+<n>R1-S1-200N</n>
+<description>Rep 1 (NW) · Strip 1 · 200 lb N/ac · 0.551 ac · v=690-750' from AB</description>
+<styleUrl>#r200</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1108916,42.5643945,0 -89.1094073,42.5643681,0 -89.1094019,42.5645327,0 -89.1108863,42.5645591,0 -89.1108916,42.5643945,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R1-S2-50N</n>
+<description>Rep 1 (NW) · Strip 2 · 50 lb N/ac · 0.551 ac · v=750-810' from AB</description>
+<styleUrl>#r50</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1108863,42.5645591,0 -89.1094019,42.5645327,0 -89.1093966,42.5646973,0 -89.1108809,42.5647237,0 -89.1108863,42.5645591,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R1-S3-150N</n>
+<description>Rep 1 (NW) · Strip 3 · 150 lb N/ac · 0.551 ac · v=810-870' from AB</description>
+<styleUrl>#r150</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1108809,42.5647237,0 -89.1093966,42.5646973,0 -89.1093912,42.5648619,0 -89.1108756,42.5648883,0 -89.1108809,42.5647237,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R1-S4-250N</n>
+<description>Rep 1 (NW) · Strip 4 · 250 lb N/ac · 0.551 ac · v=870-930' from AB</description>
+<styleUrl>#r250</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1108756,42.5648883,0 -89.1093912,42.5648619,0 -89.1093858,42.5650265,0 -89.1108702,42.5650529,0 -89.1108756,42.5648883,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R1-S5-100N</n>
+<description>Rep 1 (NW) · Strip 5 · 100 lb N/ac · 0.551 ac · v=930-990' from AB</description>
+<styleUrl>#r100</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1108702,42.5650529,0 -89.1093858,42.5650265,0 -89.1093805,42.5651911,0 -89.1108649,42.5652175,0 -89.1108702,42.5650529,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R1-S6-0N</n>
+<description>Rep 1 (NW) · Strip 6 · 0 lb N/ac · 0.551 ac · v=990-1050' from AB</description>
+<styleUrl>#r0</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1108649,42.5652175,0 -89.1093805,42.5651911,0 -89.1093751,42.5653557,0 -89.1108595,42.5653820,0 -89.1108649,42.5652175,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R2-S1-250N</n>
+<description>Rep 2 (NE) · Strip 1 · 250 lb N/ac · 0.551 ac · v=690-750' from AB</description>
+<styleUrl>#r250</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1094073,42.5643681,0 -89.1079229,42.5643417,0 -89.1079175,42.5645063,0 -89.1094019,42.5645327,0 -89.1094073,42.5643681,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R2-S2-100N</n>
+<description>Rep 2 (NE) · Strip 2 · 100 lb N/ac · 0.551 ac · v=750-810' from AB</description>
+<styleUrl>#r100</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1094019,42.5645327,0 -89.1079175,42.5645063,0 -89.1079122,42.5646709,0 -89.1093966,42.5646973,0 -89.1094019,42.5645327,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R2-S3-0N</n>
+<description>Rep 2 (NE) · Strip 3 · 0 lb N/ac · 0.551 ac · v=810-870' from AB</description>
+<styleUrl>#r0</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1093966,42.5646973,0 -89.1079122,42.5646709,0 -89.1079068,42.5648355,0 -89.1093912,42.5648619,0 -89.1093966,42.5646973,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R2-S4-50N</n>
+<description>Rep 2 (NE) · Strip 4 · 50 lb N/ac · 0.551 ac · v=870-930' from AB</description>
+<styleUrl>#r50</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1093912,42.5648619,0 -89.1079068,42.5648355,0 -89.1079015,42.5650001,0 -89.1093858,42.5650265,0 -89.1093912,42.5648619,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R2-S5-150N</n>
+<description>Rep 2 (NE) · Strip 5 · 150 lb N/ac · 0.551 ac · v=930-990' from AB</description>
+<styleUrl>#r150</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1093858,42.5650265,0 -89.1079015,42.5650001,0 -89.1078961,42.5651647,0 -89.1093805,42.5651911,0 -89.1093858,42.5650265,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R2-S6-200N</n>
+<description>Rep 2 (NE) · Strip 6 · 200 lb N/ac · 0.551 ac · v=990-1050' from AB</description>
+<styleUrl>#r200</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1093805,42.5651911,0 -89.1078961,42.5651647,0 -89.1078907,42.5653293,0 -89.1093751,42.5653557,0 -89.1093805,42.5651911,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R3-S1-0N</n>
+<description>Rep 3 (SW) · Strip 1 · 0 lb N/ac · 0.551 ac · v=330-390' from AB</description>
+<styleUrl>#r0</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1099998,42.5633906,0 -89.1085154,42.5633642,0 -89.1085100,42.5635287,0 -89.1099944,42.5635551,0 -89.1099998,42.5633906,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R3-S2-150N</n>
+<description>Rep 3 (SW) · Strip 2 · 150 lb N/ac · 0.551 ac · v=390-450' from AB</description>
+<styleUrl>#r150</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1099944,42.5635551,0 -89.1085100,42.5635287,0 -89.1085047,42.5636933,0 -89.1099890,42.5637197,0 -89.1099944,42.5635551,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R3-S3-250N</n>
+<description>Rep 3 (SW) · Strip 3 · 250 lb N/ac · 0.551 ac · v=450-510' from AB</description>
+<styleUrl>#r250</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1099890,42.5637197,0 -89.1085047,42.5636933,0 -89.1084993,42.5638579,0 -89.1099837,42.5638843,0 -89.1099890,42.5637197,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R3-S4-100N</n>
+<description>Rep 3 (SW) · Strip 4 · 100 lb N/ac · 0.551 ac · v=510-570' from AB</description>
+<styleUrl>#r100</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1099837,42.5638843,0 -89.1084993,42.5638579,0 -89.1084940,42.5640225,0 -89.1099783,42.5640489,0 -89.1099837,42.5638843,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R3-S5-200N</n>
+<description>Rep 3 (SW) · Strip 5 · 200 lb N/ac · 0.551 ac · v=570-630' from AB</description>
+<styleUrl>#r200</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1099783,42.5640489,0 -89.1084940,42.5640225,0 -89.1084886,42.5641871,0 -89.1099730,42.5642135,0 -89.1099783,42.5640489,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R3-S6-50N</n>
+<description>Rep 3 (SW) · Strip 6 · 50 lb N/ac · 0.551 ac · v=630-690' from AB</description>
+<styleUrl>#r50</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1099730,42.5642135,0 -89.1084886,42.5641871,0 -89.1084833,42.5643517,0 -89.1099676,42.5643781,0 -89.1099730,42.5642135,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R4-S1-50N</n>
+<description>Rep 4 (SE) · Strip 1 · 50 lb N/ac · 0.551 ac · v=330-390' from AB</description>
+<styleUrl>#r50</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1085154,42.5633642,0 -89.1070311,42.5633377,0 -89.1070257,42.5635023,0 -89.1085100,42.5635287,0 -89.1085154,42.5633642,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R4-S2-200N</n>
+<description>Rep 4 (SE) · Strip 2 · 200 lb N/ac · 0.551 ac · v=390-450' from AB</description>
+<styleUrl>#r200</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1085100,42.5635287,0 -89.1070257,42.5635023,0 -89.1070203,42.5636669,0 -89.1085047,42.5636933,0 -89.1085100,42.5635287,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R4-S3-100N</n>
+<description>Rep 4 (SE) · Strip 3 · 100 lb N/ac · 0.551 ac · v=450-510' from AB</description>
+<styleUrl>#r100</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1085047,42.5636933,0 -89.1070203,42.5636669,0 -89.1070150,42.5638315,0 -89.1084993,42.5638579,0 -89.1085047,42.5636933,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R4-S4-0N</n>
+<description>Rep 4 (SE) · Strip 4 · 0 lb N/ac · 0.551 ac · v=510-570' from AB</description>
+<styleUrl>#r0</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1084993,42.5638579,0 -89.1070150,42.5638315,0 -89.1070096,42.5639961,0 -89.1084940,42.5640225,0 -89.1084993,42.5638579,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R4-S5-150N</n>
+<description>Rep 4 (SE) · Strip 5 · 150 lb N/ac · 0.551 ac · v=570-630' from AB</description>
+<styleUrl>#r150</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1084940,42.5640225,0 -89.1070096,42.5639961,0 -89.1070042,42.5641607,0 -89.1084886,42.5641871,0 -89.1084940,42.5640225,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+<Placemark>
+<n>R4-S6-250N</n>
+<description>Rep 4 (SE) · Strip 6 · 250 lb N/ac · 0.551 ac · v=630-690' from AB</description>
+<styleUrl>#r250</styleUrl>
+<Polygon><outerBoundaryIs><LinearRing><coordinates>-89.1084886,42.5641871,0 -89.1070042,42.5641607,0 -89.1069989,42.5643253,0 -89.1084833,42.5643517,0 -89.1084886,42.5641871,0</coordinates></LinearRing></outerBoundaryIs></Polygon>
+</Placemark>
+</Document>
+</kml>

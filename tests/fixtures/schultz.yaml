@@ -1,0 +1,21 @@
+trial:
+  type: fertility
+  name: "Schultz N-rate 2026"
+  treatments:
+    - {label: "0",   value: 0,   unit: "lb N/ac"}
+    - {label: "50",  value: 50,  unit: "lb N/ac"}
+    - {label: "100", value: 100, unit: "lb N/ac"}
+    - {label: "150", value: 150, unit: "lb N/ac"}
+    - {label: "200", value: 200, unit: "lb N/ac"}
+    - {label: "250", value: 250, unit: "lb N/ac"}
+  reps: 4
+  plot_length_ft: 400
+
+geometry:
+  trial_swath_ft: 60
+  ab_line: reference/example_inputs/schultz.zip
+  field_boundary: reference/example_inputs/schultz_poly.zip
+  soil_mode: skip
+
+output:
+  dir: ./out/schultz/
