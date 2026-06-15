@@ -159,7 +159,7 @@
 - [x] Phase 69: Field Operations TC Log (0/0 plans) (completed 2026-04-18)
 - [ ] Phase 70: Interactive Field Map (0/0 plans)
 - [x] Phase 71: Unified Field Operations View (0/0 plans) (completed 2026-04-20)
-- [ ] Phase 72: As-Applied Data Overlay (0/0 plans)
+- [ ] Phase 72: Acreage Reconciliation Tool (0/0 plans)
 
 </details>
 
@@ -556,22 +556,23 @@ Plans:
 - [ ] 71-02-PLAN.md — renderFieldOpsPanel() rendering with grouped items, type badges, subtotals, grand total; remove Inputs/Machinery nav items; add CSS
 - [ ] 71-03-PLAN.md — Cross-group drag-and-drop + inline add-item form + human verify checkpoint
 
-### Phase 72: As-Applied Data Overlay
+### Phase 72: Acreage Reconciliation Tool
 
-**Goal:** Overlay as-applied field operation data on the interactive field map — showing prescription vs. actual application data for each field polygon, sourced from Case IH API exports or manual upload, so farm managers can visually verify coverage and identify missed areas.
+**Goal:** Replace the Compliance Hub Acreage tab with a full spatial reconciliation tool for crop insurance reporting. Ingests FSA CLU shapefiles, the Glomalin farm registry, and FieldView API as-planted data; spatially overlays them via PostGIS; flags acreage discrepancies (Green/Yellow/Red thresholds); and produces an interactive map view, tabular acreage report, and output shapefile with the full RMA attribute schema. Manual editing (split CLU, merge CLUs, draw from scratch, manual acreage override) is a hard requirement — the tool must function completely with zero automated inputs.
 
 **Milestone:** v13.0
 
-**Depends on**: Phase 70 (Interactive Field Map — field boundaries, basemap, and FieldDetailPanel foundation)
+**Depends on**: Phase 68 (Compliance Hub Redesign — Acreage tab shell), Phase 70 (Interactive Field Map — MapLibre GL infrastructure)
 
 **Success Criteria** (what must be TRUE):
-  1. The `/app/maps` page can display as-applied data as a visual overlay on field polygons
-  2. As-applied data can be imported (Case IH export or manual upload)
-  3. A user can select which operation/layer to view (e.g., herbicide application, fertilizer, seeding)
-  4. The detail panel for a selected field shows as-applied summary (product, rate, date, coverage %)
-  5. Missing coverage or off-target areas are visually distinguishable
+  1. FSA CLU shapefiles, Glomalin farm registry, and FieldView as-planted data are ingested and cross-walked
+  2. PostGIS ST_Intersection overlay produces per-CLU/crop reconciliation records with Green/Yellow/Red discrepancy flags
+  3. A user can split a CLU, merge CLUs, draw a new boundary, and override acreage manually — with zero automated data loaded
+  4. Map view shows FSA CLU boundaries + as-planted polygons + crop colors + discrepancy flag indicators + farm#/tract#/field labels
+  5. Tabular report exports by farm#/tract#/CLU/crop/RMA unit with planted ac, CLU ac, delta, and source flag (auto/manual/overridden)
+  6. Output .shp carries full RMA attribute schema and is ready to hand to the crop insurance agent
 
-**Requirements:** AAD-01, AAD-02, AAD-03, AAD-04, AAD-05
+**Requirements:** ACR-01, ACR-02, ACR-03, ACR-04, ACR-05, ACR-06
 
 **Plans:** 0/0 plans complete
 
