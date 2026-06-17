@@ -130,9 +130,22 @@ DECLARE
   bind_permissions int;
   user_role        public.app_role;
 BEGIN
-  -- Read app_role from JWT — embedded at app_metadata.app_role by the hook
-  SELECT (auth.jwt()->'app_metadata'->>'app_role')::public.app_role
-  INTO user_role;
+  -- Read app_role from JWT — embedded at app_metadata.app_role by the hook.
+  -- Guard against unrecognized role strings: an invalid enum cast raises
+  -- invalid_text_representation, which we catch and convert to a deny (false)
+  -- rather than letting an unhandled exception crash RLS policy evaluation.
+  BEGIN
+    SELECT (auth.jwt()->'app_metadata'->>'app_role')::public.app_role
+    INTO user_role;
+  EXCEPTION WHEN invalid_text_representation THEN
+    RETURN false;  -- unknown role string (e.g. "Owner", "admin") → deny
+  END;
+
+  -- Explicit NULL guard: absent app_role in JWT → deny.
+  -- Makes intent clear and prevents accidental default-role "fix" by future devs.
+  IF user_role IS NULL THEN
+    RETURN false;
+  END IF;
 
   SELECT COUNT(*)
   INTO bind_permissions
