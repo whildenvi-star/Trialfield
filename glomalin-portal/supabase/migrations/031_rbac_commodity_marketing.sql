@@ -196,7 +196,11 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.authorize_for_role(public.app_permission, public.app_role) TO authenticated;
+-- authorize_for_role is a test/SC-5 helper — NOT callable by end users.
+-- Do not grant EXECUTE to authenticated: any auth'd user could enumerate the full
+-- permission topology via supabase.rpc('authorize_for_role', ...).
+-- Invoke only from postgres / service-role test scripts.
+GRANT EXECUTE ON FUNCTION public.authorize_for_role(public.app_permission, public.app_role) TO postgres;
 
 
 -- ---------------------------------------------------------------------------
