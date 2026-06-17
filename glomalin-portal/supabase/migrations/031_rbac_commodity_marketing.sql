@@ -71,6 +71,13 @@ CREATE TABLE IF NOT EXISTS public.role_permissions (
 );
 COMMENT ON TABLE public.role_permissions IS 'Commodity marketing permissions for each app_role.';
 
+-- Prevent direct public reads on role_permissions.
+-- The authorize() and authorize_for_role() SECURITY DEFINER functions retain access
+-- because they execute as their definer (the migration owner / postgres role).
+-- No SELECT policy = deny all direct reads; SECURITY DEFINER functions bypass RLS.
+REVOKE ALL ON TABLE public.role_permissions FROM anon, authenticated;
+ALTER TABLE public.role_permissions ENABLE ROW LEVEL SECURITY;
+
 
 -- ---------------------------------------------------------------------------
 -- Step 4a: Seed — owner rows (18 total — all permissions)
