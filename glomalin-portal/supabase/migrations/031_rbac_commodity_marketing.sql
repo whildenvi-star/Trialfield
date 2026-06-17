@@ -205,6 +205,8 @@ GRANT EXECUTE ON FUNCTION public.authorize_for_role(public.app_permission, publi
 CREATE OR REPLACE FUNCTION public.custom_access_token_hook(event jsonb)
 RETURNS jsonb
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
 AS $$
 DECLARE
   claims        jsonb;
