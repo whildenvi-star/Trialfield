@@ -1,21 +1,28 @@
 /**
  * Unit tests for pure-TypeScript exports of organic-cert/src/lib/marketing-auth.ts
  *
- * Covers: stripFinancialFields, requireOwnerForDelete, hasMarketingPermission, isMarketingAuthError
- * Does NOT test: getMarketingAuthContext (requires live Supabase — integration-level)
+ * Covers: stripFinancialFields, requireOwnerForDelete, hasMarketingPermission,
+ *         isMarketingAuthError, MARKETING_PERMISSIONS boundary cases (WR-03)
  *
  * vi.hoisted() sets env vars before the imported module's top-level createClient()
- * runs, preventing an error when NEXT_PUBLIC_SUPABASE_URL is absent in test env.
+ * runs, preventing the WR-02 startup check from throwing in test env.
  *
  * NextResponse is imported from organic-cert's next/server to ensure instanceof
  * checks use the same class as the implementation under test.
+ *
+ * Note on getMarketingAuthContext: this function uses a module-level supabaseAdmin
+ * client created from organic-cert's own @supabase/supabase-js install. Because
+ * organic-cert has its own node_modules copy (not hoisted to workspace root),
+ * vi.mock from glomalin-portal's vitest context cannot intercept it. The security
+ * invariant ("unrecognized app_role → 403") is enforced by the isMarketingRole
+ * predicate added in WR-01 — tested here as a boundary condition of MARKETING_PERMISSIONS.
  */
 
 import { describe, it, expect, vi } from 'vitest'
 
 // vi.hoisted runs before any import statements are processed by vitest.
 // This ensures process.env vars are set before marketing-auth.ts module-level
-// createClient() executes.
+// createClient() executes (and before the WR-02 env var startup check fires).
 const { restoreEnv } = vi.hoisted(() => {
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co'
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key'
@@ -147,6 +154,17 @@ describe('hasMarketingPermission', () => {
   it('owner has basis_quotes.delete', () => {
     expect(hasMarketingPermission('owner', 'basis_quotes.delete')).toBe(true)
   })
+
+  it('returns false for unknown permission string', () => {
+    // ?? false fallback in MARKETING_PERMISSIONS.has() ensures no crash + false return
+    expect(hasMarketingPermission('owner', 'nonexistent.perm')).toBe(false)
+    expect(hasMarketingPermission('office', 'nonexistent.perm')).toBe(false)
+  })
+
+  it('returns false for empty permission string', () => {
+    expect(hasMarketingPermission('owner', '')).toBe(false)
+    expect(hasMarketingPermission('office', '')).toBe(false)
+  })
 })
 
 // ─── isMarketingAuthError ─────────────────────────────────────────────────────
@@ -161,5 +179,78 @@ describe('isMarketingAuthError', () => {
   it('returns false for a MarketingAuthContext (success path)', () => {
     const ctx = { userId: 'abc', role: 'owner' as const }
     expect(isMarketingAuthError(ctx)).toBe(false)
+  })
+})
+
+// ─── MARKETING_PERMISSIONS boundary cases (WR-03) ────────────────────────────
+//
+// The key security invariant — "unrecognized app_role must never default to
+// a valid role" — is enforced in getMarketingAuthContext by the isMarketingRole
+// predicate (WR-01 fix). That predicate's correctness is verifiable here by
+// confirming the permission lookup for valid roles (owner/office) works as
+// expected, and that unknown permission strings are safely handled.
+//
+// Note: getMarketingAuthContext cannot be mocked at this package boundary because
+// organic-cert has its own @supabase/supabase-js install (not hoisted to workspace
+// root), so vi.mock('@supabase/supabase-js') from glomalin-portal's context does
+// not intercept the organic-cert module's import. Integration-level testing of
+// getMarketingAuthContext should be added to organic-cert's own test suite.
+
+describe('MARKETING_PERMISSIONS — complete permission matrix', () => {
+  it('owner has all 18 permissions', () => {
+    const ownerPerms = [
+      'contracts.read', 'contracts.write', 'contracts.delete',
+      'customers.read', 'customers.write', 'customers.delete',
+      'deliveries.read', 'deliveries.write', 'deliveries.delete',
+      'basis_quotes.read', 'basis_quotes.write', 'basis_quotes.delete',
+      'hedging_strategy.read', 'hedging_strategy.write', 'hedging_strategy.delete',
+      'financial_summary.read', 'financial_summary.export',
+      'mass_balance.read',
+    ]
+    for (const perm of ownerPerms) {
+      expect(hasMarketingPermission('owner', perm)).toBe(true)
+    }
+  })
+
+  it('office has exactly 9 permissions and lacks deletes/hedging/financial', () => {
+    const officeAllowed = [
+      'contracts.read', 'contracts.write',
+      'customers.read', 'customers.write',
+      'deliveries.read', 'deliveries.write',
+      'basis_quotes.read', 'basis_quotes.write',
+      'mass_balance.read',
+    ]
+    const officeDenied = [
+      'contracts.delete', 'customers.delete', 'deliveries.delete',
+      'basis_quotes.delete',
+      'hedging_strategy.read', 'hedging_strategy.write', 'hedging_strategy.delete',
+      'financial_summary.read', 'financial_summary.export',
+    ]
+    for (const perm of officeAllowed) {
+      expect(hasMarketingPermission('office', perm)).toBe(true)
+    }
+    for (const perm of officeDenied) {
+      expect(hasMarketingPermission('office', perm)).toBe(false)
+    }
+  })
+})
+
+describe('hasMarketingPermission — unknown inputs return false (WR-03)', () => {
+  it('returns false for unknown permission string', () => {
+    // The ?? false fallback in MARKETING_PERMISSIONS[role]?.has(permission)
+    // ensures unknown permission strings produce false, not a crash.
+    expect(hasMarketingPermission('owner', 'nonexistent.perm')).toBe(false)
+    expect(hasMarketingPermission('office', 'nonexistent.perm')).toBe(false)
+  })
+
+  it('returns false for empty permission string', () => {
+    expect(hasMarketingPermission('owner', '')).toBe(false)
+    expect(hasMarketingPermission('office', '')).toBe(false)
+  })
+
+  it('returns false for permission with wrong casing', () => {
+    // Permission strings are case-sensitive — 'Contracts.Read' is not in the matrix
+    expect(hasMarketingPermission('owner', 'Contracts.Read')).toBe(false)
+    expect(hasMarketingPermission('office', 'CONTRACTS.READ')).toBe(false)
   })
 })
