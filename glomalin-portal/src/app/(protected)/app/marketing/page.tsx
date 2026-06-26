@@ -1,20 +1,44 @@
-import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
+import { requireMarketingAccess, isMarketingGuardError } from '@/lib/supabase/guard'
+import { fetchCertServiceWithAuth } from '@/app/api/mobile/_lib/proxy'
+import { computePosition } from '@/lib/marketing/position'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
-import { MarketingWorkspace } from '@/components/marketing/marketing-workspace'
+import { PageHeader } from '@/components/ui/page-header'
+import { SectionHeader } from '@/components/ui/section-header'
 import { YearSelector } from '@/components/ui/year-selector'
-import { computeCommodityPositions } from '@/lib/marketing/queries'
-import {
-  fetchBudgetService,
-  fetchGrainService,
-} from '@/app/api/mobile/_lib/proxy'
-import type { CbotPrice, YieldSummary, BudgetField } from '@/lib/marketing/types'
+import { KpiStrip } from '@/components/ui/kpi-strip'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { SkeletonCard, SkeletonRow } from '@/components/ui/skeleton'
+import { PositionStrip } from '@/components/marketing/position-strip'
+import { ContractTable } from '@/components/marketing/contract-table'
+import { BasisExposurePanel } from '@/components/marketing/basis-exposure-panel'
+import { ReconQueue } from '@/components/marketing/recon-queue'
 
-const COMMODITY_MAP = [
-  { symbol: 'ZCZ26', commodity: 'Corn',     fallbackPrice: 4.5 },
-  { symbol: 'ZSX26', commodity: 'Soybeans', fallbackPrice: 10.5 },
-  { symbol: 'ZWZ26', commodity: 'Wheat',    fallbackPrice: 5.8 },
-  { symbol: 'ZOZ26', commodity: 'Oats',     fallbackPrice: 3.5 },
-]
+interface GrainContractRow {
+  id: string
+  instrument: 'PRICED' | 'SPOT' | 'FOB' | 'PRICED_LATER' | 'BASIS_FIXED' | 'FUTURES_FIXED' | 'MIN_PRICE' | 'ACCUMULATOR'
+  contractedBushels: number
+  appliedBushels: number
+  futuresPrice?: number | null
+  basis?: number | null
+  finalCashPrice?: number | null
+  cropYear: number
+  deliveryStart?: string | null
+  deliveryEnd?: string | null
+  customer: { id: string; name: string; shortCode: string }
+  variant: { id: string; name: string }
+  status: 'OPEN' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELLED' | 'EXPIRED'
+}
+
+interface GrainDeliveryRow {
+  id: string
+  deliveryDate: string
+  netBushels: number
+  unappliedBushels: number
+  customer: { id: string; name: string; shortCode: string }
+  variant: { id: string; name: string }
+}
 
 export default async function MarketingPage({
   searchParams,
@@ -22,112 +46,96 @@ export default async function MarketingPage({
   searchParams: Promise<{ year?: string }>
 }) {
   const { year: yearParam } = await searchParams
-  const cropYear = yearParam ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
-  const supabase = await createClient()
+  const cropYear = yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
 
-  const [
-    { data: commodities },
-    { data: variants },
-    { data: instruments },
-    { data: pricingConfigs },
-  ] = await Promise.all([
-    supabase.from('commodities').select('*').order('sort_order'),
-    supabase.from('crop_variants').select('*').eq('crop_year', cropYear).order('commodity_id').order('name'),
-    supabase.from('sale_instruments').select('*').eq('crop_year', cropYear).order('commodity_id').order('created_at'),
-    supabase.from('commodity_pricing').select('*').eq('crop_year', cropYear),
+  const guard = await requireMarketingAccess()
+  if (isMarketingGuardError(guard)) redirect('/app')
+  const { role, supabase } = guard
+  const isOwner = role === 'owner'
+
+  const { data: { session } } = await supabase.auth.getSession()
+  const accessToken = session?.access_token ?? ''
+
+  let contracts: GrainContractRow[] = []
+  let deliveries: GrainDeliveryRow[] = []
+  let contractsError = false
+  let deliveriesError = false
+
+  const [contractsRes, deliveriesRes] = await Promise.allSettled([
+    fetchCertServiceWithAuth(
+      `/api/marketing/grain-contracts?year=${cropYear}`,
+      accessToken
+    ),
+    fetchCertServiceWithAuth(
+      `/api/marketing/grain-deliveries?year=${cropYear}&unmatched=true`,
+      accessToken
+    ),
   ])
 
-  // CBOT prices — farm-budget proxies Yahoo Finance, falls back to hardcoded reference prices
-  let cbotPrices: CbotPrice[] = []
-  let priceSource = 'unavailable'
-  let priceTimestamp: string | null = null
-  try {
-    const results = await Promise.allSettled(
-      COMMODITY_MAP.map(async (c) => {
-        const res = await fetchBudgetService(`/api/cbot-fetch?symbol=${encodeURIComponent(c.symbol)}`)
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const json = (await res.json()) as { price?: number; change?: number; timestamp?: string; source?: string }
-        if (!json.price) throw new Error('No price')
-        return {
-          commodity:  c.commodity,
-          symbol:     c.symbol,
-          price:      json.price,
-          change:     json.change ?? 0,
-          timestamp:  json.timestamp ?? new Date().toISOString(),
-          source:     json.source ?? 'barchart-delayed',
-        } satisfies CbotPrice
-      })
-    )
-    for (const r of results) {
-      if (r.status === 'fulfilled') {
-        cbotPrices.push(r.value)
-        priceSource    = r.value.source
-        priceTimestamp = r.value.timestamp
-      }
-    }
-  } catch { /* ignore */ }
-
-  if (cbotPrices.length === 0) {
-    cbotPrices = COMMODITY_MAP.map((c) => ({
-      commodity: c.commodity,
-      symbol:    c.symbol,
-      price:     c.fallbackPrice,
-      change:    0,
-      timestamp: new Date().toISOString(),
-      source:    'manual-fallback',
-    }))
-    priceSource = 'manual-fallback'
+  if (contractsRes.status === 'fulfilled' && contractsRes.value.ok) {
+    const data = await contractsRes.value.json() as { contracts?: GrainContractRow[] }
+    contracts = data.contracts ?? []
+  } else {
+    contractsError = true
   }
 
-  // Yield summaries from grain-tickets (best-effort)
-  let yieldSummaries: YieldSummary[] = []
-  let yieldAvailable = false
-  try {
-    const res = await fetchGrainService(`/api/summaries?year=${cropYear}`)
-    if (res.ok) {
-      const json = (await res.json()) as { summaries?: YieldSummary[] }
-      yieldSummaries = json.summaries ?? []
-      yieldAvailable = true
-    }
-  } catch { /* grain-tickets may be offline */ }
+  if (deliveriesRes.status === 'fulfilled' && deliveriesRes.value.ok) {
+    const data = await deliveriesRes.value.json() as { deliveries?: GrainDeliveryRow[] }
+    deliveries = data.deliveries ?? []
+  } else {
+    deliveriesError = true
+  }
 
-  // Budget fields from farm-budget (best-effort)
-  let budgetFields: BudgetField[] = []
-  try {
-    const res = await fetchBudgetService('/api/budget-field-details')
-    if (res.ok) {
-      const json = (await res.json()) as { fields?: BudgetField[] }
-      budgetFields = json.fields ?? []
-    }
-  } catch { /* farm-budget may be offline */ }
+  const positionData = isOwner ? computePosition(contracts) : null
 
-  const positions = computeCommodityPositions(
-    commodities ?? [],
-    variants    ?? [],
-    instruments ?? [],
-    cbotPrices,
-    pricingConfigs ?? []
-  )
+  const unPricedContracts = isOwner
+    ? contracts.filter(c =>
+        (c.instrument === 'FUTURES_FIXED' && (c.futuresPrice == null)) ||
+        (c.instrument === 'BASIS_FIXED' && (c.basis == null))
+      )
+    : []
 
   return (
-    <div className="flex flex-col min-h-0">
-      <div className="flex items-center justify-end px-4 pt-4 pb-0">
-        <YearSelector currentYear={cropYear} />
-      </div>
-      <MarketingWorkspace
-        commodities={commodities ?? []}
-        initialVariants={variants ?? []}
-        initialInstruments={instruments ?? []}
-        initialCommodityPositions={positions}
-        initialPricingConfigs={pricingConfigs ?? []}
-        cbotPrices={cbotPrices}
-        priceSource={priceSource}
-        priceTimestamp={priceTimestamp}
-        yieldAvailable={yieldAvailable}
-        yieldSummaries={yieldSummaries}
-        budgetFields={budgetFields}
-        cropYear={cropYear}
+    <div className="p-4 md:p-6 max-w-6xl space-y-6">
+      <PageHeader
+        title="Marketing Command Center"
+        subtitle={`${cropYear} crop year`}
+        actions={<YearSelector currentYear={cropYear} />}
       />
+
+      {/* Error banners — shown when organic-cert routes are not yet built or offline */}
+      {contractsError && (
+        <div className="px-4 py-3 bg-glomalin-warning/10 border border-glomalin-warning/30 text-glomalin-warning text-sm rounded">
+          Unable to load contracts — refresh to retry.
+        </div>
+      )}
+
+      {/* Position strip — owner only, server-side gate */}
+      {isOwner && positionData && (
+        <PositionStrip data={positionData} cropYear={cropYear} />
+      )}
+
+      {/* Contract table */}
+      <div>
+        <SectionHeader
+          title="Contracts"
+          actions={
+            <a
+              href="/app/marketing/contracts/new"
+              className="px-3 py-1.5 rounded border border-glomalin-border text-xs font-mono text-glomalin-muted hover:border-glomalin-accent hover:text-glomalin-accent transition-colors"
+            >
+              New Contract
+            </a>
+          }
+        />
+        <ContractTable contracts={contracts} role={role} cropYear={cropYear} />
+      </div>
+
+      {/* Lower section: two-column for owner, single-column for office */}
+      <div className={isOwner ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'grid grid-cols-1'}>
+        {isOwner && <BasisExposurePanel contracts={unPricedContracts} />}
+        <ReconQueue deliveries={deliveries} />
+      </div>
     </div>
   )
 }
