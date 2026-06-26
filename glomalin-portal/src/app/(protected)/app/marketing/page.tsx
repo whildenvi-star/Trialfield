@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-import { Suspense } from 'react'
 import { requireMarketingAccess, isMarketingGuardError } from '@/lib/supabase/guard'
 import { fetchCertServiceWithAuth } from '@/app/api/mobile/_lib/proxy'
 import { computePosition } from '@/lib/marketing/position'
@@ -7,9 +6,6 @@ import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { PageHeader } from '@/components/ui/page-header'
 import { SectionHeader } from '@/components/ui/section-header'
 import { YearSelector } from '@/components/ui/year-selector'
-import { KpiStrip } from '@/components/ui/kpi-strip'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { SkeletonCard, SkeletonRow } from '@/components/ui/skeleton'
 import { PositionStrip } from '@/components/marketing/position-strip'
 import { ContractTable } from '@/components/marketing/contract-table'
 import { BasisExposurePanel } from '@/components/marketing/basis-exposure-panel'
@@ -107,6 +103,11 @@ export default async function MarketingPage({
       {contractsError && (
         <div className="px-4 py-3 bg-glomalin-warning/10 border border-glomalin-warning/30 text-glomalin-warning text-sm rounded">
           Unable to load contracts — refresh to retry.
+        </div>
+      )}
+      {deliveriesError && (
+        <div className="px-4 py-3 bg-glomalin-warning/10 border border-glomalin-warning/30 text-glomalin-warning text-sm rounded">
+          Unable to load deliveries — refresh to retry.
         </div>
       )}
 
