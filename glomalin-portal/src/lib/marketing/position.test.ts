@@ -1,44 +1,77 @@
-// RED phase — position.ts does not exist until Plan 02 Task 1.
+// RED phase → GREEN after Plan 02 Task 1.
 // Run: npx vitest run src/lib/marketing/position.test.ts
-// Expected now: FAIL (module not found or undefined is not a function). Expected after Plan 02: PASS.
-import { describe, it, expect } from 'vitest'
-import { computePosition, PRICED_INSTRUMENTS } from './position'
+import { describe, it, expect } from "vitest"
+import { computePosition, PRICED_INSTRUMENTS } from "./position"
 
-describe('computePosition', () => {
-  it('RED: module exists and exports computePosition function', () => {
-    // This test exists solely to confirm the module resolves correctly.
-    // It FAILS in RED phase because position.ts does not exist yet.
-    // Plan 02 Task 1 creates position.ts → this test turns GREEN.
-    expect(typeof computePosition).toBe('function')
+describe("computePosition", () => {
+  it("RED: module exists and exports computePosition function", () => {
+    expect(typeof computePosition).toBe("function")
   })
 
-  it.todo('returns zero summary for empty array')
-  // expect: { contractedBu: 0, pricedBu: 0, openBu: 0, avgPriceCents: 0, contractCount: 0 }
+  it("returns zero summary for empty array", () => {
+    const result = computePosition([])
+    expect(result).toEqual({ contractedBu: 0, pricedBu: 0, openBu: 0, avgPriceCents: 0, contractCount: 0 })
+  })
 
-  it.todo('PRICED_LATER does not count as priced — counts as open')
-  // input: [{ instrument: 'PRICED_LATER', contractedBushels: 5000, finalCashPrice: null }]
-  // expect: pricedBu: 0, openBu: 5000
+  it("PRICED_LATER does not count as priced — counts as open", () => {
+    const result = computePosition([
+      { instrument: "PRICED_LATER", contractedBushels: 5000, finalCashPrice: null, futuresPrice: null, basis: null }
+    ])
+    expect(result.pricedBu).toBe(0)
+    expect(result.openBu).toBe(5000)
+  })
 
-  it.todo('SPOT does not count as priced — counts as open')
-  // input: [{ instrument: 'SPOT', contractedBushels: 3000, finalCashPrice: null }]
-  // expect: pricedBu: 0
+  it("SPOT does not count as priced — counts as open", () => {
+    const result = computePosition([
+      { instrument: "SPOT", contractedBushels: 3000, finalCashPrice: null }
+    ])
+    expect(result.pricedBu).toBe(0)
+    expect(result.openBu).toBe(3000)
+  })
 
-  it.todo('PRICED instrument with finalCashPrice counts as priced and contributes to WAP')
-  // input: [{ instrument: 'PRICED', contractedBushels: 10000, finalCashPrice: 482, futuresPrice: 500, basis: -18 }]
-  // expect: pricedBu: 10000, avgPriceCents: 482
+  it("PRICED instrument with finalCashPrice counts as priced and contributes to WAP", () => {
+    const result = computePosition([
+      { instrument: "PRICED", contractedBushels: 10000, finalCashPrice: 482, futuresPrice: 500, basis: -18 }
+    ])
+    expect(result.pricedBu).toBe(10000)
+    expect(result.avgPriceCents).toBe(482)
+  })
 
-  it.todo('WAP: weighted average across PRICED + FUTURES_FIXED contracts')
-  // PRICED 10000bu at finalCashPrice=500, FUTURES_FIXED 5000bu at futuresPrice=480 basis=null
-  // expect: pricedBu: 15000, avgPriceCents: 493 (weighted avg)
+  it("WAP: weighted average across PRICED + FUTURES_FIXED contracts", () => {
+    const result = computePosition([
+      { instrument: "PRICED", contractedBushels: 10000, finalCashPrice: 500, futuresPrice: 500, basis: 0 },
+      { instrument: "FUTURES_FIXED", contractedBushels: 5000, finalCashPrice: null, futuresPrice: 480, basis: null }
+    ])
+    expect(result.pricedBu).toBe(15000)
+    expect(result.avgPriceCents).toBe(493)
+  })
 
-  it.todo('uses futuresPrice+basis as effective price when finalCashPrice is null')
-  // input: { instrument: 'FUTURES_FIXED', contractedBushels: 5000, finalCashPrice: null, futuresPrice: 490, basis: -10 }
-  // expect: avgPriceCents: 480
+  it("uses futuresPrice+basis as effective price when finalCashPrice is null", () => {
+    const result = computePosition([
+      { instrument: "FUTURES_FIXED", contractedBushels: 5000, finalCashPrice: null, futuresPrice: 490, basis: -10 }
+    ])
+    expect(result.avgPriceCents).toBe(480)
+  })
 
-  it.todo('contract with all price fields null still counts in pricedBu but not WAP denominator')
-  // input: PRICED instrument, finalCashPrice: null, futuresPrice: null, basis: null
-  // expect: pricedBu > 0, avgPriceCents: 0
+  it("contract with all price fields null still counts in pricedBu but not WAP denominator", () => {
+    const result = computePosition([
+      { instrument: "PRICED", contractedBushels: 5000, finalCashPrice: null, futuresPrice: null, basis: null }
+    ])
+    expect(result.pricedBu).toBe(5000)
+    expect(result.avgPriceCents).toBe(0)
+  })
 
-  it.todo('PRICED_INSTRUMENTS set includes PRICED, FUTURES_FIXED, BASIS_FIXED, FOB, MIN_PRICE')
-  it.todo('PRICED_INSTRUMENTS set excludes PRICED_LATER, SPOT, ACCUMULATOR')
+  it("PRICED_INSTRUMENTS set includes PRICED, FUTURES_FIXED, BASIS_FIXED, FOB, MIN_PRICE", () => {
+    expect(PRICED_INSTRUMENTS.has("PRICED")).toBe(true)
+    expect(PRICED_INSTRUMENTS.has("FUTURES_FIXED")).toBe(true)
+    expect(PRICED_INSTRUMENTS.has("BASIS_FIXED")).toBe(true)
+    expect(PRICED_INSTRUMENTS.has("FOB")).toBe(true)
+    expect(PRICED_INSTRUMENTS.has("MIN_PRICE")).toBe(true)
+  })
+
+  it("PRICED_INSTRUMENTS set excludes PRICED_LATER, SPOT, ACCUMULATOR", () => {
+    expect(PRICED_INSTRUMENTS.has("PRICED_LATER")).toBe(false)
+    expect(PRICED_INSTRUMENTS.has("SPOT")).toBe(false)
+    expect(PRICED_INSTRUMENTS.has("ACCUMULATOR")).toBe(false)
+  })
 })
