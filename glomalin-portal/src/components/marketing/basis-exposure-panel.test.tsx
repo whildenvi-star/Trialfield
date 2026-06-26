@@ -1,6 +1,5 @@
-// RED phase — basis-exposure-panel.tsx does not exist until Plan 02 Task 2.
+// GREEN after Plan 02 Task 2.
 // Run: npx vitest run src/components/marketing/basis-exposure-panel.test.tsx
-// Expected now: FAIL (module not found). Expected after Plan 02: PASS.
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { BasisExposurePanel } from './basis-exposure-panel'
@@ -41,33 +40,37 @@ const PRICED_CONTRACT = {
 
 describe('BasisExposurePanel', () => {
   it('RED: module exists and exports BasisExposurePanel component', () => {
-    // This test exists solely to confirm the module resolves correctly.
-    // It FAILS in RED phase because basis-exposure-panel.tsx does not exist yet.
-    // Plan 02 Task 2 creates basis-exposure-panel.tsx → this test turns GREEN.
     expect(typeof BasisExposurePanel).toBe('function')
   })
 
-  it.todo('renders empty state when no contracts have open pricing leg')
-  // render(<BasisExposurePanel contracts={[HTA_PRICED, PRICED_CONTRACT]} />)
-  // expect: "No open pricing legs" empty state
+  it('renders empty state when no contracts have open pricing leg', () => {
+    render(<BasisExposurePanel contracts={[HTA_PRICED, PRICED_CONTRACT]} />)
+    expect(screen.getByText('No open pricing legs')).toBeTruthy()
+  })
 
-  it.todo('shows FUTURES_FIXED contract with null futuresPrice as exposed')
-  // render(<BasisExposurePanel contracts={[HTA_UNPRICED]} />)
-  // expect: HTA badge visible, customer shortCode visible
+  it('shows FUTURES_FIXED contract with null futuresPrice as exposed', () => {
+    render(<BasisExposurePanel contracts={[HTA_UNPRICED]} />)
+    expect(screen.getByText('HTA')).toBeTruthy()
+    expect(screen.getByText('ACM')).toBeTruthy()
+  })
 
-  it.todo('shows BASIS_FIXED contract with null basis as exposed')
-  // render(<BasisExposurePanel contracts={[BASIS_UNSET]} />)
-  // expect: BASIS badge visible
+  it('shows BASIS_FIXED contract with null basis as exposed', () => {
+    render(<BasisExposurePanel contracts={[BASIS_UNSET]} />)
+    expect(screen.getByText('BASIS')).toBeTruthy()
+  })
 
-  it.todo('does NOT show fully-priced FUTURES_FIXED contract')
-  // render(<BasisExposurePanel contracts={[HTA_PRICED]} />)
-  // expect: empty state (HTA_PRICED has futuresPrice set)
+  it('does NOT show fully-priced FUTURES_FIXED contract', () => {
+    render(<BasisExposurePanel contracts={[HTA_PRICED]} />)
+    expect(screen.getByText('No open pricing legs')).toBeTruthy()
+  })
 
-  it.todo('does NOT show non-HTA/BASIS_FIXED contracts regardless of price state')
-  // render(<BasisExposurePanel contracts={[PRICED_CONTRACT]} />)
-  // expect: empty state
+  it('does NOT show non-HTA/BASIS_FIXED contracts regardless of price state', () => {
+    render(<BasisExposurePanel contracts={[PRICED_CONTRACT]} />)
+    expect(screen.getByText('No open pricing legs')).toBeTruthy()
+  })
 
-  it.todo('shows count of exposed contracts in CardDescription')
-  // render(<BasisExposurePanel contracts={[HTA_UNPRICED, BASIS_UNSET]} />)
-  // expect: "2 contracts with open pricing leg"
+  it('shows count of exposed contracts in CardDescription', () => {
+    render(<BasisExposurePanel contracts={[HTA_UNPRICED, BASIS_UNSET]} />)
+    expect(screen.getByText('2 contracts with open pricing leg')).toBeTruthy()
+  })
 })
