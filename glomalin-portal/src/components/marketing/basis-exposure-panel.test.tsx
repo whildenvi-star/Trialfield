@@ -1,8 +1,10 @@
 // GREEN after Plan 02 Task 2.
 // Run: npx vitest run src/components/marketing/basis-exposure-panel.test.tsx
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, afterEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
 import { BasisExposurePanel } from './basis-exposure-panel'
+
+afterEach(cleanup)
 
 const HTA_UNPRICED = {
   id: 'c1', instrument: 'FUTURES_FIXED' as const,
