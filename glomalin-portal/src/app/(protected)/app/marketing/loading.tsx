@@ -1,5 +1,4 @@
-import { KpiStrip } from '@/components/ui/kpi-strip'
-import { SkeletonCard, SkeletonRow } from '@/components/ui/skeleton'
+import { SkeletonRow } from '@/components/ui/skeleton'
 import { Card, CardHeader, CardContent } from '@/components/ui/card'
 
 function Block({ w = 'w-full', h = 'h-4' }: { w?: string; h?: string }) {
@@ -17,13 +16,6 @@ export default function MarketingLoading() {
         </div>
         <Block w="w-24" h="h-8" />
       </div>
-
-      {/* Position strip skeleton — 4 KPI cards */}
-      <KpiStrip cols={4}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <SkeletonCard key={i} />
-        ))}
-      </KpiStrip>
 
       {/* Section header skeleton */}
       <div className="flex items-center justify-between">
