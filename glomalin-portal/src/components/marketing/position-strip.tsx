@@ -35,7 +35,7 @@ export function PositionStrip({ data, cropYear }: PositionStripProps) {
       />
       <StatCard
         label="EST. AVG PRICE"
-        value={data.avgPriceCents > 0 ? formatUsdCents(data.avgPriceCents) : EM_DASH}
+        value={data.avgPriceCents > 0 ? formatUsdCents(data.avgPriceCents / 100) : EM_DASH}
         sublabel="blended cash"
         variant="default"
       />
