@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { requireMarketingAccess, isMarketingGuardError } from '@/lib/supabase/guard'
+import { getMarketingAuthContext } from '@/lib/supabase/marketing-guard-rsc'
 import { fetchCertServiceWithAuth } from '@/app/api/mobile/_lib/proxy'
 import { computePosition } from '@/lib/marketing/position'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
@@ -44,13 +44,10 @@ export default async function MarketingPage({
   const { year: yearParam } = await searchParams
   const cropYear = yearParam && /^\d{4}$/.test(yearParam) ? parseInt(yearParam, 10) : CURRENT_CROP_YEAR
 
-  const guard = await requireMarketingAccess()
-  if (isMarketingGuardError(guard)) redirect('/app')
-  const { role, supabase } = guard
+  const ctx = await getMarketingAuthContext()
+  if (!ctx) redirect('/app')
+  const { role, accessToken } = ctx
   const isOwner = role === 'owner'
-
-  const { data: { session } } = await supabase.auth.getSession()
-  const accessToken = session?.access_token ?? ''
 
   let contracts: GrainContractRow[] = []
   let deliveries: GrainDeliveryRow[] = []
