@@ -81,13 +81,6 @@ export default async function MarketingPage({
 
   const positionData = isOwner ? computePosition(contracts) : null
 
-  const unPricedContracts = isOwner
-    ? contracts.filter(c =>
-        (c.instrument === 'FUTURES_FIXED' && (c.futuresPrice == null)) ||
-        (c.instrument === 'BASIS_FIXED' && (c.basis == null))
-      )
-    : []
-
   return (
     <div className="p-4 md:p-6 max-w-6xl space-y-6">
       <PageHeader
@@ -131,7 +124,7 @@ export default async function MarketingPage({
 
       {/* Lower section: two-column for owner, single-column for office */}
       <div className={isOwner ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'grid grid-cols-1'}>
-        {isOwner && <BasisExposurePanel contracts={unPricedContracts} />}
+        {isOwner && <BasisExposurePanel contracts={contracts} />}
         <ReconQueue deliveries={deliveries} />
       </div>
     </div>

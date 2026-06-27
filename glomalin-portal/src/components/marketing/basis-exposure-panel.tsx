@@ -34,10 +34,8 @@ interface BasisExposurePanelProps {
 export function BasisExposurePanel({ contracts }: BasisExposurePanelProps) {
   const exposed = contracts.filter(
     (c) =>
-      (c.instrument === 'FUTURES_FIXED' &&
-        (c.futuresPrice == null || c.futuresPrice === undefined)) ||
-      (c.instrument === 'BASIS_FIXED' &&
-        (c.basis == null || c.basis === undefined))
+      (c.instrument === 'FUTURES_FIXED' && c.basis == null) ||       // HTA: futures locked, basis still open
+      (c.instrument === 'BASIS_FIXED' && c.futuresPrice == null)     // Basis-fixed: basis locked, futures still open
   )
 
   return (
