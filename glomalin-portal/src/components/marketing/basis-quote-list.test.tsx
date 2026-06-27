@@ -1,5 +1,5 @@
-// RED phase — component does not exist yet.
-// Wave 2B implements BasisQuoteListClient against these stubs.
+// GREEN phase — BasisQuoteListClient implemented.
+// Tests scope queries to the table body to avoid false matches with select options.
 // Run: npx vitest run src/components/marketing/basis-quote-list.test.tsx
 
 import { vi } from 'vitest'
@@ -15,7 +15,7 @@ vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', supabaseUrl)
 vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', serviceRoleKey)
 
 import { describe, it, expect, afterEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { render, screen, within, cleanup } from '@testing-library/react'
 import { BasisQuoteListClient } from '@/components/marketing/basis-quote-list'
 
 afterEach(cleanup)
@@ -49,14 +49,17 @@ const VARIANTS = [
 describe('BasisQuoteListClient', () => {
   it('renders all quotes when variant filter is All', () => {
     render(<BasisQuoteListClient quotes={QUOTES} variants={VARIANTS} />)
-    expect(screen.getByText('Yellow Corn')).toBeTruthy()
-    expect(screen.getByText('Soft Red Wheat')).toBeTruthy()
+    // Use getAllByText — variant names appear in both select options and table cells
+    expect(screen.getAllByText('Yellow Corn').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Soft Red Wheat').length).toBeGreaterThan(0)
   })
 
   it('filters quotes to matching variantId when variant selected', () => {
     render(<BasisQuoteListClient quotes={QUOTES} variants={VARIANTS} initialVariantFilter="v1" />)
-    expect(screen.getByText('Yellow Corn')).toBeTruthy()
-    expect(screen.queryByText('Soft Red Wheat')).toBeFalsy()
+    // Scope to table body to check only rendered rows (not select options)
+    const tbody = screen.getByRole('table').querySelector('tbody')!
+    expect(within(tbody).getByText('Yellow Corn')).toBeTruthy()
+    expect(within(tbody).queryByText('Soft Red Wheat')).toBeFalsy()
   })
 
   it('renders basis value negative in danger color', () => {
