@@ -59,13 +59,19 @@ export function computePosition(contracts: GrainContractForPosition[]): Position
       }
 
       if (effectivePrice !== null) {
-        wapNumerator += effectivePrice * c.contractedBushels
+        // Round per-contract before accumulation: prices are integer cents in the
+        // database, but the type allows floats. Rounding here prevents floating-point
+        // drift from accumulating across many contracts before the final WAP round.
+        wapNumerator += Math.round(effectivePrice) * c.contractedBushels
         wapDenominator += c.contractedBushels
       }
     }
   }
 
   const openBu = contractedBu - pricedBu
+  // Integer cent precision: wapNumerator is a sum of (cents * bushels), so the
+  // quotient is cents/bu. Math.round produces the nearest integer cent, which is
+  // the correct unit for avgPriceCents.
   const avgPriceCents = wapDenominator > 0 ? Math.round(wapNumerator / wapDenominator) : 0
 
   return {
