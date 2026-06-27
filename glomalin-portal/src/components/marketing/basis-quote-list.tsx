@@ -40,7 +40,7 @@ type GrainVariant = {
   id: string
   name: string
   cropYear?: number
-  commodity?: { name: string; symbol?: string }
+  commodity?: { name: string; symbol: string }
 }
 
 interface BasisQuoteListClientProps {
