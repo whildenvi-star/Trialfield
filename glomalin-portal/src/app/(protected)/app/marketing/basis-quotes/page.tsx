@@ -7,7 +7,7 @@ export default async function BasisQuotesPage() {
   const ctx = await getMarketingAuthContext()
   if (!ctx) redirect('/app')
 
-  const { role, accessToken } = ctx
+  const { accessToken } = ctx
 
   const [quotesRes, variantsRes] = await Promise.all([
     fetchCertServiceWithAuth('/api/marketing/basis-quotes', accessToken),
@@ -17,5 +17,5 @@ export default async function BasisQuotesPage() {
   const quotes = quotesRes.ok ? await quotesRes.json() : []
   const variants = variantsRes.ok ? await variantsRes.json() : []
 
-  return <BasisQuoteListClient quotes={quotes} variants={variants} role={role} />
+  return <BasisQuoteListClient quotes={quotes} variants={variants} />
 }

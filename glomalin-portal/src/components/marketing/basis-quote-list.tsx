@@ -46,7 +46,6 @@ type GrainVariant = {
 interface BasisQuoteListClientProps {
   quotes: BasisQuote[]
   variants: GrainVariant[]
-  role?: 'owner' | 'office'
   /** Optional pre-selected variant filter (used by tests and URL param hydration) */
   initialVariantFilter?: string
 }
@@ -109,7 +108,6 @@ function formatDate(dateStr: string | null | undefined): string {
 export function BasisQuoteListClient({
   quotes,
   variants,
-  role,
   initialVariantFilter = '',
 }: BasisQuoteListClientProps) {
   const [selectedVariantId, setSelectedVariantId] = useState<string>(initialVariantFilter)
