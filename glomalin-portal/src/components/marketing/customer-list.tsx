@@ -55,18 +55,15 @@ export function CustomerListClient({ customers, role }: CustomerListClientProps)
   const { sortKey, sortDir, onSort } = useSortState('name')
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [localCustomers, setLocalCustomers] = useState<Customer[]>(customers)
 
-  // Sort customers
-  const sorted = [...localCustomers].sort((a, b) => {
+  // Sort customers; list is refreshed server-side via router.refresh() after save
+  const sorted = [...customers].sort((a, b) => {
     if (!sortKey || !sortDir) return 0
     const av = (a[sortKey as keyof Customer] as string | null) ?? ''
     const bv = (b[sortKey as keyof Customer] as string | null) ?? ''
     const cmp = av < bv ? -1 : av > bv ? 1 : 0
     return sortDir === 'asc' ? cmp : -cmp
   })
-
-  void setLocalCustomers // suppress lint warning — used for optimistic updates after save
 
   function openCreate() {
     setEditCustomer(null)
