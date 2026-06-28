@@ -4,6 +4,9 @@ import { fetchCertServiceWithAuth } from '@/app/api/mobile/_lib/proxy'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
+  // getSession() is safe here because middleware calls getUser() for all non-public routes,
+  // validating the token before this handler runs. Remove or change the public-path config
+  // in middleware.ts if this route ever needs to be publicly accessible.
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -19,6 +22,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const supabase = await createClient()
+  // See GET handler comment — middleware validates the token before this runs.
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
