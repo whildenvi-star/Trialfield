@@ -121,11 +121,15 @@ export function BasisQuoteListClient({
       ? quotes
       : quotes.filter((q) => q.variantId === selectedVariantId)
 
-  // Sort newest date first
+  // Sort newest date first; null dates sort to the bottom (epoch = oldest)
   const sorted = [...filtered].sort((a, b) => {
-    const aDate = a.quoteDate ?? a.quotedAt ?? ''
-    const bDate = b.quoteDate ?? b.quotedAt ?? ''
-    return new Date(bDate).getTime() - new Date(aDate).getTime()
+    const aTime = a.quoteDate ?? a.quotedAt
+      ? new Date(a.quoteDate ?? a.quotedAt!).getTime()
+      : new Date(0).getTime()
+    const bTime = b.quoteDate ?? b.quotedAt
+      ? new Date(b.quoteDate ?? b.quotedAt!).getTime()
+      : new Date(0).getTime()
+    return bTime - aTime
   })
 
   function variantDisplayName(q: BasisQuote): string {
