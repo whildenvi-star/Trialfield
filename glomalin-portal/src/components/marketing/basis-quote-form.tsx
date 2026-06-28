@@ -68,9 +68,12 @@ export function BasisQuoteForm({ variants, onSuccess, open, onClose }: BasisQuot
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
+    const basisTrimmed = form.basisValue.trim()
+    const basisNum = parseFloat(basisTrimmed)
+
     const missing: string[] = []
     if (!form.variantId) missing.push('variant')
-    if (!form.basisValue) missing.push('basis')
+    if (!basisTrimmed || !isFinite(basisNum)) missing.push('basis')
     if (!form.futuresMonth) missing.push('futuresMonth')
     if (!form.quoteDate) missing.push('quoteDate')
     if (!form.location) missing.push('location')
@@ -79,7 +82,7 @@ export function BasisQuoteForm({ variants, onSuccess, open, onClose }: BasisQuot
     if (missing.length > 0) {
       const parts: string[] = []
       if (missing.includes('variant')) parts.push('Grain variant is required')
-      if (missing.includes('basis')) parts.push('Basis value is required')
+      if (missing.includes('basis')) parts.push('Basis value must be a valid number')
       if (missing.includes('futuresMonth')) parts.push('Futures month is required')
       if (missing.includes('quoteDate')) parts.push('Quote date is required')
       if (missing.includes('location')) parts.push('Location is required')
@@ -97,7 +100,7 @@ export function BasisQuoteForm({ variants, onSuccess, open, onClose }: BasisQuot
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           variantId: form.variantId,
-          basisValue: parseFloat(form.basisValue),
+          basisValue: basisNum,
           futuresMonth: form.futuresMonth,
           quoteDate: form.quoteDate,
           location: form.location,
