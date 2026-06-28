@@ -82,8 +82,10 @@ export async function fetchCertServiceWithAuth(
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
+      // Caller headers spread first so the Authorization header below always wins
+      // and cannot be overridden by a call site passing its own Authorization key.
       ...options?.headers,
+      'Authorization': `Bearer ${accessToken}`,
     },
   } as RequestInit)
 }
