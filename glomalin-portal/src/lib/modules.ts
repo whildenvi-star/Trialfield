@@ -43,6 +43,14 @@ export function getEmbedUrl(mod: Module): string | null {
 
 export const MODULES: Module[] = [
   {
+    id: 'crew',
+    label: 'Field Operations',
+    sublabel: 'Crops · Tasks · Seeds · Inputs',
+    route: '/app/crew',
+    status: 'live',
+    type: 'native',
+  },
+  {
     id: 'maps',
     label: 'Field Map',
     sublabel: 'Polygon Map & Field Detail',

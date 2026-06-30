@@ -8,7 +8,7 @@ interface UserRow {
   id: string
   email: string
   fullName: string
-  role: 'admin' | 'agronomist' | 'operator' | 'viewer'
+  role: 'admin' | 'agronomist' | 'operator' | 'owner' | 'viewer'
   lastSignIn: string | null
   certUserId: string | null
   modules: Record<string, boolean>
@@ -19,10 +19,11 @@ interface SavingCell {
   field: string
 }
 
-const ROLES = ['admin', 'agronomist', 'operator', 'viewer'] as const
+const ROLES = ['admin', 'owner', 'agronomist', 'operator', 'viewer'] as const
 
 const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
+  owner: 'Owner (Financial)',
   agronomist: 'Agronomist',
   operator: 'Operator',
   viewer: 'Office',
@@ -50,7 +51,6 @@ export default function AdminPage() {
 
   // Invite form state
   const [inviteEmail, setInviteEmail] = useState('')
-  const [invitePassword, setInvitePassword] = useState('')
   const [inviteRole, setInviteRole] = useState<string>('viewer')
   const [inviteModules, setInviteModules] = useState<Record<string, boolean>>(
     () => Object.fromEntries(MODULES.map((m) => [m.id, false]))
@@ -147,7 +147,6 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: inviteEmail.trim(),
-          password: invitePassword,
           role: inviteRole,
           modules: Object.entries(inviteModules)
             .filter(([, v]) => v)
@@ -156,9 +155,8 @@ export default function AdminPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Failed to invite user')
-      setInviteSuccess(`User created: ${inviteEmail.trim()}`)
+      setInviteSuccess(`Invite sent to ${inviteEmail.trim()} — they'll receive an email to set their password`)
       setInviteEmail('')
-      setInvitePassword('')
       setInviteRole('viewer')
       setInviteModules(Object.fromEntries(MODULES.map((m) => [m.id, false])))
       // Refresh user list to include newly invited user
@@ -238,16 +236,6 @@ export default function AdminPage() {
             disabled={inviting}
             required
           />
-          <input
-            type="text"
-            value={invitePassword}
-            onChange={(e) => setInvitePassword(e.target.value)}
-            placeholder="password"
-            className="bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-3 py-2 font-mono text-sm focus:outline-none focus:border-glomalin-accent w-48"
-            disabled={inviting}
-            required
-            minLength={6}
-          />
           <select
             value={inviteRole}
             onChange={(e) => setInviteRole(e.target.value)}
@@ -288,7 +276,7 @@ export default function AdminPage() {
             disabled={inviting}
             className="bg-glomalin-accent text-glomalin-bg px-4 py-2 rounded font-bold font-mono text-sm disabled:opacity-50"
           >
-            {inviting ? 'Creating...' : 'Create User'}
+            {inviting ? 'Sending invite...' : 'Send Invite'}
           </button>
           {inviteError && (
             <span className="text-red-400 font-mono text-sm self-center">

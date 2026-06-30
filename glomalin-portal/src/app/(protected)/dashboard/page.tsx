@@ -17,6 +17,9 @@ export default async function DashboardPage() {
   ])
 
   const role = profile?.role ?? 'viewer'
+
+  if (role === 'operator') redirect('/app/crew')
+
   const grantedModules: string[] | null = role === 'admin'
     ? null
     : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)

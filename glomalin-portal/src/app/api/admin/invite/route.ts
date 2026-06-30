@@ -24,15 +24,9 @@ export async function POST(request: NextRequest) {
   // Read and validate body
   const body = await request.json()
   const validRoles = ['admin', 'agronomist', 'operator', 'viewer']
-  if (!body.email || !body.role || !validRoles.includes(body.role) || !body.password) {
+  if (!body.email || !body.role || !validRoles.includes(body.role)) {
     return NextResponse.json(
-      { error: 'Missing or invalid fields: email, password, role' },
-      { status: 400 }
-    )
-  }
-  if (body.password.length < 6) {
-    return NextResponse.json(
-      { error: 'Password must be at least 6 characters' },
+      { error: 'Missing or invalid fields: email, role' },
       { status: 400 }
     )
   }
@@ -49,22 +43,21 @@ export async function POST(request: NextRequest) {
     }
   )
 
-  // Create user directly with password (no email invite flow)
-  const { data: createData, error: createError } = await adminClient.auth.admin.createUser({
-    email: body.email,
-    password: body.password,
-    email_confirm: true,
-  })
+  // Send email invite — user receives a link to set their own password
+  const { data: inviteData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
+    body.email,
+    { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.whughesfarms.com'}/auth/callback?type=invite` }
+  )
 
-  if (createError) {
-    console.error('Create user error:', JSON.stringify(createError, null, 2))
+  if (inviteError) {
+    console.error('Invite user error:', JSON.stringify(inviteError, null, 2))
     return NextResponse.json(
-      { error: createError.message ?? 'Failed to create user', code: createError.code, status: createError.status },
+      { error: inviteError.message ?? 'Failed to invite user', code: (inviteError as { code?: string }).code },
       { status: 500 }
     )
   }
 
-  const newUserId = createData.user.id
+  const newUserId = inviteData.user.id
 
   // If role is not viewer, update the auto-created profile (trigger creates viewer by default).
   // Use adminClient (service role) to bypass RLS — profiles_update_own only allows self-updates,
@@ -82,7 +75,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Grant module access at invite time if modules were specified
-  const modules: string[] = Array.isArray(body.modules) ? body.modules : []
+  // Auto-grant 'crew' module for operator role
+  const modules: string[] = Array.isArray(body.modules) ? [...body.modules] : []
+  if (body.role === 'operator' && !modules.includes('crew')) {
+    modules.push('crew')
+  }
   if (modules.length > 0) {
     const moduleRows = modules.map((moduleId: string) => ({
       user_id: newUserId,
