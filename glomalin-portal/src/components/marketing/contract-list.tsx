@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Table,
   TableHead,
@@ -87,6 +87,7 @@ export function ContractListClient({
   // ── Drawer state ─────────────────────────────────────────────────────────
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editContract, setEditContract] = useState<GrainContractRow | null>(null)
+  const formIsDirtyRef = useRef(false)
 
   // ── Sort state ───────────────────────────────────────────────────────────
   const { sortKey, sortDir, onSort } = useSortState('deliveryStartDate')
@@ -160,16 +161,22 @@ export function ContractListClient({
 
   // ── Actions ──────────────────────────────────────────────────────────────
   function openCreate() {
+    formIsDirtyRef.current = false
     setEditContract(null)
     setDrawerOpen(true)
   }
 
   function openEdit(c: GrainContractRow) {
+    formIsDirtyRef.current = false
     setEditContract(c)
     setDrawerOpen(true)
   }
 
   function handleClose() {
+    if (formIsDirtyRef.current) {
+      if (!window.confirm('Discard unsaved changes?')) return
+    }
+    formIsDirtyRef.current = false
     setDrawerOpen(false)
   }
 
@@ -413,6 +420,7 @@ export function ContractListClient({
                 onSuccess={handleSaved}
                 open={drawerOpen}
                 role={role}
+                onDirtyChange={(dirty) => { formIsDirtyRef.current = dirty }}
               />
             </div>
           </div>

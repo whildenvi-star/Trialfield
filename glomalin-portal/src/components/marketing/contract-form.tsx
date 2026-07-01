@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 // GrainContractRow — extended from contract-table.tsx with specialty detail fields
 export interface GrainContractRow {
@@ -274,6 +274,8 @@ interface ContractFormProps {
   onSuccess: () => void
   open: boolean
   role: string
+  /** Called whenever the form's dirty state changes so the parent can gate close actions */
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -285,6 +287,7 @@ export function ContractForm({
   onSuccess,
   open,
   role,
+  onDirtyChange,
 }: ContractFormProps) {
   const isEdit = contract !== null
   const canSeeFinancials = role !== 'OFFICE'
@@ -294,14 +297,20 @@ export function ContractForm({
   )
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const initialFormRef = useRef<ContractFormState>(
+    contract ? contractToForm(contract) : EMPTY_FORM
+  )
 
   // Reset form when drawer opens or contract changes
   useEffect(() => {
     if (open) {
-      setForm(contract ? contractToForm(contract) : EMPTY_FORM)
+      const initial = contract ? contractToForm(contract) : EMPTY_FORM
+      setForm(initial)
+      initialFormRef.current = initial
       setError(null)
+      onDirtyChange?.(false)
     }
-  }, [open, contract])
+  }, [open, contract]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Derived visibility flags ────────────────────────────────────────────
 
@@ -337,7 +346,13 @@ export function ContractForm({
     >
   ) {
     const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
+    setForm((prev) => {
+      const next = { ...prev, [name]: value }
+      // Notify parent of dirty state by comparing against the snapshot taken on open
+      const dirty = JSON.stringify(next) !== JSON.stringify(initialFormRef.current)
+      onDirtyChange?.(dirty)
+      return next
+    })
   }
 
   function variantLabel(v: {
@@ -968,7 +983,12 @@ export function ContractForm({
             type="checkbox"
             checked={form.hasPremium}
             onChange={(e) =>
-              setForm((prev) => ({ ...prev, hasPremium: e.target.checked }))
+              setForm((prev) => {
+                const next = { ...prev, hasPremium: e.target.checked }
+                const dirty = JSON.stringify(next) !== JSON.stringify(initialFormRef.current)
+                onDirtyChange?.(dirty)
+                return next
+              })
             }
             className="accent-glomalin-accent"
           />
