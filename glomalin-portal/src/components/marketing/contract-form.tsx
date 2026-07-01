@@ -263,6 +263,7 @@ interface ContractFormProps {
   }[]
   onSuccess: () => void
   open: boolean
+  role: string
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────
@@ -273,8 +274,10 @@ export function ContractForm({
   variants,
   onSuccess,
   open,
+  role,
 }: ContractFormProps) {
   const isEdit = contract !== null
+  const canSeeFinancials = role !== 'OFFICE'
 
   const [form, setForm] = useState<ContractFormState>(
     contract ? contractToForm(contract) : EMPTY_FORM
@@ -373,11 +376,11 @@ export function ContractForm({
         cropYear: cropYearNum,
         contractedBushels: bushelsNum,
         paymentBasis: form.paymentBasis,
-        // Price fields — nulled out when instrument doesn't show them
-        futuresPrice: SHOWS_FUTURES_PRICE.has(form.instrumentType)
+        // Price fields — nulled out when instrument doesn't show them or role is OFFICE
+        futuresPrice: (canSeeFinancials && SHOWS_FUTURES_PRICE.has(form.instrumentType))
           ? parseFloat(form.futuresPrice) || null
           : null,
-        basis: SHOWS_BASIS.has(form.instrumentType)
+        basis: (canSeeFinancials && SHOWS_BASIS.has(form.instrumentType))
           ? parseFloat(form.basis) || null
           : null,
         // Delivery
@@ -576,7 +579,7 @@ export function ContractForm({
 
         {/* ── Conditional price fields ──────────────────────────────────── */}
 
-        {showFuturesPrice && (
+        {showFuturesPrice && canSeeFinancials && (
           <div className={fieldClass}>
             <label className={labelClass} htmlFor="cf-futuresPrice">
               Futures Price $/bu{' '}
@@ -599,7 +602,7 @@ export function ContractForm({
           </div>
         )}
 
-        {showBasis && (
+        {showBasis && canSeeFinancials && (
           <div className={fieldClass}>
             <label className={labelClass} htmlFor="cf-basis">
               Basis $/bu{' '}

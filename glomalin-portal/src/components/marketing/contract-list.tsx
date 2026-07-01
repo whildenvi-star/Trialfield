@@ -412,6 +412,7 @@ export function ContractListClient({
                 variants={variants}
                 onSuccess={handleSaved}
                 open={drawerOpen}
+                role={role}
               />
             </div>
           </div>
