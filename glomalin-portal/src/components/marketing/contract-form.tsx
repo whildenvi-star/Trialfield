@@ -232,6 +232,16 @@ const fieldClass = 'mb-3'
 const filterSelectClass =
   'bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-xs rounded px-2 py-1 focus:outline-none focus:border-glomalin-accent'
 
+// ─── numOrNull helper ──────────────────────────────────────────────────────
+// Converts a string to a number, returning null for empty/non-finite input.
+// Unlike `parseFloat(s) || null`, this correctly preserves a legitimate 0 value.
+
+function numOrNull(s: string): number | null {
+  if (s === '' || s === null || s === undefined) return null
+  const n = parseFloat(s)
+  return isFinite(n) ? n : null
+}
+
 // ─── parseBonus helper ─────────────────────────────────────────────────────
 
 function parseQualityBonuses(
@@ -378,10 +388,10 @@ export function ContractForm({
         paymentBasis: form.paymentBasis,
         // Price fields — nulled out when instrument doesn't show them or role is OFFICE
         futuresPrice: (canSeeFinancials && SHOWS_FUTURES_PRICE.has(form.instrumentType))
-          ? parseFloat(form.futuresPrice) || null
+          ? numOrNull(form.futuresPrice)
           : null,
         basis: (canSeeFinancials && SHOWS_BASIS.has(form.instrumentType))
-          ? parseFloat(form.basis) || null
+          ? numOrNull(form.basis)
           : null,
         // Delivery
         deliveryStart: form.deliveryStart || null,
@@ -394,29 +404,28 @@ export function ContractForm({
       // ── Specialty sections ────────────────────────────────────────────
       if (form.paymentBasis === 'PER_ACRE') {
         body.seedCornDetails = {
-          acresIrrigated: parseFloat(form.acresIrrigated) || 0,
-          acresDryland: parseFloat(form.acresDryland) || 0,
-          irrigatedRatePerAcre: parseFloat(form.irrigatedRatePerAcre) || null,
-          drylandRatePerAcre: parseFloat(form.drylandRatePerAcre) || null,
-          yieldGoalPerAcre: parseFloat(form.yieldGoalPerAcre) || null,
-          bonusPricePerBuOver: parseFloat(form.bonusPricePerBuOver) || null,
+          acresIrrigated: numOrNull(form.acresIrrigated) ?? 0,
+          acresDryland: numOrNull(form.acresDryland) ?? 0,
+          irrigatedRatePerAcre: numOrNull(form.irrigatedRatePerAcre),
+          drylandRatePerAcre: numOrNull(form.drylandRatePerAcre),
+          yieldGoalPerAcre: numOrNull(form.yieldGoalPerAcre),
+          bonusPricePerBuOver: numOrNull(form.bonusPricePerBuOver),
         }
       }
 
       if (form.paymentBasis === 'PER_UNIT') {
         body.seedUnitDetails = {
-          contractedUnits: parseFloat(form.contractedUnits) || null,
-          pricePerUnit: parseFloat(form.pricePerUnit) || null,
+          contractedUnits: numOrNull(form.contractedUnits),
+          pricePerUnit: numOrNull(form.pricePerUnit),
           unitDescription: form.unitDescription || null,
         }
       }
 
       if (form.paymentBasis === 'PER_TON') {
         body.canningCropDetails = {
-          baseRatePerTon: parseFloat(form.baseRatePerTon) || null,
-          tenderometerTarget: parseFloat(form.tenderometerTarget) || null,
-          tenderometerAdjPerUnit:
-            parseFloat(form.tenderometerAdjPerUnit) || null,
+          baseRatePerTon: numOrNull(form.baseRatePerTon),
+          tenderometerTarget: numOrNull(form.tenderometerTarget),
+          tenderometerAdjPerUnit: numOrNull(form.tenderometerAdjPerUnit),
           qualityFactors: parseQualityBonuses(form.qualityFactors),
         }
       }
@@ -424,9 +433,9 @@ export function ContractForm({
       // ── Premium section ──────────────────────────────────────────────
       if (form.hasPremium) {
         body.contractPremium = {
-          basePremium: parseFloat(form.basePremium) || 0,
-          varietyPremium: parseFloat(form.varietyPremium) || 0,
-          royaltyDeduction: parseFloat(form.royaltyDeduction) || 0,
+          basePremium: numOrNull(form.basePremium) ?? 0,
+          varietyPremium: numOrNull(form.varietyPremium) ?? 0,
+          royaltyDeduction: numOrNull(form.royaltyDeduction) ?? 0,
           qualityBonuses: parseQualityBonuses(form.qualityBonuses),
           netPremium,
         }
