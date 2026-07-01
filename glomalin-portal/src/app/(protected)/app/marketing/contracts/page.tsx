@@ -15,9 +15,19 @@ export default async function ContractsPage() {
     fetchCertServiceWithAuth('/api/marketing/grain-variants', accessToken),
   ])
 
-  const contracts = contractsRes.ok ? await contractsRes.json() : []
-  const customers = customersRes.ok ? await customersRes.json() : []
-  const variants = variantsRes.ok ? await variantsRes.json() : []
+  if (!contractsRes.ok) {
+    throw new Error(`Failed to load contracts: ${contractsRes.status}`)
+  }
+  if (!customersRes.ok) {
+    throw new Error(`Failed to load customers: ${customersRes.status}`)
+  }
+  if (!variantsRes.ok) {
+    throw new Error(`Failed to load grain variants: ${variantsRes.status}`)
+  }
+
+  const contracts = await contractsRes.json()
+  const customers = await customersRes.json()
+  const variants = await variantsRes.json()
 
   return <ContractListClient contracts={contracts} customers={customers} variants={variants} role={role} />
 }
