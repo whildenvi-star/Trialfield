@@ -225,12 +225,35 @@ export function contractToForm(contract: GrainContractRow): ContractFormState {
 // ─── Styling constants ─────────────────────────────────────────────────────
 
 const inputClass =
-  'w-full bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-sm rounded px-2 py-1.5 focus:outline-none focus:border-glomalin-accent placeholder:text-glomalin-muted'
+  'w-full bg-glomalin-elevated border border-glomalin-border text-glomalin-text font-mono text-sm rounded-md px-2.5 py-2 focus:outline-none focus:border-glomalin-accent placeholder:text-glomalin-muted/50 transition-colors'
 const labelClass =
-  'block text-xs text-glomalin-muted font-mono mb-1 uppercase tracking-wide'
+  'block text-[10px] text-glomalin-text/60 font-mono mb-1.5 uppercase tracking-widest'
 const fieldClass = 'mb-3'
 const filterSelectClass =
-  'bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-xs rounded px-2 py-1 focus:outline-none focus:border-glomalin-accent'
+  'bg-glomalin-elevated border border-glomalin-border text-glomalin-text font-mono text-xs rounded-md px-2 py-1 focus:outline-none focus:border-glomalin-accent transition-colors'
+
+function SectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-3 mb-4 mt-6 first:mt-0">
+      <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-glomalin-accent shrink-0">
+        {label}
+      </span>
+      <div className="flex-1 h-px bg-glomalin-border" />
+    </div>
+  )
+}
+
+function SubsectionDivider({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3 mt-5">
+      <div className="h-px flex-1 bg-glomalin-border/60" />
+      <span className="text-[10px] font-mono uppercase tracking-widest text-glomalin-muted/70 px-1">
+        — {label} —
+      </span>
+      <div className="h-px flex-1 bg-glomalin-border/60" />
+    </div>
+  )
+}
 
 // ─── numOrNull helper ──────────────────────────────────────────────────────
 // Converts a string to a number, returning null for empty/non-finite input.
@@ -499,9 +522,7 @@ export function ContractForm({
         )}
 
         {/* ── Contract Details ──────────────────────────────────────────── */}
-        <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3">
-          Contract Details
-        </p>
+        <SectionDivider label="Contract Details" />
 
         {/* Customer */}
         <div className={fieldClass}>
@@ -650,9 +671,7 @@ export function ContractForm({
         )}
 
         {/* ── Payment Basis ─────────────────────────────────────────────── */}
-        <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
-          Payment Basis
-        </p>
+        <SectionDivider label="Payment Basis" />
 
         <div className={fieldClass}>
           <label className={labelClass} htmlFor="cf-paymentBasis">
@@ -675,73 +694,73 @@ export function ContractForm({
         {/* ── Seed Corn Details (PER_ACRE) ──────────────────────────────── */}
         {showSeedCorn && (
           <>
-            <p className="text-xs text-glomalin-muted font-mono font-semibold uppercase tracking-wide mb-3 mt-4">
-              — Seed Corn Details —
-            </p>
+            <SubsectionDivider label="Seed Corn Details" />
 
-            <div className={fieldClass}>
-              <label className={labelClass} htmlFor="cf-acresIrrigated">
-                Acres Irrigated
-              </label>
-              <input
-                id="cf-acresIrrigated"
-                name="acresIrrigated"
-                type="number"
-                step="1"
-                aria-label="Acres Irrigated"
-                value={form.acresIrrigated}
-                onChange={handleChange}
-                className={inputClass}
-                placeholder="0"
-              />
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className={labelClass} htmlFor="cf-acresIrrigated">
+                  Acres Irrigated
+                </label>
+                <input
+                  id="cf-acresIrrigated"
+                  name="acresIrrigated"
+                  type="number"
+                  step="1"
+                  aria-label="Acres Irrigated"
+                  value={form.acresIrrigated}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cf-acresDryland">
+                  Acres Dryland
+                </label>
+                <input
+                  id="cf-acresDryland"
+                  name="acresDryland"
+                  type="number"
+                  step="1"
+                  value={form.acresDryland}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="0"
+                />
+              </div>
             </div>
 
-            <div className={fieldClass}>
-              <label className={labelClass} htmlFor="cf-acresDryland">
-                Acres Dryland
-              </label>
-              <input
-                id="cf-acresDryland"
-                name="acresDryland"
-                type="number"
-                step="1"
-                value={form.acresDryland}
-                onChange={handleChange}
-                className={inputClass}
-                placeholder="0"
-              />
-            </div>
-
-            <div className={fieldClass}>
-              <label className={labelClass} htmlFor="cf-irrigatedRatePerAcre">
-                Irrigated Rate $/acre
-              </label>
-              <input
-                id="cf-irrigatedRatePerAcre"
-                name="irrigatedRatePerAcre"
-                type="number"
-                step="0.01"
-                value={form.irrigatedRatePerAcre}
-                onChange={handleChange}
-                className={inputClass}
-                placeholder="e.g. 850.00"
-              />
-            </div>
-
-            <div className={fieldClass}>
-              <label className={labelClass} htmlFor="cf-drylandRatePerAcre">
-                Dryland Rate $/acre
-              </label>
-              <input
-                id="cf-drylandRatePerAcre"
-                name="drylandRatePerAcre"
-                type="number"
-                step="0.01"
-                value={form.drylandRatePerAcre}
-                onChange={handleChange}
-                className={inputClass}
-                placeholder="e.g. 700.00"
-              />
+            <div className="grid grid-cols-2 gap-3 mb-3">
+              <div>
+                <label className={labelClass} htmlFor="cf-irrigatedRatePerAcre">
+                  Irrigated $/acre
+                </label>
+                <input
+                  id="cf-irrigatedRatePerAcre"
+                  name="irrigatedRatePerAcre"
+                  type="number"
+                  step="0.01"
+                  value={form.irrigatedRatePerAcre}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="850.00"
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="cf-drylandRatePerAcre">
+                  Dryland $/acre
+                </label>
+                <input
+                  id="cf-drylandRatePerAcre"
+                  name="drylandRatePerAcre"
+                  type="number"
+                  step="0.01"
+                  value={form.drylandRatePerAcre}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="700.00"
+                />
+              </div>
             </div>
 
             <div className={fieldClass}>
@@ -781,9 +800,7 @@ export function ContractForm({
         {/* ── Seed Unit Details (PER_UNIT) ──────────────────────────────── */}
         {showSeedUnit && (
           <>
-            <p className="text-xs text-glomalin-muted font-mono font-semibold uppercase tracking-wide mb-3 mt-4">
-              — Seed Unit Details —
-            </p>
+            <SubsectionDivider label="Seed Unit Details" />
 
             <div className={fieldClass}>
               <label className={labelClass} htmlFor="cf-contractedUnits">
@@ -838,9 +855,7 @@ export function ContractForm({
         {/* ── Canning Crop Details (PER_TON) ───────────────────────────── */}
         {showCanning && (
           <>
-            <p className="text-xs text-glomalin-muted font-mono font-semibold uppercase tracking-wide mb-3 mt-4">
-              — Canning Crop Details —
-            </p>
+            <SubsectionDivider label="Canning Crop Details" />
 
             <div className={fieldClass}>
               <label className={labelClass} htmlFor="cf-baseRatePerTon">
@@ -909,36 +924,35 @@ export function ContractForm({
         )}
 
         {/* ── Delivery Window ───────────────────────────────────────────── */}
-        <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
-          Delivery Window
-        </p>
+        <SectionDivider label="Delivery Window" />
 
-        <div className={fieldClass}>
-          <label className={labelClass} htmlFor="cf-deliveryStart">
-            Delivery Start
-          </label>
-          <input
-            id="cf-deliveryStart"
-            name="deliveryStart"
-            type="date"
-            value={form.deliveryStart}
-            onChange={handleChange}
-            className={inputClass}
-          />
-        </div>
-
-        <div className={fieldClass}>
-          <label className={labelClass} htmlFor="cf-deliveryEnd">
-            Delivery End
-          </label>
-          <input
-            id="cf-deliveryEnd"
-            name="deliveryEnd"
-            type="date"
-            value={form.deliveryEnd}
-            onChange={handleChange}
-            className={inputClass}
-          />
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label className={labelClass} htmlFor="cf-deliveryStart">
+              Start
+            </label>
+            <input
+              id="cf-deliveryStart"
+              name="deliveryStart"
+              type="date"
+              value={form.deliveryStart}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass} htmlFor="cf-deliveryEnd">
+              End
+            </label>
+            <input
+              id="cf-deliveryEnd"
+              name="deliveryEnd"
+              type="date"
+              value={form.deliveryEnd}
+              onChange={handleChange}
+              className={inputClass}
+            />
+          </div>
         </div>
 
         <div className={fieldClass}>
@@ -956,11 +970,6 @@ export function ContractForm({
           />
         </div>
 
-        {/* ── Notes ────────────────────────────────────────────────────── */}
-        <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3 mt-5">
-          Notes
-        </p>
-
         <div className={fieldClass}>
           <label className={labelClass} htmlFor="cf-notes">
             Notes
@@ -976,6 +985,7 @@ export function ContractForm({
         </div>
 
         {/* ── Premium toggle ────────────────────────────────────────────── */}
+        <SectionDivider label="Premium" />
         <div className="mb-3 flex items-center gap-2">
           <input
             id="cf-hasPremium"
@@ -1003,9 +1013,7 @@ export function ContractForm({
         {/* ── Contract Premium section ──────────────────────────────────── */}
         {form.hasPremium && (
           <>
-            <p className="text-xs text-glomalin-muted font-mono font-semibold uppercase tracking-wide mb-3 mt-4">
-              — Contract Premium —
-            </p>
+            <SubsectionDivider label="Contract Premium" />
 
             <div className={fieldClass}>
               <label className={labelClass} htmlFor="cf-basePremium">
