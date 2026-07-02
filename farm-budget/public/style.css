@@ -219,6 +219,17 @@ header h1::before {
   font-weight: 600;
 }
 
+.dash-enterprise-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 1rem 0 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--border);
+}
+
 /* ============================================================
    MAIN CONTENT
    ============================================================ */
@@ -1109,6 +1120,25 @@ body.light .actual-cell {
   padding: 1rem 1.25rem;
   flex: 1;
   min-width: 0;
+  display: none;
+}
+
+.hero-banner.expanded .hero-content { display: block; }
+
+.hero-toggle-btn {
+  font-size: 0.62rem;
+  opacity: 0.5;
+  padding: 0.18rem 0.5rem;
+  margin-top: 0.35rem;
+  align-self: flex-start;
+}
+
+.hero-toggle-btn:hover { opacity: 1; }
+
+/* Pending invoices bar — elevated state for Sandy's invoice-entry workflow */
+.dash-pending-bar--active {
+  border-left: 2px solid var(--amber);
+  padding-left: 0.5rem;
 }
 
 /* ---- Futures sparklines (right side of hero banner) ---- */
@@ -1478,6 +1508,100 @@ body.light .audit-badge.warn { background: #c08800; }
 }
 
 .settings-details summary:hover { color: var(--primary); }
+
+/* ── Actions overflow menu ─────────────── */
+.actions-overflow {
+  position: relative;
+}
+
+.actions-trigger {
+  letter-spacing: 0.06em;
+}
+
+.actions-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 3px);
+  min-width: 220px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  z-index: 200;
+}
+
+.actions-overflow.open .actions-menu {
+  display: block;
+}
+
+.actions-item {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  transition: background 0.1s, color 0.1s;
+}
+
+.actions-item:last-child { border-bottom: none; }
+
+.actions-item:hover {
+  background: var(--highlight);
+  color: var(--primary);
+}
+
+.actions-item-details {
+  border-bottom: 1px solid var(--border);
+}
+
+.actions-item-details:last-child { border-bottom: none; }
+
+.actions-item-details > summary {
+  display: block;
+  padding: 0.45rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+  color: var(--text-light);
+  text-transform: lowercase;
+  letter-spacing: 0.03em;
+  user-select: none;
+  list-style: none;
+  transition: background 0.1s, color 0.1s;
+}
+
+.actions-item-details > summary::-webkit-details-marker { display: none; }
+.actions-item-details > summary::marker { display: none; }
+
+.actions-item-details > summary::after {
+  content: ' \25B8';
+  font-size: 0.6rem;
+  opacity: 0.6;
+}
+
+.actions-item-details[open] > summary::after { content: ' \25BE'; }
+
+.actions-item-details > summary:hover {
+  background: var(--highlight);
+  color: var(--primary);
+}
+
+.actions-settings-bar {
+  flex-direction: column;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin: 0;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+}
 
 .settings-bar {
   display: flex;
@@ -4025,6 +4149,31 @@ tr.fo-confirm-form-row td {
 .mkt-toggle-btn:last-child { border-right: none; }
 .mkt-toggle-btn.active { background: var(--primary); color: #000; font-weight: 600; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+/* Instrument form labels and controls (used in mkt-drawer) */
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-light);
+  font-family: var(--font-mono);
+}
+.form-control {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-bright);
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.55rem;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+.form-control:focus { outline: none; border-color: var(--primary-dim); }
 
 /* Variant setup table */
 .mkt-variant-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-bottom: 0.5rem; }

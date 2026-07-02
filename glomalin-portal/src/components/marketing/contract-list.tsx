@@ -66,7 +66,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const filterSelectClass =
-  'bg-glomalin-bg border border-glomalin-border text-glomalin-text font-mono text-xs rounded px-2 py-1 focus:outline-none focus:border-glomalin-accent'
+  'bg-glomalin-elevated border border-glomalin-border text-glomalin-text font-mono text-xs rounded-md px-2 py-1 focus:outline-none focus:border-glomalin-accent transition-colors'
 
 const EM_DASH = '—'
 
@@ -395,24 +395,31 @@ export function ContractListClient({
         <div className="fixed inset-0 z-50">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/60"
+            className="fixed inset-0 bg-black/60 backdrop-blur-[2px]"
             onClick={handleClose}
           />
           {/* Panel */}
-          <div className="fixed right-0 top-0 h-full w-[520px] bg-glomalin-surface border-l border-glomalin-border overflow-y-auto">
-            <div className="sticky top-0 flex items-center justify-between px-4 py-3 border-b border-glomalin-border bg-glomalin-surface">
-              <h2 className="font-mono text-glomalin-text font-semibold">
-                {editContract ? 'Edit Contract' : 'New Contract'}
-              </h2>
+          <div className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-glomalin-surface border-l border-glomalin-border overflow-y-auto">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-glomalin-border bg-glomalin-surface">
+              <div>
+                <h2 className="font-mono text-glomalin-text font-semibold text-sm tracking-wide">
+                  {editContract ? 'Edit Contract' : 'New Contract'}
+                </h2>
+                {editContract && (
+                  <p className="font-mono text-[10px] text-glomalin-muted/70 uppercase tracking-widest mt-0.5">
+                    {editContract.customer?.name ?? ''} · {editContract.variant?.name ?? ''}
+                  </p>
+                )}
+              </div>
               <button
                 onClick={handleClose}
-                className="text-glomalin-muted hover:text-glomalin-text font-mono text-lg leading-none font-semibold"
+                className="w-7 h-7 flex items-center justify-center rounded text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-elevated font-mono text-base leading-none transition-colors"
                 aria-label="Close drawer"
               >
                 ×
               </button>
             </div>
-            <div className="p-4">
+            <div className="px-5 py-4">
               <ContractForm
                 contract={editContract}
                 customers={customers}
