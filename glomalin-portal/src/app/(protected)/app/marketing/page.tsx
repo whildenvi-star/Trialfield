@@ -101,7 +101,18 @@ export default async function MarketingPage({
       <PageHeader
         title="Marketing Command Center"
         subtitle={`${cropYear} crop year`}
-        actions={<YearSelector currentYear={cropYear} />}
+        actions={
+          <YearSelector
+            currentYear={cropYear}
+            // Forward-looking: you market up to a year ahead ("this year and next"),
+            // plus last year for reference. Default selector only looked backward.
+            availableYears={[
+              CURRENT_CROP_YEAR + 1,
+              CURRENT_CROP_YEAR,
+              CURRENT_CROP_YEAR - 1,
+            ]}
+          />
+        }
       />
 
       {/* Error banners — shown when organic-cert routes are not yet built or offline */}
