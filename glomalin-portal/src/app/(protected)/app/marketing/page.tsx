@@ -54,27 +54,42 @@ export default async function MarketingPage({
   let contractsError = false
   let deliveriesError = false
 
+  // Phase 13/14 routes return bare arrays and are named `contracts` / `deliveries`
+  // (not grain-*). Contracts are not year-filtered server-side, so filter by cropYear
+  // here. Deliveries use ?unreconciled=true and are intentionally NOT year-filtered —
+  // an unmatched delivery must stay in the recon queue regardless of the year selector.
   const [contractsRes, deliveriesRes] = await Promise.allSettled([
     fetchCertServiceWithAuth(
-      `/api/marketing/grain-contracts?year=${cropYear}`,
+      `/api/marketing/contracts`,
       accessToken
     ),
     fetchCertServiceWithAuth(
-      `/api/marketing/grain-deliveries?year=${cropYear}&unmatched=true`,
+      `/api/marketing/deliveries?unreconciled=true`,
       accessToken
     ),
   ])
 
   if (contractsRes.status === 'fulfilled' && contractsRes.value.ok) {
-    const data = await contractsRes.value.json() as { contracts?: GrainContractRow[] }
-    contracts = data.contracts ?? []
+    // Backend columns are deliveryStartDate/deliveryEndDate; ContractTable and
+    // BasisExposurePanel read deliveryStart/deliveryEnd — normalize here.
+    const data = await contractsRes.value.json() as (GrainContractRow & {
+      deliveryStartDate?: string | null
+      deliveryEndDate?: string | null
+    })[]
+    contracts = (Array.isArray(data) ? data : [])
+      .filter((c) => c.cropYear === cropYear)
+      .map((c) => ({
+        ...c,
+        deliveryStart: c.deliveryStart ?? c.deliveryStartDate ?? null,
+        deliveryEnd: c.deliveryEnd ?? c.deliveryEndDate ?? null,
+      }))
   } else {
     contractsError = true
   }
 
   if (deliveriesRes.status === 'fulfilled' && deliveriesRes.value.ok) {
-    const data = await deliveriesRes.value.json() as { deliveries?: GrainDeliveryRow[] }
-    deliveries = data.deliveries ?? []
+    const data = await deliveriesRes.value.json() as GrainDeliveryRow[]
+    deliveries = Array.isArray(data) ? data : []
   } else {
     deliveriesError = true
   }
