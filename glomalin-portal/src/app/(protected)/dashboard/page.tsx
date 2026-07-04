@@ -37,7 +37,7 @@ export default async function DashboardPage() {
 
       {/* Desktop: map + command panel */}
       <div className="hidden md:block">
-        <DashboardDesktop grantedModules={grantedModules}>
+        <DashboardDesktop>
           <Suspense fallback={<div className="w-full h-full bg-glomalin-bg animate-pulse" />}>
             <FieldMap isAdmin={role === 'admin'} />
           </Suspense>
