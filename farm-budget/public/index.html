@@ -125,47 +125,52 @@
               Symbol format: ZC<b>Z</b>26.CBT &mdash; month codes: F=Jan G=Feb H=Mar J=Apr K=May M=Jun N=Jul Q=Aug U=Sep V=Oct X=Nov Z=Dec
             </div>
           </div>
+          <button id="hero-toggle" class="hero-toggle-btn btn-sm">[+] terminal</button>
         </div>
       </div>
       <div class="dashboard-controls">
+        <span id="sync-badge" class="sync-badge" title="checking sync status...">&#9679; sync</span>
         <div class="view-toggle" id="yield-mode-toggle">
           <button class="toggle-btn active" data-yield-mode="projected">Projected</button>
           <button class="toggle-btn" data-yield-mode="actual">Actual</button>
         </div>
-        <div style="display:flex;gap:0.5rem;align-items:center">
-          <button id="btn-sync-all-registry" class="btn-sm role-hide-restricted" title="Sync acres & rent for all fields from Farm Registry">Sync All from Registry</button>
-          <button id="dash-download-pdf" class="btn-sm role-hide-restricted">Download PDF</button>
-          <button class="btn-sm role-hide-restricted" onclick="location.reload(true)" title="Clear cache and reload">&#x21bb; Refresh</button>
-          <details class="settings-details role-hide-restricted">
-            <summary>Settings</summary>
-            <div class="settings-bar">
-              <label><input type="checkbox" id="set-fixed-mach"> Fixed Machinery Rate: $<input type="number" id="set-mach-rate" class="inline-input" value="100" step="1" min="0">/ac</label>
-              <label>Fuel: $<input type="number" id="set-fuel-price" class="inline-input" value="5.00" step="0.01" min="0">/gal</label>
-              <label>Wage: $<input type="number" id="set-wage-rate" class="inline-input" value="25" step="0.50" min="0">/hr</label>
-              <label>Interest: <input type="number" id="set-interest-rate" class="inline-input" value="6" step="0.25" min="0" max="30">%</label>
-              <label>Carry: <input type="number" id="set-carry-months" class="inline-input" value="6" step="1" min="1" max="12"> months</label>
-            </div>
-          </details>
-          <details class="settings-details">
-            <summary>FieldOps Integration</summary>
-            <div class="settings-bar" style="flex-direction:column;align-items:flex-start;gap:0.5rem">
-              <div id="fieldops-status" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
-                <span class="fieldops-mode">Loading...</span>
+        <div class="actions-overflow" id="actions-overflow">
+          <button class="btn-sm actions-trigger" id="actions-trigger" title="Actions">&#x22EF; actions</button>
+          <div class="actions-menu" id="actions-menu">
+            <button id="btn-sync-all-registry" class="actions-item role-hide-restricted" title="Sync acres &amp; rent for all fields from Farm Registry">sync all from registry</button>
+            <button id="dash-download-pdf" class="actions-item role-hide-restricted">download pdf</button>
+            <button class="actions-item role-hide-restricted" onclick="location.reload(true)" title="Clear cache and reload">&#x21bb; refresh</button>
+            <details class="actions-item-details role-hide-restricted">
+              <summary>settings</summary>
+              <div class="settings-bar actions-settings-bar">
+                <label><input type="checkbox" id="set-fixed-mach"> Fixed Machinery Rate: $<input type="number" id="set-mach-rate" class="inline-input" value="100" step="1" min="0">/ac</label>
+                <label>Fuel: $<input type="number" id="set-fuel-price" class="inline-input" value="5.00" step="0.01" min="0">/gal</label>
+                <label>Wage: $<input type="number" id="set-wage-rate" class="inline-input" value="25" step="0.50" min="0">/hr</label>
+                <label>Interest: <input type="number" id="set-interest-rate" class="inline-input" value="6" step="0.25" min="0" max="30">%</label>
+                <label>Carry: <input type="number" id="set-carry-months" class="inline-input" value="6" step="1" min="1" max="12"> months</label>
               </div>
-              <button id="fieldops-sync-btn" class="btn-sm btn-primary" style="margin-top:0.25rem">Sync Now</button>
-              <details style="width:100%;margin-top:0.25rem">
-                <summary style="cursor:pointer;font-size:0.8rem;color:var(--text-light)">Sync History</summary>
-                <div class="table-wrap" style="max-height:200px;overflow-y:auto;margin-top:0.25rem">
-                  <table class="compact-table">
-                    <thead><tr>
-                      <th>Time</th><th>Status</th><th>Matched</th><th>Created</th><th>Apps</th><th>Errors</th>
-                    </tr></thead>
-                    <tbody id="fieldops-history-list"></tbody>
-                  </table>
+            </details>
+            <details class="actions-item-details">
+              <summary>fieldops integration</summary>
+              <div class="settings-bar" style="flex-direction:column;align-items:flex-start;gap:0.5rem">
+                <div id="fieldops-status" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap">
+                  <span class="fieldops-mode">Loading...</span>
                 </div>
-              </details>
-            </div>
-          </details>
+                <button id="fieldops-sync-btn" class="btn-sm btn-primary" style="margin-top:0.25rem">Sync Now</button>
+                <details style="width:100%;margin-top:0.25rem">
+                  <summary style="cursor:pointer;font-size:0.8rem;color:var(--text-light)">Sync History</summary>
+                  <div class="table-wrap" style="max-height:200px;overflow-y:auto;margin-top:0.25rem">
+                    <table class="compact-table">
+                      <thead><tr>
+                        <th>Time</th><th>Status</th><th>Matched</th><th>Created</th><th>Apps</th><th>Errors</th>
+                      </tr></thead>
+                      <tbody id="fieldops-history-list"></tbody>
+                    </table>
+                  </div>
+                </details>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
 
@@ -217,6 +222,8 @@
         </div>
       </div>
 
+      <div id="dash-enterprise-strip" class="dash-enterprise-strip"></div>
+
       <h3 class="role-hide-restricted">Cost Category Rollup</h3>
       <div class="table-wrap role-hide-restricted">
         <table id="dash-rollup-table">
@@ -246,7 +253,10 @@
         </table>
       </div>
 
-      <div id="dash-supply-card" style="margin-top:1.5rem"></div>
+      <details id="supply-planning-details" style="margin-top:1.5rem">
+        <summary style="cursor:pointer;font-weight:600;color:var(--text-light)">Supply Planning</summary>
+        <div id="dash-supply-card" style="margin-top:0.5rem"></div>
+      </details>
 
       <details style="margin-top:1.5rem">
         <summary style="cursor:pointer;font-weight:600;color:var(--text-light)">Acre Reconciliation <span id="dash-recon-badge" style="font-size:0.75rem;font-weight:normal"></span></summary>
@@ -848,7 +858,7 @@
       <!-- Sub-tab strip -->
       <div class="mkt-tabs">
         <button class="mkt-tab-btn active" data-mtab="dashboard">Hedging Dashboard</button>
-        <button class="mkt-tab-btn" data-mtab="instruments">Instruments</button>
+        <button class="mkt-tab-btn" data-mtab="instruments">Contracts</button>
         <button class="mkt-tab-btn role-hide-office" data-mtab="whatif">What-If</button>
         <button class="mkt-tab-btn" data-mtab="basis">Basis</button>
         <button class="mkt-tab-btn" data-mtab="croptypes">Crop Types</button>
@@ -859,9 +869,14 @@
         <div id="mkt-dashboard-root"></div>
       </div>
 
-      <!-- Instruments -->
+      <!-- Contracts (Phase 13 — replaces old sale_instruments ledger) -->
       <div id="mtab-instruments" class="mtab-content">
-        <div id="mkt-instruments-root"></div>
+        <iframe
+          id="contracts-embed"
+          src="/app/marketing-embed/contracts"
+          style="width:100%;height:75vh;border:none;display:block"
+          title="Contract Management"
+        ></iframe>
       </div>
 
       <!-- Crop Types -->
@@ -1575,7 +1590,7 @@
 
   <script src="sales.js?v=3"></script>
   <script src="hedging.js?v=3"></script>
-  <script src="sales-marketing.js?v=5"></script>
+  <script src="sales-marketing.js?v=7"></script>
   <script src="farm-map.js"></script>
   <script src="pdf-report.js"></script>
   <script src="fieldops-ui.js"></script>
@@ -1928,5 +1943,62 @@
   </script>
   <script src="settings-panel.js"></script>
   <script src="formatting-agent.js"></script>
+  <script>
+  (function () {
+    var overflow = document.getElementById('actions-overflow');
+    var trigger = document.getElementById('actions-trigger');
+    if (!overflow || !trigger) return;
+    trigger.addEventListener('click', function (e) {
+      e.stopPropagation();
+      overflow.classList.toggle('open');
+    });
+    document.addEventListener('click', function (e) {
+      if (!overflow.contains(e.target)) overflow.classList.remove('open');
+    });
+    overflow.querySelectorAll('.actions-item').forEach(function (btn) {
+      btn.addEventListener('click', function () { overflow.classList.remove('open'); });
+    });
+  })();
+  (function () {
+    var toggle = document.getElementById('hero-toggle');
+    var banner = document.querySelector('.hero-banner');
+    if (!toggle || !banner) return;
+    if (localStorage.getItem('hero-expanded') === '1') {
+      banner.classList.add('expanded');
+      toggle.textContent = '[−] terminal';
+    }
+    toggle.addEventListener('click', function () {
+      var open = banner.classList.toggle('expanded');
+      toggle.textContent = open ? '[−] terminal' : '[+] terminal';
+      localStorage.setItem('hero-expanded', open ? '1' : '0');
+    });
+  })();
+  (function () {
+    var badge = document.getElementById('sync-badge');
+    if (!badge) return;
+    function refresh() {
+      fetch('/api/sync-status').then(function (r) { return r.json(); }).then(function (s) {
+        var problems = [];
+        if (s.lastNotifyOk === false) problems.push('push to seed-inventory failing: ' + s.lastNotifyError);
+        if (s.lastReconOk === false) problems.push('pull from seed-inventory failing: ' + s.lastReconError);
+        if (problems.length) {
+          badge.classList.add('sync-bad');
+          badge.textContent = '● sync failing';
+          badge.title = problems.join('\n');
+        } else {
+          badge.classList.remove('sync-bad');
+          badge.textContent = '● sync ok';
+          badge.title = 'seed-inventory sync healthy' +
+            (s.lastNotifyAt ? '\nlast push: ' + s.lastNotifyAt : '') +
+            (s.lastReconAt ? '\nlast pull: ' + s.lastReconAt : '');
+        }
+      }).catch(function () {
+        badge.title = 'sync status unavailable';
+      });
+    }
+    refresh();
+    setInterval(refresh, 60000);
+  })();
+  </script>
 </body>
 </html>
