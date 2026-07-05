@@ -336,6 +336,47 @@
         activateEnterprise(idx);
       });
     });
+
+    // Enterprise switcher bar (top of enterprise view — visible in iframe where sidebar is hidden)
+    var switcher = document.getElementById('ent-switcher-bar');
+    if (switcher) {
+      switcher.innerHTML = enterprises.map(function (ent, idx) {
+        return '<button class="ent-pill" data-enterprise-idx="' + idx + '">' + util.escHtml(ent.shortName || ent.name) + '</button>';
+      }).join('');
+      switcher.querySelectorAll('.ent-pill').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          activateEnterprise(parseInt(btn.getAttribute('data-enterprise-idx')));
+        });
+      });
+    }
+
+    // Dashboard enterprise strip — prominent buttons grouped by category
+    var strip = document.getElementById('dash-enterprise-strip');
+    if (strip) {
+      var groups = [
+        { key: 'conventional', label: 'conventional' },
+        { key: 'organic', label: 'organic' }
+      ];
+      strip.innerHTML = groups.map(function (grp) {
+        var btns = enterprises.map(function (ent, idx) {
+          if ((ent.category || 'conventional') !== grp.key) return '';
+          return '<button class="ent-btn ent-btn--' + grp.key + '" data-enterprise-idx="' + idx + '">' +
+                 '<span class="ent-btn-name">' + util.escHtml(ent.name) + '</span>' +
+                 '<span class="ent-btn-sub">' + util.escHtml(ent.shortName || '') + '</span>' +
+                 '</button>';
+        }).join('');
+        if (!btns) return '';
+        return '<div class="ent-btn-group">' +
+               '<div class="ent-btn-group-label">' + grp.label + '</div>' +
+               '<div class="ent-btn-row">' + btns + '</div>' +
+               '</div>';
+      }).join('');
+      strip.querySelectorAll('.ent-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          activateEnterprise(parseInt(btn.getAttribute('data-enterprise-idx')));
+        });
+      });
+    }
   }
 
   // --- Tab Navigation ---
@@ -370,10 +411,10 @@
     currentEnterpriseIdx = idx;
     location.hash = 'enterprise-' + idx;
 
-    // Update pill active states
-    var pills = document.querySelectorAll('.ent-pill');
-    pills.forEach(function (p) { p.classList.remove('active'); });
-    if (pills[idx]) pills[idx].classList.add('active');
+    // Update active states across all enterprise switchers (sidebar bar, banner bar, dashboard buttons)
+    document.querySelectorAll('.ent-pill, .ent-btn').forEach(function (p) {
+      p.classList.toggle('active', parseInt(p.getAttribute('data-enterprise-idx')) === idx);
+    });
 
     // Show enterprise bar
     document.getElementById('nav-enterprise-bar').classList.add('visible');

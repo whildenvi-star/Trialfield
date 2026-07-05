@@ -221,13 +221,95 @@ header h1::before {
 
 .dash-enterprise-strip {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-direction: column;
+  gap: 0.75rem;
   margin: 1rem 0 0.75rem;
-  padding: 0.6rem 0.75rem;
+  padding: 0.85rem 1rem;
   background: var(--card);
   border: 1px solid var(--border);
   border-left: 2px solid var(--border);
+}
+
+.ent-btn-group-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 0.4rem;
+}
+
+.ent-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ent-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.7rem 1.1rem;
+  min-width: 150px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary-dim);
+  border-radius: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.ent-btn--organic { border-left-color: var(--success); }
+
+.ent-btn-name {
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ent-btn-sub {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--text-light);
+  text-transform: lowercase;
+}
+
+.ent-btn:hover {
+  background: var(--highlight);
+  border-color: var(--primary-dim);
+  border-left-width: 3px;
+  transform: translateY(-1px);
+}
+
+.ent-btn--organic:hover { border-color: var(--success); }
+
+.ent-btn.active {
+  background: var(--highlight);
+  border-color: var(--primary-dim);
+}
+
+.ent-btn.active .ent-btn-name { color: var(--primary); }
+
+/* Enterprise switcher bar (banner at top of enterprise view) */
+.ent-switcher-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--primary-dim);
+}
+
+.ent-switcher-bar .ent-pill {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.8rem;
 }
 
 /* ============================================================
@@ -1134,6 +1216,23 @@ body.light .actual-cell {
 }
 
 .hero-toggle-btn:hover { opacity: 1; }
+
+/* Cross-app sync health badge — dim when healthy, amber when a sync path is failing */
+.sync-badge {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: lowercase;
+  color: var(--text-light);
+  opacity: 0.5;
+  white-space: nowrap;
+  cursor: default;
+  align-self: center;
+}
+.sync-badge.sync-bad {
+  color: var(--amber);
+  opacity: 1;
+  font-weight: 600;
+}
 
 /* Pending invoices bar — elevated state for Sandy's invoice-entry workflow */
 .dash-pending-bar--active {
@@ -2972,7 +3071,7 @@ tr.drag-over-bottom { box-shadow: inset 0 -3px 0 var(--primary); }
   .btn-close, .settings-details, .dashboard-search,
   .editor-panel, .overlay, .toast, #main-nav,
   .hedging-tabs, .map-controls, .view-toggle,
-  .nav-enterprise-bar { display: none !important; }
+  .nav-enterprise-bar, .ent-switcher-bar { display: none !important; }
   main { max-width: 100%; padding: 0; }
   .tab-content { display: block !important; opacity: 1 !important; }
   .tab-content:not(.active) { display: none !important; }
