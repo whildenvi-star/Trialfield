@@ -185,6 +185,20 @@ export function ContractListClient({
     window.location.reload()
   }
 
+  async function handleDelete(c: GrainContractRow) {
+    const label = [c.customer?.name, c.variant?.name, `${c.contractedBushels.toLocaleString()} bu`]
+      .filter(Boolean)
+      .join(' · ')
+    if (!window.confirm(`Delete this contract?\n\n${label}\n\nThis cannot be undone.`)) return
+    const res = await fetch(`/api/cert-proxy/marketing/contracts/${c.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      window.location.reload()
+    } else {
+      const data = await res.json().catch(() => ({}))
+      window.alert(data.error ?? 'Failed to delete contract.')
+    }
+  }
+
   // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div>
@@ -381,6 +395,15 @@ export function ContractListClient({
                       >
                         Edit
                       </button>
+                      {role === 'owner' && (
+                        <button
+                          aria-label={`Delete contract ${c.id}`}
+                          onClick={() => handleDelete(c)}
+                          className="ml-3 text-glomalin-danger font-mono text-xs hover:opacity-80 transition-opacity"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </TableCell>
                   </TableRow>
                 )
