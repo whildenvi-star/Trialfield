@@ -28,9 +28,11 @@ export async function GET(request: Request) {
     .from('clu_records')
     .select('*')
     .eq('crop_year', cropYear)
+    .eq('superseded', false)   // exclude parent rows that have been split
     .order('farm_number')
     .order('tract_number')
     .order('clu')
+    .order('sub_label', { nullsFirst: true })
 
   if (confirmedOnly) {
     query = query.eq('reported', true)
@@ -54,6 +56,17 @@ export async function GET(request: Request) {
   for (const b of boundaries ?? []) {
     const key = `${b.farm_number}::${b.tract_number}::${b.clu_label}`
     boundaryMap.set(key, { fsa_acres: b.fsa_acres, fsa_attributes: b.fsa_attributes ?? {} })
+  }
+
+  // Zone intended-use fallback: zone_id → intended_use for CLUs without their own
+  const { data: zoneAttrs } = await supabase
+    .from('zone_year_attributes')
+    .select('zone_id, intended_use')
+    .eq('crop_year', cropYear)
+
+  const zoneUseMap = new Map<string, string>()
+  for (const z of zoneAttrs ?? []) {
+    if (z.zone_id && z.intended_use) zoneUseMap.set(z.zone_id, z.intended_use)
   }
 
   // ── CSV build ────────────────────────────────────────────────────────────────
@@ -93,11 +106,14 @@ export async function GET(request: Request) {
     const cells = [
       r.farm_number  ?? '',
       r.tract_number ?? '',
-      r.clu          ?? '',
+      // Sub-CLU rows get composite identifier: '1a', '1b'; whole CLUs stay as '1'
+      `${r.clu ?? ''}${r.sub_label ?? ''}`,
       csvQuote(r.field_name),
       String(cropYear),
       csvQuote(r.crop),
-      csvQuote(r.use),
+      // CLU-level intended_use wins; fall back to zone attribute. The legacy
+      // `use` column is intentionally not read — it holds irrigation strings.
+      csvQuote(r.intended_use ?? (r.zone_id ? zoneUseMap.get(r.zone_id) : null) ?? ''),
       r.fsa_acres != null ? r.fsa_acres.toFixed(2) : '',
       b?.fsa_acres   != null ? Number(b.fsa_acres).toFixed(2) : '',
       '100',

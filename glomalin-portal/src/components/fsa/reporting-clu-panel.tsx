@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { INTENDED_USE_VALUES } from '@/lib/fsa/calc'
 
 export type ReportingStatus = 'orange' | 'yellow' | 'green'
 
@@ -18,6 +19,7 @@ export interface CluMapProperties {
   reported: boolean
   organic: boolean
   irrigated: boolean
+  intended_use: string | null
   prevented_planting: boolean
   status: ReportingStatus
 }
@@ -55,6 +57,7 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNex
   const [plantDate, setPlantDate] = useState(clu.grain_plant_date ?? '')
   const [organic, setOrganic] = useState(clu.organic)
   const [irrigated, setIrrigated] = useState(clu.irrigated)
+  const [intendedUse, setIntendedUse] = useState(clu.intended_use ?? '')
   const [cropChoices, setCropChoices] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
@@ -91,9 +94,10 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNex
       grain_plant_date: plantDate || null,
       organic,
       irrigated,
+      intended_use: intendedUse || null,
     })
     if (ok) {
-      onRecordUpdated({ id: clu.id, crop: crop.trim() || null, grain_plant_date: plantDate || null, organic, irrigated })
+      onRecordUpdated({ id: clu.id, crop: crop.trim() || null, grain_plant_date: plantDate || null, organic, irrigated, intended_use: intendedUse || null })
     }
     setSaving(false)
   }
@@ -170,6 +174,20 @@ export function ReportingCluPanel({ clu, onClose, onRecordUpdated, onNavigateNex
             onChange={(e) => setPlantDate(e.target.value)}
             className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 text-sm font-mono text-glomalin-text focus:outline-none focus:border-glomalin-accent"
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-mono text-glomalin-muted mb-1">Intended Use</label>
+          <select
+            value={intendedUse}
+            onChange={(e) => setIntendedUse(e.target.value)}
+            className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 text-sm font-mono text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+          >
+            <option value="">—</option>
+            {INTENDED_USE_VALUES.map((v) => (
+              <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center gap-4">

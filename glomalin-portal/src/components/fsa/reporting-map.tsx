@@ -7,6 +7,7 @@ import { getSatelliteStyle, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/m
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { ReportingCluPanel } from './reporting-clu-panel'
 import type { CluMapProperties, ReportingStatus, CluAnomalyResult } from './reporting-clu-panel'
+import { MapBatchEditBar, type BatchEditFields } from './map-batch-edit-bar'
 
 // Status fill colors — visible against satellite imagery
 const STATUS_COLORS: Record<ReportingStatus, string> = {
@@ -92,6 +93,10 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
   const [expandedTracts, setExpandedTracts] = useState<Set<string>>(new Set())
   const [smsBoundaryNames, setSmsBoundaryNames] = useState<Record<string, string>>({})
   const [plantingPasses, setPlantingPasses] = useState<Record<string, PlantingPass[]>>({})
+  // Batch edit: CLUs checked in the sidebar for multi-apply
+  const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
+  const [batchBusy, setBatchBusy] = useState(false)
+  const [batchError, setBatchError] = useState<string | null>(null)
 
   // Sync with app-level dark/light theme — watches the 'light' class on <html>
   useEffect(() => {
@@ -265,6 +270,71 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
     mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], props.id])
     setSelectedClu(props)
   }, [])
+
+  // Batch selection: toggle one CLU checkbox
+  const toggleChecked = useCallback((id: string) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  // Batch selection: set many CLUs at once (tract/farm select-all)
+  const toggleCheckedMany = useCallback((ids: string[], on: boolean) => {
+    setCheckedIds((prev) => {
+      const next = new Set(prev)
+      for (const id of ids) {
+        if (on) next.add(id)
+        else next.delete(id)
+      }
+      return next
+    })
+  }, [])
+
+  const clearChecked = useCallback(() => {
+    setCheckedIds(new Set())
+    setBatchError(null)
+  }, [])
+
+  // Apply batch edit to all checked CLUs, then patch in-memory state from the
+  // server response (picks up organic auto-sync + recomputes status/counts)
+  const handleBatchApply = useCallback(
+    async (fields: BatchEditFields) => {
+      const ids = Array.from(checkedIds)
+      if (ids.length === 0) return
+      setBatchBusy(true)
+      setBatchError(null)
+      try {
+        const res = await fetch('/api/fsa/clu-records/bulk-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids, action: 'batch-edit', fields }),
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          setBatchError(json.error ?? 'Batch update failed')
+          return
+        }
+        for (const rec of json.records ?? []) {
+          handleRecordUpdated({
+            id: rec.id,
+            crop: rec.crop ?? null,
+            grain_plant_date: rec.grain_plant_date ?? null,
+            organic: rec.organic,
+            irrigated: rec.irrigated ?? false,
+            intended_use: rec.intended_use ?? null,
+          })
+        }
+      } catch {
+        setBatchError('Network error — please try again')
+      } finally {
+        setBatchBusy(false)
+      }
+    },
+    [checkedIds, handleRecordUpdated]
+  )
 
   const toggleFarm = useCallback((farmNumber: string) => {
     setExpandedFarms((prev) => {
@@ -443,6 +513,18 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
             },
           })
 
+          // Batch-checked CLUs highlight — sky blue, distinct from gold single-select
+          mapInstance.addLayer({
+            id: 'clu-checked',
+            type: 'line',
+            source: 'clus',
+            filter: ['==', ['get', 'id'], ''],
+            paint: {
+              'line-color': '#38bdf8',
+              'line-width': 3,
+            },
+          })
+
           // Anomaly dashed outline — on top of all other CLU layers
           const anomalyIds = anomaliesRef.current.map((a) => a.clu_record_id)
           mapInstance.addLayer({
@@ -595,7 +677,7 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
     const map = mapRef.current
     if (!map) return
     const vis = showCluLayer ? 'visible' : 'none'
-    for (const id of ['clu-fill', 'clu-stroke', 'clu-selected', 'clu-hover', 'clu-anomaly-stroke']) {
+    for (const id of ['clu-fill', 'clu-stroke', 'clu-selected', 'clu-checked', 'clu-hover', 'clu-anomaly-stroke']) {
       if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis)
     }
   }, [showCluLayer])
@@ -611,6 +693,18 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
       (ids.length > 0 ? ['in', ['get', 'id'], ['literal', ids]] : ['==', ['get', 'id'], '']) as any
     )
   }, [anomalies])
+
+  // Update batch-checked highlight filter when checkbox selection changes
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !map.getLayer('clu-checked')) return
+    const ids = Array.from(checkedIds)
+    map.setFilter(
+      'clu-checked',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (ids.length > 0 ? ['in', ['get', 'id'], ['literal', ids]] : ['==', ['get', 'id'], '']) as any
+    )
+  }, [checkedIds])
 
   // Toggle SMS farm boundary layer visibility
   useEffect(() => {
@@ -726,6 +820,9 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
           )}
           {Array.from(farmTree.entries()).map(([farmNumber, { farm, tracts }]) => {
             const isExpanded = expandedFarms.has(farmNumber)
+            const farmIds = Array.from(tracts.values()).flat().map((f) => f.properties.id)
+            const farmAllChecked = farmIds.length > 0 && farmIds.every((id) => checkedIds.has(id))
+            const farmSomeChecked = farmIds.some((id) => checkedIds.has(id))
             return (
               <div key={farmNumber} className="border-b border-glomalin-border">
                 {/* Farm header */}
@@ -738,6 +835,15 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
                     if (farm) flyToFarm(farm)
                   }}
                 >
+                  <input
+                    type="checkbox"
+                    checked={farmAllChecked}
+                    ref={(el) => { if (el) el.indeterminate = !farmAllChecked && farmSomeChecked }}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={() => toggleCheckedMany(farmIds, !farmAllChecked)}
+                    className="accent-sky-400 w-3 h-3 mt-0.5 shrink-0 cursor-pointer"
+                    aria-label={`Select all CLUs in farm ${farmNumber}`}
+                  />
                   <span className={`text-[9px] font-mono text-glomalin-muted mt-0.5 shrink-0 inline-block transition-transform duration-150 ${isExpanded ? 'rotate-90' : ''}`}>
                     ▶
                   </span>
@@ -775,6 +881,9 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
                     {Array.from(tracts.entries()).map(([tractNumber, tractFeatures]) => {
                       const tractKey = `${farmNumber}|${tractNumber}`
                       const isTractExpanded = expandedTracts.has(tractKey)
+                      const tractIds = tractFeatures.map((f) => f.properties.id)
+                      const tractAllChecked = tractIds.length > 0 && tractIds.every((id) => checkedIds.has(id))
+                      const tractSomeChecked = tractIds.some((id) => checkedIds.has(id))
                       return (
                         <div key={tractKey} className="border-t border-glomalin-border/40">
                           {/* Tract header */}
@@ -782,6 +891,15 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
                             className="flex items-center gap-1.5 px-4 py-1.5 cursor-pointer hover:bg-glomalin-bg transition-colors"
                             onClick={() => toggleTract(tractKey)}
                           >
+                            <input
+                              type="checkbox"
+                              checked={tractAllChecked}
+                              ref={(el) => { if (el) el.indeterminate = !tractAllChecked && tractSomeChecked }}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={() => toggleCheckedMany(tractIds, !tractAllChecked)}
+                              className="accent-sky-400 w-3 h-3 shrink-0 cursor-pointer"
+                              aria-label={`Select all CLUs in tract ${tractNumber}`}
+                            />
                             <span className={`text-[8px] font-mono text-glomalin-muted shrink-0 inline-block transition-transform duration-150 ${isTractExpanded ? 'rotate-90' : ''}`}>
                               ▶
                             </span>
@@ -801,28 +919,40 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
                               ? (plantingPasses[p.registry_field_id] ?? [])
                               : []
                             const isSelected = selectedClu?.id === p.id
+                            const isChecked = checkedIds.has(p.id)
                             return (
                               <div key={p.id} className="border-t border-glomalin-border/30">
-                                <button
-                                  onClick={() => handleSelectClu(p)}
-                                  className={`w-full text-left flex items-center gap-1.5 px-5 py-1.5 transition-colors ${
-                                    isSelected ? 'bg-glomalin-accent/15' : 'hover:bg-glomalin-bg'
+                                <div
+                                  className={`flex items-center gap-1.5 px-5 py-1.5 transition-colors ${
+                                    isSelected ? 'bg-glomalin-accent/15' : isChecked ? 'bg-sky-500/10' : 'hover:bg-glomalin-bg'
                                   }`}
                                 >
-                                  <span
-                                    className="w-2 h-2 rounded-full shrink-0"
-                                    style={{ backgroundColor: STATUS_COLORS[p.status] }}
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() => toggleChecked(p.id)}
+                                    className="accent-sky-400 w-3 h-3 shrink-0 cursor-pointer"
+                                    aria-label={`Select CLU ${p.clu}`}
                                   />
-                                  <span className="font-mono text-[10px] text-glomalin-muted shrink-0">
-                                    {p.clu}
-                                  </span>
-                                  <span className="font-mono text-[10px] text-glomalin-text truncate flex-1">
-                                    {smsName ?? '—'}
-                                  </span>
-                                  <span className="font-mono text-[9px] text-glomalin-muted shrink-0">
-                                    {p.fsa_acres}
-                                  </span>
-                                </button>
+                                  <button
+                                    onClick={() => handleSelectClu(p)}
+                                    className="flex-1 min-w-0 text-left flex items-center gap-1.5"
+                                  >
+                                    <span
+                                      className="w-2 h-2 rounded-full shrink-0"
+                                      style={{ backgroundColor: STATUS_COLORS[p.status] }}
+                                    />
+                                    <span className="font-mono text-[10px] text-glomalin-muted shrink-0">
+                                      {p.clu}
+                                    </span>
+                                    <span className="font-mono text-[10px] text-glomalin-text truncate flex-1">
+                                      {smsName ?? '—'}
+                                    </span>
+                                    <span className="font-mono text-[9px] text-glomalin-muted shrink-0">
+                                      {p.fsa_acres}
+                                    </span>
+                                  </button>
+                                </div>
                                 {p.crop && (
                                   <div className="px-8 pb-0.5">
                                     <span className="font-mono text-[9px] text-glomalin-muted truncate block">
@@ -909,6 +1039,23 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
               <p className="text-glomalin-accent font-mono text-sm font-semibold mb-1">Map Error</p>
               <p className="text-glomalin-muted font-mono text-xs">{error}</p>
             </div>
+          </div>
+        )}
+
+        {/* Batch edit bar — shown when CLUs are checked in the sidebar */}
+        {checkedIds.size > 0 && !loading && (
+          <div className="absolute bottom-3 left-3 z-10 space-y-1.5">
+            {batchError && (
+              <p className="font-mono text-[10px] text-red-400 bg-glomalin-surface/95 rounded px-2 py-1 border border-red-800 w-72">
+                {batchError}
+              </p>
+            )}
+            <MapBatchEditBar
+              selectedCount={checkedIds.size}
+              busy={batchBusy}
+              onApply={handleBatchApply}
+              onClear={clearChecked}
+            />
           </div>
         )}
 

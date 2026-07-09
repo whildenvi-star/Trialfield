@@ -31,6 +31,7 @@ export interface CluRecord {
   cover_crop: boolean
   grain_plant_date: string | null
   use: string | null
+  intended_use: string | null
   reported: boolean
   tillage_2024: string | null
   tillage_2025: string | null
@@ -45,6 +46,9 @@ export interface CluRecord {
   line_number: string | null
   policy_number: string | null
   prevented_planting: boolean
+  sub_label?: string | null
+  parent_clu_id?: string | null
+  superseded?: boolean
 }
 
 export interface PricingEntry {
@@ -115,6 +119,10 @@ export interface ValidationWarning {
 }
 
 // ===== Constants =====
+
+/** 578 intended-use values stored on clu_records.intended_use (and zone_year_attributes.intended_use) */
+export const INTENDED_USE_VALUES = ['grain', 'forage', 'seed', 'silage'] as const
+export type IntendedUse = (typeof INTENDED_USE_VALUES)[number]
 
 export const TILLAGE_CODES: Record<string, string> = {
   A: 'No Till',

@@ -62,6 +62,7 @@ const ALLOWED_FIELDS = new Set([
   'cover_crop',
   'grain_plant_date',
   'use',
+  'intended_use',
   'reported',
   'crop_year',
   'prevented_planting',

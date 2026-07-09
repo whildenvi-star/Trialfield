@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import type { CluRecord, ValidationWarning } from '@/lib/fsa/calc'
+import { INTENDED_USE_VALUES, type CluRecord, type ValidationWarning } from '@/lib/fsa/calc'
 import { CropTypeahead } from './crop-typeahead'
 import { ConfirmDialog } from './confirm-dialog'
 
@@ -23,6 +23,7 @@ type DraftFields = {
   crop: string
   registry_crop_id: string  // canonical crop ID from farm-registry
   use: string
+  intended_use: string
   grain_plant_date: string
   organic: boolean
   prevented_planting: boolean
@@ -58,6 +59,7 @@ export function CluCard({
     crop: record.crop ?? '',
     registry_crop_id: record.registry_crop_id ?? '',
     use: record.use ?? '',
+    intended_use: record.intended_use ?? '',
     grain_plant_date: record.grain_plant_date ?? '',
     organic: record.organic,
     prevented_planting: record.prevented_planting ?? false,
@@ -82,6 +84,7 @@ export function CluCard({
         crop: record.crop ?? '',
         registry_crop_id: record.registry_crop_id ?? '',
         use: record.use ?? '',
+        intended_use: record.intended_use ?? '',
         grain_plant_date: record.grain_plant_date ?? '',
         organic: record.organic,
         prevented_planting: record.prevented_planting ?? false,
@@ -160,6 +163,7 @@ export function CluCard({
           crop: draft.crop.trim() || null,
           registry_crop_id: draft.registry_crop_id.trim() || null,
           use: draft.use.trim() || null,
+          intended_use: draft.intended_use || null,
           grain_plant_date: draft.grain_plant_date.trim() || null,
           organic: draft.organic,
           prevented_planting: draft.prevented_planting,
@@ -206,6 +210,7 @@ export function CluCard({
       crop: record.crop ?? '',
       registry_crop_id: record.registry_crop_id ?? '',
       use: record.use ?? '',
+      intended_use: record.intended_use ?? '',
       grain_plant_date: record.grain_plant_date ?? '',
       organic: record.organic,
       prevented_planting: record.prevented_planting ?? false,
@@ -419,6 +424,23 @@ export function CluCard({
               <option value="">— select —</option>
               <option value="Non-Irrigated">Non-Irrigated</option>
               <option value="Irrigated">Irrigated</option>
+            </select>
+          </div>
+
+          {/* Intended Use */}
+          <div>
+            <label className="block font-mono text-xs text-glomalin-muted uppercase tracking-wider mb-1">
+              Intended Use
+            </label>
+            <select
+              className="w-full bg-glomalin-bg border border-glomalin-border rounded px-3 py-2 font-mono text-sm text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+              value={draft.intended_use}
+              onChange={(e) => setDraft((d) => ({ ...d, intended_use: e.target.value }))}
+            >
+              <option value="">— select —</option>
+              {INTENDED_USE_VALUES.map((v) => (
+                <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+              ))}
             </select>
           </div>
 

@@ -192,6 +192,7 @@ export async function GET(request: Request) {
           reported: r.reported,
           organic: r.organic,
           irrigated: r.irrigated ?? false,
+          intended_use: r.intended_use ?? null,
           prevented_planting: r.prevented_planting,
           status,
         },
