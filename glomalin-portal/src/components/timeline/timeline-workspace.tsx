@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import Link from 'next/link'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import type { TimelineEntry, TimelineSource, SingleSourceResponse } from '@/lib/timeline/types'
 import { TimelineFilters } from './timeline-filters'
@@ -212,7 +213,21 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
         <div className="flex items-center justify-between px-4 pt-4 pb-2">
           <div>
             <h2 className="text-base font-mono font-semibold text-glomalin-text">{fieldName}</h2>
-            <p className="text-xs font-mono text-glomalin-muted">Activity Timeline</p>
+            <div className="flex items-center gap-3 mt-0.5">
+              <p className="text-xs font-mono text-glomalin-muted">Activity Timeline</p>
+              <Link
+                href={`/app/field-history/${fieldId}`}
+                className="text-xs font-mono text-glomalin-muted hover:text-glomalin-accent transition-colors"
+              >
+                Field history →
+              </Link>
+              <Link
+                href={`/app/field-history/${fieldId}/audit`}
+                className="text-xs font-mono text-glomalin-muted hover:text-glomalin-accent transition-colors"
+              >
+                Organic audit →
+              </Link>
+            </div>
           </div>
           <TimelineExport
             entries={filteredEntries}
