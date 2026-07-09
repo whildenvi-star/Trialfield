@@ -31,6 +31,7 @@ interface MarketingWorkspaceProps {
   cropYear: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function MarketingWorkspace(_props: MarketingWorkspaceProps) {
   return (
     <div className="py-8">

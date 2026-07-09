@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Table,
   TableHead,
@@ -165,6 +165,18 @@ export function ContractListClient({
     setEditContract(null)
     setDrawerOpen(true)
   }
+
+  // What-if panel's "enter as real contract" button opens the create drawer
+  // from outside this component (CustomEvent — no prop drilling across siblings)
+  useEffect(() => {
+    function onOpenNew() {
+      formIsDirtyRef.current = false
+      setEditContract(null)
+      setDrawerOpen(true)
+    }
+    window.addEventListener('glomalin:open-new-contract', onOpenNew)
+    return () => window.removeEventListener('glomalin:open-new-contract', onOpenNew)
+  }, [])
 
   function openEdit(c: GrainContractRow) {
     formIsDirtyRef.current = false
