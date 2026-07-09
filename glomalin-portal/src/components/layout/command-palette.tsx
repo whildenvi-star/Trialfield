@@ -68,7 +68,7 @@ export function CommandPalette({ grantedModules }: CommandPaletteProps) {
     function handleKeydown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
-        open ? closePalette() : openPalette()
+        if (open) { closePalette() } else { openPalette() }
       }
     }
     window.addEventListener('keydown', handleKeydown)

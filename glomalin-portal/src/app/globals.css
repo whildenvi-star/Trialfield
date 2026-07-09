@@ -8,7 +8,7 @@
 @layer base {
   :root {
     /* --- Layout --- */
-    --sidebar-w: 220px;
+    --sidebar-w: 64px;
     --portal-header-h: 0px;
     --embed-breadcrumb-h: 36px;
 
@@ -37,6 +37,18 @@
     @apply bg-glomalin-bg text-glomalin-text font-sans;
     font-size: var(--size-base);
   }
+}
+
+/* ── Sidebar tooltip animation ──────────────────────────────────────── */
+@keyframes tooltip-slide-right {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.tooltip-slide-right {
+  animation: tooltip-slide-right 150ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tooltip-slide-right { animation: none; }
 }
 
 /* ── Theme color definitions ────────────────────────────────────────
