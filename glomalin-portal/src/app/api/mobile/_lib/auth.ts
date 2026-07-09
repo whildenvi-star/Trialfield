@@ -44,7 +44,7 @@ export async function getMobileUser(
     return NextResponse.json({ error: 'No profile found' }, { status: 403 })
   }
 
-  const allowedRoles = ['operator', 'agronomist', 'admin']
+  const allowedRoles = ['operator', 'agronomist', 'admin', 'owner']
   if (!allowedRoles.includes(profile.role)) {
     return NextResponse.json({ error: 'Insufficient role' }, { status: 403 })
   }
