@@ -201,12 +201,18 @@
         var ct = cropTypes.find(function (c) { return c.id === ctypeId; });
         if (!ct) return;
         var subs = (ct.subCrops || []).slice();
+        var subcropName = subs[subIdx].name;
         subs[subIdx] = Object.assign({}, subs[subIdx], { enterpriseId: newEntId });
-        api.put('/api/crop-types/' + ctypeId, { subCrops: subs }).then(function () {
-          var entName = sel.options[sel.selectedIndex].text;
-          util.showToast(subs[subIdx].name + ' → ' + entName);
-          reloadCropTypes();
-        });
+        var entName = sel.options[sel.selectedIndex].text;
+        api.put('/api/crop-types/' + ctypeId, { subCrops: subs })
+          .then(function () {
+            return api.post('/api/fields/batch-enterprise', { cropName: subcropName, enterpriseId: newEntId });
+          })
+          .then(function (result) {
+            var fieldNote = result.updated > 0 ? ' (' + result.updated + ' field' + (result.updated !== 1 ? 's' : '') + ' updated)' : '';
+            util.showToast(subcropName + ' → ' + entName + fieldNote);
+            reloadCropTypes();
+          });
       });
     });
 

@@ -212,24 +212,59 @@ async function flushAndExit(signal) {
 process.on('SIGTERM', () => flushAndExit('SIGTERM'));
 process.on('SIGINT',  () => flushAndExit('SIGINT'));
 
+// Build a seed-inventory URL with the shared embed token — seed-inventory's auth
+// middleware 403s any request without it, including server-to-server calls.
+function seedInventoryUrl(path) {
+  var base = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + path;
+  var token = process.env.SEED_INVENTORY_TOKEN || process.env.EMBED_TOKEN || '';
+  if (!token) return base;
+  return base + (path.indexOf('?') === -1 ? '?' : '&') + 'token=' + encodeURIComponent(token);
+}
+
 // Live sync: notify seed-inventory to re-pull forecasts after every save.
 // Fire-and-forget — seed-inventory being down should never block farm-budget.
+// Every attempt is recorded in _syncStatus so failures are visible instead of silent.
+let _syncStatus = {
+  lastNotifyAt: null, lastNotifyOk: null, lastNotifyError: null,
+  lastReconAt: null, lastReconOk: null, lastReconError: null
+};
+function recordNotify(ok, err) {
+  _syncStatus.lastNotifyAt = new Date().toISOString();
+  _syncStatus.lastNotifyOk = ok;
+  _syncStatus.lastNotifyError = ok ? null : (err || 'unknown error');
+  if (!ok) console.warn('[live-sync] notify seed-inventory failed:', _syncStatus.lastNotifyError);
+}
+function recordSiSync(ok, err) {
+  _syncStatus.lastReconAt = new Date().toISOString();
+  _syncStatus.lastReconOk = ok;
+  _syncStatus.lastReconError = ok ? null : (err || 'unknown error');
+  if (!ok) console.warn('[live-sync] reconciliation fetch from seed-inventory failed:', _syncStatus.lastReconError);
+}
 let _notifyTimer = null;
 function notifySeedInventory() {
   // Debounce notifications to 2s so rapid saves don't hammer seed-inventory
   if (_notifyTimer) clearTimeout(_notifyTimer);
   _notifyTimer = setTimeout(() => {
     _notifyTimer = null;
-    var url = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/forecasts/sync-webhook';
-    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+    var url = seedInventoryUrl('/api/forecasts/sync-webhook');
+    var cropYear = (store.settings && store.settings.cropYear) || null;
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cropYear: cropYear }) })
       .then(function (r) {
-        if (!r.ok) console.warn('[live-sync] seed-inventory returned', r.status);
+        recordNotify(r.ok, r.ok ? null : 'seed-inventory returned ' + r.status);
       })
-      .catch(function () {
-        // seed-inventory is down — silently ignore
+      .catch(function (e) {
+        recordNotify(false, e.message);
       });
   }, 2000);
 }
+
+// Sync health for the UI badge — did the last push/pull to seed-inventory work?
+app.get('/api/sync-status', function (req, res) {
+  res.json(Object.assign({}, _syncStatus, {
+    cropYear: (store.settings && store.settings.cropYear) || null,
+    seedInventoryUrl: process.env.SEED_INVENTORY_URL || 'http://localhost:3006'
+  }));
+});
 
 function generateId(prefix) {
   return (prefix || 'x') + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
@@ -474,25 +509,29 @@ app.get('/api/procurement-status', async (req, res) => {
     return res.json(_procurementCache.data);
   }
   try {
-    const siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation';
-    const siResp = await fetch(siUrl);
+    const siResp = await fetch(seedInventoryUrl('/api/reconciliation'));
     if (!siResp.ok) throw new Error('seed-inventory returned ' + siResp.status);
     const recon = await siResp.json();
     const byName = {};
+    const byId = {};
     recon.forEach(function (row) {
-      var key = (row.type === 'SEED' ? row.variety : row.productName) || '';
-      if (!key) return;
-      byName[key.toLowerCase()] = {
+      var entry = {
         orderedQty: row.totalOrdered || 0,
         deliveredQty: row.totalDelivered || 0,
         unit: row.unit || ''
       };
+      if (row.budgetProductId) byId[row.budgetProductId] = entry;
+      var key = (row.type === 'SEED' ? row.variety : row.productName) || '';
+      if (!key) return;
+      byName[key.toLowerCase()] = entry;
     });
-    const response = { offline: false, byName: byName };
+    const response = { offline: false, byName: byName, byId: byId };
     _procurementCache = { data: response, fetchedAt: now };
+    recordSiSync(true, null);
     res.json(response);
   } catch (e) {
-    res.json({ offline: true, byName: {} });
+    recordSiSync(false, e.message);
+    res.json({ offline: true, byName: {}, byId: {} });
   }
 });
 
@@ -1438,6 +1477,8 @@ app.get('/api/forecast', async function (req, res) {
       if (!productMap[mapKey]) {
         productMap[mapKey] = {
           productName: inp.productName,
+          budgetProductId: product ? product.id : '',
+          budgetProductType: 'product',
           supplierId: product ? (product.supplierId || '') : '',
           unit: product ? (product.unit || '') : '',
           purchaseUnit: product ? (product.purchaseUnit || product.unit || '') : '',
@@ -1486,6 +1527,8 @@ app.get('/api/forecast', async function (req, res) {
       if (!productMap[mapKey]) {
         productMap[mapKey] = {
           productName: fs.variety,
+          budgetProductId: s ? s.id : '',
+          budgetProductType: 'seed',
           supplierId: s ? (s.supplierId || '') : '',
           unit: 'units',
           unitCost: s ? (s.pricePerUnit || 0) : 0,
@@ -1514,23 +1557,33 @@ app.get('/api/forecast', async function (req, res) {
   // Pull ordered/delivered quantities from seed-inventory (single source of truth for procurement)
   var orderedMap = {};
   var deliveredMap = {};
+  var orderedById = {};
+  var deliveredById = {};
   try {
     var siCropYear = (store.settings && store.settings.cropYear) ? store.settings.cropYear : 2026;
-    var siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation?cropYear=' + siCropYear;
-    var siResp = await fetch(siUrl);
+    var siResp = await fetch(seedInventoryUrl('/api/reconciliation?cropYear=' + siCropYear));
     if (siResp.ok) {
       var recon = await siResp.json();
       recon.forEach(function (row) {
-        // Normalize to lowercase so casing differences between services don't break matching
+        // ID-first: rows linked to a farm-budget product match exactly
+        if (row.budgetProductId) {
+          orderedById[row.budgetProductId] = (orderedById[row.budgetProductId] || 0) + (row.totalOrdered || 0);
+          deliveredById[row.budgetProductId] = (deliveredById[row.budgetProductId] || 0) + (row.totalDelivered || 0);
+        }
+        // Name fallback for unlinked rows — normalize to lowercase so casing differences don't break matching
         var key = (row.type === 'SEED' ? row.variety : row.productName);
         if (!key) return;
         key = key.trim().toLowerCase();
         orderedMap[key] = (orderedMap[key] || 0) + (row.totalOrdered || 0);
         deliveredMap[key] = (deliveredMap[key] || 0) + (row.totalDelivered || 0);
       });
+      recordSiSync(true, null);
+    } else {
+      recordSiSync(false, 'seed-inventory returned ' + siResp.status);
     }
   } catch (e) {
     // seed-inventory unavailable — procurement columns will show 0
+    recordSiSync(false, e.message);
   }
 
   // Resolve supplierName from suppliers
@@ -1546,8 +1599,11 @@ app.get('/api/forecast', async function (req, res) {
     if (row.totalQty <= 0) return; // filter zero-qty
     var cat = row.category || 'Other';
     if (!grouped[cat]) grouped[cat] = [];
-    var ordered = orderedMap[(row.productName || '').trim().toLowerCase()] || 0;
-    var delivered = deliveredMap[(row.productName || '').trim().toLowerCase()] || 0;
+    var nameKey = (row.productName || '').trim().toLowerCase();
+    var ordered = (row.budgetProductId && orderedById[row.budgetProductId] !== undefined)
+      ? orderedById[row.budgetProductId] : (orderedMap[nameKey] || 0);
+    var delivered = (row.budgetProductId && deliveredById[row.budgetProductId] !== undefined)
+      ? deliveredById[row.budgetProductId] : (deliveredMap[nameKey] || 0);
     // Convert forecast to billed (purchase) units so forecast/ordered/delivered all match
     var conv = row.conversionRate || 1;
     var billedQty = row.isSeedVariety ? row.totalQty : Math.ceil(row.totalQty / conv * 100) / 100;
@@ -1791,8 +1847,7 @@ app.get('/api/demand', async function (req, res) {
   var deliveredMap = {};
   var deliveryWindowMap = {};
   try {
-    var siUrl = (process.env.SEED_INVENTORY_URL || 'http://localhost:3006') + '/api/reconciliation';
-    var siResp = await fetch(siUrl);
+    var siResp = await fetch(seedInventoryUrl('/api/reconciliation'));
     if (siResp.ok) {
       var recon = await siResp.json();
       recon.forEach(function (row) {
@@ -1803,9 +1858,13 @@ app.get('/api/demand', async function (req, res) {
         orderedMap[key] = (orderedMap[key] || 0) + (row.totalOrdered || 0);
         deliveredMap[key] = (deliveredMap[key] || 0) + (row.totalDelivered || 0);
       });
+      recordSiSync(true, null);
+    } else {
+      recordSiSync(false, 'seed-inventory returned ' + siResp.status);
     }
   } catch (e) {
     // seed-inventory unavailable — procurement columns will show 0
+    recordSiSync(false, e.message);
   }
 
   demandRows.forEach(function (row) {

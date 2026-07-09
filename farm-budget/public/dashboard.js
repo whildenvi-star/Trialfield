@@ -508,7 +508,8 @@
     var el = document.getElementById('dash-pending-bar');
     if (!el) return;
     var pending = (invoiceTotals && invoiceTotals.pendingFields) || [];
-    if (!pending.length) { el.style.display = 'none'; return; }
+    if (!pending.length) { el.classList.remove('dash-pending-bar--active'); el.style.display = 'none'; return; }
+    el.classList.add('dash-pending-bar--active');
 
     var collapsed = localStorage.getItem('dash-pending-collapsed') === '1';
     var totalPending = pending.reduce(function (s, pf) { return s + pf.pendingCount; }, 0);

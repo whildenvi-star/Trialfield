@@ -452,8 +452,24 @@
 
       var unassigned = grouped['__none__'] || [];
       if (unassigned.length) {
+        var poolSelectOpts = pools.length
+          ? '<option value="">— move to pool —</option>' + pools.map(function (p) {
+              return '<option value="' + util.escHtml(p.id) + '">' + util.escHtml(p.name) + '</option>';
+            }).join('')
+          : null;
+
+        // Flag instruments whose key (type + buyer + bushels + price) appears more than once
+        var dupKeys = {};
+        unassigned.forEach(function (inst) {
+          var k = inst.instrument_type + '|' + (inst.buyer || '') + '|' + String(inst.bushels || '') + '|' + String(inst.price_per_bushel || '');
+          dupKeys[k] = (dupKeys[k] || 0) + 1;
+        });
+
         html += '<div class="mkt-inst-group"><div class="mkt-inst-group-hdr" style="color:var(--danger)">⚠ Unassigned (' + unassigned.length + ')</div><table class="mkt-inst-table"><tbody>';
-        unassigned.forEach(function (inst) { html += renderInstRow(inst, mixColors, typeLabel); });
+        unassigned.forEach(function (inst) {
+          var dk = inst.instrument_type + '|' + (inst.buyer || '') + '|' + String(inst.bushels || '') + '|' + String(inst.price_per_bushel || '');
+          html += renderInstRow(inst, mixColors, typeLabel, poolSelectOpts, dupKeys[dk] > 1);
+        });
         html += '</tbody></table></div>';
       }
       root.innerHTML = html;
@@ -485,12 +501,31 @@
           .catch(function () { util.showToast('Delete failed', 'error'); });
       });
     });
+
+    root.querySelectorAll('.mkt-assign-pool-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-iid');
+        var sel = btn.previousElementSibling;
+        var ctId = (sel && sel.tagName === 'SELECT') ? sel.value : '';
+        if (!ctId) { util.showToast('Select a pool first', 'error'); return; }
+        btn.disabled = true;
+        btn.textContent = '…';
+        api.put('/api/marketing/instruments/' + id, { crop_type_id: ctId })
+          .then(function () { util.showToast('Moved to pool'); reload(); })
+          .catch(function (err) {
+            util.showToast('Move failed: ' + (err && err.message ? err.message : 'error'), 'error');
+            btn.disabled = false;
+            btn.textContent = '→';
+          });
+      });
+    });
   }
 
-  function renderInstRow(inst, mixColors, typeLabel) {
+  function renderInstRow(inst, mixColors, typeLabel, poolSelectOpts, isDup) {
     var color = mixColors[inst.instrument_type] || '#6b7280';
     var lbl   = typeLabel[inst.instrument_type] || inst.instrument_type;
     var detail = '';
+    var detailIsHtml = false;
     if (inst.instrument_type === 'cash' || inst.instrument_type === 'forward_contract') {
       detail = util.formatNum(inst.bushels, 0) + ' bu @ ' + util.formatMoney(inst.price_per_bushel);
       if (inst.delivery_start) detail += ' · ' + String(inst.delivery_start).slice(0, 7);
@@ -500,21 +535,27 @@
         detail += ' · Basis ' + (Number(inst.basis) >= 0 ? '+' : '') + util.formatMoney(inst.basis);
       } else {
         detail += ' · <span style="color:#f59e0b">[Basis Open]</span>';
+        detailIsHtml = true;
       }
       if (inst.delivery_start) detail += ' · ' + String(inst.delivery_start).slice(0, 7);
     } else if (inst.instrument_type === 'option') {
       detail = (inst.option_side || '') + ' ' + (inst.option_type || '') + ' · strike ' + util.formatMoney(inst.strike_price);
       if (inst.expiry_date) detail += ' · exp ' + String(inst.expiry_date).slice(0, 7);
     } else if (inst.instrument_type === 'accumulator') {
-      detail = 'KO ' + util.formatMoney(inst.ko_level);
-      if (inst.ki_level) {
-        var pool = pools.find(function (p) { return p.id === inst.crop_type_id; });
-        var cbotP = pool ? pool.cbotPrice : 0;
-        var kiActive = cbotP > 0 && cbotP < Number(inst.ki_level);
-        detail += ' · KI ' + util.formatMoney(inst.ki_level) + (kiActive ? ' ⚠' : '');
+      if (inst.ko_level == null || inst.ko_level === '') {
+        detail = '<span style="color:var(--warning,#f59e0b)" title="KO level, cadence, and accumulation window required — click Edit to complete">⚠ Incomplete — click Edit</span>';
+        detailIsHtml = true;
+      } else {
+        detail = 'KO ' + util.formatMoney(inst.ko_level);
+        if (inst.ki_level) {
+          var pool = pools.find(function (p) { return p.id === inst.crop_type_id; });
+          var cbotP = pool ? pool.cbotPrice : 0;
+          var kiActive = cbotP > 0 && cbotP < Number(inst.ki_level);
+          detail += ' · KI ' + util.formatMoney(inst.ki_level) + (kiActive ? ' ⚠' : '');
+        }
+        if (inst.daily_bu) detail += ' · ' + util.formatNum(inst.daily_bu, 0) + ' bu/day';
+        else if (inst.weekly_bu) detail += ' · ' + util.formatNum(inst.weekly_bu, 0) + ' bu/wk';
       }
-      if (inst.daily_bu) detail += ' · ' + util.formatNum(inst.daily_bu, 0) + ' bu/day';
-      else if (inst.weekly_bu) detail += ' · ' + util.formatNum(inst.weekly_bu, 0) + ' bu/wk';
     }
 
     // Year badge for forward-year instruments
@@ -522,11 +563,24 @@
       ? '<span class="mkt-year-badge">' + inst.crop_year + '</span>'
       : '';
 
+    // Inline pool picker + assign button (only for unassigned rows)
+    var poolPicker = poolSelectOpts
+      ? '<select class="mkt-pool-sel" data-iid="' + inst.id + '" style="font-size:0.75rem;padding:1px 3px;border:1px solid var(--border,#d1d5db);border-radius:3px;background:var(--surface,#fff);color:var(--muted,#6b7280);margin-right:2px;max-width:110px">' + poolSelectOpts + '</select>' +
+        '<button class="btn-link mkt-assign-pool-btn" data-iid="' + inst.id + '" style="font-size:0.8rem;margin-right:4px" title="Assign to selected pool">→</button>'
+      : '';
+
+    // Duplicate indicator
+    var dupBadge = isDup
+      ? '<span style="color:var(--warning,#f59e0b);font-size:0.7rem;margin-right:4px;cursor:default" title="Possible duplicate — verify before keeping both">dup?</span>'
+      : '';
+
     return '<tr class="mkt-inst-row">' +
       '<td style="width:56px"><span class="type-badge" style="background:' + color + '20;color:' + color + ';padding:2px 6px">' + lbl + '</span></td>' +
       '<td class="mkt-inst-buyer">' + util.escHtml(inst.buyer || inst.counterparty || '—') + yearBadge + '</td>' +
-      '<td class="mkt-inst-detail">' + util.escHtml(detail) + '</td>' +
+      '<td class="mkt-inst-detail">' + (detailIsHtml ? detail : util.escHtml(detail)) + '</td>' +
       '<td class="mkt-inst-actions">' +
+        poolPicker +
+        dupBadge +
         '<button class="btn-link mkt-edit-inst" data-iid="' + inst.id + '">Edit</button>' +
         '<button class="btn-link mkt-del-inst" style="color:var(--danger)" data-iid="' + inst.id + '">Del</button>' +
       '</td>' +
@@ -703,7 +757,13 @@
 
     overlay.appendChild(drawer);
     document.body.appendChild(overlay);
-    requestAnimationFrame(function () { drawer.classList.add('open'); });
+    requestAnimationFrame(function () {
+      drawer.classList.add('open');
+      if (inst && inst.instrument_type === 'accumulator' && (inst.ko_level == null || inst.ko_level === '')) {
+        var koInput = drawer.querySelector('#mkt-form-ko');
+        if (koInput) koInput.focus();
+      }
+    });
 
     function close() { overlay.remove(); }
     overlay.addEventListener('click', close);

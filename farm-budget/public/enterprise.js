@@ -721,6 +721,8 @@
     var weightedExp = 0;
     var weightedProfit = 0;
 
+    var sumCropProfit = 0;
+
     fields.forEach(function (f) {
       var b = f._computed || {};
       var a = b.effectiveAcres !== undefined ? b.effectiveAcres : ((f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0);
@@ -729,11 +731,11 @@
       totalIncome += b.cropIncomeTotal || 0;
       totalProfit += b.profitFarmWithoutPayments || 0;
       weightedExp += (b.expPerAcre || 0) * a;
-      weightedProfit += (b.profitPerAcre || 0) * a;
+      sumCropProfit += ((b.cropIncomeTotal || 0) - (b.expTotal || 0));
     });
 
     var avgExp = totalAcres > 0 ? weightedExp / totalAcres : 0;
-    var avgProfit = totalAcres > 0 ? weightedProfit / totalAcres : 0;
+    var avgProfit = totalAcres > 0 ? Math.round(sumCropProfit / totalAcres * 100) / 100 : 0;
 
     var profitCls = avgProfit >= 0 ? 'profit-pos' : 'profit-neg';
     var totalProfitCls = totalProfit >= 0 ? 'profit-pos' : 'profit-neg';
