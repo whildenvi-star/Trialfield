@@ -108,6 +108,14 @@
   // --- Render table ---
   function renderTable() {
     var tbody = document.getElementById('field-tbody');
+    var editPanel = document.getElementById('edit-panel');
+    var editForm = document.getElementById('edit-form');
+
+    // Park the form in the hidden holder before wiping innerHTML
+    if (editForm && editForm.parentNode !== editPanel) {
+      editPanel.appendChild(editForm);
+    }
+
     var totalAcres = 0, totalOrganic = 0, totalRent = 0;
     var html = '';
 
@@ -120,7 +128,10 @@
       var rentDisplay = f.totalRentDollars > 0 ? '$' + formatNum(f.totalRentDollars, 0) : '-';
 
       html += '<tr class="field-row' + sel + '" data-id="' + f.id + '">';
-      html += '<td style="font-weight:500;">' + esc(f.name) + '</td>';
+      html += '<td><div style="display:flex;align-items:center;gap:7px;">' +
+        buildSvgThumb(f.geometry || null, 30) +
+        '<span style="font-weight:500;">' + esc(f.name) + '</span>' +
+        '</div></td>';
       html += '<td class="number">' + formatNum(f.reportingAcres, 2) + '</td>';
       html += '<td class="number">' + (f.organicAcres > 0 ? '<span style="color:var(--organic);">' + formatNum(f.organicAcres, 2) + '</span>' : '-') + '</td>';
       html += '<td>' + badge + '</td>';
@@ -137,6 +148,40 @@
     html += '</tr>';
 
     tbody.innerHTML = html;
+
+    // Inject edit form as inline expansion
+    if (editForm && (selectedId || isNew)) {
+      var targetRow;
+      if (isNew) {
+        // New field form floats above all rows
+        targetRow = null;
+      } else {
+        targetRow = tbody.querySelector('tr[data-id="' + selectedId + '"]');
+      }
+
+      if (targetRow || isNew) {
+        var expTr = document.createElement('tr');
+        expTr.className = 'expansion-row';
+        var expTd = document.createElement('td');
+        expTd.colSpan = 5;
+        expTd.className = 'expansion-cell';
+        expTd.appendChild(editForm);
+        expTr.appendChild(expTd);
+
+        if (isNew) {
+          // Insert before first field row (or before totals if no rows)
+          var firstRow = tbody.querySelector('tr.field-row') || tbody.querySelector('tr.totals-row');
+          if (firstRow) {
+            tbody.insertBefore(expTr, firstRow);
+          } else {
+            tbody.appendChild(expTr);
+          }
+        } else {
+          targetRow.insertAdjacentElement('afterend', expTr);
+        }
+        editForm.style.display = 'block';
+      }
+    }
 
     // Inline edit for rent cells
     tbody.querySelectorAll('.rent-cell').forEach(function (td) {
@@ -180,12 +225,23 @@
     });
   }
 
-  // --- Row click → open edit panel ---
+  // --- Row click → toggle inline expansion ---
   document.getElementById('field-tbody').addEventListener('click', function (e) {
+    // Ignore clicks inside the expansion cell (inputs, buttons, etc.)
+    if (e.target.closest('.expansion-cell')) return;
     var row = e.target.closest('.field-row');
     if (!row) return;
     var id = row.getAttribute('data-id');
     if (!id) return;
+
+    // Same row → collapse
+    if (id === selectedId) {
+      selectedId = null;
+      isNew = false;
+      renderTable();
+      return;
+    }
+
     var field = allFields.find(function (f) { return f.id === id; });
     if (field) showEdit(field);
   });
@@ -282,8 +338,6 @@
     isNew = true;
     selectedId = null;
 
-    document.getElementById('edit-empty').style.display = 'none';
-    document.getElementById('edit-form').style.display = 'block';
     document.getElementById('edit-title').textContent = 'New Field';
 
     document.getElementById('edit-name').value = '';
@@ -331,8 +385,7 @@
 
     api('DELETE', '/api/fields/' + selectedId).then(function () {
       selectedId = null;
-      document.getElementById('edit-form').style.display = 'none';
-      document.getElementById('edit-empty').style.display = 'block';
+      isNew = false;
       loadFields();
     });
   });
@@ -772,6 +825,82 @@
   }
 
   document.getElementById('edit-ownership').addEventListener('change', updateRentVisibility);
+
+  // --- Field boundary SVG thumbnail ---
+  function buildSvgThumb(geometry, size) {
+    size = size || 32;
+    if (!geometry || !geometry.coordinates) return thumbPlaceholder(size);
+
+    var allBbox = [];
+    function collectRing(ring) {
+      for (var i = 0; i < ring.length; i++) allBbox.push(ring[i]);
+    }
+    if (geometry.type === 'Polygon') {
+      if (geometry.coordinates[0]) collectRing(geometry.coordinates[0]);
+    } else if (geometry.type === 'MultiPolygon') {
+      for (var pi = 0; pi < geometry.coordinates.length; pi++) {
+        if (geometry.coordinates[pi][0]) collectRing(geometry.coordinates[pi][0]);
+      }
+    } else {
+      return thumbPlaceholder(size);
+    }
+
+    if (!allBbox.length) return thumbPlaceholder(size);
+
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (var i = 0; i < allBbox.length; i++) {
+      var c = allBbox[i];
+      if (c[0] < minX) minX = c[0];
+      if (c[0] > maxX) maxX = c[0];
+      if (c[1] < minY) minY = c[1];
+      if (c[1] > maxY) maxY = c[1];
+    }
+
+    var dX = maxX - minX || 0.001;
+    var dY = maxY - minY || 0.001;
+    var pad = size * 0.1;
+    var usable = size - 2 * pad;
+    var scale = Math.min(usable / dX, usable / dY);
+    var offX = pad + (usable - dX * scale) / 2;
+    var offY = pad + (usable - dY * scale) / 2;
+
+    function project(coord) {
+      return [
+        (offX + (coord[0] - minX) * scale).toFixed(1),
+        ((size - offY) - (coord[1] - minY) * scale).toFixed(1)
+      ];
+    }
+
+    function ringPath(ring) {
+      return ring.map(function (c, j) {
+        var pt = project(c);
+        return (j === 0 ? 'M' : 'L') + pt[0] + ' ' + pt[1];
+      }).join(' ') + ' Z';
+    }
+
+    var paths = [];
+    if (geometry.type === 'Polygon') {
+      geometry.coordinates.forEach(function (ring) { paths.push(ringPath(ring)); });
+    } else {
+      geometry.coordinates.forEach(function (poly) {
+        poly.forEach(function (ring) { paths.push(ringPath(ring)); });
+      });
+    }
+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size +
+      '" viewBox="0 0 ' + size + ' ' + size + '" style="display:block;flex-shrink:0;">' +
+      '<path d="' + paths.join(' ') + '" fill="rgba(139,115,85,0.13)" stroke="#8B7355"' +
+      ' stroke-width="1.5" stroke-linejoin="round" fill-rule="evenodd"/>' +
+      '</svg>';
+  }
+
+  function thumbPlaceholder(size) {
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size +
+      '" style="display:block;flex-shrink:0;opacity:0.25;">' +
+      '<rect x="4" y="4" width="' + (size - 8) + '" height="' + (size - 8) +
+      '" rx="2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 3"/>' +
+      '</svg>';
+  }
 
   // --- Utilities ---
   function formatNum(n, decimals) {

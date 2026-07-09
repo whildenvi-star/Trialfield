@@ -133,30 +133,16 @@ main {
    SPLIT LAYOUT
    ============================================================ */
 .split-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-@media (max-width: 1200px) {
-  .split-layout {
-    grid-template-columns: 1fr;
-  }
+  display: block;
 }
 
 .list-panel {
   min-width: 0;
 }
 
+/* Hidden DOM holder — keeps form element alive between renderTable() calls */
 .edit-panel {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 0;
-  position: sticky;
-  top: 1rem;
-  max-height: calc(100vh - 8rem);
-  overflow-y: auto;
+  display: none;
 }
 
 .edit-empty {
@@ -290,7 +276,23 @@ main {
 .data-table tr { cursor: pointer; }
 .data-table tr:hover { background: var(--bg-raised); }
 .data-table tr.selected { background: var(--highlight); }
+.data-table tr.selected td { border-bottom: none; }
 .data-table tr.totals-row { font-weight: 700; background: var(--highlight); cursor: default; }
+
+/* Inline accordion expansion */
+.expansion-row { cursor: default; }
+.expansion-row:hover { background: transparent !important; }
+.expansion-cell {
+  padding: 0 !important;
+  border-top: none !important;
+  border-left: 2px solid var(--primary-dim) !important;
+  border-right: 1px solid var(--border) !important;
+  border-bottom: 2px solid var(--primary-dim) !important;
+}
+.expansion-cell > .edit-form {
+  max-height: 70vh;
+  overflow-y: auto;
+}
 
 .number { text-align: right; font-variant-numeric: tabular-nums; }
 
