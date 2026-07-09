@@ -18,11 +18,13 @@ export default async function DashboardPage() {
 
   const role = profile?.role ?? 'viewer'
 
-  if (role === 'operator') redirect('/app/crew')
-
   const grantedModules: string[] | null = role === 'admin'
     ? null
     : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)
+
+  // Only send operators to the crew app if they hold the module grant —
+  // otherwise middleware bounces /app/crew back here and the client loops.
+  if (role === 'operator' && grantedModules?.includes('crew')) redirect('/app/crew')
 
   const grantedModuleIds: string[] = grantedModules === null
     ? MODULES.map((m) => m.id)
