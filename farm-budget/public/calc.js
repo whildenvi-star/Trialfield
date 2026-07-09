@@ -332,13 +332,24 @@
 
     result.yieldPerAcre = resolvedYield;
     result.yieldSource = yieldSource;
-    // Moisture-based drying: if field has harvestMoisture and buyer has discount schedule, use tiered calc
+    // Moisture-based drying: if field has harvestMoisture and buyer has discount schedule, use tiered calc.
+    // Full economic hit per gross bushel = price discount + shrink cost:
+    //   total = P − (1−s)(P−d) = d + s(P−d)
+    // where d = tiered $/bu price discount, s = buyer shrink %/pt × points over
+    // threshold (payable-bushel reduction), P = crop price $/bu. With P unknown
+    // (0), degrades to the price-discount-only behavior.
     result.harvestMoisture = field.harvestMoisture || 0;
     var rawDryingPerAcre;
     if (field.harvestMoisture > 0 && buyer && buyer.discountSchedule && buyer.discountSchedule.length > 0) {
       var moistureDiscount = computeMoistureDiscount(field.harvestMoisture, buyer.discountSchedule, buyer.threshold || 15);
-      rawDryingPerAcre = result.yieldPerAcre * moistureDiscount;
+      var pointsOver = Math.max(0, field.harvestMoisture - (buyer.threshold || 15));
+      var shrinkFrac = Math.min(1, ((buyer.shrink || 0) / 100) * pointsOver);
+      var cropPrice = pricing ? (pricing.pricePerUnit || 0) : 0;
+      var totalHitPerBu = moistureDiscount + shrinkFrac * Math.max(0, cropPrice - moistureDiscount);
+      rawDryingPerAcre = result.yieldPerAcre * totalHitPerBu;
       result.dryingMethod = 'moisture';
+      result.moistureShrinkFrac = round4(shrinkFrac);
+      result.moistureHitPerBu = round4(totalHitPerBu);
     } else {
       rawDryingPerAcre = result.yieldPerAcre * dryingRate;
       result.dryingMethod = 'flat';
@@ -504,7 +515,7 @@
       var cropFields = byCrop[crop];
       var totalAcres = 0;
       var sumYieldTimesAcres = 0;
-      var sumProfitTimesAcres = 0;
+      var sumCropProfit = 0;
       var sumMachTimesAcres = 0;
       var totalProjected = 0;
       var totalExpense = 0;
@@ -518,7 +529,7 @@
         var a = b.effectiveAcres !== undefined ? b.effectiveAcres : ((f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0);
         totalAcres += a;
         sumYieldTimesAcres += b.yieldPerAcre * a;
-        sumProfitTimesAcres += b.profitPerAcre * a;
+        sumCropProfit += (b.cropIncomeTotal - b.expTotal);
         sumMachTimesAcres += b.machineryPerAcre * a;
         totalProjected += b.totalYield;
         totalExpense += b.expTotal;
@@ -528,7 +539,7 @@
       });
 
       var avgYield = totalAcres > 0 ? round2(sumYieldTimesAcres / totalAcres) : 0;
-      var avgProfit = totalAcres > 0 ? round2(sumProfitTimesAcres / totalAcres) : 0;
+      var avgProfit = totalAcres > 0 ? round2(sumCropProfit / totalAcres) : 0;
       var avgMach = totalAcres > 0 ? round2(sumMachTimesAcres / totalAcres) : 0;
       var cop = totalYield > 0 ? round2(totalExpense / totalYield) : 0;
       var unit = cropFields[0] ? (cropFields[0].yieldUnit || 'Bu') : 'Bu';

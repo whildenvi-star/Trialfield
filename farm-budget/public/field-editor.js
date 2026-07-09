@@ -2232,7 +2232,6 @@
     fields.forEach(function(f) {
       if (!f) return;
       var pf = JSON.parse(JSON.stringify(f));
-      (pf.inputs || []).forEach(function(inp) { delete inp.invoiceCostTotal; delete inp.actualQuantity; });
       var b = Calc.computeFieldBudget(pf, refs, settings);
       var acres = b.rentAcres;
       if (!acres) return;
@@ -2269,7 +2268,6 @@
       buyers: window.refData.buyers || []
     };
     var previewField = JSON.parse(JSON.stringify(currentField));
-    (previewField.inputs || []).forEach(function(inp) { delete inp.invoiceCostTotal; delete inp.actualQuantity; });
     var budget = Calc.computeFieldBudget(previewField, refs, window.refData.settings);
 
     // Outlier detection — flag line items more than 2× the enterprise median
@@ -2388,7 +2386,7 @@
       renderItem('Expense', budget.expPerAcre, budget.expTotal, 'highlight') +
       (isOffice ? '' : renderItem('Income', dispAc(budget.cropIncomeTotal), budget.cropIncomeTotal)) +
       (isOffice ? '' : renderItem('AUX Payments', dispAc(budget.totalGovPayments), budget.totalGovPayments)) +
-      (isOffice ? '' : renderItem('Profit', budget.profitPerAcre, budget.profitFarmWithoutPayments, 'highlight ' + util.profitClass(budget.profitPerAcre))) +
+      (isOffice ? '' : renderItem('Field Profit/AC', budget.profitPerAcre, budget.profitFarmWithoutPayments, 'highlight ' + util.profitClass(budget.profitPerAcre))) +
       (isOffice ? '' : renderItem('Profit (w/ Pay)', dispAc(budget.profitFarmWithPayments), budget.profitFarmWithPayments, 'highlight ' + util.profitClass(budget.profitFarmWithPayments))) +
       (isOffice ? '' : renderItem('COP', budget.cop, budget.cop, copClass)) +
       '</div></div>';
@@ -2565,6 +2563,12 @@
     if (budget.dryingMethod === 'moisture' && currentField && currentField.harvestMoisture > 0) {
       dryRows.push(['Harvest moisture', currentField.harvestMoisture + '%']);
       dryRows.push(['Buyer', currentField.buyerId || '—']);
+      if (budget.moistureShrinkFrac > 0) {
+        dryRows.push(['Shrink', (budget.moistureShrinkFrac * 100).toFixed(2) + '% of bushels']);
+      }
+      if (budget.moistureHitPerBu > 0) {
+        dryRows.push(['Total hit', '$' + budget.moistureHitPerBu + '/Bu (discount + shrink)']);
+      }
     } else {
       var flatRate = budget.yieldPerAcre > 0 && budget.dryingPerAcre > 0 ? Calc.round4(budget.dryingPerAcre / budget.yieldPerAcre) : 0;
       dryRows.push(['Drying rate', '$' + flatRate + '/Bu']);

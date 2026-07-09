@@ -574,6 +574,76 @@ async function pushYieldUpdates(cropYear) {
   console.log(`Yield push: portal=${portalStatus}, budget=${budgetStatus}`);
 }
 
+// pushDeliveryToMarketing: called after ticket create/update/delete for tickets
+// with a buyer destination. Mirrors each ticket into the cert-service marketing
+// module (organic-cert :3004) as a GrainDelivery so bushels accumulate against
+// the buyer's contract in the planner's Contracts tab.
+// Fire-and-forget — never blocks the ticket response. Bin-bound and buyer-less
+// tickets never push. action: 'upsert' | 'delete'.
+async function pushDeliveryToMarketing(ticket, action) {
+  const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
+  if (!token) {
+    console.warn('pushDeliveryToMarketing: no ECOSYSTEM_TOKEN/EMBED_TOKEN — skipping');
+    return;
+  }
+  const certUrl = process.env.CERT_SERVICE_URL || 'http://localhost:3004';
+
+  let payload;
+  if (action === 'delete') {
+    payload = { action: 'delete', grainTicketId: ticket.id };
+  } else {
+    if (!ticket.buyerId) {
+      // Buyer was removed on edit — retract any previously-pushed delivery
+      payload = { action: 'delete', grainTicketId: ticket.id };
+    } else {
+      const buyer = await prisma.buyer.findUnique({ where: { id: ticket.buyerId } });
+      if (!buyer) {
+        console.warn(`pushDeliveryToMarketing: local buyer ${ticket.buyerId} not found for ticket ${ticket.id}`);
+        return;
+      }
+      const cropConfig = await buildCropConfigObject(ticket.cropYear);
+      const json = dbTicketToJson(ticket);
+      const computed = Calc.computeTicket(json, cropConfig);
+      if (!computed.netBU || computed.netBU <= 0) {
+        console.warn(`pushDeliveryToMarketing: ticket ${ticket.id} computed netBU ${computed.netBU} — skipping`);
+        return;
+      }
+      payload = {
+        action: 'upsert',
+        grainTicketId: ticket.id,
+        scaleTicketNum: json.ticketNo || null,
+        deliveryDate: json.date,
+        netWeightLbs: json.netWeight,
+        netBushels: Math.round(computed.netBU * 100) / 100,
+        moisturePercent: json.moisture || null,
+        foreignMatterPct: json.fm || null,
+        testWeightLbs: computed.testWeight || null,
+        buyerName: buyer.name,
+        cropName: json.crop,
+        cropYear: json.cropYear,
+        notes: `${json.farm || ''}`.trim() || null
+      };
+    }
+  }
+
+  try {
+    const response = await fetch(certUrl + '/api/marketing/ingest-delivery', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-ecosystem-token': token },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(5000)
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error(`Marketing push: ticket ${ticket.id} -> http-${response.status}`, result.error || '');
+    } else {
+      console.log(`Marketing push: ticket ${ticket.id} -> ${result.status}${result.applyOutcome ? ` (${result.applyOutcome}, ${result.appliedBushels || 0} bu applied)` : ''}`);
+    }
+  } catch (e) {
+    console.error(`Marketing push: ticket ${ticket.id} failed:`, e.message);
+  }
+}
+
 // --- Validation ---
 function validateTicket(body, cropConfig) {
   const errors = [];
@@ -727,8 +797,11 @@ app.post('/api/tickets', async (req, res) => {
       }
     });
     res.status(201).json(enrichTicket(dbTicketToJson(ticket), cropConfig));
-    // Trigger yield recompute after response — fire-and-forget, never blocks client
+    // Trigger yield recompute + marketing delivery push after response — fire-and-forget
     pushYieldUpdates(cropYear).catch(err => console.error('pushYieldUpdates (POST) error:', err));
+    if (ticket.buyerId) {
+      pushDeliveryToMarketing(ticket, 'upsert').catch(err => console.error('pushDeliveryToMarketing (POST) error:', err));
+    }
   } catch (e) {
     console.error('POST /api/tickets error:', e);
     if (e.code === 'P2002') return res.status(409).json({ error: 'Duplicate ticket' });
@@ -778,8 +851,14 @@ app.put('/api/tickets/:id', async (req, res) => {
     const ticket = await prisma.ticket.update({ where: { id }, data: updateData });
     const cropConfig = await buildCropConfigObject(ticket.cropYear);
     res.json(enrichTicket(dbTicketToJson(ticket), cropConfig));
-    // Trigger yield recompute after response — fire-and-forget, never blocks client
+    // Trigger yield recompute + marketing sync after response — fire-and-forget.
+    // upsert handles buyer-removed edits too (sends delete when buyerId is null,
+    // retracting a previously-pushed delivery); had-buyer check keeps buyer-less
+    // ticket edits from spamming the cert service.
     pushYieldUpdates(ticket.cropYear).catch(err => console.error('pushYieldUpdates (PUT) error:', err));
+    if (ticket.buyerId || existing.buyerId) {
+      pushDeliveryToMarketing(ticket, 'upsert').catch(err => console.error('pushDeliveryToMarketing (PUT) error:', err));
+    }
   } catch (e) {
     console.error('PUT /api/tickets/:id error:', e);
     if (e.code === 'P2025') return res.status(404).json({ error: 'Ticket not found' });
@@ -791,13 +870,16 @@ app.delete('/api/tickets/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     if (isNaN(id)) return res.status(404).json({ error: 'Ticket not found' });
-    // Read cropYear before deletion so we can recompute the correct year after
-    const existing = await prisma.ticket.findUnique({ where: { id }, select: { cropYear: true } });
+    // Read cropYear + buyerId before deletion so we can recompute + retract after
+    const existing = await prisma.ticket.findUnique({ where: { id }, select: { id: true, cropYear: true, buyerId: true } });
     const cropYear = existing ? existing.cropYear : new Date().getFullYear();
     await prisma.ticket.delete({ where: { id } });
     res.json({ ok: true });
-    // Trigger yield recompute after response — fire-and-forget, never blocks client
+    // Trigger yield recompute + marketing retraction after response — fire-and-forget
     pushYieldUpdates(cropYear).catch(err => console.error('pushYieldUpdates (DELETE) error:', err));
+    if (existing && existing.buyerId) {
+      pushDeliveryToMarketing(existing, 'delete').catch(err => console.error('pushDeliveryToMarketing (DELETE) error:', err));
+    }
   } catch (e) {
     if (e.code === 'P2025') return res.status(404).json({ error: 'Ticket not found' });
     console.error('DELETE /api/tickets/:id error:', e);
@@ -813,8 +895,16 @@ app.post('/api/tickets/batch-delete', async (req, res) => {
       return res.status(400).json({ error: 'No ticket IDs provided' });
     }
     const intIds = ids.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+    // Capture buyer-linked tickets before deletion so marketing deliveries get retracted
+    const buyerTickets = await prisma.ticket.findMany({
+      where: { id: { in: intIds }, buyerId: { not: null } },
+      select: { id: true, buyerId: true }
+    });
     const result = await prisma.ticket.deleteMany({ where: { id: { in: intIds } } });
     res.json({ ok: true, deleted: result.count });
+    for (const t of buyerTickets) {
+      pushDeliveryToMarketing(t, 'delete').catch(err => console.error('pushDeliveryToMarketing (batch-delete) error:', err));
+    }
   } catch (e) {
     console.error('POST /api/tickets/batch-delete error:', e);
     res.status(500).json({ error: 'Internal server error' });
@@ -1633,24 +1723,64 @@ app.delete('/api/grain-bins/:id', async (req, res) => {
 });
 
 // --- Buyer proxy from farm-budget ---
+// Farm-budget is the buyer master. Tickets, however, FK to the LOCAL Buyer
+// table (Ticket.buyerId Int) — so every fetch syncs farm-budget buyers into
+// the local table by unique name and callers get local integer ids back.
+// (Before this sync, the destinations dropdown carried farm-budget string ids
+// like "buy_0479", which parseInt() silently nulled on ticket save.)
+const BUDGET_API_URL = process.env.BUDGET_API_URL || 'http://localhost:3001';
+
+async function fetchFarmBudgetBuyers() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  try {
+    const tokenParam = process.env.EMBED_TOKEN ? `?token=${encodeURIComponent(process.env.EMBED_TOKEN)}` : '';
+    const response = await fetch(`${BUDGET_API_URL}/api/buyers${tokenParam}`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!response.ok) {
+      console.error('fetchFarmBudgetBuyers: farm-budget returned status', response.status);
+      return null;
+    }
+    const buyers = await response.json();
+    return Array.isArray(buyers) ? buyers : null;
+  } catch (fetchErr) {
+    clearTimeout(timeout);
+    console.error('fetchFarmBudgetBuyers: farm-budget unreachable:', fetchErr.message);
+    return null;
+  }
+}
+
+// Upsert farm-budget buyers into the local Buyer table by unique name.
+// Returns a Map of lowercased name -> local Buyer row.
+async function syncBuyersFromFarmBudget(fbBuyers) {
+  const localByName = new Map();
+  for (const b of fbBuyers) {
+    const name = (b.name || '').trim();
+    if (!name) continue;
+    try {
+      const row = await prisma.buyer.upsert({
+        where: { name },
+        update: { shortCode: b.shortCode || null },
+        create: { name, shortCode: b.shortCode || null },
+      });
+      localByName.set(name.toLowerCase(), row);
+    } catch (e) {
+      console.error(`syncBuyersFromFarmBudget: upsert failed for "${name}":`, e.message);
+    }
+  }
+  return localByName;
+}
+
 app.get('/api/buyers', async (req, res) => {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    let buyers;
-    try {
-      const response = await fetch('http://localhost:3001/api/buyers', { signal: controller.signal });
-      clearTimeout(timeout);
-      if (!response.ok) {
-        console.error('GET /api/buyers: farm-budget returned status', response.status);
-        return res.json({ _source: 'unavailable', buyers: [] });
-      }
-      buyers = await response.json();
-    } catch (fetchErr) {
-      clearTimeout(timeout);
-      console.error('GET /api/buyers: farm-budget unreachable:', fetchErr.message);
-      return res.json({ _source: 'unavailable', buyers: [] });
-    }
+    const fbBuyers = await fetchFarmBudgetBuyers();
+    if (!fbBuyers) return res.json({ _source: 'unavailable', buyers: [] });
+    const localByName = await syncBuyersFromFarmBudget(fbBuyers);
+    // Preserve farm-budget shape; add localId so numeric-id consumers work
+    const buyers = fbBuyers.map(b => {
+      const local = localByName.get((b.name || '').trim().toLowerCase());
+      return Object.assign({}, b, { localId: local ? local.id : null });
+    });
     res.json(buyers);
   } catch (e) {
     console.error('GET /api/buyers error:', e);
@@ -1664,24 +1794,11 @@ app.get('/api/destinations', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     const [binsResult, buyersResult] = await Promise.allSettled([
       prisma.grainBin.findMany({ orderBy: { name: 'asc' } }),
-      (async () => {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-        try {
-          const response = await fetch('http://localhost:3001/api/buyers', { signal: controller.signal });
-          clearTimeout(timeout);
-          if (!response.ok) return [];
-          return await response.json();
-        } catch (e) {
-          clearTimeout(timeout);
-          console.error('GET /api/destinations: farm-budget fetch failed:', e.message);
-          return [];
-        }
-      })()
+      fetchFarmBudgetBuyers()
     ]);
 
     const bins = binsResult.status === 'fulfilled' ? binsResult.value : [];
-    const buyers = buyersResult.status === 'fulfilled' ? buyersResult.value : [];
+    const fbBuyers = buyersResult.status === 'fulfilled' ? buyersResult.value : null;
 
     const binItems = bins.map(b => ({
       id: b.id,
@@ -1690,13 +1807,24 @@ app.get('/api/destinations', async (req, res) => {
       capacity: b.capacity
     }));
 
-    const buyerItems = Array.isArray(buyers) ? buyers.map(b => ({
-      id: b.id,
-      type: 'buyer',
-      name: b.name,
-      shortCode: b.shortCode || null,
-      buyerType: b.type || null
-    })) : [];
+    // Buyer ids here MUST be local Buyer ints — Ticket.buyerId FKs to them
+    let buyerItems = [];
+    if (fbBuyers) {
+      const localByName = await syncBuyersFromFarmBudget(fbBuyers);
+      buyerItems = fbBuyers
+        .map(b => {
+          const local = localByName.get((b.name || '').trim().toLowerCase());
+          if (!local) return null;
+          return {
+            id: local.id,
+            type: 'buyer',
+            name: b.name,
+            shortCode: b.shortCode || null,
+            buyerType: b.type || null
+          };
+        })
+        .filter(Boolean);
+    }
 
     // Bins grouped first, each group sorted alphabetically
     const merged = [

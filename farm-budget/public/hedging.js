@@ -313,8 +313,8 @@
       var rtHours = buyer.rtHours || 1;
       var truckingRate = buyer.truckingRate || 0;
       var truckingPerBu = loadSize > 0 ? (truckingRate * rtHours) / loadSize : 0;
-      var dryingRate = buyer.dryingRate || 0;
-      var shrinkPct = buyer.shrinkPct || 0;
+      var dryingRate = buyer.drying || 0;
+      var shrinkPct = buyer.shrink || 0;
       var shrinkCost = netPrice * (shrinkPct / 100);
       var netOfCosts = netPrice - truckingPerBu - dryingRate - shrinkCost;
 
