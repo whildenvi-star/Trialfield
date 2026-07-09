@@ -53,7 +53,25 @@
 
     function buildCropList(registryCrops) {
       allCrops = [];
-      if (registryCrops && registryCrops.length > 0) {
+      // Configured crops (CropConfig for the active crop year) are the ONLY names
+      // the server accepts — offer exactly those so entry stays consistent.
+      // Registry crops enrich them with category grouping + registryCropId.
+      var configNames = Object.keys((window.refData && refData.cropConfig) || {});
+      var registryByName = {};
+      (registryCrops || []).forEach(function (c) {
+        registryByName[(c.name || '').trim().toLowerCase()] = c;
+      });
+      if (configNames.length > 0) {
+        configNames.sort().forEach(function (name) {
+          var reg = registryByName[name.trim().toLowerCase()];
+          allCrops.push({
+            name: name,
+            cropType: reg ? (reg.category || 'Other') : 'Other',
+            registryCropId: reg ? reg.id : null
+          });
+        });
+      } else if (registryCrops && registryCrops.length > 0) {
+        // Fallback when crop config is unavailable (e.g. offline cold start)
         registryCrops.forEach(function (c) {
           allCrops.push({ name: c.name, cropType: c.category || 'Other', registryCropId: c.id });
         });
@@ -87,7 +105,7 @@
       });
 
       if (matched.length === 0) {
-        dropdown.innerHTML = '<div class="crop-ac-empty">No matching crops</div>';
+        dropdown.innerHTML = '<div class="crop-ac-empty">No match — crop must exist in this year\'s crop config</div>';
         dropdown.style.display = 'block';
         selectableItems = [];
         selectedIdx = -1;
@@ -150,7 +168,7 @@
         // Store registryCropId on the input element for form submission
         inputEl.dataset.registryCropId = selectableItems[idx].registryCropId || '';
         dropdown.style.display = 'none';
-        updatePreview();
+        if (inputEl.id === 'entry-crop') updatePreview();
       }
     }
 
@@ -210,6 +228,27 @@
       if (!wrapper.contains(e.target)) {
         closeDropdown();
       }
+    });
+
+    // Snap typed text to the canonical configured name (case/space-insensitive)
+    // so "organic wheat " saves as "Organic Wheat". Delayed so a dropdown click
+    // can land first.
+    inputEl.addEventListener('blur', function () {
+      setTimeout(function () {
+        var typed = (inputEl.value || '').trim().toLowerCase();
+        if (!typed) return;
+        buildCropList(_registryCrops || []);
+        for (var i = 0; i < allCrops.length; i++) {
+          if (allCrops[i].name.trim().toLowerCase() === typed) {
+            if (inputEl.value !== allCrops[i].name) {
+              inputEl.value = allCrops[i].name;
+              if (inputEl.id === 'entry-crop') updatePreview();
+            }
+            inputEl.dataset.registryCropId = allCrops[i].registryCropId || '';
+            return;
+          }
+        }
+      }, 200);
     });
   }
 
@@ -361,6 +400,9 @@
   window.addEventListener('ref-data-loaded', function () {
     // --- Entry form autocompletes ---
     attachCropAutocomplete(document.getElementById('entry-crop'));
+    // Edit dialog gets the same configured-crop dropdown so edits stay consistent
+    var editCropEl = document.getElementById('edit-crop');
+    if (editCropEl) attachCropAutocomplete(editCropEl);
 
     var farmList = document.getElementById('farm-list');
     refData.farmNames.forEach(function (f) {
