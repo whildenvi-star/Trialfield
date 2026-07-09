@@ -536,8 +536,22 @@
     document.getElementById('prev-moistureShrink').textContent = c.moistureShrink !== undefined ? c.moistureShrink + '%' : '--';
     document.getElementById('prev-discount').textContent = c.discount !== undefined ? c.discount : '--';
     document.getElementById('prev-fmDiscount').textContent = c.fmDiscountFactor !== undefined ? c.fmDiscountFactor : '--';
+    var scaleEl = document.getElementById('prev-scaleBU');
+    if (scaleEl) scaleEl.textContent = c.scaleBU !== undefined ? util.formatNum(c.scaleBU, 2) : '--';
     document.getElementById('prev-grossBU').textContent = c.grossBU !== undefined ? util.formatNum(c.grossBU, 2) : '--';
     document.getElementById('prev-netBU').textContent = c.netBU !== undefined ? util.formatNum(c.netBU, 2) : '--';
+    // Explain the gap between the paper scale ticket and payable bushels
+    var lineEl = document.getElementById('prev-discount-line');
+    if (lineEl) {
+      if (c.scaleBU > 0 && c.netBU !== undefined && c.scaleBU - c.netBU > 0.005) {
+        var diff = c.scaleBU - c.netBU;
+        var pct = (diff / c.scaleBU) * 100;
+        lineEl.textContent = 'Scale ticket ' + util.formatNum(c.scaleBU, 2) + ' bu − ' +
+          util.formatNum(diff, 2) + ' bu discounts (' + util.formatNum(pct, 1) + '%)';
+      } else {
+        lineEl.textContent = '';
+      }
+    }
   }
 
   // --- Form Submission ---

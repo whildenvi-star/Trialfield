@@ -36,6 +36,10 @@
     // FM discount factor: if FM >= 1, factor = (FM - 1) / 100, else 0
     var fmDiscountFactor = fm >= 1 ? (fm - 1) / 100 : 0;
 
+    // Scale BU = raw pounds / testWeight — no discounts. This is the number
+    // printed on the elevator's paper scale ticket.
+    var scaleBU = testWeight > 0 ? netWeight / testWeight : 0;
+
     // Gross BU = (((100 - ((moisture - moistureShrink) * discount)) * netWeight) / testWeight) / 100
     // This matches the spreadsheet formula exactly: moisture adjustment is part of Gross BU
     var grossBU = 0;
@@ -51,6 +55,7 @@
       testWeight: testWeight,
       moistureShrink: moistureShrink,
       discount: discount,
+      scaleBU: round(scaleBU, 6),
       grossBU: round(grossBU, 6),
       netBU: round(netBU, 6)
     };

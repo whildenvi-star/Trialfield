@@ -230,8 +230,13 @@
             <div class="preview-hero">
               <div class="preview-hero-label">Net BU If Sold</div>
               <div class="preview-hero-value"><span id="prev-netBU">--</span><span class="preview-hero-unit">bu</span></div>
+              <div class="preview-hero-sub" id="prev-discount-line" style="font-size:0.8rem;color:var(--text-light,#888);margin-top:0.25rem"></div>
             </div>
             <div class="preview-secondary">
+              <div class="preview-field">
+                <span class="label">Scale Ticket BU</span>
+                <span class="value highlight" id="prev-scaleBU">--</span>
+              </div>
               <div class="preview-field">
                 <span class="label">Gross BU</span>
                 <span class="value highlight" id="prev-grossBU">--</span>
@@ -460,9 +465,9 @@
   <script src="chart.min.js" defer></script>
   <script src="glomalin.js" defer></script>
   <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available, using local farm list')"></script>
-  <script src="calc.js"></script>
+  <script src="calc.js?v=20260709b"></script>
   <script src="app.js"></script>
-  <script src="tickets.js?v=20260709"></script>
+  <script src="tickets.js?v=20260709b"></script>
   <script src="farms.js"></script>
   <script src="scan.js"></script>
   <script src="settlements.js"></script>
