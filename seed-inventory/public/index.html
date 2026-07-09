@@ -10,12 +10,12 @@
   <link rel="stylesheet" href="platform-tokens.css?v=2">
   <link rel="stylesheet" href="style.css?v=2">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#080a0f">
+  <meta name="theme-color" content="#f8fafc">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="/icons/icon-192.png">
   <script>
-    (function(){var t=localStorage.getItem('si-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+    (function(){var t=localStorage.getItem('si-theme');if(t!=='dark')document.documentElement.classList.add('light-pending')})();
     if(window!==window.top)document.documentElement.classList.add('in-iframe');
   </script>
   <script>
@@ -68,6 +68,7 @@
       </button>
     </nav>
     <div class="sidebar-footer">
+      <span id="sync-badge" class="sync-badge" title="checking sync status...">&#9679; sync</span>
       <button id="theme-toggle" class="theme-toggle" style="display:none">☀</button>
     </div>
   </aside>
@@ -158,73 +159,180 @@
       <div id="dash-outstanding-list" style="margin-top:1rem"></div>
     </section>
 
-    <!-- PRODUCTS TAB (read-only lookup from Farm Budget) -->
+    <!-- PRODUCTS TAB -->
     <section id="tab-products" class="tab-content">
-      <h2>Product Lookup</h2>
-      <div id="catalog-offline" class="offline-banner hidden">Farm Budget is offline — catalog unavailable</div>
+      <h2>Products</h2>
       <div class="toolbar">
         <div class="filters">
           <div class="type-toggle">
-            <button class="toggle-btn catalog-cat active" data-cat="">All</button>
-            <button class="toggle-btn catalog-cat" data-cat="Seed">Seed</button>
-            <button class="toggle-btn catalog-cat" data-cat="Fertilizer">Fertilizer</button>
-            <button class="toggle-btn catalog-cat" data-cat="Chemical">Chemical</button>
-            <button class="toggle-btn catalog-cat" data-cat="Biological">Biological</button>
-            <button class="toggle-btn catalog-cat" data-cat="Other">Other</button>
+            <button class="toggle-btn prod-subtab active" data-subtab="SEED">Seeds</button>
+            <button class="toggle-btn prod-subtab" data-subtab="INPUT">Inputs</button>
           </div>
-          <input type="text" id="product-search" placeholder="Search products...">
+          <input type="text" id="product-search" placeholder="Search...">
         </div>
-        <span class="source-badge">Source: Farm Budget</span>
+        <div class="toolbar-actions">
+          <button class="btn-primary" id="add-product-btn">+ New Product</button>
+        </div>
       </div>
-      <div class="catalog-summary" id="catalog-summary"></div>
+      <div class="catalog-summary" id="product-summary"></div>
       <div class="table-wrap">
         <table id="product-table">
-          <thead>
-            <tr>
-              <th>Product</th>
-              <th>Category</th>
-              <th>Supplier</th>
-              <th>Unit</th>
-              <th class="number">Price</th>
-              <th>Organic</th>
-              <th>Cert #</th>
-              <th></th>
-            </tr>
-          </thead>
+          <thead id="product-thead"></thead>
           <tbody id="product-tbody"></tbody>
         </table>
       </div>
 
-      <!-- Organic Cert Edit Modal -->
-      <div id="cert-modal" class="modal hidden">
-        <div class="modal-content">
+      <!-- Product Add / Edit Modal -->
+      <div id="product-modal" class="modal hidden">
+        <div class="modal-content modal-wide">
           <div class="modal-header">
-            <h3 id="cert-modal-title">Edit Organic Cert</h3>
-            <button class="modal-close" id="cert-modal-close">&times;</button>
+            <h3 id="product-modal-title">Add Product</h3>
+            <button class="modal-close" id="product-modal-close">&times;</button>
           </div>
-          <form id="cert-form">
-            <input type="hidden" id="cf-budgetId">
-            <input type="hidden" id="cf-budgetType">
-            <div class="form-grid">
+          <form id="product-form">
+            <input type="hidden" id="pf-id">
+            <div class="form-group" style="margin-bottom:0.75rem">
+              <div class="type-toggle">
+                <button type="button" class="toggle-btn pf-type-btn active" data-ptype="SEED">Seed</button>
+                <button type="button" class="toggle-btn pf-type-btn" data-ptype="INPUT">Input</button>
+              </div>
+            </div>
+
+            <!-- Seed fields -->
+            <div id="pf-seed-fields" class="form-grid">
               <div class="form-group">
-                <label for="cf-organicCertNumber">Organic Cert #</label>
-                <input type="text" id="cf-organicCertNumber" placeholder="Cert number or OMRI listing ID">
+                <label for="pf-crop">Crop</label>
+                <select id="pf-crop">
+                  <option value="">--</option>
+                  <option value="Corn">Corn</option>
+                  <option value="Soybeans">Soybeans</option>
+                  <option value="Wheat">Wheat</option>
+                  <option value="Oats">Oats</option>
+                  <option value="Rye">Rye</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
               <div class="form-group">
-                <label for="cf-omriListed">
-                  <input type="checkbox" id="cf-omriListed"> OMRI Listed
-                </label>
+                <label for="pf-variety">Variety *</label>
+                <input type="text" id="pf-variety" placeholder="e.g. SH 4.600">
+              </div>
+              <div class="form-group">
+                <label for="pf-maturity">Maturity</label>
+                <input type="text" id="pf-maturity" placeholder="e.g. 1.7 or 103">
+              </div>
+              <div class="form-group">
+                <label for="pf-brand">Brand</label>
+                <input type="text" id="pf-brand" placeholder="Pioneer, DeKalb...">
+              </div>
+              <div class="form-group">
+                <label for="pf-purchaseUnit">Billed Unit</label>
+                <input type="text" id="pf-purchaseUnit" list="pf-unit-list" placeholder="units, bag, cwt">
+              </div>
+              <div class="form-group">
+                <label for="pf-unitType">App Unit</label>
+                <input type="text" id="pf-unitType" list="pf-unit-list" placeholder="units">
+              </div>
+              <div class="form-group">
+                <label for="pf-conversionRate">Seeds / Unit</label>
+                <input type="number" id="pf-conversionRate" step="1" min="0" placeholder="80000">
+              </div>
+              <div class="form-group">
+                <label for="pf-pricePerUnit">Price / Unit ($)</label>
+                <input type="number" id="pf-pricePerUnit" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label for="pf-supplier">Supplier</label>
+                <select id="pf-supplier"><option value="">--</option></select>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="pf-organicGround"> Organic</label>
               </div>
               <div class="form-group full-width">
-                <label for="cf-localNotes">Notes</label>
-                <input type="text" id="cf-localNotes" placeholder="Local notes for this product">
+                <label for="pf-notes">Notes</label>
+                <input type="text" id="pf-notes" placeholder="Notes">
               </div>
             </div>
-            <div class="form-actions">
-              <button type="submit" class="btn-primary">Save</button>
-              <button type="button" class="btn-sm" id="cert-cancel-btn">Cancel</button>
+
+            <!-- Input fields -->
+            <div id="pf-input-fields" class="form-grid hidden">
+              <div class="form-group full-width">
+                <label for="pf-productName">Product Name *</label>
+                <input type="text" id="pf-productName" placeholder="e.g. 32-0-0 UAN">
+              </div>
+              <div class="form-group">
+                <label for="pf-inputCategory">Category</label>
+                <select id="pf-inputCategory">
+                  <option value="FERTILIZER">Fertilizer</option>
+                  <option value="CHEMICAL">Chemical</option>
+                  <option value="BIOLOGICAL">Biological</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="pf-unitType-i">App Unit</label>
+                <input type="text" id="pf-unitType-i" list="pf-unit-list" placeholder="lbs, gal, qt/ac">
+              </div>
+              <div class="form-group">
+                <label for="pf-purchaseUnit-i">Billed Unit</label>
+                <input type="text" id="pf-purchaseUnit-i" list="pf-unit-list" placeholder="ton, gallon, case">
+              </div>
+              <div class="form-group">
+                <label for="pf-conversionRate-i">Conversion Rate</label>
+                <input type="number" id="pf-conversionRate-i" step="any" min="0" placeholder="app units per billed unit">
+              </div>
+              <div class="form-group">
+                <label for="pf-pricePerUnit-i">Price / Billed Unit ($)</label>
+                <input type="number" id="pf-pricePerUnit-i" step="0.01" min="0">
+              </div>
+              <div class="form-group">
+                <label for="pf-supplier-i">Supplier</label>
+                <select id="pf-supplier-i"><option value="">--</option></select>
+              </div>
+              <div class="form-group">
+                <label><input type="checkbox" id="pf-organicGround-i"> Organic / OMRI</label>
+              </div>
+              <div class="form-group full-width">
+                <label for="pf-notes-i">Notes</label>
+                <input type="text" id="pf-notes-i" placeholder="Notes">
+              </div>
             </div>
+
+            <datalist id="pf-unit-list">
+              <option value="units"><option value="bag"><option value="cwt"><option value="lbs">
+              <option value="ton"><option value="gallon"><option value="gal"><option value="case">
+              <option value="acre"><option value="oz">
+            </datalist>
+            <div class="form-actions">
+              <button type="submit" class="btn-primary">Save Product</button>
+              <button type="button" class="btn-sm" id="pf-cancel-btn">Cancel</button>
+            </div>
+            <div id="pf-status" style="display:none;font-size:0.8rem;color:var(--text-warn,#a0855a);margin-top:0.4rem"></div>
           </form>
+        </div>
+      </div>
+
+      <!-- Merge Modal -->
+      <div id="merge-modal" class="modal hidden">
+        <div class="modal-content" style="max-width:500px">
+          <div class="modal-header">
+            <h3>Merge Into Another Product</h3>
+            <button class="modal-close" id="merge-modal-close">&times;</button>
+          </div>
+          <p id="merge-source-label" style="margin:0 0 0.75rem;font-size:0.9rem;color:var(--text-light)"></p>
+          <div class="form-group">
+            <label>Keep this product instead:</label>
+            <div class="autocomplete-wrap">
+              <input type="text" id="merge-target-search" placeholder="Search for the keeper..." autocomplete="off">
+              <input type="hidden" id="merge-target-id">
+              <div class="autocomplete-list" id="merge-target-aclist"></div>
+            </div>
+          </div>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin:0.5rem 0">All orders, deliveries, returns, and forecasts transfer to the keeper. This product will be deactivated.</p>
+          <div class="form-actions">
+            <button class="btn-primary" id="merge-confirm-btn" disabled>Merge &amp; Deactivate</button>
+            <button class="btn-sm" id="merge-cancel-btn">Cancel</button>
+          </div>
+          <div id="merge-status" style="display:none;font-size:0.8rem;margin-top:0.4rem;color:var(--text-warn,#a0855a)"></div>
         </div>
       </div>
     </section>
@@ -824,9 +932,51 @@
       updateTheme();
     });
 
+    // Sync with portal day/night setting via postMessage
+    window.addEventListener('message', function (e) {
+      if (!e.data || e.data.type !== 'glomalin-theme') return;
+      var want = e.data.theme === 'light';
+      var has = document.body.classList.contains('light');
+      if (want !== has) {
+        document.body.classList.toggle('light', want);
+        localStorage.setItem('si-theme', want ? 'light' : 'dark');
+        updateTheme();
+      }
+    });
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
+
+    // Cross-app sync health badge
+    (function () {
+      var badge = document.getElementById('sync-badge');
+      if (!badge) return;
+      function refresh() {
+        api.get('/api/sync-status').then(function (s) {
+          var problems = [];
+          if (s.cropYearMismatch) problems.push('CROP YEAR MISMATCH: ' + s.cropYearMismatch);
+          if (s.lastForecastSyncOk === false) problems.push('forecast sync failing: ' + s.lastForecastSyncError);
+          if (s.lastProductSyncOk === false) problems.push('product sync failing: ' + s.lastProductSyncError);
+          if (s.lastBudgetFetchOk === false) problems.push('farm-budget fetch failing: ' + s.lastBudgetFetchError);
+          if (problems.length) {
+            badge.classList.add('sync-bad');
+            badge.textContent = '● sync failing';
+            badge.title = problems.join('\n');
+          } else {
+            badge.classList.remove('sync-bad');
+            badge.textContent = '● sync ok';
+            badge.title = 'farm-budget sync healthy' +
+              (s.lastForecastSyncAt ? '\nlast forecast sync: ' + s.lastForecastSyncAt : '') +
+              (s.unlinkedProducts ? '\n' + s.unlinkedProducts + ' product(s) not yet linked to farm-budget' : '');
+          }
+        }).catch(function () {
+          badge.title = 'sync status unavailable';
+        });
+      }
+      refresh();
+      setInterval(refresh, 60000);
+    })();
   </script>
   <script>window.__SP_THEME_KEY = 'si-theme';</script>
   <script src="settings-panel.js"></script>

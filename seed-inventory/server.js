@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const Anthropic = require('@anthropic-ai/sdk');
+const { writeSeedReceipt, writeInputReceipt, writePurchaseOrder } = require('./lib/pg-writer');
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -222,6 +223,8 @@ app.post('/api/products', async function (req, res) {
     organicCertNumber: req.body.organicCertNumber || '',
     omriListed: req.body.omriListed || false,
     organicGround: req.body.organicGround || false,
+    maturity: req.body.maturity || '',
+    pricePerUnit: req.body.pricePerUnit != null ? parseFloat(req.body.pricePerUnit) : null,
     budgetProductId: req.body.budgetProductId || null,
     budgetProductType: req.body.budgetProductType || null,
     notes: req.body.notes || '',
@@ -265,6 +268,8 @@ app.put('/api/products/:id', async function (req, res) {
       crop: updated.crop || '',
       brand: updated.brand || '',
       variety: updated.variety || '',
+      maturity: updated.maturity || '',
+      pricePerUnit: updated.pricePerUnit || 0,
       organicGround: !!updated.organicGround
     } : {
       name: updated.productName || '',
@@ -300,6 +305,42 @@ app.delete('/api/products/:id', async function (req, res) {
     var budgetPath = isSeed ? '/api/seeds/' + toDelete.budgetProductId : '/api/products/' + toDelete.budgetProductId;
     fetch(budgetUrl(budgetPath), { method: 'DELETE' }).catch(function (e) {
       console.warn('[write-back] Product delete from farm-budget failed:', e.message);
+    });
+  }
+});
+
+app.post('/api/products/:id/merge', async function (req, res) {
+  var sourceId = req.params.id;
+  var targetId = req.body.targetProductId;
+  if (!targetId) return res.status(400).json({ error: 'targetProductId required' });
+
+  var source = store.products.find(function (p) { return p.id === sourceId; });
+  var target = store.products.find(function (p) { return p.id === targetId; });
+  if (!source) return res.status(404).json({ error: 'Source product not found' });
+  if (!target) return res.status(404).json({ error: 'Target product not found' });
+  if (source.type !== target.type) return res.status(400).json({ error: 'Cannot merge products of different types' });
+
+  // Re-assign all references from source to target
+  ['orders', 'receipts', 'returns', 'forecasts'].forEach(function (coll) {
+    (store[coll] || []).forEach(function (item) {
+      if (item.productId === sourceId) item.productId = targetId;
+    });
+  });
+
+  // Soft-delete source
+  var srcIdx = store.products.findIndex(function (p) { return p.id === sourceId; });
+  store.products[srcIdx].active = false;
+  store.products[srcIdx].updatedAt = new Date().toISOString();
+
+  await saveData();
+  res.json(target);
+
+  // Deactivate source in farm-budget (fire-and-forget)
+  if (source.budgetProductId) {
+    var isSeed = source.type === 'SEED';
+    var budgetPath = isSeed ? '/api/seeds/' + source.budgetProductId : '/api/products/' + source.budgetProductId;
+    fetch(budgetUrl(budgetPath), { method: 'DELETE' }).catch(function (e) {
+      console.warn('[write-back] Merge deactivation in farm-budget failed:', e.message);
     });
   }
 });
@@ -500,6 +541,54 @@ app.delete('/api/forecasts/:id', async function (req, res) {
   res.json({ ok: true });
 });
 
+// ─── Sync Status ─────────────────────────────────────────────────────
+// Every cross-app fetch/sync records its outcome here so failures are
+// visible in the UI badge instead of dying silently in a catch block.
+var _syncStatus = {
+  lastForecastSyncAt: null, lastForecastSyncOk: null, lastForecastSyncError: null,
+  lastForecastCounts: null,
+  lastProductSyncAt: null, lastProductSyncOk: null, lastProductSyncError: null,
+  lastBudgetFetchAt: null, lastBudgetFetchOk: null, lastBudgetFetchError: null,
+  lastWebhookAt: null,
+  cropYearMismatch: null
+};
+function recordForecastSync(ok, err, counts) {
+  _syncStatus.lastForecastSyncAt = new Date().toISOString();
+  _syncStatus.lastForecastSyncOk = ok;
+  _syncStatus.lastForecastSyncError = ok ? null : (err || 'unknown error');
+  if (counts) _syncStatus.lastForecastCounts = counts;
+  if (!ok) console.warn('[sync-status] forecast sync failed:', _syncStatus.lastForecastSyncError);
+}
+function recordProductSync(ok, err) {
+  _syncStatus.lastProductSyncAt = new Date().toISOString();
+  _syncStatus.lastProductSyncOk = ok;
+  _syncStatus.lastProductSyncError = ok ? null : (err || 'unknown error');
+  if (!ok) console.warn('[sync-status] product sync failed:', _syncStatus.lastProductSyncError);
+}
+function recordBudgetFetch(ok, err) {
+  _syncStatus.lastBudgetFetchAt = new Date().toISOString();
+  _syncStatus.lastBudgetFetchOk = ok;
+  _syncStatus.lastBudgetFetchError = ok ? null : (err || 'unknown error');
+  if (!ok) console.warn('[sync-status] farm-budget fetch failed:', _syncStatus.lastBudgetFetchError);
+}
+function checkCropYearMatch(budgetCropYear) {
+  if (!budgetCropYear || !store.settings.cropYear) { _syncStatus.cropYearMismatch = null; return; }
+  if (String(budgetCropYear) !== String(store.settings.cropYear)) {
+    _syncStatus.cropYearMismatch = 'farm-budget is on ' + budgetCropYear + ' but seed-inventory is on ' + store.settings.cropYear;
+    console.warn('[sync-status] CROP YEAR MISMATCH:', _syncStatus.cropYearMismatch);
+  } else {
+    _syncStatus.cropYearMismatch = null;
+  }
+}
+app.get('/api/sync-status', function (req, res) {
+  res.json(Object.assign({}, _syncStatus, {
+    cropYear: store.settings.cropYear || null,
+    unlinkedProducts: store.products.filter(function (p) {
+      return p.active !== false && !p.budgetProductId;
+    }).length
+  }));
+});
+
 // ─── Pull Forecasts from Farm Budget ─────────────────────────────────
 
 // Shared sync logic — upserts forecast records from farm-budget data and removes orphans.
@@ -619,6 +708,7 @@ app.post('/api/forecasts/pull-from-budget', async function (req, res) {
     var cropYear = store.settings.cropYear || 2026;
 
     var result = applyForecastSync(data, cropYear);
+    recordForecastSync(true, null, result);
     // Also sync the full product catalog (not just forecasted products)
     await syncAllProductsFromBudget();
     await saveData();
@@ -634,6 +724,7 @@ app.post('/api/forecasts/pull-from-budget', async function (req, res) {
     });
   } catch (err) {
     console.error('Pull from budget error:', err);
+    recordForecastSync(false, err.message);
     res.status(500).json({ error: 'Failed to pull from Farm Budget: ' + err.message });
   }
 });
@@ -644,6 +735,10 @@ app.post('/api/forecasts/sync-webhook', async function (req, res) {
   // Respond immediately so farm-budget isn't blocked
   res.json({ ok: true, queued: true });
 
+  _syncStatus.lastWebhookAt = new Date().toISOString();
+  // Farm-budget sends its cropYear in the webhook body — flag drift between the two apps
+  if (req.body && req.body.cropYear) checkCropYearMatch(req.body.cropYear);
+
   // Always invalidate the catalog cache so new products appear on next /api/products call
   _catalogCache = { data: null, fetchedAt: 0 };
 
@@ -653,12 +748,17 @@ app.post('/api/forecasts/sync-webhook', async function (req, res) {
   try {
     var syncUrl = budgetUrl('/api/forecast');
     var response = await fetch(syncUrl);
-    if (!response.ok) { _syncInProgress = false; return; }
+    if (!response.ok) {
+      recordForecastSync(false, 'farm-budget returned ' + response.status);
+      _syncInProgress = false;
+      return;
+    }
     var data = await response.json();
     var cropYear = store.settings.cropYear || 2026;
 
     var result = applyForecastSync(data, cropYear);
     await saveData();
+    recordForecastSync(true, null, result);
     console.log('[live-sync] Forecasts synced from farm-budget — created:' + result.created + ' updated:' + result.updated + ' removed:' + result.removed + ' (' + new Date().toISOString() + ')');
 
     // Background: materialize any new products/seeds from farm-budget
@@ -666,7 +766,7 @@ app.post('/api/forecasts/sync-webhook', async function (req, res) {
       if (r.changed) console.log('[live-sync] Product catalog synced — ' + r.products + ' products, ' + r.seeds + ' seeds checked');
     }).catch(function (e) { console.warn('[live-sync] Product sync error:', e.message); });
   } catch (err) {
-    console.error('[live-sync] Sync failed:', err.message);
+    recordForecastSync(false, err.message);
   } finally {
     _syncInProgress = false;
   }
@@ -676,12 +776,31 @@ function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
   var name = bp.productName || '';
   var match;
 
+  // ID-first: forecast rows carry the farm-budget record id — an exact link
+  // that survives renames. Name matching below is the fallback for unlinked rows.
+  if (bp.budgetProductId) {
+    match = store.products.find(function (p) {
+      return p.active !== false && p.budgetProductId === bp.budgetProductId;
+    });
+    if (match) {
+      match.organicGround = !!bp.organicGround;
+      if (bp.purchaseUnit) match.purchaseUnit = bp.purchaseUnit.toLowerCase();
+      if (bp.conversionRate) match.conversionRate = bp.conversionRate;
+      return match;
+    }
+  }
+
   if (bp.isSeedVariety || type === 'SEED') {
     // Match seed by variety name
     match = store.products.find(function (p) {
       return p.active !== false && p.type === 'SEED' &&
         (p.variety || '').toLowerCase() === name.toLowerCase();
     });
+    if (match && bp.budgetProductId && !match.budgetProductId) {
+      match.budgetProductId = bp.budgetProductId;
+      match.budgetProductType = bp.budgetProductType || 'seed';
+      console.log('[sync] linked seed "' + name + '" to budget id ' + bp.budgetProductId + ' via name match');
+    }
     if (!match) {
       match = {
         id: generateId('prod'),
@@ -700,6 +819,8 @@ function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
         organicCertNumber: '',
         omriListed: false,
         organicGround: !!bp.organicGround,
+        budgetProductId: bp.budgetProductId || '',
+        budgetProductType: bp.budgetProductId ? (bp.budgetProductType || 'seed') : '',
         notes: 'Auto-created from Farm Budget sync',
         active: true,
         createdAt: new Date().toISOString(),
@@ -718,6 +839,11 @@ function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
       return p.active !== false && p.type === 'INPUT' &&
         (p.productName || '').toLowerCase() === name.toLowerCase();
     });
+    if (match && bp.budgetProductId && !match.budgetProductId) {
+      match.budgetProductId = bp.budgetProductId;
+      match.budgetProductType = bp.budgetProductType || 'product';
+      console.log('[sync] linked input "' + name + '" to budget id ' + bp.budgetProductId + ' via name match');
+    }
     if (!match) {
       match = {
         id: generateId('prod'),
@@ -736,6 +862,8 @@ function findOrCreateProduct(bp, type, categoryName, inputCategoryMap) {
         organicCertNumber: '',
         omriListed: false,
         organicGround: !!bp.organicGround,
+        budgetProductId: bp.budgetProductId || '',
+        budgetProductType: bp.budgetProductId ? (bp.budgetProductType || 'product') : '',
         notes: 'Auto-created from Farm Budget sync',
         active: true,
         createdAt: new Date().toISOString(),
@@ -780,7 +908,8 @@ async function pushProductToBudget(localProduct) {
       crop: localProduct.crop || '',
       brand: localProduct.brand || '',
       variety: localProduct.variety || '',
-      pricePerUnit: 0,
+      maturity: localProduct.maturity || '',
+      pricePerUnit: localProduct.pricePerUnit || 0,
       seedsPerUnit: Math.round(localProduct.conversionRate) || 80000,
       organicGround: !!localProduct.organicGround,
       supplierId: budgetSupplierId || ''
@@ -859,7 +988,10 @@ async function syncAllProductsFromBudget() {
       fetch(budgetUrl('/api/products')).then(function (r) { return r.json(); }),
       fetch(budgetUrl('/api/seeds')).then(function (r) { return r.json(); })
     ]);
-    if (results[0].status === 'rejected' && results[1].status === 'rejected') return { changed: false };
+    if (results[0].status === 'rejected' && results[1].status === 'rejected') {
+      recordProductSync(false, results[0].reason && results[0].reason.message);
+      return { changed: false };
+    }
 
     var budgetProducts = results[0].status === 'fulfilled' && Array.isArray(results[0].value) ? results[0].value : [];
     var budgetSeeds    = results[1].status === 'fulfilled' && Array.isArray(results[1].value) ? results[1].value : [];
@@ -945,9 +1077,10 @@ async function syncAllProductsFromBudget() {
     }
 
     if (changed) await saveData();
+    recordProductSync(true, null);
     return { changed: changed, products: budgetProducts.length, seeds: budgetSeeds.length };
   } catch (e) {
-    console.error('[sync-products] Failed:', e.message);
+    recordProductSync(false, e.message);
     return { changed: false, error: e.message };
   }
 }
@@ -1278,6 +1411,9 @@ app.post('/api/orders', async function (req, res) {
   };
   store.orders.push(item);
   await saveData();
+  // Dual-write to shared PostgreSQL — fire-and-forget
+  var orderLineItem = { id: item.id + '_li', productId: item.productId, quantityOrdered: item.quantityOrdered, unit: item.unit, unitPrice: item.pricePerUnit, cropYear: item.cropYear };
+  writePurchaseOrder(item, [orderLineItem], store.products).catch(function (e) { console.warn('[pg-writer] order write failed:', e.message); });
   res.status(201).json(item);
 });
 
@@ -1289,6 +1425,9 @@ app.put('/api/orders/:id', async function (req, res) {
   var o = store.orders[idx];
   o.totalCost = Math.round((o.quantityOrdered || 0) * (o.pricePerUnit || 0) * (1 - (o.prepayDiscount || 0)) * 100) / 100;
   await saveData();
+  // Dual-write updated order to shared PostgreSQL — fire-and-forget
+  var updatedLineItem = { id: o.id + '_li', productId: o.productId, quantityOrdered: o.quantityOrdered, unit: o.unit, unitPrice: o.pricePerUnit, cropYear: o.cropYear };
+  writePurchaseOrder(o, [updatedLineItem], store.products).catch(function (e) { console.warn('[pg-writer] order update write failed:', e.message); });
   res.json(store.orders[idx]);
 });
 
@@ -1342,6 +1481,7 @@ function syncPickupStatuses(orderId) {
 app.post('/api/receipts', async function (req, res) {
   var item = {
     id: generateId('rct'),
+    cropYear: req.body.cropYear || store.settings.cropYear,
     orderId: req.body.orderId || '',
     productId: req.body.productId || '',
     supplierId: req.body.supplierId || '',
@@ -1366,6 +1506,13 @@ app.post('/api/receipts', async function (req, res) {
   store.receipts.push(item);
   if (item.orderId) syncPickupStatuses(item.orderId);
   await saveData();
+  // Dual-write to shared PostgreSQL — fire-and-forget, never blocks the response
+  var product = store.products && store.products.find(function (p) { return p.id === item.productId; });
+  if (product && product.type === 'INPUT') {
+    writeInputReceipt(item, product).catch(function (e) { console.warn('[pg-writer] input receipt write failed:', e.message); });
+  } else {
+    writeSeedReceipt(item, product).catch(function (e) { console.warn('[pg-writer] seed receipt write failed:', e.message); });
+  }
   res.status(201).json(item);
 });
 
@@ -1420,6 +1567,7 @@ app.post('/api/receipts/batch', async function (req, res) {
       receivedBy: shared.receivedBy || '',
       verifiedBy: shared.verifiedBy || '',
       verificationMethod: shared.verificationMethod || 'MANUAL',
+      cropYear: shared.cropYear || store.settings.cropYear,
       photoPath: shared.photoPath || '',
       scanData: shared.scanData || null,
       discrepancyFlag: item.discrepancyFlag || false,
@@ -1435,6 +1583,15 @@ app.post('/api/receipts/batch', async function (req, res) {
 
   affectedOrderIds.forEach(function (oid) { syncPickupStatuses(oid); });
   await saveData();
+  // Dual-write each receipt to shared PostgreSQL — fire-and-forget
+  created.forEach(function (receipt) {
+    var product = store.products && store.products.find(function (p) { return p.id === receipt.productId; });
+    if (product && product.type === 'INPUT') {
+      writeInputReceipt(receipt, product).catch(function (e) { console.warn('[pg-writer] batch input receipt write failed:', e.message); });
+    } else {
+      writeSeedReceipt(receipt, product).catch(function (e) { console.warn('[pg-writer] batch seed receipt write failed:', e.message); });
+    }
+  });
   res.status(201).json({ deliveryGroupId: deliveryGroupId, receipts: created });
 });
 
@@ -1443,8 +1600,9 @@ app.post('/api/receipts/batch', async function (req, res) {
 app.get('/api/returns', function (req, res) {
   var items = store.returns;
   if (req.query.cropYear) {
-    // Filter by linked order's cropYear
     items = items.filter(function (ret) {
+      // Direct cropYear stamp wins; legacy returns fall back to linked order's year
+      if (ret.cropYear) return String(ret.cropYear) === req.query.cropYear;
       var order = store.orders.find(function (o) { return o.id === ret.orderId; });
       return order && String(order.cropYear) === req.query.cropYear;
     });
@@ -1461,6 +1619,7 @@ app.get('/api/returns/:id', function (req, res) {
 app.post('/api/returns', async function (req, res) {
   var item = {
     id: generateId('ret'),
+    cropYear: req.body.cropYear || store.settings.cropYear,
     productId: req.body.productId || '',
     orderId: req.body.orderId || '',
     supplierId: req.body.supplierId || '',
@@ -1504,22 +1663,28 @@ app.get('/api/reconciliation', async function (req, res) {
 
   // Fetch conversion rates from farm-budget for inputs missing local conversionRate
   var budgetConv = {};
+  var budgetConvById = {};
   try {
     var bpResp = await fetch(budgetUrl('/api/products'));
     if (bpResp.ok) {
       var bpProducts = await bpResp.json();
       bpProducts.forEach(function (bp) {
+        if (!bp.conversionRate) return;
+        var entry = {
+          conversionRate: bp.conversionRate,
+          purchaseUnit: bp.purchaseUnit || bp.unit || ''
+        };
+        if (bp.id) budgetConvById[bp.id] = entry;
         var key = (bp.name || '').trim().toLowerCase();
-        if (key && bp.conversionRate) {
-          budgetConv[key] = {
-            conversionRate: bp.conversionRate,
-            purchaseUnit: bp.purchaseUnit || bp.unit || ''
-          };
-        }
+        if (key) budgetConv[key] = entry;
       });
+      recordBudgetFetch(true, null);
+    } else {
+      recordBudgetFetch(false, 'farm-budget returned ' + bpResp.status);
     }
   } catch (e) {
     // farm-budget unavailable — fall back to local product data
+    recordBudgetFetch(false, e.message);
   }
 
   var products = store.products.filter(function (p) {
@@ -1538,18 +1703,26 @@ app.get('/api/reconciliation', async function (req, res) {
     });
     var orderIds = orders.map(function (o) { return o.id; });
     var receipts = store.receipts.filter(function (r) {
-      return r.productId === p.id && (!r.orderId || orderIds.indexOf(r.orderId) !== -1);
+      if (r.productId !== p.id) return false;
+      if (r.cropYear) return String(r.cropYear) === cropYear;
+      return !r.orderId || orderIds.indexOf(r.orderId) !== -1;
     });
     var returns = store.returns.filter(function (ret) {
-      return ret.productId === p.id && (!ret.orderId || orderIds.indexOf(ret.orderId) !== -1);
+      if (ret.productId !== p.id) return false;
+      if (ret.cropYear) return String(ret.cropYear) === cropYear;
+      return !ret.orderId || orderIds.indexOf(ret.orderId) !== -1;
     });
 
     // Use local conversionRate if set, otherwise look up from farm-budget
     var convRate = p.conversionRate;
     var purchaseUnit = p.purchaseUnit || p.unitType || '';
     if (!convRate || convRate === 1) {
-      var lookupKey = (p.type === 'INPUT' ? (p.productName || '') : (p.variety || '')).trim().toLowerCase();
-      var budgetMatch = budgetConv[lookupKey];
+      // ID-first, name fallback
+      var budgetMatch = p.budgetProductId ? budgetConvById[p.budgetProductId] : null;
+      if (!budgetMatch) {
+        var lookupKey = (p.type === 'INPUT' ? (p.productName || '') : (p.variety || '')).trim().toLowerCase();
+        budgetMatch = budgetConv[lookupKey];
+      }
       if (budgetMatch) {
         convRate = budgetMatch.conversionRate;
         purchaseUnit = budgetMatch.purchaseUnit || purchaseUnit;
@@ -1586,6 +1759,7 @@ app.get('/api/reconciliation', async function (req, res) {
 
     return {
       productId: p.id,
+      budgetProductId: p.budgetProductId || '',
       type: p.type,
       brand: p.brand,
       crop: p.crop || '',
@@ -1881,6 +2055,7 @@ app.post('/api/verify/confirm', async function (req, res) {
   if (!items) {
     var receipt = {
       id: generateId('rct'),
+      cropYear: shared.cropYear || store.settings.cropYear,
       orderId: shared.orderId || '',
       productId: shared.productId || '',
       supplierId: shared.supplierId || '',
@@ -1913,6 +2088,7 @@ app.post('/api/verify/confirm', async function (req, res) {
   items.forEach(function (item) {
     var receipt = {
       id: generateId('rct'),
+      cropYear: shared.cropYear || store.settings.cropYear,
       deliveryGroupId: deliveryGroupId,
       orderId: item.orderId || '',
       productId: item.productId || '',

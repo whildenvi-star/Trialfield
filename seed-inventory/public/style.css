@@ -1103,6 +1103,23 @@ header { display: none; }
 .sidebar-footer {
   padding: 0.75rem;
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* Cross-app sync health badge — dim when healthy, amber when a sync path is failing */
+.sync-badge {
+  font-size: 0.68rem;
+  text-transform: lowercase;
+  opacity: 0.5;
+  white-space: nowrap;
+  cursor: default;
+}
+.sync-badge.sync-bad {
+  color: var(--amber);
+  opacity: 1;
+  font-weight: 600;
 }
 
 .app-main { margin-left: 0; min-height: 100vh; }

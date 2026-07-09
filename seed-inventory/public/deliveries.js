@@ -154,9 +154,13 @@
             '<div class="add-product-panel hidden" style="border:1px solid var(--border);border-top:none;background:var(--surface-2,#1a1710);padding:0.75rem;font-size:0.85rem">' +
               '<div style="font-weight:600;margin-bottom:0.5rem;color:var(--primary,#C8860A)">Add New Product</div>' +
               '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem">' +
-                '<div class="form-group" style="grid-column:1/-1"><label style="font-size:0.75rem">Name</label><input type="text" class="ap-name" style="width:100%"></div>' +
+                '<div class="form-group" style="grid-column:1/-1"><label style="font-size:0.75rem">Name / Variety</label><input type="text" class="ap-name" style="width:100%"></div>' +
                 '<div class="form-group"><label style="font-size:0.75rem">Type</label><select class="ap-type" style="width:100%"><option value="INPUT">Input</option><option value="SEED">Seed</option></select></div>' +
                 '<div class="form-group ap-catgroup"><label style="font-size:0.75rem">Category</label><select class="ap-category" style="width:100%"><option value="FERTILIZER">Fertilizer</option><option value="CHEMICAL">Chemical</option><option value="BIOLOGICAL">Biological</option><option value="OTHER">Other</option></select></div>' +
+                '<div class="form-group ap-seedgroup" style="display:none"><label style="font-size:0.75rem">Crop</label><select class="ap-crop" style="width:100%"><option value="">--</option><option value="Corn">Corn</option><option value="Soybeans">Soybeans</option><option value="Wheat">Wheat</option><option value="Oats">Oats</option><option value="Rye">Rye</option><option value="Other">Other</option></select></div>' +
+                '<div class="form-group ap-seedgroup" style="display:none"><label style="font-size:0.75rem">Maturity</label><input type="text" class="ap-maturity" placeholder="e.g. 1.7" style="width:100%"></div>' +
+                '<div class="form-group ap-seedgroup" style="display:none"><label style="font-size:0.75rem">Brand</label><input type="text" class="ap-brand" placeholder="Pioneer..." style="width:100%"></div>' +
+                '<div class="form-group"><label style="font-size:0.75rem">Supplier</label><select class="ap-supplier" style="width:100%"><option value="">--</option></select></div>' +
                 '<div class="form-group"><label style="font-size:0.75rem">App Unit</label><input type="text" class="ap-unit" placeholder="lbs" style="width:100%"></div>' +
                 '<div class="form-group"><label style="font-size:0.75rem">Purchase Unit</label><input type="text" class="ap-purchaseUnit" placeholder="tons" style="width:100%"></div>' +
               '</div>' +
@@ -305,7 +309,14 @@
         addPanel.querySelector('.ap-name').value = nameVal;
         addPanel.querySelector('.ap-unit').value = '';
         addPanel.querySelector('.ap-purchaseUnit').value = '';
+        addPanel.querySelector('.ap-maturity').value = '';
+        addPanel.querySelector('.ap-brand').value = '';
         addPanel.querySelector('.ap-status').style.display = 'none';
+        // Reset type to INPUT (default), hide seed fields
+        addPanel.querySelector('.ap-type').value = 'INPUT';
+        addPanel.querySelector('.ap-catgroup').style.display = '';
+        addPanel.querySelectorAll('.ap-seedgroup').forEach(function (el) { el.style.display = 'none'; });
+        apPopulateSuppliers();
         addPanel.classList.remove('hidden');
         addPanel.querySelector('.ap-name').focus();
         return;
@@ -314,9 +325,20 @@
     });
 
     // Add-product panel wiring
+    function apPopulateSuppliers() {
+      var sel = addPanel.querySelector('.ap-supplier');
+      if (!sel) return;
+      var suppliers = (window.refData && window.refData.suppliers) ? window.refData.suppliers.filter(function (s) { return s.active !== false; }) : [];
+      sel.innerHTML = '<option value="">--</option>' + suppliers.map(function (s) {
+        return '<option value="' + util.escapeHtml(s.name) + '">' + util.escapeHtml(s.name) + '</option>';
+      }).join('');
+    }
+
     addPanel.querySelector('.ap-type').addEventListener('change', function () {
       var isSeed = this.value === 'SEED';
       addPanel.querySelector('.ap-catgroup').style.display = isSeed ? 'none' : '';
+      addPanel.querySelectorAll('.ap-seedgroup').forEach(function (el) { el.style.display = isSeed ? '' : 'none'; });
+      apPopulateSuppliers();
     });
 
     addPanel.querySelector('.ap-cancel').addEventListener('click', function () {
@@ -328,6 +350,7 @@
       var name = nameEl.value.trim();
       if (!name) { nameEl.focus(); return; }
       var type = addPanel.querySelector('.ap-type').value;
+      var isSeed = type === 'SEED';
       var cat = addPanel.querySelector('.ap-category').value;
       var unit = addPanel.querySelector('.ap-unit').value.trim() || 'lbs';
       var pUnit = addPanel.querySelector('.ap-purchaseUnit').value.trim() || unit;
@@ -338,17 +361,24 @@
       statusEl.textContent = 'Saving…';
       statusEl.style.display = '';
 
-      api.post('/api/products', {
+      var postData = {
         type: type,
-        productName: type === 'INPUT' ? name : '',
-        variety: type === 'SEED' ? name : '',
-        inputCategory: type === 'INPUT' ? cat : '',
+        productName: isSeed ? '' : name,
+        variety: isSeed ? name : '',
+        inputCategory: isSeed ? '' : cat,
         unitType: unit,
         purchaseUnit: pUnit,
         conversionRate: 1,
+        supplier: addPanel.querySelector('.ap-supplier').value || '',
         notes: 'Added during delivery entry'
-      }).then(function (created) {
-        // Reload ref data then select the new product
+      };
+      if (isSeed) {
+        postData.crop = addPanel.querySelector('.ap-crop').value || '';
+        postData.maturity = addPanel.querySelector('.ap-maturity').value.trim() || '';
+        postData.brand = addPanel.querySelector('.ap-brand').value.trim() || '';
+      }
+
+      api.post('/api/products', postData).then(function (created) {
         window.reloadRefData().then(function () {
           addPanel.classList.add('hidden');
           saveBtn.disabled = false;
@@ -599,6 +629,7 @@
     var id = document.getElementById('df-id').value;
 
     var shared = {
+      cropYear: (window.refData && window.refData.settings && window.refData.settings.cropYear) || new Date().getFullYear(),
       supplierId: document.getElementById('df-supplierId').value,
       farmId: document.getElementById('df-farmId').value,
       farmName: document.getElementById('df-farm-search').value,
@@ -611,10 +642,18 @@
 
     var rows = document.querySelectorAll('#df-items-container .line-item-row');
     var items = [];
+    var validationError = false;
     rows.forEach(function (row) {
       var productId = row.querySelector('.li-productId').value;
       var qty = parseFloat(row.querySelector('.li-quantity').value) || 0;
-      if (!productId) return; // skip empty rows
+      if (!productId) {
+        var typed = row.querySelector('.li-product-search').value.trim();
+        if (typed) {
+          util.showToast('Select a product from the dropdown — "' + typed + '" was not matched', 'error');
+          validationError = true;
+        }
+        return;
+      }
       items.push({
         productId: productId,
         orderId: row.querySelector('.li-orderId').value,
@@ -625,6 +664,7 @@
       });
     });
 
+    if (validationError) return;
     if (items.length === 0) {
       util.showToast('Add at least one product', 'error');
       return;
