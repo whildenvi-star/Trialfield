@@ -61,6 +61,8 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
   const [error, setError]                       = useState<string | null>(null)
   const fileInputRef                            = useRef<HTMLInputElement>(null)
   const datFileInputRef                         = useRef<HTMLInputElement>(null)
+  const autoSyncedRef                           = useRef(false)
+  const [autoSyncBanner, setAutoSyncBanner]     = useState<string | null>(null)
 
   const fetchSummary = useCallback(() => {
     setLoading(true)
@@ -82,6 +84,36 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
   }
 
   useEffect(() => { fetchSummary(); fetchFvStatus() }, [fetchSummary])
+
+  // Auto-sync FieldView if connected and last import was > 6 hours ago
+  useEffect(() => {
+    if (autoSyncedRef.current) return
+    if (loading || !fvStatus) return
+    if (!fvStatus.connected) return
+
+    const fvRow = summary.find((r) => r.source_adapter === 'climate-fieldview')
+    const lastImport = fvRow?.last_imported_at ? new Date(fvRow.last_imported_at).getTime() : 0
+    const sixHoursAgo = Date.now() - 6 * 60 * 60 * 1000
+
+    if (lastImport > sixHoursAgo) return   // recent enough
+
+    autoSyncedRef.current = true
+    setAutoSyncBanner('Syncing last night\'s FieldView passes…')
+
+    fetch('/api/fsa/coverage-import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source: 'fieldview', crop_year: cropYear }),
+    })
+      .then((r) => r.json())
+      .then((d: ImportResult) => {
+        if ((d.imported ?? 0) > 0) fetchSummary()
+      })
+      .catch(() => {/* non-blocking */})
+      .finally(() => {
+        setTimeout(() => setAutoSyncBanner(null), 4000)
+      })
+  }, [loading, fvStatus, summary, cropYear, fetchSummary])
 
   async function handleFieldViewSync() {
     setFvSyncing(true)
@@ -324,6 +356,13 @@ export function CoverageImportPanel({ cropYear = CURRENT_CROP_YEAR }: CoverageIm
               Connect your FieldView account to pull as-applied, planting, and harvest records automatically.
             </p>
           )}
+        </div>
+      )}
+
+      {/* Auto-sync banner */}
+      {autoSyncBanner && (
+        <div className="rounded border border-glomalin-accent/30 bg-glomalin-accent/5 px-3 py-2 text-xs font-mono text-glomalin-accent animate-pulse">
+          {autoSyncBanner}
         </div>
       )}
 

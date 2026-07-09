@@ -4,15 +4,19 @@ import { useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { CluWorkspace } from '@/components/fsa/clu-workspace'
 import { ZoneSetupPanel } from '@/components/fsa/zone-setup-panel'
-import { ReconciliationView } from '@/components/fsa/reconciliation-view'
 import { CoverageImportPanel } from '@/components/fsa/coverage-import-panel'
 import { ActionButton } from '@/components/compliance/ui'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import type { CluRecord } from '@/lib/fsa/calc'
 
-// CRITICAL: ssr: false required — ReportingMap uses maplibre-gl which requires `window`
+// CRITICAL: ssr: false required — map components use maplibre-gl which requires `window`
 const ReportingMap = dynamic(
   () => import('@/components/fsa/reporting-map').then((m) => m.ReportingMap),
+  { ssr: false }
+)
+
+const OverlayMap = dynamic(
+  () => import('@/components/fsa/overlay-map').then((m) => m.OverlayMap),
   { ssr: false }
 )
 
@@ -25,7 +29,7 @@ interface AcreageTabProps {
 }
 
 export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigateTab }: AcreageTabProps) {
-  const [view, setView] = useState<'clu' | 'map' | 'zones' | 'reconcile' | 'coverage'>('map')
+  const [view, setView] = useState<'clu' | 'map' | 'zones' | 'overlay' | 'coverage'>('map')
 
   const filtered = useMemo(() => {
     let out = records
@@ -44,8 +48,8 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
     return out
   }, [records, farmFilter, cropFilter])
 
-  // Reconciliation and Map views need full height — remove max-w constraint
-  const wrapClass = (view === 'reconcile' || view === 'map') ? 'h-[calc(100vh-220px)]' : 'max-w-7xl mx-auto px-0'
+  // Overlay and Map views need full height — remove max-w constraint
+  const wrapClass = (view === 'overlay' || view === 'map') ? 'h-[calc(100vh-220px)]' : 'max-w-7xl mx-auto px-0'
 
   return (
     <div className={wrapClass}>
@@ -66,8 +70,8 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
           File PP Claim &rarr;
         </ActionButton>
         <div className="ml-auto flex rounded border border-glomalin-border overflow-hidden text-xs font-mono">
-          {(['map', 'clu', 'zones', 'reconcile', 'coverage'] as const).map((v, i) => {
-            const labels = { map: 'Map View', clu: 'CLU Records', zones: 'Zone Setup', reconcile: 'Reconcile', coverage: 'As-Applied' }
+          {(['map', 'clu', 'zones', 'overlay', 'coverage'] as const).map((v, i) => {
+            const labels = { map: 'Map View', clu: 'CLU Records', zones: 'Zone Setup', overlay: 'Overlay', coverage: 'As-Applied' }
             return (
               <button
                 key={v}
@@ -102,8 +106,8 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
         <ZoneSetupPanel cropYear={CURRENT_CROP_YEAR} />
       )}
 
-      {view === 'reconcile' && (
-        <ReconciliationView cropYear={CURRENT_CROP_YEAR} />
+      {view === 'overlay' && (
+        <OverlayMap cropYear={CURRENT_CROP_YEAR} />
       )}
 
       {view === 'coverage' && (
