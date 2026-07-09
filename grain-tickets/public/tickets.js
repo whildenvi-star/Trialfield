@@ -575,6 +575,7 @@
       ticketNo: form.ticketNo.value,
       notes: form.notes.value,
       fm: form.fm.value,
+      testWeight: form.testWeight.value || null,
       buyerId: destType === 'buyer' ? destId : null,
       grainBinId: destType === 'bin' ? destId : null
       // cropYear is derived server-side from date — not sent from client
@@ -1313,6 +1314,7 @@
     document.getElementById('edit-netWeight').value = ticket.netWeight != null ? ticket.netWeight : '';
     document.getElementById('edit-moisture').value = ticket.moisture != null ? ticket.moisture : '';
     document.getElementById('edit-fm').value = ticket.fm != null ? ticket.fm : '';
+    document.getElementById('edit-testWeight').value = ticket.testWeight != null ? ticket.testWeight : '';
     document.getElementById('edit-notes').value = ticket.notes || '';
 
     // Set destination select value
@@ -1354,6 +1356,7 @@
       netWeight: document.getElementById('edit-netWeight').value,
       moisture: document.getElementById('edit-moisture').value,
       fm: document.getElementById('edit-fm').value,
+      testWeight: document.getElementById('edit-testWeight').value || null,
       notes: document.getElementById('edit-notes').value
     };
     // Include registryCropId if set by autocomplete selection

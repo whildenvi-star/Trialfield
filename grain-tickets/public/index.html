@@ -186,6 +186,10 @@
                   <label for="entry-fm">FM %</label>
                   <input type="number" id="entry-fm" name="fm" step="0.01" min="0" max="100" inputmode="decimal" value="0" placeholder="0.0">
                 </div>
+                <div class="form-group">
+                  <label for="entry-testWeight">Test Weight (lbs/bu)</label>
+                  <input type="number" id="entry-testWeight" name="testWeight" step="0.1" min="0" max="100" inputmode="decimal" placeholder="e.g. 58.5">
+                </div>
               </div>
             </div>
 
@@ -242,7 +246,7 @@
                 <span class="value highlight" id="prev-grossBU">--</span>
               </div>
               <div class="preview-field">
-                <span class="label">Test Weight</span>
+                <span class="label">Std Test Wt</span>
                 <span class="value" id="prev-testWeight">--</span>
               </div>
               <div class="preview-field">
@@ -347,6 +351,7 @@
               <label>Net Weight (lbs)<input type="number" id="edit-netWeight" step="any" required></label>
               <label>Moisture %<input type="number" id="edit-moisture" step="any" required></label>
               <label>FM %<input type="number" id="edit-fm" step="any"></label>
+              <label>Test Wt (lbs/bu)<input type="number" id="edit-testWeight" step="any"></label>
               <label>Destination
                 <select id="edit-destination">
                   <option value="">-- None --</option>
@@ -465,9 +470,9 @@
   <script src="chart.min.js" defer></script>
   <script src="glomalin.js" defer></script>
   <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available, using local farm list')"></script>
-  <script src="calc.js?v=20260709b"></script>
+  <script src="calc.js?v=20260709c"></script>
   <script src="app.js"></script>
-  <script src="tickets.js?v=20260709b"></script>
+  <script src="tickets.js?v=20260709c"></script>
   <script src="farms.js"></script>
   <script src="scan.js"></script>
   <script src="settlements.js"></script>

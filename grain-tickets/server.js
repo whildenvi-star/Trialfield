@@ -346,6 +346,7 @@ function dbTicketToJson(dbTicket) {
     netWeight: dbTicket.netWeight,
     moisture: dbTicket.moisture,
     fm: dbTicket.fm || 0,
+    testWeight: dbTicket.testWeight || null,  // measured lbs/bu (grade factor, not the conversion divisor)
     crop: dbTicket.crop,
     registryCropId: dbTicket.registryCropId || null,  // canonical crop ID from farm-registry
     ticketNo: dbTicket.ticketNo || '',
@@ -617,7 +618,9 @@ async function pushDeliveryToMarketing(ticket, action) {
         netBushels: Math.round(computed.netBU * 100) / 100,
         moisturePercent: json.moisture || null,
         foreignMatterPct: json.fm || null,
-        testWeightLbs: computed.testWeight || null,
+        // Prefer the load's measured test weight (grade factor from the scale
+        // ticket); fall back to the crop's standard bushel weight
+        testWeightLbs: json.testWeight || computed.testWeight || null,
         buyerName: buyer.name,
         cropName: json.crop,
         cropYear: json.cropYear,
@@ -787,6 +790,7 @@ app.post('/api/tickets', async (req, res) => {
         netWeight: parseFloat(netWeight) || 0,
         moisture: parseFloat(moisture) || 0,
         fm: parseFloat(fm) || 0,
+        testWeight: req.body.testWeight ? parseFloat(req.body.testWeight) || null : null,
         crop: (crop || '').trim(),
         ticketNo: cleanTicketNo || null,
         notes: (notes || '').trim() || null,
@@ -818,10 +822,12 @@ app.put('/api/tickets/:id', async (req, res) => {
     if (!existing) return res.status(404).json({ error: 'Ticket not found' });
 
     const updateData = {};
-    const fields = ['date', 'farm', 'netWeight', 'moisture', 'crop', 'ticketNo', 'notes', 'fm'];
+    const fields = ['date', 'farm', 'netWeight', 'moisture', 'crop', 'ticketNo', 'notes', 'fm', 'testWeight'];
     fields.forEach(f => {
       if (req.body[f] !== undefined) {
-        if (['netWeight', 'moisture', 'fm'].includes(f)) {
+        if (f === 'testWeight') {
+          updateData.testWeight = req.body[f] ? parseFloat(req.body[f]) || null : null;
+        } else if (['netWeight', 'moisture', 'fm'].includes(f)) {
           updateData[f] = parseFloat(req.body[f]) || 0;
         } else if (f === 'date') {
           updateData.date = new Date(req.body[f] + 'T12:00:00.000Z');

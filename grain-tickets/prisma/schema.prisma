@@ -16,6 +16,7 @@ model Ticket {
   netWeight       Float    // Pounds — raw scale weight
   moisture        Float    // Moisture percentage
   fm              Float    @default(0) // Foreign matter percentage
+  testWeight      Float?   // Measured lbs/bu from the scale ticket — grade factor only; bushel conversion always uses CropConfig.testWeight (standard bushel)
   crop            String   // Crop name (matched to CropConfig.cropName)
   registryCropId  String?  // farm-registry canonical crop ID (e.g., crop_009) — backfilled by Phase 50
   ticketNo        String?  // NOT unique — 14 known duplicates in existing data
