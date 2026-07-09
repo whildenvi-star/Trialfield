@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Empty } from '@/components/ui/empty'
 import { YearSelector } from '@/components/ui/year-selector'
 import { createClient } from '@/lib/supabase/server'
+import { buildSvgThumb, type GeoJsonGeometry } from '@/lib/utils/field-thumb'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ interface SummaryRow {
 
 const r2 = (n: number) => Math.round(n * 100) / 100
 const fmt = (n: number | null) => n == null ? '—' : `$${n.toFixed(0)}`
+
 
 function groupByEnterprise(rows: SummaryRow[]) {
   const map = new Map<string, SummaryRow[]>()
@@ -96,6 +98,20 @@ export default async function EnterpriseSummaryPage({
       .single()
     role = profile?.role ?? 'viewer'
   }
+
+  // 0. Field boundary thumbnails — name → geojson lookup (best-effort, no hard failure)
+  const boundaryByName = new Map<string, GeoJsonGeometry>()
+  try {
+    const { data: boundaryRows } = await supabase
+      .from('field_boundaries')
+      .select('name, geojson')
+      .eq('is_deleted', false)
+    for (const row of boundaryRows ?? []) {
+      if (row.name && row.geojson) {
+        boundaryByName.set(row.name.toLowerCase().trim(), row.geojson as GeoJsonGeometry)
+      }
+    }
+  } catch { /* thumbnails are decorative — never block the page */ }
 
   // 1. Budget costs from farm-budget
   let budgetFields: BudgetField[] = []
@@ -217,10 +233,13 @@ export default async function EnterpriseSummaryPage({
 
                 {/* Mobile card view — shown below md (768px) */}
                 <div className="md:hidden space-y-2 mb-2">
-                  {entRows.map((row, i) => (
+                  {entRows.map((row, i) => {
+                    const thumbGeo = boundaryByName.get(row.fieldName.toLowerCase().trim()) ?? null
+                    return (
                     <div key={i} className="bg-glomalin-surface border border-glomalin-border rounded p-3">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-mono text-glomalin-text font-semibold">
+                        <span className="flex items-center gap-2 text-sm font-mono text-glomalin-text font-semibold">
+                          <span dangerouslySetInnerHTML={{ __html: buildSvgThumb(thumbGeo, 28) }} />
                           {row.fieldName}
                         </span>
                         <span className="text-xs font-mono text-glomalin-muted">
@@ -244,7 +263,7 @@ export default async function EnterpriseSummaryPage({
                         Open on desktop for full detail
                       </p>
                     </div>
-                  ))}
+                  )})}
                 </div>
 
                 {/* Desktop table — shown on md+ */}
@@ -265,9 +284,16 @@ export default async function EnterpriseSummaryPage({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-glomalin-border">
-                      {entRows.map((row, i) => (
+                      {entRows.map((row, i) => {
+                        const thumbGeo = boundaryByName.get(row.fieldName.toLowerCase().trim()) ?? null
+                        return (
                         <tr key={i} className="hover:bg-glomalin-surface/50 transition-colors">
-                          <td className="px-4 py-2.5 text-glomalin-text">{row.fieldName}</td>
+                          <td className="px-4 py-2.5 text-glomalin-text">
+                            <span className="flex items-center gap-2">
+                              <span dangerouslySetInnerHTML={{ __html: buildSvgThumb(thumbGeo, 30) }} />
+                              {row.fieldName}
+                            </span>
+                          </td>
                           <td className="px-4 py-2.5 text-glomalin-muted">{row.crop}</td>
                           <td className="px-4 py-2.5 text-right text-glomalin-muted">{row.acres.toFixed(1)}</td>
                           <td className="px-4 py-2.5 text-right">{fmt(row.seedPerAcre)}</td>
@@ -285,7 +311,7 @@ export default async function EnterpriseSummaryPage({
                             )}
                           </td>
                         </tr>
-                      ))}
+                      )})}
                       {/* Subtotal row */}
                       <tr className="bg-glomalin-surface font-medium text-glomalin-text">
                         <td className="px-4 py-2.5 text-glomalin-accent" colSpan={2}>Subtotal</td>

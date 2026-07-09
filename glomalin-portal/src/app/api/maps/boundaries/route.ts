@@ -27,7 +27,8 @@ export async function GET() {
   // Fetch field boundaries from Supabase
   const { data: rows, error } = await supabase
     .from('field_boundaries')
-    .select('registry_field_id, name, geojson, centroid_lat, centroid_lng')
+    .select('registry_field_id, name, geojson, centroid_lat, centroid_lng, total_acres, last_edited_at, is_deleted')
+    .eq('is_deleted', false)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -125,9 +126,11 @@ export async function GET() {
         crop:              budget?.crop ?? null,
         organic:           isOrganic,
         reportingAcres,
+        total_acres:       row.total_acres ? Number(row.total_acres) : null,
         fsa_reported,
         last_7d_in:        last7d,
         last_30d_in:       last30d,
+        last_edited_at:    row.last_edited_at ?? null,
       },
     }
   })
