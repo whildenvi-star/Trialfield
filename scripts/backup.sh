@@ -10,7 +10,7 @@
 #   0 2 * * * /srv/farm-ops/scripts/backup.sh
 #
 # Backups stored at: /var/backups/farm-ops/YYYY-MM-DD/
-# Retention: 7 days (configurable via RETENTION_DAYS)
+# Retention: 30 days (configurable via RETENTION_DAYS)
 # ============================================================================
 
 set -uo pipefail
@@ -20,7 +20,7 @@ set -uo pipefail
 # ---------------------------------------------------------------------------
 BACKUP_ROOT="/var/backups/farm-ops"
 APP_ROOT="/srv/farm-ops"
-RETENTION_DAYS=7
+RETENTION_DAYS=30
 LOG_FILE="/var/log/farm-ops-backup.log"
 TIMESTAMP=$(date +%Y-%m-%d)
 BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"

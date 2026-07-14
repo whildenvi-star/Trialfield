@@ -2,6 +2,15 @@
 
 Step-by-step instructions to set up the entire platform on a fresh VPS from scratch.
 
+> ⚠️ **NEVER hand-type `rsync` or `scp` to the VPS. Always deploy with `scripts/deploy-vps.sh`.**
+> The deploy script applies `.rsyncignore`, which protects every app's `data/data.json` from
+> being overwritten by stale local copies. A manual rsync on 2026-06-27 bypassed it and
+> destroyed 566 orders and 508 receipts of production seed-inventory data (unrecoverable —
+> the droplet's 7-day backup retention had already purged the last good copy).
+> Also: connection strings for the shared local PostgreSQL must use `127.0.0.1`, not
+> `localhost` — `localhost` resolves to `::1`, which pg_hba does not trust, and dual-writes
+> fail silently.
+
 ---
 
 ## 1. Prerequisites
