@@ -95,7 +95,7 @@ export function CustomerForm({ customer, onSuccess, open, onClose }: CustomerFor
       setError('Name is required.')
       return
     } else if (!form.type) {
-      setError('Customer type is required.')
+      setError('Buyer type is required.')
       return
     }
 
@@ -117,7 +117,7 @@ export function CustomerForm({ customer, onSuccess, open, onClose }: CustomerFor
         const msg: string = json?.error ?? 'Save failed'
         setError(
           msg.includes('Duplicate')
-            ? 'A customer with this name already exists.'
+            ? 'A buyer with this name already exists.'
             : msg
         )
       } else {
@@ -143,9 +143,9 @@ export function CustomerForm({ customer, onSuccess, open, onClose }: CustomerFor
           </div>
         )}
 
-        {/* Customer Details */}
+        {/* Buyer Details */}
         <p className="text-xs text-glomalin-accent font-mono font-semibold uppercase tracking-wide mb-3">
-          Customer Details
+          Buyer Details
         </p>
 
         <div className={fieldClass}>
@@ -270,7 +270,7 @@ export function CustomerForm({ customer, onSuccess, open, onClose }: CustomerFor
             onChange={handleChange}
             className={`${inputClass} resize-none`}
             rows={3}
-            placeholder="Any notes about this customer..."
+            placeholder="Any notes about this buyer..."
           />
         </div>
 
@@ -281,7 +281,7 @@ export function CustomerForm({ customer, onSuccess, open, onClose }: CustomerFor
             disabled={saving}
             className="w-full bg-glomalin-accent text-glomalin-bg font-mono font-semibold text-sm rounded px-4 py-2 hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Customer'}
+            {saving ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Buyer'}
           </button>
         </div>
       </form>

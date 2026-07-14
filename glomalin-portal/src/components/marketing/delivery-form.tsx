@@ -165,7 +165,7 @@ export function DeliveryForm({
     // ── Validation ────────────────────────────────────────────────────────
     const errors: string[] = []
     if (!form.variantId) errors.push('Grain variant is required')
-    if (!form.customerId) errors.push('Customer is required')
+    if (!form.customerId) errors.push('Buyer is required')
     if (!form.deliveryDate) errors.push('Delivery date is required')
     const weightNum = parseFloat(form.netWeightLbs)
     if (!form.netWeightLbs || !isFinite(weightNum)) {
@@ -262,7 +262,7 @@ export function DeliveryForm({
 
         <div className={fieldClass}>
           <label className={labelClass} htmlFor="customerId">
-            Customer
+            Buyer
           </label>
           <select
             id="customerId"
@@ -271,7 +271,7 @@ export function DeliveryForm({
             onChange={handleChange}
             className={inputClass}
           >
-            <option value="">— Select customer —</option>
+            <option value="">— Select buyer —</option>
             {customers.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}

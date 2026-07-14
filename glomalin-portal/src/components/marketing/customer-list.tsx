@@ -88,20 +88,20 @@ export function CustomerListClient({ customers, role }: CustomerListClientProps)
     <div>
       {/* Header row */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h1 className="font-heading text-lg font-semibold text-glomalin-text">Customers</h1>
+        <h1 className="font-heading text-lg font-semibold text-glomalin-text">Buyers</h1>
         <button
           onClick={openCreate}
           className="bg-glomalin-accent text-glomalin-bg font-mono font-semibold text-sm rounded px-4 py-2 hover:opacity-90 transition-opacity"
         >
-          Add Customer
+          Add Buyer
         </button>
       </div>
 
       {/* Table or empty state */}
       {sorted.length === 0 ? (
         <div className="py-16 flex flex-col items-center gap-2">
-          <p className="text-glomalin-muted font-mono text-sm">No customers yet.</p>
-          <p className="text-glomalin-muted font-sans text-sm">Add your first customer to get started.</p>
+          <p className="text-glomalin-muted font-mono text-sm">No buyers yet.</p>
+          <p className="text-glomalin-muted font-sans text-sm">Add your first buyer to get started.</p>
         </div>
       ) : (
         <div className="overflow-x-auto rounded border border-glomalin-border">
@@ -141,7 +141,7 @@ export function CustomerListClient({ customers, role }: CustomerListClientProps)
                   </TableCell>
                   <TableCell className="text-right">
                     <button
-                      aria-label={`Edit customer ${c.name}`}
+                      aria-label={`Edit buyer ${c.name}`}
                       className="text-glomalin-accent font-mono text-xs hover:opacity-80 transition-opacity"
                       onClick={(e) => {
                         e.stopPropagation()
@@ -170,7 +170,7 @@ export function CustomerListClient({ customers, role }: CustomerListClientProps)
           <div className="fixed right-0 top-0 h-full w-[480px] bg-glomalin-surface border-l border-glomalin-border overflow-y-auto">
             <div className="flex items-center justify-between px-4 py-3 border-b border-glomalin-border">
               <h2 className="font-mono text-glomalin-text font-semibold">
-                {editCustomer ? 'Edit Customer' : 'New Customer'}
+                {editCustomer ? 'Edit Buyer' : 'New Buyer'}
               </h2>
               <button
                 onClick={handleClose}

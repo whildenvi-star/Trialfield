@@ -139,7 +139,7 @@ describe('DeliveryListClient', () => {
     const variantSelect = within(form).getByLabelText('Grain Variant')
     fireEvent.change(variantSelect, { target: { value: 'var-1' } })
 
-    const customerSelect = within(form).getByLabelText('Customer')
+    const customerSelect = within(form).getByLabelText('Buyer')
     fireEvent.change(customerSelect, { target: { value: 'cust-1' } })
 
     const dateInput = within(form).getByLabelText('Delivery Date')

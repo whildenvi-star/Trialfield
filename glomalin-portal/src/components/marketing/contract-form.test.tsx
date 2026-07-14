@@ -36,8 +36,8 @@ describe('ContractForm', () => {
   it('renders create mode with empty contracted bushels and no customer selected when contract prop is null', () => {
     render(<ContractForm {...baseProps} contract={null} />)
 
-    // Customer select starts empty
-    const customerSelect = screen.getByRole('combobox', { name: /customer/i })
+    // Buyer select starts empty
+    const customerSelect = screen.getByRole('combobox', { name: /buyer/i })
     expect(customerSelect).toBeDefined()
     expect((customerSelect as HTMLSelectElement).value).toBe('')
 

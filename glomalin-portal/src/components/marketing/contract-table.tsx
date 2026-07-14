@@ -122,7 +122,7 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
         <TableHead>
           <TableRow hover={false}>
             <SortableHeader sortKey="customer" currentKey={sortKey} direction={sortDir} onSort={onSort}>
-              CUSTOMER
+              BUYER
             </SortableHeader>
             <SortableHeader sortKey="variant" currentKey={sortKey} direction={sortDir} onSort={onSort}>
               VARIANT

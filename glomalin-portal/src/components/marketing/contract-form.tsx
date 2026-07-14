@@ -395,7 +395,7 @@ export function ContractForm({
 
     // ── Validation ────────────────────────────────────────────────────────
     const errors: string[] = []
-    if (!form.customerId) errors.push('Customer is required')
+    if (!form.customerId) errors.push('Buyer is required')
     if (!form.variantId) errors.push('Grain variant is required')
     if (!form.instrumentType) errors.push('Instrument type is required')
     const bushelsNum = parseFloat(form.contractedBushels)
@@ -524,10 +524,10 @@ export function ContractForm({
         {/* ── Contract Details ──────────────────────────────────────────── */}
         <SectionDivider label="Contract Details" />
 
-        {/* Customer */}
+        {/* Buyer */}
         <div className={fieldClass}>
           <label className={labelClass} htmlFor="cf-customerId">
-            Customer <span className="text-red-400">*</span>
+            Buyer <span className="text-red-400">*</span>
           </label>
           <select
             id="cf-customerId"

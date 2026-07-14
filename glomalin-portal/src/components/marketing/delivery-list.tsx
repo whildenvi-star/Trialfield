@@ -191,12 +191,12 @@ export function DeliveryListClient({
         </select>
 
         <select
-          aria-label="Customer"
+          aria-label="Buyer"
           value={filterCustomer}
           onChange={(e) => setFilterCustomer(e.target.value)}
           className={filterSelectClass}
         >
-          <option value="">All Customers</option>
+          <option value="">All Buyers</option>
           {uniqueCustomers.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
@@ -223,7 +223,7 @@ export function DeliveryListClient({
             <TableHead>
               <TableRow hover={false}>
                 <SortableHeader sortKey="deliveryDate" currentKey={sortKey} direction={sortDir} onSort={onSort}>DATE</SortableHeader>
-                <SortableHeader sortKey="customer" currentKey={sortKey} direction={sortDir} onSort={onSort}>CUSTOMER</SortableHeader>
+                <SortableHeader sortKey="customer" currentKey={sortKey} direction={sortDir} onSort={onSort}>BUYER</SortableHeader>
                 <SortableHeader sortKey="variant" currentKey={sortKey} direction={sortDir} onSort={onSort}>VARIANT</SortableHeader>
                 <SortableHeader sortKey="netBushels" currentKey={sortKey} direction={sortDir} onSort={onSort} className="text-right">NET BU</SortableHeader>
                 <SortableHeader sortKey="unappliedBushels" currentKey={sortKey} direction={sortDir} onSort={onSort}>UNAPPLIED</SortableHeader>

@@ -307,7 +307,7 @@ export function ContractListClient({
                   direction={sortDir}
                   onSort={onSort}
                 >
-                  CUSTOMER
+                  BUYER
                 </SortableHeader>
                 <SortableHeader
                   sortKey="variant"

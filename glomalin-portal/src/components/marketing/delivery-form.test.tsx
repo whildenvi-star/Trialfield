@@ -32,8 +32,8 @@ describe('DeliveryForm', () => {
 
     // Grain Variant select
     expect(screen.getByLabelText(/grain variant/i)).toBeDefined()
-    // Customer select
-    expect(screen.getByLabelText(/customer/i)).toBeDefined()
+    // Buyer select
+    expect(screen.getByLabelText(/buyer/i)).toBeDefined()
     // Delivery Date input
     expect(screen.getByLabelText(/delivery date/i)).toBeDefined()
     // Net Weight input
@@ -66,7 +66,7 @@ describe('DeliveryForm', () => {
     fireEvent.change(screen.getByLabelText(/grain variant/i), {
       target: { name: 'variantId', value: 'var-1' },
     })
-    fireEvent.change(screen.getByLabelText(/customer/i), {
+    fireEvent.change(screen.getByLabelText(/buyer/i), {
       target: { name: 'customerId', value: 'cust-1' },
     })
     fireEvent.change(screen.getByLabelText(/delivery date/i), {
@@ -104,7 +104,7 @@ describe('DeliveryForm', () => {
     fireEvent.change(screen.getByLabelText(/grain variant/i), {
       target: { name: 'variantId', value: 'var-1' },
     })
-    fireEvent.change(screen.getByLabelText(/customer/i), {
+    fireEvent.change(screen.getByLabelText(/buyer/i), {
       target: { name: 'customerId', value: 'cust-1' },
     })
     fireEvent.change(screen.getByLabelText(/delivery date/i), {

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
   { label: 'Overview',     href: '/app/marketing',              stub: false },
-  { label: 'Customers',    href: '/app/marketing/customers',    stub: false },
+  { label: 'Buyers',       href: '/app/marketing/customers',    stub: false },
   { label: 'Basis Quotes', href: '/app/marketing/basis-quotes', stub: false },
   { label: 'Contracts',    href: '/app/marketing/contracts',    stub: false },
   { label: 'Deliveries',   href: '/app/marketing/deliveries',   stub: false },

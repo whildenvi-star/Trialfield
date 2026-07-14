@@ -120,7 +120,7 @@ export function ApplyDeliveryClient({
             <span className="text-glomalin-text">{delivery.deliveryDate.slice(0, 10)}</span>
           </div>
           <div>
-            <span className="text-glomalin-muted">Customer: </span>
+            <span className="text-glomalin-muted">Buyer: </span>
             <span className="text-glomalin-text">{delivery.customer.name}</span>
           </div>
           <div>

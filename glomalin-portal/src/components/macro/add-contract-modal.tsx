@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface AddContractModalProps {
@@ -11,10 +11,35 @@ interface AddContractModalProps {
 
 const CONTRACT_TYPES = ['Cash', 'HTA', 'Basis', 'Futures', 'DP']
 
+type BuyerOption = { id: string; name: string }
+
 export function AddContractModal({ crops, cropYear, onClose }: AddContractModalProps) {
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Buyer list comes from the shared marketing customers list (organic-cert via
+  // cert-proxy). null = still loading; falls back to free text if the fetch fails
+  // or the list is empty, so the form never blocks on it.
+  const [buyers, setBuyers] = useState<BuyerOption[] | null>(null)
+  const [buyersUnavailable, setBuyersUnavailable] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/cert-proxy/marketing/customers?dropdown=true')
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('fetch failed'))))
+      .then((data: BuyerOption[]) => {
+        if (cancelled) return
+        if (Array.isArray(data) && data.length > 0) setBuyers(data)
+        else setBuyersUnavailable(true)
+      })
+      .catch(() => {
+        if (!cancelled) setBuyersUnavailable(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const [form, setForm] = useState({
     crop: crops[0] ?? '',
@@ -115,13 +140,29 @@ export function AddContractModal({ crops, cropYear, onClose }: AddContractModalP
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs text-glomalin-muted mb-1">Buyer</label>
-              <input
-                type="text"
-                value={form.buyer}
-                onChange={(e) => set('buyer', e.target.value)}
-                placeholder="e.g. Heartland Coop"
-                className="w-full rounded border border-glomalin-border bg-glomalin-bg text-glomalin-text px-3 py-2 text-sm focus:outline-none focus:border-glomalin-accent placeholder:text-glomalin-muted/50"
-              />
+              {buyersUnavailable ? (
+                <input
+                  type="text"
+                  value={form.buyer}
+                  onChange={(e) => set('buyer', e.target.value)}
+                  placeholder="e.g. Heartland Coop"
+                  className="w-full rounded border border-glomalin-border bg-glomalin-bg text-glomalin-text px-3 py-2 text-sm focus:outline-none focus:border-glomalin-accent placeholder:text-glomalin-muted/50"
+                />
+              ) : (
+                <select
+                  value={form.buyer}
+                  onChange={(e) => set('buyer', e.target.value)}
+                  disabled={buyers === null}
+                  className="w-full rounded border border-glomalin-border bg-glomalin-bg text-glomalin-text px-3 py-2 text-sm focus:outline-none focus:border-glomalin-accent disabled:opacity-50"
+                >
+                  <option value="">
+                    {buyers === null ? 'Loading buyers…' : '— select buyer —'}
+                  </option>
+                  {(buyers ?? []).map((b) => (
+                    <option key={b.id} value={b.name}>{b.name}</option>
+                  ))}
+                </select>
+              )}
             </div>
             <div>
               <label className="block text-xs text-glomalin-muted mb-1">Type</label>
