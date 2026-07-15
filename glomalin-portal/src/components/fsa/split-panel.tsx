@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Drawer } from '@/components/compliance/ui/drawer'
 import { CropTypeahead } from '@/components/fsa/crop-typeahead'
+import { INTENDED_USE_VALUES } from '@/lib/fsa/calc'
 
 export interface SplitProposal {
   sub_label: string
@@ -11,7 +12,7 @@ export interface SplitProposal {
   crop: string
   irrigated: boolean
   organic: boolean
-  use: string
+  intended_use: string   // '' | grain | forage | seed | silage
   source_label: string   // "Zone: Hughes East" | "Coverage 2026-05-12" | "Drawn"
 }
 
@@ -76,12 +77,12 @@ export function SplitPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           splits: proposals.map((p) => ({
-            sub_label: p.sub_label,
-            geojson:   p.geojson,
-            crop:      p.crop,
-            irrigated: p.irrigated,
-            organic:   p.organic,
-            use:       p.use || null,
+            sub_label:    p.sub_label,
+            geojson:      p.geojson,
+            crop:         p.crop,
+            irrigated:    p.irrigated,
+            organic:      p.organic,
+            intended_use: p.intended_use || null,
           })),
         }),
       })
@@ -164,13 +165,16 @@ export function SplitPanel({
                 <label className="block text-[9px] font-mono text-glomalin-muted uppercase tracking-widest mb-1">
                   Intended use
                 </label>
-                <input
-                  type="text"
-                  value={p.use}
-                  onChange={(e) => updateProposal(i, { use: e.target.value })}
-                  placeholder="e.g. GR (grain), SE (seed), SI (silage)"
-                  className="w-full bg-glomalin-surface border border-glomalin-border rounded px-2 py-1.5 font-mono text-xs text-glomalin-text placeholder:text-glomalin-muted/40 focus:outline-none focus:border-glomalin-accent"
-                />
+                <select
+                  value={p.intended_use}
+                  onChange={(e) => updateProposal(i, { intended_use: e.target.value })}
+                  className="w-full bg-glomalin-surface border border-glomalin-border rounded px-2 py-1.5 font-mono text-xs text-glomalin-text focus:outline-none focus:border-glomalin-accent"
+                >
+                  <option value="">—</option>
+                  {INTENDED_USE_VALUES.map((v) => (
+                    <option key={v} value={v}>{v.charAt(0).toUpperCase() + v.slice(1)}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Practice toggles */}

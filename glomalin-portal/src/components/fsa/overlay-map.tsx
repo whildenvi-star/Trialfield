@@ -207,7 +207,7 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
       crop:         z.zone_crop && z.zone_crop !== '(none)' ? z.zone_crop : '',
       irrigated:    z.zone_irrigated ?? false,
       organic:      z.zone_organic ?? false,
-      use:          '',
+      intended_use: '',
       source_label: `Zone: ${z.zone_name ?? z.zone_id ?? '?'}`,
     }))
 
@@ -231,7 +231,7 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
       crop:         baseCrop,
       irrigated:    false,
       organic:      false,
-      use:          '',
+      intended_use: '',
       source_label: `Coverage ${ev.op_date ?? '—'} · ${ev.product ?? ev.source_adapter ?? '?'}`,
     }))
 
@@ -339,7 +339,7 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
           crop:         '',
           irrigated:    false,
           organic:      false,
-          use:          '',
+          intended_use: '',
           source_label: 'Drawn (snip)',
         },
         {
@@ -349,7 +349,7 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
           crop:         selectedClu?.crop ?? '',
           irrigated:    false,
           organic:      false,
-          use:          '',
+          intended_use: '',
           source_label: 'Remainder',
         },
       ]

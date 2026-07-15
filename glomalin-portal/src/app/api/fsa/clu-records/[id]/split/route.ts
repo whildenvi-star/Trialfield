@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
+import { INTENDED_USE_VALUES } from '@/lib/fsa/calc'
 
 // POST /api/fsa/clu-records/[id]/split
 //
@@ -8,7 +9,7 @@ import { requireModuleAccess, isGuardError } from '@/lib/supabase/guard'
 // audit trail entry. Export routes filter WHERE superseded=false.
 //
 // Body:
-//   { splits: [{ sub_label, geojson, crop, irrigated, organic, use }] }
+//   { splits: [{ sub_label, geojson, crop, irrigated, organic, intended_use }] }
 //
 // Validation:
 //   - Parent must exist and not already be superseded
@@ -25,7 +26,7 @@ interface SplitSpec {
   crop: string
   irrigated: boolean
   organic: boolean
-  use: string | null
+  intended_use: string | null
 }
 
 export async function POST(
@@ -69,6 +70,16 @@ export async function POST(
     }
   }
 
+  for (const split of splits) {
+    const iu = split.intended_use
+    if (iu != null && iu !== '' && !INTENDED_USE_VALUES.includes(iu as (typeof INTENDED_USE_VALUES)[number])) {
+      return NextResponse.json(
+        { error: `intended_use must be one of: ${INTENDED_USE_VALUES.join(', ')}` },
+        { status: 400 }
+      )
+    }
+  }
+
   // Validate parent exists and is not already superseded
   const { data: parent, error: parentErr } = await supabase
     .from('clu_records')
@@ -92,13 +103,13 @@ export async function POST(
 
   for (const split of splits) {
     const { data: newId, error: splitErr } = await supabase.rpc('create_clu_split', {
-      p_parent_id:  id,
-      p_sub_label:  split.sub_label,
-      p_geojson:    split.geojson,
-      p_crop:       split.crop,
-      p_irrigated:  split.irrigated,
-      p_organic:    split.organic,
-      p_use:        split.use ?? null,
+      p_parent_id:     id,
+      p_sub_label:     split.sub_label,
+      p_geojson:       split.geojson,
+      p_crop:          split.crop,
+      p_irrigated:     split.irrigated,
+      p_organic:       split.organic,
+      p_intended_use:  split.intended_use || null,
     })
 
     if (splitErr) {
