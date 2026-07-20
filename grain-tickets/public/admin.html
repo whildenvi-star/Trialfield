@@ -174,7 +174,7 @@
     </table>
 
     <!-- BUYERS SECTION -->
-    <h2>Buyers <span style="font-size:0.75rem;color:var(--text-light)">(managed in farm-budget)</span></h2>
+    <h2>Buyers <span style="font-size:0.75rem;color:var(--text-light)">(managed in the planner: Marketing &rarr; Buyers)</span></h2>
     <div id="buyer-status" style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.5rem"></div>
     <table id="buyer-table">
       <thead>
@@ -740,7 +740,7 @@
     });
 
     // ============================
-    // BUYERS (read-only from farm-budget)
+    // BUYERS (read-only, synced from the marketing module's customer list)
     // ============================
     var buyers = [];
 
@@ -750,14 +750,14 @@
         if (!data || data._source === 'unavailable' || !Array.isArray(data)) {
           buyers = Array.isArray(data && data.buyers) ? data.buyers : [];
           statusEl.style.color = 'orange';
-          statusEl.textContent = 'farm-budget unavailable — start it on port 3001';
+          statusEl.textContent = 'No buyers yet — add them in the planner under Marketing → Buyers';
           renderBuyers();
           populateColmapBuyerSelect();
           return;
         }
         buyers = data;
         statusEl.style.color = 'var(--text-light)';
-        statusEl.textContent = 'Loaded ' + buyers.length + ' buyer' + (buyers.length === 1 ? '' : 's') + ' from farm-budget';
+        statusEl.textContent = 'Loaded ' + buyers.length + ' buyer' + (buyers.length === 1 ? '' : 's') + ' from the marketing module';
         renderBuyers();
         populateColmapBuyerSelect();
       });

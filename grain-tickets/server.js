@@ -1728,66 +1728,83 @@ app.delete('/api/grain-bins/:id', async (req, res) => {
   }
 });
 
-// --- Buyer proxy from farm-budget ---
-// Farm-budget is the buyer master. Tickets, however, FK to the LOCAL Buyer
-// table (Ticket.buyerId Int) — so every fetch syncs farm-budget buyers into
-// the local table by unique name and callers get local integer ids back.
-// (Before this sync, the destinations dropdown carried farm-budget string ids
-// like "buy_0479", which parseInt() silently nulled on ticket save.)
-const BUDGET_API_URL = process.env.BUDGET_API_URL || 'http://localhost:3001';
+// --- Buyer sync from the marketing module (organic-cert :3004) ---
+// The marketing Customer table is the buyer master — buyers added in the
+// enterprise planner (Marketing → Buyers, office role can write) show up
+// here as ticket destinations. Tickets FK to the LOCAL Buyer table
+// (Ticket.buyerId Int), so every fetch syncs marketing customers into the
+// local table by unique name and callers get local integer ids back. If
+// organic-cert is unreachable, we serve the last-synced local rows so the
+// destinations dropdown keeps working offline.
 
-async function fetchFarmBudgetBuyers() {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+// Marketing CustomerType enum -> compact display strings
+const CUSTOMER_TYPE_LABELS = {
+  ELEVATOR: 'elevator',
+  CO_OP: 'co-op',
+  SPECIALTY: 'specialty',
+  END_USER: 'end user',
+  MALTSTER: 'maltster'
+};
+
+async function fetchMarketingCustomers() {
+  const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
+  if (!token) {
+    console.warn('fetchMarketingCustomers: no ECOSYSTEM_TOKEN/EMBED_TOKEN — cannot reach marketing');
+    return null;
+  }
+  const certUrl = process.env.CERT_SERVICE_URL || 'http://localhost:3004';
   try {
-    const tokenParam = process.env.EMBED_TOKEN ? `?token=${encodeURIComponent(process.env.EMBED_TOKEN)}` : '';
-    const response = await fetch(`${BUDGET_API_URL}/api/buyers${tokenParam}`, { signal: controller.signal });
-    clearTimeout(timeout);
+    const response = await fetch(`${certUrl}/api/marketing/customers`, {
+      headers: { 'x-ecosystem-token': token },
+      signal: AbortSignal.timeout(5000)
+    });
     if (!response.ok) {
-      console.error('fetchFarmBudgetBuyers: farm-budget returned status', response.status);
+      console.error('fetchMarketingCustomers: marketing returned status', response.status);
       return null;
     }
-    const buyers = await response.json();
-    return Array.isArray(buyers) ? buyers : null;
+    const customers = await response.json();
+    return Array.isArray(customers) ? customers : null;
   } catch (fetchErr) {
-    clearTimeout(timeout);
-    console.error('fetchFarmBudgetBuyers: farm-budget unreachable:', fetchErr.message);
+    console.error('fetchMarketingCustomers: marketing unreachable:', fetchErr.message);
     return null;
   }
 }
 
-// Upsert farm-budget buyers into the local Buyer table by unique name.
-// Returns a Map of lowercased name -> local Buyer row.
-async function syncBuyersFromFarmBudget(fbBuyers) {
-  const localByName = new Map();
-  for (const b of fbBuyers) {
-    const name = (b.name || '').trim();
+// Upsert marketing customers into the local Buyer table by unique name.
+// Returns local Buyer rows for the synced customers.
+async function syncBuyersFromMarketing(customers) {
+  const rows = [];
+  for (const c of customers) {
+    const name = (c.name || '').trim();
     if (!name) continue;
+    const type = CUSTOMER_TYPE_LABELS[c.type] || c.type || null;
     try {
       const row = await prisma.buyer.upsert({
         where: { name },
-        update: { shortCode: b.shortCode || null },
-        create: { name, shortCode: b.shortCode || null },
+        update: { shortCode: c.shortCode || null, type, notes: c.notes || null },
+        create: { name, shortCode: c.shortCode || null, type, notes: c.notes || null },
       });
-      localByName.set(name.toLowerCase(), row);
+      rows.push(row);
     } catch (e) {
-      console.error(`syncBuyersFromFarmBudget: upsert failed for "${name}":`, e.message);
+      console.error(`syncBuyersFromMarketing: upsert failed for "${name}":`, e.message);
     }
   }
-  return localByName;
+  return rows;
+}
+
+// Fetch-and-sync with local fallback. Returns local Buyer rows.
+async function getSyncedBuyers() {
+  const customers = await fetchMarketingCustomers();
+  if (customers) return syncBuyersFromMarketing(customers);
+  return prisma.buyer.findMany({ orderBy: { name: 'asc' } });
 }
 
 app.get('/api/buyers', async (req, res) => {
   try {
-    const fbBuyers = await fetchFarmBudgetBuyers();
-    if (!fbBuyers) return res.json({ _source: 'unavailable', buyers: [] });
-    const localByName = await syncBuyersFromFarmBudget(fbBuyers);
-    // Preserve farm-budget shape; add localId so numeric-id consumers work
-    const buyers = fbBuyers.map(b => {
-      const local = localByName.get((b.name || '').trim().toLowerCase());
-      return Object.assign({}, b, { localId: local ? local.id : null });
-    });
-    res.json(buyers);
+    const buyers = await getSyncedBuyers();
+    if (!buyers.length) return res.json({ _source: 'unavailable', buyers: [] });
+    // localId kept for consumers written against the old farm-budget proxy shape
+    res.json(buyers.map(b => Object.assign({}, b, { localId: b.id })));
   } catch (e) {
     console.error('GET /api/buyers error:', e);
     res.status(500).json({ error: 'Internal server error' });
@@ -1800,11 +1817,11 @@ app.get('/api/destinations', async (req, res) => {
     res.set('Cache-Control', 'no-store');
     const [binsResult, buyersResult] = await Promise.allSettled([
       prisma.grainBin.findMany({ orderBy: { name: 'asc' } }),
-      fetchFarmBudgetBuyers()
+      getSyncedBuyers()
     ]);
 
     const bins = binsResult.status === 'fulfilled' ? binsResult.value : [];
-    const fbBuyers = buyersResult.status === 'fulfilled' ? buyersResult.value : null;
+    const buyerRows = buyersResult.status === 'fulfilled' ? buyersResult.value : [];
 
     const binItems = bins.map(b => ({
       id: b.id,
@@ -1814,23 +1831,13 @@ app.get('/api/destinations', async (req, res) => {
     }));
 
     // Buyer ids here MUST be local Buyer ints — Ticket.buyerId FKs to them
-    let buyerItems = [];
-    if (fbBuyers) {
-      const localByName = await syncBuyersFromFarmBudget(fbBuyers);
-      buyerItems = fbBuyers
-        .map(b => {
-          const local = localByName.get((b.name || '').trim().toLowerCase());
-          if (!local) return null;
-          return {
-            id: local.id,
-            type: 'buyer',
-            name: b.name,
-            shortCode: b.shortCode || null,
-            buyerType: b.type || null
-          };
-        })
-        .filter(Boolean);
-    }
+    const buyerItems = buyerRows.map(b => ({
+      id: b.id,
+      type: 'buyer',
+      name: b.name,
+      shortCode: b.shortCode || null,
+      buyerType: b.type || null
+    }));
 
     // Bins grouped first, each group sorted alphabetically
     const merged = [
