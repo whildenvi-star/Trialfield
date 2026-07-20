@@ -12,7 +12,7 @@ interface MobileBottomNavProps {
 const MODULE_GROUPS: { label: string; ids: string[] }[] = [
   { label: 'Field',      ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
   { label: 'Operations', ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
-  { label: 'Finance',    ids: ['performance', 'enterprise-summary', 'farm-budget', 'grain-tickets'] },
+  { label: 'Finance',    ids: ['performance', 'enterprise-summary', 'marketing', 'farm-budget', 'grain-tickets'] },
   { label: 'Inputs',     ids: ['seed-inventory', 'meristem-malt'] },
 ]
 
