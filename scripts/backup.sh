@@ -105,16 +105,19 @@ backup_postgres() {
     db_url=$(grep -E '^DATABASE_URL=' "$env_file" | head -1 | cut -d'=' -f2-)
     # Remove surrounding quotes if present
     db_url=$(echo "$db_url" | sed 's/^["'"'"']//;s/["'"'"']$//')
+    # Strip query string — Prisma URLs carry ?schema=public, which pg_dump rejects
+    db_url="${db_url%%\?*}"
 
     if [ -z "$db_url" ]; then
         log_error "$app_name: DATABASE_URL not found in $env_file"
         return 1
     fi
 
-    if pg_dump --format=custom "$db_url" -f "$dump_file" 2>>"$LOG_FILE"; then
+    if pg_dump --format=custom "$db_url" -f "$dump_file" 2>>"$LOG_FILE" && [ -s "$dump_file" ]; then
         log "OK: $app_name database backed up ($(du -h "$dump_file" | cut -f1))"
     else
-        log_error "$app_name: pg_dump failed"
+        rm -f "$dump_file"
+        log_error "$app_name: pg_dump failed or produced an empty dump"
         return 1
     fi
 }
@@ -134,7 +137,9 @@ fi
 # ---------------------------------------------------------------------------
 log "--- Supabase Database (CRITICAL — only backup of portal data) ---"
 
-PORTAL_ENV="$APP_ROOT/glomalin-portal/.env"
+# The portal keeps its env in .env.local on the droplet; fall back to .env
+PORTAL_ENV="$APP_ROOT/glomalin-portal/.env.local"
+[ -f "$PORTAL_ENV" ] || PORTAL_ENV="$APP_ROOT/glomalin-portal/.env"
 if [ -f "$PORTAL_ENV" ]; then
     SUPABASE_DB_URL=$(grep -E '^SUPABASE_DB_URL=' "$PORTAL_ENV" | head -1 | cut -d'=' -f2-)
     SUPABASE_DB_URL=$(echo "$SUPABASE_DB_URL" | sed 's/^["'"'"']//;s/["'"'"']$//')
@@ -143,15 +148,16 @@ if [ -f "$PORTAL_ENV" ]; then
         log_error "glomalin-portal: SUPABASE_DB_URL not found in $PORTAL_ENV"
     else
         SUPABASE_DUMP="$BACKUP_DIR/postgres/glomalin-portal.dump"
-        if pg_dump --format=custom "$SUPABASE_DB_URL" -f "$SUPABASE_DUMP" 2>>"$LOG_FILE"; then
+        if pg_dump --format=custom "$SUPABASE_DB_URL" -f "$SUPABASE_DUMP" 2>>"$LOG_FILE" && [ -s "$SUPABASE_DUMP" ]; then
             log "OK: glomalin-portal (Supabase) backed up ($(du -h "$SUPABASE_DUMP" | cut -f1))"
             log "    *** This is the ONLY copy of portal data — Supabase free tier has NO built-in backups ***"
         else
+            rm -f "$SUPABASE_DUMP"
             log_error "glomalin-portal: pg_dump of Supabase database FAILED — portal data is NOT backed up"
         fi
     fi
 else
-    log_error "glomalin-portal: .env file not found at $PORTAL_ENV"
+    log_error "glomalin-portal: env file not found at $APP_ROOT/glomalin-portal/.env.local or .env"
 fi
 
 # ---------------------------------------------------------------------------

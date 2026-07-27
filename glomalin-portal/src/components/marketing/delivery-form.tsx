@@ -21,8 +21,40 @@ export interface DeliveryRow {
   notes: string | null
   appliedBushels: number            // computed
   unappliedBushels: number          // computed
+  source?: 'grain-ticket' | 'manual'  // derived server-side from the notes marker
+  sourceTicketId?: string | null      // grain-tickets id when source === 'grain-ticket'
   customer: { id: string; name: string; shortCode: string }
   variant: { id: string; name: string }
+}
+
+// ─── Duplicate detection ───────────────────────────────────────────────────
+// Grain tickets sync buyer-bound loads into deliveries automatically, so a
+// manual entry can double-count a load. Flag likely duplicates before create.
+
+export type DuplicateCandidate = Pick<
+  DeliveryRow,
+  'id' | 'scaleTicketNum' | 'customerId' | 'variantId' | 'deliveryDate' | 'netBushels' | 'source'
+> & { customer?: { name: string }; variant?: { name: string } }
+
+export function findPossibleDuplicates(
+  form: { scaleTicketNum: string; customerId: string; variantId: string; deliveryDate: string; netBushels: string },
+  existing: DuplicateCandidate[]
+): DuplicateCandidate[] {
+  const ticketNum = form.scaleTicketNum.trim().toLowerCase()
+  const bushels = parseFloat(form.netBushels)
+  return existing.filter((d) => {
+    if (ticketNum && d.scaleTicketNum && d.scaleTicketNum.trim().toLowerCase() === ticketNum) {
+      return true
+    }
+    return (
+      isFinite(bushels) &&
+      bushels > 0 &&
+      d.customerId === form.customerId &&
+      d.variantId === form.variantId &&
+      d.deliveryDate.split('T')[0] === form.deliveryDate &&
+      Math.abs(d.netBushels - bushels) <= bushels * 0.02
+    )
+  })
 }
 
 // ─── Form state ────────────────────────────────────────────────────────────
@@ -83,6 +115,7 @@ interface DeliveryFormProps {
   onSuccess: () => void
   open: boolean
   onDirtyChange?: (isDirty: boolean) => void
+  existingDeliveries?: DuplicateCandidate[]
 }
 
 // ─── Styling constants ─────────────────────────────────────────────────────
@@ -115,6 +148,10 @@ function numOrNull(s: string): number | null {
 
 // ─── DeliveryForm component ────────────────────────────────────────────────
 
+// Fields that participate in duplicate matching — changing any of them
+// invalidates a previous "Log Anyway" acknowledgment
+const DUP_MATCH_FIELDS = ['scaleTicketNum', 'customerId', 'variantId', 'deliveryDate', 'netBushels']
+
 export function DeliveryForm({
   delivery,
   customers,
@@ -122,14 +159,18 @@ export function DeliveryForm({
   onSuccess,
   open,
   onDirtyChange,
+  existingDeliveries = [],
 }: DeliveryFormProps) {
   const isEdit = delivery !== null
+  const isTicketSourced = delivery?.source === 'grain-ticket'
 
   const [form, setForm] = useState<DeliveryFormState>(
     delivery ? deliveryToForm(delivery) : EMPTY_DELIVERY_FORM
   )
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [duplicateMatches, setDuplicateMatches] = useState<DuplicateCandidate[]>([])
+  const [dupAcknowledged, setDupAcknowledged] = useState(false)
   const initialFormRef = useRef<DeliveryFormState>(
     delivery ? deliveryToForm(delivery) : EMPTY_DELIVERY_FORM
   )
@@ -141,6 +182,8 @@ export function DeliveryForm({
       setForm(initial)
       initialFormRef.current = initial
       setError(null)
+      setDuplicateMatches([])
+      setDupAcknowledged(false)
       onDirtyChange?.(false)
     }
   }, [open, delivery]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -151,6 +194,10 @@ export function DeliveryForm({
     >
   ) {
     const { name, value } = e.target
+    if (DUP_MATCH_FIELDS.includes(name)) {
+      setDuplicateMatches([])
+      setDupAcknowledged(false)
+    }
     setForm((prev) => {
       const next = { ...prev, [name]: value }
       const dirty = JSON.stringify(next) !== JSON.stringify(initialFormRef.current)
@@ -179,6 +226,19 @@ export function DeliveryForm({
     if (errors.length > 0) {
       setError(errors.join('. '))
       return
+    }
+
+    // ── Duplicate guard (create only) ─────────────────────────────────────
+    // Buyer-bound grain tickets sync here automatically — warn once, then let
+    // the second submit ("Log Anyway") through
+    if (!isEdit && !dupAcknowledged) {
+      const matches = findPossibleDuplicates(form, existingDeliveries)
+      if (matches.length > 0) {
+        setDuplicateMatches(matches)
+        setDupAcknowledged(true)
+        setError(null)
+        return
+      }
     }
 
     setSaving(true)
@@ -236,6 +296,42 @@ export function DeliveryForm({
             {error}
           </div>
         )}
+
+        {/* Ticket-sourced: read-only notice */}
+        {isTicketSourced && (
+          <div className="bg-glomalin-info/10 border border-glomalin-info/40 text-glomalin-info text-sm font-mono px-3 py-2 rounded mb-3">
+            Synced from grain ticket #{delivery?.sourceTicketId ?? '?'}. Edits made
+            here would be overwritten by the next ticket sync —{' '}
+            <a href="/app/grain-tickets" className="underline hover:opacity-80">
+              edit the ticket in Grain Tickets
+            </a>
+            .
+          </div>
+        )}
+
+        {/* Possible-duplicate warning (create only) */}
+        {duplicateMatches.length > 0 && (
+          <div
+            role="alert"
+            className="bg-glomalin-warning/10 border border-glomalin-warning text-glomalin-warning text-sm font-mono px-3 py-2 rounded mb-3"
+          >
+            <p className="font-semibold mb-1">
+              Possible duplicate — grain tickets sync here automatically.
+            </p>
+            <ul className="list-disc pl-4 space-y-0.5">
+              {duplicateMatches.map((m) => (
+                <li key={m.id}>
+                  {m.deliveryDate.split('T')[0]} · {m.customer?.name ?? m.customerId} ·{' '}
+                  {m.netBushels.toFixed(2)} bu
+                  {m.scaleTicketNum ? ` · ticket ${m.scaleTicketNum}` : ''}
+                  {m.source === 'grain-ticket' ? ' · from grain ticket' : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <fieldset disabled={isTicketSourced} className="min-w-0">
 
         {/* ── Section 1: Delivery Details ───────────────────────────────── */}
         <SectionDivider label="Delivery Details" />
@@ -447,13 +543,22 @@ export function DeliveryForm({
         </div>
 
         {/* ── Submit ────────────────────────────────────────────────────── */}
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full bg-glomalin-accent text-black font-mono font-semibold text-sm rounded-md px-4 py-2.5 hover:opacity-90 disabled:opacity-50 transition-opacity mt-2"
-        >
-          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Log Delivery'}
-        </button>
+        {!isTicketSourced && (
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full bg-glomalin-accent text-black font-mono font-semibold text-sm rounded-md px-4 py-2.5 hover:opacity-90 disabled:opacity-50 transition-opacity mt-2"
+          >
+            {saving
+              ? 'Saving…'
+              : isEdit
+              ? 'Save Changes'
+              : duplicateMatches.length > 0
+              ? 'Log Anyway'
+              : 'Log Delivery'}
+          </button>
+        )}
+        </fieldset>
       </form>
     </div>
   )

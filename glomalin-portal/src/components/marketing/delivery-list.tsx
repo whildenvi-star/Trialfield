@@ -12,6 +12,7 @@ import {
   SortableHeader,
   useSortState,
 } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import { Empty } from '@/components/ui/empty'
 import { formatBu } from '@/lib/fmt'
 import { DeliveryForm, DeliveryRow } from '@/components/marketing/delivery-form'
@@ -225,6 +226,7 @@ export function DeliveryListClient({
                 <SortableHeader sortKey="deliveryDate" currentKey={sortKey} direction={sortDir} onSort={onSort}>DATE</SortableHeader>
                 <SortableHeader sortKey="customer" currentKey={sortKey} direction={sortDir} onSort={onSort}>BUYER</SortableHeader>
                 <SortableHeader sortKey="variant" currentKey={sortKey} direction={sortDir} onSort={onSort}>VARIANT</SortableHeader>
+                <TableHeader>SOURCE</TableHeader>
                 <SortableHeader sortKey="netBushels" currentKey={sortKey} direction={sortDir} onSort={onSort} className="text-right">NET BU</SortableHeader>
                 <SortableHeader sortKey="unappliedBushels" currentKey={sortKey} direction={sortDir} onSort={onSort}>UNAPPLIED</SortableHeader>
                 <TableHeader className="text-right">ACTIONS</TableHeader>
@@ -236,6 +238,13 @@ export function DeliveryListClient({
                   <TableCell className="font-mono text-sm text-glomalin-muted">{d.deliveryDate.slice(0, 10)}</TableCell>
                   <TableCell className="text-glomalin-text text-sm">{d.customer?.name ?? EM_DASH}</TableCell>
                   <TableCell className="text-glomalin-text text-sm">{d.variant?.name ?? EM_DASH}</TableCell>
+                  <TableCell>
+                    {d.source === 'grain-ticket' ? (
+                      <Badge variant="info" title="Synced from Grain Tickets">Ticket</Badge>
+                    ) : (
+                      <span className="text-glomalin-muted font-mono text-sm">{EM_DASH}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="font-mono text-sm text-right">{formatBu(d.netBushels)}</TableCell>
                   <TableCell className={`font-mono text-sm ${d.unappliedBushels > 0 ? 'text-glomalin-warning' : 'text-glomalin-muted'}`}>
                     {formatBu(d.unappliedBushels)}
@@ -244,11 +253,11 @@ export function DeliveryListClient({
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button
-                        aria-label={`Edit delivery ${d.id}`}
+                        aria-label={`${d.source === 'grain-ticket' ? 'View' : 'Edit'} delivery ${d.id}`}
                         onClick={() => openEdit(d)}
                         className="text-glomalin-accent font-mono text-xs hover:opacity-80 transition-opacity"
                       >
-                        Edit
+                        {d.source === 'grain-ticket' ? 'View' : 'Edit'}
                       </button>
                       <button
                         aria-label={`Apply delivery ${d.id}`}
@@ -273,7 +282,11 @@ export function DeliveryListClient({
             <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4 border-b border-glomalin-border bg-glomalin-surface">
               <div>
                 <h2 className="font-mono text-glomalin-text font-semibold text-sm tracking-wide">
-                  {editDelivery ? 'Edit Delivery' : 'Log Delivery'}
+                  {editDelivery
+                    ? editDelivery.source === 'grain-ticket'
+                      ? 'View Delivery'
+                      : 'Edit Delivery'
+                    : 'Log Delivery'}
                 </h2>
                 {editDelivery && (
                   <p className="font-mono text-[10px] text-glomalin-muted/70 uppercase tracking-widest mt-0.5">
@@ -297,6 +310,7 @@ export function DeliveryListClient({
                 onSuccess={handleSaved}
                 open={drawerOpen}
                 onDirtyChange={(dirty) => { formIsDirtyRef.current = dirty }}
+                existingDeliveries={deliveries}
               />
             </div>
           </div>

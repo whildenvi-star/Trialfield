@@ -639,6 +639,8 @@ async function pushDeliveryToMarketing(ticket, action) {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       console.error(`Marketing push: ticket ${ticket.id} -> http-${response.status}`, result.error || '');
+    } else if (result.status === 'skipped') {
+      console.warn(`Marketing push: ticket ${ticket.id} -> skipped (${result.reason || 'unknown'}${result.cropName ? `: no variant "${result.cropName}" for ${result.cropYear}` : ''})`);
     } else {
       console.log(`Marketing push: ticket ${ticket.id} -> ${result.status}${result.applyOutcome ? ` (${result.applyOutcome}, ${result.appliedBushels || 0} bu applied)` : ''}`);
     }

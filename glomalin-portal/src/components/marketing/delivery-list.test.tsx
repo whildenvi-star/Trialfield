@@ -63,7 +63,9 @@ const deliveries = [
     scaleTicketNum: 'SCL-002',
     loadoutEventId: null,
     settlementLineId: null,
-    notes: null,
+    notes: '[grain-ticket:42]',
+    source: 'grain-ticket' as const,
+    sourceTicketId: '42',
     variant: { id: 'var-1', name: 'Yellow Corn' },
     customer: { id: 'cust-1', name: 'Test Elevator', shortCode: 'TE' },
   },
@@ -102,8 +104,8 @@ describe('DeliveryListClient', () => {
       (row) => !within(row).queryByText('(unmatched)')
     )!
     const cells = within(matchedRow).getAllByRole('cell')
-    // Unapplied is the 5th cell (index 4)
-    const unappliedCell = cells[4]
+    // Unapplied is the 6th cell (index 5 — SOURCE column sits after VARIANT)
+    const unappliedCell = cells[5]
     expect(unappliedCell.className).toContain('text-glomalin-muted')
     expect(unappliedCell.className).not.toContain('text-glomalin-warning')
   })
@@ -142,8 +144,10 @@ describe('DeliveryListClient', () => {
     const customerSelect = within(form).getByLabelText('Buyer')
     fireEvent.change(customerSelect, { target: { value: 'cust-1' } })
 
+    // A date with no existing delivery for this buyer/variant — the duplicate
+    // guard would otherwise intercept the first submit
     const dateInput = within(form).getByLabelText('Delivery Date')
-    fireEvent.change(dateInput, { target: { value: '2025-09-15' } })
+    fireEvent.change(dateInput, { target: { value: '2025-11-01' } })
 
     const weightInput = within(form).getByLabelText('Net Weight (lbs)')
     fireEvent.change(weightInput, { target: { value: '56000' } })
@@ -160,5 +164,24 @@ describe('DeliveryListClient', () => {
 
     expect(fetchMock).toHaveBeenCalled()
     expect(window.location.reload).toHaveBeenCalled()
+  })
+
+  // Guardrails: ticket-sourced rows get a badge and a View (not Edit) action
+  it('ticket-sourced row shows the Ticket badge and a View action; manual row shows Edit and no badge', () => {
+    render(<DeliveryListClient {...baseProps} />)
+    const tbody = document.querySelector('tbody')!
+
+    expect(within(tbody).getByText('Ticket')).toBeTruthy()
+    expect(within(tbody).getByRole('button', { name: /view delivery del-2/i })).toBeTruthy()
+    expect(within(tbody).getByRole('button', { name: /edit delivery del-1/i })).toBeTruthy()
+    expect(within(tbody).queryByRole('button', { name: /edit delivery del-2/i })).toBeNull()
+  })
+
+  it('opening a ticket-sourced row titles the drawer View Delivery', () => {
+    render(<DeliveryListClient {...baseProps} />)
+    const tbody = document.querySelector('tbody')!
+    fireEvent.click(within(tbody).getByRole('button', { name: /view delivery del-2/i }))
+    expect(screen.getByText('View Delivery')).toBeTruthy()
+    expect(screen.getByText(/synced from grain ticket #42/i)).toBeTruthy()
   })
 })
