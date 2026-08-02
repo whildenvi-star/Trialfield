@@ -159,7 +159,7 @@
 - [x] Phase 69: Field Operations TC Log (0/0 plans) (completed 2026-04-18)
 - [ ] Phase 70: Interactive Field Map (0/0 plans)
 - [x] Phase 71: Unified Field Operations View (0/0 plans) (completed 2026-04-20)
-- [ ] Phase 72: Acreage Reconciliation Tool (0/0 plans)
+- [ ] Phase 72: Acreage Reconciliation Tool (0/7 plans)
 
 </details>
 
@@ -574,5 +574,14 @@ Plans:
 
 **Requirements:** ACR-01, ACR-02, ACR-03, ACR-04, ACR-05, ACR-06
 
-**Plans:** 0/0 plans complete
+**Plans:** 7 plans
+
+Plans:
+- [ ] 72-01-PLAN.md — Configurable Green/Yellow/Red threshold engine + config table + admin CRUD (ACR-02)
+- [ ] 72-02-PLAN.md — Fold coverage_events into farm reconciliation + wire orphaned ReconciliationView as 6th Acreage-tab view (ACR-02, ACR-04, ACR-05)
+- [ ] 72-03-PLAN.md — Manual spatial editing: CLU merge (ST_Union) + draw-from-scratch RPCs, routes, panel (ACR-03)
+- [ ] 72-04-PLAN.md — FSA CLU shapefile admin import + clu_boundaries MultiPolygon widen (ACR-01)
+- [ ] 72-05-PLAN.md — RMA output schema (grower/share%/unit#/policy#/failed-acre/source-flag) + shapefile DBF extension (ACR-05, ACR-06)
+- [ ] 72-06-PLAN.md — FieldView live OAuth activation (human-verify) + Vercel cron sync route (ACR-01)
+- [ ] 72-07-PLAN.md — [BLOCKING] Apply migrations 037-041 to live Supabase + whole-phase verification
 
