@@ -51,7 +51,7 @@ Project convention: colocated `*.test.ts(x)` files next to source (e.g. `src/lib
 | 72-05-02 | 05 | 2 | ACR-06 | T-72-05-01 | DBF fields ≤10 chars, no collisions | unit | `npx vitest run src/app/api/fsa/export-shapefile/route.test.ts` | ❌ W0 | ⬜ pending |
 | 72-05-03 | 05 | 2 | ACR-05 | T-72-05-02 | RMA field validation + escapeCell hardening | tsc-gate | `npx tsc --noEmit` (no clu-workspace/clu-records/calc errors) | ✅ | ⬜ pending |
 | 72-06-* | 06 | 1 | ACR-01 | — | FieldView OAuth (credential-blocked) | manual | human-verify checkpoint (no live credentials) | N/A | ⬜ pending |
-| 72-07-02 | 07 | 3 | ALL | T-72-07-01 | Full suite green post-migration | full+tsc | `npm run test && npx tsc --noEmit` | ✅ | ⬜ pending |
+| 72-07-02 | 07 | 3 | ALL | T-72-07-01 | Full suite green + merge smoke stamps source_flag='manual' | full+tsc | `npm run test && npx tsc --noEmit` | ✅ | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
