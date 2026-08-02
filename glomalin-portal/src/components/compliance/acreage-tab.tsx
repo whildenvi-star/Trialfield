@@ -48,13 +48,16 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
     return out
   }, [records, farmFilter, cropFilter])
 
-  // Overlay and Map views need full height — remove max-w constraint
-  const wrapClass = (view === 'overlay' || view === 'map') ? 'h-[calc(100vh-220px)]' : 'max-w-7xl mx-auto px-0'
+  // Overlay and Map views: flex column sized to the real remaining viewport —
+  // toggle row is shrink-0, map takes flex-1, nothing runs below the fold
+  const wrapClass = (view === 'overlay' || view === 'map')
+    ? 'flex flex-col h-[calc(100vh-280px)] min-h-[520px]'
+    : 'max-w-7xl mx-auto px-0'
 
   return (
     <div className={wrapClass}>
       {/* Header bar: cross-tab nav + view toggle */}
-      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-glomalin-border">
+      <div className="flex items-center gap-3 mb-2 pb-2 border-b border-glomalin-border shrink-0">
         <ActionButton
           variant="secondary"
           size="sm"
@@ -86,7 +89,10 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
       </div>
 
       {view === 'map' && (
-        <ReportingMap farmFilter={farmFilter} />
+        <ReportingMap
+          farmFilter={farmFilter}
+          className="relative flex flex-1 min-h-0 border border-glomalin-border rounded overflow-hidden"
+        />
       )}
 
       {view === 'clu' && (
@@ -107,7 +113,9 @@ export function AcreageTab({ records, loadError, farmFilter, cropFilter, navigat
       )}
 
       {view === 'overlay' && (
-        <OverlayMap cropYear={CURRENT_CROP_YEAR} />
+        <div className="flex-1 min-h-0">
+          <OverlayMap cropYear={CURRENT_CROP_YEAR} />
+        </div>
       )}
 
       {view === 'coverage' && (

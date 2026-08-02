@@ -155,7 +155,7 @@ export function ComplianceShell({
   return (
     <div>
       {/* ── Module header ──────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-y-2 mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-y-2 mb-3">
         <div>
           <h1 className="font-heading text-2xl font-bold tracking-wide text-glomalin-bright uppercase leading-tight">
             Compliance Hub
@@ -249,7 +249,7 @@ export function ComplianceShell({
       </div>
 
       {/* ── Tab content ────────────────────────────────────────────── */}
-      <div className={activeTab === 'overview' ? '' : 'mt-5'}>
+      <div className={activeTab === 'overview' ? '' : 'mt-3'}>
         {renderTabContent()}
       </div>
     </div>

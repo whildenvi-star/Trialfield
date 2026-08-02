@@ -110,6 +110,24 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
   const [splitProposals, setSplitProposals]         = useState<SplitProposal[]>([])
   const [splitPanelOpen, setSplitPanelOpen]         = useState(false)
   const [expandedFarms, setExpandedFarms]           = useState<Set<string>>(new Set())
+  const [fullscreen, setFullscreen]                 = useState(false)
+
+  // MapLibre canvas doesn't follow CSS size changes — resize after toggle
+  useEffect(() => {
+    mapRef.current?.resize()
+    const raf = requestAnimationFrame(() => mapRef.current?.resize())
+    return () => cancelAnimationFrame(raf)
+  }, [fullscreen])
+
+  // Escape exits fullscreen (unless a child dialog already handled it)
+  useEffect(() => {
+    if (!fullscreen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) setFullscreen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [fullscreen])
 
   // Fetch CLU list on mount
   useEffect(() => {
@@ -509,7 +527,13 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
   const selectedClu = cluList.find((c) => c.id === selectedId) ?? null
 
   return (
-    <div className="relative flex h-full min-h-[500px] border border-glomalin-border rounded overflow-hidden">
+    <div
+      className={
+        fullscreen
+          ? 'fixed inset-0 z-[70] flex bg-glomalin-bg'
+          : 'relative flex h-full min-h-[480px] border border-glomalin-border rounded overflow-hidden'
+      }
+    >
 
       {/* ── Left sidebar: CLU list ─────────────────────────────────────── */}
       <div className="w-60 shrink-0 bg-glomalin-surface border-r border-glomalin-border flex flex-col overflow-hidden">
@@ -604,6 +628,15 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
       {/* ── Map container ────────────────────────────────────────────────── */}
       <div className="relative flex-1 min-w-0">
         <div ref={mapContainerRef} className="w-full h-full" />
+
+        {/* Expand / exit fullscreen */}
+        <button
+          onClick={() => setFullscreen((v) => !v)}
+          className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-glomalin-border bg-glomalin-surface/90 backdrop-blur font-mono text-[11px] text-glomalin-text hover:border-glomalin-accent transition-colors"
+          title={fullscreen ? 'Exit fullscreen (Esc)' : 'Expand map to fullscreen'}
+        >
+          {fullscreen ? '✕ Exit' : '⛶ Expand'}
+        </button>
 
         {loading && (
           <div className="absolute inset-0 flex items-center justify-center bg-glomalin-bg/80">

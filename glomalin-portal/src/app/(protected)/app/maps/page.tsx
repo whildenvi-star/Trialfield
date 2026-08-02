@@ -17,7 +17,7 @@ export default async function MapsPage() {
   const isAdmin = profile?.role === 'admin'
 
   return (
-    <div className="fixed top-0 bottom-0 right-0 left-0 md:left-[220px]">
+    <div className="fixed top-0 bottom-0 right-0 left-0 md:left-[var(--sidebar-w)]">
       <Suspense fallback={<div className="w-full h-full bg-[#080604] animate-pulse" />}>
         <FieldMap isAdmin={isAdmin} />
       </Suspense>

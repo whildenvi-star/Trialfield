@@ -13,7 +13,7 @@ export function EmbedBreadcrumb({ moduleLabel }: EmbedBreadcrumbProps) {
       className="fixed right-0 z-40 flex items-center justify-between px-4 sm:px-6 border-b border-glomalin-border bg-glomalin-surface"
       style={{
         top: 0,
-        left: 'var(--sidebar-w, 220px)',
+        left: 'var(--sidebar-w, 64px)',
         height: 'var(--embed-breadcrumb-h, 36px)',
       }}
     >

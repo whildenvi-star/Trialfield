@@ -97,6 +97,26 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set())
   const [batchBusy, setBatchBusy] = useState(false)
   const [batchError, setBatchError] = useState<string | null>(null)
+  // Fullscreen expand — container flips to fixed inset-0
+  const [expanded, setExpanded] = useState(false)
+
+  // MapLibre canvas doesn't follow CSS size changes — resize after toggle,
+  // twice: once now, once after the layout frame settles
+  useEffect(() => {
+    mapRef.current?.resize()
+    const raf = requestAnimationFrame(() => mapRef.current?.resize())
+    return () => cancelAnimationFrame(raf)
+  }, [expanded])
+
+  // Escape exits expanded mode (unless a child dialog already handled it)
+  useEffect(() => {
+    if (!expanded) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) setExpanded(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [expanded])
 
   // Sync with app-level dark/light theme — watches the 'light' class on <html>
   useEffect(() => {
@@ -731,7 +751,13 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
   const totalGreen = farms.reduce((s, f) => s + f.green, 0)
 
   return (
-    <div className={className ?? 'relative flex h-[calc(100vh-240px)] min-h-[500px] border border-glomalin-border rounded overflow-hidden'}>
+    <div
+      className={
+        expanded
+          ? 'fixed inset-0 z-[70] flex bg-glomalin-bg'
+          : (className ?? 'relative flex h-[calc(100vh-240px)] min-h-[500px] border border-glomalin-border rounded overflow-hidden')
+      }
+    >
       {/* Farm list sidebar */}
       <div className="w-64 shrink-0 bg-glomalin-surface border-r border-glomalin-border flex flex-col overflow-hidden">
         {/* Overall progress header */}
@@ -1024,6 +1050,15 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
           className="w-full h-full transition-[filter] duration-700"
           style={nightMode ? { filter: 'brightness(0.48) saturate(0.60) contrast(1.20)' } : undefined}
         />
+
+        {/* Expand / exit fullscreen */}
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded border border-glomalin-border bg-glomalin-surface/90 backdrop-blur font-mono text-[11px] text-glomalin-text hover:border-glomalin-accent transition-colors"
+          title={expanded ? 'Exit fullscreen (Esc)' : 'Expand map to fullscreen'}
+        >
+          {expanded ? '✕ Exit' : '⛶ Expand'}
+        </button>
 
         {/* Loading overlay */}
         {loading && (
