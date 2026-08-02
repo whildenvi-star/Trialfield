@@ -387,7 +387,7 @@ const DBF_FIELDS: DbfField[] = [
 | A4 | Merge (`ST_Union`) is genuinely absent — confirmed via full-text search of `supabase/migrations/` for `ST_Union` and of `src/` for "merge" (excluding unrelated "merged"/promise-merge usages) | Phase Requirements (ACR-03), Architecture Patterns | Low risk — this was a direct grep, high confidence |
 | A5 | n8n is not deployed on the VPS droplet — confirmed by absence from `ecosystem.config.js` (the only process manager config found) and no docker-compose/n8n references anywhere in the repo | Environment Availability | If n8n runs in a Docker container managed outside this repo (invisible to a repo-only search), the D-04 fallback decision (Vercel Cron) could be based on incomplete information. **Recommend an explicit human-verify checkpoint**: "confirm n8n is/isn't running on the droplet via SSH" before committing to the Vercel Cron approach |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 The five questions CONTEXT.md explicitly delegates to research are answered here directly (not deferred further):
 
