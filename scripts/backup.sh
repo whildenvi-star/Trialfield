@@ -27,6 +27,11 @@ BACKUP_DIR="$BACKUP_ROOT/$TIMESTAMP"
 
 ERROR_COUNT=0
 
+# Use the newest installed pg_dump — the postgresql-common wrapper resolves to
+# the local cluster's version (16), which refuses newer servers (Supabase is 17)
+PG_DUMP=$(ls /usr/lib/postgresql/*/bin/pg_dump 2>/dev/null | sort -V | tail -1)
+[ -n "$PG_DUMP" ] || PG_DUMP=pg_dump
+
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
@@ -113,7 +118,7 @@ backup_postgres() {
         return 1
     fi
 
-    if pg_dump --format=custom "$db_url" -f "$dump_file" 2>>"$LOG_FILE" && [ -s "$dump_file" ]; then
+    if "$PG_DUMP" --format=custom "$db_url" -f "$dump_file" 2>>"$LOG_FILE" && [ -s "$dump_file" ]; then
         log "OK: $app_name database backed up ($(du -h "$dump_file" | cut -f1))"
     else
         rm -f "$dump_file"
@@ -148,7 +153,7 @@ if [ -f "$PORTAL_ENV" ]; then
         log_error "glomalin-portal: SUPABASE_DB_URL not found in $PORTAL_ENV"
     else
         SUPABASE_DUMP="$BACKUP_DIR/postgres/glomalin-portal.dump"
-        if pg_dump --format=custom "$SUPABASE_DB_URL" -f "$SUPABASE_DUMP" 2>>"$LOG_FILE" && [ -s "$SUPABASE_DUMP" ]; then
+        if "$PG_DUMP" --format=custom "$SUPABASE_DB_URL" -f "$SUPABASE_DUMP" 2>>"$LOG_FILE" && [ -s "$SUPABASE_DUMP" ]; then
             log "OK: glomalin-portal (Supabase) backed up ($(du -h "$SUPABASE_DUMP" | cut -f1))"
             log "    *** This is the ONLY copy of portal data — Supabase free tier has NO built-in backups ***"
         else
