@@ -9,6 +9,74 @@
   var foViewMode = 'perAcre'; // 'perAcre' | 'perField'
   var enterpriseStats = null; // per-line medians for outlier detection, computed at editor open
 
+  // --- One-page scroll layout: section aliases, jump-scroll, scrollspy ---
+  // Old section names (pre-merge) map to the section that absorbed them so
+  // defaultSection deep-links from other files keep working.
+  var SECTION_ALIASES = {
+    seed: 'identity',
+    aux: 'yield',
+    inputs: 'fieldops-unified',
+    machinery: 'fieldops-unified',
+    fieldops: 'fieldops-unified'
+  };
+
+  function resolveSection(s) { return SECTION_ALIASES[s] || s || 'identity'; }
+
+  function scrollToSection(section, instant) {
+    var container = document.querySelector('.editor-sections');
+    var panel = document.querySelector('.editor-section-panel[data-section="' + section + '"]');
+    if (!container || !panel || panel.offsetParent === null) return; // role-hidden target → no-op
+    var top = panel.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 8;
+    if (instant) {
+      container.scrollTop = Math.max(0, top);
+    } else {
+      container.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
+  }
+
+  var spyTicking = false;
+  function updateScrollSpy() {
+    var container = document.querySelector('.editor-sections');
+    if (!container) return;
+    var panels = Array.prototype.filter.call(
+      document.querySelectorAll('.editor-section-panel'),
+      function (p) { return p.offsetParent !== null; }); // skip role-hidden
+    if (!panels.length) return;
+    var cTop = container.getBoundingClientRect().top;
+    var active = panels[0];
+    panels.forEach(function (p) {
+      if (p.getBoundingClientRect().top - cTop <= 40) active = p;
+    });
+    // At the very bottom, highlight the last visible section
+    if (container.scrollTop + container.clientHeight >= container.scrollHeight - 2) {
+      active = panels[panels.length - 1];
+    }
+    var section = active.getAttribute('data-section');
+    document.querySelectorAll('.ed-nav-item').forEach(function (li) {
+      li.classList.toggle('active', li.getAttribute('data-section') === section);
+    });
+  }
+
+  (function () {
+    var container = document.querySelector('.editor-sections');
+    if (!container) return;
+    container.addEventListener('scroll', function () {
+      if (spyTicking) return;
+      spyTicking = true;
+      requestAnimationFrame(function () { spyTicking = false; updateScrollSpy(); });
+      // position:fixed autocomplete dropdowns detach on scroll — close them
+      document.querySelectorAll('.prod-ac-dropdown').forEach(function (d) { d.style.display = 'none'; });
+    });
+    // Section collapse/expand via card headers
+    container.addEventListener('click', function (e) {
+      var header = e.target.closest('.ed-sec-header');
+      if (!header) return;
+      var panel = header.closest('.editor-section-panel');
+      if (panel) panel.classList.toggle('ed-sec-collapsed');
+      updateScrollSpy();
+    });
+  })();
+
   window.openFieldEditor = function (field, enterpriseId, defaultSystemCode, defaultSection, peerFields) {
     if (field) {
       currentField = JSON.parse(JSON.stringify(field)); // deep copy
@@ -47,33 +115,18 @@
     updatePreview();
     updateNavBadges();
     updateSplitBanner();
-    // Reset nav — jump to defaultSection if provided, otherwise Field Info
-    var navItems = document.querySelectorAll('.ed-nav-item');
-    var panels = document.querySelectorAll('.editor-section-panel');
-    navItems.forEach(function (li) { li.classList.remove('active'); });
-    panels.forEach(function (p) { p.classList.remove('active'); });
-    var startSection = defaultSection || 'identity';
-    var startNav = document.querySelector('.ed-nav-item[data-section="' + startSection + '"]') ||
-                   document.querySelector('.ed-nav-item[data-section="identity"]');
-    var startPanel = document.querySelector('.editor-section-panel[data-section="' + startSection + '"]') ||
-                     document.querySelector('.editor-section-panel[data-section="identity"]');
-    if (startNav) startNav.classList.add('active');
-    if (startPanel) startPanel.classList.add('active');
+    // Jump to defaultSection if provided, otherwise top (Field Info)
+    var startSection = resolveSection(defaultSection);
     overlay.style.display = 'flex';
     requestAnimationFrame(function () {
       overlay.classList.add('visible');
+      // All sections start expanded on each open
+      document.querySelectorAll('.editor-section-panel.ed-sec-collapsed').forEach(function (p) {
+        p.classList.remove('ed-sec-collapsed');
+      });
+      scrollToSection(startSection, true);
+      updateScrollSpy();
     });
-
-    // Load FieldOps data if the field has been synced
-    var foAppsContainer = document.getElementById('ed-fieldops-applications');
-    var foYieldContainer = document.getElementById('ed-fieldops-yield-history');
-    if (field && field.id && field._fieldops) {
-      if (window.loadFieldApplications) window.loadFieldApplications(field.id, foAppsContainer);
-      if (window.loadFieldYieldHistory) window.loadFieldYieldHistory(field.id, foYieldContainer);
-    } else {
-      if (foAppsContainer) foAppsContainer.innerHTML = '<p style="color:var(--text-light);font-size:0.8rem">No FieldOps data for this field.</p>';
-      if (foYieldContainer) foYieldContainer.innerHTML = '';
-    }
 
     // Populate program template dropdown
     populateProgramDropdown();
@@ -326,105 +379,8 @@
     }
     renderSeedRows();
 
-    renderInputRows();
-    renderMachRows();
     renderFieldOpsPanel();
     renderAuxRows();
-  }
-
-  // --- Product Autocomplete ---
-  function initProductAutocomplete(input) {
-    var idx = parseInt(input.getAttribute('data-idx'));
-    var dropdown = input.parentElement.querySelector('.prod-ac-dropdown');
-    var timer = null;
-    var selIdx = -1;
-    var matches = [];
-
-    function showDropdown(items) {
-      matches = items;
-      selIdx = -1;
-      if (!items.length) { dropdown.style.display = 'none'; return; }
-      var html = items.map(function (p, i) {
-        var price = Calc.computeApplicationPrice(p);
-        return '<div class="prod-ac-item" data-i="' + i + '">' +
-          '<span style="font-weight:500">' + util.escHtml(p.name) + '</span>' +
-          '<span class="prod-ac-item-meta">' +
-          util.escHtml(p.unit || '') + ' · $' + util.formatNum(price, 4) + '/' + util.escHtml(p.unit || 'unit') +
-          '</span></div>';
-      }).join('');
-      dropdown.innerHTML = html;
-      var rect = input.getBoundingClientRect();
-      dropdown.style.top = (rect.bottom + 2) + 'px';
-      dropdown.style.left = rect.left + 'px';
-      dropdown.style.width = Math.max(320, rect.width) + 'px';
-      dropdown.style.display = 'block';
-
-      dropdown.querySelectorAll('.prod-ac-item').forEach(function (el) {
-        el.addEventListener('mousedown', function (e) {
-          e.preventDefault();
-          selectProduct(parseInt(el.getAttribute('data-i')));
-        });
-      });
-    }
-
-    function selectProduct(i) {
-      var p = matches[i];
-      if (!p) return;
-      input.value = p.name;
-      currentField.inputs[idx].productName = p.name;
-      dropdown.style.display = 'none';
-      renderInputRows();
-      updatePreview();
-    }
-
-    function highlightItem(i) {
-      dropdown.querySelectorAll('.prod-ac-item').forEach(function (el, j) {
-        el.style.background = j === i ? 'var(--highlight)' : '';
-      });
-    }
-
-    input.addEventListener('input', function () {
-      clearTimeout(timer);
-      timer = setTimeout(function () {
-        var q = input.value.trim().toLowerCase();
-        if (q.length < 1) { dropdown.style.display = 'none'; return; }
-        var words = q.split(/\s+/).filter(Boolean);
-        var filtered = (window.refData.products || []).filter(function (p) {
-          var name = p.name.toLowerCase();
-          return words.every(function (w) { return name.indexOf(w) !== -1; });
-        }).slice(0, 12);
-        showDropdown(filtered);
-      }, 150);
-    });
-
-    input.addEventListener('keydown', function (e) {
-      if (!matches.length) return;
-      if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx + 1, matches.length - 1); highlightItem(selIdx); }
-      else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx - 1, 0); highlightItem(selIdx); }
-      else if (e.key === 'Enter' && selIdx >= 0) { e.preventDefault(); selectProduct(selIdx); }
-      else if (e.key === 'Escape') { dropdown.style.display = 'none'; }
-    });
-
-    input.addEventListener('blur', function () {
-      setTimeout(function () {
-        dropdown.style.display = 'none';
-        // Snap to canonical product name on blur (case-insensitive match)
-        var typed = input.value.trim().toLowerCase();
-        if (typed) {
-          var match = (window.refData.products || []).find(function (p) {
-            return p.name.trim().toLowerCase() === typed;
-          });
-          if (match && input.value !== match.name) {
-            input.value = match.name;
-            currentField.inputs[idx].productName = match.name;
-          }
-        }
-      }, 200);
-    });
-
-    input.addEventListener('focus', function () {
-      if (input.value.trim().length >= 1) input.dispatchEvent(new Event('input'));
-    });
   }
 
   // --- Field Ops add-item autocomplete (products for Input, implements for Pass) ---
@@ -532,167 +488,6 @@
     });
   }
 
-  // --- Input Products Table ---
-  function renderInputRows() {
-    var tbody = document.getElementById('ed-inputs-tbody');
-    var html = '';
-    (currentField.inputs || []).forEach(function (inp, idx) {
-      var product = window.refData.products.find(function (p) {
-        return p.name.trim().toLowerCase() === (inp.productName || '').trim().toLowerCase();
-      });
-      var appPrice = product ? Calc.computeApplicationPrice(product) : 0;
-      var cost = (inp.quantity || 0) * appPrice;
-      var unitLabel = product ? (product.unit || '') : '';
-
-      html += '<tr data-drag-idx="' + idx + '">' +
-        '<td class="drag-handle" title="Drag to reorder">⠿</td>' +
-        '<td style="position:relative"><input type="text" value="' + util.escHtml(inp.productName || '') + '" data-idx="' + idx + '" data-field="productName" class="ed-inp-field prod-ac-input" style="width:180px" placeholder="Type to search...">' +
-        '<div class="prod-ac-dropdown" data-idx="' + idx + '"></div></td>' +
-        '<td><input type="number" value="' + (inp.quantity || '') + '" data-idx="' + idx + '" data-field="quantity" class="ed-inp-field" step="0.1" min="0" style="width:70px"></td>' +
-        '<td class="unit-cell" style="font-size:0.78rem;color:var(--text-light);white-space:nowrap">' + util.escHtml(unitLabel) + '</td>' +
-        '<td><select data-idx="' + idx + '" data-field="season" class="ed-inp-field" style="width:80px">' +
-        '<option value=""' + (!inp.season ? ' selected' : '') + '>--</option>' +
-        '<option value="Spring"' + (inp.season === 'Spring' ? ' selected' : '') + '>Spring</option>' +
-        '<option value="Fall"' + (inp.season === 'Fall' ? ' selected' : '') + '>Fall</option>' +
-        '</select></td>' +
-        '<td class="number">' + util.formatMoney(cost) + '</td>' +
-        '<td><button class="btn-danger ed-remove-inp" data-idx="' + idx + '">X</button></td>' +
-        '</tr>';
-    });
-    tbody.innerHTML = html;
-    updateNavBadges();
-
-    // Product autocomplete
-    tbody.querySelectorAll('.prod-ac-input').forEach(function (input) {
-      initProductAutocomplete(input);
-    });
-
-    // Event listeners for non-product fields
-    tbody.querySelectorAll('.ed-inp-field:not(.prod-ac-input)').forEach(function (el) {
-      el.addEventListener('change', function () {
-        var idx = parseInt(el.getAttribute('data-idx'));
-        var field = el.getAttribute('data-field');
-        var val = el.value;
-        if (field === 'quantity') val = parseFloat(val) || 0;
-        currentField.inputs[idx][field] = val;
-        renderInputRows();
-        updatePreview();
-      });
-    });
-
-    tbody.querySelectorAll('.ed-remove-inp').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var idx = parseInt(btn.getAttribute('data-idx'));
-        currentField.inputs.splice(idx, 1);
-        renderInputRows();
-        updatePreview();
-      });
-    });
-
-    makeRowsSortable(tbody, function () { return currentField.inputs; }, function () {
-      renderInputRows();
-      updatePreview();
-    });
-  }
-
-  document.getElementById('ed-add-input').addEventListener('click', function () {
-    if (!currentField) return;
-    currentField.inputs.push({
-      id: util.generateId('inp'),
-      productName: '',
-      quantity: 0,
-      season: 'Spring'
-    });
-    renderInputRows();
-  });
-
-  // --- Machinery Table ---
-  function renderMachRows() {
-    var tbody = document.getElementById('ed-mach-tbody');
-    var html = '';
-    (currentField.machinery || []).forEach(function (m, idx) {
-      var impl = window.refData.implements.find(function (i) {
-        return i.name.toLowerCase() === (m.implementName || '').toLowerCase();
-      });
-      var useHire = m.useHire !== undefined ? m.useHire :
-        (impl && impl.defaultMode === 'hire' && impl.customHireRate > 0);
-      var cost;
-      if (useHire && impl && impl.customHireRate > 0) {
-        cost = impl.customHireRate * (m.passes || 1);
-      } else {
-        cost = impl ? impl.costPerAcre * (m.passes || 1) : 0;
-      }
-      var hasHireOption = impl && impl.customHireRate > 0;
-      var modeLabel = useHire ? 'Hire' : 'Own';
-      var modeCls = useHire ? 'status-open' : 'status-done';
-
-      html += '<tr data-drag-idx="' + idx + '">' +
-        '<td class="drag-handle" title="Drag to reorder">⠿</td>' +
-        '<td><input type="text" value="' + util.escHtml(m.implementName) + '" data-idx="' + idx + '" data-field="implementName" class="ed-mach-field" list="impl-search-list" style="width:150px"></td>' +
-        '<td><input type="number" value="' + (m.passes || '') + '" data-idx="' + idx + '" data-field="passes" class="ed-mach-field" step="0.1" min="0" style="width:60px"></td>' +
-        '<td class="number">' + util.formatMoney(cost) + '</td>' +
-        (hasHireOption ?
-          '<td class="ed-mach-mode" data-idx="' + idx + '"><span class="status-badge ' + modeCls + '" style="font-size:0.7rem">' + modeLabel + '</span></td>' :
-          '<td></td>') +
-        '<td><button class="btn-danger ed-remove-mach" data-idx="' + idx + '">X</button></td>' +
-        '</tr>';
-    });
-    tbody.innerHTML = html;
-    updateNavBadges();
-
-    tbody.querySelectorAll('.ed-mach-field').forEach(function (el) {
-      el.addEventListener('change', function () {
-        var idx = parseInt(el.getAttribute('data-idx'));
-        var field = el.getAttribute('data-field');
-        var val = el.value;
-        if (field === 'passes') val = parseFloat(val) || 0;
-        currentField.machinery[idx][field] = val;
-        renderMachRows();
-        updatePreview();
-      });
-    });
-
-    // Mode toggle (own/hire)
-    tbody.querySelectorAll('.ed-mach-mode').forEach(function (td) {
-      td.addEventListener('click', function () {
-        var idx = parseInt(td.getAttribute('data-idx'));
-        var m = currentField.machinery[idx];
-        var impl = window.refData.implements.find(function (i) {
-          return i.name.toLowerCase() === (m.implementName || '').toLowerCase();
-        });
-        var currentlyHire = m.useHire !== undefined ? m.useHire :
-          (impl && impl.defaultMode === 'hire' && impl.customHireRate > 0);
-        m.useHire = !currentlyHire;
-        renderMachRows();
-        updatePreview();
-      });
-    });
-
-    tbody.querySelectorAll('.ed-remove-mach').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var idx = parseInt(btn.getAttribute('data-idx'));
-        currentField.machinery.splice(idx, 1);
-        renderMachRows();
-        updatePreview();
-      });
-    });
-
-    makeRowsSortable(tbody, function () { return currentField.machinery; }, function () {
-      renderMachRows();
-      updatePreview();
-    });
-  }
-
-  document.getElementById('ed-add-mach').addEventListener('click', function () {
-    if (!currentField) return;
-    currentField.machinery.push({
-      id: util.generateId('mach'),
-      implementName: '',
-      passes: 1
-    });
-    renderMachRows();
-  });
-
   // --- Field Ops Unified Panel ---
   function renderFieldOpsPanel() {
     var container = document.getElementById('fo-groups-container');
@@ -722,7 +517,7 @@
       var unitLabel = product ? (product.unit || '') : '';
       var purchaseUnit = product ? (product.purchaseUnit || unitLabel) : unitLabel;
       var conversionRate = product ? (product.conversionRate || 1) : 1;
-      var rateDisplay = (inp.quantity || 0) + (unitLabel ? ' ' + unitLabel : '');
+      var rateDisplay = Calc.round2(inp.quantity || 0) + (unitLabel ? ' ' + unitLabel : '');
       allItems.push({
         name: name,
         itemType: itemType,
@@ -849,14 +644,23 @@
       });
     });
 
-    // Render groups
-    var html = '';
+    // Render groups — one flat table, one tbody per operation group
     var grandTotal = 0;
     var isOperator = window.APP_ROLE === 'operator';
+    var colCount = isOperator ? 5 : 7;
+    var anyItems = false;
+
+    var theadHtml = '<thead><tr><th></th><th>Name</th><th>Status</th>' +
+      (foViewMode === 'perField' ? '<th>Field Qty</th>' : '<th>Rate</th>') +
+      (isOperator ? '' : (foViewMode === 'perField' ? '<th>Field $</th><th>$/ac</th>' : '<th>$/ac</th><th>Total $</th>')) +
+      '<th></th></tr></thead>';
+
+    var bodiesHtml = '';
 
     window.FieldOpsGroups.GROUP_ORDER.forEach(function (groupName) {
       var items = groupsMap[groupName];
       if (!items.length) return;
+      anyItems = true;
 
       var groupSubtotal = 0;
       items.forEach(function (item) { groupSubtotal += item.costPerAcre; });
@@ -904,16 +708,16 @@
           if (foViewMode === 'perField' && item.invoiceQtyTotal != null) {
             var plannedFieldQty = Calc.round2(plannedQ * acres);
             if (Math.abs(item.invoiceQtyTotal - plannedFieldQty) > 0.01) {
-              deltaHtml = '<br><span style="font-size:0.65rem;color:var(--text-light)">planned: ' + plannedFieldQty + ', inv: ' + item.invoiceQtyTotal + '</span>';
+              deltaHtml = '<br><span style="font-size:0.65rem;color:var(--text-light)">planned: ' + util.formatNum(plannedFieldQty, 2) + ', inv: ' + util.formatNum(item.invoiceQtyTotal, 2) + '</span>';
             }
           } else if (foViewMode === 'perAcre' && Math.abs(item.actualQuantity - plannedQ) > 0.001) {
-            deltaHtml = '<br><span style="font-size:0.65rem;color:var(--text-light)">planned: ' + plannedQ + ', actual: ' + item.actualQuantity + '</span>';
+            deltaHtml = '<br><span style="font-size:0.65rem;color:var(--text-light)">planned: ' + util.formatNum(plannedQ, 2) + ', actual: ' + util.formatNum(item.actualQuantity, 2) + '</span>';
           }
         }
 
         var dragTd = isSeed ? '<td></td>' : '<td class="drag-handle" title="Drag to reorder">⠿</td>';
         var removeTd = isSeed
-          ? '<td style="text-align:center"><span style="font-size:0.65rem;color:var(--text-light)">Seed tab</span></td>'
+          ? '<td style="text-align:center"><span style="font-size:0.65rem;color:var(--text-light)">Field Info</span></td>'
           : '<td><button class="btn-danger fo-remove" data-item-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.68rem">X</button></td>';
         // Per-field view: derive field-level qty and use invoice cost when available
         var rateDisplayFinal, costDisplay, totalDisplay;
@@ -937,16 +741,16 @@
         } else {
           rateDisplayFinal = item.rateDisplay;
           costDisplay = item.itemType === 'seed'
-            ? '<span style="font-size:0.7rem;color:var(--text-light)">see Seed tab</span>'
+            ? '<span style="font-size:0.7rem;color:var(--text-light)">see Field Info</span>'
             : '$' + util.formatNum(Calc.round2(item.costPerAcre), 2);
           totalDisplay = item.itemType === 'seed' ? '—' : '$' + util.formatNum(fieldTotal, 2);
         }
+        var typeBadge = ' <span class="fo-type-badge fo-badge-' + item.itemType + '">' + item.itemType + '</span>';
         rowsHtml += '<tr' + rowClass + ' data-global-idx="' + item.globalIdx + '" data-item-type="' + item.itemType + '" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '"' + (!isSeed ? ' data-drag-idx="' + item.sourceIdx + '"' : '') + '>' +
           dragTd +
           (isSeed
-            ? '<td style="font-size:0.78rem">' + util.escHtml(item.name || '—') + '</td>'
-            : '<td class="fo-name-cell" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.78rem;cursor:pointer;text-decoration:underline dotted" title="Click to swap product">' + util.escHtml(item.name || '—') + '</td>') +
-          '<td><span class="fo-type-badge fo-badge-' + item.itemType + '">' + item.itemType + '</span></td>' +
+            ? '<td style="font-size:0.78rem">' + util.escHtml(item.name || '—') + typeBadge + '</td>'
+            : '<td class="fo-name-cell" data-source-type="' + item.sourceType + '" data-source-idx="' + item.sourceIdx + '" style="font-size:0.78rem;cursor:pointer" title="Click to swap product"><span style="text-decoration:underline dotted">' + util.escHtml(item.name || '—') + '</span>' + typeBadge + '</td>') +
           '<td>' + chipHtml + '</td>' +
           (isSeed
             ? '<td class="number" style="font-size:0.75rem">' + util.escHtml(item.rateDisplay) + '</td>'
@@ -957,43 +761,40 @@
           '</tr>';
       });
 
-      html += '<div class="fo-group' + (allConfirmed ? ' fo-collapsed' : '') + '" data-group="' + util.escHtml(groupName) + '">' +
-        '<div class="fo-group-header fo-group-toggle" data-group="' + util.escHtml(groupName) + '">' +
+      bodiesHtml += '<tbody class="fo-group-tbody' + (allConfirmed ? ' fo-collapsed' : '') + '" data-group="' + util.escHtml(groupName) + '">' +
+        '<tr class="fo-group-row fo-group-toggle" data-group="' + util.escHtml(groupName) + '">' +
+        '<td class="fo-group-cell" colspan="' + colCount + '"><div class="fo-group-cell-inner">' +
         '<span class="fo-group-chevron">&#9662;</span>' +
         '<span class="fo-group-name">' + util.escHtml(groupName) + '</span>' +
         progressHtml +
         '<span class="fo-group-subtotal">' + subtotalDisplay + '</span>' +
-        '</div>' +
-        '<div class="fo-group-body">' +
-        '<table class="compact-table fo-table" style="width:100%">' +
-        '<thead><tr><th></th><th>Name</th><th>Type</th><th>Status</th>' +
-        (foViewMode === 'perField' ? '<th>Field Qty</th>' : '<th>Rate</th>') +
-        (isOperator ? '' : (foViewMode === 'perField' ? '<th>Field $</th><th>$/ac</th>' : '<th>$/ac</th><th>Total $</th>')) +
-        '<th></th></tr></thead>' +
-        '<tbody>' + rowsHtml + '</tbody>' +
-        '</table>' +
-        '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(groupName) + '" style="margin-top:0.4rem;font-size:0.72rem">+ Add to ' + util.escHtml(groupName) + '</button>' +
+        '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(groupName) + '" style="font-size:0.72rem">+ Add</button>' +
         (items.some(function(i) { return (i.sourceType === 'input' || i.sourceType === 'custom') && i.passStatus === 'planned'; })
-          ? '<button class="btn-sm fo-enter-invoice" data-group="' + util.escHtml(groupName) + '" style="margin-top:0.4rem;margin-left:0.5rem;font-size:0.72rem">&#128203; Enter Invoice</button>'
+          ? '<button class="btn-sm fo-enter-invoice" data-group="' + util.escHtml(groupName) + '" style="font-size:0.72rem">&#128203; Invoice</button>'
           : '') +
-        '</div>' +
-        '</div>';
+        '</div></td></tr>' +
+        rowsHtml +
+        '</tbody>';
     });
 
-    if (!html) {
-      var emptyStateHtml = '<p style="color:var(--text-light);font-size:0.8rem;padding:0.25rem 0 0.75rem">No inputs or passes yet — add items by operation type:</p>';
+    if (!anyItems) {
+      bodiesHtml = '';
       window.FieldOpsGroups.GROUP_ORDER.forEach(function (g) {
-        emptyStateHtml +=
-          '<div class="fo-group" data-group="' + util.escHtml(g) + '" style="margin-bottom:0.5rem">' +
-          '<div class="fo-group-header"><span class="fo-group-name">' + util.escHtml(g) + '</span></div>' +
-          '<div class="fo-group-body">' +
-          '<table class="compact-table fo-table" style="width:100%"><thead><tr></tr></thead><tbody></tbody></table>' +
-          '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(g) + '" style="margin-top:0.25rem;font-size:0.72rem">+ Add to ' + util.escHtml(g) + '</button>' +
-          '</div></div>';
+        bodiesHtml += '<tbody class="fo-group-tbody" data-group="' + util.escHtml(g) + '">' +
+          '<tr class="fo-group-row fo-group-toggle" data-group="' + util.escHtml(g) + '">' +
+          '<td class="fo-group-cell" colspan="' + colCount + '"><div class="fo-group-cell-inner">' +
+          '<span class="fo-group-name">' + util.escHtml(g) + '</span>' +
+          '<span class="fo-group-subtotal"></span>' +
+          '<button class="btn-sm fo-add-item" data-group="' + util.escHtml(g) + '" style="font-size:0.72rem">+ Add</button>' +
+          '</div></td></tr></tbody>';
       });
-      html = emptyStateHtml;
     }
-    container.innerHTML = html;
+    container.innerHTML =
+      (anyItems ? '' : '<p style="color:var(--text-light);font-size:0.8rem;padding:0.25rem 0 0.75rem">No inputs or passes yet — add items by operation type:</p>') +
+      '<table class="compact-table fo-table fo-table-flat" style="width:100%">' +
+      (anyItems ? theadHtml : '') +
+      bodiesHtml +
+      '</table>';
 
     // Grand total
     var grandPerAc = Calc.round2(grandTotal);
@@ -1004,14 +805,13 @@
       if (grandFieldEl) grandFieldEl.textContent = 'Field: $' + util.formatNum(grandField, 2);
     }
 
-    // Wire collapse toggles
+    // Wire collapse toggles — chevron rotation is pure CSS (.fo-collapsed)
     container.querySelectorAll('.fo-group-toggle').forEach(function (header) {
-      header.addEventListener('click', function () {
-        var group = header.closest('.fo-group');
+      header.addEventListener('click', function (e) {
+        if (e.target.closest('.fo-add-item, .fo-enter-invoice')) return; // buttons live in the header row
+        var group = header.closest('.fo-group-tbody');
         if (!group) return;
-        var isCollapsed = group.classList.toggle('fo-collapsed');
-        var chevron = header.querySelector('.fo-group-chevron');
-        if (chevron) chevron.innerHTML = isCollapsed ? '&#9656;' : '&#9662;';
+        group.classList.toggle('fo-collapsed');
       });
     });
 
@@ -1020,19 +820,15 @@
     var collapseBtn = document.getElementById('fo-collapse-all');
     if (expandBtn) {
       expandBtn.onclick = function () {
-        container.querySelectorAll('.fo-group').forEach(function (g) {
+        container.querySelectorAll('.fo-group-tbody').forEach(function (g) {
           g.classList.remove('fo-collapsed');
-          var ch = g.querySelector('.fo-group-chevron');
-          if (ch) ch.innerHTML = '&#9662;';
         });
       };
     }
     if (collapseBtn) {
       collapseBtn.onclick = function () {
-        container.querySelectorAll('.fo-group').forEach(function (g) {
+        container.querySelectorAll('.fo-group-tbody').forEach(function (g) {
           g.classList.add('fo-collapsed');
-          var ch = g.querySelector('.fo-group-chevron');
-          if (ch) ch.innerHTML = '&#9656;';
         });
       };
     }
@@ -1237,7 +1033,7 @@
         var formRow = document.createElement('tr');
         formRow.className = 'fo-confirm-form-row';
 
-        var formHtml = '<td colspan="8"><div class="fo-confirm-form-inner">';
+        var formHtml = '<td colspan="' + colCount + '"><div class="fo-confirm-form-inner">';
         if (currentStatus !== 'planned') {
           // Confirmed — show edit invoice form pre-filled with existing values
           if (currentStatus === 'confirmed' && isInputType) {
@@ -1425,16 +1221,15 @@
         btn.style.display = 'none';
 
         // Find the tbody for this group
-        var groupDiv = container.querySelector('.fo-group[data-group="' + groupName + '"]');
-        if (!groupDiv) return;
-        var tbody = groupDiv.querySelector('tbody');
+        var tbody = container.querySelector('.fo-group-tbody[data-group="' + groupName + '"]');
         if (!tbody) return;
+        tbody.classList.remove('fo-collapsed'); // make the new row visible
 
         var addRow = document.createElement('tr');
         addRow.className = 'fo-add-row';
         addRow.setAttribute('data-adding-group', groupName);
         addRow.innerHTML = '<td></td>' +
-          '<td colspan="5">' +
+          '<td colspan="' + (colCount - 2) + '">' +
           '<div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;padding:0.25rem 0">' +
           '<select class="fo-add-type" style="font-size:0.75rem;width:90px">' +
           '<option value="input">Input</option>' +
@@ -1458,7 +1253,7 @@
         var nameInput = addRow.querySelector('.fo-add-name');
         var acDropdown = addRow.querySelector('.fo-add-ac-dropdown');
         initFoAddAutocomplete(nameInput, typeSelect, acDropdown);
-        nameInput.focus();
+        nameInput.focus({ preventScroll: true });
 
         // Cancel
         addRow.querySelector('.fo-add-cancel').addEventListener('click', function () {
@@ -1501,12 +1296,13 @@
     container.querySelectorAll('.fo-enter-invoice').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var groupName = btn.getAttribute('data-group');
-        var groupEl = btn.closest('.fo-group');
+        var groupEl = btn.closest('.fo-group-tbody');
         if (!groupEl) return;
 
         // Toggle: close if already open
-        var existing = groupEl.querySelector('.fo-invoice-batch-form');
+        var existing = groupEl.querySelector('.fo-invoice-batch-row');
         if (existing) { existing.remove(); return; }
+        groupEl.classList.remove('fo-collapsed');
 
         var today = new Date().toISOString().slice(0, 10);
         var fieldAcres = currentField.acres || 0;
@@ -1572,13 +1368,18 @@
           '<button class="btn-sm fo-inv-cancel" style="font-size:0.72rem">Cancel</button>' +
           '</div></div>';
 
-        var wrapper = document.createElement('div');
-        wrapper.innerHTML = batchHtml;
-        btn.parentElement.appendChild(wrapper.firstElementChild);
+        var formTr = document.createElement('tr');
+        formTr.className = 'fo-invoice-batch-row';
+        var formTd = document.createElement('td');
+        formTd.colSpan = colCount;
+        formTd.innerHTML = batchHtml;
+        formTr.appendChild(formTd);
+        var headerRow = groupEl.querySelector('.fo-group-row');
+        headerRow.insertAdjacentElement('afterend', formTr);
 
         var batchForm = groupEl.querySelector('.fo-invoice-batch-form');
 
-        batchForm.querySelector('.fo-inv-cancel').addEventListener('click', function () { batchForm.remove(); });
+        batchForm.querySelector('.fo-inv-cancel').addEventListener('click', function () { formTr.remove(); });
 
         batchForm.querySelector('.fo-inv-confirm-all').addEventListener('click', function () {
           var invNum    = batchForm.querySelector('.fo-inv-num').value.trim();
@@ -1642,7 +1443,7 @@
         dragSrc = {
           sourceType: row.getAttribute('data-source-type'),
           sourceIdx: parseInt(row.getAttribute('data-source-idx'), 10),
-          origGroup: row.closest('.fo-group') ? row.closest('.fo-group').getAttribute('data-group') : null
+          origGroup: row.closest('.fo-group-tbody') ? row.closest('.fo-group-tbody').getAttribute('data-group') : null
         };
         e.dataTransfer.effectAllowed = 'move';
         row.classList.add('drag-src');
@@ -1652,7 +1453,7 @@
         row.draggable = false;
         row.classList.remove('drag-src');
         clearRowIndicators();
-        container.querySelectorAll('.fo-group').forEach(function (g) {
+        container.querySelectorAll('.fo-group-tbody').forEach(function (g) {
           g.classList.remove('fo-drop-target');
         });
         dragSrc = null;
@@ -1661,7 +1462,7 @@
       // Within-group row reorder
       row.addEventListener('dragover', function (e) {
         if (!dragSrc) return;
-        var rowGroup = row.closest('.fo-group') ? row.closest('.fo-group').getAttribute('data-group') : null;
+        var rowGroup = row.closest('.fo-group-tbody') ? row.closest('.fo-group-tbody').getAttribute('data-group') : null;
         if (dragSrc.origGroup !== rowGroup) return;
         var isSelf = row.getAttribute('data-source-type') === dragSrc.sourceType &&
           parseInt(row.getAttribute('data-source-idx'), 10) === dragSrc.sourceIdx;
@@ -1682,7 +1483,7 @@
         e.preventDefault();
         e.stopPropagation();
         if (!dragSrc) return;
-        var rowGroup = row.closest('.fo-group') ? row.closest('.fo-group').getAttribute('data-group') : null;
+        var rowGroup = row.closest('.fo-group-tbody') ? row.closest('.fo-group-tbody').getAttribute('data-group') : null;
         if (dragSrc.origGroup !== rowGroup) return;
         var tgtType = row.getAttribute('data-source-type');
         var tgtIdx = parseInt(row.getAttribute('data-source-idx'), 10);
@@ -1692,8 +1493,8 @@
         var insertAfter = e.clientY >= rect.top + rect.height / 2;
 
         // Build current ordered list from DOM rows in this group
-        var groupEl = row.closest('.fo-group');
-        var domRows = Array.from(groupEl.querySelectorAll('tbody tr[data-source-type]'));
+        var groupEl = row.closest('.fo-group-tbody');
+        var domRows = Array.from(groupEl.querySelectorAll('tr[data-source-type]'));
         var ordered = domRows.map(function (r) {
           return { sourceType: r.getAttribute('data-source-type'), sourceIdx: parseInt(r.getAttribute('data-source-idx'), 10) };
         });
@@ -1718,7 +1519,7 @@
     });
 
     // Group-level drop zones for cross-group drops
-    container.querySelectorAll('.fo-group').forEach(function (group) {
+    container.querySelectorAll('.fo-group-tbody').forEach(function (group) {
       var targetGroup = group.getAttribute('data-group');
 
       group.addEventListener('dragover', function (e) {
@@ -2151,8 +1952,6 @@
   function updateNavBadges() {
     if (!currentField) return;
     var counts = {
-      inputs: (currentField.inputs || []).length,
-      machinery: (currentField.machinery || []).length,
       seed: (currentField.seeds || []).length,
       aux: (currentField.auxPayments || []).length
     };
@@ -2410,68 +2209,6 @@
     if (kpiCop) kpiCop.textContent = util.formatMoney(budget.cop);
   }
 
-  // --- Row drag-to-reorder helper ---
-  // Only activates when the user grabs the .drag-handle cell — inputs/selects are unaffected.
-  function makeRowsSortable(tbody, getArray, onReorder) {
-    var dragSrcIdx = null;
-
-    function clearIndicators() {
-      tbody.querySelectorAll('tr').forEach(function (r) {
-        r.classList.remove('drag-over-top', 'drag-over-bottom');
-      });
-    }
-
-    tbody.querySelectorAll('.drag-handle').forEach(function (handle) {
-      var row = handle.closest('tr');
-
-      // Only enable drag when pointer is on the handle
-      handle.addEventListener('mousedown', function () { row.draggable = true; });
-      handle.addEventListener('mouseup',   function () { row.draggable = false; });
-
-      row.addEventListener('dragstart', function (e) {
-        dragSrcIdx = parseInt(row.getAttribute('data-drag-idx'));
-        e.dataTransfer.effectAllowed = 'move';
-        row.classList.add('drag-src');
-      });
-
-      row.addEventListener('dragend', function () {
-        row.draggable = false;
-        row.classList.remove('drag-src');
-        clearIndicators();
-        dragSrcIdx = null;
-      });
-
-      row.addEventListener('dragover', function (e) {
-        if (dragSrcIdx === null) return;
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        var targetIdx = parseInt(row.getAttribute('data-drag-idx'));
-        if (targetIdx === dragSrcIdx) return;
-        clearIndicators();
-        var rect = row.getBoundingClientRect();
-        row.classList.add(e.clientY < rect.top + rect.height / 2 ? 'drag-over-top' : 'drag-over-bottom');
-      });
-
-      row.addEventListener('dragleave', function () {
-        row.classList.remove('drag-over-top', 'drag-over-bottom');
-      });
-
-      row.addEventListener('drop', function (e) {
-        e.preventDefault();
-        if (dragSrcIdx === null) return;
-        var targetIdx = parseInt(row.getAttribute('data-drag-idx'));
-        if (targetIdx === dragSrcIdx) return;
-        var arr = getArray();
-        var rect = row.getBoundingClientRect();
-        var insertAfter = e.clientY >= rect.top + rect.height / 2;
-        var item = arr.splice(dragSrcIdx, 1)[0];
-        var dest = targetIdx > dragSrcIdx ? (insertAfter ? targetIdx - 1 : targetIdx - 1) : (insertAfter ? targetIdx + 1 : targetIdx);
-        arr.splice(dest, 0, item);
-        onReorder();
-      });
-    });
-  }
-
   // --- Cost Detail panel ---
   function renderCostDetail(budget) {
     var el = document.getElementById('ed-cost-detail-body');
@@ -2601,47 +2338,7 @@
     el.innerHTML = html;
   }
 
-  // --- Machinery Template Dropdown ---
-  window.populateMachProgDropdown = function () {
-    var sel = document.getElementById('ed-mach-template');
-    if (!sel) return;
-    var progs = (window.refData && window.refData.machineryPrograms) || [];
-    var html = '<option value="">-- Load Machinery Template --</option>';
-    progs.forEach(function (p) {
-      html += '<option value="' + util.escHtml(p.id) + '">' + util.escHtml(p.name) + '</option>';
-    });
-    sel.innerHTML = html;
-  };
-
-  // Populate on ref-data load
-  window.addEventListener('ref-data-loaded', window.populateMachProgDropdown);
-
-  // Apply machinery template button
-  (function () {
-    var btn = document.getElementById('ed-load-mach-template');
-    if (!btn) return;
-    btn.addEventListener('click', function () {
-      var sel = document.getElementById('ed-mach-template');
-      if (!sel || !sel.value) return;
-      var progs = (window.refData && window.refData.machineryPrograms) || [];
-      var prog = progs.find(function (p) { return p.id === sel.value; });
-      if (!prog || !currentField) return;
-      if (currentField.machinery && currentField.machinery.length > 0) {
-        if (!confirm('Replace current machinery list with "' + prog.name + '"?')) return;
-      }
-      currentField.machinery = (prog.machinery || []).map(function (m) {
-        return { id: util.generateId('mach'), implementName: m.implementName, passes: m.passes || 1, useHire: m.useHire };
-      });
-      currentField.machineryProgramId = prog.id;
-      sel.value = '';
-      renderMachRows();
-      updateNavBadges();
-      updatePreview();
-      util.showToast('Applied: ' + prog.name);
-    });
-  })();
-
-  // --- Nav tab switching ---
+  // --- Nav jump links (scrollspy owns the active highlight) ---
   (function () {
     var navList = document.getElementById('ed-nav-list');
     if (!navList) return;
@@ -2650,12 +2347,10 @@
       if (!item) return;
       var section = item.getAttribute('data-section');
       if (!section) return;
-      navList.querySelectorAll('.ed-nav-item').forEach(function (li) { li.classList.remove('active'); });
-      item.classList.add('active');
-      document.querySelectorAll('.editor-section-panel').forEach(function (p) { p.classList.remove('active'); });
+      // Expand the target section if collapsed before jumping to it
       var panel = document.querySelector('.editor-section-panel[data-section="' + section + '"]');
-      if (panel) panel.classList.add('active');
-      if (section === 'fieldops-unified') renderFieldOpsPanel();
+      if (panel) panel.classList.remove('ed-sec-collapsed');
+      scrollToSection(section, false);
     });
   })();
 

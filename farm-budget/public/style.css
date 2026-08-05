@@ -2002,20 +2002,79 @@ body.light .audit-badge.warn { background: #c08800; }
 }
 
 
-/* ── Content Panels ── */
+/* ── Content Panels — all sections stacked on one scrolling page ── */
 .editor-sections {
   overflow-y: auto;
-  padding: 1rem 1.25rem;
+  overflow-x: hidden; /* wide tables scroll inside their own section body instead */
+  padding: 0 1.25rem 1.25rem;
   min-height: 0;
 }
 
-.editor-section-panel {
-  display: none;
-  height: 100%;
+.editor-sections .editor-section-body {
+  overflow-x: auto;
 }
 
-.editor-section-panel.active {
+.editor-sections .form-group label {
+  white-space: normal; /* long labels wrap instead of overlapping the next column */
+}
+
+.editor-section-panel {
   display: block;
+  margin-top: 1rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.ed-sec-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 6px 6px 0 0;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.ed-sec-header:hover .ed-sec-title { color: var(--text); }
+
+.ed-sec-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ed-sec-chevron {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  transition: transform 0.15s ease;
+}
+
+.ed-sec-collapsed .ed-sec-chevron { transform: rotate(-90deg); }
+.ed-sec-collapsed .editor-section-body { display: none; }
+.ed-sec-collapsed .ed-sec-header { border-bottom: none; border-radius: 6px; }
+
+.ed-subsection {
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.ed-subsec-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-light);
+  margin-bottom: 0.4rem;
 }
 
 /* ── Budget Sidebar ── */
@@ -3834,26 +3893,33 @@ body.light .prod-category-name { color: #222; }
    Field Ops Unified Panel
    ======================================== */
 
-.fo-group {
-  margin-bottom: 0.6rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  overflow: hidden;
+/* Flat layout: one table, one tbody per operation group */
+.fo-table td {
+  vertical-align: middle;
 }
 
-.fo-group-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.6rem;
+.fo-table-flat td {
+  padding: 0.2rem 0.4rem;
+  white-space: normal; /* override global td nowrap so the table fits the column */
+}
+
+.fo-group-row td.fo-group-cell {
   background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 0.3rem 0.5rem;
   cursor: pointer;
   user-select: none;
-  border-bottom: 1px solid var(--border);
 }
 
-.fo-group-header:hover {
+.fo-group-row:hover td.fo-group-cell {
   background: var(--hover-bg, rgba(200,134,10,0.06));
+}
+
+.fo-group-cell-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  flex-wrap: wrap; /* keeps colspan cell from inflating column min-widths */
 }
 
 .fo-group-chevron {
@@ -3864,7 +3930,7 @@ body.light .prod-category-name { color: #222; }
   transition: transform 0.15s ease;
 }
 
-.fo-group.fo-collapsed .fo-group-chevron {
+.fo-group-tbody.fo-collapsed .fo-group-chevron {
   transform: rotate(-90deg);
 }
 
@@ -3883,16 +3949,12 @@ body.light .prod-category-name { color: #222; }
   color: var(--primary);
 }
 
-.fo-group.fo-collapsed .fo-group-body {
+.fo-group-tbody.fo-collapsed tr:not(.fo-group-row) {
   display: none;
 }
 
-.fo-group-body {
-  padding: 0.4rem 0.5rem 0.5rem;
-}
-
-.fo-table td {
-  vertical-align: middle;
+.fo-group-cell .btn-sm {
+  padding: 0.1rem 0.4rem;
 }
 
 /* Type badges */
@@ -3967,9 +4029,9 @@ body.light .prod-category-name { color: #222; }
   letter-spacing: 0.06em;
 }
 
-.fo-group.fo-drop-target {
-  outline: 2px dashed var(--primary);
-  outline-offset: -2px;
+.fo-group-tbody.fo-drop-target .fo-group-row td {
+  outline: 1px dashed var(--primary);
+  outline-offset: -1px;
 }
 
 .fo-add-row td {

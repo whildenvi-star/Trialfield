@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="platform-tokens.css?v=2">
-  <link rel="stylesheet" href="style.css?v=20260614">
+  <link rel="stylesheet" href="style.css?v=20260805">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
@@ -1005,12 +1005,9 @@
           </div>
 
           <ul class="ed-nav-list" id="ed-nav-list">
-            <li class="ed-nav-item active" data-section="identity">Field Info</li>
-            <li class="ed-nav-item" data-section="seed">Seed<span class="ed-nav-badge" id="badge-seed"></span></li>
+            <li class="ed-nav-item active" data-section="identity">Field Info<span class="ed-nav-badge" id="badge-seed"></span></li>
             <li class="ed-nav-item" data-section="fieldops-unified">Field Ops<span class="ed-nav-badge" id="badge-fieldops-unified"></span></li>
-            <li class="ed-nav-item" data-section="yield">Yield &amp; Income</li>
-            <li class="ed-nav-item role-hide-office" data-section="aux">AUX Payments<span class="ed-nav-badge" id="badge-aux"></span></li>
-            <li class="ed-nav-item" data-section="fieldops">Case IH Sync</li>
+            <li class="ed-nav-item" data-section="yield">Yield &amp; Income<span class="ed-nav-badge role-hide-office" id="badge-aux"></span></li>
             <li class="ed-nav-item role-hide-office" data-section="costdetail">Cost Detail</li>
           </ul>
 
@@ -1020,7 +1017,9 @@
         <div class="editor-sections">
 
           <!-- Field Info -->
-          <div class="editor-section-panel active" data-section="identity">
+          <div class="editor-section-panel" data-section="identity">
+            <div class="ed-sec-header"><span class="ed-sec-chevron">&#9662;</span><h3 class="ed-sec-title">Field Info</h3></div>
+            <div class="editor-section-body">
             <div id="ed-split-banner" style="display:none;margin-bottom:0.75rem;padding:0.6rem 0.75rem;background:#1a2a1a;border:1px solid #2d4a2d;border-radius:4px;font-size:0.8rem;">
               <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.25rem">
                 <span style="color:var(--primary);font-weight:600">Split Field</span>
@@ -1088,38 +1087,22 @@
                 <textarea id="ed-notes" rows="2" style="width:100%;resize:vertical;font-size:0.85rem;padding:0.35rem 0.5rem;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:4px;font-family:inherit" placeholder="e.g. work the ends, watch for wet spots in NW corner…"></textarea>
               </div>
             </div>
-          </div>
 
-          <!-- Input Products -->
-          <div class="editor-section-panel" data-section="inputs">
-            <div class="editor-section-body">
-              <table id="ed-inputs-table" class="compact-table" style="width:100%">
-                <thead><tr><th></th><th>Product</th><th>Qty</th><th>Unit</th><th>Season</th><th>$/AC</th><th></th></tr></thead>
-                <tbody id="ed-inputs-tbody"></tbody>
+            <div class="ed-subsection">
+              <div class="ed-subsec-title">Seed</div>
+              <div id="ed-seeds-acre-hint" style="font-size:0.78rem;color:var(--text-light);margin-bottom:0.5rem;"></div>
+              <table class="ref-table" style="font-size:0.8rem;width:100%">
+                <thead><tr><th>Variety</th><th>Population</th><th>Acres</th><th>Cost/ac</th><th></th></tr></thead>
+                <tbody id="ed-seeds-tbody"></tbody>
               </table>
-              <button id="ed-add-input" class="btn-sm" style="margin-top:0.5rem">+ Add Input</button>
+              <button id="ed-add-seed" class="btn-sm" style="margin-top:0.5rem">+ Add Variety</button>
             </div>
-          </div>
-
-          <!-- Machinery -->
-          <div class="editor-section-panel" data-section="machinery">
-            <div class="editor-section-body">
-              <div class="mach-tmpl-bar" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
-                <select id="ed-mach-template" style="flex:1;font-size:0.78rem">
-                  <option value="">-- Load Machinery Template --</option>
-                </select>
-                <button id="ed-load-mach-template" class="btn-sm btn-primary" style="font-size:0.75rem;padding:0.25rem 0.5rem">Apply</button>
-              </div>
-              <table id="ed-mach-table" class="compact-table" style="width:100%">
-                <thead><tr><th></th><th>Implement</th><th>Passes</th><th>$/AC</th><th>Mode</th><th></th></tr></thead>
-                <tbody id="ed-mach-tbody"></tbody>
-              </table>
-              <button id="ed-add-mach" class="btn-sm" style="margin-top:0.5rem">+ Add Implement</button>
             </div>
           </div>
 
           <!-- Field Ops Unified Panel -->
           <div class="editor-section-panel" data-section="fieldops-unified">
+            <div class="ed-sec-header"><span class="ed-sec-chevron">&#9662;</span><h3 class="ed-sec-title">Field Ops</h3></div>
             <div class="editor-section-body" id="ed-fieldops-unified-body">
               <!-- Rendered by renderFieldOpsPanel() in field-editor.js -->
               <div class="fo-toolbar" style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
@@ -1153,20 +1136,9 @@
             </div>
           </div>
 
-          <!-- Seed -->
-          <div class="editor-section-panel" data-section="seed">
-            <div class="editor-section-body">
-              <div id="ed-seeds-acre-hint" style="font-size:0.78rem;color:var(--text-light);margin-bottom:0.5rem;"></div>
-              <table class="ref-table" style="font-size:0.8rem;width:100%">
-                <thead><tr><th>Variety</th><th>Population</th><th>Acres</th><th>Cost/ac</th><th></th></tr></thead>
-                <tbody id="ed-seeds-tbody"></tbody>
-              </table>
-              <button id="ed-add-seed" class="btn-sm" style="margin-top:0.5rem">+ Add Variety</button>
-            </div>
-          </div>
-
           <!-- Yield & Income -->
           <div class="editor-section-panel" data-section="yield">
+            <div class="ed-sec-header"><span class="ed-sec-chevron">&#9662;</span><h3 class="ed-sec-title">Yield &amp; Income</h3></div>
             <div class="editor-section-body">
               <div style="margin-bottom:0.75rem;">
                 <div class="view-toggle" id="ed-yield-mode-toggle" style="display:inline-flex;">
@@ -1208,35 +1180,24 @@
                   <input type="number" id="ed-insIncome" step="0.01" min="0">
                 </div>
               </div>
-            </div>
-          </div>
 
-          <!-- AUX Payments -->
-          <div class="editor-section-panel role-hide-office" data-section="aux">
-            <div class="editor-section-body">
-              <table id="ed-aux-table" class="compact-table" style="width:100%">
-                <thead><tr><th>Label</th><th>$/AC</th><th></th></tr></thead>
-                <tbody id="ed-aux-tbody"></tbody>
-              </table>
-              <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
-                <button id="ed-add-aux" class="btn-sm">+ Add Payment</button>
-                <span id="ed-aux-total" style="font-size:0.8rem;color:var(--text-light);"></span>
+              <div class="ed-subsection role-hide-office">
+                <div class="ed-subsec-title">AUX Payments</div>
+                <table id="ed-aux-table" class="compact-table" style="width:100%">
+                  <thead><tr><th>Label</th><th>$/AC</th><th></th></tr></thead>
+                  <tbody id="ed-aux-tbody"></tbody>
+                </table>
+                <div style="display:flex;align-items:center;gap:0.75rem;margin-top:0.5rem;">
+                  <button id="ed-add-aux" class="btn-sm">+ Add Payment</button>
+                  <span id="ed-aux-total" style="font-size:0.8rem;color:var(--text-light);"></span>
+                </div>
               </div>
-            </div>
-          </div>
-
-          <!-- FieldOps Data -->
-          <div class="editor-section-panel" data-section="fieldops">
-            <div class="editor-section-body">
-              <h4 style="font-size:0.8rem;color:var(--text-light);margin-bottom:0.5rem">Application History</h4>
-              <div id="ed-fieldops-applications"></div>
-              <h4 style="font-size:0.8rem;color:var(--text-light);margin:0.75rem 0 0.5rem">Yield History</h4>
-              <div id="ed-fieldops-yield-history"></div>
             </div>
           </div>
 
           <!-- Cost Detail -->
           <div class="editor-section-panel role-hide-office" data-section="costdetail">
+            <div class="ed-sec-header"><span class="ed-sec-chevron">&#9662;</span><h3 class="ed-sec-title">Cost Detail</h3></div>
             <div class="editor-section-body">
               <div id="ed-cost-detail-body"></div>
             </div>
@@ -1581,7 +1542,7 @@
   <script src="dashboard.js?v=20260428a"></script>
   <script src="enterprise.js?v=20260406a"></script>
   <script src="field-ops-groups.js"></script>
-  <script src="field-editor.js?v=20260709a"></script>
+  <script src="field-editor.js?v=20260805"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js"></script>
   <script src="seed-manager.js"></script>
