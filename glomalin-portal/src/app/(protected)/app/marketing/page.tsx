@@ -138,7 +138,7 @@ export default async function MarketingPage({
           title="Contracts"
           actions={
             <a
-              href="/app/marketing/contracts/new"
+              href="/app/marketing/contracts?new=1"
               className="px-3 py-1.5 rounded border border-glomalin-border text-xs font-mono text-glomalin-muted hover:border-glomalin-accent hover:text-glomalin-accent transition-colors"
             >
               New Contract

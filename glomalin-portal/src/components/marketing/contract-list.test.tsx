@@ -176,4 +176,27 @@ describe('ContractListClient', () => {
       expect(screen.queryByText('Edit Contract')).toBeNull()
     })
   })
+
+  // Dashboard deep-link: ?new=1 opens the create drawer (dashboard "New Contract" CTA)
+  describe('?new= query param', () => {
+    afterEach(() => {
+      window.history.replaceState(null, '', '/')
+    })
+
+    it('opens the create drawer on mount and strips the param', () => {
+      window.history.replaceState(null, '', '/app/marketing/contracts?new=1')
+      render(
+        <ContractListClient
+          contracts={contracts}
+          customers={customers}
+          variants={variants}
+          role="owner"
+        />
+      )
+      // Two matches = list button + open drawer title; closed drawer would yield one
+      expect(screen.getAllByText('New Contract')).toHaveLength(2)
+      expect(screen.queryByText('Edit Contract')).toBeNull()
+      expect(window.location.search).not.toContain('new=')
+    })
+  })
 })
