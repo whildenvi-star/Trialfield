@@ -63,7 +63,6 @@
     </nav>
     <div class="nav-enterprise-bar" id="nav-enterprise-bar"></div>
     <div class="sidebar-footer">
-      <button id="theme-toggle" class="theme-toggle" style="display:none">&#9788;</button>
     </div>
   </aside>
 
@@ -1556,32 +1555,6 @@
   <script src="farm-map.js"></script>
   <script src="pdf-report.js"></script>
   <script src="fieldops-ui.js"></script>
-
-  <!-- Theme toggle -->
-  <script>
-  (function () {
-    var btn = document.getElementById('theme-toggle');
-    var btnNav = document.getElementById('theme-toggle-nav');
-    var meta = document.querySelector('meta[name="theme-color"]');
-    function update() {
-      var isLight = document.body.classList.contains('light');
-      var icon = isLight ? '&#9790;' : '&#9788;';
-      btn.innerHTML = icon;
-      btnNav.innerHTML = icon;
-      if (meta) meta.content = isLight ? '#ffffff' : '#080a0f';
-    }
-    function toggle() {
-      document.body.classList.toggle('light');
-      var isLight = document.body.classList.contains('light');
-      localStorage.setItem('mru-theme', isLight ? 'light' : 'dark');
-      update();
-      window.dispatchEvent(new Event('theme-change'));
-    }
-    update();
-    btn.addEventListener('click', toggle);
-    btnNav.addEventListener('click', toggle);
-  })();
-  </script>
 
   <!-- Futures sparkline charts (Chart.js + server proxy) -->
   <script>
