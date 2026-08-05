@@ -55,7 +55,7 @@ if (process.env.EMBED_TOKEN) {
 // Static files served before API auth so pages always load
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders(res, filePath) {
-    if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+    if (filePath.endsWith('.css') || filePath.endsWith('.js') || filePath.endsWith('.html')) {
       res.setHeader('Cache-Control', 'no-cache, must-revalidate');
     }
   }
