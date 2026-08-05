@@ -481,9 +481,40 @@
     var buyerName = settlement.buyer ? settlement.buyer.name : 'Unknown';
     header.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;">' +
       '<div><strong>Settlement:</strong> ' + escHtml(buyerName) + ' — Crop Year ' + escHtml(String(settlement.cropYear)) + '</div>' +
+      '<div style="display:flex;gap:0.5rem;">' +
+      '<button id="manual-finish-match-btn" class="btn-sm">Finish &amp; Match</button>' +
       '<button id="manual-end-session-btn" class="btn-sm" style="color:var(--danger)">End Session</button>' +
+      '</div>' +
       '</div>';
     container.appendChild(header);
+
+    // Wire "Finish & Match" button — runs the ticket matcher, then ends the session
+    var finishBtn = header.querySelector('#manual-finish-match-btn');
+    if (finishBtn) {
+      finishBtn.addEventListener('click', function () {
+        finishBtn.disabled = true;
+        finishBtn.textContent = 'Matching...';
+        fetch('/api/settlements/' + settlement.id + '/rematch', { method: 'POST' })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+          .then(function (res) {
+            if (!res.ok) {
+              finishBtn.disabled = false;
+              finishBtn.textContent = 'Finish & Match';
+              showToast('Match failed: ' + (res.data.error || 'Unknown error'));
+              return;
+            }
+            var d = res.data;
+            manualSettlementId = null;
+            renderManualStartForm(container);
+            showToast('Settlement saved: ' + (d.matched || 0) + ' matched, ' + (d.unmatched || 0) + ' unmatched');
+          })
+          .catch(function (err) {
+            finishBtn.disabled = false;
+            finishBtn.textContent = 'Finish & Match';
+            showToast('Match error: ' + err.message);
+          });
+      });
+    }
 
     // Wire "End Session" button
     var endBtn = header.querySelector('#manual-end-session-btn');

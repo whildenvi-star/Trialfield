@@ -8,6 +8,19 @@ export const PRICED_INSTRUMENTS = new Set<string>([
   "MIN_PRICE",
 ])
 // PRICED_LATER, SPOT, and ACCUMULATOR are deliberately excluded.
+// SPOT is priced only when it carries a finalCashPrice — see isPricedContract.
+
+/**
+ * A contract counts as priced if its instrument is inherently priced, or if it
+ * is a SPOT sale with a known cash price. A SPOT row without a price is just a
+ * delivery record and must stay in the open position.
+ */
+export function isPricedContract(c: GrainContractForPosition): boolean {
+  return (
+    PRICED_INSTRUMENTS.has(c.instrument) ||
+    (c.instrument === "SPOT" && c.finalCashPrice != null)
+  )
+}
 
 export interface PositionSummary {
   contractedBu: number
@@ -21,9 +34,9 @@ export interface PositionSummary {
 export interface GrainContractForPosition {
   instrument: string
   contractedBushels: number
-  finalCashPrice?: number | null   // cents/bu if known
-  futuresPrice?: number | null     // cents/bu
-  basis?: number | null            // cents/bu (can be negative)
+  finalCashPrice?: number | null   // $/bu if known
+  futuresPrice?: number | null     // $/bu
+  basis?: number | null            // $/bu (can be negative)
 }
 
 /**
@@ -46,7 +59,7 @@ export function computePosition(contracts: GrainContractForPosition[]): Position
   for (const c of contracts) {
     contractedBu += c.contractedBushels
 
-    if (PRICED_INSTRUMENTS.has(c.instrument)) {
+    if (isPricedContract(c)) {
       pricedBu += c.contractedBushels
 
       // Determine effective price
@@ -59,10 +72,10 @@ export function computePosition(contracts: GrainContractForPosition[]): Position
       }
 
       if (effectivePrice !== null) {
-        // Round per-contract before accumulation: prices are integer cents in the
-        // database, but the type allows floats. Rounding here prevents floating-point
-        // drift from accumulating across many contracts before the final WAP round.
-        wapNumerator += Math.round(effectivePrice) * c.contractedBushels
+        // Prices are stored in $/bu; convert to integer cents at this boundary.
+        // Rounding per-contract prevents floating-point drift from accumulating
+        // across many contracts before the final WAP round.
+        wapNumerator += Math.round(effectivePrice * 100) * c.contractedBushels
         wapDenominator += c.contractedBushels
       }
     }

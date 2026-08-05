@@ -184,7 +184,7 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
                   </TableCell>
                   <TableCell>
                     {'basis' in contract && contract.basis != null ? (
-                      formatBasis(contract.basis / 100)
+                      formatBasis(contract.basis)
                     ) : (
                       <span className="text-glomalin-muted">{EM_DASH}</span>
                     )}

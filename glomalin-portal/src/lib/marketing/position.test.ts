@@ -1,13 +1,9 @@
-// RED phase → GREEN after Plan 02 Task 1.
 // Run: npx vitest run src/lib/marketing/position.test.ts
+// Note: contract prices are stored in $/bu; avgPriceCents output is integer cents/bu.
 import { describe, it, expect } from "vitest"
-import { computePosition, PRICED_INSTRUMENTS } from "./position"
+import { computePosition, isPricedContract, PRICED_INSTRUMENTS } from "./position"
 
 describe("computePosition", () => {
-  it("RED: module exists and exports computePosition function", () => {
-    expect(typeof computePosition).toBe("function")
-  })
-
   it("returns zero summary for empty array", () => {
     const result = computePosition([])
     expect(result).toEqual({ contractedBu: 0, pricedBu: 0, openBu: 0, avgPriceCents: 0, contractCount: 0 })
@@ -21,7 +17,7 @@ describe("computePosition", () => {
     expect(result.openBu).toBe(5000)
   })
 
-  it("SPOT does not count as priced — counts as open", () => {
+  it("SPOT without a price does not count as priced — counts as open", () => {
     const result = computePosition([
       { instrument: "SPOT", contractedBushels: 3000, finalCashPrice: null }
     ])
@@ -29,9 +25,18 @@ describe("computePosition", () => {
     expect(result.openBu).toBe(3000)
   })
 
+  it("SPOT with a finalCashPrice counts as priced and contributes to WAP", () => {
+    const result = computePosition([
+      { instrument: "SPOT", contractedBushels: 5000, finalCashPrice: 5.10 }
+    ])
+    expect(result.pricedBu).toBe(5000)
+    expect(result.openBu).toBe(0)
+    expect(result.avgPriceCents).toBe(510)
+  })
+
   it("PRICED instrument with finalCashPrice counts as priced and contributes to WAP", () => {
     const result = computePosition([
-      { instrument: "PRICED", contractedBushels: 10000, finalCashPrice: 482, futuresPrice: 500, basis: -18 }
+      { instrument: "PRICED", contractedBushels: 10000, finalCashPrice: 4.82, futuresPrice: 5.00, basis: -0.18 }
     ])
     expect(result.pricedBu).toBe(10000)
     expect(result.avgPriceCents).toBe(482)
@@ -39,16 +44,25 @@ describe("computePosition", () => {
 
   it("WAP: weighted average across PRICED + FUTURES_FIXED contracts", () => {
     const result = computePosition([
-      { instrument: "PRICED", contractedBushels: 10000, finalCashPrice: 500, futuresPrice: 500, basis: 0 },
-      { instrument: "FUTURES_FIXED", contractedBushels: 5000, finalCashPrice: null, futuresPrice: 480, basis: null }
+      { instrument: "PRICED", contractedBushels: 10000, finalCashPrice: 5.00, futuresPrice: 5.00, basis: 0 },
+      { instrument: "FUTURES_FIXED", contractedBushels: 5000, finalCashPrice: null, futuresPrice: 4.80, basis: null }
     ])
     expect(result.pricedBu).toBe(15000)
     expect(result.avgPriceCents).toBe(493)
   })
 
+  it("WAP blends SPOT cash price with other priced contracts", () => {
+    const result = computePosition([
+      { instrument: "PRICED", contractedBushels: 5000, finalCashPrice: 5.00 },
+      { instrument: "SPOT", contractedBushels: 5000, finalCashPrice: 4.50 }
+    ])
+    expect(result.pricedBu).toBe(10000)
+    expect(result.avgPriceCents).toBe(475)
+  })
+
   it("uses futuresPrice+basis as effective price when finalCashPrice is null", () => {
     const result = computePosition([
-      { instrument: "FUTURES_FIXED", contractedBushels: 5000, finalCashPrice: null, futuresPrice: 490, basis: -10 }
+      { instrument: "FUTURES_FIXED", contractedBushels: 5000, finalCashPrice: null, futuresPrice: 4.90, basis: -0.10 }
     ])
     expect(result.avgPriceCents).toBe(480)
   })
@@ -73,5 +87,23 @@ describe("computePosition", () => {
     expect(PRICED_INSTRUMENTS.has("PRICED_LATER")).toBe(false)
     expect(PRICED_INSTRUMENTS.has("SPOT")).toBe(false)
     expect(PRICED_INSTRUMENTS.has("ACCUMULATOR")).toBe(false)
+  })
+})
+
+describe("isPricedContract", () => {
+  it("true for inherently priced instruments regardless of price fields", () => {
+    expect(isPricedContract({ instrument: "PRICED", contractedBushels: 1000, finalCashPrice: null })).toBe(true)
+    expect(isPricedContract({ instrument: "FUTURES_FIXED", contractedBushels: 1000 })).toBe(true)
+  })
+
+  it("SPOT is priced only when finalCashPrice is present", () => {
+    expect(isPricedContract({ instrument: "SPOT", contractedBushels: 1000, finalCashPrice: 5.10 })).toBe(true)
+    expect(isPricedContract({ instrument: "SPOT", contractedBushels: 1000, finalCashPrice: null })).toBe(false)
+    expect(isPricedContract({ instrument: "SPOT", contractedBushels: 1000 })).toBe(false)
+  })
+
+  it("false for PRICED_LATER and ACCUMULATOR even with a price", () => {
+    expect(isPricedContract({ instrument: "PRICED_LATER", contractedBushels: 1000, finalCashPrice: 5.10 })).toBe(false)
+    expect(isPricedContract({ instrument: "ACCUMULATOR", contractedBushels: 1000, finalCashPrice: 5.10 })).toBe(false)
   })
 })

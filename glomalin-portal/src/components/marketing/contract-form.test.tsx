@@ -14,6 +14,7 @@ const baseProps = {
   variants,
   onSuccess,
   open: true,
+  role: 'OWNER',
 }
 
 // Minimal contract for edit mode tests
@@ -112,6 +113,77 @@ describe('ContractForm', () => {
 
     expect(screen.queryByRole('spinbutton', { name: /futures price/i })).toBeNull()
     expect(screen.queryByRole('spinbutton', { name: /^basis/i })).toBeNull()
+  })
+
+  // CONTRACT-02b: Cash price visibility for SPOT
+  it('shows cash price field when instrument is SPOT', () => {
+    render(<ContractForm {...baseProps} contract={null} />)
+
+    const instrumentSelect = screen.getByRole('combobox', { name: /instrument type/i })
+    fireEvent.change(instrumentSelect, { target: { value: 'SPOT' } })
+
+    expect(screen.queryByRole('spinbutton', { name: /cash price/i })).not.toBeNull()
+  })
+
+  it('hides cash price field for PRICED and PRICED_LATER', () => {
+    render(<ContractForm {...baseProps} contract={null} />)
+
+    const instrumentSelect = screen.getByRole('combobox', { name: /instrument type/i })
+    fireEvent.change(instrumentSelect, { target: { value: 'PRICED' } })
+    expect(screen.queryByRole('spinbutton', { name: /cash price/i })).toBeNull()
+
+    fireEvent.change(instrumentSelect, { target: { value: 'PRICED_LATER' } })
+    expect(screen.queryByRole('spinbutton', { name: /cash price/i })).toBeNull()
+  })
+
+  it('hides cash price field for SPOT when role is OFFICE', () => {
+    render(<ContractForm {...baseProps} contract={null} role="OFFICE" />)
+
+    const instrumentSelect = screen.getByRole('combobox', { name: /instrument type/i })
+    fireEvent.change(instrumentSelect, { target: { value: 'SPOT' } })
+
+    expect(screen.queryByRole('spinbutton', { name: /cash price/i })).toBeNull()
+  })
+
+  it('submits finalCashPrice and long-form delivery date keys for a SPOT contract', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      render(<ContractForm {...baseProps} contract={null} />)
+
+      fireEvent.change(screen.getByRole('combobox', { name: /buyer/i }), { target: { value: 'cust-1' } })
+      fireEvent.change(screen.getByRole('combobox', { name: /grain variant/i }), { target: { value: 'var-1' } })
+      fireEvent.change(screen.getByRole('combobox', { name: /instrument type/i }), { target: { value: 'SPOT' } })
+      fireEvent.change(screen.getByRole('spinbutton', { name: /contracted bushels/i }), { target: { value: '5000' } })
+      fireEvent.change(screen.getByRole('spinbutton', { name: /cash price/i }), { target: { value: '5.10' } })
+
+      fireEvent.submit(screen.getByRole('button', { name: /save|create/i }).closest('form')!)
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+      expect(body.instrument).toBe('SPOT')
+      expect(body.finalCashPrice).toBe(5.10)
+      expect('deliveryStartDate' in body).toBe(true)
+      expect('deliveryStart' in body).toBe(false)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('renders cash price input as disabled in edit mode for SPOT contract', () => {
+    const spotContract = {
+      ...existingContract,
+      instrument: 'SPOT' as const,
+      futuresPrice: null,
+      basis: null,
+      finalCashPrice: 5.1,
+    }
+    render(<ContractForm {...baseProps} contract={spotContract} />)
+
+    const cashPriceInput = screen.getByRole('spinbutton', { name: /cash price/i })
+    expect((cashPriceInput as HTMLInputElement).disabled).toBe(true)
+    expect((cashPriceInput as HTMLInputElement).value).toBe('5.1')
   })
 
   // CONTRACT-03: Edit mode pre-fills fields

@@ -65,6 +65,7 @@ export interface GrainContractRow {
 
 export const SHOWS_FUTURES_PRICE = new Set(['PRICED', 'FUTURES_FIXED'])
 export const SHOWS_BASIS = new Set(['PRICED', 'BASIS_FIXED', 'FOB'])
+export const SHOWS_CASH_PRICE = new Set(['SPOT'])
 
 export const INSTRUMENT_LABELS: Record<string, string> = {
   PRICED: 'Priced',
@@ -87,6 +88,7 @@ interface ContractFormState {
   contractedBushels: string
   futuresPrice: string
   basis: string
+  finalCashPrice: string
   paymentBasis: string
   // Specialty: PER_ACRE
   acresIrrigated: string
@@ -125,6 +127,7 @@ const EMPTY_FORM: ContractFormState = {
   contractedBushels: '',
   futuresPrice: '',
   basis: '',
+  finalCashPrice: '',
   paymentBasis: 'PER_BUSHEL',
   // PER_ACRE
   acresIrrigated: '',
@@ -183,6 +186,7 @@ export function contractToForm(contract: GrainContractRow): ContractFormState {
     contractedBushels: str(contract.contractedBushels),
     futuresPrice: str(contract.futuresPrice),
     basis: str(contract.basis),
+    finalCashPrice: str(contract.finalCashPrice),
     paymentBasis: contract.paymentBasis ?? 'PER_BUSHEL',
     // PER_ACRE
     acresIrrigated: str(scd?.acresIrrigated),
@@ -339,6 +343,7 @@ export function ContractForm({
 
   const showFuturesPrice = SHOWS_FUTURES_PRICE.has(form.instrumentType)
   const showBasis = SHOWS_BASIS.has(form.instrumentType)
+  const showCashPrice = SHOWS_CASH_PRICE.has(form.instrumentType)
   const showSeedCorn = form.paymentBasis === 'PER_ACRE'
   const showSeedUnit = form.paymentBasis === 'PER_UNIT'
   const showCanning = form.paymentBasis === 'PER_TON'
@@ -431,9 +436,12 @@ export function ContractForm({
         basis: (canSeeFinancials && SHOWS_BASIS.has(form.instrumentType))
           ? numOrNull(form.basis)
           : null,
+        finalCashPrice: (canSeeFinancials && SHOWS_CASH_PRICE.has(form.instrumentType))
+          ? numOrNull(form.finalCashPrice)
+          : null,
         // Delivery
-        deliveryStart: form.deliveryStart || null,
-        deliveryEnd: form.deliveryEnd || null,
+        deliveryStartDate: form.deliveryStart || null,
+        deliveryEndDate: form.deliveryEnd || null,
         location: form.location || null,
         notes: form.notes || null,
         hasPremium: form.hasPremium,
@@ -666,6 +674,29 @@ export function ContractForm({
               disabled={isEdit}
               className={isEdit ? lockedInputClass : inputClass}
               placeholder="e.g. -0.35"
+            />
+          </div>
+        )}
+
+        {showCashPrice && canSeeFinancials && (
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="cf-finalCashPrice">
+              Cash Price $/bu{' '}
+              {isEdit && (
+                <span className="text-glomalin-muted">(locked)</span>
+              )}
+            </label>
+            <input
+              id="cf-finalCashPrice"
+              name="finalCashPrice"
+              type="number"
+              step="0.0001"
+              aria-label="Cash Price"
+              value={form.finalCashPrice}
+              onChange={handleChange}
+              disabled={isEdit}
+              className={isEdit ? lockedInputClass : inputClass}
+              placeholder="e.g. 5.10"
             />
           </div>
         )}

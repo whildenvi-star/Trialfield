@@ -2,7 +2,7 @@
 // per-crop position summaries, sale histories, budget aggregates, and what-if
 // scenario math for the marketing dashboard.
 
-import { computePosition, PRICED_INSTRUMENTS } from './position'
+import { computePosition, isPricedContract } from './position'
 import type { PositionSummary, GrainContractForPosition } from './position'
 
 // ── Input types (shapes from the API responses) ────────────────────────────
@@ -156,11 +156,12 @@ interface CommodityGroup {
   variantNameById: Map<string, string>
 }
 
-// Effective sale price in cents — mirrors computePosition's WAP rules
+// Effective sale price in cents — mirrors computePosition's WAP rules.
+// Contract prices are stored in $/bu; converted to integer cents here.
 function effectivePriceCents(c: GrainContractForPosition): number | null {
-  if (!PRICED_INSTRUMENTS.has(c.instrument)) return null
-  if (c.finalCashPrice != null) return c.finalCashPrice
-  if (c.futuresPrice != null) return c.futuresPrice + (c.basis ?? 0)
+  if (!isPricedContract(c)) return null
+  if (c.finalCashPrice != null) return Math.round(c.finalCashPrice * 100)
+  if (c.futuresPrice != null) return Math.round((c.futuresPrice + (c.basis ?? 0)) * 100)
   return null
 }
 

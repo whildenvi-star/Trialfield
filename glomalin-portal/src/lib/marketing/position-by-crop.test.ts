@@ -17,15 +17,15 @@ const VARIANTS: RawGrainVariant[] = [
 function pricedContract(
   variantId: string,
   bushels: number,
-  priceCents: number,
+  priceDollars: number,
   extra: Partial<ContractWithVariant> = {}
 ): ContractWithVariant {
   const variant = VARIANTS.find((v) => v.id === variantId)!
   return {
-    id: `c-${variantId}-${bushels}-${priceCents}`,
+    id: `c-${variantId}-${bushels}-${priceDollars}`,
     instrument: 'PRICED',
     contractedBushels: bushels,
-    finalCashPrice: priceCents,
+    finalCashPrice: priceDollars,
     variant: { id: variant.id, name: variant.name },
     ...extra,
   }
@@ -52,15 +52,15 @@ function buildCorn(
 describe('blended average price (weighted, never simple)', () => {
   it('weights by bushels — 10k @ $5.00 + 30k @ $4.00 = $4.25, not $4.50', () => {
     const crop = buildCorn([
-      pricedContract('v-corn', 10_000, 500),
-      pricedContract('v-corn', 30_000, 400),
+      pricedContract('v-corn', 10_000, 5.00),
+      pricedContract('v-corn', 30_000, 4.00),
     ])
     expect(crop.position.avgPriceCents).toBe(425)
   })
 
   it('scenario blends real + hypothetical bushels by weight', () => {
     // Real: 20,000 bu @ $4.00. Hypo: 20,000 bu @ $5.00 → blended $4.50
-    const crop = buildCorn([pricedContract('v-corn', 20_000, 400)])
+    const crop = buildCorn([pricedContract('v-corn', 20_000, 4.00)])
     const result = applyScenario(crop, [{ bushels: 20_000, priceDollars: 5.0 }])
     expect(result.newWAPDollars).toBeCloseTo(4.5, 4)
   })
@@ -68,7 +68,7 @@ describe('blended average price (weighted, never simple)', () => {
   it('stacked hypothetical sales all count toward the blend', () => {
     // Real: 10,000 @ $4.00. Hypos: 10,000 @ $5.00 and 20,000 @ $4.50
     // → (40,000 + 50,000 + 90,000) / 40,000 = $4.50
-    const crop = buildCorn([pricedContract('v-corn', 10_000, 400)])
+    const crop = buildCorn([pricedContract('v-corn', 10_000, 4.00)])
     const result = applyScenario(crop, [
       { bushels: 10_000, priceDollars: 5.0 },
       { bushels: 20_000, priceDollars: 4.5 },
@@ -78,7 +78,7 @@ describe('blended average price (weighted, never simple)', () => {
   })
 
   it('ignores hypothetical sales with zero bushels or zero price', () => {
-    const crop = buildCorn([pricedContract('v-corn', 10_000, 400)])
+    const crop = buildCorn([pricedContract('v-corn', 10_000, 4.00)])
     const result = applyScenario(crop, [
       { bushels: 0, priceDollars: 5.0 },
       { bushels: 5_000, priceDollars: 0 },
@@ -92,7 +92,7 @@ describe('blended average price (weighted, never simple)', () => {
 
 describe('break-even (COP per bushel)', () => {
   it('single field: expPerAcre / yieldPerAcre', () => {
-    const crop = buildCorn([pricedContract('v-corn', 1_000, 400)])
+    const crop = buildCorn([pricedContract('v-corn', 1_000, 4.00)])
     expect(crop.budget!.copPerBu).toBeCloseTo(4.0, 4)
     expect(crop.budget!.totalEstimatedBu).toBeCloseTo(20_000, 2)
     expect(crop.budget!.totalCost).toBeCloseTo(80_000, 2)
@@ -103,7 +103,7 @@ describe('break-even (COP per bushel)', () => {
       { crop: 'Corn', acres: 100, expPerAcre: 800, yieldPerAcre: 200 },
       { crop: 'corn ', acres: 100, expPerAcre: 700, yieldPerAcre: 100 }, // case/space-insensitive match
     ]
-    const crop = buildCorn([pricedContract('v-corn', 1_000, 400)], budget)
+    const crop = buildCorn([pricedContract('v-corn', 1_000, 4.00)], budget)
     // weighted exp = 750, weighted yield = 150 → cop = 5.00
     expect(crop.budget!.copPerBu).toBeCloseTo(5.0, 4)
     // invariant: copPerBu ≡ totalCost / totalEstimatedBu
@@ -115,7 +115,7 @@ describe('break-even (COP per bushel)', () => {
 
   it('margin locked = (WAP − break-even) × priced bushels', () => {
     // 10,000 bu @ $4.50 vs $4.00 break-even → +$0.50/bu, +$5,000 total
-    const crop = buildCorn([pricedContract('v-corn', 10_000, 450)])
+    const crop = buildCorn([pricedContract('v-corn', 10_000, 4.50)])
     expect(crop.marginLockedPerBu).toBeCloseTo(0.5, 4)
     expect(crop.marginLockedTotal).toBeCloseTo(5_000, 2)
   })
@@ -126,19 +126,19 @@ describe('break-even (COP per bushel)', () => {
 describe('percent sold', () => {
   it('is sold bushels over projected production', () => {
     // 5,000 sold of 20,000 projected → 25%
-    const crop = buildCorn([pricedContract('v-corn', 5_000, 400)])
+    const crop = buildCorn([pricedContract('v-corn', 5_000, 4.00)])
     expect(crop.pctSold).toBeCloseTo(0.25, 4)
     expect(crop.overhedged).toBe(false)
   })
 
   it('exceeds 100% uncapped and flags overhedged', () => {
-    const crop = buildCorn([pricedContract('v-corn', 25_000, 400)])
+    const crop = buildCorn([pricedContract('v-corn', 25_000, 4.00)])
     expect(crop.pctSold).toBeCloseTo(1.25, 4)
     expect(crop.overhedged).toBe(true)
   })
 
   it('scenario can push into overhedged', () => {
-    const crop = buildCorn([pricedContract('v-corn', 15_000, 400)])
+    const crop = buildCorn([pricedContract('v-corn', 15_000, 4.00)])
     expect(crop.overhedged).toBe(false)
     const result = applyScenario(crop, [{ bushels: 10_000, priceDollars: 4.5 }])
     expect(result.newPctSold).toBeCloseTo(1.25, 4)
@@ -146,7 +146,7 @@ describe('percent sold', () => {
   })
 
   it('is null when no budget data exists', () => {
-    const crop = buildCorn([pricedContract('v-corn', 5_000, 400)], [])
+    const crop = buildCorn([pricedContract('v-corn', 5_000, 4.00)], [])
     expect(crop.pctSold).toBeNull()
     expect(crop.budget).toBeNull()
   })
@@ -156,7 +156,7 @@ describe('percent sold', () => {
 
 describe('missing cost data', () => {
   it('margin and profit are null, never zero or fabricated', () => {
-    const crop = buildCorn([pricedContract('v-corn', 10_000, 450)], [])
+    const crop = buildCorn([pricedContract('v-corn', 10_000, 4.50)], [])
     expect(crop.marginLockedPerBu).toBeNull()
     expect(crop.marginLockedTotal).toBeNull()
     const result = applyScenario(crop, [{ bushels: 5_000, priceDollars: 5.0 }])
@@ -171,7 +171,7 @@ describe('missing cost data', () => {
     const budget: BudgetFieldRow[] = [
       { crop: 'Corn', acres: 100, expPerAcre: 800, yieldPerAcre: 0 },
     ]
-    const crop = buildCorn([pricedContract('v-corn', 1_000, 400)], budget)
+    const crop = buildCorn([pricedContract('v-corn', 1_000, 4.00)], budget)
     expect(crop.budget).toBeNull()
   })
 })
@@ -208,8 +208,8 @@ describe('crop with zero sales', () => {
 describe('sales list', () => {
   it('orders by date with running cumulative % of projected', () => {
     const crop = buildCorn([
-      pricedContract('v-corn', 4_000, 420, { deliveryStartDate: '2026-10-01' }),
-      pricedContract('v-corn', 6_000, 450, { deliveryStartDate: '2026-03-15' }),
+      pricedContract('v-corn', 4_000, 4.20, { deliveryStartDate: '2026-10-01' }),
+      pricedContract('v-corn', 6_000, 4.50, { deliveryStartDate: '2026-03-15' }),
     ])
     expect(crop.sales.map((s) => s.date)).toEqual(['2026-03-15', '2026-10-01'])
     expect(crop.sales[0].cumulativeBu).toBe(6_000)
@@ -239,7 +239,7 @@ describe('sales list', () => {
 describe('variant breakdown', () => {
   it('keeps food beans separate from commodity beans under one Soybeans card', () => {
     const groups = groupContractsByCommodity(
-      [pricedContract('v-soy', 20_000, 1000), pricedContract('v-food', 5_000, 1300)],
+      [pricedContract('v-soy', 20_000, 10.00), pricedContract('v-food', 5_000, 13.00)],
       VARIANTS
     )
     const crops = buildCropMarketingDataList(groups, [], NO_PRICES)
