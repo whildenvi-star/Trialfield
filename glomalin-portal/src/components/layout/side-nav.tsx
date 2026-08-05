@@ -24,7 +24,7 @@ const MODULE_GROUPS: { label: string; icon: 'field' | 'ops' | 'finance' | 'input
   { label: 'Field',      icon: 'field',   ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
   { label: 'Operations', icon: 'ops',     ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
   { label: 'Finance',    icon: 'finance', ids: ['performance', 'enterprise-summary', 'marketing', 'farm-budget', 'grain-tickets'] },
-  { label: 'Inputs',     icon: 'inputs',  ids: ['seed-inventory', 'meristem-malt'] },
+  { label: 'Inputs',     icon: 'inputs',  ids: ['seed-inventory', 'reference-data', 'meristem-malt'] },
 ]
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────

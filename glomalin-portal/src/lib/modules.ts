@@ -6,6 +6,7 @@ export interface Module {
   status: 'live' | 'coming-soon'
   type: 'native' | 'embed'
   embedKey?: string
+  query?: string
 }
 
 // Same-origin embed paths — Caddy proxies /embed/<app>/* to Express ports.
@@ -33,8 +34,9 @@ const EMBED_URL_OVERRIDES: Record<string, string | undefined> = {
 export function getEmbedUrl(mod: Module): string | null {
   if (mod.type !== 'embed' || !mod.embedKey) return null
   // Use env override (for local dev) or same-origin proxy path (production)
-  const base = EMBED_URL_OVERRIDES[mod.embedKey] || EMBED_PATHS[mod.embedKey] || null
+  let base = EMBED_URL_OVERRIDES[mod.embedKey] || EMBED_PATHS[mod.embedKey] || null
   if (!base) return null
+  if (mod.query) base += (base.includes('?') ? '&' : '?') + mod.query
   const token = process.env.EMBED_TOKEN
   if (!token) return base
   const sep = base.includes('?') ? '&' : '?'
@@ -175,5 +177,15 @@ export const MODULES: Module[] = [
     status: 'live',
     type: 'embed',
     embedKey: 'SEED_INVENTORY',
+  },
+  {
+    id: 'reference-data',
+    label: 'Reference Data',
+    sublabel: 'Products, Seeds, Suppliers & Catalogs',
+    route: '/app/reference-data',
+    status: 'live',
+    type: 'embed',
+    embedKey: 'FARM_BUDGET',
+    query: 'view=reference',
   },
 ]

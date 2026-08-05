@@ -10,6 +10,13 @@
   window.APP_ROLE = _role;
   document.documentElement.setAttribute('data-role', _role);
 
+  // --- View mode ---
+  // ?view=reference: solo Reference mode — the portal's "Reference Data"
+  // module embeds this app pinned to the Reference tab (chrome hidden via
+  // the html.solo-reference class set pre-paint in index.html).
+  var _view = new URLSearchParams(window.location.search).get('view') || '';
+  window.APP_VIEW = _view;
+
   // --- Portal postMessage bridge ---
   // Receives theme and text-scale changes from the Glomalin portal so the
   // settings panel in the portal header also controls this embedded app.
@@ -473,6 +480,7 @@
   window.addEventListener('ref-data-loaded', function () { refDataReady = true; });
 
   function restoreTab() {
+    if (window.APP_VIEW === 'reference') return true; // solo mode is pinned to Reference
     var hash = location.hash.replace('#', '');
     if (!hash) return false;
     // Enterprise tab: hash = "enterprise-N"
@@ -542,11 +550,20 @@
   }
 
   // --- Initial Load ---
-  var restoredFromHash = restoreTab();
-  loadRefData().then(function () {
-    // Ensure dashboard loads on first visit (no hash = dashboard is default active tab)
-    if (!restoredFromHash) {
-      activateRegularTab('dashboard');
-    }
-  });
+  if (_view === 'reference') {
+    // Solo Reference mode: land on the Reference tab's Overview cards
+    loadRefData().then(function () {
+      activateRegularTab('reference');
+      var ob = document.querySelector('.ref-sub-btn[data-ref-sub="overview"]');
+      if (ob) ob.click();
+    });
+  } else {
+    var restoredFromHash = restoreTab();
+    loadRefData().then(function () {
+      // Ensure dashboard loads on first visit (no hash = dashboard is default active tab)
+      if (!restoredFromHash) {
+        activateRegularTab('dashboard');
+      }
+    });
+  }
 })();

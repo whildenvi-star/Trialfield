@@ -4900,3 +4900,77 @@ html.in-iframe main { padding-top: 0.5rem; }
   .app-sidebar, .app-bottom-nav { display: none !important; }
   .app-main { margin-left: 0 !important; }
 }
+
+/* ===== Solo Reference mode (?view=reference — portal "Reference Data" module) ===== */
+/* Portal chrome provides outer nav; hide this app's own navigation entirely. */
+html.solo-reference .app-sidebar { display: none !important; }
+html.solo-reference .app-bottom-nav { display: none !important; }
+html.solo-reference .app-main { margin-left: 0 !important; padding-bottom: 0 !important; }
+html.solo-reference #tab-reference > h2 { display: none; }
+
+/* ===== Reference Overview cards ===== */
+.ref-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.ref-overview-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.85rem 1rem;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s;
+}
+.ref-overview-card:hover { border-color: var(--primary); }
+.ref-overview-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--primary);
+}
+.ref-overview-card.has-flags::before { background: var(--amber); }
+
+.ref-overview-card .card-label {
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  margin-bottom: 0.3rem;
+}
+.ref-overview-card .card-count {
+  font-size: 1.65rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  line-height: 1;
+  margin-bottom: 0.45rem;
+}
+.ref-overview-card .card-sub {
+  font-size: 0.7rem;
+  color: var(--text-light);
+  margin-bottom: 0.45rem;
+}
+.ref-overview-card .card-flag {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+  padding: 0.1rem 0.4rem;
+  margin: 0 0.3rem 0.3rem 0;
+}
+.ref-overview-card .card-flag-ok {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--text-light);
+}

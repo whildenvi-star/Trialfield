@@ -16,6 +16,7 @@
     // Apply saved theme before first paint to prevent flash
     (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
     if(window!==window.top)document.documentElement.classList.add('in-iframe');
+    if(/[?&]view=reference\b/.test(location.search))document.documentElement.classList.add('solo-reference');
   </script>
   <script>
     // Embed base-path + fetch override — MUST run before any app scripts
@@ -439,6 +440,7 @@
 
       <!-- Sub-navigation -->
       <div class="ref-sub-nav">
+        <button class="ref-sub-btn" data-ref-sub="overview">Overview</button>
         <button class="ref-sub-btn active" data-ref-sub="products">Products</button>
         <button class="ref-sub-btn" data-ref-sub="seeds">Seeds</button>
         <button class="ref-sub-btn" data-ref-sub="implements">Implements</button>
@@ -446,6 +448,11 @@
         <button class="ref-sub-btn" data-ref-sub="unit-packs">Unit/Packs</button>
         <button class="ref-sub-btn role-hide-office" data-ref-sub="labor">Labor &amp; Overhead</button>
         <button class="ref-sub-btn" data-ref-sub="forecast">Forecast</button>
+      </div>
+
+      <!-- Overview Sub-section (landing cards; default in solo-reference mode) -->
+      <div id="ref-sub-overview" class="ref-sub-content">
+        <div id="ref-overview-cards" class="ref-overview-grid"></div>
       </div>
 
       <!-- Products Sub-section -->
@@ -1544,6 +1551,7 @@
   <script src="field-editor.js?v=20260805"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js"></script>
+  <script src="ref-overview.js?v=1"></script>
   <script src="seed-manager.js"></script>
   <script src="inventory.js?v=20260423"></script>
   <script src="demand-manager.js"></script>
