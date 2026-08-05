@@ -14,6 +14,12 @@ data/data.json
 data/data.json.bak.*
 data/photos
 
+# Droplet-side data snapshots and generated files — never delete/overwrite
+*/data/data.json.pre-*
+data/data.json.pre-*
+*/data/audit-results.json
+data/audit-results.json
+
 # Environment files
 *.env
 .env.*

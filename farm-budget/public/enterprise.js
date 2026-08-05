@@ -1215,6 +1215,15 @@
       // Fertilizer
       html += '<div class="mod-card mod-fert">';
       html += '<div class="mod-header">Fertilizer</div>';
+      (b.inputDetails || [])
+        .filter(function (d) { return d.costPerAcre > 0; })
+        .sort(function (x, y) { return y.costPerAcre - x.costPerAcre; })
+        .forEach(function (d) {
+          var seasonTag = d.season ? ' <small style="opacity:0.7">(' + util.escHtml(d.season.toLowerCase()) + ')</small>' : '';
+          html += '<div class="mod-row mod-row-sm">' +
+            '<span>' + util.escHtml(d.productName) + seasonTag + '</span>' +
+            '<span>' + util.formatMoney(d.costPerAcre) + '</span></div>';
+        });
       html += '<div class="mod-row"><span>Spring/AC</span><span>' + util.formatMoney(b.springFertPerAcre) + '</span></div>';
       html += '<div class="mod-row"><span>Fall/AC</span><span>' + util.formatMoney(b.fallFertPerAcre) + '</span></div>';
       if (b.unassignedFertPerAcre > 0) {
