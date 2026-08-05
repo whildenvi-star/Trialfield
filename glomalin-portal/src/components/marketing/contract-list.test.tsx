@@ -138,4 +138,42 @@ describe('ContractListClient', () => {
     // '(over-applied)' label should appear
     expect(screen.getByText('(over-applied)')).toBeTruthy()
   })
+
+  // Dashboard deep-link: ?edit=<id> opens the edit drawer (contract-table pencil)
+  describe('?edit= query param', () => {
+    afterEach(() => {
+      window.history.replaceState(null, '', '/')
+    })
+
+    it('opens the edit drawer for the matching contract on mount', () => {
+      window.history.replaceState(null, '', '/app/marketing/contracts?edit=con-2')
+      render(
+        <ContractListClient
+          contracts={contracts}
+          customers={customers}
+          variants={variants}
+          role="owner"
+        />
+      )
+      expect(screen.getByText('Edit Contract')).toBeTruthy()
+      // Pre-filled with con-2's bushels
+      const bushelsInput = screen.getByRole('spinbutton', { name: /contracted bushels/i })
+      expect((bushelsInput as HTMLInputElement).value).toBe('5000')
+      // Param stripped so refresh doesn't reopen
+      expect(window.location.search).not.toContain('edit=')
+    })
+
+    it('renders the plain list when the edit id matches no contract', () => {
+      window.history.replaceState(null, '', '/app/marketing/contracts?edit=nope')
+      render(
+        <ContractListClient
+          contracts={contracts}
+          customers={customers}
+          variants={variants}
+          role="owner"
+        />
+      )
+      expect(screen.queryByText('Edit Contract')).toBeNull()
+    })
+  })
 })

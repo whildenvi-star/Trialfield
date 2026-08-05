@@ -198,7 +198,7 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
                   </TableCell>
                   <TableCell>
                     <a
-                      href={`/app/marketing/contracts/${contract.id}/edit`}
+                      href={`/app/marketing/contracts?edit=${contract.id}`}
                       aria-label="Edit contract"
                       className="text-glomalin-muted hover:text-glomalin-accent transition-colors"
                     >

@@ -178,6 +178,24 @@ export function ContractListClient({
     return () => window.removeEventListener('glomalin:open-new-contract', onOpenNew)
   }, [])
 
+  // Dashboard edit pencil deep-link: /app/marketing/contracts?edit=<id> opens
+  // the edit drawer for that contract. Param is stripped after opening so a
+  // refresh or drawer close doesn't reopen it.
+  useEffect(() => {
+    const editId = new URLSearchParams(window.location.search).get('edit')
+    if (!editId) return
+    const target = contracts.find((c) => c.id === editId)
+    if (target) {
+      formIsDirtyRef.current = false
+      setEditContract(target)
+      setDrawerOpen(true)
+    }
+    const url = new URL(window.location.href)
+    url.searchParams.delete('edit')
+    window.history.replaceState(null, '', url.pathname + url.search)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   function openEdit(c: GrainContractRow) {
     formIsDirtyRef.current = false
     setEditContract(c)

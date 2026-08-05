@@ -115,4 +115,10 @@ describe('ContractTable', () => {
     render(<ContractTable contracts={[HTA_CONTRACT]} role="owner" cropYear={2025} />)
     expect(screen.getByText('HTA')).toBeTruthy()
   })
+
+  it('edit pencil links to the contracts page ?edit= deep-link (not a /edit route)', () => {
+    const { container } = render(<ContractTable contracts={[OWNER_CONTRACT]} role="owner" cropYear={2025} />)
+    const editLink = container.querySelector('a[aria-label="Edit contract"]')
+    expect(editLink?.getAttribute('href')).toBe('/app/marketing/contracts?edit=c1')
+  })
 })
