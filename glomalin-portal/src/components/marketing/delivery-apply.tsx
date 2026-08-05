@@ -15,18 +15,18 @@ export interface DeliveryForApply {
   customer: { id?: string; name: string; shortCode: string }
 }
 
-// The suggestion shape returned by POST /suggestions — contract is nested
+// The suggestion shape returned by POST /suggestions — a FLAT contract row
+// with openBushels and score merged in (see organic-cert suggestions route:
+// `return { ...rest, openBushels, score }`). Not nested under `contract`.
 export interface SuggestionResult {
-  contract: {
-    id: string
-    variantId?: string
-    customerId?: string
-    openBushels: number
-    contractedBushels: number
-    instrument?: string
-    customer?: { name: string; shortCode: string }
-    variant?: { name: string }
-  }
+  id: string
+  variantId?: string
+  customerId?: string
+  openBushels: number
+  contractedBushels: number
+  instrument?: string
+  customer?: { name: string; shortCode: string } | null
+  variant?: { name: string } | null
   score: number
 }
 
@@ -47,8 +47,8 @@ export function ApplyDeliveryClient({
   const initialInputs = useMemo(
     () =>
       suggestions.reduce<Record<string, string>>((acc, s) => {
-        const prefill = Math.min(s.contract.openBushels, delivery.unappliedBushels)
-        return { ...acc, [s.contract.id]: prefill.toFixed(2) }
+        const prefill = Math.min(s.openBushels, delivery.unappliedBushels)
+        return { ...acc, [s.id]: prefill.toFixed(2) }
       }, {}),
     [suggestions, delivery.unappliedBushels]
   )
@@ -163,10 +163,10 @@ export function ApplyDeliveryClient({
 
           <div className="flex flex-col gap-3 mb-4">
             {suggestions.map((s) => {
-              const cid = s.contract.id
-              const customerName = s.contract.customer?.name ?? '—'
-              const variantName = s.contract.variant?.name ?? '—'
-              const instrument = s.contract.instrument ?? ''
+              const cid = s.id
+              const customerName = s.customer?.name ?? '—'
+              const variantName = s.variant?.name ?? '—'
+              const instrument = s.instrument ?? ''
 
               return (
                 <div
@@ -193,7 +193,7 @@ export function ApplyDeliveryClient({
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <p className="font-mono text-xs text-glomalin-muted mb-1">
-                        Open: {formatBu(s.contract.openBushels)}
+                        Open: {formatBu(s.openBushels)}
                       </p>
                       <input
                         type="number"

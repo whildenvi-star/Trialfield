@@ -32,7 +32,8 @@ export default async function DeliveryApplyPage({
   }
 
   const delivery = await deliveryRes.json()
-  const suggestions = suggestionsRes.ok ? await suggestionsRes.json() : []
+  const suggestionsJson = suggestionsRes.ok ? await suggestionsRes.json() : []
+  const suggestions = Array.isArray(suggestionsJson) ? suggestionsJson : []
 
   return <ApplyDeliveryClient delivery={delivery} suggestions={suggestions} />
 }

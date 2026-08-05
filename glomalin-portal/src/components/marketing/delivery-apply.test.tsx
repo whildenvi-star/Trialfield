@@ -24,16 +24,19 @@ const delivery = {
   customer: { id: 'cust-1', name: 'Test Elevator', shortCode: 'TE' },
 }
 
+// Suggestions are FLAT contract rows with openBushels + score merged in,
+// mirroring the real organic-cert suggestions route response.
 // Single suggestion: pre-fill = min(5000, 800) = 800 → total=800, not overApplied
 const suggestions = [
   {
-    contract: {
-      id: 'con-1',
-      variantId: 'var-1',
-      customerId: 'cust-1',
-      openBushels: 5000,
-      contractedBushels: 10000,
-    },
+    id: 'con-1',
+    variantId: 'var-1',
+    customerId: 'cust-1',
+    openBushels: 5000,
+    contractedBushels: 10000,
+    instrument: 'SPOT',
+    customer: { name: 'Test Elevator', shortCode: 'TE' },
+    variant: { name: 'Yellow Corn' },
     score: 100,
   },
 ]
@@ -41,23 +44,19 @@ const suggestions = [
 // Two-suggestion fixture for over-application test
 const twoSuggestions = [
   {
-    contract: {
-      id: 'con-1',
-      variantId: 'var-1',
-      customerId: 'cust-1',
-      openBushels: 5000,
-      contractedBushels: 10000,
-    },
+    id: 'con-1',
+    variantId: 'var-1',
+    customerId: 'cust-1',
+    openBushels: 5000,
+    contractedBushels: 10000,
     score: 100,
   },
   {
-    contract: {
-      id: 'con-2',
-      variantId: 'var-1',
-      customerId: 'cust-1',
-      openBushels: 2000,
-      contractedBushels: 5000,
-    },
+    id: 'con-2',
+    variantId: 'var-1',
+    customerId: 'cust-1',
+    openBushels: 2000,
+    contractedBushels: 5000,
     score: 70,
   },
 ]
