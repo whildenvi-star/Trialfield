@@ -24,6 +24,9 @@ export interface SuggestionResult {
   customerId?: string
   openBushels: number
   contractedBushels: number
+  // Take-all contracts have no fixed quantity — openBushels is the delivery's
+  // unapplied amount, not contracted − applied. Absent on older server builds.
+  buyerTakesAll?: boolean
   instrument?: string
   customer?: { name: string; shortCode: string } | null
   variant?: { name: string } | null
@@ -218,7 +221,7 @@ export function ApplyDeliveryClient({
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <p className="font-mono text-xs text-glomalin-muted mb-1">
-                        Open: {formatBu(s.openBushels)}
+                        Open: {s.buyerTakesAll ? 'take-all' : formatBu(s.openBushels)}
                       </p>
                       <input
                         type="number"
