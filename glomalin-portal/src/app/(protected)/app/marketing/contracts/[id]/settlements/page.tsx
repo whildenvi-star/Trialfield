@@ -17,7 +17,14 @@ export default async function ContractSettlementsPage({
   const res = await fetchCertServiceWithAuth('/api/marketing/contracts/' + id + '/settlements', accessToken)
 
   if (!res.ok) {
-    throw new Error('Contract not found')
+    if (res.status === 404) {
+      throw new Error('Contract not found')
+    }
+    if (res.status === 403) {
+      throw new Error('You do not have access to this contract')
+    }
+    const body = await res.json().catch(() => ({}))
+    throw new Error(body.error ?? `Failed to load settlements (${res.status})`)
   }
 
   const { contract, settlements, reconciliation } = await res.json()
