@@ -16,6 +16,7 @@ export interface GrainContractRow {
     | 'ACCUMULATOR'
   contractedBushels: number
   buyerTakesAll?: boolean
+  anyVariety?: boolean
   appliedBushels?: number
   deliveredLbs?: number
   futuresPrice?: number | null
@@ -89,6 +90,7 @@ interface ContractFormState {
   cropYear: string
   contractedBushels: string
   buyerTakesAll: boolean
+  anyVariety: boolean
   status: string
   futuresPrice: string
   basis: string
@@ -130,6 +132,7 @@ const EMPTY_FORM: ContractFormState = {
   cropYear: String(new Date().getFullYear()),
   contractedBushels: '',
   buyerTakesAll: false,
+  anyVariety: false,
   status: 'OPEN',
   futuresPrice: '',
   basis: '',
@@ -191,6 +194,7 @@ export function contractToForm(contract: GrainContractRow): ContractFormState {
     cropYear: str(contract.cropYear),
     contractedBushels: contract.buyerTakesAll ? '' : str(contract.contractedBushels),
     buyerTakesAll: !!contract.buyerTakesAll,
+    anyVariety: !!contract.anyVariety,
     status: contract.status ?? 'OPEN',
     futuresPrice: str(contract.futuresPrice),
     basis: str(contract.basis),
@@ -439,6 +443,7 @@ export function ContractForm({
         cropYear: cropYearNum,
         contractedBushels: form.buyerTakesAll ? 0 : bushelsNum,
         buyerTakesAll: form.buyerTakesAll,
+        anyVariety: form.anyVariety,
         paymentBasis: form.paymentBasis,
         // status is only user-editable on take-all contracts (server enforces too)
         ...(isEdit && form.buyerTakesAll ? { status: form.status } : {}),
@@ -647,6 +652,32 @@ export function ContractForm({
             className="text-xs text-glomalin-text font-mono uppercase tracking-wide cursor-pointer"
           >
             Buyer Takes All Production
+          </label>
+        </div>
+
+        {/* Any variety — board pricing call (HTA/accumulator/spot): deliveries
+            of any variety of this commodity from this buyer can fill it */}
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            id="cf-anyVariety"
+            name="anyVariety"
+            type="checkbox"
+            checked={form.anyVariety}
+            onChange={(e) =>
+              setForm((prev) => {
+                const next = { ...prev, anyVariety: e.target.checked }
+                const dirty = JSON.stringify(next) !== JSON.stringify(initialFormRef.current)
+                onDirtyChange?.(dirty)
+                return next
+              })
+            }
+            className="accent-glomalin-accent"
+          />
+          <label
+            htmlFor="cf-anyVariety"
+            className="text-xs text-glomalin-text font-mono uppercase tracking-wide cursor-pointer"
+          >
+            Any Variety — Board Sale
           </label>
         </div>
 

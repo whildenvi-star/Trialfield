@@ -407,6 +407,11 @@ export function ContractListClient({
                     </TableCell>
                     <TableCell className="text-glomalin-text text-sm">
                       {c.variant?.name ?? EM_DASH}
+                      {c.anyVariety && (
+                        <span className="ml-1.5 font-mono text-[10px] text-glomalin-muted uppercase tracking-wide">
+                          any variety
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={badge.variant}>{badge.label}</Badge>

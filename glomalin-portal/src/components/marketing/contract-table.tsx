@@ -29,6 +29,7 @@ interface GrainContractRow {
     | 'ACCUMULATOR'
   contractedBushels: number
   buyerTakesAll?: boolean
+  anyVariety?: boolean
   appliedBushels: number
   deliveredLbs?: number
   futuresPrice?: number | null
@@ -180,7 +181,14 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
               return (
                 <TableRow key={contract.id}>
                   <TableCell>{contract.customer.name}</TableCell>
-                  <TableCell>{contract.variant.name}</TableCell>
+                  <TableCell>
+                    {contract.variant.name}
+                    {contract.anyVariety && (
+                      <span className="ml-1.5 font-mono text-[10px] text-glomalin-muted uppercase tracking-wide">
+                        any variety
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={badge.variant}>{badge.label}</Badge>
                   </TableCell>
