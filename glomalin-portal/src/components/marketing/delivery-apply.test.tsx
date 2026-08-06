@@ -62,21 +62,57 @@ const twoSuggestions = [
 ]
 
 describe('ApplyDeliveryClient', () => {
+  // Prefill allocates greedily down the ranked list — never sums past unapplied
+  it('prefill never exceeds unappliedBushels across multiple suggestions', () => {
+    render(<ApplyDeliveryClient delivery={delivery} suggestions={twoSuggestions} />)
+
+    // Greedy: con-1 = min(5000, 800) = 800, con-2 = min(2000, 0) = 0
+    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[]
+    expect(inputs[0].value).toBe('800.00')
+    expect(inputs[1].value).toBe('0.00')
+
+    // Defaults are valid → submit enabled
+    const submitBtn = screen.getByRole('button', { name: /apply to contracts/i })
+    expect(submitBtn).toHaveProperty('disabled', false)
+  })
+
   // DELIVERY-03: Client-side over-application guard (submit disabled)
   it('submit is disabled when total appliedBushels input exceeds unappliedBushels', () => {
     render(<ApplyDeliveryClient delivery={delivery} suggestions={twoSuggestions} />)
 
-    // Default: con-1=800, con-2=800 → total=1600 > 800, button disabled
     const submitBtn = screen.getByRole('button', { name: /apply to contracts/i })
-    expect(submitBtn).toHaveProperty('disabled', true)
-
-    // Confirm with explicit over-application values
     const inputs = screen.getAllByRole('spinbutton')
     act(() => {
       fireEvent.change(inputs[0], { target: { value: '600' } })
       fireEvent.change(inputs[1], { target: { value: '300' } })
     })
+    // 600 + 300 = 900 > 800 unapplied → disabled
     expect(submitBtn).toHaveProperty('disabled', true)
+  })
+
+  // Cross-commodity suggestions prefill 0 and carry a warning
+  it('prefills 0 and warns when suggestion variant differs from delivery variant', () => {
+    const crossVariant = [
+      {
+        id: 'con-corn',
+        variantId: 'var-other',
+        customerId: 'cust-9',
+        openBushels: 50000,
+        contractedBushels: 50000,
+        instrument: 'FUTURES_FIXED',
+        customer: { name: 'Other Buyer', shortCode: 'OB' },
+        variant: { name: 'Shell Corn' },
+        score: 10,
+      },
+      ...suggestions,
+    ]
+    render(<ApplyDeliveryClient delivery={delivery} suggestions={crossVariant} />)
+
+    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[]
+    // Wrong-variant card: 0 prefill; matching card still gets the full unapplied
+    expect(inputs[0].value).toBe('0.00')
+    expect(inputs[1].value).toBe('800.00')
+    expect(screen.getByText(/different commodity/i)).toBeTruthy()
   })
 
   // DELIVERY-03: POST body shape for applications endpoint
@@ -117,7 +153,12 @@ describe('ApplyDeliveryClient', () => {
   it('shows error when sum of inputs exceeds delivery.unappliedBushels', async () => {
     render(<ApplyDeliveryClient delivery={delivery} suggestions={twoSuggestions} />)
 
-    // Default: total=1600 > 800 → submit triggers error (guard fires in handleSubmit)
+    // Force over-application (defaults are now valid), then submit
+    const inputs = screen.getAllByRole('spinbutton')
+    act(() => {
+      fireEvent.change(inputs[0], { target: { value: '600' } })
+      fireEvent.change(inputs[1], { target: { value: '300' } })
+    })
     const form = document.querySelector('form')!
     await act(async () => {
       fireEvent.submit(form)

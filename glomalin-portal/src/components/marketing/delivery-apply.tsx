@@ -44,14 +44,20 @@ export function ApplyDeliveryClient({
   const router = useRouter()
 
   // ── State ─────────────────────────────────────────────────────────────────
-  const initialInputs = useMemo(
-    () =>
-      suggestions.reduce<Record<string, string>>((acc, s) => {
-        const prefill = Math.min(s.openBushels, delivery.unappliedBushels)
-        return { ...acc, [s.id]: prefill.toFixed(2) }
-      }, {}),
-    [suggestions, delivery.unappliedBushels]
-  )
+  // Prefill allocates the unmatched bushels greedily down the ranked list so
+  // the defaults never sum past the delivery. Cross-commodity suggestions
+  // (contract variant ≠ delivery variant) prefill 0 — applying wheat to a
+  // corn contract must be a deliberate act.
+  const initialInputs = useMemo(() => {
+    let remaining = delivery.unappliedBushels
+    return suggestions.reduce<Record<string, string>>((acc, s) => {
+      const variantMismatch =
+        !!s.variantId && !!delivery.variant.id && s.variantId !== delivery.variant.id
+      const prefill = variantMismatch ? 0 : Math.max(0, Math.min(s.openBushels, remaining))
+      remaining -= prefill
+      return { ...acc, [s.id]: prefill.toFixed(2) }
+    }, {})
+  }, [suggestions, delivery.unappliedBushels, delivery.variant.id])
 
   const [inputs, setInputs] = useState<Record<string, string>>(initialInputs)
   const [error, setError] = useState<string | null>(null)
@@ -167,6 +173,8 @@ export function ApplyDeliveryClient({
               const customerName = s.customer?.name ?? '—'
               const variantName = s.variant?.name ?? '—'
               const instrument = s.instrument ?? ''
+              const variantMismatch =
+                !!s.variantId && !!delivery.variant.id && s.variantId !== delivery.variant.id
 
               return (
                 <div
@@ -190,6 +198,11 @@ export function ApplyDeliveryClient({
                       </p>
                     </div>
                   </div>
+                  {variantMismatch && (
+                    <p className="font-mono text-xs text-glomalin-warning mb-2">
+                      ⚠ Different commodity than this delivery ({delivery.variant.name})
+                    </p>
+                  )}
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <p className="font-mono text-xs text-glomalin-muted mb-1">
