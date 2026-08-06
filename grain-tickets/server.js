@@ -310,12 +310,19 @@ async function runMatch(settlementId) {
     where: { buyerId: settlement.buyerId, cropYear: settlement.cropYear }
   });
 
-  // Build normalized ticket number → ticket.id lookup map
+  // Build normalized ticket number → ticket.id lookup map.
+  // Split-load legs share one ticketNo across 2+ tickets; a settlement line can
+  // only attach to ONE ticket, so ambiguous numbers are left for manual matching
+  // rather than silently matching a partial leg against the full-load line.
   const ticketMap = {};
+  const ambiguous = new Set();
   farmTickets.forEach(t => {
     const norm = normalizeTicketNo(t.ticketNo);
-    if (norm) ticketMap[norm] = t.id;
+    if (!norm) return;
+    if (ticketMap[norm] !== undefined) ambiguous.add(norm);
+    else ticketMap[norm] = t.id;
   });
+  ambiguous.forEach(norm => { delete ticketMap[norm]; });
 
   let matched = 0;
   let unmatched = 0;
@@ -373,6 +380,7 @@ function dbTicketToJson(dbTicket) {
     testWeight: dbTicket.testWeight || null,  // measured lbs/bu (grade factor, not the conversion divisor)
     crop: dbTicket.crop,
     registryCropId: dbTicket.registryCropId || null,  // canonical crop ID from farm-registry
+    splitGroupId: dbTicket.splitGroupId || null,      // set when this row is one leg of a split load
     ticketNo: dbTicket.ticketNo || '',
     notes: dbTicket.notes || '',
     hbtBinNo: dbTicket.hbtBinNo || null,
@@ -822,6 +830,75 @@ app.post('/api/tickets', async (req, res) => {
         where: { cropYear, cropName: (crop || '').trim(), registryCropId: { not: null } },
       });
       registryCropId = cc ? cc.registryCropId : null;
+    }
+
+    // --- Split load: one physical ticket, grain from 2+ farms ---
+    // body.splits = [{farm, netWeight}, ...]. Creates one Ticket row per farm
+    // (same ticketNo, linked by splitGroupId) so yield summaries stay per-farm.
+    // The duplicate-ticketNo check above already ran once for the whole load.
+    const rawSplits = Array.isArray(req.body.splits) ? req.body.splits : null;
+    if (rawSplits && rawSplits.length >= 2) {
+      const totalWeight = parseFloat(netWeight) || 0;
+      const legs = [];
+      let weightSum = 0;
+      for (const s of rawSplits) {
+        const w = parseFloat(s.netWeight);
+        if (!(w > 0)) {
+          return res.status(400).json({ error: 'Validation failed', messages: ['Each split farm needs a weight greater than 0'] });
+        }
+        const resolution = await resolveTicketFarm(s.farm);
+        if (resolution.error) {
+          return res.status(400).json({ error: 'Validation failed', messages: [resolution.error] });
+        }
+        legs.push({ farm: resolution.farm, netWeight: w });
+        weightSum += w;
+      }
+      if (Math.abs(weightSum - totalWeight) > 1) {
+        return res.status(400).json({
+          error: 'Validation failed',
+          messages: [`Split weights (${weightSum} lbs) must add up to the ticket net weight (${totalWeight} lbs)`]
+        });
+      }
+      const dupFarms = new Set(legs.map(l => l.farm));
+      if (dupFarms.size !== legs.length) {
+        return res.status(400).json({ error: 'Validation failed', messages: ['Each split farm must be different'] });
+      }
+
+      const splitGroupId = 'split_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+      const baseNotes = (notes || '').trim();
+      const created = await prisma.$transaction(legs.map((leg, i) =>
+        prisma.ticket.create({
+          data: {
+            date: new Date((date || new Date().toISOString().split('T')[0]) + 'T12:00:00.000Z'),
+            cropYear,
+            farm: leg.farm,
+            netWeight: leg.netWeight,
+            moisture: parseFloat(moisture) || 0,
+            fm: parseFloat(fm) || 0,
+            testWeight: req.body.testWeight ? parseFloat(req.body.testWeight) || null : null,
+            crop: (crop || '').trim(),
+            ticketNo: cleanTicketNo || null,
+            notes: (baseNotes ? baseNotes + ' ' : '') + `[split ${i + 1}/${legs.length} of ${totalWeight} lbs]`,
+            buyerId: buyerId,
+            grainBinId: grainBinId,
+            destination: null,
+            splitGroupId,
+            registryCropId,
+          }
+        })
+      ));
+      res.status(201).json({
+        split: true,
+        splitGroupId,
+        tickets: created.map(t => enrichTicket(dbTicketToJson(t), cropConfig)),
+      });
+      pushYieldUpdates(cropYear).catch(err => console.error('pushYieldUpdates (POST split) error:', err));
+      for (const t of created) {
+        if (t.buyerId) {
+          pushDeliveryToMarketing(t, 'upsert').catch(err => console.error('pushDeliveryToMarketing (POST split) error:', err));
+        }
+      }
+      return;
     }
 
     const ticket = await prisma.ticket.create({

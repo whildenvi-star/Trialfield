@@ -209,6 +209,18 @@
                   <label for="entry-farm">Farm</label>
                   <input type="text" id="entry-farm" name="farm" list="farm-list" required placeholder="Type to search...">
                   <datalist id="farm-list"></datalist>
+                  <label style="display:flex;align-items:center;gap:0.4rem;margin-top:0.35rem;font-weight:normal;font-size:0.85rem;cursor:pointer;">
+                    <input type="checkbox" id="entry-split-toggle" style="width:auto;margin:0;"> Split load (grain from two farms)
+                  </label>
+                </div>
+                <div class="form-group" id="split-farm2-group" style="display:none">
+                  <label for="entry-farm2">Second Farm</label>
+                  <input type="text" id="entry-farm2" list="farm-list" placeholder="Type to search...">
+                </div>
+                <div class="form-group" id="split-weight2-group" style="display:none">
+                  <label for="entry-farm2-weight">Second Farm Weight (lbs)</label>
+                  <input type="number" id="entry-farm2-weight" min="0" step="1" inputmode="decimal" placeholder="e.g. 25480">
+                  <small id="split-remainder" style="display:block;margin-top:0.25rem;color:var(--text-light,#888);"></small>
                 </div>
                 <div class="form-group">
                   <label for="entry-crop">Crop</label>
@@ -472,7 +484,7 @@
   <script src="http://localhost:3005/client/farm-registry-client.js" onerror="console.log('[FarmRegistry] Not available, using local farm list')"></script>
   <script src="calc.js?v=20260709c"></script>
   <script src="app.js"></script>
-  <script src="tickets.js?v=20260806a"></script>
+  <script src="tickets.js?v=20260806b"></script>
   <script src="farms.js"></script>
   <script src="scan.js"></script>
   <script src="settlements.js"></script>

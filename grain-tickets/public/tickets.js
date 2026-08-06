@@ -568,6 +568,40 @@
     }
   }
 
+  // --- Split load toggle (one physical ticket, grain from two farms) ---
+  var splitToggle = document.getElementById('entry-split-toggle');
+  var splitFarm2Group = document.getElementById('split-farm2-group');
+  var splitWeight2Group = document.getElementById('split-weight2-group');
+  function updateSplitRemainder() {
+    var remEl = document.getElementById('split-remainder');
+    if (!remEl || !splitToggle.checked) return;
+    var total = parseFloat(document.getElementById('entry-netWeight').value) || 0;
+    var w2 = parseFloat(document.getElementById('entry-farm2-weight').value) || 0;
+    var farm1 = document.getElementById('entry-farm').value || 'first farm';
+    if (total > 0 && w2 > 0 && w2 < total) {
+      remEl.textContent = farm1 + ' gets the remaining ' + util.formatNum(total - w2, 0) + ' lbs';
+    } else if (w2 >= total && total > 0) {
+      remEl.textContent = 'Second farm weight must be less than the ticket total (' + util.formatNum(total, 0) + ' lbs)';
+    } else {
+      remEl.textContent = '';
+    }
+  }
+  if (splitToggle) {
+    splitToggle.addEventListener('change', function () {
+      var show = splitToggle.checked;
+      splitFarm2Group.style.display = show ? '' : 'none';
+      splitWeight2Group.style.display = show ? '' : 'none';
+      if (!show) {
+        document.getElementById('entry-farm2').value = '';
+        document.getElementById('entry-farm2-weight').value = '';
+      }
+      updateSplitRemainder();
+    });
+    ['entry-netWeight', 'entry-farm2-weight', 'entry-farm'].forEach(function (id) {
+      document.getElementById(id).addEventListener('input', updateSplitRemainder);
+    });
+  }
+
   // --- Form Submission ---
   document.getElementById('ticket-form').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -617,11 +651,40 @@
       return;
     }
 
+    // Split load: send per-farm weights; farm 1 gets the remainder
+    if (splitToggle && splitToggle.checked) {
+      var farm2 = document.getElementById('entry-farm2').value.trim();
+      var w2 = parseFloat(document.getElementById('entry-farm2-weight').value);
+      var total = parseFloat(body.netWeight);
+      if (!farm2) {
+        util.showToast('Enter the second farm for the split', 3000, 'warning');
+        return;
+      }
+      if (!(w2 > 0) || w2 >= total) {
+        util.showToast('Second farm weight must be between 0 and the ticket total', 3000, 'warning');
+        return;
+      }
+      body.splits = [
+        { farm: body.farm, netWeight: total - w2 },
+        { farm: farm2, netWeight: w2 }
+      ];
+    }
+
     api.post('/api/tickets', body).then(function (result) {
       // Save sticky destination for next entry
       localStorage.setItem('lastDestination', destVal);
-      util.showToast('Ticket ' + result.ticketNo + ' saved! Net BU: ' + util.formatNum(result._computed.netBU, 2));
+      if (result.split && result.tickets) {
+        util.showToast('Split ticket ' + result.tickets[0].ticketNo + ' saved! ' +
+          result.tickets.map(function (t) {
+            return t.farm + ' ' + util.formatNum(t._computed.netBU, 2) + ' bu';
+          }).join(' + '));
+      } else {
+        util.showToast('Ticket ' + result.ticketNo + ' saved! Net BU: ' + util.formatNum(result._computed.netBU, 2));
+      }
       form.reset();
+      // form.reset() clears the split checkbox but not the JS-driven visibility
+      if (splitFarm2Group) splitFarm2Group.style.display = 'none';
+      if (splitWeight2Group) splitWeight2Group.style.display = 'none';
       // Re-set date to today
       document.getElementById('entry-date').value = new Date().toISOString().split('T')[0];
       // Restore sticky destination after form.reset() clears it
@@ -947,7 +1010,8 @@
         html += '<td><span class="status-pill badge badge-' + reconStatus + '">' + reconLabel + '</span></td>';
 
         // Secondary columns
-        html += '<td class="col-secondary editable" data-field="ticketNo">' + escapeHtml(t.ticketNo || '') + '</td>';
+        html += '<td class="col-secondary editable" data-field="ticketNo">' + escapeHtml(t.ticketNo || '') +
+          (t.splitGroupId ? ' <span title="Split load — one physical ticket, two farms" style="opacity:0.7;">&#x2442;</span>' : '') + '</td>';
         html += '<td class="col-secondary editable number" data-field="netWeight">' + util.formatNum(t.netWeight, 0) + '</td>';
         html += '<td class="col-secondary editable number" data-field="fm">' + util.formatNum(t.fm, 2) + '</td>';
         html += '<td class="col-secondary number">' + util.formatNum(c.testWeight, 0) + '</td>';

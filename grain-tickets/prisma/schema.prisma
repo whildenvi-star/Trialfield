@@ -28,11 +28,13 @@ model Ticket {
   buyer           Buyer?   @relation(fields: [buyerId], references: [id], onDelete: SetNull)
   grainBinId      Int?     // FK to GrainBin — null unless destination is a bin
   grainBin        GrainBin? @relation(fields: [grainBinId], references: [id], onDelete: SetNull)
+  splitGroupId    String?  // Links legs of one physical load split across farms — same ticketNo per leg
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   settlementLines SettlementLine[] // Matched settlement lines — populated in Phase 13
 
+  @@index([splitGroupId])     // Split-load leg lookup
   @@index([ticketNo])         // Non-unique: 14 duplicate ticket numbers exist in data
   @@index([farm, cropYear])   // Farm summary queries
   @@index([crop, cropYear])   // Crop summary queries
