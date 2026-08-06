@@ -814,6 +814,16 @@ app.post('/api/tickets', async (req, res) => {
       return res.status(400).json({ error: 'Validation failed', messages: [farmResolution.error] });
     }
 
+    // Canonical crop ID: client sends it on autocomplete pick; otherwise inherit
+    // it from this year's CropConfig so tickets never miss yield summaries.
+    let registryCropId = req.body.registryCropId || null;
+    if (!registryCropId) {
+      const cc = await prisma.cropConfig.findFirst({
+        where: { cropYear, cropName: (crop || '').trim(), registryCropId: { not: null } },
+      });
+      registryCropId = cc ? cc.registryCropId : null;
+    }
+
     const ticket = await prisma.ticket.create({
       data: {
         date: new Date((date || new Date().toISOString().split('T')[0]) + 'T12:00:00.000Z'),
@@ -829,7 +839,7 @@ app.post('/api/tickets', async (req, res) => {
         buyerId: buyerId,
         grainBinId: grainBinId,
         destination: null,  // New tickets use FK (buyerId/grainBinId), not free-text
-        registryCropId: req.body.registryCropId || null  // canonical crop ID from farm-registry
+        registryCropId: registryCropId  // canonical crop ID from farm-registry (client or CropConfig)
       }
     });
     res.status(201).json(enrichTicket(dbTicketToJson(ticket), cropConfig));
