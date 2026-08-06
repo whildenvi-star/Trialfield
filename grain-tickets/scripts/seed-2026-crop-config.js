@@ -58,9 +58,26 @@ async function main() {
     },
   });
 
+  // Albert Lea seed wheat — cropName must match the marketing GrainVariant
+  // 'Organic Seed Wheat' exactly (delivery sync matches by string). Schedule
+  // mirrors Organic Wheat until Albert Lea's discount sheet says otherwise;
+  // update:{} so hand-edited configs survive re-runs.
+  const seedWheat = await prisma.cropConfig.upsert({
+    where: { cropYear_cropName: { cropYear: TARGET_YEAR, cropName: 'Organic Seed Wheat' } },
+    update: {},
+    create: {
+      cropYear: TARGET_YEAR,
+      cropName: 'Organic Seed Wheat',
+      testWeight: 60,
+      moistureShrink: 13,
+      discount: 1.5,
+    },
+  });
+
   const total = await prisma.cropConfig.count({ where: { cropYear: TARGET_YEAR } });
   console.log(`Copied ${copied} configs ${SOURCE_YEAR} -> ${TARGET_YEAR}; ${TARGET_YEAR} now has ${total} rows.`);
   console.log(`Organic Wheat ${TARGET_YEAR}: TW ${wheat.testWeight}, base ${wheat.moistureShrink}%, shrink ${wheat.discount}%/pt`);
+  console.log(`Organic Seed Wheat ${TARGET_YEAR}: TW ${seedWheat.testWeight}, base ${seedWheat.moistureShrink}%, shrink ${seedWheat.discount}%/pt`);
 }
 
 main()
