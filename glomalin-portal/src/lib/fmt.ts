@@ -24,10 +24,11 @@ export function formatPct(n: number): string {
   return pctFormatter.format(n)
 }
 
-/** Format basis in cents/bu: +12¢ or -8¢ */
+/** Format basis in cents/bu: +12¢, -8¢, or -14.25¢ (fractional cents kept) */
 export function formatBasis(n: number): string {
   const sign = n > 0 ? '+' : ''
-  return `${sign}${Math.round(n * 100)}¢`
+  const cents = Math.round(n * 10000) / 100
+  return `${sign}${cents}¢`
 }
 
 /** Format acres: 1,234.5 */

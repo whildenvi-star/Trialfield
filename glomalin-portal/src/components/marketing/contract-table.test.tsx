@@ -48,6 +48,21 @@ const HTA_CONTRACT = {
   status: 'OPEN' as const,
 }
 
+// HTA with both legs set but no stored cash — table derives futures + basis
+const HTA_BOTH_LEGS_CONTRACT = {
+  id: 'c5',
+  instrument: 'FUTURES_FIXED' as const,
+  contractedBushels: 50000,
+  appliedBushels: 0,
+  futuresPrice: 4.59,
+  basis: -0.1425,
+  finalCashPrice: null,
+  cropYear: 2025,
+  customer: { id: 'cu1', name: 'Acme Grain', shortCode: 'ACM' },
+  variant: { id: 'v1', name: 'Yellow Corn' },
+  status: 'OPEN' as const,
+}
+
 const PTF_CONTRACT = {
   id: 'c4',
   instrument: 'PRICED_LATER' as const,
@@ -93,6 +108,30 @@ describe('ContractTable', () => {
     render(<ContractTable contracts={[OFFICE_CONTRACT as any]} role="office" cropYear={2025} />)
     const dashes = screen.getAllByText('—')
     expect(dashes.length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('derives cash (futures + basis) for HTA with both legs and no stored cash', () => {
+    render(<ContractTable contracts={[HTA_BOTH_LEGS_CONTRACT as any]} role="owner" cropYear={2025} />)
+    // 4.59 + (-0.1425) = 4.4475 → $4.45
+    expect(screen.getByText('$4.45')).toBeTruthy()
+    expect(screen.getByTitle('Derived: futures + basis')).toBeTruthy()
+  })
+
+  it('does NOT derive cash for HTA with futures only (basis unset)', () => {
+    render(<ContractTable contracts={[HTA_CONTRACT as any]} role="owner" cropYear={2025} />)
+    // basis and cash cells both show the dash
+    expect(screen.getAllByText('—').length).toBeGreaterThanOrEqual(2)
+    expect(screen.queryByTitle('Derived: futures + basis')).toBeNull()
+  })
+
+  it('stored finalCashPrice is not marked as derived', () => {
+    render(<ContractTable contracts={[OWNER_CONTRACT as any]} role="owner" cropYear={2025} />)
+    expect(screen.queryByTitle('Derived: futures + basis')).toBeNull()
+  })
+
+  it('renders fractional-cent basis without rounding to whole cents', () => {
+    render(<ContractTable contracts={[HTA_BOTH_LEGS_CONTRACT as any]} role="owner" cropYear={2025} />)
+    expect(screen.getByText('-14.25¢')).toBeTruthy()
   })
 
   it('renders empty state when contracts array is empty', () => {

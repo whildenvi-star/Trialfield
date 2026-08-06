@@ -59,6 +59,21 @@ const INSTRUMENT_BADGE: Record<
 const EM_DASH = '—'
 const EDIT_PENCIL = '✎'
 
+/**
+ * Cash price to display: the stored final price, else futures + basis when
+ * both legs are known (an HTA whose basis has been set). Office payloads have
+ * all three fields stripped by the API, so this stays null for that role.
+ */
+function effectiveCashPrice(c: {
+  futuresPrice?: number | null
+  basis?: number | null
+  finalCashPrice?: number | null
+}): number | null {
+  if (c.finalCashPrice != null) return c.finalCashPrice
+  if (c.futuresPrice != null && c.basis != null) return c.futuresPrice + c.basis
+  return null
+}
+
 interface ContractTableProps {
   contracts: GrainContractRow[]
   role: 'owner' | 'office'
@@ -104,8 +119,8 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
         bv = b.basis ?? null
         break
       case 'finalCashPrice':
-        av = a.finalCashPrice ?? null
-        bv = b.finalCashPrice ?? null
+        av = effectiveCashPrice(a)
+        bv = effectiveCashPrice(b)
         break
     }
 
@@ -161,6 +176,7 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
           ) : (
             sortedContracts.map((contract) => {
               const badge = INSTRUMENT_BADGE[contract.instrument]
+              const cash = effectiveCashPrice(contract)
               return (
                 <TableRow key={contract.id}>
                   <TableCell>{contract.customer.name}</TableCell>
@@ -200,8 +216,16 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
                     )}
                   </TableCell>
                   <TableCell>
-                    {'finalCashPrice' in contract && contract.finalCashPrice != null ? (
-                      <Money value={contract.finalCashPrice} cents />
+                    {cash != null ? (
+                      <span
+                        title={
+                          contract.finalCashPrice == null
+                            ? 'Derived: futures + basis'
+                            : undefined
+                        }
+                      >
+                        <Money value={cash} cents />
+                      </span>
                     ) : (
                       <span className="text-glomalin-muted">{EM_DASH}</span>
                     )}
