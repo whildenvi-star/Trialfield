@@ -39,7 +39,11 @@ if (fs.existsSync(envPath)) {
 }
 
 const { PrismaClient } = require('@prisma/client');
-const REGISTRY_URL = 'http://localhost:3005/api/fields';
+// REGISTRY_TOKEN (or the shared EMBED_TOKEN) satisfies farm-registry's API gate
+const REGISTRY_TOKEN = process.env.REGISTRY_TOKEN || process.env.EMBED_TOKEN || '';
+const REGISTRY_URL =
+  'http://localhost:3005/api/fields' +
+  (REGISTRY_TOKEN ? `?token=${encodeURIComponent(REGISTRY_TOKEN)}` : '');
 const REPORT_FILE = path.join(__dirname, 'backfill-report.json');
 const COMMIT = process.argv.includes('--commit');
 
