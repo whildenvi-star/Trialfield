@@ -66,11 +66,12 @@ export async function GET() {
   }
 
   // Build email + lastSignIn map from auth users
-  const authMap: Record<string, { email: string; lastSignIn: string | null }> = {}
+  const authMap: Record<string, { email: string; lastSignIn: string | null; appRole: string | null }> = {}
   for (const authUser of authUsers ?? []) {
     authMap[authUser.id] = {
       email: authUser.email ?? '',
       lastSignIn: authUser.last_sign_in_at ?? null,
+      appRole: (authUser.app_metadata?.app_role as string | undefined) ?? null,
     }
   }
 
@@ -81,6 +82,7 @@ export async function GET() {
     fullName: profile.full_name ?? '',
     role: profile.role,
     lastSignIn: authMap[profile.id]?.lastSignIn ?? null,
+    appRole: authMap[profile.id]?.appRole ?? null,
     certUserId: profile.cert_user_id ?? null,
     modules: accessMap[profile.id] ?? {},
   }))

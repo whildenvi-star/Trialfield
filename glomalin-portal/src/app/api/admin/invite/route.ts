@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   // Read and validate body
   const body = await request.json()
-  const validRoles = ['admin', 'agronomist', 'operator', 'viewer']
+  const validRoles = ['admin', 'owner', 'agronomist', 'operator', 'viewer']
   if (!body.email || !body.role || !validRoles.includes(body.role)) {
     return NextResponse.json(
       { error: 'Missing or invalid fields: email, role' },
@@ -71,6 +71,22 @@ export async function POST(request: NextRequest) {
     if (roleError) {
       // Invite succeeded but role update failed — log and return partial success
       console.error('Invite succeeded but role update failed:', roleError)
+    }
+  }
+
+  // Marketing RBAC (System B): profiles.role 'owner' → app_role 'owner',
+  // 'viewer' (Office) → app_role 'office'. Everyone else gets no app_role and
+  // the marketing module fails closed. Stored in app_metadata so the
+  // custom_access_token_hook embeds it in the JWT — clients cannot write it.
+  const appRole =
+    body.role === 'owner' ? 'owner' : body.role === 'viewer' ? 'office' : null
+  if (appRole) {
+    const { error: appRoleError } = await adminClient.auth.admin.updateUserById(
+      newUserId,
+      { app_metadata: { app_role: appRole } }
+    )
+    if (appRoleError) {
+      console.error('Invite succeeded but app_role update failed:', appRoleError)
     }
   }
 

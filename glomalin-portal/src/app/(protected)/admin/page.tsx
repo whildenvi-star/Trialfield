@@ -9,6 +9,7 @@ interface UserRow {
   email: string
   fullName: string
   role: 'admin' | 'agronomist' | 'operator' | 'owner' | 'viewer'
+  appRole: 'owner' | 'office' | null
   lastSignIn: string | null
   certUserId: string | null
   modules: Record<string, boolean>
@@ -28,6 +29,14 @@ const ROLE_LABELS: Record<string, string> = {
   operator: 'Operator',
   viewer: 'Office',
 }
+
+// Marketing RBAC (app_role) is a separate axis from the portal role —
+// e.g. an operator can hold office-level marketing access.
+const APP_ROLE_OPTIONS = [
+  { value: '', label: 'None' },
+  { value: 'office', label: 'Office (no financials)' },
+  { value: 'owner', label: 'Owner (full)' },
+] as const
 
 function formatLastSignIn(dateStr: string | null): string {
   if (!dateStr) return 'Never'
@@ -99,6 +108,29 @@ export default function AdminPage() {
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update role')
+    } finally {
+      setSavingCell(null)
+    }
+  }
+
+  async function handleAppRoleChange(userId: string, newValue: string) {
+    const appRole = newValue === '' ? null : (newValue as 'owner' | 'office')
+    setSavingCell({ userId, field: 'app_role' })
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/app-role`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appRole }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error ?? 'Failed to update marketing access')
+      }
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, appRole } : u))
+      )
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update marketing access')
     } finally {
       setSavingCell(null)
     }
@@ -321,6 +353,12 @@ export default function AdminPage() {
                 <th className="text-left px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border">
                   Role
                 </th>
+                <th
+                  className="text-left px-4 py-3 text-glomalin-muted font-semibold border-b border-glomalin-border whitespace-nowrap"
+                  title="Grain Marketing access level — independent of portal role"
+                >
+                  Marketing
+                </th>
                 {MODULES.map((mod) => (
                   <th
                     key={mod.id}
@@ -341,7 +379,7 @@ export default function AdminPage() {
               {users.length === 0 && (
                 <tr>
                   <td
-                    colSpan={3 + MODULES.length + 2}
+                    colSpan={4 + MODULES.length + 2}
                     className="text-center px-4 py-6 text-glomalin-muted"
                   >
                     No users found
@@ -401,6 +439,33 @@ export default function AdminPage() {
                         {ROLES.map((r) => (
                           <option key={r} value={r}>
                             {r}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+
+                    {/* Marketing access (app_role) */}
+                    <td className="px-4 py-3">
+                      <select
+                        value={user.appRole ?? ''}
+                        onChange={(e) => handleAppRoleChange(user.id, e.target.value)}
+                        disabled={isCurrentUser || isSaving(user.id, 'app_role')}
+                        className={`bg-glomalin-bg border border-glomalin-border text-glomalin-text rounded px-2 py-1 text-xs focus:outline-none focus:border-glomalin-accent transition-opacity ${
+                          isCurrentUser
+                            ? 'opacity-40 cursor-not-allowed'
+                            : isSaving(user.id, 'app_role')
+                            ? 'opacity-50'
+                            : ''
+                        }`}
+                        title={
+                          isCurrentUser
+                            ? 'You cannot change your own marketing access'
+                            : 'Takes effect on their next sign-in or token refresh'
+                        }
+                      >
+                        {APP_ROLE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
                           </option>
                         ))}
                       </select>

@@ -35,7 +35,7 @@ export async function PATCH(
 
   // Read and validate body
   const body = await request.json()
-  const validRoles = ['admin', 'agronomist', 'operator', 'viewer']
+  const validRoles = ['admin', 'owner', 'agronomist', 'operator', 'viewer']
   if (!body.role || !validRoles.includes(body.role)) {
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
   }
@@ -52,5 +52,9 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update role' }, { status: 500 })
   }
 
+  // NOTE: profiles.role (module access) and app_metadata.app_role (marketing
+  // financials) are independent axes — live users combine them freely
+  // (e.g. operator + office). Role changes deliberately do NOT touch
+  // app_role; use the marketing-access endpoint for that.
   return NextResponse.json({ profile: updated })
 }
