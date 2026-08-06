@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { MODULES, getEmbedUrl } from '@/lib/modules'
+import { mintEmbedGrant } from '@/lib/embed-grant'
 import { EmbedFrame } from '@/components/embed-frame'
 import { EmbedBreadcrumb } from '@/components/embed-breadcrumb'
 import { createClient } from '@/lib/supabase/server'
@@ -66,7 +67,14 @@ export default async function ModulePage({ params }: ModulePageProps) {
       const dbRole = profile?.role ?? 'viewer'
       embedRole = EMBED_ROLE_MAP[dbRole] ?? dbRole
     }
-    const roleUrl = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'role=' + embedRole
+    let roleUrl = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'role=' + embedRole
+
+    // Per-user signed grant — middleware has already verified module_access
+    // for this route, so minting here is the enforcement boundary.
+    const grant = user && mod.embedKey ? mintEmbedGrant(mod.embedKey, user.id) : null
+    if (grant) {
+      roleUrl += '&grant=' + encodeURIComponent(grant)
+    }
 
     return (
       <>

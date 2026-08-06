@@ -37,10 +37,9 @@ export function getEmbedUrl(mod: Module): string | null {
   let base = EMBED_URL_OVERRIDES[mod.embedKey] || EMBED_PATHS[mod.embedKey] || null
   if (!base) return null
   if (mod.query) base += (base.includes('?') ? '&' : '?') + mod.query
-  const token = process.env.EMBED_TOKEN
-  if (!token) return base
-  const sep = base.includes('?') ? '&' : '?'
-  return `${base}${sep}token=${token}`
+  // No credential here: the raw EMBED_TOKEN stays server-side. The module
+  // page appends a per-user signed grant instead (see lib/embed-grant.ts).
+  return base
 }
 
 export const MODULES: Module[] = [

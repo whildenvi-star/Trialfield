@@ -57,6 +57,27 @@ app.use(cors(corsOptions));
 
 app.use(express.json());
 
+// ── Embed auth helpers ───────────────────────────────────────────
+// Browsers authenticate with a per-user grant minted by the portal:
+// v1.<app>.<userId>.<exp>.<hmacHex>, HMAC-signed with the server-held
+// EMBED_TOKEN (which never reaches a browser). The raw token itself is
+// only accepted from server-to-server callers (?token= / x-embed-token).
+const EMBED_APP_NAME = 'grain-tickets';
+const EMBED_GRANT_COOKIE = 'embed_grant_' + EMBED_APP_NAME.replace(/-/g, '_');
+function verifyEmbedGrant(grant) {
+  if (!grant || typeof grant !== 'string') return false;
+  const parts = grant.split('.');
+  if (parts.length !== 5 || parts[0] !== 'v1' || parts[1] !== EMBED_APP_NAME) return false;
+  const exp = parseInt(parts[3], 10);
+  if (!Number.isFinite(exp) || exp * 1000 < Date.now()) return false;
+  const grantCrypto = require('crypto');
+  const expected = grantCrypto.createHmac('sha256', process.env.EMBED_TOKEN)
+    .update(parts.slice(0, 4).join('.')).digest('hex');
+  const sigBuf = Buffer.from(parts[4]);
+  const expectedBuf = Buffer.from(expected);
+  return sigBuf.length === expectedBuf.length && grantCrypto.timingSafeEqual(sigBuf, expectedBuf);
+}
+
 // ── Embed-token gate ─────────────────────────────────────────────
 // Cookie-setting MUST run before app.get('/') and express.static
 // so the initial page load (/?token=xxx) sets the cookie.
@@ -64,8 +85,8 @@ if (process.env.EMBED_TOKEN) {
   const cookieParser = require('cookie-parser');
   app.use(cookieParser());
   app.use((req, res, next) => {
-    if (req.query.token === process.env.EMBED_TOKEN) {
-      res.cookie('embed_session', process.env.EMBED_TOKEN, {
+    if (typeof req.query.grant === 'string' && verifyEmbedGrant(req.query.grant)) {
+      res.cookie(EMBED_GRANT_COOKIE, req.query.grant, {
         httpOnly: true, sameSite: 'lax', secure: true,
         maxAge: 24 * 60 * 60 * 1000,
       });
@@ -99,7 +120,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
 if (process.env.EMBED_TOKEN) {
   app.use('/api', (req, res, next) => {
     if (req.query.token === process.env.EMBED_TOKEN) return next();
+    if (req.get('x-embed-token') === process.env.EMBED_TOKEN) return next();
     if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
+    if (typeof req.query.grant === 'string' && verifyEmbedGrant(req.query.grant)) return next();
+    if (req.cookies && verifyEmbedGrant(req.cookies[EMBED_GRANT_COOKIE])) return next();
     res.status(403).json({ error: 'Forbidden' });
   });
 }
