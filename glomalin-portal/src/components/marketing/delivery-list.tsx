@@ -240,7 +240,14 @@ export function DeliveryListClient({
                   <TableCell className="text-glomalin-text text-sm">{d.variant?.name ?? EM_DASH}</TableCell>
                   <TableCell>
                     {d.source === 'grain-ticket' ? (
-                      <Badge variant="info" title="Synced from Grain Tickets">Ticket</Badge>
+                      <div className="flex flex-col items-start gap-0.5">
+                        <Badge variant="info" title="Synced from Grain Tickets">Ticket</Badge>
+                        {d.scaleTicketNum && (
+                          <span className="text-glomalin-muted font-mono text-xs">#{d.scaleTicketNum}</span>
+                        )}
+                      </div>
+                    ) : d.scaleTicketNum ? (
+                      <span className="text-glomalin-muted font-mono text-sm">#{d.scaleTicketNum}</span>
                     ) : (
                       <span className="text-glomalin-muted font-mono text-sm">{EM_DASH}</span>
                     )}
