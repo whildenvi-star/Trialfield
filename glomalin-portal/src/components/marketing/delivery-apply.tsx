@@ -28,6 +28,10 @@ export interface SuggestionResult {
   customer?: { name: string; shortCode: string } | null
   variant?: { name: string } | null
   score: number
+  // 'variant' = exact variety match; 'commodity' = commodity-level contract
+  // (e.g. a generic Soybeans HTA) that accepts any same-commodity variety.
+  // Absent on responses from older server builds.
+  matchTier?: 'variant' | 'commodity'
 }
 
 // ── ApplyDeliveryClient ───────────────────────────────────────────────────────
@@ -45,15 +49,17 @@ export function ApplyDeliveryClient({
 
   // ── State ─────────────────────────────────────────────────────────────────
   // Prefill allocates the unmatched bushels greedily down the ranked list so
-  // the defaults never sum past the delivery. Cross-commodity suggestions
-  // (contract variant ≠ delivery variant) prefill 0 — applying wheat to a
-  // corn contract must be a deliberate act.
+  // the defaults never sum past the delivery. Commodity-tier matches (a generic
+  // Soybeans HTA taking any variety) are legitimate targets and prefill
+  // normally; a variant mismatch WITHOUT the server's commodity-tier blessing
+  // (older builds / unexpected rows) prefills 0 so it stays a deliberate act.
   const initialInputs = useMemo(() => {
     let remaining = delivery.unappliedBushels
     return suggestions.reduce<Record<string, string>>((acc, s) => {
       const variantMismatch =
         !!s.variantId && !!delivery.variant.id && s.variantId !== delivery.variant.id
-      const prefill = variantMismatch ? 0 : Math.max(0, Math.min(s.openBushels, remaining))
+      const blocked = variantMismatch && s.matchTier !== 'commodity'
+      const prefill = blocked ? 0 : Math.max(0, Math.min(s.openBushels, remaining))
       remaining -= prefill
       return { ...acc, [s.id]: prefill.toFixed(2) }
     }, {})
@@ -175,6 +181,7 @@ export function ApplyDeliveryClient({
               const instrument = s.instrument ?? ''
               const variantMismatch =
                 !!s.variantId && !!delivery.variant.id && s.variantId !== delivery.variant.id
+              const isCommodityTier = variantMismatch && s.matchTier === 'commodity'
 
               return (
                 <div
@@ -198,11 +205,16 @@ export function ApplyDeliveryClient({
                       </p>
                     </div>
                   </div>
-                  {variantMismatch && (
-                    <p className="font-mono text-xs text-glomalin-warning mb-2">
-                      ⚠ Different commodity than this delivery ({delivery.variant.name})
+                  {isCommodityTier ? (
+                    <p className="font-mono text-xs text-glomalin-muted mb-2">
+                      Commodity-level contract — accepts any variety priced as{' '}
+                      {variantName.toLowerCase()}
                     </p>
-                  )}
+                  ) : variantMismatch ? (
+                    <p className="font-mono text-xs text-glomalin-warning mb-2">
+                      ⚠ Different variety than this delivery ({delivery.variant.name})
+                    </p>
+                  ) : null}
                   <div className="flex items-center gap-3">
                     <div className="flex-1">
                       <p className="font-mono text-xs text-glomalin-muted mb-1">

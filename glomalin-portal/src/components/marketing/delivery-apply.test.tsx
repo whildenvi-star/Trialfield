@@ -90,8 +90,8 @@ describe('ApplyDeliveryClient', () => {
     expect(submitBtn).toHaveProperty('disabled', true)
   })
 
-  // Cross-commodity suggestions prefill 0 and carry a warning
-  it('prefills 0 and warns when suggestion variant differs from delivery variant', () => {
+  // Unblessed variant mismatch (no matchTier from server) prefills 0 + warns
+  it('prefills 0 and warns when suggestion variant differs without commodity-tier blessing', () => {
     const crossVariant = [
       {
         id: 'con-corn',
@@ -112,7 +112,32 @@ describe('ApplyDeliveryClient', () => {
     // Wrong-variant card: 0 prefill; matching card still gets the full unapplied
     expect(inputs[0].value).toBe('0.00')
     expect(inputs[1].value).toBe('800.00')
-    expect(screen.getByText(/different commodity/i)).toBeTruthy()
+    expect(screen.getByText(/different variety/i)).toBeTruthy()
+  })
+
+  // Commodity-tier match (generic Soybeans HTA taking any variety) prefills
+  // normally and shows the informational label, not a warning
+  it('prefills and labels commodity-tier suggestions as commodity-level contracts', () => {
+    const commodityTier = [
+      {
+        id: 'con-hta',
+        variantId: 'var-generic-soy',
+        customerId: 'cust-1',
+        openBushels: 10000,
+        contractedBushels: 10000,
+        instrument: 'HTA',
+        customer: { name: 'Test Elevator', shortCode: 'TE' },
+        variant: { name: 'Soybeans' },
+        score: 80,
+        matchTier: 'commodity' as const,
+      },
+    ]
+    render(<ApplyDeliveryClient delivery={delivery} suggestions={commodityTier} />)
+
+    const inputs = screen.getAllByRole('spinbutton') as HTMLInputElement[]
+    expect(inputs[0].value).toBe('800.00')
+    expect(screen.getByText(/commodity-level contract/i)).toBeTruthy()
+    expect(screen.queryByText(/different variety/i)).toBeNull()
   })
 
   // DELIVERY-03: POST body shape for applications endpoint
