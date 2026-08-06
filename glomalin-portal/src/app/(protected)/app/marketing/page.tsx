@@ -10,6 +10,8 @@ import { PositionStrip } from '@/components/marketing/position-strip'
 import { ContractTable } from '@/components/marketing/contract-table'
 import { BasisExposurePanel } from '@/components/marketing/basis-exposure-panel'
 import { ReconQueue } from '@/components/marketing/recon-queue'
+import { EnterprisePositionTable } from '@/components/marketing/enterprise-position-table'
+import { loadEnterpriseData } from '@/lib/marketing/load-enterprise-data'
 
 interface GrainContractRow {
   id: string
@@ -96,6 +98,11 @@ export default async function MarketingPage({
 
   const positionData = isOwner ? computePosition(contracts) : null
 
+  // Enterprise rollup — pooled marketing position joined to crop plan, actuals,
+  // and live CBOT. Degrades to volumes-only when budget/tickets are offline;
+  // RBAC is payload-level inside the loader.
+  const enterprise = await loadEnterpriseData(accessToken, role, cropYear)
+
   return (
     <div className="p-4 md:p-6 max-w-6xl space-y-6">
       <PageHeader
@@ -131,6 +138,14 @@ export default async function MarketingPage({
       {isOwner && positionData && (
         <PositionStrip data={positionData} cropYear={cropYear} />
       )}
+
+      {/* Enterprise position — commodity rows with variant sub-rows */}
+      <EnterprisePositionTable
+        rows={enterprise.rows}
+        isOwner={enterprise.isOwner}
+        cropYear={cropYear}
+        notes={enterprise.notes}
+      />
 
       {/* Contract table */}
       <div>
