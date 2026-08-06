@@ -24,8 +24,10 @@ import urllib.error
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-SUPABASE_URL     = "https://hmjmrdhwrzltckzuoaoh.supabase.co"
-SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhtam1yZGh3cnpsdGNrenVvYW9oIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjcyMDEwMiwiZXhwIjoyMDg4Mjk2MTAyfQ.kIC2tM4swMmKGsNxR8DySp0CcwTijNQHGnMSf7JFDng"
+SUPABASE_URL     = os.environ.get("SUPABASE_URL", "https://hmjmrdhwrzltckzuoaoh.supabase.co")
+SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+if not SERVICE_ROLE_KEY:
+    raise SystemExit("Set SUPABASE_SERVICE_ROLE_KEY in the environment (see glomalin-portal/.env.local)")
 CROP_YEAR        = 2026
 
 DEFAULT_DIR      = "/Users/glomalinguild/Desktop/WHughes Farms boundary files"
