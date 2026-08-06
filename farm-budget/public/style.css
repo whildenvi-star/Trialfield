@@ -4974,3 +4974,7 @@ html.solo-reference #tab-reference > h2 { display: none; }
   font-family: var(--font-mono);
   color: var(--text-light);
 }
+
+/* Seed Inputs table sits directly in a catalog body (no category header above),
+   so restore the top border .prod-table normally omits */
+.scc-catalog-body .prod-table { border-top: 1px solid var(--border); }

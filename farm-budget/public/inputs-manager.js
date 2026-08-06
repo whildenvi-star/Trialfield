@@ -104,6 +104,31 @@
     });
   });
 
+  // Seed Inputs section (Seeds sub-tab) — collapse toggle + add button
+  document.getElementById('seed-inputs-toggle').addEventListener('click', function () {
+    var body = document.getElementById('seed-inputs-body');
+    var open = body.classList.contains('open');
+    body.classList.toggle('open', !open);
+    this.classList.toggle('open', !open);
+  });
+
+  document.getElementById('seed-inputs-add').addEventListener('click', function () {
+    openProductPanel({
+      id: null,
+      name: '',
+      category: 'Seed',
+      unitBilledPrice: 0,
+      conversionRate: 1,
+      unit: 'UNIT',
+      purchaseUnit: 'UNIT',
+      organic: false,
+      organicGround: false,
+      p205: 0,
+      k20: 0,
+      supplierId: ''
+    });
+  });
+
   // Supplier select helper — creates inline select on dblclick
   function getSupplierName(id, type) {
     if (!id) return '--';
@@ -194,31 +219,12 @@
     });
   }
 
-  function renderProductTable(products) {
-    var container = document.getElementById('products-container');
-    // Group by category
-    var grouped = {};
-    CATEGORY_ORDER.forEach(function (cat) { grouped[cat] = []; });
-    products.forEach(function (p) {
-      var cat = p.category || 'Other';
-      if (!grouped[cat]) grouped[cat] = [];
-      grouped[cat].push(p);
-    });
-
-    var html = '';
-    CATEGORY_ORDER.forEach(function (cat) {
-      var items = grouped[cat];
-      if (!items || !items.length) return;
-      var isCollapsed = collapsedCategories.has(cat);
-      html += '<div class="prod-category' + (isCollapsed ? ' collapsed' : '') + '" data-category="' + cat + '">';
-      html += '<div class="prod-category-header">';
-      html += '<span class="prod-category-name">' + util.escHtml(cat) + '</span>';
-      html += '<span class="prod-category-count">' + items.length + '</span>';
-      html += '<span class="prod-category-toggle">&#9660;</span>';
-      html += '</div>';
-      html += '<div class="prod-category-body">';
-      var _showProdPrices = window.APP_ROLE !== 'operator';
-      html += '<table class="prod-table"><thead><tr>';
+  // Builds the <table class="prod-table"> markup for one category's products.
+  // Shared by the Products sub-tab (per-category blocks) and the Seed Inputs
+  // section in the Seeds sub-tab.
+  function buildProductTable(cat, items) {
+    var _showProdPrices = window.APP_ROLE !== 'operator';
+    var html = '<table class="prod-table"><thead><tr>';
       html += '<th><input type="checkbox" class="cat-select-all" data-category="' + cat + '"></th>';
       html += '<th>Product Name</th>';
       html += '<th>Supplier</th>';
@@ -277,30 +283,18 @@
         html += '<td>' + (p.organic ? '<span class="prod-organic-badge">ORG</span>' : '') + '</td>';
         html += '<td>' + (p.organicGround ? '<span class="prod-og-badge" style="background:#16a34a;color:#fff;padding:0.1rem 0.35rem;border-radius:3px;font-size:0.65rem;font-weight:600">OG</span>' : '') + '</td>';
         html += '<td><button class="btn-danger" data-del-id="' + p.id + '" data-del-type="products" style="font-size:0.7rem;padding:0.15rem 0.4rem">Del</button></td>';
-        html += '</tr>';
-      });
-      html += '</tbody></table></div></div>';
+      html += '</tr>';
     });
+    html += '</tbody></table>';
+    return html;
+  }
 
-    container.innerHTML = html;
-
-    // Bind events for each category table
+  // Shared per-container bindings for any container holding .prod-table markup
+  function bindProductContainer(container) {
     container.querySelectorAll('.prod-table tbody').forEach(function (tbody) {
       bindEditing(tbody, 'products');
       bindDelete(tbody, 'products');
       bindSupplierSelect(tbody, 'products', 'supplierId', 'product');
-    });
-
-    // Category collapse/expand
-    container.querySelectorAll('.prod-category-header').forEach(function (hdr) {
-      hdr.addEventListener('click', function (e) {
-        if (e.target.tagName === 'INPUT') return;
-        var catDiv = hdr.parentElement;
-        var cat = catDiv.getAttribute('data-category');
-        catDiv.classList.toggle('collapsed');
-        if (catDiv.classList.contains('collapsed')) collapsedCategories.add(cat);
-        else collapsedCategories.delete(cat);
-      });
     });
 
     // Product name click — open detail panel
@@ -336,8 +330,71 @@
         renderProductTable(getCurrentFilteredProducts());
       });
     });
+  }
 
-    document.getElementById('inp-count').textContent = products.length + ' products';
+  function renderProductTable(products) {
+    var container = document.getElementById('products-container');
+    // Seed-category products render in the Seeds sub-tab (Seed Inputs section),
+    // not here — stored category values are untouched (seed-inventory sync
+    // depends on category 'Seed').
+    var nonSeed = products.filter(function (p) { return (p.category || 'Other') !== 'Seed'; });
+    // Group by category
+    var grouped = {};
+    CATEGORY_ORDER.forEach(function (cat) { grouped[cat] = []; });
+    nonSeed.forEach(function (p) {
+      var cat = p.category || 'Other';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(p);
+    });
+
+    var html = '';
+    CATEGORY_ORDER.forEach(function (cat) {
+      var items = grouped[cat];
+      if (!items || !items.length) return;
+      var isCollapsed = collapsedCategories.has(cat);
+      html += '<div class="prod-category' + (isCollapsed ? ' collapsed' : '') + '" data-category="' + cat + '">';
+      html += '<div class="prod-category-header">';
+      html += '<span class="prod-category-name">' + util.escHtml(cat) + '</span>';
+      html += '<span class="prod-category-count">' + items.length + '</span>';
+      html += '<span class="prod-category-toggle">&#9660;</span>';
+      html += '</div>';
+      html += '<div class="prod-category-body">';
+      html += buildProductTable(cat, items);
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html;
+    bindProductContainer(container);
+
+    // Category collapse/expand
+    container.querySelectorAll('.prod-category-header').forEach(function (hdr) {
+      hdr.addEventListener('click', function (e) {
+        if (e.target.tagName === 'INPUT') return;
+        var catDiv = hdr.parentElement;
+        var cat = catDiv.getAttribute('data-category');
+        catDiv.classList.toggle('collapsed');
+        if (catDiv.classList.contains('collapsed')) collapsedCategories.add(cat);
+        else collapsedCategories.delete(cat);
+      });
+    });
+
+    document.getElementById('inp-count').textContent = nonSeed.length + ' products';
+
+    renderSeedInputs();
+  }
+
+  // Seed Inputs section (Seeds sub-tab): category 'Seed' products — always
+  // rendered from allProducts so the Products search doesn't affect it.
+  function renderSeedInputs() {
+    var container = document.getElementById('seed-inputs-container');
+    if (!container) return;
+    var seedInputs = allProducts.filter(function (p) { return p.category === 'Seed'; });
+    container.innerHTML = seedInputs.length
+      ? buildProductTable('Seed', seedInputs)
+      : '<p style="color:var(--text-light);font-size:0.75rem;margin:0.25rem 0">No seed inputs yet.</p>';
+    bindProductContainer(container);
+    var countEl = document.getElementById('seed-inputs-count');
+    if (countEl) countEl.textContent = seedInputs.length ? '— ' + seedInputs.length : '';
   }
 
   function getCurrentFilteredProducts() {

@@ -21,12 +21,15 @@
     if (n > 0) list.push(n + ' ' + msg);
   }
 
-  // Returns { flags: [...], count: N } for one card key
+  // Returns { flags: [...], count: N, sub? } for one card key
   function inspect(key, rd) {
     var flags = [];
+    var sub = null;
     var rows = rd[key] || [];
     switch (key) {
       case 'products': {
+        // Seed-category products display under Seeds (Seed Inputs section)
+        rows = rows.filter(function (p) { return (p.category || 'Other') !== 'Seed'; });
         flag(flags, rows.filter(function (p) { return !num(p.unitBilledPrice); }).length, 'missing price');
         flag(flags, rows.filter(function (p) { return !p.supplierId; }).length, 'missing supplier');
         break;
@@ -34,6 +37,8 @@
       case 'seeds': {
         flag(flags, rows.filter(function (s) { return !num(s.pricePerUnit); }).length, 'missing price');
         flag(flags, rows.filter(function (s) { return !num(s.seedsPerUnit); }).length, 'missing seeds/unit');
+        var seedInputs = (rd.products || []).filter(function (p) { return p.category === 'Seed'; }).length;
+        if (seedInputs) sub = '+ ' + seedInputs + ' seed input product' + (seedInputs !== 1 ? 's' : '');
         break;
       }
       case 'implements': {
@@ -62,7 +67,7 @@
         break;
       }
     }
-    return { count: rows.length, flags: flags };
+    return { count: rows.length, flags: flags, sub: sub };
   }
 
   function render() {
@@ -77,7 +82,8 @@
       html += '<div class="' + cls + '" data-card="' + card.key + '" role="button" tabindex="0">';
       html += '<div class="card-label">' + card.label + '</div>';
       html += '<div class="card-count">' + (info.count === null ? '&mdash;' : info.count) + '</div>';
-      if (card.sub) html += '<div class="card-sub">' + card.sub + '</div>';
+      var subText = info.sub || card.sub;
+      if (subText) html += '<div class="card-sub">' + subText + '</div>';
       if (info.flags.length) {
         info.flags.forEach(function (f) { html += '<span class="card-flag">&#9888; ' + f + '</span>'; });
       } else if (!card.derived) {

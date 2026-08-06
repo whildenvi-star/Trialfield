@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="platform-tokens.css?v=2">
-  <link rel="stylesheet" href="style.css?v=20260805r">
+  <link rel="stylesheet" href="style.css?v=20260806a">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
@@ -652,21 +652,15 @@
           <div id="scc-header-right" style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap"></div>
         </div>
 
-        <!-- Stat cards (populated by JS) -->
-        <div id="seed-stat-cards"></div>
-
-        <!-- Demand panel (hero) -->
-        <div id="seed-demand-container"></div>
-
-        <!-- Variety Catalog — secondary, collapsible -->
+        <!-- Variety Catalog — primary, open by default -->
         <div class="scc-catalog-section">
-          <div class="scc-catalog-toggle" id="seed-catalog-toggle">
+          <div class="scc-catalog-toggle open" id="seed-catalog-toggle">
             <span class="scc-catalog-caret">&#9654;</span>
             <span>Variety Catalog</span>
             <span id="seed-count" style="color:var(--text-light);font-weight:400"></span>
             <span style="margin-left:auto;font-size:0.62rem;opacity:0.6">dbl-click to edit</span>
           </div>
-          <div class="scc-catalog-body" id="seed-catalog-body">
+          <div class="scc-catalog-body open" id="seed-catalog-body">
             <div class="filters" style="margin-bottom:0.5rem">
               <input type="text" id="seed-search" placeholder="Search varieties...">
               <button id="seed-add" class="btn-primary btn-sm">+ Add Seed</button>
@@ -690,6 +684,28 @@
             </div>
           </div>
         </div>
+
+        <!-- Seed Inputs — category 'Seed' products (cover crop seed, boxes, treatments), rendered by inputs-manager.js -->
+        <div class="scc-catalog-section">
+          <div class="scc-catalog-toggle" id="seed-inputs-toggle">
+            <span class="scc-catalog-caret">&#9654;</span>
+            <span>Seed Inputs</span>
+            <span id="seed-inputs-count" style="color:var(--text-light);font-weight:400"></span>
+            <span style="margin-left:auto;font-size:0.62rem;opacity:0.6">cover crop seed &middot; boxes &middot; treatments</span>
+          </div>
+          <div class="scc-catalog-body" id="seed-inputs-body">
+            <div class="filters" style="margin-bottom:0.5rem">
+              <button id="seed-inputs-add" class="btn-primary btn-sm">+ Add Seed Input</button>
+            </div>
+            <div id="seed-inputs-container" class="table-wrap"></div>
+          </div>
+        </div>
+
+        <!-- Stat cards (populated by JS) -->
+        <div id="seed-stat-cards" style="margin-top:1.5rem"></div>
+
+        <!-- Demand panel (hero) -->
+        <div id="seed-demand-container"></div>
 
       </div><!-- /ref-sub-seeds -->
 
@@ -1550,9 +1566,9 @@
   <script src="field-ops-groups.js"></script>
   <script src="field-editor.js?v=20260805"></script>
   <script src="programs.js?v=20260403h"></script>
-  <script src="inputs-manager.js"></script>
-  <script src="ref-overview.js?v=1"></script>
-  <script src="seed-manager.js"></script>
+  <script src="inputs-manager.js?v=20260806a"></script>
+  <script src="ref-overview.js?v=2"></script>
+  <script src="seed-manager.js?v=20260806a"></script>
   <script src="inventory.js?v=20260423"></script>
   <script src="demand-manager.js"></script>
   <script src="reports.js?v=20260427h"></script>
