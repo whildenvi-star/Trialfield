@@ -808,11 +808,17 @@ app.post('/api/tickets', async (req, res) => {
       return res.status(400).json({ error: 'Validation failed', messages: validationErrors });
     }
 
+    // Farm names are locked to the registry (canonicalized; alias-tolerant)
+    const farmResolution = await resolveTicketFarm(farm);
+    if (farmResolution.error) {
+      return res.status(400).json({ error: 'Validation failed', messages: [farmResolution.error] });
+    }
+
     const ticket = await prisma.ticket.create({
       data: {
         date: new Date((date || new Date().toISOString().split('T')[0]) + 'T12:00:00.000Z'),
         cropYear,
-        farm: (farm || '').trim(),
+        farm: farmResolution.farm,
         netWeight: parseFloat(netWeight) || 0,
         moisture: parseFloat(moisture) || 0,
         fm: parseFloat(fm) || 0,
@@ -867,6 +873,16 @@ app.put('/api/tickets/:id', async (req, res) => {
         }
       }
     });
+
+    // Farm changes are locked to the registry. Unchanged names are left alone so
+    // old tickets with legacy spellings stay editable (moisture fixes etc.).
+    if (updateData.farm !== undefined && updateData.farm !== existing.farm) {
+      const farmResolution = await resolveTicketFarm(updateData.farm);
+      if (farmResolution.error) {
+        return res.status(400).json({ error: 'Validation failed', messages: [farmResolution.error] });
+      }
+      updateData.farm = farmResolution.farm;
+    }
 
     // Handle destination FK fields separately
     if (req.body.buyerId !== undefined) {
@@ -1538,13 +1554,19 @@ app.get('/api/farm-names', async (req, res) => {
 // --- Proxy: registry crop list (avoids CORS when called from browser) ---
 // Cached 60s in-memory to avoid hammering farm-registry on every page load
 const REGISTRY_URL = process.env.FARM_REGISTRY_URL || 'http://localhost:3005';
+// farm-registry's API gate accepts ?token= (REGISTRY_TOKEN, or the shared EMBED_TOKEN)
+const REGISTRY_TOKEN = process.env.REGISTRY_TOKEN || process.env.EMBED_TOKEN || '';
+function registryUrl(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  return `${REGISTRY_URL}${path}${REGISTRY_TOKEN ? sep + 'token=' + encodeURIComponent(REGISTRY_TOKEN) : ''}`;
+}
 let _gtRegistryCropsCache = null;
 let _gtRegistryCropsCacheExpiry = 0;
 app.get('/api/registry/crops', async (req, res) => {
   try {
     const now = Date.now();
     if (!_gtRegistryCropsCache || now > _gtRegistryCropsCacheExpiry) {
-      const resp = await fetch(`${REGISTRY_URL}/api/crops`);
+      const resp = await fetch(registryUrl('/api/crops'));
       if (!resp.ok) throw new Error('Registry returned ' + resp.status);
       _gtRegistryCropsCache = await resp.json();
       _gtRegistryCropsCacheExpiry = now + 60 * 1000; // 60s cache
@@ -1555,11 +1577,75 @@ app.get('/api/registry/crops', async (req, res) => {
   }
 });
 
+// --- Registry farm lookup: tickets may only use farms that exist in the registry ---
+// Cached 60s; falls back to the stale cache on fetch failure, and fails OPEN
+// (accepts the name unverified) only if the registry has never been reachable —
+// a down registry must not block harvest data entry.
+let _gtRegistryFarmsCache = null;
+let _gtRegistryFarmsExpiry = 0;
+const normFarmName = (s) => (s || '').trim().replace(/\s+/g, ' ').toLowerCase();
+async function getRegistryFarmLookup() {
+  const now = Date.now();
+  if (_gtRegistryFarmsCache && now < _gtRegistryFarmsExpiry) return _gtRegistryFarmsCache;
+  try {
+    const resp = await fetch(registryUrl('/api/fields?active=true'));
+    if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+    const fields = await resp.json();
+    const byNorm = {};
+    fields.forEach((f) => {
+      byNorm[normFarmName(f.name)] = f;
+      (f.aliases || []).forEach((a) => {
+        if (!byNorm[normFarmName(a)]) byNorm[normFarmName(a)] = f;
+      });
+    });
+    _gtRegistryFarmsCache = {
+      list: fields.map((f) => ({ id: f.id, name: f.name })).sort((a, b) => a.name.localeCompare(b.name)),
+      byNorm,
+    };
+    _gtRegistryFarmsExpiry = now + 60 * 1000;
+  } catch (err) {
+    console.warn('getRegistryFarmLookup:', err.message);
+    if (_gtRegistryFarmsCache) _gtRegistryFarmsExpiry = now + 15 * 1000; // retry soon, serve stale
+    else return null;
+  }
+  return _gtRegistryFarmsCache;
+}
+
+// Canonical farm list for the ticket entry datalist
+app.get('/api/registry/farms', async (req, res) => {
+  const lookup = await getRegistryFarmLookup();
+  if (!lookup) return res.status(502).json({ error: 'Registry unavailable' });
+  res.json(lookup.list);
+});
+
+// Resolve a farm name against the registry (name or alias, case/space-insensitive).
+// On match: canonicalizes to the registry field name and ensures a linked Farm row
+// exists so yield summaries pick the ticket up immediately (no backfill needed).
+// Returns { farm } on success, { error } when the name is unknown.
+async function resolveTicketFarm(rawFarm) {
+  const raw = (rawFarm || '').trim();
+  const lookup = await getRegistryFarmLookup();
+  if (!lookup) {
+    console.warn(`resolveTicketFarm: registry unreachable — accepting "${raw}" unverified`);
+    return { farm: raw };
+  }
+  const match = lookup.byNorm[normFarmName(raw)];
+  if (!match) {
+    return { error: `Farm "${raw}" is not in the Farm Registry — pick a registry farm, or add it (or an alias) in Farm Registry first` };
+  }
+  await prisma.farm.upsert({
+    where: { name: match.name },
+    update: { registryId: match.id },
+    create: { name: match.name, registryId: match.id },
+  });
+  return { farm: match.name };
+}
+
 // --- Sync Farm acres from Farm Registry ---
 // Uses Farm.registryId for canonical ID lookup when available; falls back to name matching.
 app.post('/api/farms/sync-registry', async (req, res) => {
   try {
-    const resp = await fetch(`${REGISTRY_URL}/api/fields?active=true`);
+    const resp = await fetch(registryUrl('/api/fields?active=true'));
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);
     const regFields = await resp.json();
 

@@ -404,12 +404,26 @@
     var editCropEl = document.getElementById('edit-crop');
     if (editCropEl) attachCropAutocomplete(editCropEl);
 
+    // Farm suggestions come from the Farm Registry (canonical names only) —
+    // the server rejects farms it can't resolve, so don't suggest the legacy
+    // free-text spellings from the local Farm table. Falls back to the local
+    // list only if the registry proxy is down (server fails open then too).
     var farmList = document.getElementById('farm-list');
-    refData.farmNames.forEach(function (f) {
-      var opt = document.createElement('option');
-      opt.value = f;
-      farmList.appendChild(opt);
-    });
+    function fillFarmList(names) {
+      farmList.innerHTML = '';
+      names.forEach(function (f) {
+        var opt = document.createElement('option');
+        opt.value = f;
+        farmList.appendChild(opt);
+      });
+    }
+    fetch('/api/registry/farms')
+      .then(function (r) { if (!r.ok) throw new Error('registry proxy ' + r.status); return r.json(); })
+      .then(function (fields) { fillFarmList(fields.map(function (f) { return f.name; })); })
+      .catch(function () { fillFarmList(refData.farmNames); });
+    // Edit dialog gets the same registry-locked suggestions
+    var editFarmEl = document.getElementById('edit-farm');
+    if (editFarmEl) editFarmEl.setAttribute('list', 'farm-list');
 
     // --- Filter autocompletes (farm from Registry, crop from macro) ---
     loadRegistryFields();
