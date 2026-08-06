@@ -42,6 +42,25 @@ var corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
+
+// ── Embed-token gate ─────────────────────────────────────────────
+// Cookie-setting runs BEFORE static files so the initial page load
+// (/?token=xxx) sets the cookie even though express.static handles
+// the response. API routes are gated separately below.
+if (process.env.EMBED_TOKEN) {
+  var cookieParser = require('cookie-parser');
+  app.use(cookieParser());
+  app.use(function (req, res, next) {
+    if (req.query.token === process.env.EMBED_TOKEN) {
+      res.cookie('embed_session', process.env.EMBED_TOKEN, {
+        httpOnly: true, sameSite: 'lax', secure: true,
+        maxAge: 24 * 60 * 60 * 1000,
+      });
+    }
+    next();
+  });
+}
+
 app.use(express.static(path.join(__dirname, 'public'), {
   setHeaders(res, filePath) {
     if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
@@ -49,6 +68,18 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
   }
 }));
+
+// API auth gate — accepts ?token=, embed_session cookie, or x-embed-token
+// header (header path is for server-to-server callers: farm-budget agent
+// context + farm-registry CLU proxy).
+if (process.env.EMBED_TOKEN) {
+  app.use('/api', function (req, res, next) {
+    if (req.query.token === process.env.EMBED_TOKEN) return next();
+    if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
+    if (req.get('x-embed-token') === process.env.EMBED_TOKEN) return next();
+    res.status(403).json({ error: 'Forbidden' });
+  });
+}
 
 // perf: Cache-Control on GET API responses — allows browser to skip refetch for short TTL
 app.use('/api', function (req, res, next) {

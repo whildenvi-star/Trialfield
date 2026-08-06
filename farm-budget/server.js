@@ -2388,7 +2388,14 @@ app.post('/api/chat', async (req, res) => {
   var crossResults = await Promise.allSettled(crossModuleQueries.map(function (q) {
     var ctrl = new AbortController();
     var timer = setTimeout(function () { ctrl.abort(); }, 3000);
-    return fetch(q.url, { signal: ctrl.signal })
+    // Sibling apps gate /api behind EMBED_TOKEN — pass it both ways
+    // (query for cookie-style gates, header for fsa-acres).
+    var url = q.url;
+    if (process.env.EMBED_TOKEN) {
+      url += (url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(process.env.EMBED_TOKEN);
+    }
+    var headers = process.env.EMBED_TOKEN ? { 'x-embed-token': process.env.EMBED_TOKEN } : {};
+    return fetch(url, { signal: ctrl.signal, headers: headers })
       .then(function (r) { clearTimeout(timer); return r.json(); })
       .then(function (data) { return { name: q.name, text: q.transform(data) }; })
       .catch(function () { clearTimeout(timer); return { name: q.name, text: null }; });

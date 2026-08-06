@@ -94,10 +94,10 @@ app.use(express.static(path.join(__dirname, 'public'), {
   }
 }));
 
-// API auth gate — agent routes exempted (have own kill-switch + daily cap)
+// API auth gate — agent routes included (kill-switch + daily cap are rate
+// limits, not auth; UI callers carry the embed_session cookie).
 if (process.env.EMBED_TOKEN) {
   app.use('/api', (req, res, next) => {
-    if (req.path.startsWith('/agent')) return next();
     if (req.query.token === process.env.EMBED_TOKEN) return next();
     if (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN) return next();
     res.status(403).json({ error: 'Forbidden' });

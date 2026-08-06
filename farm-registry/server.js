@@ -754,7 +754,9 @@ app.get('/api/fsa/clu-records', async (req, res) => {
     return res.json(fsaCache.data);
   }
   try {
-    const resp = await fetch('http://localhost:3002/api/clu-records');
+    const resp = await fetch('http://localhost:3002/api/clu-records', {
+      headers: process.env.EMBED_TOKEN ? { 'x-embed-token': process.env.EMBED_TOKEN } : {},
+    });
     if (!resp.ok) throw new Error('FSA returned ' + resp.status);
     const data = await resp.json();
     fsaCache = { data, ts: now };
