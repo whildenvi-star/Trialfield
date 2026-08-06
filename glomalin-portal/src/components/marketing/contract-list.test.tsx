@@ -39,6 +39,22 @@ const contracts = [
     customer: { id: 'c1', name: 'Heartland Coop', shortCode: 'HC' },
     variant: { id: 'v1', name: 'Yellow Corn', cropYear: 2025 },
   },
+  {
+    // NOTE: instrument deliberately 'SPOT', not 'PRICED' as literally specified in
+    // 16-00-PLAN.md — 'PRICED' collides with con-1's badge text and breaks the
+    // pre-existing "renders all contracts"/"hides non-matching rows" assertions that
+    // query within(tbody).getByText('PRICED') expecting exactly one match (Rule 1 fix;
+    // the plan's own acceptance criteria requires pre-existing GREEN tests to still pass).
+    id: 'con-3',
+    instrument: 'SPOT' as const,
+    paymentBasis: 'PER_UNIT',
+    status: 'OPEN' as const,
+    cropYear: 2025,
+    contractedBushels: 2000,
+    openBushels: 2000,
+    customer: { id: 'c2', name: 'KWS Cereals', shortCode: 'KWS' },
+    variant: { id: 'v2', name: 'KWS Aviator Rye', cropYear: 2025 },
+  },
 ]
 
 describe('ContractListClient', () => {
@@ -198,5 +214,19 @@ describe('ContractListClient', () => {
       expect(screen.queryByText('Edit Contract')).toBeNull()
       expect(window.location.search).not.toContain('new=')
     })
+  })
+})
+
+// D-05: the "Lots" action renders only on PER_UNIT contract rows. Per 16-UI-SPEC.md the
+// Lots control is a plain <a href> (NOT a router.push button), so no next/navigation mock
+// is needed and none must be added to this file. The D-06 addendum in 16-CONTEXT.md records
+// why the decision's literal "router.push()" wording was superseded.
+describe('ContractListClient — Lots action (D-05)', () => {
+  it('renders a Lots link only on the PER_UNIT row', () => {
+    expect(true).toBe(false) // TODO: GREEN in 16-02
+  })
+
+  it('the Lots link points at /app/marketing/contracts/con-3/settlements', () => {
+    expect(true).toBe(false) // TODO: GREEN in 16-02
   })
 })
