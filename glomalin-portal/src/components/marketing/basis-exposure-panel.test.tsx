@@ -16,14 +16,16 @@ const HTA_UNPRICED = {
   status: 'OPEN' as const,
 }
 
+// Both legs locked — futures AND basis — so nothing is exposed.
 const HTA_PRICED = {
-  ...HTA_UNPRICED, id: 'c2', futuresPrice: 490,
+  ...HTA_UNPRICED, id: 'c2', futuresPrice: 490, basis: -15,
 }
 
+// Basis-fixed: basis leg locked, futures leg still open — exposed.
 const BASIS_UNSET = {
   id: 'c3', instrument: 'BASIS_FIXED' as const,
   contractedBushels: 3000, appliedBushels: 0,
-  futuresPrice: 490, basis: null, finalCashPrice: null,
+  futuresPrice: null, basis: -15, finalCashPrice: null,
   cropYear: 2025,
   customer: { id: 'cu1', name: 'Acme', shortCode: 'ACM' },
   variant: { id: 'v1', name: 'Corn' },
@@ -56,7 +58,7 @@ describe('BasisExposurePanel', () => {
     expect(screen.getByText('ACM')).toBeTruthy()
   })
 
-  it('shows BASIS_FIXED contract with null basis as exposed', () => {
+  it('shows BASIS_FIXED contract with open futures leg as exposed', () => {
     render(<BasisExposurePanel contracts={[BASIS_UNSET]} />)
     expect(screen.getByText('BASIS')).toBeTruthy()
   })
