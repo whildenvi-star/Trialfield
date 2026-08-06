@@ -435,6 +435,15 @@ export function ContractListClient({
                       >
                         Edit
                       </button>
+                      {c.paymentBasis === 'PER_UNIT' && (
+                        <a
+                          href={`/app/marketing/contracts/${c.id}/settlements`}
+                          aria-label={`View lot settlements for contract ${c.id}`}
+                          className="ml-3 text-glomalin-accent font-mono text-xs hover:opacity-80 transition-opacity"
+                        >
+                          Lots
+                        </a>
+                      )}
                       {role === 'owner' && (
                         <button
                           aria-label={`Delete contract ${c.id}`}

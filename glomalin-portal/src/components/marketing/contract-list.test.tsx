@@ -223,10 +223,46 @@ describe('ContractListClient', () => {
 // why the decision's literal "router.push()" wording was superseded.
 describe('ContractListClient — Lots action (D-05)', () => {
   it('renders a Lots link only on the PER_UNIT row', () => {
-    expect(true).toBe(false) // TODO: GREEN in 16-02
+    render(
+      <ContractListClient
+        contracts={contracts}
+        customers={customers}
+        variants={variants}
+        role="owner"
+      />
+    )
+    const tbody = document.querySelector('tbody')!
+    // Only con-3 (paymentBasis PER_UNIT) should contribute a Lots link; the two
+    // PER_BUSHEL rows (con-1, con-2) must not.
+    const lotsLinks = within(tbody).getAllByRole('link', { name: /lot settlements/i })
+    expect(lotsLinks).toHaveLength(1)
   })
 
   it('the Lots link points at /app/marketing/contracts/con-3/settlements', () => {
-    expect(true).toBe(false) // TODO: GREEN in 16-02
+    render(
+      <ContractListClient
+        contracts={contracts}
+        customers={customers}
+        variants={variants}
+        role="owner"
+      />
+    )
+    const tbody = document.querySelector('tbody')!
+    const lotsLink = within(tbody).getByRole('link', { name: /lot settlements/i })
+    expect(lotsLink.getAttribute('href')).toBe('/app/marketing/contracts/con-3/settlements')
+  })
+
+  it('renders the Lots link for office role too — not owner-gated (D-04)', () => {
+    render(
+      <ContractListClient
+        contracts={contracts}
+        customers={customers}
+        variants={variants}
+        role="office"
+      />
+    )
+    const tbody = document.querySelector('tbody')!
+    const lotsLinks = within(tbody).getAllByRole('link', { name: /lot settlements/i })
+    expect(lotsLinks).toHaveLength(1)
   })
 })
