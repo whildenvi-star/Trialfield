@@ -84,6 +84,18 @@ export function CustomerListClient({ customers, role }: CustomerListClientProps)
     router.refresh()
   }
 
+  async function handleDelete(c: Customer) {
+    const label = [c.name, c.shortCode].filter(Boolean).join(' · ')
+    if (!window.confirm(`Delete this buyer?\n\n${label}\n\nThis cannot be undone.`)) return
+    const res = await fetch(`/api/cert-proxy/marketing/customers/${c.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      window.location.reload()
+    } else {
+      const data = await res.json().catch(() => ({}))
+      window.alert(data.error ?? 'Failed to delete buyer.')
+    }
+  }
+
   return (
     <div>
       {/* Header row */}
@@ -150,6 +162,18 @@ export function CustomerListClient({ customers, role }: CustomerListClientProps)
                     >
                       Edit
                     </button>
+                    {role === 'owner' && (
+                      <button
+                        aria-label={`Delete buyer ${c.name}`}
+                        className="ml-3 text-glomalin-danger font-mono text-xs hover:opacity-80 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(c)
+                        }}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
