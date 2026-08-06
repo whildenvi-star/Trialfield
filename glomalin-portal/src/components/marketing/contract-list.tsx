@@ -226,7 +226,11 @@ export function ContractListClient({
   }
 
   async function handleDelete(c: GrainContractRow) {
-    const label = [c.customer?.name, c.variant?.name, `${c.contractedBushels.toLocaleString()} bu`]
+    const label = [
+      c.customer?.name,
+      c.variant?.name,
+      c.buyerTakesAll ? 'all production' : `${c.contractedBushels.toLocaleString()} bu`,
+    ]
       .filter(Boolean)
       .join(' · ')
     if (!window.confirm(`Delete this contract?\n\n${label}\n\nThis cannot be undone.`)) return
@@ -411,16 +415,22 @@ export function ContractListClient({
                       {c.cropYear}
                     </TableCell>
                     <TableCell className="font-mono text-sm text-right">
-                      {formatBu(c.contractedBushels)}
+                      {c.buyerTakesAll ? 'All production' : formatBu(c.contractedBushels)}
                     </TableCell>
-                    <TableCell
-                      className={`font-mono text-sm ${openBu < 0 ? 'text-glomalin-danger' : 'text-glomalin-text'}`}
-                    >
-                      {formatBu(Math.abs(openBu))}
-                      {openBu < 0 && (
-                        <span className="text-xs ml-1">(over-applied)</span>
-                      )}
-                    </TableCell>
+                    {c.buyerTakesAll ? (
+                      <TableCell className="font-mono text-sm text-glomalin-text">
+                        {`${Math.round(c.deliveredLbs ?? 0).toLocaleString()} lbs delivered`}
+                      </TableCell>
+                    ) : (
+                      <TableCell
+                        className={`font-mono text-sm ${openBu < 0 ? 'text-glomalin-danger' : 'text-glomalin-text'}`}
+                      >
+                        {formatBu(Math.abs(openBu))}
+                        {openBu < 0 && (
+                          <span className="text-xs ml-1">(over-applied)</span>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell className="text-sm text-glomalin-muted">
                       {delivDisplay}
                     </TableCell>

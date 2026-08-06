@@ -252,3 +252,15 @@ describe('variant breakdown', () => {
     expect(soy.position.avgPriceCents).toBe(1060)
   })
 })
+
+describe('PER_UNIT exclusion from bushel-denominated outputs', () => {
+  it('excludes PER_UNIT contracts from the crop position and sale rows', () => {
+    const crop = buildCorn([
+      pricedContract('v-corn', 10_000, 5.00),
+      pricedContract('v-corn', 2_000, 4.00, { paymentBasis: 'PER_UNIT' }),
+    ])
+    expect(crop.position.contractedBu).toBe(10_000)
+    expect(crop.sales).toHaveLength(1)
+    expect(crop.sales[0].bushels).toBe(10_000)
+  })
+})

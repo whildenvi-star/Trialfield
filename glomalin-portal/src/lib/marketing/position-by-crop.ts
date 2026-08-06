@@ -340,8 +340,12 @@ function assembleCrop(
   }
 }
 
-function buildSaleRows(contracts: ContractWithVariant[], budget: CropBudget | null): SaleRow[] {
+function buildSaleRows(allContracts: ContractWithVariant[], budget: CropBudget | null): SaleRow[] {
   const projected = budget?.totalEstimatedBu ?? null
+
+  // PER_UNIT seed contracts are excluded from bushel-denominated sale rows,
+  // matching computePosition's filter.
+  const contracts = allContracts.filter((c) => c.paymentBasis !== 'PER_UNIT')
 
   const dated = contracts.map((c, i) => ({
     id: c.id ?? `contract-${i}`,

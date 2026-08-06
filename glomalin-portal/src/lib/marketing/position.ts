@@ -34,6 +34,7 @@ export interface PositionSummary {
 export interface GrainContractForPosition {
   instrument: string
   contractedBushels: number
+  paymentBasis?: string | null
   finalCashPrice?: number | null   // $/bu if known
   futuresPrice?: number | null     // $/bu
   basis?: number | null            // $/bu (can be negative)
@@ -50,7 +51,11 @@ export interface GrainContractForPosition {
  *   3. Otherwise (futuresPrice is also null): no effective price — contract counts
  *      in pricedBu but is excluded from the WAP denominator to avoid divide artifacts.
  */
-export function computePosition(contracts: GrainContractForPosition[]): PositionSummary {
+export function computePosition(allContracts: GrainContractForPosition[]): PositionSummary {
+  // PER_UNIT seed contracts are paid per unit, not per bushel — their
+  // contractedBushels (0 for take-all) would pollute the bushel KPIs.
+  const contracts = allContracts.filter((c) => c.paymentBasis !== 'PER_UNIT')
+
   let contractedBu = 0
   let pricedBu = 0
   let wapNumerator = 0

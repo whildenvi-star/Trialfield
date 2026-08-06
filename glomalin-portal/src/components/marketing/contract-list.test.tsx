@@ -266,3 +266,48 @@ describe('ContractListClient — Lots action (D-05)', () => {
     expect(lotsLinks).toHaveLength(1)
   })
 })
+
+// Buyer-takes-all rows: no bushel quantity — show "All production" and delivered lbs.
+describe('ContractListClient — buyer takes all production', () => {
+  const takeAllContracts = [
+    {
+      id: 'con-ta',
+      instrument: 'SPOT' as const,
+      paymentBasis: 'PER_UNIT',
+      status: 'OPEN' as const,
+      cropYear: 2025,
+      contractedBushels: 0,
+      openBushels: -1200, // would read "(over-applied)" on a normal row
+      buyerTakesAll: true,
+      deliveredLbs: 743660.4,
+      customer: { id: 'c2', name: 'KWS Cereals', shortCode: 'KWS' },
+      variant: { id: 'v2', name: 'KWS Aviator Rye', cropYear: 2025 },
+    },
+  ]
+
+  it('shows "All production" instead of contracted bushels and delivered lbs instead of open', () => {
+    render(
+      <ContractListClient
+        contracts={takeAllContracts}
+        customers={customers}
+        variants={variants}
+        role="owner"
+      />
+    )
+    const tbody = document.querySelector('tbody')!
+    expect(within(tbody).getByText('All production')).toBeTruthy()
+    expect(within(tbody).getByText('743,660 lbs delivered')).toBeTruthy()
+  })
+
+  it('never shows the over-applied warning on a take-all row', () => {
+    render(
+      <ContractListClient
+        contracts={takeAllContracts}
+        customers={customers}
+        variants={variants}
+        role="owner"
+      />
+    )
+    expect(screen.queryByText('(over-applied)')).toBeNull()
+  })
+})

@@ -122,3 +122,29 @@ describe('ContractTable', () => {
     expect(editLink?.getAttribute('href')).toBe('/app/marketing/contracts?edit=c1')
   })
 })
+
+// Buyer-takes-all rows on the dashboard table: "All production" + delivered lbs.
+describe('ContractTable — buyer takes all production', () => {
+  const TAKE_ALL_CONTRACT = {
+    id: 'c-ta',
+    instrument: 'SPOT' as const,
+    contractedBushels: 0,
+    buyerTakesAll: true,
+    appliedBushels: 13279,
+    deliveredLbs: 743660.4,
+    cropYear: 2025,
+    customer: { id: 'cu3', name: 'KWS Cereals', shortCode: 'KWS' },
+    variant: { id: 'v2', name: 'KWS Aviator Rye' },
+    status: 'OPEN' as const,
+  }
+
+  it('shows "All production" instead of a bushel quantity', () => {
+    render(<ContractTable contracts={[TAKE_ALL_CONTRACT]} role="owner" cropYear={2025} />)
+    expect(screen.getByText('All production')).toBeTruthy()
+  })
+
+  it('shows delivered lbs instead of the delivery progress bar', () => {
+    render(<ContractTable contracts={[TAKE_ALL_CONTRACT]} role="owner" cropYear={2025} />)
+    expect(screen.getByText('743,660 lbs delivered')).toBeTruthy()
+  })
+})

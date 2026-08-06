@@ -136,8 +136,10 @@ describe('ContractForm', () => {
     expect(screen.queryByRole('spinbutton', { name: /cash price/i })).toBeNull()
   })
 
-  it('hides cash price field for SPOT when role is OFFICE', () => {
-    render(<ContractForm {...baseProps} contract={null} role="OFFICE" />)
+  it('hides cash price field for SPOT when role is office', () => {
+    // Marketing roles are lowercase ('owner' | 'office') — the uppercase
+    // variant was masking a real bug that showed price fields to office.
+    render(<ContractForm {...baseProps} contract={null} role="office" />)
 
     const instrumentSelect = screen.getByRole('combobox', { name: /instrument type/i })
     fireEvent.change(instrumentSelect, { target: { value: 'SPOT' } })
@@ -261,5 +263,74 @@ describe('ContractForm', () => {
 
     expect(screen.queryByText('— Contract Premium —')).toBeNull()
     expect(screen.queryByRole('spinbutton', { name: /base premium/i })).toBeNull()
+  })
+})
+
+// Buyer-takes-all contracts (KWS hybrid rye): no fixed quantity, manual status.
+describe('ContractForm — buyer takes all production', () => {
+  it('checking the flag disables the bushels input and skips its validation on submit', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      render(<ContractForm {...baseProps} contract={null} />)
+
+      fireEvent.click(screen.getByRole('checkbox', { name: /buyer takes all production/i }))
+
+      const bushelsInput = screen.getByRole('spinbutton', { name: /contracted bushels/i })
+      expect((bushelsInput as HTMLInputElement).disabled).toBe(true)
+
+      fireEvent.change(screen.getByRole('combobox', { name: /buyer/i }), { target: { value: 'cust-1' } })
+      fireEvent.change(screen.getByRole('combobox', { name: /grain variant/i }), { target: { value: 'var-1' } })
+      fireEvent.change(screen.getByRole('combobox', { name: /instrument type/i }), { target: { value: 'SPOT' } })
+      // no contractedBushels entered — must still submit
+
+      fireEvent.submit(screen.getByRole('button', { name: /save|create/i }).closest('form')!)
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+      expect(body.buyerTakesAll).toBe(true)
+      expect(body.contractedBushels).toBe(0)
+      // status is not sent on create
+      expect('status' in body).toBe(false)
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('does not show the status select when creating or editing a normal contract', () => {
+    render(<ContractForm {...baseProps} contract={existingContract} />)
+    expect(screen.queryByRole('combobox', { name: /contract status/i })).toBeNull()
+  })
+
+  it('shows the status select when editing a take-all contract and submits the chosen status', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      const takeAllContract = {
+        ...existingContract,
+        instrument: 'SPOT' as const,
+        futuresPrice: null,
+        basis: null,
+        buyerTakesAll: true,
+        contractedBushels: 0,
+        paymentBasis: 'PER_UNIT',
+      }
+      render(<ContractForm {...baseProps} contract={takeAllContract} />)
+
+      const statusSelect = screen.getByRole('combobox', { name: /contract status/i })
+      fireEvent.change(statusSelect, { target: { value: 'FILLED' } })
+
+      fireEvent.submit(screen.getByRole('button', { name: /save/i }).closest('form')!)
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled())
+
+      const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+      expect(body.buyerTakesAll).toBe(true)
+      expect(body.contractedBushels).toBe(0)
+      expect(body.status).toBe('FILLED')
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })

@@ -15,7 +15,9 @@ export interface GrainContractRow {
     | 'MIN_PRICE'
     | 'ACCUMULATOR'
   contractedBushels: number
+  buyerTakesAll?: boolean
   appliedBushels?: number
+  deliveredLbs?: number
   futuresPrice?: number | null
   basis?: number | null
   finalCashPrice?: number | null
@@ -86,6 +88,8 @@ interface ContractFormState {
   instrumentType: string
   cropYear: string
   contractedBushels: string
+  buyerTakesAll: boolean
+  status: string
   futuresPrice: string
   basis: string
   finalCashPrice: string
@@ -125,6 +129,8 @@ const EMPTY_FORM: ContractFormState = {
   instrumentType: '',
   cropYear: String(new Date().getFullYear()),
   contractedBushels: '',
+  buyerTakesAll: false,
+  status: 'OPEN',
   futuresPrice: '',
   basis: '',
   finalCashPrice: '',
@@ -183,7 +189,9 @@ export function contractToForm(contract: GrainContractRow): ContractFormState {
     variantId: contract.variantId ?? contract.variant?.id ?? '',
     instrumentType: contract.instrument ?? '',
     cropYear: str(contract.cropYear),
-    contractedBushels: str(contract.contractedBushels),
+    contractedBushels: contract.buyerTakesAll ? '' : str(contract.contractedBushels),
+    buyerTakesAll: !!contract.buyerTakesAll,
+    status: contract.status ?? 'OPEN',
     futuresPrice: str(contract.futuresPrice),
     basis: str(contract.basis),
     finalCashPrice: str(contract.finalCashPrice),
@@ -317,7 +325,9 @@ export function ContractForm({
   onDirtyChange,
 }: ContractFormProps) {
   const isEdit = contract !== null
-  const canSeeFinancials = role !== 'OFFICE'
+  // Marketing roles are lowercase ('owner' | 'office') — matching lowercase
+  // here; the uppercase comparison silently showed price fields to office.
+  const canSeeFinancials = role !== 'office'
 
   const [form, setForm] = useState<ContractFormState>(
     contract ? contractToForm(contract) : EMPTY_FORM
@@ -404,7 +414,7 @@ export function ContractForm({
     if (!form.variantId) errors.push('Grain variant is required')
     if (!form.instrumentType) errors.push('Instrument type is required')
     const bushelsNum = parseFloat(form.contractedBushels)
-    if (!form.contractedBushels || !isFinite(bushelsNum)) {
+    if (!form.buyerTakesAll && (!form.contractedBushels || !isFinite(bushelsNum))) {
       errors.push('Contracted bushels must be a valid number')
     }
     const cropYearNum = parseInt(form.cropYear, 10)
@@ -427,8 +437,11 @@ export function ContractForm({
         variantId: form.variantId,
         instrument: form.instrumentType,
         cropYear: cropYearNum,
-        contractedBushels: bushelsNum,
+        contractedBushels: form.buyerTakesAll ? 0 : bushelsNum,
+        buyerTakesAll: form.buyerTakesAll,
         paymentBasis: form.paymentBasis,
+        // status is only user-editable on take-all contracts (server enforces too)
+        ...(isEdit && form.buyerTakesAll ? { status: form.status } : {}),
         // Price fields — nulled out when instrument doesn't show them or role is OFFICE
         futuresPrice: (canSeeFinancials && SHOWS_FUTURES_PRICE.has(form.instrumentType))
           ? numOrNull(form.futuresPrice)
@@ -612,10 +625,40 @@ export function ContractForm({
           />
         </div>
 
+        {/* Buyer takes all production */}
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            id="cf-buyerTakesAll"
+            name="buyerTakesAll"
+            type="checkbox"
+            checked={form.buyerTakesAll}
+            onChange={(e) =>
+              setForm((prev) => {
+                const next = { ...prev, buyerTakesAll: e.target.checked }
+                const dirty = JSON.stringify(next) !== JSON.stringify(initialFormRef.current)
+                onDirtyChange?.(dirty)
+                return next
+              })
+            }
+            className="accent-glomalin-accent"
+          />
+          <label
+            htmlFor="cf-buyerTakesAll"
+            className="text-xs text-glomalin-text font-mono uppercase tracking-wide cursor-pointer"
+          >
+            Buyer Takes All Production
+          </label>
+        </div>
+
         {/* Contracted Bushels */}
         <div className={fieldClass}>
           <label className={labelClass} htmlFor="cf-contractedBushels">
-            Contracted Bushels <span className="text-red-400">*</span>
+            Contracted Bushels{' '}
+            {form.buyerTakesAll ? (
+              <span className="text-glomalin-muted">(all production)</span>
+            ) : (
+              <span className="text-red-400">*</span>
+            )}
           </label>
           <input
             id="cf-contractedBushels"
@@ -623,12 +666,34 @@ export function ContractForm({
             type="number"
             step="1"
             aria-label="Contracted Bushels"
-            value={form.contractedBushels}
+            value={form.buyerTakesAll ? '' : form.contractedBushels}
             onChange={handleChange}
-            className={inputClass}
-            placeholder="e.g. 5000"
+            disabled={form.buyerTakesAll}
+            className={form.buyerTakesAll ? lockedInputClass : inputClass}
+            placeholder={form.buyerTakesAll ? 'All production' : 'e.g. 5000'}
           />
         </div>
+
+        {/* Status — manual on take-all contracts only; normal contracts get
+            their status from delivery recompute */}
+        {isEdit && form.buyerTakesAll && (
+          <div className={fieldClass}>
+            <label className={labelClass} htmlFor="cf-status">
+              Contract Status
+            </label>
+            <select
+              id="cf-status"
+              name="status"
+              value={form.status}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="OPEN">Open</option>
+              <option value="FILLED">Filled</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </div>
+        )}
 
         {/* ── Conditional price fields ──────────────────────────────────── */}
 

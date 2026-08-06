@@ -107,3 +107,26 @@ describe("isPricedContract", () => {
     expect(isPricedContract({ instrument: "ACCUMULATOR", contractedBushels: 1000, finalCashPrice: 5.10 })).toBe(false)
   })
 })
+
+describe("computePosition — PER_UNIT exclusion", () => {
+  it("excludes PER_UNIT contracts from contractedBu, pricedBu, WAP, and contractCount", () => {
+    const result = computePosition([
+      { instrument: "PRICED", contractedBushels: 10000, finalCashPrice: 5.00, paymentBasis: "PER_BUSHEL" },
+      // PER_UNIT seed rye — must not pollute the bushel KPIs
+      { instrument: "SPOT", contractedBushels: 2000, finalCashPrice: 4.00, paymentBasis: "PER_UNIT" },
+      // take-all PER_UNIT with the 0-bushel sentinel
+      { instrument: "SPOT", contractedBushels: 0, finalCashPrice: null, paymentBasis: "PER_UNIT" },
+    ])
+    expect(result.contractedBu).toBe(10000)
+    expect(result.pricedBu).toBe(10000)
+    expect(result.avgPriceCents).toBe(500)
+    expect(result.contractCount).toBe(1)
+  })
+
+  it("keeps contracts with no paymentBasis field (legacy rows)", () => {
+    const result = computePosition([
+      { instrument: "PRICED", contractedBushels: 5000, finalCashPrice: 5.00 },
+    ])
+    expect(result.contractedBu).toBe(5000)
+  })
+})

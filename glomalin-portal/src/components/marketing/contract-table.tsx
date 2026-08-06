@@ -28,7 +28,9 @@ interface GrainContractRow {
     | 'MIN_PRICE'
     | 'ACCUMULATOR'
   contractedBushels: number
+  buyerTakesAll?: boolean
   appliedBushels: number
+  deliveredLbs?: number
   futuresPrice?: number | null
   basis?: number | null
   finalCashPrice?: number | null
@@ -167,13 +169,21 @@ export function ContractTable({ contracts, role, cropYear }: ContractTableProps)
                     <Badge variant={badge.variant}>{badge.label}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <span className="font-mono">{formatBu(contract.contractedBushels)}</span>
+                    <span className="font-mono">
+                      {contract.buyerTakesAll ? 'All production' : formatBu(contract.contractedBushels)}
+                    </span>
                   </TableCell>
                   <TableCell>
-                    <DeliveryProgressBar
-                      applied={contract.appliedBushels}
-                      contracted={contract.contractedBushels}
-                    />
+                    {contract.buyerTakesAll ? (
+                      <span className="font-mono text-sm text-glomalin-text">
+                        {`${Math.round(contract.deliveredLbs ?? 0).toLocaleString()} lbs delivered`}
+                      </span>
+                    ) : (
+                      <DeliveryProgressBar
+                        applied={contract.appliedBushels}
+                        contracted={contract.contractedBushels}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>
                     {'futuresPrice' in contract && contract.futuresPrice != null ? (
