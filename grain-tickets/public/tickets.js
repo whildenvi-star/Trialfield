@@ -1193,7 +1193,7 @@
     var field = td.getAttribute('data-field');
     var tr = td.closest('tr');
     var id = tr.getAttribute('data-id');
-    var ticket = allTickets.find(function (t) { return t.id === id; });
+    var ticket = allTickets.find(function (t) { return String(t.id) === String(id); });
     if (!ticket) return;
 
     var oldVal = ticket[field];
@@ -1220,7 +1220,7 @@
       body[field] = newVal;
       api.put('/api/tickets/' + id, body).then(function (updated) {
         // Update local data
-        var idx = allTickets.findIndex(function (t) { return t.id === id; });
+        var idx = allTickets.findIndex(function (t) { return String(t.id) === String(id); });
         if (idx !== -1) allTickets[idx] = updated;
         applyFilters();
       });
@@ -1290,7 +1290,7 @@
   window.deleteTicket = function (id) {
     if (!confirm('Delete this ticket?')) return;
     api.del('/api/tickets/' + id).then(function () {
-      allTickets = allTickets.filter(function (t) { return t.id !== id; });
+      allTickets = allTickets.filter(function (t) { return String(t.id) !== String(id); });
       applyFilters();
     });
   };
@@ -1333,7 +1333,7 @@
     })
     .then(function (r) { return r.json(); })
     .then(function (result) {
-      allTickets = allTickets.filter(function (t) { return ids.indexOf(t.id) === -1; });
+      allTickets = allTickets.filter(function (t) { return ids.indexOf(String(t.id)) === -1; });
       document.getElementById('select-all-tickets').checked = false;
       applyFilters();
       util.showToast('Deleted ' + result.deleted + ' ticket(s)');
