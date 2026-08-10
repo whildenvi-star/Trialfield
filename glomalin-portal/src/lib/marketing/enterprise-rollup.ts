@@ -49,9 +49,12 @@ export const ENTERPRISE_CROSSWALK: CrosswalkEntry[] = [
   // Wheat
   { variantName: 'Wheat', budgetCrops: ['Wheat'], ticketCrops: ['Wheat'], premiumDefault: 0 },
   { variantName: 'Organic Wheat', budgetCrops: ['ORG Wheat'], ticketCrops: ['Organic Wheat'], premiumDefault: 0 },
-  { variantName: 'Organic Seed Wheat', budgetCrops: ['ORG seed wheat'], ticketCrops: [], premiumDefault: 0 },
+  { variantName: 'Organic Seed Wheat', budgetCrops: ['ORG seed wheat'], ticketCrops: ['Organic Seed Wheat'], premiumDefault: 0 },
   // Barley / Rye
-  { variantName: 'Seed Barley', budgetCrops: ['Seed grade Winter Barley'], ticketCrops: [], premiumDefault: 0 },
+  { variantName: 'Barley', budgetCrops: [], ticketCrops: ['Barley'], premiumDefault: 0 },
+  { variantName: 'Organic Barley', budgetCrops: ['ORG Barley', 'ORG feed barley'], ticketCrops: ['Organic Barley'], premiumDefault: 0 },
+  { variantName: 'Seed Barley', budgetCrops: ['Seed grade Winter Barley'], ticketCrops: ['Seed Barley'], premiumDefault: 0 },
+  { variantName: 'Organic Seed Barley', budgetCrops: [], ticketCrops: ['Organic Seed Barley'], premiumDefault: 0 },
   { variantName: 'Hybrid Rye', budgetCrops: ['Hybrid Seed Rye'], ticketCrops: ['Hybrid Rye'], premiumDefault: 0 },
 ]
 

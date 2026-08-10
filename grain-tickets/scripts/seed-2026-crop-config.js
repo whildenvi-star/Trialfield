@@ -11,6 +11,8 @@
  * 2. Upserts "Organic Wheat" 2026 to the Cashton Farm Supply schedule:
  *    testWeight 60 lb/bu, base moisture 13%, shrink 1.5%/point over base
  *    (= 0.15% per 0.1%, matching their discount sheet exactly).
+ * 3. Upserts the barley variants ('Barley', 'Seed Barley', 'Organic Seed
+ *    Barley') so ticket crops match the marketing GrainVariant names.
  */
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
@@ -73,6 +75,31 @@ async function main() {
       discount: 1.5,
     },
   });
+
+  // Barley — cropName must match the marketing GrainVariants exactly
+  // ('Barley', 'Organic Barley', 'Seed Barley', 'Organic Seed Barley'; the
+  // delivery sync matches by string). Schedule copies the existing Organic
+  // Barley row until a buyer discount sheet says otherwise; update:{} so
+  // hand-edited configs survive re-runs.
+  const orgBarley = await prisma.cropConfig.findUnique({
+    where: { cropYear_cropName: { cropYear: TARGET_YEAR, cropName: 'Organic Barley' } },
+  });
+  const barleySchedule = {
+    testWeight: orgBarley ? orgBarley.testWeight : 48, // USDA barley TW
+    moistureShrink: orgBarley ? orgBarley.moistureShrink : 13,
+    discount: orgBarley ? orgBarley.discount : 0,
+    tolerancePct: orgBarley ? orgBarley.tolerancePct : null,
+    toleranceLbs: orgBarley ? orgBarley.toleranceLbs : null,
+  };
+  const BARLEY_NAMES = ['Barley', 'Seed Barley', 'Organic Seed Barley'];
+  for (const cropName of BARLEY_NAMES) {
+    const row = await prisma.cropConfig.upsert({
+      where: { cropYear_cropName: { cropYear: TARGET_YEAR, cropName } },
+      update: {},
+      create: { cropYear: TARGET_YEAR, cropName, ...barleySchedule },
+    });
+    console.log(`${cropName} ${TARGET_YEAR}: TW ${row.testWeight}, base ${row.moistureShrink}%, shrink ${row.discount}%/pt`);
+  }
 
   const total = await prisma.cropConfig.count({ where: { cropYear: TARGET_YEAR } });
   console.log(`Copied ${copied} configs ${SOURCE_YEAR} -> ${TARGET_YEAR}; ${TARGET_YEAR} now has ${total} rows.`);
