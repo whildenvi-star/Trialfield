@@ -48,12 +48,22 @@ export function reYearFuturesSymbol(symbol: string, cropYear: number): string {
   return symbol.replace(/\d{2}(\.CBT)$/i, `${yy}$1`)
 }
 
+export interface ExcludedTicketDetail {
+  id: number
+  farm: string
+  crop: string
+  date: string
+  reason: 'noFieldId' | 'noCropId'
+}
+
 export interface EnterpriseDataNotes {
   budgetAvailable: boolean
   ticketsAvailable: boolean
   cbotAvailable: boolean
   /** tickets dropped from yield summaries for missing registry IDs */
   excludedTickets: { noFieldId: number; noCropId: number } | null
+  /** per-ticket detail for the excluded tickets (absent from older grain-tickets responses) */
+  excludedTicketDetails: ExcludedTicketDetail[] | null
 }
 
 export interface EnterpriseData {
@@ -134,6 +144,7 @@ export async function loadEnterpriseData(
   interface YieldSummariesResponse {
     summaries?: Array<{ cropName: string; totalNetBU: number }>
     excludedTickets?: { noFieldId: number; noCropId: number }
+    excludedTicketDetails?: ExcludedTicketDetail[]
   }
   interface SettlementSummaryResponse {
     summary?: Array<{ crop: string; netPayment: number }>
@@ -171,6 +182,7 @@ export async function loadEnterpriseData(
       ticketsAvailable: yieldData != null,
       cbotAvailable: Object.values(cbotBySymbol).some((p) => p != null),
       excludedTickets: yieldData?.excludedTickets ?? null,
+      excludedTicketDetails: yieldData?.excludedTicketDetails ?? null,
     },
     cbotContracts: isOwner ? cbotContracts : {},
   }

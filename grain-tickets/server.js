@@ -489,8 +489,20 @@ async function computeYieldSummaries(cropYear) {
   const groups = {}; // key: `${registryFieldId}::${registryCropId}`
   let noFieldIdCount = 0;
   let noCropIdCount = 0;
+  const excludedTicketDetails = [];  // per-ticket detail for portal warning, capped at MAX_EXCLUDED_DETAILS
+  const MAX_EXCLUDED_DETAILS = 50;
   const warnedFarms = {};  // track warned farms to log once per farm name
   const warnedCrops = {};  // track warned crops to log once per crop name
+
+  let excludedDetailsTruncated = false;
+  const recordExcluded = (t, reason) => {
+    if (excludedTicketDetails.length < MAX_EXCLUDED_DETAILS) {
+      excludedTicketDetails.push({ id: t.id, farm: t.farm || '', crop: t.crop || '', date: t.date, reason });
+    } else if (!excludedDetailsTruncated) {
+      excludedDetailsTruncated = true;
+      console.warn(`Yield pipeline: excluded ticket detail list truncated at ${MAX_EXCLUDED_DETAILS}`);
+    }
+  };
 
   dbTickets.forEach(t => {
     const farmKey = (t.farm || '').trim().toLowerCase();
@@ -499,6 +511,7 @@ async function computeYieldSummaries(cropYear) {
     // Exclude tickets whose farm has no registryId
     if (!farm || !farm.registryId) {
       noFieldIdCount++;
+      recordExcluded(t, 'noFieldId');
       const farmName = t.farm || '(unknown)';
       if (!warnedFarms[farmName]) {
         warnedFarms[farmName] = true;
@@ -510,6 +523,7 @@ async function computeYieldSummaries(cropYear) {
     // Exclude tickets with no registryCropId
     if (!t.registryCropId) {
       noCropIdCount++;
+      recordExcluded(t, 'noCropId');
       const cropName = t.crop || '(unknown)';
       if (!warnedCrops[cropName]) {
         warnedCrops[cropName] = true;
@@ -560,7 +574,8 @@ async function computeYieldSummaries(cropYear) {
 
   return {
     summaries,
-    excludedTickets: { noFieldId: noFieldIdCount, noCropId: noCropIdCount }
+    excludedTickets: { noFieldId: noFieldIdCount, noCropId: noCropIdCount },
+    excludedTicketDetails
   };
 }
 
@@ -1131,7 +1146,12 @@ app.get('/api/yield-summaries', async (req, res) => {
   try {
     const cropYear = req.query.cropYear ? parseInt(req.query.cropYear, 10) : new Date().getFullYear();
     const result = await computeYieldSummaries(cropYear);
-    res.json({ summaries: result.summaries, cropYear, excludedTickets: result.excludedTickets });
+    res.json({
+      summaries: result.summaries,
+      cropYear,
+      excludedTickets: result.excludedTickets,
+      excludedTicketDetails: result.excludedTicketDetails
+    });
   } catch (e) {
     console.error('GET /api/yield-summaries error:', e);
     res.status(500).json({ error: 'Internal server error' });

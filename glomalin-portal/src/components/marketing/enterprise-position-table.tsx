@@ -148,18 +148,67 @@ export function EnterprisePositionTable({
             {isOwner && notes.cbotAvailable && (
               <span>@ Today = priced revenue + unsold projection at live CBOT (delayed)</span>
             )}
-            {notes.excludedTickets != null &&
-              notes.excludedTickets.noFieldId + notes.excludedTickets.noCropId > 0 && (
-                <span className="text-glomalin-warning">
-                  {notes.excludedTickets.noFieldId + notes.excludedTickets.noCropId} scale tickets missing
-                  registry IDs excluded from actuals
-                </span>
-              )}
+            <ExcludedTicketsWarning notes={notes} />
             {!notes.ticketsAvailable && <span>grain-tickets offline — actuals unavailable</span>}
           </div>
         </div>
       )}
     </Card>
+  )
+}
+
+// ── Excluded-tickets warning ───────────────────────────────────────────────
+
+const EXCLUDED_REASON: Record<string, string> = {
+  noCropId: 'crop not linked to a registry crop — edit the ticket and pick the crop from the registry list',
+  noFieldId: 'farm has no registry ID — needs re-linking in Grain Tickets Admin',
+}
+
+function ExcludedTicketsWarning({ notes }: { notes: EnterpriseDataNotes }) {
+  const [showDetails, setShowDetails] = useState(false)
+  const count =
+    (notes.excludedTickets?.noFieldId ?? 0) + (notes.excludedTickets?.noCropId ?? 0)
+  if (count === 0) return null
+
+  const details = notes.excludedTicketDetails
+  const label = `${count} scale ticket${count === 1 ? '' : 's'} missing registry IDs excluded from actuals`
+
+  // Older grain-tickets responses carry only the count — link straight through
+  if (!details || details.length === 0) {
+    return (
+      <a href="/app/grain-tickets" className="text-glomalin-warning underline hover:opacity-80">
+        {label}
+      </a>
+    )
+  }
+
+  return (
+    <div className="basis-full">
+      <button
+        onClick={() => setShowDetails((s) => !s)}
+        className="text-glomalin-warning hover:opacity-80 text-left"
+      >
+        <span className="mr-1">{showDetails ? '▾' : '▸'}</span>
+        {label}
+      </button>
+      {showDetails && (
+        <ul className="mt-1 ml-4 space-y-1">
+          {details.map((t) => (
+            <li key={t.id} className="text-glomalin-warning/90">
+              <span className="text-glomalin-bright">#{t.id}</span>
+              {' '}· {String(t.date).slice(0, 10)} · {t.farm} · {t.crop}
+              {' '}— {EXCLUDED_REASON[t.reason] ?? t.reason}{' '}
+              <a href="/app/grain-tickets" className="underline hover:opacity-80">
+                open Grain Tickets
+              </a>
+            </li>
+          ))}
+          {details.length < count && (
+            <li className="text-glomalin-muted">…and {count - details.length} more</li>
+          )}
+        </ul>
+      )}
+    </div>
   )
 }
 
