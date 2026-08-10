@@ -466,7 +466,7 @@ async function computeYieldSummaries(cropYear) {
   const dbTickets = await prisma.ticket.findMany({
     where: { cropYear: year },
     select: {
-      id: true, farm: true, netWeight: true, moisture: true, fm: true,
+      id: true, farm: true, date: true, netWeight: true, moisture: true, fm: true,
       crop: true, registryCropId: true, cropYear: true
     }
   });
@@ -1442,6 +1442,31 @@ app.get('/api/crops', async (req, res) => {
   } catch (e) {
     console.error('GET /api/crops error:', e);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Drift between this year's CropConfig names and the marketing GrainVariant
+// list (the source of truth for crop names — see lib/crop-sync.js)
+app.get('/api/crops/drift', async (req, res) => {
+  try {
+    const drift = await cropSync.computeCropDrift(new Date().getFullYear());
+    res.json(drift);
+  } catch (e) {
+    console.error('GET /api/crops/drift error:', e.message);
+    res.status(502).json({ error: 'Could not reach marketing service: ' + e.message });
+  }
+});
+
+// Pull missing marketing variant names into this year's CropConfig.
+// Create-only: never updates or deletes existing rows.
+app.post('/api/crops/sync-from-marketing', async (req, res) => {
+  try {
+    const result = await cropSync.syncCropsFromMarketing(new Date().getFullYear());
+    console.log(`Crop sync: added ${result.added.length} crop(s)`, result.added.map((a) => a.name).join(', ') || '(none)');
+    res.json(result);
+  } catch (e) {
+    console.error('POST /api/crops/sync-from-marketing error:', e.message);
+    res.status(502).json({ error: 'Crop sync failed: ' + e.message });
   }
 });
 
