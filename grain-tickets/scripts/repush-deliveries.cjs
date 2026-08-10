@@ -20,6 +20,17 @@ const Calc = require(path.join(__dirname, '..', 'public', 'calc.js'));
 const CERT_URL = process.env.CERT_SERVICE_URL || 'http://localhost:3004';
 const TOKEN = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
 
+// Keep the admin "never reached marketing" banner accurate (see server.js
+// recordPushSkip — the table is the current orphan set, not a log).
+async function recordSkip(t, reason) {
+  const data = { cropName: t.crop, cropYear: t.cropYear, buyerName: t.buyer ? t.buyer.name : null, reason };
+  await prisma.marketingPushSkip.upsert({
+    where: { ticketId: t.id },
+    update: data,
+    create: { ticketId: t.id, ...data },
+  }).catch((e) => console.warn(`recordSkip ticket ${t.id}:`, e.message));
+}
+
 async function buildCropConfigObject(cropYear) {
   const rows = await prisma.cropConfig.findMany({ where: { cropYear } });
   const config = {};
@@ -95,17 +106,21 @@ async function main() {
       const result = await res.json().catch(() => ({}));
       if (!res.ok) {
         outcomes.push({ ticket: t.id, crop: t.crop, outcome: `http-${res.status} ${result.error || ''}` });
+        await recordSkip(t, `http-${res.status}: ${result.error || 'error'}`);
       } else if (result.status === 'skipped') {
         outcomes.push({ ticket: t.id, crop: t.crop, outcome: `skipped (${result.reason}: "${result.cropName}" ${result.cropYear})` });
+        await recordSkip(t, result.reason || 'skipped');
       } else {
         outcomes.push({
           ticket: t.id,
           crop: t.crop,
           outcome: `${result.status} (${result.applyOutcome || 'n/a'}, ${result.appliedBushels || 0} bu applied)`
         });
+        await prisma.marketingPushSkip.deleteMany({ where: { ticketId: t.id } }).catch(() => {});
       }
     } catch (e) {
       outcomes.push({ ticket: t.id, crop: t.crop, outcome: `error: ${e.message}` });
+      await recordSkip(t, `push-failed: ${e.message}`);
     }
   }
 

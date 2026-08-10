@@ -35,6 +35,7 @@
     .btn-danger:hover { text-decoration: underline; }
     .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--success); color: white; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: opacity 0.3s; z-index: 100; }
     .toast.hidden { opacity: 0; pointer-events: none; }
+    #crop-drift-banner.hidden, #crop-skip-banner.hidden { display: none; }
     .add-form { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: end; margin-bottom: 1rem; background: var(--card); padding: 1rem; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .add-form .field { display: flex; flex-direction: column; }
     .add-form label { font-size: 0.75rem; color: var(--text-light); font-weight: 600; margin-bottom: 0.2rem; }
@@ -56,6 +57,8 @@
   <main>
     <!-- CROPS SECTION -->
     <h2>Crops</h2>
+    <div id="crop-skip-banner" class="hidden"></div>
+    <div id="crop-drift-banner" class="hidden"></div>
     <div class="add-form" id="crop-add-form">
       <div class="field">
         <label>Crop Name</label>
@@ -312,6 +315,60 @@
         renderCrops();
         populateFarmCropDropdown();
       });
+      loadCropDrift();
+    }
+
+    // Crop names must match the marketing variant list exactly (the delivery
+    // sync matches by string) — surface any drift and offer a one-click pull.
+    function loadCropDrift() {
+      api('GET', '/api/crops/drift').then(function (drift) {
+        var banner = document.getElementById('crop-drift-banner');
+        if (!drift || drift.error) { banner.classList.add('hidden'); return; }
+        var html = '';
+        if (drift.missingInTickets && drift.missingInTickets.length) {
+          html += '<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:10px 14px;margin-bottom:8px">';
+          html += '<strong>' + drift.missingInTickets.length + ' marketing crop(s) missing from ticket entry:</strong> ';
+          html += escHtml(drift.missingInTickets.map(function (m) { return m.name; }).join(', '));
+          html += ' <button class="btn btn-primary" id="crop-sync-btn" style="margin-left:10px">Sync from Marketing</button>';
+          html += '</div>';
+        }
+        if (drift.missingInMarketing && drift.missingInMarketing.length) {
+          html += '<div style="background:#e7f1ff;border:1px solid #9ec5fe;border-radius:6px;padding:10px 14px;margin-bottom:8px">';
+          html += 'Ticket crops with no marketing variant (deliveries won\'t count against contracts): ';
+          html += escHtml(drift.missingInMarketing.join(', '));
+          html += '. To market one, add it to the marketing reference list (seed-marketing-reference.cjs), then re-push.';
+          html += '</div>';
+        }
+        renderDriftBanner(banner, html);
+      }).catch(function () { /* marketing unreachable — banner stays hidden */ });
+
+      api('GET', '/api/marketing-push/skips').then(function (data) {
+        var el = document.getElementById('crop-skip-banner');
+        if (!data || !data.count) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+        var parts = Object.keys(data.groups).map(function (k) { return data.groups[k] + ' ticket(s): ' + k; });
+        el.innerHTML = '<div style="background:#f8d7da;border:1px solid #dc3545;border-radius:6px;padding:10px 14px;margin-bottom:8px">'
+          + '<strong>' + data.count + ' ticket(s) never reached marketing</strong> — deliveries not counted against contracts. '
+          + escHtml(parts.join('; '))
+          + '. Fix the crop (sync above or add the marketing variant), then run <code>node scripts/repush-deliveries.cjs</code> on the server.</div>';
+        el.classList.remove('hidden');
+      }).catch(function () {});
+    }
+
+    function renderDriftBanner(banner, html) {
+        if (!html) { banner.classList.add('hidden'); banner.innerHTML = ''; return; }
+        banner.innerHTML = html;
+        banner.classList.remove('hidden');
+        var syncBtn = document.getElementById('crop-sync-btn');
+        if (syncBtn) {
+          syncBtn.addEventListener('click', function () {
+            syncBtn.disabled = true;
+            api('POST', '/api/crops/sync-from-marketing').then(function (result) {
+              if (result.error) { showToast(result.error); syncBtn.disabled = false; return; }
+              showToast('Added ' + result.added.length + ' crop(s): ' + result.added.map(function (a) { return a.name; }).join(', '));
+              loadCrops();
+            });
+          });
+        }
     }
 
     function renderCrops() {

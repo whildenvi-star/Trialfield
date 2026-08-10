@@ -198,3 +198,18 @@ model AgentDailyUsage {
 
   @@unique([date])
 }
+
+// Tickets whose marketing push was skipped (no matching GrainVariant) or
+// failed — the CURRENT orphan set, not a log: rows are removed on the next
+// successful push for the same ticket. Healed by scripts/repush-deliveries.cjs
+// after the crop name exists in marketing.
+model MarketingPushSkip {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int      @unique
+  cropName  String
+  cropYear  Int
+  buyerName String?
+  reason    String   // "unknown-variant" | http error text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -10,6 +10,7 @@ const multer = require('multer');
 const XLSX = require('xlsx');
 const Anthropic = require('@anthropic-ai/sdk');
 const prisma = require('./lib/db');
+const cropSync = require('./lib/crop-sync');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -628,6 +629,33 @@ async function pushYieldUpdates(cropYear) {
 // the buyer's contract in the planner's Contracts tab.
 // Fire-and-forget — never blocks the ticket response. Bin-bound and buyer-less
 // tickets never push. action: 'upsert' | 'delete'.
+// Track tickets whose marketing push didn't land (unknown crop variant, cert
+// service down) — the CURRENT orphan set, cleared on the next successful push.
+// Surfaced in admin; healed by scripts/repush-deliveries.cjs once fixed.
+async function recordPushSkip(ticket, reason) {
+  try {
+    let buyerName = null;
+    if (ticket.buyerId) {
+      const b = await prisma.buyer.findUnique({ where: { id: ticket.buyerId } });
+      buyerName = b ? b.name : null;
+    }
+    const data = { cropName: ticket.crop, cropYear: ticket.cropYear, buyerName, reason };
+    await prisma.marketingPushSkip.upsert({
+      where: { ticketId: ticket.id },
+      update: data,
+      create: { ticketId: ticket.id, ...data },
+    });
+  } catch (e) {
+    console.warn('recordPushSkip failed:', e.message);
+  }
+}
+
+async function clearPushSkip(ticketId) {
+  try {
+    await prisma.marketingPushSkip.deleteMany({ where: { ticketId } });
+  } catch (e) { /* bookkeeping only */ }
+}
+
 async function pushDeliveryToMarketing(ticket, action) {
   const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
   if (!token) {
@@ -686,13 +714,17 @@ async function pushDeliveryToMarketing(ticket, action) {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       console.error(`Marketing push: ticket ${ticket.id} -> http-${response.status}`, result.error || '');
+      if (payload.action !== 'delete') await recordPushSkip(ticket, `http-${response.status}: ${result.error || 'error'}`);
     } else if (result.status === 'skipped') {
       console.warn(`Marketing push: ticket ${ticket.id} -> skipped (${result.reason || 'unknown'}${result.cropName ? `: no variant "${result.cropName}" for ${result.cropYear}` : ''})`);
+      if (payload.action !== 'delete') await recordPushSkip(ticket, result.reason || 'skipped');
     } else {
       console.log(`Marketing push: ticket ${ticket.id} -> ${result.status}${result.applyOutcome ? ` (${result.applyOutcome}, ${result.appliedBushels || 0} bu applied)` : ''}`);
+      await clearPushSkip(ticket.id);
     }
   } catch (e) {
     console.error(`Marketing push: ticket ${ticket.id} failed:`, e.message);
+    if (payload && payload.action !== 'delete') await recordPushSkip(ticket, `push-failed: ${e.message}`);
   }
 }
 
@@ -1025,6 +1057,7 @@ app.delete('/api/tickets/:id', async (req, res) => {
     const cropYear = existing ? existing.cropYear : new Date().getFullYear();
     await prisma.ticket.delete({ where: { id } });
     res.json({ ok: true });
+    clearPushSkip(id);
     // Trigger yield recompute + marketing retraction after response — fire-and-forget
     pushYieldUpdates(cropYear).catch(err => console.error('pushYieldUpdates (DELETE) error:', err));
     if (existing && existing.buyerId) {
@@ -1052,6 +1085,7 @@ app.post('/api/tickets/batch-delete', async (req, res) => {
     });
     const result = await prisma.ticket.deleteMany({ where: { id: { in: intIds } } });
     res.json({ ok: true, deleted: result.count });
+    prisma.marketingPushSkip.deleteMany({ where: { ticketId: { in: intIds } } }).catch(() => {});
     for (const t of buyerTickets) {
       pushDeliveryToMarketing(t, 'delete').catch(err => console.error('pushDeliveryToMarketing (batch-delete) error:', err));
     }
@@ -1467,6 +1501,24 @@ app.post('/api/crops/sync-from-marketing', async (req, res) => {
   } catch (e) {
     console.error('POST /api/crops/sync-from-marketing error:', e.message);
     res.status(502).json({ error: 'Crop sync failed: ' + e.message });
+  }
+});
+
+// Tickets whose marketing push didn't land — grouped for the admin banner
+app.get('/api/marketing-push/skips', async (req, res) => {
+  try {
+    const skips = await prisma.marketingPushSkip.findMany({
+      orderBy: [{ cropYear: 'desc' }, { cropName: 'asc' }, { ticketId: 'asc' }],
+    });
+    const groups = {};
+    for (const s of skips) {
+      const key = `${s.cropName} (${s.cropYear})`;
+      groups[key] = (groups[key] || 0) + 1;
+    }
+    res.json({ count: skips.length, groups, skips });
+  } catch (e) {
+    console.error('GET /api/marketing-push/skips error:', e);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -3178,4 +3230,16 @@ app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Connected to PostgreSQL: ${ticketCount} tickets, ${farmCount} farms, ${cropCount} crop configs`);
   console.log(`Grain Tickets server running at http://localhost:${PORT}`);
   console.log(`LAN access: http://<your-ip>:${PORT}`);
+
+  // Cheap nag: crop names out of sync with marketing break the delivery push
+  cropSync.computeCropDrift(new Date().getFullYear())
+    .then((drift) => {
+      if (drift.missingInTickets.length) {
+        console.warn(`Crop drift: ${drift.missingInTickets.length} marketing crop(s) missing from ticket entry: ${drift.missingInTickets.map((m) => m.name).join(', ')} — sync from the admin page`);
+      }
+      if (drift.missingInMarketing.length) {
+        console.warn(`Crop drift: ${drift.missingInMarketing.length} ticket crop(s) with no marketing variant (deliveries won't count against contracts): ${drift.missingInMarketing.join(', ')}`);
+      }
+    })
+    .catch((e) => console.warn('Crop drift check skipped:', e.message));
 });
