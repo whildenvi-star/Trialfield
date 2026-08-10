@@ -57,7 +57,14 @@ export async function middleware(request: NextRequest) {
   // Public routes: pass through (but redirect authenticated users on / to dashboard)
   if (isPublicRoute(pathname)) {
     if (pathname === '/' && user) {
-      return redirectWithCookies(new URL('/dashboard', request.url), response)
+      // Admins land on the Enterprise Planner; everyone else on /dashboard
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      const landing = profile?.role === 'admin' ? '/app/farm-budget' : '/dashboard'
+      return redirectWithCookies(new URL(landing, request.url), response)
     }
     return response
   }
