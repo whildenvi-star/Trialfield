@@ -42,7 +42,7 @@ export const ENTERPRISE_CROSSWALK: CrosswalkEntry[] = [
   { variantName: 'Soybeans', budgetCrops: ['RR Soybeans'], ticketCrops: ['RR Soybeans', 'Enlist Soybeans'], premiumDefault: -0.75 },
   { variantName: 'Non-GMO Food Beans', budgetCrops: ['Soybeans'], ticketCrops: ['Food Beans', 'Pioneer 21A20 Food beans'], premiumDefault: 1.5 },
   { variantName: 'High Oil Soybeans', budgetCrops: ['High Oil Soybeans'], ticketCrops: ['High Oil Soybeans'], premiumDefault: 2.15 },
-  { variantName: 'Seed Soybeans', budgetCrops: ['DF seed beans'], ticketCrops: ['DF seed beans'], premiumDefault: 3.5 },
+  { variantName: 'Non-GMO Seed Grade Beans', budgetCrops: ['Non-GMO Seed Grade Beans'], ticketCrops: ['Non-GMO Seed Grade Beans'], premiumDefault: 3.5 },
   { variantName: 'Organic Soybeans', budgetCrops: ['ORG Soybeans'], ticketCrops: ['Organic Soybeans'], premiumDefault: 0 },
   { variantName: 'Organic Food Beans', budgetCrops: ['ORG Food Beans'], ticketCrops: ['Organic Food Beans'], premiumDefault: 0 },
   { variantName: 'Organic Natto Beans', budgetCrops: ['ORG Natto Beans', 'ORG Natto Beans (ORG IRR)'], ticketCrops: ['Organic Natto Beans'], premiumDefault: 0 },
