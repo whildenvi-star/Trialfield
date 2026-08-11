@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="platform-tokens.css?v=2">
-  <link rel="stylesheet" href="style.css?v=20260811a">
+  <link rel="stylesheet" href="style.css?v=20260811b">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
@@ -887,6 +887,7 @@
         <button class="mkt-tab-btn" data-mtab="instruments">Contracts</button>
         <button class="mkt-tab-btn role-hide-office" data-mtab="whatif">What-If</button>
         <button class="mkt-tab-btn" data-mtab="basis">Basis</button>
+        <button class="mkt-tab-btn" data-mtab="straw">Straw</button>
         <button class="mkt-tab-btn" data-mtab="croptypes">Crop Types</button>
       </div>
 
@@ -903,6 +904,11 @@
           style="width:100%;height:75vh;border:none;display:block"
           title="Contract Management"
         ></iframe>
+      </div>
+
+      <!-- Straw Sales (small grains, by the ton → $/ac) -->
+      <div id="mtab-straw" class="mtab-content">
+        <div id="straw-root"></div>
       </div>
 
       <!-- Crop Types -->
@@ -1568,7 +1574,7 @@
   <script src="enterprise.js?v=20260811a"></script>
   <script src="field-ops-groups.js"></script>
   <script src="field-editor.js?v=20260805"></script>
-  <script src="field-strips.js?v=20260811a"></script>
+  <script src="field-strips.js?v=20260811b"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js?v=20260806a"></script>
   <script src="ref-overview.js?v=2"></script>
@@ -1580,6 +1586,7 @@
   <script src="sales.js?v=3"></script>
   <script src="hedging.js?v=4"></script>
   <script src="sales-marketing.js?v=7"></script>
+  <script src="straw.js?v=20260811a"></script>
   <script src="farm-map.js"></script>
   <script src="pdf-report.js"></script>
   <script src="fieldops-ui.js"></script>

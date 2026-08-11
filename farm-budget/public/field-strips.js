@@ -74,11 +74,7 @@
       return (codeOrder[ca] || 0) - (codeOrder[cb] || 0);
     });
 
-    var seedOptions = (window.refData.seedVarieties || []).map(function (s) {
-      return '<option value="' + esc(s.variety) + '">';
-    }).join('');
-
-    var html = '<datalist id="fs-seed-list">' + seedOptions + '</datalist><div class="fs-scroll">';
+    var html = '<div class="fs-scroll">';
     sorted.forEach(function (f) { html += stripHtml(f); });
     html += '</div>';
     root.innerHTML = html;
@@ -120,13 +116,13 @@
   }
 
   // Numeric editable cell. kind: iqty|mpasses|spop|fkey (+ data-idx or data-key)
-  function editCell(cellN, kind, idxOrKey, text, cls) {
+  function editCell(cellN, kind, idxOrKey, text, cls, title) {
     var n = cellN.n++;
     var dataAttr = kind === 'fkey'
       ? 'data-key="' + esc(idxOrKey) + '"'
       : 'data-idx="' + idxOrKey + '"';
     return '<span class="fs-edit ' + (cls || '') + '" data-cell="' + n + '" data-kind="' + kind + '" ' +
-      dataAttr + ' title="Click to edit">' + text + '</span>';
+      dataAttr + ' title="' + esc(title || 'Click to edit') + '">' + text + '</span>';
   }
 
   function kvRow(label, valueHtml, cls) {
@@ -259,9 +255,17 @@
       var inp = f.inputs[j];
       var d = details[j] || {};
       var dim = inp.passStatus === 'disregarded';
+      var confirmed = inp.passStatus === 'confirmed';
+      var hasInvoice = inp.invoiceCostTotal != null;
+      var shownQty = confirmed && inp.actualQuantity != null ? inp.actualQuantity : inp.quantity;
+      var isActual = confirmed && inp.actualQuantity != null && inp.actualQuantity !== inp.quantity;
+      var qtyCell = hasInvoice
+        ? '<span class="fs-qty fs-locked" title="Priced from invoice — edit in field editor">' + rate(shownQty) + '</span>'
+        : editCell(cellN, 'iqty', j, rate(shownQty), 'fs-qty' + (isActual ? ' fs-actual' : ''),
+            isActual ? 'As-applied rate (planned: ' + rate(inp.quantity) + ') — click to edit' : (confirmed ? 'As-applied rate — click to edit' : 'Click to edit'));
       h += '<div class="fs-row fs-irow' + (dim ? ' fs-dim' : '') + '">' +
         chkHtml('input', j, inp) +
-        editCell(cellN, 'iqty', j, rate(inp.quantity), 'fs-qty') +
+        qtyCell +
         '<span class="fs-unit">' + esc(d.unit || '') + '</span>' +
         '<span class="fs-name" data-kind="input" data-idx="' + j + '" title="' + esc(inp.productName) + ' — click to swap">' + esc(inp.productName || '') + '</span>' +
         (money ? '<span class="fs-cost">' + util.formatMoney(d.costPerAcre || 0) + '</span>' : '') +
@@ -337,14 +341,25 @@
   // ── NUMERIC EDIT ────────────────────────────────────────────────────────────
 
   function readNum(f, kind, idx, key) {
-    if (kind === 'iqty') return (f.inputs[idx] || {}).quantity || 0;
+    if (kind === 'iqty') {
+      var it = f.inputs[idx] || {};
+      // Confirmed rows edit the as-applied rate (which drives the cost)
+      if (it.passStatus === 'confirmed' && it.actualQuantity != null) return it.actualQuantity;
+      return it.quantity || 0;
+    }
     if (kind === 'mpasses') return (f.machinery[idx] || {}).passes || 1;
     if (kind === 'spop') return (f.seeds[idx] || {}).population || 0;
     return parseFloat(f[key]) || 0;
   }
 
   function writeNum(f, kind, idx, key, v) {
-    if (kind === 'iqty') { if (f.inputs[idx]) f.inputs[idx].quantity = v; return; }
+    if (kind === 'iqty') {
+      var it = f.inputs[idx];
+      if (!it) return;
+      if (it.passStatus === 'confirmed') it.actualQuantity = v;
+      else it.quantity = v;
+      return;
+    }
     if (kind === 'mpasses') { if (f.machinery[idx]) f.machinery[idx].passes = v; return; }
     if (kind === 'spop') { if (f.seeds[idx]) f.seeds[idx].population = v; return; }
     f[key] = v;
@@ -401,16 +416,61 @@
     });
   }
 
-  // ── NAME SWAP (datalist-backed, same lists the modal uses) ──────────────────
+  // ── NAME SWAP — constrained catalog dropdowns (no free text, no misspells) ──
 
-  function listFor(kind) {
-    if (kind === 'mach') return 'impl-search-list';
-    if (kind === 'seed') return 'fs-seed-list';
-    return 'prod-search-list';
+  function optionHtml(name, cur) {
+    return '<option value="' + esc(name) + '"' + (name === cur ? ' selected' : '') + '>' + esc(name) + '</option>';
+  }
+
+  // Products grouped by category; implements flat; varieties with the field's
+  // crop matches listed first. Current value kept selectable even if it has
+  // fallen out of the catalog (marked so it's visible something is off).
+  function catalogOptions(kind, cur, f) {
+    var html = '';
+    var known = false;
+    if (kind === 'mach') {
+      var impls = (window.refData.implements || []).map(function (i) { return i.name; }).sort();
+      known = impls.indexOf(cur) !== -1;
+      html = impls.map(function (n) { return optionHtml(n, cur); }).join('');
+    } else if (kind === 'seed') {
+      var vars = (window.refData.seedVarieties || []);
+      var crop = ((f && f.crop) || '').toLowerCase();
+      var match = [], rest = [];
+      vars.forEach(function (s) {
+        var sc = (s.crop || '').toLowerCase();
+        var hit = crop && sc && (crop.indexOf(sc) !== -1 || sc.indexOf(crop) !== -1);
+        (hit ? match : rest).push(s.variety);
+        if (s.variety === cur) known = true;
+      });
+      match.sort(); rest.sort();
+      if (match.length) {
+        html += '<optgroup label="' + esc(f.crop || 'Matching crop') + '">' +
+          match.map(function (n) { return optionHtml(n, cur); }).join('') + '</optgroup>';
+        html += '<optgroup label="Other varieties">' +
+          rest.map(function (n) { return optionHtml(n, cur); }).join('') + '</optgroup>';
+      } else {
+        html = rest.map(function (n) { return optionHtml(n, cur); }).join('');
+      }
+    } else {
+      var cats = {};
+      (window.refData.products || []).forEach(function (p) {
+        var c = p.category || 'Other';
+        (cats[c] = cats[c] || []).push(p.name);
+        if (p.name === cur) known = true;
+      });
+      Object.keys(cats).sort().forEach(function (c) {
+        html += '<optgroup label="' + esc(c) + '">' +
+          cats[c].sort().map(function (n) { return optionHtml(n, cur); }).join('') + '</optgroup>';
+      });
+    }
+    if (cur && !known) {
+      html = '<option value="' + esc(cur) + '" selected>' + esc(cur) + ' (not in catalog!)</option>' + html;
+    }
+    return html;
   }
 
   function openName(span) {
-    if (span.querySelector('input')) return;
+    if (span.querySelector('select')) return;
     var fid = stripOf(span);
     var f = getField(fid);
     if (!f) return;
@@ -422,16 +482,21 @@
     var origHtml = span.innerHTML;
 
     span.classList.add('fs-editing');
-    span.innerHTML = '<input type="text" class="fs-input fs-input-name" list="' + listFor(kind) + '" value="' + esc(curName) + '">';
-    var input = span.querySelector('input');
-    input.focus();
-    input.select();
+    span.innerHTML = '<select class="fs-input fs-select">' + catalogOptions(kind, curName, f) + '</select>';
+    var sel = span.querySelector('select');
+    sel.focus();
 
     var done = false;
-    function commit() {
+    function restore() {
       if (done) return;
       done = true;
-      var name = input.value.trim();
+      span.classList.remove('fs-editing');
+      span.innerHTML = origHtml;
+    }
+    sel.addEventListener('change', function () {
+      if (done) return;
+      done = true;
+      var name = sel.value;
       if (name && name !== curName) {
         if (kind === 'mach') item.implementName = name;
         else if (kind === 'seed') item.variety = name;
@@ -439,44 +504,45 @@
         markDirty(fid);
         rerenderStrip(fid);
       } else {
-        span.classList.remove('fs-editing');
-        span.innerHTML = origHtml;
+        done = false;
+        restore();
       }
-    }
-
-    input.addEventListener('blur', commit);
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-      else if (e.key === 'Escape') {
-        done = true;
-        span.classList.remove('fs-editing');
-        span.innerHTML = origHtml;
-      }
+    });
+    sel.addEventListener('blur', restore);
+    sel.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') restore();
     });
   }
 
   // ── ADD ROW ─────────────────────────────────────────────────────────────────
 
   function openAdd(div) {
-    if (div.querySelector('input')) return;
+    if (div.querySelector('select')) return;
     var fid = stripOf(div);
     var f = getField(fid);
     if (!f) return;
     var kind = div.getAttribute('data-kind');
     var season = div.getAttribute('data-season') || '';
     var origHtml = div.innerHTML;
-    var placeholder = kind === 'mach' ? 'implement…' : (kind === 'seed' ? 'variety…' : 'product…');
+    var label = kind === 'mach' ? 'implement' : (kind === 'seed' ? 'variety' : 'product');
 
-    div.innerHTML = '<input type="text" class="fs-input fs-input-name" list="' + listFor(kind) + '" placeholder="' + placeholder + '">';
-    var input = div.querySelector('input');
-    input.focus();
+    div.innerHTML = '<select class="fs-input fs-select">' +
+      '<option value="" selected>— choose ' + label + ' —</option>' +
+      catalogOptions(kind, null, f) + '</select>';
+    var sel = div.querySelector('select');
+    sel.focus();
 
     var done = false;
-    function commit() {
+    function restore() {
       if (done) return;
       done = true;
-      var name = input.value.trim();
-      if (!name) { div.innerHTML = origHtml; return; }
+      div.innerHTML = origHtml;
+    }
+    sel.addEventListener('change', function () {
+      if (done) return;
+      var name = sel.value;
+      if (!name) return;
+      done = true;
       if (kind === 'mach') {
         f.machinery = f.machinery || [];
         f.machinery.push({ id: util.generateId('mach'), implementName: name, passes: 1, passStatus: 'planned' });
@@ -492,15 +558,10 @@
       }
       markDirty(fid);
       rerenderStrip(fid);
-    }
-
-    input.addEventListener('blur', function () {
-      // let datalist mousedown land first
-      setTimeout(commit, 150);
     });
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); commit(); }
-      else if (e.key === 'Escape') { done = true; div.innerHTML = origHtml; }
+    sel.addEventListener('blur', restore);
+    sel.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') restore();
     });
   }
 
@@ -550,12 +611,124 @@
       item.passStatus = 'planned';
       item.confirmedDate = null;
       item.actualQuantity = null;
+      markDirty(fid);
+      rerenderStrip(fid);
     } else {
-      item.passStatus = 'confirmed';
-      item.confirmedDate = new Date().toISOString().slice(0, 10);
+      // Don't confirm yet — the popover form applies the status on Confirm
+      chk.checked = false;
+      openConfirmPop(chk, fid, kind, idx, item);
     }
-    markDirty(fid);
-    rerenderStrip(fid);
+  }
+
+  // ── CONFIRM POPOVER — as-applied form (mirrors the modal's confirm fields) ──
+
+  var popEl = null;
+  var popCloser = null;
+
+  function closePop() {
+    if (popEl) { popEl.remove(); popEl = null; }
+    if (popCloser) { document.removeEventListener('mousedown', popCloser, true); popCloser = null; }
+  }
+
+  function openConfirmPop(anchor, fid, kind, idx, item) {
+    closePop();
+    var f = getField(fid);
+    if (!f) return;
+    var isInput = kind === 'input';
+    var today = new Date().toISOString().slice(0, 10);
+    var acres = (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
+    var name = isInput ? (item.productName || '') : (item.implementName || '');
+    var product = isInput ? (window.refData.products || []).find(function (p) {
+      return (p.name || '').trim().toLowerCase() === name.trim().toLowerCase();
+    }) : null;
+    var unit = product ? (product.unit || '') : '';
+    var purchaseUnit = product ? (product.purchaseUnit || product.unit || '') : '';
+
+    popEl = document.createElement('div');
+    popEl.className = 'fs-pop';
+    popEl.innerHTML =
+      '<div class="fs-pop-title">Confirm: ' + esc(name) + '</div>' +
+      '<label class="fs-pop-lab">Date<input type="date" class="fs-pop-date" value="' + today + '"></label>' +
+      (isInput
+        ? '<label class="fs-pop-lab">Actual rate<span class="fs-pop-inline"><input type="number" step="any" min="0" class="fs-pop-qty" value="' + (item.quantity || 0) + '"><span class="fs-pop-unit">' + esc(unit) + '/ac</span></span></label>'
+        : '') +
+      '<label class="fs-pop-lab">By<input type="text" class="fs-pop-by" value="' + esc(item.confirmedBy || '') + '" placeholder="who applied it"></label>' +
+      '<label class="fs-pop-lab">Note<input type="text" class="fs-pop-note" value="' + esc(item.statusNote || '') + '"></label>' +
+      (isInput
+        ? '<details class="fs-pop-inv"><summary>Invoice (optional)</summary>' +
+          '<label class="fs-pop-lab">Invoice #<input type="text" class="fs-pop-inv-num"></label>' +
+          '<label class="fs-pop-lab">Vendor<input type="text" class="fs-pop-inv-vendor"></label>' +
+          '<label class="fs-pop-lab">Total qty' + (purchaseUnit ? ' (' + esc(purchaseUnit) + ')' : '') + '<input type="number" step="any" min="0" class="fs-pop-inv-qty"></label>' +
+          '<label class="fs-pop-lab">Total cost $<input type="number" step="any" min="0" class="fs-pop-inv-cost"></label>' +
+          '<label class="fs-pop-lab">Acres<input type="number" step="any" min="0" class="fs-pop-inv-acres" value="' + acres + '"></label>' +
+          '</details>'
+        : '') +
+      '<div class="fs-pop-btns">' +
+        '<button class="fs-pop-ok">Confirm ✓</button>' +
+        '<button class="fs-pop-cancel">Cancel</button>' +
+      '</div>';
+    document.body.appendChild(popEl);
+
+    // Position near the checkbox, clamped to the viewport
+    var r = anchor.getBoundingClientRect();
+    var w = popEl.offsetWidth || 240;
+    var h = popEl.offsetHeight || 200;
+    popEl.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8)) + 'px';
+    popEl.style.top = Math.max(8, Math.min(r.bottom + 4, window.innerHeight - h - 8)) + 'px';
+
+    var dateEl = popEl.querySelector('.fs-pop-date');
+    dateEl.focus();
+
+    popEl.querySelector('.fs-pop-cancel').addEventListener('click', closePop);
+    popEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closePop();
+      if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+        e.preventDefault();
+        popEl.querySelector('.fs-pop-ok').click();
+      }
+    });
+
+    popEl.querySelector('.fs-pop-ok').addEventListener('click', function () {
+      var val = function (sel) { var el = popEl.querySelector(sel); return el ? el.value.trim() : ''; };
+      item.passStatus = 'confirmed';
+      item.confirmedDate = val('.fs-pop-date') || today;
+      item.confirmedBy = val('.fs-pop-by') || null;
+      item.statusNote = val('.fs-pop-note') || null;
+      if (isInput) {
+        var invNum = val('.fs-pop-inv-num');
+        var invVendor = val('.fs-pop-inv-vendor');
+        var invQty = parseFloat(val('.fs-pop-inv-qty')) || 0;
+        var invCost = parseFloat(val('.fs-pop-inv-cost')) || 0;
+        var invAcres = parseFloat(val('.fs-pop-inv-acres')) || acres;
+        if (invNum || invVendor || invQty > 0 || invCost > 0) {
+          // Same semantics as the modal's per-field invoice entry
+          item.invoiceNumber = invNum || null;
+          item.invoiceVendor = invVendor || null;
+          item.invoiceDate = item.confirmedDate;
+          item.invoiceAcres = invAcres || null;
+          item.invoiceQtyTotal = invQty || null;
+          item.invoiceCostTotal = invCost || null;
+          item.invoiceUnit = purchaseUnit || unit;
+          item.actualQuantity = invAcres > 0 && invQty > 0
+            ? Calc.round2(invQty / invAcres)
+            : (parseFloat(val('.fs-pop-qty')) || item.quantity || 0);
+        } else {
+          var actual = parseFloat(val('.fs-pop-qty'));
+          item.actualQuantity = isNaN(actual) ? (item.quantity || 0) : actual;
+        }
+      }
+      closePop();
+      markDirty(fid);
+      rerenderStrip(fid);
+    });
+
+    // Click outside closes (capture phase, attached next tick so the opening click doesn't self-close)
+    setTimeout(function () {
+      popCloser = function (e) {
+        if (popEl && !popEl.contains(e.target)) closePop();
+      };
+      document.addEventListener('mousedown', popCloser, true);
+    }, 0);
   }
 
   // ── SAVE QUEUE ──────────────────────────────────────────────────────────────
