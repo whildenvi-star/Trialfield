@@ -676,18 +676,29 @@
     if (currentView === 'cards') renderCards(sorted);
     else if (currentView === 'grid') renderGrid(sorted);
     else if (currentView === 'modules') renderModules(sorted);
+    else if (currentView === 'strips') renderStrips(sorted);
+  }
+
+  function renderStrips(fields) {
+    window.FieldStrips.render(document.getElementById('ent-strips-view'), fields, {
+      openEditor: function (f) { window.openFieldEditor(f, null, null, null, fieldsData); },
+      onFieldSaved: function () { renderSummaryBar(fieldsData); }
+    });
   }
 
   function updateViewVisibility() {
     var cards = document.getElementById('ent-cards');
     var grid = document.getElementById('ent-grid-view');
     var modules = document.getElementById('ent-module-view');
+    var strips = document.getElementById('ent-strips-view');
     cards.classList.add('hidden');
     grid.classList.add('hidden');
     modules.classList.add('hidden');
+    strips.classList.add('hidden');
     if (currentView === 'cards') cards.classList.remove('hidden');
     else if (currentView === 'grid') grid.classList.remove('hidden');
     else if (currentView === 'modules') modules.classList.remove('hidden');
+    else if (currentView === 'strips') strips.classList.remove('hidden');
   }
 
   function loadEnterprise(entId) {

@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="platform-tokens.css?v=2">
-  <link rel="stylesheet" href="style.css?v=20260806a">
+  <link rel="stylesheet" href="style.css?v=20260811a">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
@@ -288,6 +288,7 @@
           <div class="view-toggle">
             <button class="toggle-btn active" data-view="cards">Cards</button>
             <button class="toggle-btn" data-view="grid">Grid</button>
+            <button class="toggle-btn" data-view="strips">Sheet</button>
             <button class="toggle-btn" data-view="modules">Modules</button>
           </div>
           <select id="ent-sort" class="btn-sm" style="font-size:0.82rem;padding:0.35rem 0.5rem">
@@ -315,6 +316,8 @@
       </div>
       <!-- Module view (hidden by default) -->
       <div id="ent-module-view" class="hidden"></div>
+      <!-- Field strips "Sheet" view (hidden by default) -->
+      <div id="ent-strips-view" class="hidden"></div>
 
       <!-- BATCH COMMAND BAR: visible when batch mode is ON -->
       <div id="ent-batch-bar" style="display:none;align-items:center;gap:0.5rem;flex-wrap:wrap;padding:0.5rem 0.75rem;background:var(--card);border:1px solid var(--primary);border-radius:6px;margin-top:0.5rem">
@@ -1562,9 +1565,10 @@
   <script src="crop-colors.js"></script>
   <script src="app.js?v=20260805r"></script>
   <script src="dashboard.js?v=20260428a"></script>
-  <script src="enterprise.js?v=20260406a"></script>
+  <script src="enterprise.js?v=20260811a"></script>
   <script src="field-ops-groups.js"></script>
   <script src="field-editor.js?v=20260805"></script>
+  <script src="field-strips.js?v=20260811a"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js?v=20260806a"></script>
   <script src="ref-overview.js?v=2"></script>
