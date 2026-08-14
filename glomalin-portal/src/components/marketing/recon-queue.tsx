@@ -56,7 +56,7 @@ export function ReconQueue({ deliveries }: ReconQueueProps) {
                     })}
                   </span>
                   <span className="font-sans text-sm text-glomalin-muted">
-                    {d.customer.shortCode} \u00b7 {d.variant.name}
+                    {d.customer.shortCode} · {d.variant.name}
                   </span>
                   <span className="font-mono text-xs text-glomalin-warning">
                     {formatBu(d.unappliedBushels)} unmatched
