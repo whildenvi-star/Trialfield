@@ -6,7 +6,7 @@ export default function MarketingLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex gap-0 min-h-0">
+    <div className="flex flex-col min-h-0">
       <MarketingNav />
       <div className="flex-1 min-w-0 overflow-hidden">
         {children}

@@ -53,10 +53,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
         Programs
       </button>
-      <button class="tab-btn" data-tab="sales">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-        Sales &amp; Marketing
-      </button>
       <button class="tab-btn" data-tab="map">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
         Map
@@ -80,10 +76,6 @@
     <button class="tab-btn" data-tab="programs" aria-label="Programs">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       Programs
-    </button>
-    <button class="tab-btn" data-tab="sales" aria-label="Sales">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-      Sales
     </button>
     <button class="tab-btn" data-tab="map" aria-label="Map">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
@@ -871,114 +863,7 @@
     </section>
 
     <!-- SALES & MARKETING -->
-    <section id="tab-sales" class="tab-content">
-      <h2>Sales &amp; Marketing</h2>
-
-      <!-- Crop year selector -->
-      <div class="mkt-year-bar">
-        <button class="mkt-year-btn" id="mkt-year-prev" title="Previous year">←</button>
-        <span id="mkt-year-label">—</span>
-        <button class="mkt-year-btn" id="mkt-year-next" title="Next year">→</button>
-      </div>
-
-      <!-- Sub-tab strip -->
-      <div class="mkt-tabs">
-        <button class="mkt-tab-btn active" data-mtab="dashboard">Hedging Dashboard</button>
-        <button class="mkt-tab-btn" data-mtab="instruments">Contracts</button>
-        <button class="mkt-tab-btn role-hide-office" data-mtab="whatif">What-If</button>
-        <button class="mkt-tab-btn" data-mtab="basis">Basis</button>
-        <button class="mkt-tab-btn" data-mtab="straw">Straw</button>
-        <button class="mkt-tab-btn" data-mtab="croptypes">Crop Types</button>
-      </div>
-
-      <!-- Hedging Dashboard -->
-      <div id="mtab-dashboard" class="mtab-content active">
-        <div id="mkt-dashboard-root"></div>
-      </div>
-
-      <!-- Contracts (Phase 13 — replaces old sale_instruments ledger) -->
-      <div id="mtab-instruments" class="mtab-content">
-        <iframe
-          id="contracts-embed"
-          src="/marketing/contracts"
-          style="width:100%;height:75vh;border:none;display:block"
-          title="Contract Management"
-        ></iframe>
-      </div>
-
-      <!-- Straw Sales (small grains, by the ton → $/ac) -->
-      <div id="mtab-straw" class="mtab-content">
-        <div id="straw-root"></div>
-      </div>
-
-      <!-- Crop Types -->
-      <div id="mtab-croptypes" class="mtab-content">
-        <div id="mkt-croptypes-root"></div>
-      </div>
-
-      <!-- What-If (legacy hedging.js) -->
-      <div id="mtab-whatif" class="mtab-content role-hide-office">
-        <div class="whatif-controls">
-          <div class="form-group">
-            <label>Crop</label>
-            <select id="whatif-crop"></select>
-          </div>
-          <div class="form-group">
-            <label>CBOT Price: $<span id="whatif-cbot-display">4.50</span></label>
-            <input type="range" id="whatif-cbot-slider" min="2.00" max="12.00" step="0.10" value="4.50">
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table id="whatif-table">
-            <thead>
-              <tr><th>CBOT</th><th>Cash Price</th><th>Unsold Revenue</th>
-                  <th>Total Revenue</th><th>Total Profit</th><th>Profit/AC</th></tr>
-            </thead>
-            <tbody id="whatif-tbody"></tbody>
-          </table>
-        </div>
-        <h4 style="margin-top:1rem">Bear / Base / Bull Comparison</h4>
-        <div class="scenario-picker">
-          <label>Bear: $<input type="number" id="whatif-bear" step="0.05" value="3.50" class="inline-input"></label>
-          <label>Base: $<input type="number" id="whatif-base" step="0.05" value="4.50" class="inline-input"></label>
-          <label>Bull: $<input type="number" id="whatif-bull" step="0.05" value="5.50" class="inline-input"></label>
-        </div>
-        <div class="table-wrap">
-          <table id="whatif-compare-table">
-            <thead>
-              <tr><th>Scenario</th><th>CBOT</th><th>Total Profit</th>
-                  <th>Profit/AC</th><th>vs Base</th></tr>
-            </thead>
-            <tbody id="whatif-compare-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Basis (legacy hedging.js) -->
-      <div id="mtab-basis" class="mtab-content">
-        <div class="form-group" style="max-width:300px;margin-bottom:1rem">
-          <label>Crop</label>
-          <select id="basis-crop"></select>
-        </div>
-        <div class="table-wrap">
-          <table id="basis-table">
-            <thead>
-              <tr><th>Buyer</th><th>Basis</th><th>Net Price</th>
-                  <th>Load Size</th><th>RT Hours</th><th>Trucking/Bu</th>
-                  <th>Drying Rate</th><th>Shrink %</th>
-                  <th title="Net price minus trucking and handling costs">Net-of-Costs</th></tr>
-            </thead>
-            <tbody id="basis-tbody"></tbody>
-          </table>
-        </div>
-
-        <!-- Buyer Discount Schedules -->
-        <h3 style="margin-top:2rem">Buyer Discount Schedules</h3>
-        <p class="edit-hint">Set moisture discount tiers per buyer.</p>
-        <div id="buyer-schedule-container"></div>
-      </div>
-
-    </section>
+    <!-- Sales & Marketing tab removed 2026-08-14 — replaced by the portal Marketing Command Center (/app/marketing) -->
 
     <!-- FARM MAP -->
     <section id="tab-map" class="tab-content">
@@ -1569,7 +1454,7 @@
   </script>
   <script src="calc.js?v=20260709a"></script>
   <script src="crop-colors.js"></script>
-  <script src="app.js?v=20260805r"></script>
+  <script src="app.js?v=20260814a"></script>
   <script src="dashboard.js?v=20260428a"></script>
   <script src="enterprise.js?v=20260811a"></script>
   <script src="field-ops-groups.js"></script>
@@ -1583,10 +1468,7 @@
   <script src="demand-manager.js"></script>
   <script src="reports.js?v=20260427h"></script>
 
-  <script src="sales.js?v=3"></script>
-  <script src="hedging.js?v=4"></script>
-  <script src="sales-marketing.js?v=7"></script>
-  <script src="straw.js?v=20260811a"></script>
+  <script src="sales.js?v=4"></script>
   <script src="farm-map.js"></script>
   <script src="pdf-report.js"></script>
   <script src="fieldops-ui.js"></script>

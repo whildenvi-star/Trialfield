@@ -535,15 +535,14 @@
   });
 
   // --- Role: hide restricted tabs ---
-  // For operator role, remove Programs, Sales, and Map from the navigation entirely.
+  // For operator role, remove Programs and Map from the navigation entirely.
   if (_role === 'operator') {
-    ['programs', 'sales', 'map'].forEach(function (tabName) {
+    ['programs', 'map'].forEach(function (tabName) {
       var btn = document.querySelector('.nav-primary > .tab-btn[data-tab="' + tabName + '"]');
       if (btn) btn.style.display = 'none';
     });
   }
   // For office role, remove Programs (bulk program management is admin-only).
-  // Sales and Map remain accessible for contract entry and field geography.
   if (_role === 'office') {
     var btn = document.querySelector('.nav-primary > .tab-btn[data-tab="programs"]');
     if (btn) btn.style.display = 'none';

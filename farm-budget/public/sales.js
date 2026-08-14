@@ -1,4 +1,4 @@
-// Crop Types Manager + hedging-data-ready bridge
+// Crop Types Manager (Reference tab)
 (function () {
   'use strict';
 
@@ -21,13 +21,6 @@
           body.style.display = isOpen ? 'block' : 'none';
         });
       }
-    }
-    if (e.detail.tab === 'sales') {
-      api.get('/api/dashboard').then(function (dash) {
-        window.dispatchEvent(new CustomEvent('hedging-data-ready', {
-          detail: { dashboard: dash, sales: [] }
-        }));
-      });
     }
   });
 

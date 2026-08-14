@@ -1,17 +1,18 @@
 import { redirect } from 'next/navigation'
 import { getMarketingAuthContext } from '@/lib/supabase/marketing-guard-rsc'
 import { fetchCertServiceWithAuth } from '@/app/api/mobile/_lib/proxy'
-import { computePosition } from '@/lib/marketing/position'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { PageHeader } from '@/components/ui/page-header'
-import { SectionHeader } from '@/components/ui/section-header'
 import { YearSelector } from '@/components/ui/year-selector'
-import { PositionStrip } from '@/components/marketing/position-strip'
-import { ContractTable } from '@/components/marketing/contract-table'
+import { KpiStrip } from '@/components/ui/kpi-strip'
+import { StatCard } from '@/components/ui/stat-card'
+import { formatBu, formatUsd, formatPct } from '@/lib/fmt'
+import { CropPoolCards } from '@/components/marketing/crop-pool-cards'
 import { BasisExposurePanel } from '@/components/marketing/basis-exposure-panel'
 import { ReconQueue } from '@/components/marketing/recon-queue'
 import { EnterprisePositionTable } from '@/components/marketing/enterprise-position-table'
 import { loadEnterpriseData } from '@/lib/marketing/load-enterprise-data'
+import type { CommodityRollupRow, OfficeCommodityRollupRow } from '@/lib/marketing/enterprise-rollup'
 
 interface GrainContractRow {
   id: string
@@ -36,6 +37,35 @@ interface GrainDeliveryRow {
   unappliedBushels: number
   customer: { id: string; name: string; shortCode: string }
   variant: { id: string; name: string }
+}
+
+// Farm-wide totals for the summary strip, from rollup rows. Office rows have
+// financial keys omitted — exposure comes back null there.
+function farmSummary(rows: Array<CommodityRollupRow | OfficeCommodityRollupRow>, isOwner: boolean) {
+  let projectedBu = 0
+  let pricedBu = 0
+  let soldBu = 0
+  let exposure: number | null = isOwner ? 0 : null
+  for (const row of rows) {
+    pricedBu += row.pricedBu
+    soldBu += row.soldBu
+    if (row.projectedBu != null) {
+      projectedBu += row.projectedBu
+      if (isOwner && exposure != null) {
+        const cbot = (row as CommodityRollupRow).cbotPriceDollars
+        if (cbot != null) {
+          exposure += Math.max(0, row.projectedBu - row.pricedBu) * cbot
+        }
+      }
+    }
+  }
+  return {
+    projectedBu,
+    pricedBu,
+    soldBu,
+    pctPriced: projectedBu > 0 ? pricedBu / projectedBu : null,
+    exposure,
+  }
 }
 
 export default async function MarketingPage({
@@ -72,8 +102,8 @@ export default async function MarketingPage({
   ])
 
   if (contractsRes.status === 'fulfilled' && contractsRes.value.ok) {
-    // Backend columns are deliveryStartDate/deliveryEndDate; ContractTable and
-    // BasisExposurePanel read deliveryStart/deliveryEnd — normalize here.
+    // Backend columns are deliveryStartDate/deliveryEndDate; BasisExposurePanel
+    // reads deliveryStart/deliveryEnd — normalize here.
     const data = await contractsRes.value.json() as (GrainContractRow & {
       deliveryStartDate?: string | null
       deliveryEndDate?: string | null
@@ -96,12 +126,12 @@ export default async function MarketingPage({
     deliveriesError = true
   }
 
-  const positionData = isOwner ? computePosition(contracts) : null
-
   // Enterprise rollup — pooled marketing position joined to crop plan, actuals,
   // and live CBOT. Degrades to volumes-only when budget/tickets are offline;
   // RBAC is payload-level inside the loader.
   const enterprise = await loadEnterpriseData(accessToken, role, cropYear)
+  const summary = farmSummary(enterprise.rows, enterprise.isOwner)
+  const activeContracts = contracts.filter((c) => c.status !== 'CANCELLED')
 
   return (
     <div className="p-4 md:p-6 max-w-6xl space-y-6">
@@ -109,16 +139,24 @@ export default async function MarketingPage({
         title="Marketing Command Center"
         subtitle={`${cropYear} crop year`}
         actions={
-          <YearSelector
-            currentYear={cropYear}
-            // Forward-looking: you market up to a year ahead ("this year and next"),
-            // plus last year for reference. Default selector only looked backward.
-            availableYears={[
-              CURRENT_CROP_YEAR + 1,
-              CURRENT_CROP_YEAR,
-              CURRENT_CROP_YEAR - 1,
-            ]}
-          />
+          <div className="flex items-center gap-3">
+            <a
+              href="/app/marketing/contracts?new=1"
+              className="px-3 py-1.5 rounded border border-glomalin-border text-xs font-mono text-glomalin-muted hover:border-glomalin-accent hover:text-glomalin-accent transition-colors"
+            >
+              New Contract
+            </a>
+            <YearSelector
+              currentYear={cropYear}
+              // Forward-looking: you market up to a year ahead ("this year and next"),
+              // plus last year for reference. Default selector only looked backward.
+              availableYears={[
+                CURRENT_CROP_YEAR + 1,
+                CURRENT_CROP_YEAR,
+                CURRENT_CROP_YEAR - 1,
+              ]}
+            />
+          </div>
         }
       />
 
@@ -134,34 +172,59 @@ export default async function MarketingPage({
         </div>
       )}
 
-      {/* Position strip — owner only, server-side gate */}
-      {isOwner && positionData && (
-        <PositionStrip data={positionData} cropYear={cropYear} />
-      )}
+      {/* Farm summary strip — mirrors the macro-rollup hedging dashboard strip */}
+      <KpiStrip cols={4}>
+        <StatCard
+          label="FARM % PRICED"
+          value={summary.pctPriced != null ? formatPct(summary.pctPriced) : '—'}
+          sublabel={`of ${formatBu(Math.round(summary.projectedBu))} projected bu`}
+          variant="default"
+        />
+        <StatCard
+          label="PRICED BUSHELS"
+          value={formatBu(summary.pricedBu)}
+          sublabel={`${formatBu(summary.soldBu)} bu contracted`}
+          variant="default"
+        />
+        {enterprise.isOwner && summary.exposure != null ? (
+          <StatCard
+            label="UNPRICED EXPOSURE"
+            value={formatUsd(summary.exposure)}
+            sublabel="unpriced bu × today's CBOT"
+            variant={summary.exposure > 500_000 ? 'warning' : 'default'}
+          />
+        ) : (
+          <StatCard
+            label="PROJECTED BUSHELS"
+            value={formatBu(Math.round(summary.projectedBu))}
+            sublabel="from crop plan"
+            variant="default"
+          />
+        )}
+        <StatCard
+          label="CONTRACTS"
+          value={activeContracts.length}
+          sublabel={`${cropYear} crop year`}
+          variant="default"
+        />
+      </KpiStrip>
 
-      {/* Enterprise position — commodity rows with variant sub-rows */}
+      {/* Pool cards — one per commodity, the layout carried over from the
+          macro-rollup Sales & Marketing tab it replaces */}
+      <CropPoolCards
+        rows={enterprise.rows}
+        isOwner={enterprise.isOwner}
+        contracts={contracts}
+      />
+
+      {/* Full detail table (variant rows, COP, what-if) — collapsed by default */}
       <EnterprisePositionTable
         rows={enterprise.rows}
         isOwner={enterprise.isOwner}
         cropYear={cropYear}
         notes={enterprise.notes}
+        defaultOpen={false}
       />
-
-      {/* Contract table */}
-      <div>
-        <SectionHeader
-          title="Contracts"
-          actions={
-            <a
-              href="/app/marketing/contracts?new=1"
-              className="px-3 py-1.5 rounded border border-glomalin-border text-xs font-mono text-glomalin-muted hover:border-glomalin-accent hover:text-glomalin-accent transition-colors"
-            >
-              New Contract
-            </a>
-          }
-        />
-        <ContractTable contracts={contracts} role={role} cropYear={cropYear} />
-      </div>
 
       {/* Lower section: two-column for owner, single-column for office */}
       <div className={isOwner ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : 'grid grid-cols-1'}>
