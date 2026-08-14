@@ -1,0 +1,457 @@
+farm_number,tract_number,clu_number,field_name,tract_name,calc_acres,cropland_flag
+7217,3174,1,daun,daun,27.36,True
+7217,3174,2,daun,daun,10.65,True
+7217,3174,3,daun,daun,48.2,True
+7217,3174,4,daun,daun,3.9,False
+7217,3174,5,daun,daun,1.0,True
+7217,3174,6,daun,daun,110.77,False
+7217,3174,7,daun,daun,6.7,False
+7217,3174,8,daun,daun,1.64,False
+7217,3174,14,daun,daun,2.65,False
+8459,13891,7,carrol,carrol,0.07,False
+8459,13891,11,carrol,carrol,0.33,True
+8459,13891,13,carrol,carrol,0.63,True
+8459,13891,16,carrol,carrol,0.13,True
+8459,13891,18,carrol,carrol,151.52,True
+8459,13892,8,carrol,carrol,2.95,False
+8459,13892,10,carrol,carrol,0.75,True
+8459,13892,11,carrol,carrol,1.05,True
+9808,10797,4,buchanan,buchanan,38.6,True
+9808,10797,5,buchanan,buchanan,10.77,False
+11555,855,9,New Life,New Life,8.9,True
+11624,12106,2,Twist Farm,Twist Farm,7.51,True
+11624,12106,6,Twist Farm,Twist Farm,0.2,True
+11624,12106,9,Twist Farm,Twist Farm,2.9,True
+11624,12106,20,Twist Farm,Twist Farm,0.26,False
+11624,12106,22,Twist Farm,Twist Farm,0.98,False
+11624,12106,25,Twist Farm,Twist Farm,0.01,False
+11624,12106,29,Twist Farm,Twist Farm,18.88,True
+11624,12106,30,Twist Farm,Twist Farm,4.2,True
+12638,13231,1,lake,lake,15.3,True
+12638,13231,2,lake,lake,0.58,True
+12638,13231,5,lake,lake,5.08,True
+12638,13231,11,lake,lake,1.46,False
+12638,13231,18,lake,lake,0.02,False
+12638,13231,22,lake,lake,12.84,True
+13329,13823,14,fox den,fox den,0.28,False
+13329,13823,16,fox den,fox den,8.26,True
+13329,13823,17,fox den,fox den,1.42,True
+14750,15262,302,,,0.98,False
+14750,15262,310,,,0.04,False
+14750,15262,311,,,0.32,False
+14750,15262,312,,,0.1,False
+14750,15262,325,,,34.06,True
+14903,224,6,delong christopherson,delong christopherson,,
+14903,224,9,delong christopherson,delong christopherson,5.57,True
+14903,224,10,,delong christopherson,1.57,True
+14903,224,12,delong christopherson,delong christopherson,4.66,True
+14903,224,13,delong christopherson,delong christopherson,9.37,True
+14903,224,14,delong christopherson,delong christopherson,0.68,True
+14903,224,15,delong christopherson,delong christopherson,8.97,True
+14903,224,16,delong christopherson,delong christopherson,7.5,True
+14903,224,17,delong christopherson,delong christopherson,0.72,True
+14903,224,18,delong christopherson,delong christopherson,0.83,True
+14903,224,19,delong christopherson,delong christopherson,1.95,True
+14903,224,20,delong christopherson,delong christopherson,9.5,True
+14903,224,21,delong christopherson,delong christopherson,0.87,True
+14903,224,22,delong christopherson,delong christopherson,1.89,True
+14903,224,23,delong christopherson,delong christopherson,3.64,False
+14903,224,24,delong christopherson,delong christopherson,0.88,True
+14903,224,25,delong christopherson,delong christopherson,4.32,True
+14903,224,26,delong christopherson,delong christopherson,4.81,True
+14903,224,27,,delong christopherson,1.04,True
+14903,224,28,,delong christopherson,0.62,False
+14903,841,83,delong meyer,delong meyer,13.43,False
+14903,841,92,delong meyer,delong meyer,0.18,False
+14903,841,94,delong meyer,delong meyer,2.25,True
+14903,841,95,delong meyer,delong meyer,58.69,True
+14903,1089,1,bakke,bakke,11.94,True
+14903,1089,2,bakke,bakke,15.24,True
+14903,1360,1,fox lemans,fox lemans,13.93,True
+14903,1360,104,fox lemans,fox lemans,2.36,False
+14903,1360,107,fox lemans,fox lemans,25.96,False
+14903,1360,108,fox lemans,fox lemans,1.31,False
+14903,1360,110,fox lemans,fox lemans,21.67,True
+14903,1360,111,fox lemans,fox lemans,4.92,False
+14903,1517,110,murray,murray,0.15,False
+14903,1517,112,murray,murray,0.6,True
+14903,1517,114,murray,murray,0.13,True
+14903,1517,116,murray,murray,0.45,True
+14903,1517,118,murray,murray,0.72,True
+14903,1517,122,murray,murray,70.95,True
+14903,1517,123,murray,murray,5.33,False
+14903,1517,128,murray,murray,12.39,False
+14903,1517,131,murray,murray,0.28,True
+14903,1517,133,murray,murray,0.08,True
+14903,1517,137,murray,murray,2.92,True
+14903,1517,138,murray,murray,2.53,True
+14903,1517,139,murray,murray,61.52,True
+14903,2707,1,delong avon,delong avon,43.7,True
+14903,2707,2,delong avon,delong avon,2.47,False
+14903,7890,1,cuff,cuff,7.1,True
+14903,7890,2,cuff,cuff,0.44,True
+14903,7890,185,cuff,cuff,2.75,False
+14903,8383,1,airport,airport,4.22,True
+14903,8845,170,suiter,suiter,0.14,False
+14903,8845,188,suiter,suiter,0.54,False
+14903,8845,189,suiter,suiter,8.35,False
+14903,8845,195,suiter,suiter,3.8,False
+14903,8845,197,suiter,suiter,7.74,False
+14903,8845,198,suiter,suiter,4.0,True
+14903,8845,199,suiter,suiter,13.6,True
+14903,9083,4,elwoods,elwoods,70.06,True
+14903,10084,1,hoff,hoff,77.08,True
+14903,10232,214,jahovah,jahovah,0.18,False
+14903,10232,221,jahovah,jahovah,0.52,False
+14903,10232,222,jahovah,jahovah,1.76,True
+14903,10232,223,jahovah,jahovah,21.4,True
+14903,11052,223,fagan,fagan,1.39,False
+14903,11052,224,fagan,fagan,0.12,True
+14903,11052,226,fagan,fagan,0.26,True
+14903,11052,227,fagan,fagan,11.49,True
+14903,11055,2,Kopp West,Kopp West,127.28,True
+14903,11125,1,Home,Home,39.26,True
+14903,11125,219,Home,Home,0.01,False
+14903,11205,1,Donaldson Jr.,Donaldson Jr.,,
+14903,11205,2,Donaldson Jr.,Donaldson Jr.,,
+14903,11205,3,Donaldson Jr.,Donaldson Jr.,,
+14903,11205,4,Donaldson Jr.,Donaldson Jr.,,
+14903,11205,256,Donaldson Jr.,Donaldson Jr.,,
+14903,11541,1,jessie noss,jessie noss,0.22,True
+14903,11541,2,Jessie Noss,jessie noss,0.49,True
+14903,11541,241,jessie noss,jessie noss,2.24,False
+14903,12029,2,fletcher cribben,fletcher cribben,0.78,True
+14903,12029,4,fletcher cribben,fletcher cribben,1.07,True
+14903,12029,6,fletcher cribben,fletcher cribben,0.21,True
+14903,12029,8,fletcher cribben,fletcher cribben,0.4,True
+14903,12029,10,fletcher cribben,fletcher cribben,0.07,True
+14903,12029,12,fletcher cribben,fletcher cribben,0.31,True
+14903,12029,14,fletcher cribben,fletcher cribben,0.63,True
+14903,12029,16,fletcher cribben,fletcher cribben,0.17,True
+14903,12029,17,fletcher cribben,fletcher cribben,115.7,True
+14903,12030,1,airport,airport,,
+14903,12030,2,airport,airport,,
+14903,12030,3,airport,airport,,
+14903,12030,4,airport,airport,,
+14903,12030,5,airport,airport,,
+14903,12030,6,airport,airport,,
+14903,12030,7,airport,airport,,
+14903,12030,8,airport,airport,,
+14903,12030,9,airport,airport,,
+14903,12030,10,airport,airport,,
+14903,12030,12,airport,airport,,
+14903,12030,15,airport,airport,,
+14903,12030,17,airport,airport,,
+14903,12030,18,airport,airport,,
+14903,12030,19,airport,airport,,
+14903,12030,20,airport,airport,,
+14903,12030,21,airport,airport,,
+14903,12030,22,airport,airport,,
+14903,12030,23,airport,airport,,
+14903,12030,24,airport,airport,,
+14903,12030,30,airport,airport,,
+14903,12030,31,airport,airport,,
+14903,12030,32,airport,airport,,
+14903,12030,50,airport,airport,,
+14903,12030,52,airport,airport,,
+14903,12030,280,airport,airport,,
+14903,12030,281,airport,airport,,
+14903,12030,299,airport,airport,,
+14903,12030,322,airport,airport,,
+14903,12030,326,airport,airport,,
+14903,12030,327,airport,airport,,
+14903,12030,328,airport,airport,,
+14903,12030,329,airport,airport,,
+14903,12030,330,airport,airport,,
+14903,12033,296,schwellenbach,schwellenbach,30.2,True
+14903,12035,1,gessert,gessert,,
+14903,12035,5,gessert,gessert,,
+14903,12035,6,gessert,gessert,,
+14903,12035,7,gessert,gessert,,
+14903,12035,8,gessert,gessert,,
+14903,12035,334,gessert,gessert,,
+14903,12161,2,inman,inman,12.5,True
+14903,12161,3,inman,inman,0.51,True
+14903,12161,4,inman,inman,0.03,True
+14903,12161,5,inman,inman,5.89,True
+14903,12161,6,inman,inman,0.4,True
+14903,12161,7,inman,inman,2.1,True
+14903,12161,8,inman,inman,60.13,True
+14903,12161,9,inman,inman,1.7,True
+14903,12161,343,inman,inman,13.02,False
+14903,12161,352,inman,inman,9.21,False
+14903,12162,1,inman,inman,33.7,True
+14903,12162,2,inman,inman,1.8,True
+14903,12162,3,inman,inman,1.0,True
+14903,12162,4,inman,inman,4.73,True
+14903,12162,5,inman,inman,50.35,True
+14903,12162,6,inman,inman,1.0,True
+14903,12162,340,inman,inman,8.33,False
+14903,12162,342,inman,inman,0.26,False
+14903,12162,353,inman,inman,1.04,False
+14903,12162,354,inman,inman,3.08,False
+14903,12162,355,inman,inman,1.32,False
+14903,12367,1,davis,davis,2.64,True
+14903,12367,3,davis,davis,1.92,True
+14903,12367,370,davis,davis,0.74,True
+14903,12367,372,davis,davis,0.3,True
+14903,12367,374,davis,davis,2.13,True
+14903,12367,376,davis,davis,32.18,True
+14903,12367,377,davis,davis,39.74,True
+14903,12526,3,,,72.55,True
+14903,12526,4,,,63.86,True
+14903,12526,5,,,75.0,True
+14903,12526,6,,,1.75,False
+14903,14210,8,kopp east,kopp east,89.77,True
+14903,15206,2,simpsons,simpsons,13.75,True
+14903,15206,5,simpsons,simpsons,8.28,True
+14903,15206,6,simpsons,simpsons,12.15,True
+14903,15206,24,simpsons,simpsons,30.75,True
+14903,15206,58,simpsons,simpsons,12.78,False
+14903,15206,59,simpsons,simpsons,0.95,False
+14903,15206,60,simpsons,simpsons,0.17,False
+14903,15206,80,simpsons,simpsons,54.24,False
+14903,15206,86,simpsons,simpsons,14.29,False
+14903,15206,113,simpsons,simpsons,7.01,True
+14903,15206,123,simpsons,simpsons,1.44,False
+14903,15206,126,simpsons,simpsons,110.66,True
+14903,15206,129,simpsons,simpsons,1.25,True
+14903,15206,130,simpsons,simpsons,52.81,False
+14903,15206,132,simpsons,simpsons,11.06,True
+14903,15206,134,,simpsons,8.14,True
+14903,15207,127,simpsons,simpsons,3.84,False
+14903,15207,133,simpsons,simpsons,1.11,True
+14903,15209,4,cuff,cuff,67.93,True
+14903,15209,6,cuff,cuff,10.84,True
+14903,15209,7,cuff,cuff,1.1,True
+14903,15209,8,cuff,cuff,0.6,True
+14903,15209,9,cuff,cuff,0.7,True
+14903,15209,11,cuff,cuff,0.3,True
+14903,15209,12,cuff,cuff,0.4,True
+14903,15209,13,cuff,cuff,0.3,True
+14903,15209,17,cuff,cuff,6.25,True
+14903,15209,19,cuff,cuff,5.79,False
+14903,15209,20,cuff,cuff,1.54,False
+14903,15209,21,cuff,cuff,0.33,False
+14903,15209,23,cuff,cuff,4.9,False
+14903,15209,24,cuff,cuff,0.36,True
+14903,15209,28,cuff,cuff,42.53,True
+14903,15209,29,cuff,cuff,0.5,True
+14903,15209,30,cuff,cuff,6.17,True
+14903,15209,32,cuff,cuff,5.22,True
+14903,15209,35,cuff,cuff,0.53,True
+14903,15209,36,cuff,cuff,1.24,False
+14903,15209,38,cuff,cuff,1.21,True
+14903,15209,41,cuff,cuff,0.19,False
+14903,15209,43,cuff,cuff,2.03,False
+14903,15210,31,cuff,cuff,0.29,True
+14903,15210,33,cuff,cuff,0.11,True
+14903,15210,34,cuff,cuff,0.38,True
+14903,15210,39,cuff,cuff,0.57,True
+14903,15210,42,cuff,cuff,2.11,False
+14903,15211,2,wes,wes,7.79,False
+14903,15211,4,wes,wes,127.57,True
+14903,15212,3,wes,wes,0.98,True
+14903,15216,3,,,5.41,True
+14903,15217,197,fox kettle,fox kettle,1.44,True
+14903,15217,199,fox kettle,fox kettle,20.1,True
+14903,15217,200,fox kettle,fox kettle,0.62,True
+14903,15217,201,fox kettle,fox kettle,1.3,True
+14903,15217,202,fox kettle,fox kettle,15.99,True
+14903,15218,10,fox kettle,fox kettle,0.24,True
+14903,15218,172,fox kettle,fox kettle,0.22,False
+14903,15218,173,fox kettle,fox kettle,0.07,False
+14903,15218,192,fox kettle,fox kettle,0.41,False
+14903,15218,193,fox kettle,fox kettle,8.84,True
+14903,15218,194,fox kettle,fox kettle,0.46,True
+14903,15220,7,omni,omni,0.12,True
+14903,15220,9,omni,omni,1.23,True
+14903,15220,11,omni,omni,4.97,True
+14903,15220,15,omni,omni,1.11,False
+14903,15220,16,omni,omni,0.63,False
+14903,15220,17,omni,omni,8.7,False
+14903,15220,18,omni,omni,0.55,False
+14903,15220,19,omni,omni,0.11,True
+14903,15222,7,buchanan,buchanan,10.1,True
+14903,15222,10,buchanan,buchanan,4.83,False
+14903,15226,4,jeff noss,jeff noss,6.49,True
+14903,15226,270,jeff noss,jeff noss,24.81,True
+14903,15226,272,jeff noss,jeff noss,1.49,True
+14903,15226,274,jeff noss,jeff noss,1.61,False
+14903,15228,271,suiter,suiter,0.36,True
+14903,15228,273,suiter,suiter,0.82,True
+14903,15228,275,suiter,suiter,3.79,False
+14903,15230,329,omni,omni,150.31,True
+14903,15231,1,Omni,omni,39.91,True
+14903,15231,4,omni,omni,115.42,True
+14903,15231,5,omni,omni,20.18,True
+14903,15231,9,omni,omni,21.22,True
+14903,15231,10,omni,omni,13.46,True
+14903,15231,290,omni,omni,5.89,False
+14903,15231,322,omni,omni,3.77,False
+14903,15231,324,omni,omni,41.55,False
+14903,15233,6,Grassy knoll,turkey deer,6.7,True
+14903,15233,7,turkey deer,turkey deer,3.52,True
+14903,15233,8,turkey deer,turkey deer,0.86,True
+14903,15233,18,turkey deer,turkey deer,10.02,False
+14903,15234,11,goat pasture,goat pasture,107.79,True
+14903,15234,286,goat pasture,goat pasture,7.53,False
+14903,15234,287,goat pasture,goat pasture,0.9,False
+14903,15234,288,goat pasture,goat pasture,2.0,False
+14903,15234,289,goat pasture,goat pasture,3.27,False
+14903,15234,305,goat pasture,goat pasture,12.54,False
+14903,15235,3,caravilla,caravilla,14.83,True
+14903,15235,4,caravilla,caravilla,7.75,False
+14903,15237,325,OM2,OM2,3.97,True
+14903,15237,326,OM2,OM2,4.8,False
+14903,15237,327,OM2,OM2,16.97,False
+14903,15412,318,OM1,OM1,0.08,False
+14903,15412,333,OM1,OM1,32.94,True
+14903,15412,336,OM1,OM1,43.47,True
+14903,15662,2,,,13.74,True
+14903,15662,3,,,79.44,True
+14903,15662,4,,,20.25,True
+14903,15662,5,,,1.47,True
+14903,15662,6,,,7.27,True
+14903,15662,7,,,6.79,True
+14903,15662,8,,,7.18,True
+14903,15662,9,,,21.84,True
+14903,15662,10,,,44.56,True
+14903,15662,12,,,6.62,True
+14903,15662,14,,,4.74,True
+14903,15662,15,,,13.75,True
+14903,15662,16,,,39.31,True
+14903,15662,17,,,4.95,False
+14903,15662,18,,,0.67,False
+14903,15662,19,,,3.94,True
+14903,15662,20,,,21.29,True
+14903,15662,21,,,12.53,True
+14903,15662,22,,,1.67,True
+14903,15662,23,,,10.45,True
+14903,15662,24,,,47.26,True
+14903,15662,25,,,8.97,True
+14903,15662,30,,,17.96,False
+14903,15662,31,,,9.02,False
+14903,15662,32,,,1.73,False
+14903,15662,50,,,1.35,False
+14903,15662,52,,,6.18,False
+14903,15662,280,,,0.62,False
+14903,15662,281,,,3.18,False
+14903,15662,299,,,0.05,False
+14903,15662,326,,,2.37,False
+14903,15662,327,,,14.05,True
+14903,15662,328,,,4.54,False
+14903,15662,329,,,0.72,False
+14903,15662,330,,,3.81,True
+14903,15662,331,,,44.78,True
+14903,15663,1,Airport,Airport,0.4,True
+14903,15663,2,Airport,Airport,2.57,True
+14903,15663,3,Airport,Airport,3.63,True
+14903,15663,4,Airport,Airport,14.49,True
+14903,15663,256,,Airport,16.49,False
+14903,15663,322,,Airport,3.22,True
+14903,15663,332,,Airport,1.22,True
+14904,124,1,klug,klug,8.62,True
+14904,124,3,klug,klug,14.51,True
+14904,124,4,klug,klug,16.63,True
+14904,124,5,klug,klug,45.13,True
+14904,124,7,klug,klug,4.6,True
+14904,124,8,klug,klug,1.6,True
+14904,124,9,klug,klug,25.52,True
+14904,124,378,klug,klug,0.32,False
+14904,124,379,klug,klug,10.84,False
+14904,124,380,klug,klug,0.82,False
+14904,124,381,klug,klug,5.01,False
+14904,124,385,klug,klug,24.33,True
+14904,124,386,klug,klug,8.34,True
+14904,124,387,klug,klug,1.65,True
+14904,131,1,schultz,schultz,34.16,True
+14904,131,2,schultz,schultz,12.18,True
+14904,131,3,schultz,schultz,18.55,True
+14904,131,4,schultz,schultz,34.0,True
+14904,131,5,schultz,schultz,6.22,True
+14904,131,6,schultz,schultz,0.1,True
+14904,131,7,schultz,schultz,0.5,True
+14904,131,8,schultz,schultz,2.8,True
+14904,131,73,schultz,schultz,1.71,False
+14904,131,78,schultz,schultz,7.99,False
+14904,3780,2,sid noss,sid noss,8.33,True
+14904,3780,3,sid noss,sid noss,0.7,True
+14904,3780,4,sid noss,sid noss,1.0,True
+14904,3780,5,sid noss,sid noss,0.5,True
+14904,3780,6,sid noss,sid noss,15.72,True
+14904,3780,7,sid noss,sid noss,78.56,True
+14904,3780,158,sid noss,sid noss,12.02,False
+14904,8037,1,torkelson,torkelson,31.43,True
+14904,8037,4,torkelson,torkelson,0.9,True
+14904,8037,5,torkelson,torkelson,0.7,True
+14904,8037,6,torkelson,torkelson,0.2,True
+14904,8037,7,torkelson,torkelson,0.5,True
+14904,8037,8,torkelson,torkelson,0.4,True
+14904,8037,174,torkelson,torkelson,2.85,False
+14904,8037,178,torkelson,torkelson,25.55,False
+14904,8037,179,torkelson,torkelson,14.19,True
+14904,8037,180,torkelson,torkelson,1.95,True
+14904,8037,182,torkelson,torkelson,1.61,True
+14904,8037,183,torkelson,torkelson,0.63,True
+14904,8037,184,torkelson,torkelson,77.97,True
+14904,11542,1,,jessie noss,19.51,True
+14904,11542,3,jessie noss,jessie noss,0.9,True
+14904,11542,243,jessie noss,jessie noss,1.28,False
+14904,11542,257,jessie noss,jessie noss,32.97,False
+14904,11542,258,jessie noss,jessie noss,25.31,True
+14904,11542,259,,jessie noss,1.0,True
+14904,11681,3,gessley,gessley,,
+14904,11681,4,gessley,gessley,,
+14904,11681,5,gessley,gessley,0.3,True
+14904,11681,6,gessley,gessley,,
+14904,11681,261,gessley,gessley,5.19,False
+14904,11681,271,gessley,gessley,0.46,False
+14904,11681,272,,gessley,3.0,True
+14904,11681,273,,gessley,1.4,True
+14904,11681,274,,gessley,190.6,True
+14904,12035,1,,gessert,25.6,True
+14904,12035,5,,gessert,3.9,True
+14904,12035,6,,gessert,0.4,True
+14904,12035,7,,gessert,1.6,True
+14904,12035,8,,gessert,0.1,True
+14904,12035,273,gessert,gessert,1.25,False
+14904,12035,274,gessert,gessert,2.54,False
+14904,12035,275,gessert,gessert,0.21,False
+14904,12035,276,gessert,gessert,0.93,False
+14904,12035,296,gessert,gessert,3.33,False
+14904,12035,329,gessert,gessert,17.96,False
+14904,12035,330,gessert,gessert,0.26,False
+14904,12035,331,gessert,gessert,8.69,True
+14904,12035,333,gessert,gessert,1.31,True
+14904,12035,334,,gessert,342.9,True
+14904,12393,1,larson,larson,43.06,True
+14904,12393,3,larson,larson,2.68,True
+14904,12393,4,larson,larson,0.7,True
+14904,12393,96,larson,larson,0.19,False
+14904,12393,98,larson,larson,3.47,False
+14904,12393,99,larson,larson,0.12,True
+14904,12393,100,larson,larson,10.64,True
+14904,15203,1,blue,blue,102.45,True
+14904,15203,2,blue,blue,35.23,True
+14904,15203,5,blue,blue,1.8,True
+14904,15203,6,blue,blue,0.8,True
+14904,15203,136,blue,blue,8.43,False
+14904,15203,141,blue,blue,5.99,True
+14904,15203,144,blue,blue,8.58,True
+14904,15203,146,blue,blue,3.22,False
+14904,15205,2,inman,inman,15.02,True
+14904,15205,3,inman,inman,7.74,True
+14904,15205,6,inman,inman,9.2,True
+14904,15205,7,inman,inman,8.6,True
+14904,15205,9,inman,inman,40.21,False
+15180,7452,2,Philhower  West,Philhower  West,291.14,True
+15180,7452,44,,Philhower  West,2.94,False
+15180,7452,49,,Philhower  West,1.45,False
+15180,13814,1,Towline Road  North,Towline Road  North,66.74,True
+15180,13814,6,Towline Road  North,Towline Road  North,77.34,True
+15180,13814,7,Towline Road  North,Towline Road  North,14.63,True
+15180,13814,8,Towline Road  North,Towline Road  North,85.56,True
+15180,13814,9,Towline Road  South,Towline Road  North,14.96,True
+15180,13814,10,Towline Road  South,Towline Road  North,1.94,True
+15180,13814,11,Towline Road  South,Towline Road  North,6.74,True
