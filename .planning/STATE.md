@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 71-03-PLAN.md — cross-group DnD (makeFoGroupsDraggable) + inline add-item forms. Phase 71 fully complete.
-last_updated: "2026-08-02T04:29:27.436Z"
-last_activity: 2026-08-02 -- Phase 72 planning complete
+last_updated: "2026-08-02T16:03:57.867Z"
+last_activity: 2026-08-02 -- Phase 72 execution started
 progress:
   total_phases: 21
   completed_phases: 20
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Complete, trustworthy records for every bushel — from the field it came from to the settlement it was paid on.
-**Current focus:** v13.0 — Phase 72: Acreage Reconciliation Tool. Context gathered, ready for planning.
+**Current focus:** Phase 72 — acreage-reconciliation-tool
 
 ## Current Position
 
-Phase: 72 (Acreage Reconciliation Tool) — CONTEXT GATHERED
-Plan: 0 of 0 (planning next)
-Status: Ready to execute
-Last activity: 2026-08-02 -- Phase 72 planning complete
+Phase: 72 (acreage-reconciliation-tool) — STALLED, PROPOSED SUPERSEDED
+Plan: Wave 1 code sits in 4 unmerged .claude/worktrees/ branches (72-01/03/04/06); 72-02/05/07 have no code; migrations 037-039 never applied
+Status: FSA-578 audit track (fsa-578-audit/) reached Phase 2. PHASE2-PROPOSAL.md awaits operator sign-off (§8). Recommends replacing the clu_records grain and closing Phase 72 as superseded (harvest 037, 039-view, 72-06).
+Last activity: 2026-08-16 -- Phase 2 proposal written and committed (8dee51e)
 
 Progress: v9.0 [██████████] SHIPPED | v10.0 [██████████] SHIPPED | v11.0 [██████████] COMPLETE | v12.0 [██████████] COMPLETE
 
@@ -279,7 +279,7 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-04-20
-Stopped at: Completed 71-03-PLAN.md — cross-group DnD (makeFoGroupsDraggable) + inline add-item forms. Phase 71 fully complete.
-Resume file: —
-Next action: Plan next phase or milestone.
+Last session: 2026-08-16
+Stopped at: fsa-578-audit/PHASE2-PROPOSAL.md written; waiting on operator sign-off (§8) + files: fsa578_2026_lines.csv, fsa578_2026_tracts.csv, reference migrations 001-006.
+Resume file: fsa-578-audit/PHASE2-PROPOSAL.md (read HANDOFF-PROMPT.md first)
+Next action: On sign-off → Phase 3 step 1 (migration 040, new fsa_* schema beside old). Do NOT merge Phase 72 worktrees.
