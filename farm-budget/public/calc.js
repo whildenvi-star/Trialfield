@@ -167,6 +167,8 @@
     if ((field.cropType || '').toUpperCase().indexOf('DBL') >= 0) {
       cropTypeMultiplier = 0.5;
     }
+    result.cropType = field.cropType || 'SINGLE CROP';
+    result.cropTypeMultiplier = cropTypeMultiplier;
 
     // --- RENT (charged on this crop's acres — prorated for split-field setups) ---
     result.rentPerAcre = round2((field.rentPerAcre || 0) * cropTypeMultiplier);

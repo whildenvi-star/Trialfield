@@ -1054,7 +1054,7 @@ app.post('/api/fields/sync-registry', async (req, res) => {
 //   an existing field whose acres may change before save; avoids double-counting).
 app.get('/api/fields/rent-rate', async (req, res) => {
   try {
-    const { registryFieldId, name, excludeFieldId, cropType, fieldName } = req.query;
+    const { registryFieldId, name } = req.query;
     if (!registryFieldId && !name) {
       return res.status(400).json({ error: 'registryFieldId or name required' });
     }
@@ -1092,22 +1092,11 @@ app.get('/api/fields/rent-rate', async (req, res) => {
     }
 
     // Base rate = totalRentDollars / reportingAcres (stable — not affected by enterprise entries).
-    // DBL CROP fields: two crops share the same physical acres so each pays baseRate / cropCount.
-    // cropType and fieldName params (optional) allow the caller to identify DBL CROP fields
-    // so the hint shows the correct halved rate immediately on field selection.
+    // Always return the FULL base rate: field.rentPerAcre stores the full farm rate and
+    // calc.js applies the DBL CROP 0.5× multiplier at budget time (see bulk-sync above).
+    // Pre-dividing here would stack with calc.js and quarter the rent.
     const baseRate = regField.totalRentDollars / regField.reportingAcres;
-    let dblDivisor = 1;
-    if ((cropType || '').toUpperCase() === 'DBL CROP' && fieldName) {
-      const lname = fieldName.toLowerCase();
-      const savedDblCount = store.fields.filter(f =>
-        !f.splitGroupId &&
-        (f.cropType || '').toUpperCase() === 'DBL CROP' &&
-        (f.name || '').toLowerCase() === lname &&
-        (!excludeFieldId || f.id !== excludeFieldId)
-      ).length;
-      dblDivisor = savedDblCount + 1; // +1 for the field currently being added/edited
-    }
-    const rentPerAcre = Math.round((baseRate / dblDivisor) * 100) / 100;
+    const rentPerAcre = Math.round(baseRate * 100) / 100;
 
     res.json({
       found: true,
@@ -1115,8 +1104,7 @@ app.get('/api/fields/rent-rate', async (req, res) => {
       registryFieldName: regField.name,
       totalRentDollars: regField.totalRentDollars,
       registryReportingAcres: regField.reportingAcres,
-      baseRatePerAcre: Math.round(baseRate * 100) / 100,
-      dblDivisor: dblDivisor,
+      baseRatePerAcre: rentPerAcre,
       rentPerAcre: rentPerAcre
     });
   } catch (err) {

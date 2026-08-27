@@ -228,6 +228,32 @@
 
   window.addEventListener('ref-data-loaded', populateDropdowns);
 
+  // --- Rent hint ---
+  // Last registry rent-rate response for the field being edited, so the hint can
+  // re-render when the crop type dropdown changes. Reset in populateForm.
+  var lastRentRate = null;
+
+  // Builds the rent hint. The stored/input rate is always the FULL base rate;
+  // calc.js halves it for DBL CROP at budget time, so the hint shows that math.
+  function rentHintHtml(prefix, rr) {
+    var isDbl = (document.getElementById('ed-cropType').value || '').toUpperCase() === 'DBL CROP';
+    var base = prefix + '$' + util.formatNum(rr.totalRentDollars, 0) +
+      ' / ' + util.formatNum(rr.registryReportingAcres, 2) + ' ac';
+    if (isDbl) {
+      return base + ' = $' + util.formatNum(rr.rentPerAcre, 2) +
+        ' × 0.5 dbl crop = <strong>$' + util.formatNum(rr.rentPerAcre * 0.5, 2) + '/ac in budget</strong>';
+    }
+    return base + ' = <strong>$' + util.formatNum(rr.rentPerAcre, 2) + '/ac</strong>';
+  }
+
+  function showRentHint(prefix, rr) {
+    var rh = document.getElementById('ed-rent-hint');
+    if (!rh) return;
+    rh.innerHTML = rentHintHtml(prefix, rr);
+    rh.style.display = 'block';
+    rh.style.color = '#4af626';
+  }
+
   // --- Field Name Autocomplete from Farm Registry ---
   var acInstance = null;
   function initAutocomplete() {
@@ -251,25 +277,15 @@
         }
 
         // Fetch rent rate from registry. Rate = totalRentDollars / reportingAcres (stable).
-        // DBL CROP fields pass cropType + fieldName so the server returns the halved rate.
+        // Always the FULL base rate — calc.js halves for DBL CROP at budget time.
         var rentHint = document.getElementById('ed-rent-hint');
         if (regField.totalRentDollars > 0) {
-          var excludeParam = (currentField && currentField.id) ? '&excludeFieldId=' + encodeURIComponent(currentField.id) : '';
-          var dblParams = '';
-          if (currentField && (currentField.cropType || '').toUpperCase() === 'DBL CROP') {
-            dblParams = '&cropType=' + encodeURIComponent(currentField.cropType) +
-                        '&fieldName=' + encodeURIComponent(currentField.name || '');
-          }
-          api.get('/api/fields/rent-rate?registryFieldId=' + encodeURIComponent(regField.id) + excludeParam + dblParams).then(function (rr) {
+          api.get('/api/fields/rent-rate?registryFieldId=' + encodeURIComponent(regField.id)).then(function (rr) {
             if (!rr || !rr.found || !rr.rentPerAcre) { rentHint.style.display = 'none'; return; }
             document.getElementById('ed-rentPerAcre').value = rr.rentPerAcre;
             if (currentField) currentField.rentPerAcre = rr.rentPerAcre;
-            var denomLabel = util.formatNum(rr.registryReportingAcres, 2) + ' ac';
-            var dblNote = rr.dblDivisor > 1 ? ' ÷ ' + rr.dblDivisor + ' crops' : '';
-            rentHint.innerHTML = 'From registry: $' + util.formatNum(rr.totalRentDollars, 0) +
-              ' / ' + denomLabel + dblNote + ' = <strong>$' + util.formatNum(rr.rentPerAcre, 2) + '/ac</strong>';
-            rentHint.style.display = 'block';
-            rentHint.style.color = '#4af626';
+            lastRentRate = rr;
+            showRentHint('From registry: ', rr);
             updatePreview();
           }).catch(function () { rentHint.style.display = 'none'; });
         } else {
@@ -326,29 +342,22 @@
     document.getElementById('ed-rentPerAcre').value = f.rentPerAcre || '';
 
     // Auto-apply rent rate from registry. Rate = totalRentDollars / reportingAcres (stable).
-    // For DBL CROP fields, rate is halved (or divided by crop count) automatically.
+    // Always the FULL base rate — calc.js halves for DBL CROP at budget time; the hint
+    // shows that math so the rent line visibly responds to the crop type.
+    lastRentRate = null;
     if (f.name) {
       var capturedFieldId = f.id || null;
       var rentNameParam = f.registryFieldId
         ? 'registryFieldId=' + encodeURIComponent(f.registryFieldId)
         : 'name=' + encodeURIComponent(f.name);
-      var rentDblParams = '';
-      if ((f.cropType || '').toUpperCase() === 'DBL CROP') {
-        rentDblParams = '&cropType=' + encodeURIComponent(f.cropType) +
-                        '&fieldName=' + encodeURIComponent(f.name) +
-                        '&excludeFieldId=' + encodeURIComponent(f.id || '');
-      }
-      api.get('/api/fields/rent-rate?' + rentNameParam + rentDblParams).then(function (rr) {
+      api.get('/api/fields/rent-rate?' + rentNameParam).then(function (rr) {
         if (!currentField || currentField.id !== capturedFieldId) return;
         var rh = document.getElementById('ed-rent-hint');
         if (rr && rr.found && rr.rentPerAcre > 0) {
           document.getElementById('ed-rentPerAcre').value = rr.rentPerAcre;
           currentField.rentPerAcre = rr.rentPerAcre;
-          var denomLabel = util.formatNum(rr.registryReportingAcres, 2) + ' ac';
-          var dblNote = rr.dblDivisor > 1 ? ' ÷ ' + rr.dblDivisor + ' crops' : '';
-          rh.innerHTML = '<span style="color:#4af626">$' +
-            util.formatNum(rr.totalRentDollars, 0) + ' / ' + denomLabel + dblNote + '</span>';
-          rh.style.display = 'block';
+          lastRentRate = rr;
+          showRentHint('', rr);
           updatePreview();
         } else if (rr && rr.found) {
           rh.innerHTML = '<span style="color:#888">No rent set in registry</span>';
@@ -1837,6 +1846,29 @@
     updatePlantedAcresHint();
   });
 
+  // --- Crop type change: refresh the rent hint so the halving is visible ---
+  // (syncAndPreview already re-runs via the shared previewFields listener; the
+  // budget preview halves rent + overhead through calc.js. This makes the rent
+  // rate line respond too instead of sitting silent.)
+  document.getElementById('ed-cropType').addEventListener('change', function () {
+    var rh = document.getElementById('ed-rent-hint');
+    if (!rh) return;
+    if (lastRentRate) {
+      showRentHint('', lastRentRate);
+      return;
+    }
+    // Registry not reached for this field — build the hint from the input value
+    var rate = parseFloat(document.getElementById('ed-rentPerAcre').value) || 0;
+    if ((this.value || '').toUpperCase() === 'DBL CROP' && rate > 0) {
+      rh.innerHTML = '$' + util.formatNum(rate, 2) +
+        ' × 0.5 dbl crop = <strong>$' + util.formatNum(rate * 0.5, 2) + '/ac in budget</strong>';
+      rh.style.display = 'block';
+      rh.style.color = '#4af626';
+    } else {
+      rh.style.display = 'none';
+    }
+  });
+
   // --- System code change: re-evaluate enterprise assignment ---
   document.getElementById('ed-systemCode').addEventListener('change', function () {
     if (!currentField) return;
@@ -2275,7 +2307,6 @@
       var loEntry = (window.refData.laborOverhead || []).filter ? (window.refData.laborOverhead || []).filter(function (lo) { return lo.systemCode === (currentField && currentField.systemCode); })[0] : null;
       laborRows.push(['Source', 'Flat rate — ' + (currentField ? currentField.systemCode : '') + ' schedule']);
       if (loEntry) laborRows.push(['Schedule rate', util.formatMoney(loEntry.laborPerAcre) + '/ac']);
-      laborRows.push(['Crop type mult.', budget.cropTypeMultiplier !== undefined ? budget.cropTypeMultiplier + '×' : '1×']);
       html += cdCard('Labor',
         laborRows,
         'Flat rate: <strong>' + util.formatMoney(budget.laborPerAcre) + '/ac</strong>'
@@ -2287,7 +2318,7 @@
     var ohRows = [];
     ohRows.push(['System code', currentField ? currentField.systemCode : '—']);
     if (loEntry2) ohRows.push(['Schedule rate', util.formatMoney(loEntry2.overheadPerAcre) + '/ac']);
-    if (budget.cropType === 'DBL CROP') ohRows.push(['Crop type mult.', '0.5× (double crop)']);
+    if (budget.cropTypeMultiplier < 1) ohRows.push(['Crop type mult.', budget.cropTypeMultiplier + '× (double crop)']);
     html += cdCard('Overhead',
       ohRows,
       'Total: <strong>' + util.formatMoney(budget.overheadPerAcre) + '/ac</strong>'
@@ -2401,13 +2432,8 @@
         if (rr && rr.found && rr.rentPerAcre > 0) {
           document.getElementById('ed-rentPerAcre').value = rr.rentPerAcre;
           currentField.rentPerAcre = rr.rentPerAcre;
-          var denomLabel = rr.totalBudgetAcres > 0
-            ? util.formatNum(rr.totalBudgetAcres, 2) + ' crop ac'
-            : util.formatNum(rr.registryReportingAcres, 2) + ' ac';
-          rentHint.innerHTML = 'Synced from registry: $' + util.formatNum(rr.totalRentDollars, 0) +
-            ' / ' + denomLabel + ' = <strong>$' + util.formatNum(rr.rentPerAcre, 2) + '/ac</strong>';
-          rentHint.style.display = 'block';
-          rentHint.style.color = '#4af626';
+          lastRentRate = rr;
+          showRentHint('Synced from registry: ', rr);
         } else {
           rentHint.style.display = 'none';
         }
