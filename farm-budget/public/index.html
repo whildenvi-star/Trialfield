@@ -260,6 +260,9 @@
                 <th class="number">Registry Acres</th>
                 <th class="number" title="Physical land acres — double-crop fields counted once">Budget Land Acres</th>
                 <th class="number">Delta</th>
+                <th class="number" title="Lump rent owed for the farm (registry)">Rent Lump</th>
+                <th class="number" title="Rent allocated into crop budgets (after double-crop sharing)">Rent Allocated</th>
+                <th class="number" title="Allocated − lump. Negative = rent not landing in any budget (idle acres); positive = double-crop acres unmatched to base-crop ground">Rent Δ</th>
                 <th>Status</th>
               </tr>
             </thead>
@@ -975,6 +978,13 @@
                   <option value="DBL CROP">Double Crop</option>
                 </select>
               </div>
+              <div class="form-group" id="ed-dblPartner-group" style="display:none;">
+                <label>Double-Cropped On <span style="font-size:0.65rem;color:#888;font-weight:normal;">(base crop sharing this ground)</span></label>
+                <select id="ed-dblPartner">
+                  <option value="">— select base crop —</option>
+                </select>
+                <div id="ed-dblPartner-hint" style="font-size:0.7rem;color:#888;margin-top:0.15rem;display:none;"></div>
+              </div>
               <div class="form-group">
                 <label>Tillage</label>
                 <select id="ed-tillage">
@@ -997,6 +1007,10 @@
                 <label>Rent $/AC <span style="font-size:0.65rem;color:#888;font-weight:normal;">(from Farm Registry)</span></label>
                 <input type="number" id="ed-rentPerAcre" step="0.01" min="0" readonly style="background:var(--bg-raised);cursor:not-allowed;opacity:0.7;">
                 <div id="ed-rent-hint" style="font-size:0.7rem;color:#666;margin-top:0.15rem;display:none;"></div>
+                <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.7rem;color:#888;font-weight:normal;margin-top:0.3rem;cursor:pointer;" title="Spread the farm's lump rent over this year's farmed acres instead of registry reported acres, so the full lump lands in the crop budgets even when part of the farm sits idle. Applies to every crop on this farm.">
+                  <input type="checkbox" id="ed-rentBasis" style="width:auto;margin:0;">
+                  Full rent recovery (lump &divide; farmed acres, farm-wide)
+                </label>
               </div>
               <div class="form-group" style="grid-column:1/-1">
                 <label>Field Notes <span style="font-size:0.65rem;color:#888;font-weight:normal;">(prints on crop plan report)</span></label>

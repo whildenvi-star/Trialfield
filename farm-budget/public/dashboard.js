@@ -1062,12 +1062,24 @@
             : '<div style="font-size:0.7rem;color:#888;margin-top:0.15rem">' + parts.join(', ') + '</div>';
         }
 
+        // Rent reconciliation: allocated within 1% of lump (or $50) reads as clean.
+        var rentTol = Math.max(50, (r.rentLump || 0) * 0.01);
+        var rentClean = Math.abs(r.rentDelta || 0) <= rentTol;
+        var basisNote = r.rentBasis === 'farmed' ? ' <span style="color:#8ab4cc;font-size:0.65rem" title="Lump spread over farmed acres">(farmed)</span>' : '';
+        var rentCells = r.rentLump > 0
+          ? '<td class="number">' + util.formatMoney(r.rentLump, 0) + basisNote + '</td>' +
+            '<td class="number">' + util.formatMoney(r.rentAllocated, 0) + '</td>' +
+            '<td class="number" style="color:' + (rentClean ? 'inherit' : (r.rentDelta > 0 ? '#ff6e40' : '#ff9800')) + '">' +
+              (r.rentDelta > 0 ? '+' : '') + util.formatMoney(r.rentDelta, 0) + '</td>'
+          : '<td class="number" style="color:#888">—</td><td class="number" style="color:#888">—</td><td class="number" style="color:#888">—</td>';
+
         html += '<tr>' +
           '<td>' + util.escHtml(r.registryField) + subDetail + '</td>' +
           '<td class="number">' + util.formatNum(r.registryAcres, 2) + '</td>' +
           '<td class="number">' + util.formatNum(r.budgetAcres, 2) + '</td>' +
           '<td class="number" style="color:' + (Math.abs(r.delta) < 0.02 ? 'inherit' : r.delta > 0 ? '#ff6e40' : '#ff9800') + '">' +
             (r.delta > 0 ? '+' : '') + util.formatNum(r.delta, 2) + '</td>' +
+          rentCells +
           '<td><span style="color:' + statusColor + ';font-size:0.75rem;font-weight:600">' + statusBadge + '</span></td>' +
         '</tr>';
       });
@@ -1080,12 +1092,15 @@
       if (summary) {
         var totalRegAcres = data.rows.reduce(function (s, r) { return s + r.registryAcres; }, 0);
         var totalBudgetAcres = data.rows.reduce(function (s, r) { return s + r.budgetAcres; }, 0);
+        var totalRentLump = data.rows.reduce(function (s, r) { return s + (r.rentLump || 0); }, 0);
+        var totalRentAlloc = data.rows.reduce(function (s, r) { return s + (r.rentAllocated || 0); }, 0);
         summary.textContent = data.matched + ' of ' + data.total + ' fields reconciled | Registry: ' +
-          util.formatNum(totalRegAcres, 1) + ' ac | Budget: ' + util.formatNum(totalBudgetAcres, 1) + ' ac';
+          util.formatNum(totalRegAcres, 1) + ' ac | Budget: ' + util.formatNum(totalBudgetAcres, 1) + ' ac | Rent: ' +
+          util.formatMoney(totalRentAlloc, 0) + ' allocated of ' + util.formatMoney(totalRentLump, 0) + ' lump';
       }
     }).catch(function () {
       var tbody = document.getElementById('dash-recon-tbody');
-      if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="color:#888">Registry unavailable</td></tr>';
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="color:#888">Registry unavailable</td></tr>';
     });
   }
 

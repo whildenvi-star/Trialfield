@@ -166,6 +166,59 @@ function loadData() {
   // Guard collections added after initial data.json was created
   if (!store.quickPlanConfig) store.quickPlanConfig = [];
   if (!store.strawSales) store.strawSales = [];
+  recomputeDblSharedAcres();
+}
+
+// --- Double-crop ground sharing ---
+// A DBL CROP entry is the SECOND crop on ground whose base crop is another budget
+// entry (dblPartnerFieldId). calc.js charges the DBL entry 0.5× rent/overhead; the
+// base crop needs to know how many of its acres are shared so it gets 0.5× on those.
+// dblSharedAcres is denormalized onto the base crop here (single-field calc stays
+// possible everywhere) and recomputed after every field mutation and on boot.
+
+function effAcres(f) {
+  return (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
+}
+
+function recomputeDblSharedAcres() {
+  const sharedByPartner = {};
+  (store.fields || []).forEach(f => {
+    if ((f.cropType || '').toUpperCase().indexOf('DBL') >= 0 && f.dblPartnerFieldId) {
+      sharedByPartner[f.dblPartnerFieldId] =
+        (sharedByPartner[f.dblPartnerFieldId] || 0) + effAcres(f);
+    }
+  });
+  (store.fields || []).forEach(f => {
+    const shared = sharedByPartner[f.id]
+      ? Math.round(Math.min(sharedByPartner[f.id], effAcres(f)) * 100) / 100
+      : 0;
+    if ((f.dblSharedAcres || 0) !== shared) f.dblSharedAcres = shared;
+    if (!f.dblSharedAcres) delete f.dblSharedAcres;
+  });
+}
+
+// Budget entries covering the same physical farm: matched by registryFieldId when
+// set, otherwise by normalized name. Used for rent-basis math.
+function farmGroupFields(field) {
+  const key = field.registryFieldId || (field.name || '').trim().toLowerCase();
+  if (!key) return [field];
+  return (store.fields || []).filter(f =>
+    (f.registryFieldId || (f.name || '').trim().toLowerCase()) === key
+  );
+}
+
+// Physical acres farmed this year on a farm group = sum of effective acres of the
+// base-crop (non-DBL) entries. DBL second crops ride on ground already counted.
+function farmedAcres(groupFields) {
+  return groupFields
+    .filter(f => (f.cropType || '').toUpperCase().indexOf('DBL') < 0)
+    .reduce((sum, f) => sum + effAcres(f), 0);
+}
+
+// A farm group opts into full rent recovery (lump ÷ farmed acres instead of
+// lump ÷ registry reported acres) when any member has rentBasis: 'farmed'.
+function groupRentBasis(groupFields) {
+  return groupFields.some(f => f.rentBasis === 'farmed') ? 'farmed' : 'reported';
 }
 
 // Write lock: simple promise queue
@@ -181,6 +234,9 @@ const fsp = fs.promises;
 
 async function saveDataImmediate() {
   return withLock(async () => {
+    // Keep denormalized double-crop shared acres consistent on every save path
+    // (field CRUD, splits, batch edits, registry sync).
+    recomputeDblSharedAcres();
     for (let i = MAX_BACKUPS; i > 1; i--) {
       const from = DATA_FILE + '.bak.' + (i - 1);
       const to = DATA_FILE + '.bak.' + i;
@@ -655,6 +711,7 @@ app.post('/api/fields', async (req, res) => {
   if (!field.inputs) field.inputs = [];
   if (!field.machinery) field.machinery = [];
   store.fields.push(field);
+  recomputeDblSharedAcres();
   await saveData();
   res.status(201).json(enrichField(field));
 });
@@ -671,12 +728,13 @@ app.put('/api/fields/:id', async (req, res) => {
     'insuranceIncomePerAcre', 'govPaymentLabel', 'govPaymentsPerAcre',
     'auxPayments', 'tariffsPerAcre', 'geometry', 'harvestMoisture', 'buyerId', 'templateId', 'machineryProgramId',
     'registryFieldName', 'splitGroupId', 'registryFieldId',
-    'tillage', 'notes'
+    'tillage', 'notes', 'dblPartnerFieldId', 'rentBasis'
   ];
   updatable.forEach(k => {
     if (req.body[k] !== undefined) store.fields[idx][k] = req.body[k];
   });
 
+  recomputeDblSharedAcres();
   await saveData();
   res.json(enrichField(store.fields[idx]));
 });
@@ -684,7 +742,13 @@ app.put('/api/fields/:id', async (req, res) => {
 app.delete('/api/fields/:id', async (req, res) => {
   const idx = store.fields.findIndex(f => f.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Field not found' });
+  const deletedId = store.fields[idx].id;
   store.fields.splice(idx, 1);
+  // Clear dangling partner links to the deleted field
+  store.fields.forEach(f => {
+    if (f.dblPartnerFieldId === deletedId) delete f.dblPartnerFieldId;
+  });
+  recomputeDblSharedAcres();
   await saveData();
   res.json({ ok: true });
 });
@@ -979,11 +1043,20 @@ app.post('/api/fields/sync-registry', async (req, res) => {
 
       // Sync rent rate using stable registry-based denominator.
       // baseRate = totalRentDollars / reportingAcres — store the FULL farm rate.
-      // calc.js applies cropTypeMultiplier (0.5 for DBL CROP) so we must NOT pre-divide here.
-      // Storing the full rate here + calc.js halving = correct effective rent per crop.
+      // calc.js applies cropTypeMultiplier (0.5 for DBL CROP, weighted for base
+      // crops with dblSharedAcres) so we must NOT pre-divide here.
+      // Farms opted into rentBasis 'farmed' spread the lump over this year's
+      // farmed acres instead, so the full lump lands in the crop budgets even
+      // when part of the farm sits idle.
       // Skip for split sub-fields: their acres are handled in the split-group pass below.
       if (!isSplit && match.totalRentDollars > 0) {
-        const baseRate = match.totalRentDollars / match.reportingAcres;
+        let rentDenom = match.reportingAcres;
+        const group = farmGroupFields(field);
+        if (groupRentBasis(group) === 'farmed') {
+          const fa = farmedAcres(group);
+          if (fa > 0) rentDenom = fa;
+        }
+        const baseRate = match.totalRentDollars / rentDenom;
         var rate = Math.round(baseRate * 100) / 100;
         if (Math.abs((field.rentPerAcre || 0) - rate) > 0.001) {
           field.rentPerAcre = rate;
@@ -1091,11 +1164,25 @@ app.get('/api/fields/rent-rate', async (req, res) => {
       return res.json({ found: true, registryFieldId: regField.id, registryFieldName: regField.name, totalRentDollars: 0, rentPerAcre: 0 });
     }
 
-    // Base rate = totalRentDollars / reportingAcres (stable — not affected by enterprise entries).
+    // Base rate = totalRentDollars / denominator (stable — not affected by enterprise entries).
+    // Denominator is registry reportingAcres, or this year's farmed acres when the
+    // farm group opted into rentBasis 'farmed' (full lump recovery).
     // Always return the FULL base rate: field.rentPerAcre stores the full farm rate and
     // calc.js applies the DBL CROP 0.5× multiplier at budget time (see bulk-sync above).
     // Pre-dividing here would stack with calc.js and quarter the rent.
-    const baseRate = regField.totalRentDollars / regField.reportingAcres;
+    const lnameReg = regField.name.toLowerCase();
+    const regAliases = (regField.aliases || []).map(a => a.toLowerCase());
+    const group = store.fields.filter(f => {
+      if (f.registryFieldId) return f.registryFieldId === regField.id;
+      const fn = (f.name || '').trim().toLowerCase();
+      return fn === lnameReg || fn.startsWith(lnameReg) ||
+        regAliases.some(a => fn === a || fn.startsWith(a));
+    });
+    const basis = groupRentBasis(group);
+    const groupFarmedAcres = Math.round(farmedAcres(group) * 100) / 100;
+    let rentDenom = regField.reportingAcres;
+    if (basis === 'farmed' && groupFarmedAcres > 0) rentDenom = groupFarmedAcres;
+    const baseRate = regField.totalRentDollars / rentDenom;
     const rentPerAcre = Math.round(baseRate * 100) / 100;
 
     res.json({
@@ -1104,6 +1191,9 @@ app.get('/api/fields/rent-rate', async (req, res) => {
       registryFieldName: regField.name,
       totalRentDollars: regField.totalRentDollars,
       registryReportingAcres: regField.reportingAcres,
+      rentBasis: basis,
+      farmedAcres: groupFarmedAcres,
+      denominatorAcres: Math.round(rentDenom * 100) / 100,
       baseRatePerAcre: rentPerAcre,
       rentPerAcre: rentPerAcre
     });
@@ -1161,6 +1251,7 @@ app.get('/api/dashboard/reconciliation', async (req, res) => {
     var rows = [];
     var matched = 0;
     var total = regFields.length;
+    const reconRefs = getRefs();
 
     regFields.forEach(rf => {
       var key = rf.name.toLowerCase();
@@ -1187,6 +1278,16 @@ app.get('/api/dashboard/reconciliation', async (req, res) => {
                    delta < 0 ? 'under' : 'over';
       if (status === 'matched') matched++;
 
+      // Rent reconciliation: lump owed for the farm vs rent allocated into crop
+      // budgets (calc applies double-crop sharing, so this surfaces both idle-acre
+      // under-recovery and unmatched double-crop acres).
+      var rentLump = rf.totalRentDollars || 0;
+      var rentAllocated = 0;
+      budgetFields.forEach(f => {
+        rentAllocated += Calc.computeFieldBudget(f, reconRefs, store.settings).rentTotal || 0;
+      });
+      rentAllocated = Math.round(rentAllocated * 100) / 100;
+
       rows.push({
         registryField: rf.name,
         registryAcres: rf.reportingAcres,
@@ -1194,6 +1295,10 @@ app.get('/api/dashboard/reconciliation', async (req, res) => {
         delta: delta,
         status: status,
         cropCount: nonSplitFields.length,
+        rentLump: rentLump,
+        rentAllocated: rentAllocated,
+        rentDelta: Math.round((rentAllocated - rentLump) * 100) / 100,
+        rentBasis: groupRentBasis(budgetFields),
         subFields: budgetFields.map(f => ({ name: f.name, crop: f.crop || '', acres: f.acres, splitGroupId: f.splitGroupId }))
       });
     });

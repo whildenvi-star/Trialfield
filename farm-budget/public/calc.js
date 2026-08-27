@@ -161,11 +161,20 @@
     result.effectiveAcres = acres;
     var opts = options || {};
 
-    // --- CROP TYPE MULTIPLIER ---
-    // SINGLE CROP = 1.0, DBL CROP = 0.5 rent
+    // --- CROP TYPE MULTIPLIER / DOUBLE-CROP GROUND SHARING ---
+    // DBL CROP marks the SECOND crop riding on a base crop's ground: it pays 0.5×
+    // rent and overhead on all its acres. The base crop carries dblSharedAcres
+    // (maintained server-side from DBL entries paired via dblPartnerFieldId): it
+    // pays full rate on exclusive acres and 0.5× on shared acres, i.e. a weighted
+    // multiplier of (acres − 0.5×shared) / acres. Ground with one crop pays full.
     var cropTypeMultiplier = 1;
+    result.dblSharedAcres = 0;
     if ((field.cropType || '').toUpperCase().indexOf('DBL') >= 0) {
       cropTypeMultiplier = 0.5;
+    } else if (field.dblSharedAcres > 0 && acres > 0) {
+      var sharedAc = Math.min(field.dblSharedAcres, acres);
+      cropTypeMultiplier = round4((acres - 0.5 * sharedAc) / acres);
+      result.dblSharedAcres = sharedAc;
     }
     result.cropType = field.cropType || 'SINGLE CROP';
     result.cropTypeMultiplier = cropTypeMultiplier;

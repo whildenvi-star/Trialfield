@@ -228,22 +228,56 @@
 
   window.addEventListener('ref-data-loaded', populateDropdowns);
 
-  // --- Rent hint ---
+  // --- Rent hint / double-crop pairing ---
   // Last registry rent-rate response for the field being edited, so the hint can
-  // re-render when the crop type dropdown changes. Reset in populateForm.
+  // re-render when the crop type dropdown or rent basis changes. Reset in populateForm.
   var lastRentRate = null;
+  // All budget entries (all enterprises), for the partner dropdown and rent basis.
+  var farmSiblings = [];
 
-  // Builds the rent hint. The stored/input rate is always the FULL base rate;
-  // calc.js halves it for DBL CROP at budget time, so the hint shows that math.
+  function farmGroupKey(f) {
+    return f.registryFieldId || (f.name || '').trim().toLowerCase();
+  }
+
+  function fieldEffAcres(f) {
+    return (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
+  }
+
+  // Rate implied by the current rent-basis checkbox. The endpoint returns the
+  // rate for the SAVED basis; mid-edit the checkbox may differ, so recompute
+  // from the lump and the chosen denominator.
+  function rentRateForBasis(rr) {
+    var cb = document.getElementById('ed-rentBasis');
+    var farmed = cb && cb.checked && rr.farmedAcres > 0;
+    var denom = farmed ? rr.farmedAcres : rr.registryReportingAcres;
+    if (!denom || !rr.totalRentDollars) return { rate: rr.rentPerAcre || 0, denomLabel: util.formatNum(rr.registryReportingAcres, 2) + ' ac' };
+    return {
+      rate: Math.round((rr.totalRentDollars / denom) * 100) / 100,
+      denomLabel: util.formatNum(denom, 2) + (farmed ? ' farmed ac' : ' ac')
+    };
+  }
+
+  // Builds the rent hint. The stored/input rate is always the FULL farm rate;
+  // calc.js applies the double-crop sharing at budget time, so the hint shows
+  // that math instead of silently diverging from the budget.
   function rentHintHtml(prefix, rr) {
     var isDbl = (document.getElementById('ed-cropType').value || '').toUpperCase() === 'DBL CROP';
-    var base = prefix + '$' + util.formatNum(rr.totalRentDollars, 0) +
-      ' / ' + util.formatNum(rr.registryReportingAcres, 2) + ' ac';
+    var rb = rentRateForBasis(rr);
+    var base = prefix + '$' + util.formatNum(rr.totalRentDollars, 0) + ' / ' + rb.denomLabel;
     if (isDbl) {
-      return base + ' = $' + util.formatNum(rr.rentPerAcre, 2) +
-        ' × 0.5 dbl crop = <strong>$' + util.formatNum(rr.rentPerAcre * 0.5, 2) + '/ac in budget</strong>';
+      return base + ' = $' + util.formatNum(rb.rate, 2) +
+        ' × 0.5 dbl crop = <strong>$' + util.formatNum(rb.rate * 0.5, 2) + '/ac in budget</strong>';
     }
-    return base + ' = <strong>$' + util.formatNum(rr.rentPerAcre, 2) + '/ac</strong>';
+    var html = base + ' = <strong>$' + util.formatNum(rb.rate, 2) + '/ac</strong>';
+    // Base crop with a double crop riding on part of its ground: show weighted avg
+    var eff = currentField ? fieldEffAcres(currentField) : 0;
+    var shared = currentField ? Math.min(currentField.dblSharedAcres || 0, eff) : 0;
+    if (shared > 0 && eff > 0) {
+      var avg = Math.round(rb.rate * ((eff - 0.5 * shared) / eff) * 100) / 100;
+      html += ' — ' + util.formatNum(shared, 1) + ' ac shared w/ dbl crop → <strong>$' +
+        util.formatNum(avg, 2) + '/ac avg in budget</strong>';
+    }
+    return html;
   }
 
   function showRentHint(prefix, rr) {
@@ -252,6 +286,69 @@
     rh.innerHTML = rentHintHtml(prefix, rr);
     rh.style.display = 'block';
     rh.style.color = '#4af626';
+  }
+
+  // --- Double-crop partner dropdown (which base crop's ground this rides on) ---
+  function refreshDblPartnerUI() {
+    var group = document.getElementById('ed-dblPartner-group');
+    var select = document.getElementById('ed-dblPartner');
+    var hint = document.getElementById('ed-dblPartner-hint');
+    if (!group || !select || !currentField) return;
+    var isDbl = (document.getElementById('ed-cropType').value || '').toUpperCase() === 'DBL CROP';
+    group.style.display = isDbl ? '' : 'none';
+    if (!isDbl) { if (hint) hint.style.display = 'none'; return; }
+
+    var key = farmGroupKey(currentField);
+    var candidates = farmSiblings.filter(function (f) {
+      return f.id !== currentField.id &&
+        farmGroupKey(f) === key &&
+        (f.cropType || '').toUpperCase().indexOf('DBL') < 0 &&
+        !f.splitGroupId;
+    });
+    select.innerHTML = '<option value="">— select base crop —</option>';
+    candidates.forEach(function (f) {
+      var opt = document.createElement('option');
+      opt.value = f.id;
+      opt.textContent = (f.crop || '(no crop)') + ' — ' + util.formatNum(fieldEffAcres(f), 1) + ' ac';
+      if (f.id === currentField.dblPartnerFieldId) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    if (!hint) return;
+    var partner = candidates.find(function (f) { return f.id === select.value; });
+    if (partner) {
+      var overlap = Math.min(fieldEffAcres(currentField), fieldEffAcres(partner));
+      hint.textContent = util.formatNum(overlap, 1) + ' shared ac — this crop pays half rent/overhead; ' +
+        (partner.crop || 'base crop') + ' pays half on those acres too (applies on save)';
+      hint.style.display = 'block';
+      hint.style.color = '#4af626';
+    } else if (candidates.length === 0) {
+      hint.textContent = 'No other single-crop entry on this farm yet — add the base crop first';
+      hint.style.display = 'block';
+      hint.style.color = '#ff9800';
+    } else {
+      hint.textContent = 'Unpaired: rent/overhead halve on this crop, but the base crop gets no relief';
+      hint.style.display = 'block';
+      hint.style.color = '#ff9800';
+    }
+  }
+
+  function loadFarmSiblings() {
+    var capturedId = currentField ? currentField.id : null;
+    farmSiblings = [];
+    api.get('/api/fields?all=true').then(function (all) {
+      if (!currentField || currentField.id !== capturedId) return;
+      farmSiblings = all || [];
+      refreshDblPartnerUI();
+      // Rent basis is farm-wide: reflect any group member's opt-in
+      var key = farmGroupKey(currentField);
+      var cb = document.getElementById('ed-rentBasis');
+      if (cb && !cb.checked) {
+        cb.checked = farmSiblings.some(function (f) {
+          return farmGroupKey(f) === key && f.rentBasis === 'farmed';
+        });
+      }
+    }).catch(function () { /* offline — partner list unavailable */ });
   }
 
   // --- Field Name Autocomplete from Farm Registry ---
@@ -333,6 +430,10 @@
       reassignHint.style.display = 'none';
     }
     document.getElementById('ed-cropType').value = f.cropType || 'SINGLE CROP';
+    var basisCb = document.getElementById('ed-rentBasis');
+    if (basisCb) basisCb.checked = f.rentBasis === 'farmed';
+    refreshDblPartnerUI();
+    loadFarmSiblings();
     document.getElementById('ed-tillage').value = f.tillage || 'Till';
     document.getElementById('ed-notes').value = f.notes || '';
     document.getElementById('ed-acres').value = f.acres || '';
@@ -1846,11 +1947,12 @@
     updatePlantedAcresHint();
   });
 
-  // --- Crop type change: refresh the rent hint so the halving is visible ---
+  // --- Crop type change: refresh the rent hint + partner dropdown ---
   // (syncAndPreview already re-runs via the shared previewFields listener; the
   // budget preview halves rent + overhead through calc.js. This makes the rent
   // rate line respond too instead of sitting silent.)
   document.getElementById('ed-cropType').addEventListener('change', function () {
+    refreshDblPartnerUI();
     var rh = document.getElementById('ed-rent-hint');
     if (!rh) return;
     if (lastRentRate) {
@@ -1867,6 +1969,27 @@
     } else {
       rh.style.display = 'none';
     }
+  });
+
+  // --- Double-crop partner change: sync + refresh hints ---
+  document.getElementById('ed-dblPartner').addEventListener('change', function () {
+    if (!currentField) return;
+    currentField.dblPartnerFieldId = this.value || null;
+    refreshDblPartnerUI();
+    updatePreview();
+  });
+
+  // --- Rent basis toggle: recompute the rate from lump ÷ chosen denominator ---
+  document.getElementById('ed-rentBasis').addEventListener('change', function () {
+    if (!currentField) return;
+    currentField.rentBasis = this.checked ? 'farmed' : 'reported';
+    if (lastRentRate) {
+      var rb = rentRateForBasis(lastRentRate);
+      document.getElementById('ed-rentPerAcre').value = rb.rate;
+      currentField.rentPerAcre = rb.rate;
+      showRentHint('', lastRentRate);
+    }
+    updatePreview();
   });
 
   // --- System code change: re-evaluate enterprise assignment ---
@@ -2022,6 +2145,14 @@
       currentField.registryCropId = selectedOption.dataset.registryCropId;
     }
     currentField.cropType = document.getElementById('ed-cropType').value;
+    var dblSel = document.getElementById('ed-dblPartner');
+    if ((currentField.cropType || '').toUpperCase() === 'DBL CROP') {
+      currentField.dblPartnerFieldId = (dblSel && dblSel.value) || null;
+    } else {
+      currentField.dblPartnerFieldId = null;
+    }
+    var rbCb = document.getElementById('ed-rentBasis');
+    if (rbCb) currentField.rentBasis = rbCb.checked ? 'farmed' : 'reported';
     currentField.tillage = document.getElementById('ed-tillage').value;
     currentField.acres = parseFloat(document.getElementById('ed-acres').value) || 0;
     currentField.plantedAcres = parseFloat(document.getElementById('ed-plantedAcres').value) || 0;
@@ -2318,7 +2449,11 @@
     var ohRows = [];
     ohRows.push(['System code', currentField ? currentField.systemCode : '—']);
     if (loEntry2) ohRows.push(['Schedule rate', util.formatMoney(loEntry2.overheadPerAcre) + '/ac']);
-    if (budget.cropTypeMultiplier < 1) ohRows.push(['Crop type mult.', budget.cropTypeMultiplier + '× (double crop)']);
+    if (budget.cropTypeMultiplier < 1) {
+      ohRows.push(['Crop type mult.', budget.cropTypeMultiplier === 0.5
+        ? '0.5× (double crop)'
+        : budget.cropTypeMultiplier + '× (' + util.formatNum(budget.dblSharedAcres, 1) + ' ac shared w/ dbl crop)']);
+    }
     html += cdCard('Overhead',
       ohRows,
       'Total: <strong>' + util.formatMoney(budget.overheadPerAcre) + '/ac</strong>'
