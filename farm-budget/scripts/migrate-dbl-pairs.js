@@ -47,8 +47,8 @@ const wesBarley = must('fld_1156', "Wes's winter barley");
     throw new Error(f.id + ' (' + f.crop + ') is ' + f.cropType + ', expected DBL CROP — data changed since this script was written; aborting');
   }
 });
-if (store.fields.some(f => f.id === 'fld_wes_rrsoy26')) {
-  throw new Error('fld_wes_rrsoy26 already exists — migration already ran; aborting');
+if (store.fields.some(f => f.dblPartnerFieldId)) {
+  throw new Error('dblPartnerFieldId links already present — migration already ran; aborting');
 }
 
 fs.copyFileSync(DATA_FILE, BACKUP);
@@ -71,47 +71,68 @@ pair(gesPeas, gesSnap);      // Peas (111) -> Snap Beans (114.8; 111 overlap, 3.
 // --- Wes's: barley is the base crop; RR soybeans (25 ac) ride on it ---
 wesBarley.cropType = 'SINGLE CROP';
 delete wesBarley.dblPartnerFieldId;
-wesBarley.rentBasis = 'farmed'; // opt the farm into full lump recovery
 
-const rrBeans = {
-  id: 'fld_wes_rrsoy26',
-  name: wesBarley.name,
-  crop: 'Soybeans',
-  cropType: 'DBL CROP',
-  dblPartnerFieldId: wesBarley.id,
-  systemCode: 'CON',
-  enterpriseId: 'ent_1272',
-  acres: wesBarley.acres,
-  plantedAcres: 25,
-  rentPerAcre: wesBarley.rentPerAcre, // group rate set below
-  yieldPerAcre: 0,
-  yieldUnit: 'Bu',
-  cropInsurancePerAcre: 0,
-  insuranceIncomePerAcre: 0,
-  inputs: [],
-  machinery: [],
-  seeds: [],
-  registryFieldId: wesBarley.registryFieldId || null,
-  splitGroupId: null,
-  tillage: 'No-Till',
-  notes: 'RR soybeans double-cropped on winter barley ground (25 ac). Created by dbl-pair migration ' + stamp + ' — add seed, inputs, and yield.'
-};
-store.fields.push(rrBeans);
-byId[rrBeans.id] = rrBeans;
-console.log('Created: ' + rrBeans.id + ' (RR Soybeans, 25 ac DBL on barley)');
+const wesKey = wesBarley.registryFieldId || (wesBarley.name || '').trim().toLowerCase();
+const wesGroup = store.fields.filter(f =>
+  (f.registryFieldId || (f.name || '').trim().toLowerCase()) === wesKey
+);
+
+// Pair an existing RR soybean DBL entry when the user already created one
+// (droplet: fld_mtam6v2c_izkh); otherwise create it.
+let rrBeans = wesGroup.find(f =>
+  f.id !== wesBarley.id &&
+  (f.cropType || '').toUpperCase() === 'DBL CROP' &&
+  !f.dblPartnerFieldId
+);
+if (rrBeans) {
+  rrBeans.dblPartnerFieldId = wesBarley.id;
+  console.log('Paired existing: ' + rrBeans.id + ' (' + rrBeans.crop + ', ' + effAcres(rrBeans) + ' ac) rides on winter barley');
+} else {
+  rrBeans = {
+    id: 'fld_wes_rrsoy26',
+    name: wesBarley.name,
+    crop: 'Soybeans',
+    cropType: 'DBL CROP',
+    dblPartnerFieldId: wesBarley.id,
+    systemCode: 'CON',
+    enterpriseId: 'ent_1272',
+    acres: wesBarley.acres,
+    plantedAcres: 25,
+    rentPerAcre: wesBarley.rentPerAcre,
+    yieldPerAcre: 0,
+    yieldUnit: 'Bu',
+    cropInsurancePerAcre: 0,
+    insuranceIncomePerAcre: 0,
+    inputs: [],
+    machinery: [],
+    seeds: [],
+    registryFieldId: wesBarley.registryFieldId || null,
+    splitGroupId: null,
+    tillage: 'No-Till',
+    notes: 'RR soybeans double-cropped on winter barley ground (25 ac). Created by dbl-pair migration ' + stamp + ' — add seed, inputs, and yield.'
+  };
+  store.fields.push(rrBeans);
+  byId[rrBeans.id] = rrBeans;
+  wesGroup.push(rrBeans);
+  console.log('Created: ' + rrBeans.id + ' (RR Soybeans, 25 ac DBL on barley)');
+}
 
 // --- Wes's farmed-basis rent rate: lump / farmed acres ---
-const wesGroup = store.fields.filter(f =>
-  (f.name || '').trim().toLowerCase() === (wesBarley.name || '').trim().toLowerCase()
-);
-const wesLump = Math.round(wesBarley.rentPerAcre * wesBarley.acres * 100) / 100;
-const wesFarmed = wesGroup
-  .filter(f => (f.cropType || '').toUpperCase().indexOf('DBL') < 0)
-  .reduce((s, f) => s + effAcres(f), 0);
-const wesRate = Math.round((wesLump / wesFarmed) * 100) / 100;
-wesGroup.forEach(f => { f.rentPerAcre = wesRate; });
-console.log("Wes's: lump $" + wesLump + ' / ' + wesFarmed + ' farmed ac = $' + wesRate +
-  '/ac on ' + wesGroup.length + ' entries (rentBasis farmed)');
+// Skip with WES_SKIP_FARMED=1 when the registry already uses farmed acres as its
+// denominator (droplet: Wes's reportingAcres=90 with the $18,000 lump → $200/ac).
+if (process.env.WES_SKIP_FARMED === '1') {
+  console.log("Wes's: rentBasis/rate left untouched (registry already farmed-based)");
+} else {
+  wesBarley.rentBasis = 'farmed'; // opt the farm into full lump recovery
+  const wesLump = Math.round(wesBarley.rentPerAcre * wesBarley.acres * 100) / 100;
+  const wesFarmed = wesGroup
+    .filter(f => (f.cropType || '').toUpperCase().indexOf('DBL') < 0)
+    .reduce((s, f) => s + effAcres(f), 0);
+  const wesRate = Math.round((wesLump / wesFarmed) * 100) / 100;
+  wesGroup.forEach(f => { f.rentPerAcre = wesRate; });
+  console.log("Wes's: lump $" + wesLump + ' / ' + wesFarmed + ' farmed ac = $' + wesRate +
+    '/ac on ' + wesGroup.length + ' entries (rentBasis farmed)');
+}
 
 // --- Recompute denormalized dblSharedAcres (same logic as server.js) ---
 const sharedByPartner = {};
