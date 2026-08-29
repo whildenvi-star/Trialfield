@@ -326,9 +326,10 @@ header h1::before {
    MAIN CONTENT
    ============================================================ */
 main {
-  max-width: 1400px;
+  /* Fluid — fill the viewport; breathing room comes from padding alone */
+  max-width: none;
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1.5rem clamp(1.5rem, 2.5vw, 3rem);
 }
 
 .tab-content { display: none; }

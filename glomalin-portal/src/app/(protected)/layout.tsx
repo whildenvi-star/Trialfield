@@ -73,7 +73,8 @@ export default async function ProtectedLayout({
           <DeniedToast />
         </Suspense>
         <TransitionWrapper>
-          <main className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 py-6">
+          {/* Fluid width — margins come from padding only, no centered cap */}
+          <main className="w-full px-4 sm:px-6 lg:px-8 2xl:px-10 py-6">
             {children}
           </main>
         </TransitionWrapper>
