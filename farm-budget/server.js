@@ -433,8 +433,46 @@ app.post('/api/yield-from-grain', (req, res) => {
   res.json({ ok: true, count: summaries.length });
 });
 
+// Pull yield summaries directly from grain-tickets — self-heal after a restart,
+// since the push cache is in-memory and grain-tickets only pushes on ticket changes.
+const GRAIN_API_URL = process.env.GRAIN_API_URL || 'http://localhost:3007';
+
+async function pullGrainYields() {
+  const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
+  if (!token) return null;
+  try {
+    const cropYear = store.settings.year || new Date().getFullYear();
+    const r = await fetch(`${GRAIN_API_URL}/api/yield-summaries?cropYear=${cropYear}`, {
+      headers: { 'x-embed-token': token },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (!r.ok) return null;
+    const json = await r.json();
+    const map = {};
+    (json.summaries || []).forEach(s => {
+      if (s.registryFieldId && s.registryCropId) {
+        map[s.registryFieldId + '|' + s.registryCropId] = {
+          yieldPerAcre: s.yieldPerAcre,
+          totalNetBU: s.totalNetBU,
+          ticketCount: s.ticketCount,
+          cropName: s.cropName,
+          farmName: s.farmName,
+          cropYear: json.cropYear || cropYear,
+          syncedAt: new Date().toISOString()
+        };
+      }
+    });
+    _grainYields = { data: map, updatedAt: new Date().toISOString() };
+    return map;
+  } catch {
+    return null;
+  }
+}
+
 // GET /api/yield-from-grain — client fetches cached grain yield data for dashboard overlay
-app.get('/api/yield-from-grain', (req, res) => {
+// and inline card editing. Falls back to a live pull when the push cache is empty.
+app.get('/api/yield-from-grain', async (req, res) => {
+  if (!_grainYields.data) await pullGrainYields();
   res.json({ yields: _grainYields.data, updatedAt: _grainYields.updatedAt });
 });
 

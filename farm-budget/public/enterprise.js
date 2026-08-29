@@ -9,6 +9,8 @@
   var loadSerial = 0;
   var batchMode = false;
   var selectedFieldIds = new Set();
+  var grainYields = null;        // "registryFieldId|registryCropId" -> {yieldPerAcre, cropYear, ticketCount, ...}
+  var grainYieldsFetched = false;
 
   window.addEventListener('tab-activate', function (e) {
     if (e.detail.tab === 'enterprise') {
@@ -705,6 +707,13 @@
     isLoading = true;
     var serial = ++loadSerial;
     var savedScrollY = window.scrollY;
+    // Fetch grain-ticket yields once per session (non-blocking) for the inline Actual dropdown
+    if (!grainYieldsFetched) {
+      grainYieldsFetched = true;
+      api.get('/api/yield-from-grain').then(function (r) {
+        grainYields = (r && r.yields) || null;
+      }).catch(function () { grainYieldsFetched = false; });
+    }
     // Auto-sync acres & rent from farm registry, then load fields
     api.post('/api/fields/sync-registry', {}).then(function () {
       return api.get('/api/fields?enterpriseId=' + entId);
@@ -824,7 +833,7 @@
         (window.APP_ROLE !== 'operator' && window.APP_ROLE !== 'office' ? '<div class="metric"><span class="metric-label">Income/AC</span><span class="metric-value">' + util.formatMoney(b.cropIncomePerAcre) + '</span></div>' : '') +
         (window.APP_ROLE !== 'operator' && window.APP_ROLE !== 'office' ? '<div class="metric"><span class="metric-label">Profit/AC</span><span class="metric-value ' + profitColor + '">' + util.formatMoney(profitPerAcre) + '</span></div>' : '') +
         '<div class="metric"><span class="metric-label">Yield/AC</span><span class="metric-value metric-editable" data-edit="yield" data-field-id="' + f.id + '" title="Click to edit yield">' + util.formatNum(b.yieldPerAcre, 1) + ' ' + util.escHtml(b.yieldUnit || '') +
-          (f.yieldMode === 'actual' ? ' <span class="yield-mode-badge" title="Confirmed actual yield (FieldOps)">ACT</span>' : '') + '</span></div>' +
+          (f.yieldMode === 'actual' ? ' <span class="yield-mode-badge" title="Confirmed actual yield">ACT</span>' : '') + '</span></div>' +
         (window.APP_ROLE !== 'operator' && window.APP_ROLE !== 'office' ? '<div class="metric"><span class="metric-label">COP</span><span class="metric-value">' + util.formatMoney(b.cop) + '</span></div>' : '') +
       '</div>' +
       '<div class="field-card-footer">' +
@@ -850,17 +859,32 @@
     return matched.length ? matched : seeds;
   }
 
-  // FieldOps yield history entries whose crop matches this field (same match rule as calc.js)
+  // Actual yield candidates for a field: grain-ticket totals (current crop year,
+  // per registryFieldId+registryCropId) plus FieldOps yield history whose crop
+  // matches this field (same match rule as calc.js). Sorted newest season first.
   function actualYieldOptions(f) {
     var opts = [];
-    if (!f._fieldops || !f._fieldops.yieldHistory) return opts;
-    var fieldCrop = (f.crop || '').trim().toLowerCase();
-    f._fieldops.yieldHistory.forEach(function (yh) {
-      var yhCrop = (yh.crop || '').trim().toLowerCase();
-      var cropMatch = fieldCrop === yhCrop ||
-        fieldCrop.indexOf(yhCrop) !== -1 || yhCrop.indexOf(fieldCrop) !== -1;
-      if (cropMatch && yh.yieldPerAcre > 0) opts.push(yh);
-    });
+    if (grainYields && f.registryFieldId && f.registryCropId) {
+      var g = grainYields[f.registryFieldId + '|' + f.registryCropId];
+      if (g && g.yieldPerAcre > 0) {
+        opts.push({
+          yieldPerAcre: g.yieldPerAcre,
+          season: String(g.cropYear || ''),
+          crop: g.cropName || f.crop,
+          source: 'grain',
+          ticketCount: g.ticketCount
+        });
+      }
+    }
+    if (f._fieldops && f._fieldops.yieldHistory) {
+      var fieldCrop = (f.crop || '').trim().toLowerCase();
+      f._fieldops.yieldHistory.forEach(function (yh) {
+        var yhCrop = (yh.crop || '').trim().toLowerCase();
+        var cropMatch = fieldCrop === yhCrop ||
+          fieldCrop.indexOf(yhCrop) !== -1 || yhCrop.indexOf(fieldCrop) !== -1;
+        if (cropMatch && yh.yieldPerAcre > 0) opts.push(yh);
+      });
+    }
     opts.sort(function (a, b) { return String(b.season).localeCompare(String(a.season)); });
     return opts;
   }
@@ -923,16 +947,24 @@
     }
     html += '<input type="number" step="0.1" min="0" class="iy-input" value="' + projVal + '"' + (mode === 'actual' ? ' style="display:none"' : '') + '>';
     if (actuals.length) {
-      // Preselect: entry matching current value in actual mode, else most recent target-season entry
-      var selIdx = 0;
-      for (var i = 0; i < actuals.length; i++) {
-        if (mode === 'actual' && actuals[i].yieldPerAcre === f.yieldPerAcre) { selIdx = i; break; }
-        if (String(actuals[i].season) === targetSeason) { selIdx = i; if (mode !== 'actual') break; }
+      // Preselect: entry matching current value in actual mode, else grain tickets
+      // (loads-hauled source of truth), else most recent target-season entry
+      var selIdx = -1, i;
+      if (mode === 'actual') {
+        for (i = 0; i < actuals.length; i++) {
+          if (actuals[i].yieldPerAcre === f.yieldPerAcre) { selIdx = i; break; }
+        }
       }
+      if (selIdx < 0) for (i = 0; i < actuals.length; i++) if (actuals[i].source === 'grain') { selIdx = i; break; }
+      if (selIdx < 0) for (i = 0; i < actuals.length; i++) if (String(actuals[i].season) === targetSeason) { selIdx = i; break; }
+      if (selIdx < 0) selIdx = 0;
       html += '<select class="iy-actual-select"' + (mode === 'actual' ? '' : ' style="display:none"') + '>';
       actuals.forEach(function (yh, idx) {
+        var srcLabel = yh.source === 'grain'
+          ? ' (grain, ' + (yh.ticketCount || 0) + ' tk)'
+          : ' (FieldOps)';
         html += '<option value="' + yh.yieldPerAcre + '"' + (idx === selIdx ? ' selected' : '') + '>' +
-          util.formatNum(yh.yieldPerAcre, 1) + ' — ' + util.escHtml(String(yh.season)) + ' ' + util.escHtml(yh.crop || '') + '</option>';
+          util.formatNum(yh.yieldPerAcre, 1) + ' — ' + util.escHtml(String(yh.season)) + ' ' + util.escHtml(yh.crop || '') + srcLabel + '</option>';
       });
       html += '</select>';
     }
