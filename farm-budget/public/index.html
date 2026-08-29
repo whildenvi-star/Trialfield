@@ -8,14 +8,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="platform-tokens.css?v=3">
-  <link rel="stylesheet" href="style.css?v=20260828f">
+  <link rel="stylesheet" href="platform-tokens.css?v=4">
+  <link rel="stylesheet" href="style.css?v=20260829c">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
     // Apply saved theme before first paint to prevent flash
-    // Light is the default — dark only when explicitly chosen
-    (function(){var t=localStorage.getItem('mru-theme');if(t!=='dark')document.documentElement.classList.add('light-pending')})();
+    // Light is the default — dark only when explicitly chosen.
+    // Also restore text scale + weight before first paint (font restores in settings-panel.js).
+    (function(){var t=localStorage.getItem('mru-theme');if(t!=='dark')document.documentElement.classList.add('light-pending');
+      var s=localStorage.getItem('mru-text-scale');if(s)document.documentElement.style.setProperty('--text-scale',s);
+      var w=localStorage.getItem('mru-font-weight');if(w)document.documentElement.style.setProperty('--fw-base',w)})();
     if(window!==window.top)document.documentElement.classList.add('in-iframe');
     if(/[?&]view=reference\b/.test(location.search))document.documentElement.classList.add('solo-reference');
   </script>
@@ -1845,7 +1848,7 @@
     setInterval(checkAudit, 5 * 60 * 1000);
   })();
   </script>
-  <script src="settings-panel.js?v=20260828e"></script>
+  <script src="settings-panel.js?v=20260829b"></script>
   <script src="formatting-agent.js"></script>
   <script>
   (function () {

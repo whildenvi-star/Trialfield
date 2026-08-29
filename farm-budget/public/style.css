@@ -55,22 +55,24 @@ body.light ::selection {
 }
 
 /* Readability: raise the rem base — most small labels are hardcoded rems.
-   Weight 500 body: thicker strokes for older eyes on the mono face. */
-html { font-size: 18px; }
+   --text-scale (settings panel) scales BOTH the rem base and the px tokens,
+   so every label in the app follows the user's size choice.
+   --fw-base (settings panel) sets stroke weight; 500 default for older eyes. */
+html { font-size: calc(18px * var(--text-scale, 1)); }
 
 body {
   font-family: var(--font-body, var(--font-mono));
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
-  font-weight: 500;
+  font-weight: var(--fw-base, 500);
   font-size: var(--size-base, 14px);
   scrollbar-width: thin;
   scrollbar-color: var(--border-light) var(--bg);
 }
 
-/* Form controls and buttons inherit the thicker default weight */
-button, input, select, textarea { font-weight: 500; }
+/* Form controls and buttons inherit the user's chosen weight */
+button, input, select, textarea { font-weight: var(--fw-base, 500); }
 
 /* Webkit scrollbars */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
