@@ -218,6 +218,7 @@ if (process.env.EMBED_TOKEN) {
 // --- In-memory data store ---
 let store = {
   growers: [],
+  farms: [],
   fields: [],
   crops: []
 };
@@ -225,6 +226,40 @@ let store = {
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     store = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  }
+  migrateFarms();
+}
+
+// Two-lens hierarchy: Entity (grower) → Farm → Field, beside FSA
+// Farm# → Tract → CLU. Farms seeded 1:1 from fields (a farm can later be
+// subdivided by pointing several fields at one farmId). fsaFarmNumbers /
+// fsaTractNumbers roll up from clu_records once the CLU crosswalk is filled.
+function migrateFarms() {
+  if (!store.farms) store.farms = [];
+  const farmsById = {};
+  store.farms.forEach(fm => { farmsById[fm.id] = fm; });
+  let seeded = 0;
+  store.fields.forEach(f => {
+    if (f.farmId && farmsById[f.farmId]) return;
+    const suffix = (f.id || '').replace(/^fld_/, '');
+    const farmId = suffix ? 'farm_' + suffix : generateId('farm');
+    if (!farmsById[farmId]) {
+      const farm = {
+        id: farmId,
+        growerId: f.growerId || 'grw_001',
+        name: f.name,
+        fsaTractNumbers: [],
+        notes: ''
+      };
+      store.farms.push(farm);
+      farmsById[farmId] = farm;
+    }
+    f.farmId = farmId;
+    seeded++;
+  });
+  if (seeded > 0) {
+    console.log(`[migrate] seeded ${seeded} field→farm links (${store.farms.length} farms)`);
+    saveData();
   }
 }
 
@@ -301,6 +336,54 @@ app.put('/api/growers/:id', async (req, res) => {
   });
   await saveData();
   res.json(store.growers[idx]);
+});
+
+// --- Farms (Entity → Farm → Field; FSA tracts attach at this level) ---
+app.get('/api/farms', (req, res) => {
+  let farms = store.farms || [];
+  if (req.query.growerId) farms = farms.filter(fm => fm.growerId === req.query.growerId);
+  if (req.query.expand === 'fields') {
+    farms = farms.map(fm => Object.assign({}, fm, {
+      fields: store.fields.filter(f => f.farmId === fm.id).map(f => ({ id: f.id, name: f.name, reportingAcres: f.reportingAcres }))
+    }));
+  }
+  res.json(farms);
+});
+
+app.post('/api/farms', async (req, res) => {
+  if (!req.body.name || typeof req.body.name !== 'string' || !req.body.name.trim()) {
+    return res.status(400).json({ errors: [{ field: 'name', message: 'Farm name is required' }] });
+  }
+  const farm = Object.assign(
+    { id: generateId('farm'), growerId: 'grw_001', fsaTractNumbers: [], notes: '' },
+    req.body
+  );
+  store.farms.push(farm);
+  await saveData();
+  res.status(201).json(farm);
+});
+
+app.put('/api/farms/:id', async (req, res) => {
+  const idx = (store.farms || []).findIndex(fm => fm.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Farm not found' });
+  const updatable = ['name', 'growerId', 'fsaTractNumbers', 'notes'];
+  updatable.forEach(k => {
+    if (req.body[k] !== undefined) store.farms[idx][k] = req.body[k];
+  });
+  await saveData();
+  res.json(store.farms[idx]);
+});
+
+app.delete('/api/farms/:id', async (req, res) => {
+  const idx = (store.farms || []).findIndex(fm => fm.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Farm not found' });
+  const assigned = store.fields.filter(f => f.farmId === req.params.id);
+  if (assigned.length > 0) {
+    return res.status(400).json({ error: 'Farm has ' + assigned.length + ' field(s) assigned — reassign them first' });
+  }
+  store.farms.splice(idx, 1);
+  await saveData();
+  res.json({ ok: true });
 });
 
 // --- Fields ---
@@ -433,7 +516,7 @@ app.put('/api/fields/:id', async (req, res) => {
     'transitionalRented', 'transitionalOwned',
     'landlordName', 'landlordContact',
     'totalRentDollars',
-    'growerId'
+    'growerId', 'farmId'
   ];
   updatable.forEach(k => {
     if (req.body[k] !== undefined) store.fields[idx][k] = req.body[k];
