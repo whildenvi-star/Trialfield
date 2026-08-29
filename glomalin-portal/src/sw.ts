@@ -41,8 +41,11 @@ serwist.addEventListeners();
 // (those modules are not available in the SW bundle context). Instead, we use
 // the raw IndexedDB API directly here.
 
+// MUST match DB_VERSION in src/lib/offline/db.ts — the app and SW open the same
+// database, and IndexedDB throws VersionError if this is lower than the version
+// the app already migrated to (which silently killed Background Sync at v3/v4).
 const SW_DB_NAME = 'glomalin-offline'
-const SW_DB_VERSION = 3
+const SW_DB_VERSION = 4
 
 /** Open the offline IndexedDB directly using raw IDB API */
 function openOfflineDb(): Promise<IDBDatabase> {
@@ -68,6 +71,10 @@ function openOfflineDb(): Promise<IDBDatabase> {
       }
       if (oldVersion < 3) {
         db.createObjectStore('sync-config', { keyPath: 'key' })
+      }
+      if (oldVersion < 4) {
+        const conflictStore = db.createObjectStore('conflicts', { keyPath: 'id' })
+        conflictStore.createIndex('by-resolved', 'resolved')
       }
     }
   })

@@ -19,11 +19,12 @@ const MODULE_GROUPS: { label: string; ids: string[] }[] = [
 const MAIN_TABS = [
   { label: 'Home',         href: '/dashboard',          action: undefined,      icon: 'home'  as const },
   { label: 'Farm Info',    href: '/app/field-history',  action: undefined,      icon: 'field' as const },
-  { label: 'Field Passes', href: '/app/field-ops',      action: undefined,      icon: 'check' as const },
+  // The in-field tap-confirm logger (Phase 46), not the desktop TC sign-off log
+  { label: 'Field Passes', href: '/crop-plans',         action: undefined,      icon: 'check' as const },
   { label: 'More',         href: undefined,             action: 'more' as const, icon: 'grid'  as const },
 ]
 
-const MAIN_TAB_HREFS = new Set(['/dashboard', '/app/field-history', '/app/field-ops'])
+const MAIN_TAB_HREFS = new Set(['/dashboard', '/app/field-history', '/crop-plans'])
 
 // Inline SVG icons — 24x24, stroke-based, no fill, consistent with SideNav hamburger pattern
 function HomeIcon({ className }: { className?: string }) {

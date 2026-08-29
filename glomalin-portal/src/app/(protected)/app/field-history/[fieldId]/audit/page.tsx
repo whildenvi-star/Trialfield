@@ -18,6 +18,37 @@ interface TillageOp {
   description: string | null
   dataSource: string
   passStatus: string
+  plannedSource?: string | null
+  passNumber?: number | null
+  notes?: string | null
+  operator?: { name: string } | null
+}
+
+interface MaterialUsage {
+  id: string
+  applicationDate: string
+  rate: number
+  rateUnit: string
+  acres: number
+  actualRate?: number | null
+  actualTotalCost?: number | null
+  applicator?: string | null
+  confirmedDate?: string | null
+  confirmedBy?: string | null
+  dataSource: string
+  notes?: string | null
+  material: { name: string; nopStatus?: string | null; omriListed?: boolean | null }
+}
+
+interface SeedUsage {
+  id: string
+  plantingDate: string | null
+  rate: number
+  rateUnit: string
+  acres: number
+  dataSource: string
+  notes?: string | null
+  seedLot: { variety: string; brand?: string | null; isOrganic?: boolean | null; lotNumber?: string | null }
 }
 
 interface HarvestEvent {
@@ -51,6 +82,8 @@ interface Enterprise {
   notes: string | null
   enterpriseType: string
   fieldOperations: TillageOp[]
+  materialUsages?: MaterialUsage[]
+  seedUsages?: SeedUsage[]
   harvestEvents: HarvestEvent[]
   fertilityEvents: FertilityEvent[]
 }
@@ -101,12 +134,31 @@ function fertilityTypeLabel(type: string) {
   return map[type] ?? type
 }
 
+function provenanceLabel(dataSource: string, plannedSource?: string | null): string {
+  if (dataSource === 'IMPORTED') return 'Imported'
+  if (plannedSource === 'mobile-logger') return 'Mobile logger'
+  if (plannedSource === 'field-ops-tc') return 'TC log'
+  if (plannedSource === 'budget-import') return 'Farm budget'
+  if (dataSource === 'SYNCED') return 'Farm budget'
+  return 'Manual'
+}
+
+/** Extract the invoice provenance segment sync-macro embeds in notes. */
+function invoiceFromNotes(notes: string | null | undefined): string | null {
+  if (!notes) return null
+  const match = notes.match(/Inv #[^—]*/)
+  return match ? match[0].trim() : null
+}
+
 export default function AuditPage() {
   const { fieldId } = useParams<{ fieldId: string }>()
   const [field, setField] = useState<FieldDetail | null>(null)
   const [aphRecords, setAphRecords] = useState<AphRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // NOP inspections review a 36-month window by default
+  const [threeYearWindow, setThreeYearWindow] = useState(true)
+  const [confirmedOnly, setConfirmedOnly] = useState(false)
 
   useEffect(() => {
     if (!fieldId) return
@@ -137,7 +189,10 @@ export default function AuditPage() {
     )
   }
 
-  const enterprises = [...field.enterprises].sort((a, b) => b.cropYear - a.cropYear)
+  const latestYear = field.enterprises.reduce((max, e) => Math.max(max, e.cropYear), 0)
+  const enterprises = [...field.enterprises]
+    .filter(e => !threeYearWindow || e.cropYear > latestYear - 3)
+    .sort((a, b) => b.cropYear - a.cropYear)
 
   return (
     <div className="min-h-screen">
@@ -152,6 +207,24 @@ export default function AuditPage() {
         <span className="text-xs text-glomalin-muted flex-1">
           Organic Audit Record — {field.name}
         </span>
+        <label className="text-xs text-glomalin-muted flex items-center gap-1.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={threeYearWindow}
+            onChange={e => setThreeYearWindow(e.target.checked)}
+            className="accent-current"
+          />
+          3-year window
+        </label>
+        <label className="text-xs text-glomalin-muted flex items-center gap-1.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={confirmedOnly}
+            onChange={e => setConfirmedOnly(e.target.checked)}
+            className="accent-current"
+          />
+          Confirmed only
+        </label>
         <Link
           href={`/app/field-timeline?field=${fieldId}`}
           className="text-xs text-glomalin-muted hover:text-glomalin-accent transition-colors"
@@ -211,6 +284,13 @@ export default function AuditPage() {
             acc[f.type].push(f)
             return acc
           }, {})
+          const fieldOperations = ent.fieldOperations.filter(
+            op => !confirmedOnly || op.passStatus === 'CONFIRMED'
+          )
+          const materialUsages = (ent.materialUsages ?? []).filter(
+            mu => !confirmedOnly || mu.dataSource !== 'SYNCED' || mu.confirmedDate != null || mu.applicator != null
+          )
+          const seedUsages = ent.seedUsages ?? []
 
           return (
             <section key={ent.id} className="mb-10 pb-10 border-b border-gray-200 last:border-0 print:break-inside-avoid">
@@ -231,7 +311,7 @@ export default function AuditPage() {
               </div>
 
               {/* Seed / planting info */}
-              {(ent.notes || ent.lotNumber || ent.label) && (
+              {(ent.notes || ent.lotNumber || ent.label || seedUsages.length > 0) && (
                 <div className="mb-4 pl-3 border-l-2 border-gray-200 space-y-0.5">
                   {ent.label && (
                     <div className="text-sm text-gray-700">
@@ -243,6 +323,17 @@ export default function AuditPage() {
                       <span className="text-xs text-gray-400 mr-2">Seed lot #:</span>{ent.lotNumber}
                     </div>
                   )}
+                  {seedUsages.map(su => (
+                    <div key={su.id} className="text-sm text-gray-700">
+                      <span className="text-xs text-gray-400 mr-2">Seed:</span>
+                      {su.seedLot.variety}
+                      {su.seedLot.brand ? ` (${su.seedLot.brand})` : ''}
+                      {` · ${su.rate} ${su.rateUnit}`}
+                      {su.plantingDate ? ` · planted ${fmtDate(su.plantingDate)}` : ''}
+                      {su.seedLot.isOrganic ? ' · organic seed' : ''}
+                      {su.seedLot.lotNumber ? ` · lot ${su.seedLot.lotNumber}` : ''}
+                    </div>
+                  ))}
                   {ent.notes && (
                     <div className="text-sm text-gray-600 whitespace-pre-wrap pt-0.5">{ent.notes}</div>
                   )}
@@ -250,7 +341,7 @@ export default function AuditPage() {
               )}
 
               {/* Field Operations */}
-              {ent.fieldOperations.length > 0 && (
+              {fieldOperations.length > 0 && (
                 <div className="mb-5">
                   <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
                     Field Operations
@@ -258,25 +349,85 @@ export default function AuditPage() {
                   <table className="w-full text-sm border-collapse">
                     <thead>
                       <tr className="border-b border-gray-200 text-left">
-                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-32">Date</th>
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-28">Date</th>
                         <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-24">Type</th>
                         <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-24">Status</th>
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-28">Operator</th>
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-28">Source</th>
                         <th className="py-1.5 text-xs font-medium text-gray-400">Description / Notes</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {ent.fieldOperations.map((op, i) => (
+                      {fieldOperations.map((op, i) => (
                         <tr key={op.id} className={i % 2 === 1 ? 'bg-gray-50' : ''}>
                           <td className="py-1.5 pr-4 text-gray-500 text-xs">{fmtDate(op.operationDate)}</td>
                           <td className="py-1.5 pr-4 text-xs text-gray-500 capitalize">
                             {op.type?.toLowerCase().replace('_', ' ') ?? '—'}
                           </td>
-                          <td className="py-1.5 pr-4 text-xs text-gray-500 capitalize">
-                            {op.passStatus?.toLowerCase().replace('_', ' ')}
+                          <td className="py-1.5 pr-4 text-xs capitalize">
+                            <span className={op.passStatus === 'CONFIRMED' ? 'text-green-700 font-medium' : 'text-gray-400'}>
+                              {op.passStatus?.toLowerCase().replace('_', ' ')}
+                            </span>
                           </td>
-                          <td className="py-1.5 text-gray-800">{op.description ?? '—'}</td>
+                          <td className="py-1.5 pr-4 text-xs text-gray-500">{op.operator?.name ?? '—'}</td>
+                          <td className="py-1.5 pr-4 text-xs text-gray-500">
+                            {provenanceLabel(op.dataSource, op.plannedSource)}
+                          </td>
+                          <td className="py-1.5 text-gray-800">
+                            {op.description ?? '—'}
+                            {op.passNumber && op.passNumber > 1 ? ` (pass ${op.passNumber})` : ''}
+                          </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Material Applications — as applied, with invoice evidence */}
+              {materialUsages.length > 0 && (
+                <div className="mb-5">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
+                    Material Applications
+                  </div>
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-left">
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-28">Date</th>
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400">Material</th>
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-24">NOP Status</th>
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-28">Rate</th>
+                        <th className="py-1.5 pr-4 text-xs font-medium text-gray-400 w-28">Applied By</th>
+                        <th className="py-1.5 text-xs font-medium text-gray-400 w-44">Invoice</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {materialUsages.map((mu, i) => {
+                        const confirmed = mu.dataSource !== 'SYNCED' || mu.confirmedDate != null || mu.applicator != null
+                        const invoice = invoiceFromNotes(mu.notes)
+                        return (
+                          <tr key={mu.id} className={i % 2 === 1 ? 'bg-gray-50' : ''}>
+                            <td className="py-1.5 pr-4 text-gray-500 text-xs">
+                              {fmtDate(mu.confirmedDate ?? mu.applicationDate)}
+                              {!confirmed && <span className="text-gray-400"> (planned)</span>}
+                            </td>
+                            <td className="py-1.5 pr-4 text-gray-800">
+                              {mu.material.name}
+                              {mu.material.omriListed ? <span className="text-xs text-gray-400"> · OMRI</span> : null}
+                            </td>
+                            <td className="py-1.5 pr-4 text-xs text-gray-500 capitalize">
+                              {mu.material.nopStatus?.toLowerCase() ?? '—'}
+                            </td>
+                            <td className="py-1.5 pr-4 text-xs text-gray-600">
+                              {(mu.actualRate ?? mu.rate)} {mu.rateUnit}
+                            </td>
+                            <td className="py-1.5 pr-4 text-xs text-gray-500">
+                              {mu.applicator ?? mu.confirmedBy ?? '—'}
+                            </td>
+                            <td className="py-1.5 text-xs text-gray-500">{invoice ?? '—'}</td>
+                          </tr>
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -359,7 +510,8 @@ export default function AuditPage() {
                 </div>
               )}
 
-              {ent.fieldOperations.length === 0 &&
+              {fieldOperations.length === 0 &&
+               materialUsages.length === 0 &&
                Object.keys(fertilityByType).length === 0 &&
                ent.harvestEvents.length === 0 && (
                 <p className="text-sm text-gray-400 italic">No field activity on record for this year.</p>

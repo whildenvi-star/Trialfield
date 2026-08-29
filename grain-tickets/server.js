@@ -399,6 +399,8 @@ function dbFarmToJson(dbFarm) {
   return {
     id: dbFarm.id,
     farm: dbFarm.name,
+    name: dbFarm.name,               // alias — consumers like the portal timeline match on `name`
+    registryId: dbFarm.registryId || null, // farm-registry field id for cross-module joins
     crop: dbFarm.crop || '',
     acres: dbFarm.acres,
     unit: dbFarm.unit,

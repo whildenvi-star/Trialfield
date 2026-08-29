@@ -1,6 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import {
+  buildSeasonRail,
+  type RailItem,
+  type RailFieldOp,
+  type RailMaterialUsage,
+  type RailSeedUsage,
+  type RailFertilityEvent,
+  type RailHarvestEvent,
+} from '@/lib/field-history/season-rail'
+import type { Stage } from '@/lib/field-history/stage-classifier'
 
 export interface AphRecord {
   crop: string
@@ -9,33 +19,9 @@ export interface AphRecord {
   is_disaster_year: boolean
 }
 
-export interface FieldOp {
-  id: string
-  type: string
-  operationDate: string | null
-  description: string | null
-  dataSource: string
-  passStatus: string
-}
-
-export interface HarvestEvent {
-  id: string
-  harvestDate: string
-  yieldPerAcre: number | null
-  yieldUnit: string | null
-  acresHarvested: number
-  dataSource: string
-  notes: string | null
-}
-
-export interface FertilityEvent {
-  id: string
-  type: string
-  applicationDate: string
-  quantity: number
-  quantityUnit: string
-  notes: string | null
-}
+export type FieldOp = RailFieldOp
+export type HarvestEvent = RailHarvestEvent
+export type FertilityEvent = RailFertilityEvent
 
 export interface Enterprise {
   id: string
@@ -48,9 +34,11 @@ export interface Enterprise {
   lotNumber: string | null
   notes: string | null
   enterpriseType: string
-  fieldOperations: FieldOp[]
-  harvestEvents: HarvestEvent[]
-  fertilityEvents: FertilityEvent[]
+  fieldOperations: RailFieldOp[]
+  materialUsages?: RailMaterialUsage[]
+  seedUsages?: RailSeedUsage[]
+  harvestEvents: RailHarvestEvent[]
+  fertilityEvents: RailFertilityEvent[]
 }
 
 function todayIso() {
@@ -64,21 +52,49 @@ function formatDate(dateStr: string | null) {
   } catch { return dateStr }
 }
 
-function fertilityLabel(type: string) {
-  const map: Record<string, string> = {
-    MANURE: 'manure/compost', COMPOST: 'compost', GREEN_MANURE: 'green manure',
-    MINERAL: 'minerals', FOLIAR: 'foliar', PELLET: 'pellets', INOCULANT: 'inoculant', OTHER: 'other',
-  }
-  return map[type] ?? type.toLowerCase()
+const STAGE_BADGE_CLASS: Record<Stage, string> = {
+  Tillage: 'text-orange-300/80 border-orange-800/40',
+  Fertility: 'text-lime-300/80 border-lime-800/40',
+  Planting: 'text-green-300/80 border-green-800/40',
+  'Pre-emerge': 'text-cyan-300/80 border-cyan-800/40',
+  'Post-emerge': 'text-sky-300/80 border-sky-800/40',
+  Fungicide: 'text-purple-300/80 border-purple-800/40',
+  Harvest: 'text-yellow-300/80 border-yellow-800/40',
+  Other: 'text-glomalin-muted border-glomalin-border',
 }
 
-function opTypeLabel(type: string) {
-  const map: Record<string, string> = {
-    TILLAGE: 'tillage', PLANTING: 'planting', CULTIVATION: 'cultivation',
-    HARVEST: 'harvest', SPRAYING: 'spraying', MOWING: 'mowing',
-    IRRIGATION: 'irrigation', FLAMING: 'flaming', OTHER: 'other',
-  }
-  return map[type] ?? type.toLowerCase()
+function RailRow({ item, dimmed }: { item: RailItem; dimmed?: boolean }) {
+  return (
+    <div className={`flex items-baseline gap-2 text-xs ${dimmed ? 'opacity-50' : ''}`}>
+      <span className={`shrink-0 ${item.confirmed ? 'text-glomalin-accent' : 'text-glomalin-muted'}`}>
+        {item.confirmed ? '●' : '○'}
+      </span>
+      <span className="text-glomalin-muted w-16 shrink-0 tabular-nums">
+        {item.date ? formatDate(item.date)?.replace(/, \d{4}$/, '') : dimmed ? 'planned' : '—'}
+      </span>
+      <span
+        className={`text-[9px] uppercase tracking-wide px-1.5 py-px rounded border shrink-0 w-24 text-center ${STAGE_BADGE_CLASS[item.stage]}`}
+      >
+        {item.stage}
+      </span>
+      <span className="text-glomalin-text/85 min-w-0">
+        {item.text}
+        {item.detail && <span className="text-glomalin-muted"> · {item.detail}</span>}
+        {item.by && <span className="text-glomalin-muted"> — {item.by}</span>}
+      </span>
+      {item.invoice && (
+        <span
+          title={item.notes ?? item.invoice}
+          className="text-[9px] px-1.5 py-px rounded border bg-glomalin-bg text-amber-300/80 border-amber-800/40 shrink-0"
+        >
+          🧾 {item.invoice.split(',')[0]}
+        </span>
+      )}
+      <span className="text-[9px] px-1.5 py-px rounded border bg-glomalin-bg text-glomalin-muted border-glomalin-border shrink-0 ml-auto">
+        {item.provenance}
+      </span>
+    </div>
+  )
 }
 
 const INPUT_TYPES = [
@@ -130,11 +146,14 @@ export function YearCard({ ent, aphRecords }: { ent: Enterprise; aphRecords: Aph
     r => r.crop_year === ent.cropYear && r.crop.toLowerCase() === ent.crop.toLowerCase()
   )
 
-  const fertilityByType = localFertility.reduce<Record<string, FertilityEvent[]>>((acc, f) => {
-    if (!acc[f.type]) acc[f.type] = []
-    acc[f.type].push(f)
-    return acc
-  }, {})
+  const rail = buildSeasonRail({
+    fieldOperations: ent.fieldOperations,
+    materialUsages: ent.materialUsages ?? [],
+    seedUsages: ent.seedUsages ?? [],
+    fertilityEvents: localFertility,
+    harvestEvents: localHarvest,
+  })
+  const confirmedOpCount = ent.fieldOperations.filter(o => o.passStatus === 'CONFIRMED').length
 
   async function submitInput(e: React.FormEvent) {
     e.preventDefault()
@@ -231,7 +250,7 @@ export function YearCard({ ent, aphRecords }: { ent: Enterprise; aphRecords: Aph
               </span>
             )}
             <span className="text-xs text-glomalin-muted">
-              {ent.fieldOperations.length} operation{ent.fieldOperations.length !== 1 ? 's' : ''}
+              {confirmedOpCount} of {ent.fieldOperations.length} passes confirmed
             </span>
           </div>
         </div>
@@ -253,24 +272,28 @@ export function YearCard({ ent, aphRecords }: { ent: Enterprise; aphRecords: Aph
             </div>
           )}
 
-          {/* Harvest */}
+          {/* Season progression rail — chronological, confirmed-as-applied */}
           <div>
-            <div className="text-[10px] text-glomalin-muted uppercase tracking-wider mb-1.5">harvest</div>
-            {localHarvest.length > 0 && (
-              <div className="space-y-1 mb-2">
-                {localHarvest.map(h => (
-                  <div key={h.id} className="flex items-start gap-2 text-xs">
-                    <span className="text-glomalin-muted w-24 shrink-0">{h.harvestDate ? formatDate(h.harvestDate) : 'date unknown'}</span>
-                    <span className="text-glomalin-text/80">
-                      {h.yieldPerAcre != null ? `${h.yieldPerAcre.toFixed(2)} ${h.yieldUnit ?? 'unit'}/ac` : h.notes ?? '—'}
-                    </span>
-                    {h.notes && h.yieldPerAcre != null && (
-                      <span className="text-glomalin-muted truncate max-w-xs">{h.notes}</span>
-                    )}
-                  </div>
-                ))}
+            <div className="text-[10px] text-glomalin-muted uppercase tracking-wider mb-1.5">season progression</div>
+            {rail.confirmed.length > 0 ? (
+              <div className="space-y-1">
+                {rail.confirmed.map(item => <RailRow key={item.id} item={item} />)}
+              </div>
+            ) : (
+              <div className="text-xs text-glomalin-muted italic">No confirmed activity on record</div>
+            )}
+            {rail.planned.length > 0 && (
+              <div className="mt-2 pt-2 border-t border-dashed border-glomalin-border">
+                <div className="text-[10px] text-glomalin-muted mb-1">planned / not yet confirmed</div>
+                <div className="space-y-1">
+                  {rail.planned.map(item => <RailRow key={item.id} item={item} dimmed />)}
+                </div>
               </div>
             )}
+          </div>
+
+          {/* Harvest entry */}
+          <div>
             {!showHarvestForm ? (
               <button
                 onClick={() => setShowHarvestForm(true)}
@@ -318,42 +341,8 @@ export function YearCard({ ent, aphRecords }: { ent: Enterprise; aphRecords: Aph
             )}
           </div>
 
-          {/* Field operations */}
-          {ent.fieldOperations.length > 0 && (
-            <div>
-              <div className="text-[10px] text-glomalin-muted uppercase tracking-wider mb-1.5">field operations</div>
-              <div className="space-y-0.5">
-                {ent.fieldOperations.map((op, i) => (
-                  <div key={op.id} className="flex items-start gap-2 text-xs">
-                    <span className="text-glomalin-muted shrink-0 w-5">{i + 1}.</span>
-                    {op.operationDate && (
-                      <span className="text-glomalin-muted w-24 shrink-0">{formatDate(op.operationDate)}</span>
-                    )}
-                    <span className="text-[10px] text-glomalin-accent/60 w-16 shrink-0">{opTypeLabel(op.type)}</span>
-                    <span className="text-glomalin-text/80">{op.description ?? 'pass'}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Fertility & inputs */}
+          {/* Input entry */}
           <div>
-            <div className="text-[10px] text-glomalin-muted uppercase tracking-wider mb-1.5">fertility &amp; inputs</div>
-            {Object.keys(fertilityByType).length > 0 && (
-              <div className="space-y-2 mb-2">
-                {Object.entries(fertilityByType).map(([type, events]) => (
-                  <div key={type}>
-                    <div className="text-[10px] text-glomalin-muted mb-0.5 pl-1 border-l border-glomalin-border">{fertilityLabel(type)}</div>
-                    {events.map(e => (
-                      <div key={e.id} className="text-xs text-glomalin-text/70 pl-3">
-                        {e.notes ?? (e.quantityUnit !== 'imported' ? `${e.quantity} ${e.quantityUnit}` : '—')}
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
             {!showInputForm ? (
               <button
                 onClick={() => setShowInputForm(true)}

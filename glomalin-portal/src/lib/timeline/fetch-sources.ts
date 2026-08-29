@@ -10,7 +10,7 @@ import {
   fetchCertService,
   fetchGrainService,
 } from '@/app/api/mobile/_lib/proxy'
-import { resolveFieldEnterpriseId } from '@/app/api/mobile/_lib/cert-bridge'
+import { resolveFieldEnterpriseIds } from '@/app/api/mobile/_lib/cert-bridge'
 import { createClient } from '@/lib/supabase/server'
 import type { TimelineEntry, TimelineSource } from './types'
 
@@ -45,48 +45,65 @@ export async function fetchBudgetActivities(
 
   const entries: TimelineEntry[] = []
 
-  // Machinery passes → planned pass entries
+  // Machinery passes — confirmed entries carry their real as-applied date,
+  // unconfirmed entries stay undated/planned and sort to the bottom.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const machinery: any[] = Array.isArray(field.machinery) ? field.machinery : []
   for (const m of machinery) {
+    if (m.passStatus === 'disregarded') continue
     const id = m.id ?? `budget-pass-${crypto.randomUUID()}`
+    const confirmed = m.passStatus === 'confirmed'
+    const date: string | null = confirmed && m.confirmedDate ? m.confirmedDate : null
+    const bySuffix = confirmed && m.confirmedBy ? ` — ${m.confirmedBy}` : ''
     entries.push({
       id,
       source: 'budget',
-      date: null,
-      sortDate: '9999-12-31',
+      date,
+      sortDate: date ?? '9999-12-31',
       activityType: m.implementName ?? 'Field Pass',
-      summary: `[Budget] ${m.implementName ?? 'Field Pass'}`,
+      summary: `[Budget] ${m.implementName ?? 'Field Pass'}${bySuffix}`,
       detail: {
         implementName: m.implementName,
         acres: field.plantedAcres ?? field.acres,
+        confirmedBy: m.confirmedBy ?? null,
+        statusNote: m.statusNote ?? null,
       },
-      status: 'planned',
+      status: confirmed ? 'confirmed' : 'planned',
       pairedWith: null,
       sourceLink: null,
     })
   }
 
-  // Input applications → separate planned entries with date null
+  // Input applications — same treatment, plus invoice evidence for the audit view
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const inputs: any[] = Array.isArray(field.inputs) ? field.inputs : []
   for (const inp of inputs) {
     if (!inp.productName) continue
+    const confirmed = inp.passStatus === 'confirmed'
+    const date: string | null = confirmed && inp.confirmedDate ? inp.confirmedDate : null
     const rateStr = inp.quantity ? ` ${inp.quantity} ${inp.unit ?? 'per acre'}` : ''
+    const bySuffix = confirmed && inp.confirmedBy ? ` — ${inp.confirmedBy}` : ''
     entries.push({
       id: inp.id ?? `budget-input-${crypto.randomUUID()}`,
       source: 'budget',
-      date: null,
-      sortDate: '9999-12-31',
+      date,
+      sortDate: date ?? '9999-12-31',
       activityType: 'Input Application',
-      summary: `[Budget] ${inp.productName}${rateStr}`,
+      summary: `[Budget] ${inp.productName}${rateStr}${bySuffix}`,
       detail: {
         productName: inp.productName,
         quantity: inp.quantity,
         unit: inp.unit,
         acres: field.plantedAcres ?? field.acres,
+        confirmedBy: inp.confirmedBy ?? null,
+        actualQuantity: inp.actualQuantity ?? null,
+        statusNote: inp.statusNote ?? null,
+        invoiceNumber: inp.invoiceNumber ?? null,
+        invoiceVendor: inp.invoiceVendor ?? null,
+        invoiceDate: inp.invoiceDate ?? null,
+        invoiceCostTotal: inp.invoiceCostTotal ?? null,
       },
-      status: 'planned',
+      status: confirmed ? 'confirmed' : 'planned',
       pairedWith: null,
       sourceLink: null,
     })
@@ -108,28 +125,32 @@ export async function fetchBudgetActivities(
 export async function fetchCertActivities(
   registryFieldId: string
 ): Promise<TimelineEntry[]> {
-  const fieldEnterpriseId = await resolveFieldEnterpriseId(registryFieldId)
-
-  const res = await fetchCertService(`/api/field-enterprises/${fieldEnterpriseId}`)
-  if (!res.ok) {
-    throw new Error(`organic-cert field-enterprise unavailable: ${res.status}`)
+  // Split fields have one enterprise per crop — the timeline shows them all.
+  const fieldEnterpriseIds = await resolveFieldEnterpriseIds(registryFieldId)
+  if (fieldEnterpriseIds.length === 0) {
+    throw new Error(`No organic-cert enterprise found for registry field ${registryFieldId}`)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const enterprise: any = await res.json()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ops: any[] = Array.isArray(enterprise.fieldOperations)
-    ? enterprise.fieldOperations
-    : []
+  const entries: TimelineEntry[] = []
+  for (const fieldEnterpriseId of fieldEnterpriseIds) {
+    const res = await fetchCertService(`/api/field-enterprises/${fieldEnterpriseId}`)
+    if (!res.ok) {
+      throw new Error(`organic-cert field-enterprise unavailable: ${res.status}`)
+    }
 
-  return ops.map(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (op: any): TimelineEntry => {
+    const enterprise: any = await res.json()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ops: any[] = Array.isArray(enterprise.fieldOperations)
+      ? enterprise.fieldOperations
+      : []
+
+    for (const op of ops) {
       const rawDate: string | null = op.operationDate
         ? new Date(op.operationDate).toISOString().split('T')[0]
         : null
       const operatorStr = op.operator?.name ? ` — ${op.operator.name}` : ''
-      return {
+      entries.push({
         id: `cert-${op.id}`,
         source: 'cert',
         date: rawDate,
@@ -143,13 +164,17 @@ export async function fetchCertActivities(
           passStatus: op.passStatus ?? null,
           description: op.description ?? null,
           costPerAcre: op.costPerAcre ?? null,
+          crop: enterprise.crop ?? null,
+          enterpriseLabel: enterprise.label ?? null,
         },
-        status: 'confirmed',
+        status: op.passStatus === 'PLANNED' ? 'planned' : 'confirmed',
         pairedWith: op.budgetImplementId ?? null,
         sourceLink: '/app/org-cert',
-      }
+      })
     }
-  )
+  }
+
+  return entries
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -166,10 +191,13 @@ export async function fetchCertActivities(
 export async function fetchFieldOpsActivities(
   registryFieldId: string
 ): Promise<TimelineEntry[]> {
-  // Step 1: Resolve to organic-cert field enterprise to find the cert field ID
+  // Step 1: Resolve to an organic-cert field enterprise to find the cert field ID
+  // (any enterprise works — they all share the same cert field)
   let fieldEnterpriseId: string
   try {
-    fieldEnterpriseId = await resolveFieldEnterpriseId(registryFieldId)
+    const ids = await resolveFieldEnterpriseIds(registryFieldId)
+    if (ids.length === 0) return []
+    fieldEnterpriseId = ids[0]
   } catch {
     // If the field has no cert enterprise, it has no FieldOps data either
     return []
@@ -447,7 +475,7 @@ export function mergeTimeline(
   sources: PromiseSettledResult<TimelineEntry[]>[],
   sourceNames: TimelineSource[]
 ): { entries: TimelineEntry[]; warnings: string[] } {
-  const allEntries: TimelineEntry[] = []
+  let allEntries: TimelineEntry[] = []
   const warnings: string[] = []
 
   for (let i = 0; i < sources.length; i++) {
@@ -460,6 +488,37 @@ export function mergeTimeline(
     }
   }
 
+  // Collapse budget↔cert pairs into a single row: a cert entry whose
+  // budgetImplementId (pairedWith) matches a budget machinery entry IS that
+  // budget pass, confirmed — showing both would double-count the operation.
+  // The cert row wins (it carries date/operator); it keeps a budget provenance
+  // marker via pairedWith and inherits the implement name for display.
+  const budgetById = new Map<string, TimelineEntry>()
+  for (const entry of allEntries) {
+    if (entry.source === 'budget') {
+      budgetById.set(entry.id, entry)
+    }
+  }
+
+  const consumedBudgetIds = new Set<string>()
+  for (const entry of allEntries) {
+    if (entry.source !== 'cert' || !entry.pairedWith) continue
+    const budgetEntry = budgetById.get(entry.pairedWith)
+    if (!budgetEntry) continue
+    consumedBudgetIds.add(budgetEntry.id)
+    const implementName = budgetEntry.detail['implementName']
+    if (implementName && !entry.detail['implementName']) {
+      entry.detail['implementName'] = implementName
+      entry.summary = `[Organic Cert] ${implementName}${
+        entry.detail['operator'] ? ` — ${entry.detail['operator']}` : ''
+      }`
+    }
+  }
+
+  allEntries = allEntries.filter(
+    (e) => !(e.source === 'budget' && consumedBudgetIds.has(e.id))
+  )
+
   // Sort by sortDate ascending, then by source priority for same date
   allEntries.sort((a, b) => {
     if (a.sortDate < b.sortDate) return -1
@@ -469,26 +528,6 @@ export function mergeTimeline(
     const bPriority = SOURCE_PRIORITY.indexOf(b.source)
     return aPriority - bPriority
   })
-
-  // Pair budget entries with matching cert entries:
-  // For each cert entry that has a pairedWith ID, find the budget entry with that ID
-  // and set the budget entry's pairedWith to point back to the cert entry.
-  const certEntries = allEntries.filter((e) => e.source === 'cert' && e.pairedWith)
-  const budgetById = new Map<string, TimelineEntry>()
-  for (const entry of allEntries) {
-    if (entry.source === 'budget') {
-      budgetById.set(entry.id, entry)
-    }
-  }
-
-  for (const certEntry of certEntries) {
-    if (certEntry.pairedWith) {
-      const budgetEntry = budgetById.get(certEntry.pairedWith)
-      if (budgetEntry) {
-        budgetEntry.pairedWith = certEntry.id
-      }
-    }
-  }
 
   return { entries: allEntries, warnings }
 }

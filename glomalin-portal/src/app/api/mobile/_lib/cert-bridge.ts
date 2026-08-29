@@ -136,3 +136,41 @@ export async function resolveFieldEnterpriseId(
 
   return matching[0].id
 }
+
+/**
+ * Resolve ALL organic-cert fieldEnterpriseIds for a registry field in the given
+ * crop year (defaults to current). Read paths like the field timeline want every
+ * enterprise on a split field, not a single disambiguated one — writes should
+ * keep using resolveFieldEnterpriseId.
+ *
+ * Returns [] when the field or year has no enterprises; throws only when
+ * organic-cert itself is unreachable.
+ */
+export async function resolveFieldEnterpriseIds(
+  registryFieldId: string,
+  cropYear?: number
+): Promise<string[]> {
+  const year = cropYear ?? new Date().getFullYear()
+
+  const fieldsRes = await fetchCertService('/api/fields')
+  if (!fieldsRes.ok) {
+    throw new Error(`organic-cert fields unavailable: ${fieldsRes.status}`)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const fields: any[] = await fieldsRes.json()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const certField = fields.find((f: any) => f.registryId === registryFieldId)
+  if (!certField) return []
+
+  const enterprisesRes = await fetchCertService(`/api/field-enterprises`)
+  if (!enterprisesRes.ok) {
+    throw new Error(`organic-cert field-enterprises unavailable: ${enterprisesRes.status}`)
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const allEnterprises: any[] = await enterprisesRes.json()
+  return allEnterprises
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .filter((e: any) => e.fieldId === certField.id && e.cropYear === year)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .map((e: any) => e.id)
+}
