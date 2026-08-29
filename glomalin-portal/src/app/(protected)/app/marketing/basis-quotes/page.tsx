@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getMarketingAuthContext } from '@/lib/supabase/marketing-guard-rsc'
 import { fetchCertServiceWithAuth } from '@/app/api/mobile/_lib/proxy'
 import { BasisQuoteListClient } from '@/components/marketing/basis-quote-list'
+import { ProjectedBasisEditor } from '@/components/marketing/projected-basis-editor'
 
 export default async function BasisQuotesPage() {
   const ctx = await getMarketingAuthContext()
@@ -17,5 +18,10 @@ export default async function BasisQuotesPage() {
   const quotes = quotesRes.ok ? await quotesRes.json() : []
   const variants = variantsRes.ok ? await variantsRes.json() : []
 
-  return <BasisQuoteListClient quotes={quotes} variants={variants} />
+  return (
+    <>
+      <ProjectedBasisEditor variants={variants} />
+      <BasisQuoteListClient quotes={quotes} variants={variants} />
+    </>
+  )
 }

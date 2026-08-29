@@ -11,6 +11,8 @@ export interface RawGrainVariant {
   id: string
   name: string
   cropYear?: number
+  /** planning placeholder basis, signed $/bu — WAP fallback for open basis legs */
+  projectedBasis?: number | null
   commodity?: {
     name: string
     symbol: string | null  // "C" = corn, "S" = soy, "W" = wheat, null for non-exchange
@@ -156,12 +158,20 @@ interface CommodityGroup {
   variantNameById: Map<string, string>
 }
 
-// Effective sale price in cents — mirrors computePosition's WAP rules.
+// Effective sale price in cents — mirrors computePosition's WAP rules,
+// including the projected-basis placeholder for open basis legs.
 // Contract prices are stored in $/bu; converted to integer cents here.
-function effectivePriceCents(c: GrainContractForPosition): number | null {
+function effectivePriceCents(
+  c: GrainContractForPosition,
+  projectedBasisByVariantId?: Map<string, number>
+): number | null {
   if (!isPricedContract(c)) return null
   if (c.finalCashPrice != null) return Math.round(c.finalCashPrice * 100)
-  if (c.futuresPrice != null) return Math.round((c.futuresPrice + (c.basis ?? 0)) * 100)
+  if (c.futuresPrice != null) {
+    const fallbackBasis =
+      (c.variant?.id != null ? projectedBasisByVariantId?.get(c.variant.id) : undefined) ?? 0
+    return Math.round((c.futuresPrice + (c.basis ?? fallbackBasis)) * 100)
+  }
   return null
 }
 
@@ -221,10 +231,20 @@ const CROP_NAME_TO_SYMBOL: Record<string, string> = {
   wheat: 'W',
 }
 
+/** Build the WAP fallback map (variantId → projected basis $/bu) from variant meta. */
+export function projectedBasisMap(variants: RawGrainVariant[]): Map<string, number> {
+  const m = new Map<string, number>()
+  for (const v of variants) {
+    if (v.projectedBasis != null) m.set(v.id, v.projectedBasis)
+  }
+  return m
+}
+
 export function buildCropMarketingDataList(
   groups: Map<string, CommodityGroup>,
   budgetFields: BudgetFieldRow[],
-  cbotPricesBySymbol: Record<string, number | null>
+  cbotPricesBySymbol: Record<string, number | null>,
+  projectedBasisByVariantId?: Map<string, number>
 ): CropMarketingData[] {
   // Aggregate budget rows by crop name (case-insensitive)
   const budgetByCrop = new Map<string, CropBudget>()
@@ -250,8 +270,10 @@ export function buildCropMarketingDataList(
   const result: CropMarketingData[] = []
   const coveredBudgetKeys = new Set<string>()
 
+  const positionOptions = { projectedBasisByVariantId }
+
   for (const group of Array.from(groups.values())) {
-    const position = computePosition(group.contracts)
+    const position = computePosition(group.contracts, positionOptions)
 
     // Per-variant breakdown
     const contractsByVariant = new Map<string, ContractWithVariant[]>()
@@ -263,7 +285,7 @@ export function buildCropMarketingDataList(
 
     const variantBreakdown: VariantPosition[] = []
     for (const [variantId, vContracts] of Array.from(contractsByVariant.entries())) {
-      const vPos = computePosition(vContracts)
+      const vPos = computePosition(vContracts, positionOptions)
       variantBreakdown.push({
         variantId,
         variantName: group.variantNameById.get(variantId) ?? vContracts[0]?.variant?.name ?? 'Unknown',
@@ -285,7 +307,7 @@ export function buildCropMarketingDataList(
       group.cbotSymbol != null ? (cbotPricesBySymbol[group.cbotSymbol] ?? null) : null
 
     result.push(
-      assembleCrop(group.commodityName, group.cbotSymbol, cbotPriceDollars, position, variantBreakdown, buildSaleRows(group.contracts, budget), budget)
+      assembleCrop(group.commodityName, group.cbotSymbol, cbotPriceDollars, position, variantBreakdown, buildSaleRows(group.contracts, budget, projectedBasisByVariantId), budget)
     )
   }
 
@@ -340,7 +362,11 @@ function assembleCrop(
   }
 }
 
-function buildSaleRows(allContracts: ContractWithVariant[], budget: CropBudget | null): SaleRow[] {
+function buildSaleRows(
+  allContracts: ContractWithVariant[],
+  budget: CropBudget | null,
+  projectedBasisByVariantId?: Map<string, number>
+): SaleRow[] {
   const projected = budget?.totalEstimatedBu ?? null
 
   // PER_UNIT seed contracts are excluded from bushel-denominated sale rows,
@@ -352,7 +378,7 @@ function buildSaleRows(allContracts: ContractWithVariant[], budget: CropBudget |
     date: c.deliveryStartDate ?? c.deliveryStart ?? c.createdAt ?? null,
     bushels: c.contractedBushels,
     priceDollars: (() => {
-      const cents = effectivePriceCents(c)
+      const cents = effectivePriceCents(c, projectedBasisByVariantId)
       return cents != null ? cents / 100 : null
     })(),
     instrument: c.instrument,

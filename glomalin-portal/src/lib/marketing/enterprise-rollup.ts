@@ -82,6 +82,8 @@ export interface RollupVariantMeta {
   id: string
   name: string
   cropYear?: number
+  /** planning placeholder basis, signed $/bu — WAP fallback for open basis legs */
+  projectedBasis?: number | null
   commodity?: { name: string; symbol: string | null }
 }
 
@@ -226,6 +228,14 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
   const variantMeta = new Map<string, RollupVariantMeta>()
   for (const v of variants) variantMeta.set(v.id, v)
 
+  // Projected-basis placeholders: stand in for a contract's basis in the WAP
+  // until its basis leg is actually set (analogous to projected vs actual yield)
+  const projectedBasisByVariantId = new Map<string, number>()
+  for (const v of variants) {
+    if (v.projectedBasis != null) projectedBasisByVariantId.set(v.id, v.projectedBasis)
+  }
+  const positionOptions = { projectedBasisByVariantId }
+
   // variantName → crosswalk entry
   const xwalkByVariant = new Map<string, CrosswalkEntry>()
   for (const e of ENTERPRISE_CROSSWALK) xwalkByVariant.set(lower(e.variantName), e)
@@ -274,7 +284,7 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
 
   for (const group of Array.from(byCommodity.values())) {
     const commodityName = group.commodityName
-    const position = computePosition(group.contracts)
+    const position = computePosition(group.contracts, positionOptions)
 
     // Pool WAP: futures-equivalent across all priced bushels of the commodity
     let poolNum = 0
@@ -307,7 +317,7 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     for (const variantName of Array.from(variantNames)) {
       const xwalk = xwalkByVariant.get(lower(variantName)) ?? null
       const vContracts = group.contracts.filter((c) => c.variant?.name === variantName)
-      const vPos = computePosition(vContracts)
+      const vPos = computePosition(vContracts, positionOptions)
 
       // Budget aggregation across this variant's budget crop lines
       const vBudget = (xwalk?.budgetCrops ?? [])

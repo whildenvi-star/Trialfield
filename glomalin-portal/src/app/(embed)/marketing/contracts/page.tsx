@@ -6,6 +6,7 @@ import { CropPositionPanel } from '@/components/marketing/crop-position-panel'
 import {
   groupContractsByCommodity,
   buildCropMarketingDataList,
+  projectedBasisMap,
 } from '@/lib/marketing/position-by-crop'
 import type { RawGrainVariant, BudgetFieldRow } from '@/lib/marketing/position-by-crop'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
@@ -80,7 +81,7 @@ export default async function ContractsEmbedPage() {
   }
 
   const groups = groupContractsByCommodity(rawContracts, variants)
-  const crops = buildCropMarketingDataList(groups, budgetFields, cbotPricesBySymbol)
+  const crops = buildCropMarketingDataList(groups, budgetFields, cbotPricesBySymbol, projectedBasisMap(variants))
 
   return (
     <div className="p-4 space-y-5">

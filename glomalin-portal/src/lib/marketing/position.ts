@@ -38,6 +38,18 @@ export interface GrainContractForPosition {
   finalCashPrice?: number | null   // $/bu if known
   futuresPrice?: number | null     // $/bu
   basis?: number | null            // $/bu (can be negative)
+  variant?: { id: string } | null  // for projected-basis fallback lookup
+}
+
+export interface PositionOptions {
+  /**
+   * Planning placeholder basis by variant id, signed $/bu. When a priced
+   * contract's basis leg is still open (basis == null), its variant's projected
+   * basis stands in — so WAP is a blend of actual basis where set and the
+   * placeholder everywhere else, the same way projected yield fills in until
+   * actuals arrive. Contracts whose variant has no placeholder fall back to 0.
+   */
+  projectedBasisByVariantId?: Map<string, number>
 }
 
 /**
@@ -45,13 +57,16 @@ export interface GrainContractForPosition {
  *
  * Effective price for WAP calculation (per priced contract):
  *   1. Use finalCashPrice if it is a non-null number.
- *   2. Else if futuresPrice is a non-null number: use futuresPrice + (basis ?? 0).
- *      A null basis is treated as 0 — futuresPrice alone is the best known price
- *      for HTA/basis-fixed contracts where the basis leg is still open.
+ *   2. Else if futuresPrice is a non-null number: use futuresPrice + basis,
+ *      where basis is the contract's own basis if set, else the variant's
+ *      projected basis placeholder (see PositionOptions), else 0.
  *   3. Otherwise (futuresPrice is also null): no effective price — contract counts
  *      in pricedBu but is excluded from the WAP denominator to avoid divide artifacts.
  */
-export function computePosition(allContracts: GrainContractForPosition[]): PositionSummary {
+export function computePosition(
+  allContracts: GrainContractForPosition[],
+  options?: PositionOptions
+): PositionSummary {
   // PER_UNIT seed contracts are paid per unit, not per bushel — their
   // contractedBushels (0 for take-all) would pollute the bushel KPIs.
   const contracts = allContracts.filter((c) => c.paymentBasis !== 'PER_UNIT')
@@ -72,8 +87,12 @@ export function computePosition(allContracts: GrainContractForPosition[]): Posit
       if (c.finalCashPrice != null) {
         effectivePrice = c.finalCashPrice
       } else if (c.futuresPrice != null) {
-        // Treat null basis as 0 — futures price alone is the best available estimate
-        effectivePrice = c.futuresPrice + (c.basis ?? 0)
+        // Open basis leg → variant's projected-basis placeholder, else 0
+        const fallbackBasis =
+          (c.variant?.id != null
+            ? options?.projectedBasisByVariantId?.get(c.variant.id)
+            : undefined) ?? 0
+        effectivePrice = c.futuresPrice + (c.basis ?? fallbackBasis)
       }
 
       if (effectivePrice !== null) {

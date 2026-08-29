@@ -130,3 +130,69 @@ describe("computePosition — PER_UNIT exclusion", () => {
     expect(result.contractedBu).toBe(5000)
   })
 })
+
+describe("computePosition — projected basis placeholder", () => {
+  const projectedBasisByVariantId = new Map<string, number>([
+    ["v-shell", -0.35],
+    ["v-food", 1.50],
+  ])
+
+  it("open basis leg uses the variant's projected basis", () => {
+    const result = computePosition(
+      [{ instrument: "FUTURES_FIXED", contractedBushels: 1000, futuresPrice: 4.50, basis: null, variant: { id: "v-shell" } }],
+      { projectedBasisByVariantId }
+    )
+    expect(result.avgPriceCents).toBe(415) // 4.50 - 0.35
+  })
+
+  it("actual basis wins over the placeholder once set", () => {
+    const result = computePosition(
+      [{ instrument: "FUTURES_FIXED", contractedBushels: 1000, futuresPrice: 4.50, basis: -0.20, variant: { id: "v-shell" } }],
+      { projectedBasisByVariantId }
+    )
+    expect(result.avgPriceCents).toBe(430) // 4.50 - 0.20 (actual, not -0.35)
+  })
+
+  it("WAP blends actual-basis and placeholder-basis contracts by bushels", () => {
+    const result = computePosition(
+      [
+        { instrument: "FUTURES_FIXED", contractedBushels: 1000, futuresPrice: 4.50, basis: -0.20, variant: { id: "v-shell" } },
+        { instrument: "FUTURES_FIXED", contractedBushels: 3000, futuresPrice: 4.50, basis: null, variant: { id: "v-shell" } },
+      ],
+      { projectedBasisByVariantId }
+    )
+    // (430*1000 + 415*3000) / 4000 = 418.75 → 419
+    expect(result.avgPriceCents).toBe(419)
+  })
+
+  it("positive projected basis (food-grade premium) adds to futures", () => {
+    const result = computePosition(
+      [{ instrument: "FUTURES_FIXED", contractedBushels: 500, futuresPrice: 10.00, basis: null, variant: { id: "v-food" } }],
+      { projectedBasisByVariantId }
+    )
+    expect(result.avgPriceCents).toBe(1150) // 10.00 + 1.50
+  })
+
+  it("variant without a placeholder falls back to 0 (legacy behavior)", () => {
+    const result = computePosition(
+      [{ instrument: "FUTURES_FIXED", contractedBushels: 500, futuresPrice: 10.00, basis: null, variant: { id: "v-rr" } }],
+      { projectedBasisByVariantId }
+    )
+    expect(result.avgPriceCents).toBe(1000)
+  })
+
+  it("finalCashPrice ignores the placeholder entirely", () => {
+    const result = computePosition(
+      [{ instrument: "PRICED", contractedBushels: 500, finalCashPrice: 4.10, futuresPrice: 4.50, basis: null, variant: { id: "v-shell" } }],
+      { projectedBasisByVariantId }
+    )
+    expect(result.avgPriceCents).toBe(410)
+  })
+
+  it("no options at all behaves exactly as before", () => {
+    const result = computePosition([
+      { instrument: "FUTURES_FIXED", contractedBushels: 1000, futuresPrice: 4.50, basis: null, variant: { id: "v-shell" } },
+    ])
+    expect(result.avgPriceCents).toBe(450)
+  })
+})
