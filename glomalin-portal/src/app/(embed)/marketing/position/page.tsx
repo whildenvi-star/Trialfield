@@ -96,9 +96,16 @@ export default async function MarketingPositionEmbedPage({
     (v) => !primaryNames.has(v.variantName) && (v.soldBu > 0 || (v.projectedBu ?? 0) > 0)
   )
 
+  // The portal's root layout paints a dark body; the iframe document must be
+  // repainted per theme or the widget sits on a black background.
+  const bodyCss =
+    theme === 'dark'
+      ? 'html,body{background:#0b0e14 !important;}'
+      : 'html,body{background:#eef1f5 !important;}'
+
   return (
     <div className="mpw" data-theme={theme}>
-      <style>{WIDGET_CSS}</style>
+      <style>{bodyCss + WIDGET_CSS}</style>
       <div className="mpw-head">
         <span className="mpw-title">Marketing Position · {CURRENT_CROP_YEAR}</span>
         <a className="mpw-link" href="/app/marketing" target="_top">
