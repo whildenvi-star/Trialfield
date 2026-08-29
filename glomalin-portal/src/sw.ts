@@ -199,7 +199,10 @@ async function handlePassSync(): Promise<void> {
   let db: IDBDatabase
   try {
     db = await openOfflineDb()
-  } catch {
+  } catch (err) {
+    // A VersionError here means SW_DB_VERSION fell behind db.ts — queued writes
+    // will only sync via the foreground 'online' listener until it's fixed.
+    console.error('[sw] pass-sync: failed to open offline DB', err)
     return
   }
 
