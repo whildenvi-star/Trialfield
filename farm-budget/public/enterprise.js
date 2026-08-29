@@ -819,11 +819,12 @@
       '</div>' +
       '<div class="field-card-metrics">' +
         '<div class="metric"><span class="metric-label">Acres</span><span class="metric-value">' + util.formatNum((f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0, 1) + '</span></div>' +
-        '<div class="metric"><span class="metric-label">Variety</span><span class="metric-value" style="font-size:0.8rem">' + util.escHtml(f.seeds && f.seeds.length > 1 ? f.seeds.length + ' varieties' : (f.seed ? f.seed.variety || '--' : '--')) + '</span></div>' +
+        '<div class="metric"><span class="metric-label">Variety</span><span class="metric-value metric-editable" data-edit="variety" data-field-id="' + f.id + '" title="Click to change variety" style="font-size:0.8rem">' + util.escHtml(f.seeds && f.seeds.length > 1 ? f.seeds.length + ' varieties' : (f.seed ? f.seed.variety || '--' : '--')) + '</span></div>' +
         (window.APP_ROLE !== 'operator' ? '<div class="metric"><span class="metric-label">Expense/AC</span><span class="metric-value">' + util.formatMoney(b.expPerAcre) + '</span></div>' : '') +
         (window.APP_ROLE !== 'operator' && window.APP_ROLE !== 'office' ? '<div class="metric"><span class="metric-label">Income/AC</span><span class="metric-value">' + util.formatMoney(b.cropIncomePerAcre) + '</span></div>' : '') +
         (window.APP_ROLE !== 'operator' && window.APP_ROLE !== 'office' ? '<div class="metric"><span class="metric-label">Profit/AC</span><span class="metric-value ' + profitColor + '">' + util.formatMoney(profitPerAcre) + '</span></div>' : '') +
-        '<div class="metric"><span class="metric-label">Yield/AC</span><span class="metric-value">' + util.formatNum(b.yieldPerAcre, 1) + ' ' + util.escHtml(b.yieldUnit || '') + '</span></div>' +
+        '<div class="metric"><span class="metric-label">Yield/AC</span><span class="metric-value metric-editable" data-edit="yield" data-field-id="' + f.id + '" title="Click to edit yield">' + util.formatNum(b.yieldPerAcre, 1) + ' ' + util.escHtml(b.yieldUnit || '') +
+          (f.yieldMode === 'actual' ? ' <span class="yield-mode-badge" title="Confirmed actual yield (FieldOps)">ACT</span>' : '') + '</span></div>' +
         (window.APP_ROLE !== 'operator' && window.APP_ROLE !== 'office' ? '<div class="metric"><span class="metric-label">COP</span><span class="metric-value">' + util.formatMoney(b.cop) + '</span></div>' : '') +
       '</div>' +
       '<div class="field-card-footer">' +
@@ -834,6 +835,156 @@
         '</span>' +
       '</div>' +
     '</div>';
+  }
+
+  // --- Inline card editing: variety dropdown + yield (projected manual / actual dropdown) ---
+
+  // Seeds from ref data matching this crop (fuzzy: "Blue_Corn" matches "Blue Corn"); all seeds as fallback
+  function seedOptionsForCrop(crop) {
+    var seeds = (window.refData && window.refData.seeds) || [];
+    var fc = (crop || '').trim().toLowerCase().replace(/_/g, ' ');
+    var matched = seeds.filter(function (s) {
+      var sc = (s.crop || '').trim().toLowerCase().replace(/_/g, ' ');
+      return sc === fc || sc.indexOf(fc) !== -1 || fc.indexOf(sc) !== -1;
+    });
+    return matched.length ? matched : seeds;
+  }
+
+  // FieldOps yield history entries whose crop matches this field (same match rule as calc.js)
+  function actualYieldOptions(f) {
+    var opts = [];
+    if (!f._fieldops || !f._fieldops.yieldHistory) return opts;
+    var fieldCrop = (f.crop || '').trim().toLowerCase();
+    f._fieldops.yieldHistory.forEach(function (yh) {
+      var yhCrop = (yh.crop || '').trim().toLowerCase();
+      var cropMatch = fieldCrop === yhCrop ||
+        fieldCrop.indexOf(yhCrop) !== -1 || yhCrop.indexOf(fieldCrop) !== -1;
+      if (cropMatch && yh.yieldPerAcre > 0) opts.push(yh);
+    });
+    opts.sort(function (a, b) { return String(b.season).localeCompare(String(a.season)); });
+    return opts;
+  }
+
+  function openInlineVarietyEditor(f, el) {
+    var multi = f.seeds && f.seeds.length > 1;
+    var current = multi ? '' : (f.seed ? f.seed.variety || '' : '');
+    var orig = el.innerHTML;
+    var saving = false;
+
+    var html = '<select class="inline-metric-select">';
+    if (multi) html += '<option value="">' + f.seeds.length + ' varieties</option>';
+    else if (!current) html += '<option value="">--</option>';
+    var seen = {};
+    seedOptionsForCrop(f.crop).forEach(function (s) {
+      if (!s.variety || seen[s.variety]) return;
+      seen[s.variety] = true;
+      html += '<option value="' + util.escHtml(s.variety) + '"' + (s.variety === current ? ' selected' : '') + '>' +
+        util.escHtml((s.brand ? s.brand + ' ' : '') + s.variety) + '</option>';
+    });
+    if (current && !seen[current]) html += '<option value="' + util.escHtml(current) + '" selected>' + util.escHtml(current) + '</option>';
+    html += '</select>';
+    el.innerHTML = html;
+
+    var sel = el.querySelector('select');
+    sel.focus();
+    function cancel() { if (!saving) el.innerHTML = orig; }
+    sel.addEventListener('keydown', function (e) { if (e.key === 'Escape') cancel(); });
+    sel.addEventListener('blur', function () {
+      setTimeout(function () { if (el.querySelector('select') === sel) cancel(); }, 150);
+    });
+    sel.addEventListener('change', function () {
+      var v = sel.value;
+      if (!v || v === current) { cancel(); return; }
+      if (multi && !confirm('This field has ' + f.seeds.length + ' varieties. Replace all with "' + v + '"?')) { cancel(); return; }
+      saving = true;
+      // Reuse batch-variety endpoint: swaps seed only, keeps population/inputs/machinery
+      api.post('/api/fields/batch-variety', { fieldIds: [f.id], variety: v })
+        .then(function () {
+          util.showToast('Variety set to ' + v);
+          loadEnterprise(currentEntId);
+        })
+        .catch(function () { util.showToast('Failed to update variety'); saving = false; cancel(); });
+    });
+  }
+
+  function openInlineYieldEditor(f, el) {
+    var orig = el.innerHTML;
+    var actuals = actualYieldOptions(f);
+    var mode = (f.yieldMode === 'actual' && actuals.length) ? 'actual' : 'projected';
+    var projVal = (f.yieldMode === 'actual' ? (f.projectedYieldPerAcre || f.yieldPerAcre) : f.yieldPerAcre) || 0;
+    var targetSeason = String(((window.refData.settings || {}).year || 2026) - 1);
+
+    var html = '<span class="inline-yield-editor">';
+    if (actuals.length) {
+      html += '<span class="inline-yield-toggle">' +
+        '<button type="button" class="iy-mode' + (mode === 'projected' ? ' active' : '') + '" data-mode="projected">Proj</button>' +
+        '<button type="button" class="iy-mode' + (mode === 'actual' ? ' active' : '') + '" data-mode="actual">Actual</button>' +
+      '</span>';
+    }
+    html += '<input type="number" step="0.1" min="0" class="iy-input" value="' + projVal + '"' + (mode === 'actual' ? ' style="display:none"' : '') + '>';
+    if (actuals.length) {
+      // Preselect: entry matching current value in actual mode, else most recent target-season entry
+      var selIdx = 0;
+      for (var i = 0; i < actuals.length; i++) {
+        if (mode === 'actual' && actuals[i].yieldPerAcre === f.yieldPerAcre) { selIdx = i; break; }
+        if (String(actuals[i].season) === targetSeason) { selIdx = i; if (mode !== 'actual') break; }
+      }
+      html += '<select class="iy-actual-select"' + (mode === 'actual' ? '' : ' style="display:none"') + '>';
+      actuals.forEach(function (yh, idx) {
+        html += '<option value="' + yh.yieldPerAcre + '"' + (idx === selIdx ? ' selected' : '') + '>' +
+          util.formatNum(yh.yieldPerAcre, 1) + ' — ' + util.escHtml(String(yh.season)) + ' ' + util.escHtml(yh.crop || '') + '</option>';
+      });
+      html += '</select>';
+    }
+    html += '<button type="button" class="iy-save" title="Confirm">&#10003;</button>' +
+      '<button type="button" class="iy-cancel" title="Cancel">&#10005;</button></span>';
+    el.innerHTML = html;
+
+    var input = el.querySelector('.iy-input');
+    var actualSel = el.querySelector('.iy-actual-select');
+    if (mode === 'projected') { input.focus(); input.select(); }
+
+    el.querySelectorAll('.iy-mode').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        mode = btn.getAttribute('data-mode');
+        el.querySelectorAll('.iy-mode').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        input.style.display = mode === 'projected' ? '' : 'none';
+        if (actualSel) actualSel.style.display = mode === 'actual' ? '' : 'none';
+        if (mode === 'projected') { input.focus(); input.select(); }
+      });
+    });
+
+    function cancel() { el.innerHTML = orig; }
+    function save() {
+      var val, payload;
+      if (mode === 'actual' && actualSel) {
+        val = parseFloat(actualSel.value) || 0;
+        // Stash the projection so toggling back to Proj restores it
+        payload = { yieldPerAcre: val, yieldMode: 'actual', projectedYieldPerAcre: parseFloat(input.value) || projVal };
+      } else {
+        val = parseFloat(input.value);
+        if (isNaN(val) || val < 0) { util.showToast('Enter a valid yield'); return; }
+        payload = { yieldPerAcre: val, yieldMode: 'projected', projectedYieldPerAcre: val };
+      }
+      api.put('/api/fields/' + f.id, payload)
+        .then(function () {
+          util.showToast('Yield set to ' + util.formatNum(val, 1) + (mode === 'actual' ? ' (actual)' : ''));
+          loadEnterprise(currentEntId);
+        })
+        .catch(function () { util.showToast('Failed to update yield'); cancel(); });
+    }
+
+    el.querySelector('.iy-save').addEventListener('click', save);
+    el.querySelector('.iy-cancel').addEventListener('click', cancel);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') save();
+      if (e.key === 'Escape') cancel();
+    });
+    if (actualSel) actualSel.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') save();
+      if (e.key === 'Escape') cancel();
+    });
   }
 
   function renderCards(fields) {
@@ -902,8 +1053,23 @@
           }
           return;
         }
+        if (e.target.closest && e.target.closest('.metric-editable')) return;
         var field = fieldsData.find(function (f) { return f.id === fid; });
         if (field) window.openFieldEditor(field, null, null, null, fieldsData);
+      });
+    });
+
+    // Inline metric editors (variety + yield) — click to edit in place
+    document.querySelectorAll('#ent-cards .metric-editable').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        if (isLoading || batchMode) return; // batch mode: let click bubble to select the card
+        e.stopPropagation();
+        if (el.querySelector('select, input')) return; // already editing
+        var fid = el.getAttribute('data-field-id');
+        var field = fieldsData.find(function (f) { return f.id === fid; });
+        if (!field) return;
+        if (el.getAttribute('data-edit') === 'variety') openInlineVarietyEditor(field, el);
+        else openInlineYieldEditor(field, el);
       });
     });
 

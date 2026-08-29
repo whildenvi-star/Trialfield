@@ -726,7 +726,7 @@ app.put('/api/fields/:id', async (req, res) => {
   const updatable = [
     'name', 'enterpriseId', 'systemCode', 'crop', 'cropType',
     'acres', 'plantedAcres', 'rentPerAcre', 'inputs', 'seed', 'seeds', 'machinery',
-    'yieldPerAcre', 'yieldUnit', 'cropInsurancePerAcre',
+    'yieldPerAcre', 'yieldUnit', 'yieldMode', 'projectedYieldPerAcre', 'cropInsurancePerAcre',
     'insuranceIncomePerAcre', 'govPaymentLabel', 'govPaymentsPerAcre',
     'auxPayments', 'tariffsPerAcre', 'geometry', 'harvestMoisture', 'buyerId', 'templateId', 'machineryProgramId',
     'registryFieldName', 'splitGroupId', 'registryFieldId',
