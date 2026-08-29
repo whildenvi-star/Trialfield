@@ -546,7 +546,7 @@
     var widgetTheme = document.body.classList.contains('light') ? 'light' : 'dark';
     frame.src = '/marketing/position?theme=' + widgetTheme;
     frame.title = 'Marketing position';
-    frame.style.cssText = 'width:100%;height:200px;border:1px solid var(--border);border-radius:4px;background:var(--surface);display:block';
+    frame.style.cssText = 'width:100%;height:250px;border:1px solid var(--border);border-radius:4px;background:var(--surface);display:block';
     frame.setAttribute('loading', 'lazy');
     el.appendChild(frame);
     el.style.display = 'block';

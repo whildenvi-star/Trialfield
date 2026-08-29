@@ -78,29 +78,29 @@ const WIDGET_CSS = `
   .mpw { --w-bg: transparent; --w-surface: #ffffff; --w-border: #cbd5e1;
     --w-text: #1e293b; --w-muted: #475569; --w-bright: #0f172a;
     --w-accent: #0d9488; --w-ok: #0d9488; --w-warn: #b8860b; --w-bad: #c62828;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-family: 'JetBrains Mono', ui-monospace, monospace; font-weight: 500;
     background: var(--w-bg); color: var(--w-text); padding: 12px; }
   .mpw[data-theme="dark"] { --w-surface: #10141c; --w-border: #2a3242;
     --w-text: #c7d0de; --w-muted: #8593a8; --w-bright: #eef2f8;
     --w-accent: #2dd4bf; --w-ok: #2dd4bf; --w-warn: #e8b339; --w-bad: #ef6a5a; }
   .mpw-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
-  .mpw-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--w-muted); }
-  .mpw-link { font-size: 12px; color: var(--w-muted); text-decoration: none; }
+  .mpw-title { font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--w-muted); }
+  .mpw-link { font-size: 13px; font-weight: 600; color: var(--w-muted); text-decoration: none; }
   .mpw-link:hover { color: var(--w-accent); }
   .mpw-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   @media (min-width: 1100px) { .mpw-grid { grid-template-columns: repeat(4, 1fr); } }
-  .mpw-card { border: 1px solid var(--w-border); background: var(--w-surface); border-radius: 4px; padding: 10px 12px; }
-  .mpw-crop { font-size: 14px; font-weight: 700; color: var(--w-bright); margin-bottom: 6px; }
-  .mpw-bar { height: 7px; border-radius: 4px; background: color-mix(in srgb, var(--w-border) 55%, transparent); overflow: hidden; }
-  .mpw-fill { height: 100%; border-radius: 4px; }
-  .mpw-nums { margin-top: 6px; font-size: 13px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
-  .mpw-nums b { color: var(--w-text); font-weight: 600; }
-  .mpw-actual { color: var(--w-muted); opacity: 0.85; }
-  .mpw-fin { margin-top: 4px; font-size: 13px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
-  .mpw-fin b { color: var(--w-text); font-weight: 600; }
+  .mpw-card { border: 1px solid var(--w-border); background: var(--w-surface); border-radius: 4px; padding: 12px 14px; }
+  .mpw-crop { font-size: 16px; font-weight: 700; color: var(--w-bright); margin-bottom: 7px; }
+  .mpw-bar { height: 10px; border-radius: 5px; background: color-mix(in srgb, var(--w-border) 55%, transparent); overflow: hidden; }
+  .mpw-fill { height: 100%; border-radius: 5px; }
+  .mpw-nums { margin-top: 7px; font-size: 14.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+  .mpw-nums b { color: var(--w-text); font-weight: 700; }
+  .mpw-actual { color: var(--w-muted); opacity: 0.9; }
+  .mpw-fin { margin-top: 5px; font-size: 14px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+  .mpw-fin b { color: var(--w-text); font-weight: 700; }
   .mpw-fin .below { color: var(--w-bad); }
-  .mpw-spec { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 12.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
-  .mpw-spec b { color: var(--w-text); font-weight: 600; }
+  .mpw-spec { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 13.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+  .mpw-spec b { color: var(--w-text); font-weight: 700; }
 `
 
 export default async function MarketingPositionEmbedPage({

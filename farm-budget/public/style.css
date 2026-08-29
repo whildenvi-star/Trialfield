@@ -54,18 +54,23 @@ body.light ::selection {
   color: var(--bg);
 }
 
-/* Readability: raise the rem base — most small labels are hardcoded rems */
-html { font-size: 17px; }
+/* Readability: raise the rem base — most small labels are hardcoded rems.
+   Weight 500 body: thicker strokes for older eyes on the mono face. */
+html { font-size: 18px; }
 
 body {
   font-family: var(--font-body, var(--font-mono));
   background: var(--bg);
   color: var(--text);
   line-height: 1.6;
+  font-weight: 500;
   font-size: var(--size-base, 14px);
   scrollbar-width: thin;
   scrollbar-color: var(--border-light) var(--bg);
 }
+
+/* Form controls and buttons inherit the thicker default weight */
+button, input, select, textarea { font-weight: 500; }
 
 /* Webkit scrollbars */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -117,8 +122,8 @@ header h1::before {
   padding: 0.4rem 0.9rem;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 400;
+  font-size: 0.85rem;
+  font-weight: 600;
   white-space: nowrap;
   text-transform: lowercase;
   letter-spacing: 0.04em;
@@ -1079,7 +1084,7 @@ body.light .actual-cell {
 .summary-item { display: flex; flex-direction: column; }
 
 .summary-label {
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   color: var(--text-light);
   font-weight: 600;
   text-transform: uppercase;
@@ -1087,7 +1092,7 @@ body.light .actual-cell {
 }
 
 .summary-value {
-  font-size: 1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--amber);
 }
@@ -4194,7 +4199,8 @@ tr.fo-confirm-form-row td {
   background: var(--surface-2, var(--card));
   border: 1px solid var(--border);
   border-radius: 3px;
-  font-size: 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
@@ -4208,8 +4214,8 @@ tr.fo-confirm-form-row td {
   background: var(--amber, #C8860A);
   color: #fff;
   border-radius: 10px;
-  padding: 0 0.35rem;
-  font-size: 0.7rem;
+  padding: 0.05rem 0.45rem;
+  font-size: 0.78rem;
   font-weight: 700;
   line-height: 1.4;
 }
