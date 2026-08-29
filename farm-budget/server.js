@@ -11,6 +11,7 @@ const Calc = require('./public/calc.js');
 const fieldopsClient = require('./fieldops/client');
 const fieldopsSync = require('./fieldops/sync');
 const audit = require('./audit');
+const VOICE = require('./lib/voice');
 const cron = require('node-cron');
 // node-cron loaded here for audit + FieldOps sync
 
@@ -42,17 +43,23 @@ app.use(express.json({ limit: '50mb' }));
 const EMBED_APP_NAME = 'farm-budget';
 const EMBED_GRANT_COOKIE = 'embed_grant_' + EMBED_APP_NAME.replace(/-/g, '_');
 function verifyEmbedGrant(grant) {
+  // v1.<app>.<userId>.<exp>.<sig>            — legacy, no role claim
+  // v2.<app>.<userId>.<role>.<exp>.<sig>     — role rides inside the signed payload
+  // Returns { userId, role|null } on success (truthy for existing boolean callers).
   if (!grant || typeof grant !== 'string') return false;
   const parts = grant.split('.');
-  if (parts.length !== 5 || parts[0] !== 'v1' || parts[1] !== EMBED_APP_NAME) return false;
-  const exp = parseInt(parts[3], 10);
+  const isV1 = parts[0] === 'v1' && parts.length === 5;
+  const isV2 = parts[0] === 'v2' && parts.length === 6;
+  if ((!isV1 && !isV2) || parts[1] !== EMBED_APP_NAME) return false;
+  const exp = parseInt(parts[parts.length - 2], 10);
   if (!Number.isFinite(exp) || exp * 1000 < Date.now()) return false;
   const grantCrypto = require('crypto');
   const expected = grantCrypto.createHmac('sha256', process.env.EMBED_TOKEN)
-    .update(parts.slice(0, 4).join('.')).digest('hex');
-  const sigBuf = Buffer.from(parts[4]);
+    .update(parts.slice(0, parts.length - 1).join('.')).digest('hex');
+  const sigBuf = Buffer.from(parts[parts.length - 1]);
   const expectedBuf = Buffer.from(expected);
-  return sigBuf.length === expectedBuf.length && grantCrypto.timingSafeEqual(sigBuf, expectedBuf);
+  if (sigBuf.length !== expectedBuf.length || !grantCrypto.timingSafeEqual(sigBuf, expectedBuf)) return false;
+  return { userId: parts[2], role: isV2 ? parts[3] : null };
 }
 
 // ── Embed-token gate ─────────────────────────────────────────────
@@ -2376,7 +2383,33 @@ app.post('/api/audit/resolve', async (req, res) => {
 });
 
 // --- Glomalin Terminal Chat (Claude API) ---
+// ── Chat agent guardrails: daily cap + audit log ─────────────────
+var CHAT_USAGE_FILE = path.join(__dirname, 'data', 'chat-usage.json');
+var CHAT_LOG_FILE = path.join(__dirname, 'data', 'chat-log.jsonl');
+var CHAT_DAILY_CAP = parseInt(process.env.CHAT_DAILY_CAP, 10) || 150;
+function chatUsageToday() {
+  try {
+    var u = JSON.parse(fs.readFileSync(CHAT_USAGE_FILE, 'utf8'));
+    if (u.date === new Date().toISOString().slice(0, 10)) return u.count || 0;
+  } catch (e) { /* first use — zero */ }
+  return 0;
+}
+function bumpChatUsage() {
+  try {
+    fs.writeFileSync(CHAT_USAGE_FILE, JSON.stringify({
+      date: new Date().toISOString().slice(0, 10),
+      count: chatUsageToday() + 1
+    }));
+  } catch (e) { /* non-fatal */ }
+}
+function logChat(entry) {
+  try { fs.appendFileSync(CHAT_LOG_FILE, JSON.stringify(entry) + '\n'); } catch (e) { /* non-fatal */ }
+}
+
 app.post('/api/chat', async (req, res) => {
+  if (process.env.CHAT_AGENT_ENABLED === 'false') {
+    return res.status(503).json({ error: 'Chat agent disabled' });
+  }
   var apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -2387,8 +2420,38 @@ app.post('/api/chat', async (req, res) => {
   }
 
   var userMessage = (req.body.message || '').trim();
-  var chatHistory = req.body.history || [];
-  var chatRole = (req.body.role || 'admin').toLowerCase();
+  var chatHistory = (Array.isArray(req.body.history) ? req.body.history : []).slice(-20);
+
+  // Role is derived server-side, never trusted from the browser:
+  // - v2 grant → role rides inside the HMAC-signed payload; authoritative.
+  // - v1 grant → legacy browser with no role claim; clamped to office until
+  //   the portal mints v2 (no financials on an unverified role).
+  // - raw EMBED_TOKEN → trusted server-to-server caller; may state a role.
+  // - no EMBED_TOKEN configured → local dev; body role, default admin.
+  var bodyRole = (req.body.role || '').toLowerCase();
+  var chatUserId = null;
+  var chatRole;
+  if (process.env.EMBED_TOKEN) {
+    var rawTokenOk = req.query.token === process.env.EMBED_TOKEN ||
+      req.get('x-embed-token') === process.env.EMBED_TOKEN ||
+      (req.cookies && req.cookies.embed_session === process.env.EMBED_TOKEN);
+    var grantInfo = verifyEmbedGrant(
+      typeof req.query.grant === 'string' ? req.query.grant : (req.cookies && req.cookies[EMBED_GRANT_COOKIE])
+    );
+    if (grantInfo && grantInfo.role) {
+      chatRole = grantInfo.role.toLowerCase();
+      chatUserId = grantInfo.userId;
+    } else if (grantInfo) {
+      chatUserId = grantInfo.userId;
+      chatRole = (bodyRole === 'admin' || bodyRole === 'agronomist' || !bodyRole) ? 'office' : bodyRole;
+    } else if (rawTokenOk) {
+      chatRole = bodyRole || 'admin';
+    } else {
+      chatRole = 'office';
+    }
+  } else {
+    chatRole = bodyRole || 'admin';
+  }
   // Normalize: 'viewer' and 'office' both mean the office persona
   if (chatRole === 'viewer') chatRole = 'office';
   var isFullAccess = (chatRole === 'admin' || chatRole === 'agronomist');
@@ -2398,6 +2461,15 @@ app.post('/api/chat', async (req, res) => {
   if (!userMessage) {
     return res.status(400).json({ error: 'No message provided' });
   }
+
+  if (chatUsageToday() >= CHAT_DAILY_CAP) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.write('data: ' + JSON.stringify({ error: 'Daily chat cap reached (' + CHAT_DAILY_CAP + '). Resets at midnight UTC.' }) + '\n\n');
+    res.write('data: [DONE]\n\n');
+    return res.end();
+  }
+  bumpChatUsage();
 
   // Gather live farm context from store + cross-module queries
   var contextParts = [];
@@ -2409,10 +2481,14 @@ app.post('/api/chat', async (req, res) => {
       // Full financial breakdown
       var entSummary = (dashboard.enterpriseSummaries || []).map(function (s) {
         var t = s.totals;
-        return s.enterprise.shortName + ': ' + t.acres + ' ac, rent $' + (t.rent || 0).toFixed(0) +
-          ', expenses $' + (t.expTotal || 0).toFixed(0) + ', crop income $' + (t.cropIncome || 0).toFixed(0) +
-          ', profit $' + (t.cropProfit || 0).toFixed(0) + '/ac' +
-          ', w/ payments $' + (t.profitWithPayments || 0).toFixed(0) + '/ac';
+        var acres = t.acres || 0;
+        var profitPerAc = (t.avgProfitPerAcre != null) ? t.avgProfitPerAcre
+          : (acres > 0 ? (t.cropProfit || 0) / acres : 0);
+        var wPayPerAc = acres > 0 ? (t.profitWithPayments || 0) / acres : 0;
+        return s.enterprise.shortName + ': ' + acres + ' ac, rent $' + (t.rent || 0).toFixed(0) + ' total' +
+          ', expenses $' + (t.expTotal || 0).toFixed(0) + ' total, crop income $' + (t.cropIncome || 0).toFixed(0) + ' total' +
+          ', profit $' + (t.cropProfit || 0).toFixed(0) + ' total ($' + profitPerAc.toFixed(0) + '/ac)' +
+          ', w/ payments $' + (t.profitWithPayments || 0).toFixed(0) + ' total ($' + wPayPerAc.toFixed(0) + '/ac)';
       });
       contextParts.push('ENTERPRISE SUMMARIES:\n' + entSummary.join('\n'));
 
@@ -2666,9 +2742,13 @@ app.post('/api/chat', async (req, res) => {
       .catch(function () { clearTimeout(timer); return { name: q.name, text: null }; });
   }));
 
-  crossResults.forEach(function (r) {
+  crossResults.forEach(function (r, i) {
     if (r.status === 'fulfilled' && r.value && r.value.text) {
       contextParts.push(r.value.name + ':\n' + r.value.text);
+    } else {
+      // Loud, not silent — the model must know this data is missing,
+      // not answer as if it never existed.
+      contextParts.push(crossModuleQueries[i].name + ': UNAVAILABLE — service did not respond. Say so if it matters; never estimate these numbers.');
     }
   });
 
@@ -2695,39 +2775,54 @@ app.post('/api/chat', async (req, res) => {
     }
   } catch (e) { /* skip */ }
 
+  // --- Data honesty header — the model must know what it's looking at ---
+  var dataNotes = [
+    'Generated ' + new Date().toISOString() + '.',
+    'Yield, income, and profit figures are PROJECTIONS from the ' + (store.settings.year || getCropYear()) + ' plan, not actuals. Say "projected" when quoting them.',
+    'ENTERPRISE SUMMARIES are whole-enterprise dollar totals with per-acre in parentheses. Per-acre comparisons and rankings must use the $/ac figures only.',
+    'Any section marked UNAVAILABLE is down right now — say so; never estimate or backfill it.',
+    'Only quote numbers that appear in the data. If asked for a figure that is not here, say it is not in view.'
+  ];
+  if (futuresCache.data && futuresCache.ts) {
+    dataNotes.push('CBOT futures fetched ' + new Date(futuresCache.ts).toISOString() + ' (up to 15 min stale).');
+  }
+  var promptTail = '\n\n' + VOICE + '\n\nDATA NOTES:\n' + dataNotes.join('\n') +
+    '\n\nLIVE DATA:\n' + contextParts.join('\n\n');
+
   // --- Build role-appropriate system prompt ---
   var systemPrompt;
   if (isOperator) {
     systemPrompt = 'You are Glomalin, a field operations assistant for a farming operation. ' +
       'You help operators understand what crops are planted in each field, field assignments, acreage, and harvest logistics. ' +
       'You do NOT have access to financial information — costs, rent, prices, budgets, or profitability are outside your knowledge. ' +
-      'If asked about finances, politely explain that financial data is not available in your view. ' +
+      'If asked about finances, say plainly that financial data is not in your view. ' +
       'Answer concisely in a terminal style — short, data-driven responses. Plain text, line breaks for structure. ' +
-      'Keep responses under 150 words.\n\nLIVE DATA:\n' + contextParts.join('\n\n');
+      'Keep responses under 150 words.' + promptTail;
   } else if (isOffice) {
     systemPrompt = 'You are Glomalin, an office assistant for a farming operation. ' +
       'You help with scheduling, tracking deliveries, understanding what crops are planted where, ' +
       'grain ticket counts, and reviewing sales contract quantities and market prices. ' +
       'You do NOT have access to detailed financial information — per-field costs, rent rates, input costs, ' +
       'profitability, or budget details are not available in your view. ' +
-      'If asked about costs or financial details, politely explain that those figures are not in your view. ' +
+      'If asked about costs or financial details, say plainly that those figures are not in your view. ' +
       'Answer concisely in a terminal style — short, data-driven responses. Plain text, line breaks for structure. ' +
-      'Keep responses under 200 words.\n\nLIVE DATA:\n' + contextParts.join('\n\n');
+      'Keep responses under 200 words.' + promptTail;
   } else {
     systemPrompt = 'You are Glomalin, the terminal AI for a farming operation\'s MACRO ' + getCropYear() + ' planning dashboard. ' +
-      'You have access to live data from the entire Glomalin network — farm budget, grain tickets, ' +
-      'farm registry, FSA acres, and CBOT futures. Answer questions concisely in a terminal style — ' +
-      'short, data-driven responses. Use numbers and units. No markdown headers or bullet lists — plain text, ' +
-      'line breaks for structure. Keep responses under 200 words unless the user asks for detail. ' +
-      'If there are AUDIT ALERTS in the data, proactively mention them when relevant. When a user asks about ' +
-      'a field with audit issues, cite the specific alerts. Recommend the user investigate flagged items.\n\n' +
-      'LIVE DATA:\n' + contextParts.join('\n\n');
+      'You see live data from the Glomalin network — farm budget, grain tickets, farm registry, FSA acres, ' +
+      'and CBOT futures — though individual sections can be marked UNAVAILABLE. Answer questions concisely ' +
+      'in a terminal style — short, data-driven responses. Use numbers and units. No markdown headers or ' +
+      'bullet lists — plain text, line breaks for structure. Keep responses under 200 words unless the user ' +
+      'asks for detail. When comparing enterprises or fields, use per-acre figures and show the arithmetic ' +
+      'briefly. If there are AUDIT ALERTS in the data, proactively mention them when relevant. When a user ' +
+      'asks about a field with audit issues, cite the specific alerts. Recommend the user investigate ' +
+      'flagged items.' + promptTail;
   }
 
   // Build messages array
   var messages = [];
   chatHistory.forEach(function (m) {
-    if (m.role === 'user' || m.role === 'assistant') {
+    if (m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content) {
       messages.push({ role: m.role, content: m.content });
     }
   });
@@ -2748,7 +2843,7 @@ app.post('/api/chat', async (req, res) => {
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 512,
+        max_tokens: 1024,
         stream: true,
         system: systemPrompt,
         messages: messages
@@ -2760,17 +2855,20 @@ app.post('/api/chat', async (req, res) => {
       res.write('data: ' + JSON.stringify({ error: 'Claude API error: ' + claudeResp.status }) + '\n\n');
       res.write('data: [DONE]\n\n');
       console.error('[Chat] Claude API error:', claudeResp.status, errText);
+      logChat({ ts: new Date().toISOString(), userId: chatUserId, role: chatRole, message: userMessage, error: 'api ' + claudeResp.status });
       return res.end();
     }
 
     var reader = claudeResp.body.getReader();
     var decoder = new TextDecoder();
     var sseBuffer = '';
+    var replyText = '';
 
     function processStream() {
       reader.read().then(function (result) {
         if (result.done) {
           res.write('data: [DONE]\n\n');
+          logChat({ ts: new Date().toISOString(), userId: chatUserId, role: chatRole, message: userMessage, reply: replyText });
           return res.end();
         }
         sseBuffer += decoder.decode(result.value, { stream: true });
@@ -2784,6 +2882,7 @@ app.post('/api/chat', async (req, res) => {
             try {
               var evt = JSON.parse(payload);
               if (evt.type === 'content_block_delta' && evt.delta && evt.delta.text) {
+                replyText += evt.delta.text;
                 res.write('data: ' + JSON.stringify({ text: evt.delta.text }) + '\n\n');
               }
             } catch (e) { /* skip */ }
@@ -2794,6 +2893,7 @@ app.post('/api/chat', async (req, res) => {
         console.error('[Chat] Stream error:', err.message);
         res.write('data: ' + JSON.stringify({ error: 'stream interrupted' }) + '\n\n');
         res.write('data: [DONE]\n\n');
+        logChat({ ts: new Date().toISOString(), userId: chatUserId, role: chatRole, message: userMessage, reply: replyText, error: 'stream interrupted' });
         res.end();
       });
     }
