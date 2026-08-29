@@ -1,8 +1,11 @@
 // Marketing position widget — chrome-less embed for the MACRO dashboard.
 // Sales vs projected for the four primary crops (Shell Corn, Non-GMO Yellow
-// Corn, RR Soybeans, Food Beans) plus one-line quick info on the specialty
-// crops. A trimmed-down PoolCard: volumes only, so office and owner render
-// identically (financial keys are stripped server-side for office anyway).
+// Corn, RR Soybeans, Food Beans — which pools High Oil Soybeans) plus
+// one-line quick info on the specialty crops. Volumes only, so office and
+// owner render identically (financial keys are stripped server-side).
+//
+// Theming: MACRO passes ?theme=light|dark to match its own mode. Light is
+// the default (MACRO defaults white for readability).
 import { redirect } from 'next/navigation'
 import { getMarketingAuthContext } from '@/lib/supabase/marketing-guard-rsc'
 import { loadEnterpriseData } from '@/lib/marketing/load-enterprise-data'
@@ -12,25 +15,74 @@ import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 type VariantVolume = OfficeCommodityRollupRow['variants'][number]
 
-// variantName in the enterprise crosswalk → display label on the widget
-const PRIMARY: Array<{ variant: string; label: string }> = [
-  { variant: 'Shell Corn', label: 'Shell Corn' },
-  { variant: 'Non-GMO Yellow Corn', label: 'Non-GMO Corn' },
-  { variant: 'Soybeans', label: 'RR Soybeans' },
-  { variant: 'Non-GMO Food Beans', label: 'Food Beans' },
+// crosswalk variantName(s) → one widget card; volumes are summed across them
+const PRIMARY: Array<{ variants: string[]; label: string }> = [
+  { variants: ['Shell Corn'], label: 'Shell Corn' },
+  { variants: ['Non-GMO Yellow Corn'], label: 'Non-GMO Corn' },
+  { variants: ['Soybeans'], label: 'RR Soybeans' },
+  { variants: ['Non-GMO Food Beans', 'High Oil Soybeans'], label: 'Food Beans' },
 ]
 
-function barColor(pct: number | null): string {
-  if (pct == null) return 'bg-glomalin-border'
-  if (pct >= 0.8) return 'bg-glomalin-success'
-  if (pct >= 0.5) return 'bg-glomalin-warning'
-  return 'bg-glomalin-danger'
+interface Pooled {
+  soldBu: number
+  projectedBu: number | null
+  actualBu: number | null
+  pctSold: number | null
 }
 
-export default async function MarketingPositionEmbedPage() {
+function pool(variants: VariantVolume[]): Pooled | null {
+  if (variants.length === 0) return null
+  const soldBu = variants.reduce((s, v) => s + v.soldBu, 0)
+  const projs = variants.filter((v) => v.projectedBu != null)
+  const projectedBu = projs.length ? projs.reduce((s, v) => s + (v.projectedBu ?? 0), 0) : null
+  const acts = variants.filter((v) => v.actualBu != null)
+  const actualBu = acts.length ? acts.reduce((s, v) => s + (v.actualBu ?? 0), 0) : null
+  const pctSold = projectedBu != null && projectedBu > 0 ? soldBu / projectedBu : null
+  return { soldBu, projectedBu, actualBu, pctSold }
+}
+
+function barColor(pct: number | null): string {
+  if (pct == null) return 'var(--w-border)'
+  if (pct >= 0.8) return 'var(--w-ok)'
+  if (pct >= 0.5) return 'var(--w-warn)'
+  return 'var(--w-bad)'
+}
+
+const WIDGET_CSS = `
+  .mpw { --w-bg: transparent; --w-surface: #ffffff; --w-border: #cbd5e1;
+    --w-text: #1e293b; --w-muted: #475569; --w-bright: #0f172a;
+    --w-accent: #0d9488; --w-ok: #0d9488; --w-warn: #b8860b; --w-bad: #c62828;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    background: var(--w-bg); color: var(--w-text); padding: 12px; }
+  .mpw[data-theme="dark"] { --w-surface: #10141c; --w-border: #2a3242;
+    --w-text: #c7d0de; --w-muted: #8593a8; --w-bright: #eef2f8;
+    --w-accent: #2dd4bf; --w-ok: #2dd4bf; --w-warn: #e8b339; --w-bad: #ef6a5a; }
+  .mpw-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .mpw-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--w-muted); }
+  .mpw-link { font-size: 12px; color: var(--w-muted); text-decoration: none; }
+  .mpw-link:hover { color: var(--w-accent); }
+  .mpw-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  @media (min-width: 1100px) { .mpw-grid { grid-template-columns: repeat(4, 1fr); } }
+  .mpw-card { border: 1px solid var(--w-border); background: var(--w-surface); border-radius: 4px; padding: 10px 12px; }
+  .mpw-crop { font-size: 14px; font-weight: 700; color: var(--w-bright); margin-bottom: 6px; }
+  .mpw-bar { height: 7px; border-radius: 4px; background: color-mix(in srgb, var(--w-border) 55%, transparent); overflow: hidden; }
+  .mpw-fill { height: 100%; border-radius: 4px; }
+  .mpw-nums { margin-top: 6px; font-size: 13px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+  .mpw-nums b { color: var(--w-text); font-weight: 600; }
+  .mpw-actual { color: var(--w-muted); opacity: 0.85; }
+  .mpw-spec { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 12.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+  .mpw-spec b { color: var(--w-text); font-weight: 600; }
+`
+
+export default async function MarketingPositionEmbedPage({
+  searchParams,
+}: {
+  searchParams: { theme?: string }
+}) {
   const ctx = await getMarketingAuthContext()
   if (!ctx) redirect('/login')
 
+  const theme = searchParams?.theme === 'dark' ? 'dark' : 'light'
   const { role, accessToken } = ctx
   const enterprise = await loadEnterpriseData(accessToken, role, CURRENT_CROP_YEAR)
 
@@ -39,62 +91,53 @@ export default async function MarketingPositionEmbedPage() {
   )
   const byName = new Map(allVariants.map((v) => [v.variantName, v]))
 
-  const primaryNames = new Set(PRIMARY.map((p) => p.variant))
+  const primaryNames = new Set(PRIMARY.flatMap((p) => p.variants))
   const specialty = allVariants.filter(
     (v) => !primaryNames.has(v.variantName) && (v.soldBu > 0 || (v.projectedBu ?? 0) > 0)
   )
 
   return (
-    <div className="p-3 bg-transparent">
-      <div className="flex items-baseline justify-between mb-2">
-        <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-glomalin-muted">
-          Marketing Position · {CURRENT_CROP_YEAR}
-        </span>
-        <a
-          href="/app/marketing"
-          target="_top"
-          className="text-[10px] font-mono text-glomalin-muted hover:text-glomalin-accent"
-        >
+    <div className="mpw" data-theme={theme}>
+      <style>{WIDGET_CSS}</style>
+      <div className="mpw-head">
+        <span className="mpw-title">Marketing Position · {CURRENT_CROP_YEAR}</span>
+        <a className="mpw-link" href="/app/marketing" target="_top">
           full command center →
         </a>
       </div>
 
       {/* Primary four: sales vs projected */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-        {PRIMARY.map(({ variant, label }) => {
-          const v = byName.get(variant)
-          const pct = v?.pctSold != null ? Math.min(1, v.pctSold) : null
+      <div className="mpw-grid">
+        {PRIMARY.map(({ variants, label }) => {
+          const pooled = pool(variants.map((n) => byName.get(n)).filter(Boolean) as VariantVolume[])
+          const pct = pooled?.pctSold != null ? Math.min(1, pooled.pctSold) : null
           return (
-            <div
-              key={variant}
-              className="rounded border border-glomalin-border bg-glomalin-surface px-2.5 py-2"
-            >
-              <div className="text-[11px] font-mono font-semibold text-glomalin-bright mb-1">
-                {label}
-              </div>
-              <div className="h-1 rounded-full bg-glomalin-border/60 overflow-hidden">
+            <div key={label} className="mpw-card">
+              <div className="mpw-crop">{label}</div>
+              <div className="mpw-bar">
                 <div
-                  className={`h-full rounded-full ${barColor(pct)}`}
-                  style={{ width: `${pct != null ? Math.round(pct * 100) : 0}%` }}
+                  className="mpw-fill"
+                  style={{
+                    width: `${pct != null ? Math.round(pct * 100) : 0}%`,
+                    background: barColor(pct),
+                  }}
                 />
               </div>
-              <div className="mt-1 text-[10px] font-mono text-glomalin-muted tabular-nums">
-                {v ? (
-                  v.projectedBu != null ? (
+              <div className="mpw-nums">
+                {pooled ? (
+                  pooled.projectedBu != null ? (
                     <>
-                      {formatBu(v.soldBu)} / {formatBu(Math.round(v.projectedBu))} bu
-                      {' '}· {v.pctSold != null ? formatPct(v.pctSold) : '—'} sold
+                      <b>{formatBu(pooled.soldBu)}</b> / {formatBu(Math.round(pooled.projectedBu))} bu
+                      {' '}· <b>{pooled.pctSold != null ? formatPct(pooled.pctSold) : '—'}</b> sold
                     </>
                   ) : (
-                    <>{formatBu(v.soldBu)} bu sold · no crop plan</>
+                    <>{formatBu(pooled.soldBu)} bu sold · no crop plan</>
                   )
                 ) : (
                   <>no data</>
                 )}
-                {v?.actualBu != null && (
-                  <span className="ml-1.5 text-glomalin-muted/70">
-                    actual {formatBu(Math.round(v.actualBu))}
-                  </span>
+                {pooled?.actualBu != null && (
+                  <span className="mpw-actual"> · actual {formatBu(Math.round(pooled.actualBu))}</span>
                 )}
               </div>
             </div>
@@ -104,11 +147,10 @@ export default async function MarketingPositionEmbedPage() {
 
       {/* Specialty crops: quick info one-liners */}
       {specialty.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-mono text-glomalin-muted tabular-nums">
+        <div className="mpw-spec">
           {specialty.map((v) => (
             <span key={v.variantName}>
-              <span className="text-glomalin-text">{v.variantName}</span>{' '}
-              {formatBu(v.soldBu)}
+              <b>{v.variantName}</b> {formatBu(v.soldBu)}
               {v.projectedBu != null && <>/{formatBu(Math.round(v.projectedBu))}</>} bu
               {v.pctSold != null && <> · {formatPct(v.pctSold)}</>}
             </span>

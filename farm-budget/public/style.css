@@ -54,6 +54,9 @@ body.light ::selection {
   color: var(--bg);
 }
 
+/* Readability: raise the rem base — most small labels are hardcoded rems */
+html { font-size: 17px; }
+
 body {
   font-family: var(--font-body, var(--font-mono));
   background: var(--bg);
@@ -4107,11 +4110,11 @@ tr.fo-confirm-form-row td {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.18rem 0.5rem;
+  padding: 0.22rem 0.55rem;
   background: var(--surface-2, var(--card));
   border: 1px solid var(--border);
   border-radius: 3px;
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   color: var(--text);
   cursor: pointer;
   white-space: nowrap;
@@ -4126,7 +4129,7 @@ tr.fo-confirm-form-row td {
   color: #fff;
   border-radius: 10px;
   padding: 0 0.35rem;
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   font-weight: 700;
   line-height: 1.4;
 }

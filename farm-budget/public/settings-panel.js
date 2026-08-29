@@ -40,7 +40,8 @@
     document.documentElement.style.setProperty('--text-scale', savedScale);
   }
   var savedTheme = localStorage.getItem(THEME_KEY);
-  if (savedTheme === 'light') {
+  // Light is the default — dark only when explicitly chosen
+  if (savedTheme !== 'dark') {
     document.documentElement.classList.add('light');
     document.body ? document.body.classList.add('light') : document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('light'); });
   }
@@ -56,7 +57,7 @@
   if (isIframe) {
     window.addEventListener('storage', function (e) {
       if (e.key === THEME_KEY) {
-        if (e.newValue === 'light') {
+        if (e.newValue !== 'dark') {
           document.documentElement.classList.add('light');
           if (document.body) document.body.classList.add('light');
         } else {

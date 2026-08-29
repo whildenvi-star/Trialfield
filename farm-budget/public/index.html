@@ -8,13 +8,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="platform-tokens.css?v=2">
-  <link rel="stylesheet" href="style.css?v=20260828">
+  <link rel="stylesheet" href="platform-tokens.css?v=3">
+  <link rel="stylesheet" href="style.css?v=20260828e">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
     // Apply saved theme before first paint to prevent flash
-    (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
+    // Light is the default — dark only when explicitly chosen
+    (function(){var t=localStorage.getItem('mru-theme');if(t!=='dark')document.documentElement.classList.add('light-pending')})();
     if(window!==window.top)document.documentElement.classList.add('in-iframe');
     if(/[?&]view=reference\b/.test(location.search))document.documentElement.classList.add('solo-reference');
   </script>
@@ -33,7 +34,7 @@
   <!-- Sidebar navigation (desktop) -->
   <aside class="app-sidebar">
     <div class="sidebar-brand">MACRO <span id="brand-year">2026</span></div>
-    <div id="season-switcher" style="display:none;padding:0 1rem 0.4rem;font-size:0.62rem;letter-spacing:0.04em"></div>
+    <div id="season-switcher" style="display:none;padding:0 1rem 0.4rem;font-size:0.7rem;letter-spacing:0.04em"></div>
     <nav class="sidebar-nav nav-primary" id="main-nav">
       <button class="tab-btn active" data-tab="dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
@@ -1506,7 +1507,7 @@
   <script src="calc.js?v=20260827"></script>
   <script src="crop-colors.js"></script>
   <script src="app.js?v=20260814a"></script>
-  <script src="dashboard.js?v=20260828d"></script>
+  <script src="dashboard.js?v=20260828e"></script>
   <script src="enterprise.js?v=20260811a"></script>
   <script src="field-ops-groups.js"></script>
   <script src="field-editor.js?v=20260827"></script>
@@ -1844,7 +1845,7 @@
     setInterval(checkAudit, 5 * 60 * 1000);
   })();
   </script>
-  <script src="settings-panel.js"></script>
+  <script src="settings-panel.js?v=20260828e"></script>
   <script src="formatting-agent.js"></script>
   <script>
   (function () {

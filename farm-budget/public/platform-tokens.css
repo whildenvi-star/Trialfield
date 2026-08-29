@@ -41,7 +41,7 @@
   --primary-dim: #0f766e;
   --primary-light: #14b8a6;
   --text: #1e293b;
-  --text-light: #64748b;
+  --text-light: #475569; /* was #64748b — higher contrast for readability */
   --text-bright: #0f172a;
   --border: #cbd5e1;
   --border-light: #e2e8f0;

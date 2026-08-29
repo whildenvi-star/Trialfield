@@ -543,7 +543,8 @@
     if (!embedded) return;
     marketingWidgetInjected = true;
     var frame = document.createElement('iframe');
-    frame.src = '/marketing/position';
+    var widgetTheme = document.body.classList.contains('light') ? 'light' : 'dark';
+    frame.src = '/marketing/position?theme=' + widgetTheme;
     frame.title = 'Marketing position';
     frame.style.cssText = 'width:100%;height:200px;border:1px solid var(--border);border-radius:4px;background:var(--surface);display:block';
     frame.setAttribute('loading', 'lazy');
@@ -650,18 +651,18 @@
     header.style.cssText = 'display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.75rem';
 
     var label = document.createElement('span');
-    label.style.cssText = 'font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);white-space:nowrap';
+    label.style.cssText = 'font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);white-space:nowrap';
     label.textContent = 'Field check off';
 
     var summary = document.createElement('span');
-    summary.style.cssText = 'font-size:0.68rem;color:var(--text-light);opacity:0.7';
+    summary.style.cssText = 'font-size:0.75rem;color:var(--text-light)';
     summary.textContent = pending.length + ' field' + (pending.length !== 1 ? 's' : '') + ' · ' + totalPending + ' input' + (totalPending !== 1 ? 's' : '');
 
     var spacer = document.createElement('span');
     spacer.style.flex = '1';
 
     var toggleBtn = document.createElement('button');
-    toggleBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:3px;padding:0.1rem 0.4rem;cursor:pointer;font-size:0.65rem;font-family:inherit;color:var(--text-light);line-height:1.4';
+    toggleBtn.style.cssText = 'background:none;border:1px solid var(--border);border-radius:3px;padding:0.1rem 0.4rem;cursor:pointer;font-size:0.72rem;font-family:inherit;color:var(--text-light);line-height:1.4';
     toggleBtn.textContent = collapsed ? 'show' : 'hide';
 
     header.appendChild(label);
@@ -690,7 +691,7 @@
 
       if (pf.crop) {
         var cropSpan = document.createElement('span');
-        cropSpan.style.cssText = 'opacity:0.7;font-size:0.68rem';
+        cropSpan.style.cssText = 'opacity:0.8;font-size:0.75rem';
         cropSpan.textContent = ' (' + pf.crop + ')';
         chip.appendChild(cropSpan);
       }
