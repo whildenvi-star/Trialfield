@@ -507,7 +507,7 @@
     tbody.innerHTML = html;
   }
 
-  // --- Pending Invoices Bar ---
+  // --- Field Check Off Bar ---
   function renderPendingBar(invoiceTotals) {
     var el = document.getElementById('dash-pending-bar');
     if (!el) return;
@@ -528,7 +528,7 @@
 
     var label = document.createElement('span');
     label.style.cssText = 'font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-light);white-space:nowrap';
-    label.textContent = 'Pending invoices';
+    label.textContent = 'Field check off';
 
     var summary = document.createElement('span');
     summary.style.cssText = 'font-size:0.68rem;color:var(--text-light);opacity:0.7';
