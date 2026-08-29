@@ -1,19 +1,22 @@
 // Marketing position widget — chrome-less embed for the MACRO dashboard.
 // Sales vs projected for the four primary crops (Shell Corn, Non-GMO Yellow
 // Corn, RR Soybeans, Food Beans — which pools High Oil Soybeans) plus
-// one-line quick info on the specialty crops. Volumes only, so office and
-// owner render identically (financial keys are stripped server-side).
+// one-line quick info on the specialty crops. Owners additionally get a
+// WAP · COP line per crop; office rows arrive with financial keys stripped
+// server-side, so that line simply never renders for them.
 //
 // Theming: MACRO passes ?theme=light|dark to match its own mode. Light is
 // the default (MACRO defaults white for readability).
 import { redirect } from 'next/navigation'
 import { getMarketingAuthContext } from '@/lib/supabase/marketing-guard-rsc'
 import { loadEnterpriseData } from '@/lib/marketing/load-enterprise-data'
-import type { OfficeCommodityRollupRow } from '@/lib/marketing/enterprise-rollup'
-import { formatBu, formatPct } from '@/lib/fmt'
+import type { OfficeCommodityRollupRow, VariantRollupRow } from '@/lib/marketing/enterprise-rollup'
+import { formatBu, formatPct, formatPricePerBu } from '@/lib/fmt'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 
-type VariantVolume = OfficeCommodityRollupRow['variants'][number]
+// Office rows omit the financial keys, owner rows carry them — model both.
+type VariantVolume = OfficeCommodityRollupRow['variants'][number] &
+  Partial<Pick<VariantRollupRow, 'wapCents' | 'copPerBu'>>
 
 // crosswalk variantName(s) → one widget card; volumes are summed across them
 const PRIMARY: Array<{ variants: string[]; label: string }> = [
@@ -28,6 +31,10 @@ interface Pooled {
   projectedBu: number | null
   actualBu: number | null
   pctSold: number | null
+  /** sold-bushel-weighted avg sale price, cents/bu; null when nothing priced or office */
+  wapCents: number | null
+  /** projected-bushel-weighted cost of production, $/bu; null when no budget or office */
+  copPerBu: number | null
 }
 
 function pool(variants: VariantVolume[]): Pooled | null {
@@ -38,7 +45,26 @@ function pool(variants: VariantVolume[]): Pooled | null {
   const acts = variants.filter((v) => v.actualBu != null)
   const actualBu = acts.length ? acts.reduce((s, v) => s + (v.actualBu ?? 0), 0) : null
   const pctSold = projectedBu != null && projectedBu > 0 ? soldBu / projectedBu : null
-  return { soldBu, projectedBu, actualBu, pctSold }
+
+  // WAP across the pool, weighted by each variant's sold bu (wapCents === 0
+  // means nothing priced — same convention as the enterprise table). Falls
+  // back to a plain average if the priced variants have no sold volume.
+  const priced = variants.filter((v) => (v.wapCents ?? 0) > 0)
+  const pricedSold = priced.reduce((s, v) => s + v.soldBu, 0)
+  const wapCents = priced.length
+    ? pricedSold > 0
+      ? priced.reduce((s, v) => s + (v.wapCents as number) * v.soldBu, 0) / pricedSold
+      : priced.reduce((s, v) => s + (v.wapCents as number), 0) / priced.length
+    : null
+
+  // COP weighted by projected bu — mirrors the commodity-level roll-up.
+  const budgeted = variants.filter((v) => v.copPerBu != null && (v.projectedBu ?? 0) > 0)
+  const budgetedProj = budgeted.reduce((s, v) => s + (v.projectedBu as number), 0)
+  const copPerBu = budgeted.length && budgetedProj > 0
+    ? budgeted.reduce((s, v) => s + (v.copPerBu as number) * (v.projectedBu as number), 0) / budgetedProj
+    : null
+
+  return { soldBu, projectedBu, actualBu, pctSold, wapCents, copPerBu }
 }
 
 function barColor(pct: number | null): string {
@@ -70,6 +96,9 @@ const WIDGET_CSS = `
   .mpw-nums { margin-top: 6px; font-size: 13px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
   .mpw-nums b { color: var(--w-text); font-weight: 600; }
   .mpw-actual { color: var(--w-muted); opacity: 0.85; }
+  .mpw-fin { margin-top: 4px; font-size: 13px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
+  .mpw-fin b { color: var(--w-text); font-weight: 600; }
+  .mpw-fin .below { color: var(--w-bad); }
   .mpw-spec { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 12.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
   .mpw-spec b { color: var(--w-text); font-weight: 600; }
 `
@@ -147,6 +176,22 @@ export default async function MarketingPositionEmbedPage({
                   <span className="mpw-actual"> · actual {formatBu(Math.round(pooled.actualBu))}</span>
                 )}
               </div>
+              {(pooled?.wapCents != null || pooled?.copPerBu != null) && (
+                <div className="mpw-fin">
+                  WAP{' '}
+                  <b
+                    className={
+                      pooled.wapCents != null && pooled.copPerBu != null &&
+                      pooled.wapCents / 100 < pooled.copPerBu
+                        ? 'below'
+                        : undefined
+                    }
+                  >
+                    {pooled.wapCents != null ? formatPricePerBu(pooled.wapCents / 100) : '—'}
+                  </b>
+                  {' '}· COP <b>{pooled.copPerBu != null ? formatPricePerBu(pooled.copPerBu) : '—'}</b>
+                </div>
+              )}
             </div>
           )
         })}
