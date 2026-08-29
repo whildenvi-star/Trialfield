@@ -273,3 +273,49 @@ describe('buildEnterpriseRollup — tier wall (futures vs tracking)', () => {
     expect(stripped.map((r) => r.tier).sort()).toEqual(['futures', 'tracking'])
   })
 })
+
+describe('buildEnterpriseRollup — F-IT projected basis on the remainder', () => {
+  const budgetRows = [{ crop: 'RR Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
+  const variantsWithBasis: RollupVariantMeta[] = [
+    { id: 'v-rr', name: 'Soybeans', cropYear: 2026, projectedBasis: -0.5, commodity: { name: 'Soybeans', symbol: 'S' } },
+  ]
+
+  it('values the unpriced remainder at futures + projected basis', () => {
+    const [row] = buildEnterpriseRollup(baseInput({
+      variants: variantsWithBasis,
+      contracts: [
+        { id: 'b', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 10000, futuresPrice: 12.0, basis: -0.2, variant: { id: 'v-rr', name: 'Soybeans' } },
+      ],
+      budgetRows,
+      cbotBySymbol: { S: 11.0 },
+    }))
+    // priced 10000 @ 11.80 actual basis; remainder 50000 @ 11.00 - 0.50 = 10.50
+    // (1180×10000 + 1050×50000) / 60000 = 1071.67 → 1072
+    expect(row.blendedIfSoldTodayCents).toBe(1072)
+  })
+
+  it('open basis leg uses the placeholder in WAP and the remainder alike', () => {
+    const [row] = buildEnterpriseRollup(baseInput({
+      variants: variantsWithBasis,
+      contracts: [
+        { id: 'b', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 10000, futuresPrice: 12.0, basis: null, variant: { id: 'v-rr', name: 'Soybeans' } },
+      ],
+      budgetRows,
+      cbotBySymbol: { S: 11.0 },
+    }))
+    expect(row.wapCents).toBe(1150) // 12.00 - 0.50 placeholder
+    // (1150×10000 + 1050×50000) / 60000 = 1066.67 → 1067
+    expect(row.blendedIfSoldTodayCents).toBe(1067)
+  })
+
+  it('no placeholder → remainder at plain futures (legacy behavior)', () => {
+    const [row] = buildEnterpriseRollup(baseInput({
+      contracts: [
+        { id: 'b', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 10000, futuresPrice: 12.0, variant: { id: 'v-rr', name: 'Soybeans' } },
+      ],
+      budgetRows,
+      cbotBySymbol: { S: 11.0 },
+    }))
+    expect(row.blendedIfSoldTodayCents).toBe(1117)
+  })
+})

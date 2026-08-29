@@ -236,6 +236,22 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
   }
   const positionOptions = { projectedBasisByVariantId }
 
+  // Same placeholders keyed by variant name for the F-IT remainder valuation —
+  // the variant loop works by name. Prefer the selected crop year's variant;
+  // a different-year variant only fills in when the year has no row of its own.
+  const projectedBasisByVariantName = new Map<string, number>()
+  for (const v of variants) {
+    if (v.projectedBasis == null || v.cropYear === cropYear) continue
+    if (!projectedBasisByVariantName.has(lower(v.name))) {
+      projectedBasisByVariantName.set(lower(v.name), v.projectedBasis)
+    }
+  }
+  for (const v of variants) {
+    if (v.projectedBasis != null && v.cropYear === cropYear) {
+      projectedBasisByVariantName.set(lower(v.name), v.projectedBasis)
+    }
+  }
+
   // variantName → crosswalk entry
   const xwalkByVariant = new Map<string, CrosswalkEntry>()
   for (const e of ENTERPRISE_CROSSWALK) xwalkByVariant.set(lower(e.variantName), e)
@@ -314,6 +330,10 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     }
 
     const variantRows: VariantRollupRow[] = []
+    // F-IT remainder basis: each variant's unpriced projection carries its own
+    // projected basis; these accumulate into a remainder-weighted average.
+    let remainderBasisNum = 0
+    let remainderBasisDen = 0
     for (const variantName of Array.from(variantNames)) {
       const xwalk = xwalkByVariant.get(lower(variantName)) ?? null
       const vContracts = group.contracts.filter((c) => c.variant?.name === variantName)
@@ -350,6 +370,12 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
         }
       }
       const premiumPerBu = premDen > 0 ? premNum / premDen : (xwalk?.premiumDefault ?? 0)
+
+      const vRemainingBu = Math.max((projectedBu ?? 0) - vPos.pricedBu, 0)
+      if (vRemainingBu > 0) {
+        remainderBasisNum += vRemainingBu * (projectedBasisByVariantName.get(lower(variantName)) ?? 0)
+        remainderBasisDen += vRemainingBu
+      }
 
       variantRows.push({
         variantName,
@@ -390,14 +416,19 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     const rowSymbol = group.tier === 'futures' ? group.symbol : null
     const cbotPriceDollars = rowSymbol ? (cbotBySymbol[rowSymbol] ?? null) : null
 
-    // Blended price if the unpriced remainder of the projection sold today
+    // F-IT — blended price if the unpriced remainder of the projection sold
+    // today: remainder valued at live futures + the remainder-weighted
+    // projected basis (every load pays SOMETHING in basis).
     let blendedIfSoldTodayCents: number | null = null
     if (projectedBu && projectedBu > 0 && cbotPriceDollars != null) {
       const pricedRevenueCents = position.avgPriceCents * position.pricedBu
       const remainingBu = Math.max(projectedBu - position.pricedBu, 0)
       const denominator = Math.max(projectedBu, position.pricedBu)
+      const remainderBasisCents = remainderBasisDen > 0
+        ? Math.round((remainderBasisNum / remainderBasisDen) * 100)
+        : 0
       blendedIfSoldTodayCents = Math.round(
-        (pricedRevenueCents + remainingBu * Math.round(cbotPriceDollars * 100)) / denominator
+        (pricedRevenueCents + remainingBu * (Math.round(cbotPriceDollars * 100) + remainderBasisCents)) / denominator
       )
     }
 

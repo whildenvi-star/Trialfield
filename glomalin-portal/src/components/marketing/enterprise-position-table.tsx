@@ -100,7 +100,7 @@ export function EnterprisePositionTable({
                       <Th>Avg Sale</Th>
                       <Th>COP/bu</Th>
                       <Th>Gross Sales</Th>
-                      <Th>@ Today</Th>
+                      <Th>F-IT</Th>
                     </>
                   )}
                 </tr>
@@ -146,7 +146,7 @@ export function EnterprisePositionTable({
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-mono text-glomalin-muted/70">
             {isOwner && notes.cbotAvailable && (
-              <span>@ Today = priced revenue + unsold projection at live CBOT (delayed)</span>
+              <span>F-IT = priced revenue + unsold projection at live CBOT + projected basis (delayed)</span>
             )}
             <ExcludedTicketsWarning notes={notes} />
             {!notes.ticketsAvailable && <span>grain-tickets offline — actuals unavailable</span>}
