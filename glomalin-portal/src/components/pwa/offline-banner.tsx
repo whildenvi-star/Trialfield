@@ -31,12 +31,14 @@ export default function OfflineBanner() {
   if (!mounted || isOnline) return null
 
   return (
+    // Neutral, not warning-styled: offline is normal in the field, and the
+    // data on screen is still useful — say what works, don't alarm
     <div
       role="status"
       aria-live="polite"
-      className="w-full bg-amber-100 px-4 py-2 text-center text-sm font-medium text-amber-800"
+      className="w-full bg-glomalin-surface border-b border-glomalin-border px-4 py-2 text-center text-sm font-medium text-glomalin-muted"
     >
-      Offline - showing cached data
+      Offline — showing saved data
     </div>
   )
 }

@@ -4,12 +4,16 @@ import { offlineQueue } from '@/lib/offline/db'
 import { observationQueue } from '@/lib/offline/observation-queue'
 import { processQueue } from '@/lib/offline/sync-engine'
 
-export type SyncState = 'idle' | 'syncing' | 'error'
+export type SyncState = 'idle' | 'syncing' | 'synced' | 'error'
 
 export interface SyncStatus {
   isOnline: boolean
   pendingCount: number
   syncState: SyncState
+  /** Items completed in the current drain — drives the determinate progress bar */
+  syncDone: number
+  /** Total items in the current drain */
+  syncTotal: number
   errorMessage: string | null
   drainQueue: () => void
 }
@@ -30,8 +34,11 @@ export function useSyncStatus(getToken: () => Promise<string | null>): SyncStatu
   const [isOnline, setIsOnline] = useState(true)
   const [pendingCount, setPendingCount] = useState(0)
   const [syncState, setSyncState] = useState<SyncState>('idle')
+  const [syncDone, setSyncDone] = useState(0)
+  const [syncTotal, setSyncTotal] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const isSyncing = useRef(false)
+  const syncedFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Sum pending counts from BOTH queues: offlineQueue (QueuedOperation) + observationQueue (PendingObservation)
   const refreshCount = useCallback(async () => {
@@ -45,14 +52,26 @@ export function useSyncStatus(getToken: () => Promise<string | null>): SyncStatu
   const drainQueue = useCallback(async () => {
     if (isSyncing.current || !navigator.onLine) return
     isSyncing.current = true
+    if (syncedFlashTimer.current) clearTimeout(syncedFlashTimer.current)
     setSyncState('syncing')
+    setSyncDone(0)
+    setSyncTotal(0)
     setErrorMessage(null)
     try {
-      const result = await processQueue(getToken)
+      const result = await processQueue(getToken, (done, total) => {
+        setSyncDone(done)
+        setSyncTotal(total)
+      })
 
       if (result.failed.length > 0 && result.synced === 0) {
         setSyncState('error')
         setErrorMessage(result.failed[0].errorMessage)
+      } else if (result.synced > 0) {
+        // Brief checkmark confirmation before the banner goes quiet —
+        // icon + color change together so it reads through glare
+        setSyncDone(result.total)
+        setSyncState('synced')
+        syncedFlashTimer.current = setTimeout(() => setSyncState('idle'), 2500)
       } else {
         setSyncState('idle')
       }
@@ -97,5 +116,5 @@ export function useSyncStatus(getToken: () => Promise<string | null>): SyncStatu
     }
   }, [drainQueue, refreshCount])
 
-  return { isOnline, pendingCount, syncState, errorMessage, drainQueue }
+  return { isOnline, pendingCount, syncState, syncDone, syncTotal, errorMessage, drainQueue }
 }

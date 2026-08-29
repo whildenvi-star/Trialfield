@@ -256,7 +256,8 @@ export async function replayOperation(
  * - Other 4xx errors move the item to failed with the server's error message
  */
 export async function processQueue(
-  getToken: () => Promise<string | null>
+  getToken: () => Promise<string | null>,
+  onProgress?: (done: number, total: number) => void
 ): Promise<SyncResult> {
   const result: SyncResult = { synced: 0, skipped: [], failed: [], conflicts: [], total: 0 }
 
@@ -285,7 +286,10 @@ export async function processQueue(
     return result
   }
 
+  let processed = 0
   for (const op of pending) {
+    onProgress?.(processed++, pending.length)
+
     // Exponential backoff before retry: 1s, 4s, 16s
     if (op.retryCount > 0) {
       const backoffMs = 1000 * Math.pow(4, op.retryCount - 1)
