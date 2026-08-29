@@ -117,7 +117,11 @@
 
   window.addEventListener('ref-data-loaded', function () {
     var s = window.refData.settings;
-    document.getElementById('dash-year').textContent = s.year || 2026;
+    var cropYear = s.year || 2026;
+    document.getElementById('dash-year').textContent = cropYear;
+    var brandYear = document.getElementById('brand-year');
+    if (brandYear) brandYear.textContent = cropYear;
+    document.title = 'MACRO ' + cropYear;
     // Only populate inputs on first load — not on every reloadRefData() call
     // (reloadRefData fires ref-data-loaded after saveSettings, which would reset
     // the inputs mid-edit before the server round-trip completes)

@@ -318,7 +318,7 @@
     }
 
     if (allProducts.length === 0) {
-      body += '<p>No forecast products found. Add inputs to fields in the Macro Roll-Up first.</p>';
+      body += '<p>No forecast products found. Add inputs to fields in MACRO first.</p>';
     }
 
     return reportWrapper(title, farmName, body);
@@ -340,7 +340,7 @@
     var body = '';
 
     if (sortedFields.length === 0) {
-      body += '<p>No field-level input data found. Add inputs to fields in the Macro Roll-Up first.</p>';
+      body += '<p>No field-level input data found. Add inputs to fields in MACRO first.</p>';
     } else {
       sortedFields.forEach(function (field) {
         // Enrich on-the-fly if fetched via all=true (no _computed)

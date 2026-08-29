@@ -125,7 +125,7 @@ export const MODULES: Module[] = [
   },
   {
     id: 'farm-budget',
-    label: 'Enterprise Planner',
+    label: 'MACRO 2026',
     sublabel: 'Enterprise & Field Planning',
     route: '/app/farm-budget',
     status: 'live',

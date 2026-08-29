@@ -2619,7 +2619,7 @@ app.post('/api/chat', async (req, res) => {
       'Answer concisely in a terminal style — short, data-driven responses. Plain text, line breaks for structure. ' +
       'Keep responses under 200 words.\n\nLIVE DATA:\n' + contextParts.join('\n\n');
   } else {
-    systemPrompt = 'You are Glomalin, the terminal AI for a farming operation\'s macro rollup dashboard. ' +
+    systemPrompt = 'You are Glomalin, the terminal AI for a farming operation\'s MACRO ' + getCropYear() + ' planning dashboard. ' +
       'You have access to live data from the entire Glomalin network — farm budget, grain tickets, ' +
       'farm registry, FSA acres, and CBOT futures. Answer questions concisely in a terminal style — ' +
       'short, data-driven responses. Use numbers and units. No markdown headers or bullet lists — plain text, ' +
@@ -3322,7 +3322,7 @@ app.post('/api/marketing/migrate-legacy', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Macro Roll Up server running at http://localhost:${PORT}`);
+  console.log(`MACRO ${getCropYear()} server running at http://localhost:${PORT}`);
 
   // --- Scheduled FieldOps Sync ---
   if (process.env.FIELDOPS_SYNC_ENABLED === 'true') {

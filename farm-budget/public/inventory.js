@@ -51,7 +51,7 @@
     var visibleCats = categories.filter(function (c) { return c.products && c.products.length > 0; });
 
     if (visibleCats.length === 0) {
-      container.innerHTML = util.emptyState('\uD83D\uDCE6', 'No forecast data', 'Add inputs to fields in the Macro Roll-Up to see forecasts here');
+      container.innerHTML = util.emptyState('\uD83D\uDCE6', 'No forecast data', 'Add inputs to fields in MACRO to see forecasts here');
       updateSummary(0, 0);
       return;
     }

@@ -26,11 +26,12 @@
 
   function addFooter(doc) {
     var pages = doc.internal.getNumberOfPages();
+    var fYear = (window.refData && window.refData.settings && window.refData.settings.year) || 2026;
     for (var i = 1; i <= pages; i++) {
       doc.setPage(i);
       doc.setFontSize(7);
       doc.setTextColor(120, 120, 120);
-      doc.text('Macro Roll Up — Generated ' + new Date().toLocaleDateString(), 10,
+      doc.text('MACRO ' + fYear + ' — Generated ' + new Date().toLocaleDateString(), 10,
         doc.internal.pageSize.height - 5);
       doc.text('Page ' + i + ' of ' + pages,
         doc.internal.pageSize.width - 10, doc.internal.pageSize.height - 5, { align: 'right' });
@@ -81,7 +82,7 @@
       // =============================================
       // PAGE 1: Crop Production Summary
       // =============================================
-      addHeader(doc, 'Farm Macro Roll Up — ' + year, true, 'Crop Production Summary');
+      addHeader(doc, 'MACRO ' + year, true, 'Crop Production Summary');
       var yPos = 26;
 
       var cropTableStyles = {
@@ -174,7 +175,7 @@
       // PAGE 2: Cost Category Rollup (forced page break)
       // =============================================
       doc.addPage('a4', 'landscape');
-      addHeader(doc, 'Farm Macro Roll Up — ' + year, true, 'Cost Category Rollup by Enterprise');
+      addHeader(doc, 'MACRO ' + year, true, 'Cost Category Rollup by Enterprise');
       yPos = 28;
 
       var enterprises = data.enterpriseSummaries;

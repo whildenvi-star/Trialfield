@@ -79,7 +79,7 @@ function circlePoint(cx: number, cy: number, radius: number, angleDeg: number): 
 // ------- Source apps (outer ring, 6 nodes, clockwise from top) -------
 const SOURCE_APPS = [
   { id: 'grain-tickets', label: 'Grain Tickets', description: 'Grain traceability — 527+ tickets' },
-  { id: 'farm-budget', label: 'Farm Budget', description: 'Enterprise planning & P&L' },
+  { id: 'farm-budget', label: 'MACRO 2026', description: 'Enterprise planning & P&L' },
   { id: 'fsa-acres', label: 'FSA Acres', description: 'FSA acreage reporting' },
   { id: 'farm-registry', label: 'Farm Registry', description: 'Field & acre source of truth' },
   { id: 'meristem-malt', label: 'Meristem Malt', description: 'Malt barley processing' },

@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
   // Public routes: pass through (but redirect authenticated users on / to dashboard)
   if (isPublicRoute(pathname)) {
     if (pathname === '/' && user) {
-      // Admins land on the Enterprise Planner; everyone else on /dashboard
+      // Admins land on MACRO (farm-budget); everyone else on /dashboard
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
