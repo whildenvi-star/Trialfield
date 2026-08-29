@@ -1,110 +1,112 @@
 {
-  "runAt": "2026-07-09T16:17:44.017Z",
-  "durationMs": 17,
-  "fieldsAudited": 60,
+  "runAt": "2026-08-27T23:02:01.474Z",
+  "durationMs": 14,
+  "fieldsAudited": 61,
   "alerts": [
     {
-      "id": "aud_mrdpn5fy_oimw",
+      "id": "aud_mtc4nta8_nugg",
       "fieldId": "fld_0747",
       "fieldName": "New Life",
       "enterprise": "Conv Corn",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_RENT_HIGH",
-      "message": "New Life: rent $343.75/ac is unusually high for Yellow Corn (avg $169.46)",
+      "message": "New Life: rent $343.75/ac is unusually high for Yellow Corn (avg $182.60)",
       "detail": {
         "value": 343.75,
-        "mean": 169.46,
-        "stddev": 65.47
+        "mean": 182.6,
+        "stddev": 57.4
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.472Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_1dww",
+      "id": "aud_mtc4nta8_jej7",
       "fieldId": "fld_0821",
       "fieldName": "Fox Den",
       "enterprise": "Conv Corn",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_YIELD_LOW",
-      "message": "Fox Den: yield 180.0 bu/ac is unusually low for Yellow Corn (avg 207.2)",
+      "message": "Fox Den: yield 180.0 bu/ac is unusually low for Yellow Corn (avg 207.7)",
       "detail": {
         "value": 180,
-        "mean": 207.22,
-        "stddev": 9.89
+        "mean": 207.72,
+        "stddev": 10.24
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.472Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_j8s9",
-      "fieldId": "fld_1056",
-      "fieldName": "Schwellenbach",
-      "enterprise": "Conv Corn",
-      "category": "anomaly",
-      "severity": "warning",
-      "code": "ANOMALY_EXP_HIGH",
-      "message": "Schwellenbach: expenses $1305.33/ac is unusually high for Yellow Corn (avg $984.66)",
-      "detail": {
-        "value": 1305.33,
-        "mean": 984.66,
-        "stddev": 104.9
-      },
-      "createdAt": "2026-07-09T16:17:44.015Z",
-      "resolved": false
-    },
-    {
-      "id": "aud_mrdpn5fz_9nri",
-      "fieldId": "fld_1056",
-      "fieldName": "Schwellenbach",
+      "id": "aud_mtc4nta8_ypie",
+      "fieldId": "fld_1195",
+      "fieldName": "Delong- Christpherson",
       "enterprise": "Conv Corn",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_FERT_HIGH",
-      "message": "Schwellenbach: fertilizer $651.05/ac is unusually high for Yellow Corn (avg $333.40)",
+      "message": "Delong- Christpherson: fertilizer $413.39/ac is unusually high for Yellow Corn (avg $318.71)",
       "detail": {
-        "value": 651.05,
-        "mean": 333.4,
-        "stddev": 87.26
+        "value": 413.39,
+        "mean": 318.71,
+        "stddev": 46.8
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.472Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_9e76",
+      "id": "aud_mtc4nta8_2cns",
+      "fieldId": "fld_1271",
+      "fieldName": "Noss Torkelson West, a.k.a. Jessie Noss",
+      "enterprise": "Conv Corn",
+      "category": "anomaly",
+      "severity": "warning",
+      "code": "ANOMALY_FERT_HIGH",
+      "message": "Noss Torkelson West, a.k.a. Jessie Noss: fertilizer $414.64/ac is unusually high for Yellow Corn (avg $318.71)",
+      "detail": {
+        "value": 414.64,
+        "mean": 318.71,
+        "stddev": 46.8
+      },
+      "createdAt": "2026-08-27T23:02:01.472Z",
+      "resolved": false
+    },
+    {
+      "id": "aud_mtc4nta8_jcz6",
       "fieldId": "fld_1305",
       "fieldName": "Airport",
       "enterprise": "Conv Soy",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_FERT_HIGH",
-      "message": "Airport: fertilizer $415.63/ac is unusually high for RR Soybeans (avg $233.08)",
+      "message": "Airport: fertilizer $460.49/ac is unusually high for RR Soybeans (avg $212.99)",
       "detail": {
-        "value": 415.63,
-        "mean": 233.08,
-        "stddev": 89.89
+        "value": 460.49,
+        "mean": 212.99,
+        "stddev": 119.36
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.472Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_zetv",
-      "fieldId": "fld_0709",
-      "fieldName": "Elwood's",
-      "enterprise": "Conv SM Grain",
+      "id": "aud_mtc4nta8_97fu",
+      "fieldId": "fld_mtam6v2c_izkh",
+      "fieldName": "Wes's",
+      "enterprise": "Conv Soy",
       "category": "anomaly",
       "severity": "warning",
-      "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Elwood's: losing $121.70/ac — recommend investigating cost structure",
+      "code": "ANOMALY_YIELD_LOW",
+      "message": "Wes's: yield 35.0 bu/ac is unusually low for RR Soybeans (avg 60.0)",
       "detail": {
-        "value": -121.7
+        "value": 35,
+        "mean": 60,
+        "stddev": 10
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.472Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_gecc",
+      "id": "aud_mtc4nta9_yi8p",
       "fieldId": "fld_0747",
       "fieldName": "New Life",
       "enterprise": "Conv Corn",
@@ -115,11 +117,11 @@
       "detail": {
         "value": -173.31
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_9uvx",
+      "id": "aud_mtc4nta9_guah",
       "fieldId": "fld_0785",
       "fieldName": "Fagan",
       "enterprise": "Conv Corn",
@@ -130,86 +132,56 @@
       "detail": {
         "value": -109
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_gw2u",
-      "fieldId": "fld_0821",
-      "fieldName": "Fox Den",
-      "enterprise": "Conv Corn",
-      "category": "anomaly",
-      "severity": "warning",
-      "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Fox Den: losing $67.66/ac — recommend investigating cost structure",
-      "detail": {
-        "value": -67.66
-      },
-      "createdAt": "2026-07-09T16:17:44.015Z",
-      "resolved": false
-    },
-    {
-      "id": "aud_mrdpn5fz_vrv2",
-      "fieldId": "fld_1056",
-      "fieldName": "Schwellenbach",
-      "enterprise": "Conv Corn",
-      "category": "anomaly",
-      "severity": "warning",
-      "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Schwellenbach: losing $324.63/ac — recommend investigating cost structure",
-      "detail": {
-        "value": -324.63
-      },
-      "createdAt": "2026-07-09T16:17:44.015Z",
-      "resolved": false
-    },
-    {
-      "id": "aud_mrdpn5fz_5wvf",
+      "id": "aud_mtc4nta9_hol6",
       "fieldId": "fld_1232",
       "fieldName": "Gessley",
       "enterprise": "Conv Corn",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Gessley: losing $71.29/ac — recommend investigating cost structure",
+      "message": "Gessley: losing $81.93/ac — recommend investigating cost structure",
       "detail": {
-        "value": -71.29
+        "value": -81.93
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_s4vo",
+      "id": "aud_mtc4nta9_44wd",
       "fieldId": "fld_1271",
       "fieldName": "Noss Torkelson West, a.k.a. Jessie Noss",
       "enterprise": "Conv Corn",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Noss Torkelson West, a.k.a. Jessie Noss: losing $96.73/ac — recommend investigating cost structure",
+      "message": "Noss Torkelson West, a.k.a. Jessie Noss: losing $116.23/ac — recommend investigating cost structure",
       "detail": {
-        "value": -96.73
+        "value": -116.23
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_s05h",
+      "id": "aud_mtc4nta9_qnff",
       "fieldId": "fld_1305",
       "fieldName": "Airport",
       "enterprise": "Conv Soy",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Airport: losing $97.88/ac — recommend investigating cost structure",
+      "message": "Airport: losing $144.08/ac — recommend investigating cost structure",
       "detail": {
-        "value": -97.88
+        "value": -144.08
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_uubr",
+      "id": "aud_mtc4nta9_i6ip",
       "fieldId": "fld_1384",
       "fieldName": "Gessert",
       "enterprise": "Conv Soy",
@@ -220,26 +192,26 @@
       "detail": {
         "value": -103.59
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_hjmu",
+      "id": "aud_mtc4nta9_ji5t",
       "fieldId": "fld_1652",
       "fieldName": "Noss, Torkelson East a.k.a. Noss Pond",
       "enterprise": "Conv Soy",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Noss, Torkelson East a.k.a. Noss Pond: losing $166.79/ac — recommend investigating cost structure",
+      "message": "Noss, Torkelson East a.k.a. Noss Pond: losing $173.25/ac — recommend investigating cost structure",
       "detail": {
-        "value": -166.79
+        "value": -173.25
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_z6y4",
+      "id": "aud_mtc4nta9_d9i3",
       "fieldId": "fld_1874",
       "fieldName": "Bakke",
       "enterprise": "Conv Soy",
@@ -250,86 +222,86 @@
       "detail": {
         "value": -101.13
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_zje8",
+      "id": "aud_mtc4nta9_9hp0",
       "fieldId": "fld_2132",
       "fieldName": "Fletcher-Cribben",
       "enterprise": "Org Sm Grain",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Fletcher-Cribben: losing $256.01/ac — recommend investigating cost structure",
+      "message": "Fletcher-Cribben: losing $335.01/ac — recommend investigating cost structure",
       "detail": {
-        "value": -256.01
+        "value": -335.01
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_mou7",
+      "id": "aud_mtc4nta9_uu18",
       "fieldId": "fld_2146",
       "fieldName": "OM1",
-      "enterprise": "Conv SM Grain",
+      "enterprise": "Org Sm Grain",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "OM1: losing $257.58/ac — recommend investigating cost structure",
+      "message": "OM1: losing $403.08/ac — recommend investigating cost structure",
       "detail": {
-        "value": -257.58
+        "value": -403.08
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_7sb5",
+      "id": "aud_mtc4nta9_1h68",
       "fieldId": "fld_2158",
       "fieldName": "OM2",
       "enterprise": "Org Sm Grain",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "OM2: losing $119.23/ac — recommend investigating cost structure",
+      "message": "OM2: losing $160.98/ac — recommend investigating cost structure",
       "detail": {
-        "value": -119.23
+        "value": -160.98
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_0ucj",
+      "id": "aud_mtc4nta9_8gyk",
       "fieldId": "fld_2172",
       "fieldName": "Turkey Deer",
       "enterprise": "Org Sm Grain",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Turkey Deer: losing $283.89/ac — recommend investigating cost structure",
+      "message": "Turkey Deer: losing $337.82/ac — recommend investigating cost structure",
       "detail": {
-        "value": -283.89
+        "value": -337.82
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_jr4y",
-      "fieldId": "fld_mnjaw6kh_bt4x",
-      "fieldName": "Phillhower West",
-      "enterprise": "Canning",
+      "id": "aud_mtc4nta9_x89q",
+      "fieldId": "fld_2184",
+      "fieldName": "Caravilla",
+      "enterprise": "Org Sm Grain",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_PROFIT_NEGATIVE",
-      "message": "Phillhower West: losing $109.20/ac — recommend investigating cost structure",
+      "message": "Caravilla: losing $89.89/ac — recommend investigating cost structure",
       "detail": {
-        "value": -109.2
+        "value": -89.89
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_harg",
+      "id": "aud_mtc4nta9_ik5q",
       "fieldId": "fld_mnjbjz2a_n07c",
       "fieldName": "Kopp",
       "enterprise": "Org Corn",
@@ -341,27 +313,42 @@
         "value": 40,
         "min": 50
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_agtp",
+      "id": "aud_mtc4nta9_n0g5",
+      "fieldId": "fld_mnjqhr9y_wkgu",
+      "fieldName": "Omni",
+      "enterprise": "Canning",
+      "category": "anomaly",
+      "severity": "warning",
+      "code": "ANOMALY_PROFIT_NEGATIVE",
+      "message": "Omni: losing $162.62/ac — recommend investigating cost structure",
+      "detail": {
+        "value": -162.62
+      },
+      "createdAt": "2026-08-27T23:02:01.473Z",
+      "resolved": false
+    },
+    {
+      "id": "aud_mtc4nta9_89cl",
       "fieldId": "fld_mnjqhr9y_wkgu",
       "fieldName": "Omni",
       "enterprise": "Canning",
       "category": "anomaly",
       "severity": "warning",
       "code": "ANOMALY_YIELD_BOUNDS",
-      "message": "Omni: yield 4 bu/ac below min expected 50 for Org sweet Corn",
+      "message": "Omni: yield 2.1 bu/ac below min expected 50 for Org sweet Corn",
       "detail": {
-        "value": 4,
+        "value": 2.1,
         "min": 50
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_jn5h",
+      "id": "aud_mtc4nta9_3033",
       "fieldId": "fld_mnjqppog_z92w",
       "fieldName": "Simpsons",
       "enterprise": "Org Corn",
@@ -373,11 +360,26 @@
         "value": 40,
         "min": 50
       },
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_4b2s",
+      "id": "aud_mtc4nta9_g1bl",
+      "fieldId": "fld_mq71nmdz_35ah",
+      "fieldName": "Wes's",
+      "enterprise": "Conv Corn",
+      "category": "anomaly",
+      "severity": "warning",
+      "code": "ANOMALY_PROFIT_NEGATIVE",
+      "message": "Wes's: losing $76.43/ac — recommend investigating cost structure",
+      "detail": {
+        "value": -76.43
+      },
+      "createdAt": "2026-08-27T23:02:01.473Z",
+      "resolved": false
+    },
+    {
+      "id": "aud_mtc4nta9_2ep3",
       "fieldId": "fld_0533",
       "fieldName": "Blue's",
       "enterprise": "Conv Corn",
@@ -386,11 +388,11 @@
       "code": "MISSING_BUYER",
       "message": "Blue's: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_4py5",
+      "id": "aud_mtc4nta9_org7",
       "fieldId": "fld_0568",
       "fieldName": "Buchanon",
       "enterprise": "Conv SM Grain",
@@ -399,11 +401,11 @@
       "code": "MISSING_BUYER",
       "message": "Buchanon: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_2h3n",
+      "id": "aud_mtc4nta9_p7c8",
       "fieldId": "fld_0606",
       "fieldName": "Buchanon",
       "enterprise": "Conv Corn",
@@ -412,11 +414,11 @@
       "code": "MISSING_BUYER",
       "message": "Buchanon: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_7ry7",
+      "id": "aud_mtc4nta9_zg18",
       "fieldId": "fld_0678",
       "fieldName": "Cuffs",
       "enterprise": "Conv Corn",
@@ -425,11 +427,11 @@
       "code": "MISSING_BUYER",
       "message": "Cuffs: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_kdmf",
+      "id": "aud_mtc4nta9_a82h",
       "fieldId": "fld_0709",
       "fieldName": "Elwood's",
       "enterprise": "Conv SM Grain",
@@ -438,11 +440,11 @@
       "code": "MISSING_BUYER",
       "message": "Elwood's: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_auph",
+      "id": "aud_mtc4nta9_za8d",
       "fieldId": "fld_0747",
       "fieldName": "New Life",
       "enterprise": "Conv Corn",
@@ -451,11 +453,11 @@
       "code": "MISSING_BUYER",
       "message": "New Life: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_remx",
+      "id": "aud_mtc4nta9_mv4m",
       "fieldId": "fld_0785",
       "fieldName": "Fagan",
       "enterprise": "Conv Corn",
@@ -464,11 +466,11 @@
       "code": "MISSING_BUYER",
       "message": "Fagan: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_5iiq",
+      "id": "aud_mtc4nta9_y3z4",
       "fieldId": "fld_0821",
       "fieldName": "Fox Den",
       "enterprise": "Conv Corn",
@@ -477,11 +479,11 @@
       "code": "MISSING_BUYER",
       "message": "Fox Den: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_d0u2",
+      "id": "aud_mtc4nta9_k1s3",
       "fieldId": "fld_0904",
       "fieldName": "Fox-Lemans",
       "enterprise": "Conv Corn",
@@ -490,11 +492,11 @@
       "code": "MISSING_BUYER",
       "message": "Fox-Lemans: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_74jn",
+      "id": "aud_mtc4nta9_0g1i",
       "fieldId": "fld_0942",
       "fieldName": "Larson",
       "enterprise": "Conv Corn",
@@ -503,11 +505,11 @@
       "code": "MISSING_BUYER",
       "message": "Larson: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_xzs1",
+      "id": "aud_mtc4nta9_mzjx",
       "fieldId": "fld_0980",
       "fieldName": "Noss, Jeff",
       "enterprise": "Conv Corn",
@@ -516,11 +518,11 @@
       "code": "MISSING_BUYER",
       "message": "Noss, Jeff: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_z3wh",
+      "id": "aud_mtc4nta9_icid",
       "fieldId": "fld_1018",
       "fieldName": "Noss, Sid",
       "enterprise": "Conv Corn",
@@ -529,11 +531,11 @@
       "code": "MISSING_BUYER",
       "message": "Noss, Sid: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_bl5x",
+      "id": "aud_mtc4nta9_79yo",
       "fieldId": "fld_1056",
       "fieldName": "Schwellenbach",
       "enterprise": "Conv Corn",
@@ -542,11 +544,11 @@
       "code": "MISSING_BUYER",
       "message": "Schwellenbach: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_tnql",
+      "id": "aud_mtc4nta9_6ynh",
       "fieldId": "fld_1094",
       "fieldName": "Schultz",
       "enterprise": "Conv Corn",
@@ -555,11 +557,11 @@
       "code": "MISSING_BUYER",
       "message": "Schultz: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_kdl9",
+      "id": "aud_mtc4nta9_bkun",
       "fieldId": "fld_1128",
       "fieldName": "Townline",
       "enterprise": "Conv SM Grain",
@@ -568,11 +570,11 @@
       "code": "MISSING_BUYER",
       "message": "Townline: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_klax",
+      "id": "aud_mtc4nta9_o4cp",
       "fieldId": "fld_1156",
       "fieldName": "Wes's",
       "enterprise": "Conv SM Grain",
@@ -581,11 +583,11 @@
       "code": "MISSING_BUYER",
       "message": "Wes's: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_cswt",
+      "id": "aud_mtc4nta9_pw2v",
       "fieldId": "fld_1195",
       "fieldName": "Delong- Christpherson",
       "enterprise": "Conv Corn",
@@ -594,11 +596,11 @@
       "code": "MISSING_BUYER",
       "message": "Delong- Christpherson: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_abux",
+      "id": "aud_mtc4nta9_4viv",
       "fieldId": "fld_1232",
       "fieldName": "Gessley",
       "enterprise": "Conv Corn",
@@ -607,11 +609,11 @@
       "code": "MISSING_BUYER",
       "message": "Gessley: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_j1xy",
+      "id": "aud_mtc4nta9_ozzi",
       "fieldId": "fld_1271",
       "fieldName": "Noss Torkelson West, a.k.a. Jessie Noss",
       "enterprise": "Conv Corn",
@@ -620,11 +622,11 @@
       "code": "MISSING_BUYER",
       "message": "Noss Torkelson West, a.k.a. Jessie Noss: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_aiky",
+      "id": "aud_mtc4nta9_3msg",
       "fieldId": "fld_1305",
       "fieldName": "Airport",
       "enterprise": "Conv Soy",
@@ -633,11 +635,11 @@
       "code": "MISSING_BUYER",
       "message": "Airport: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_ctle",
+      "id": "aud_mtc4nta9_p5k7",
       "fieldId": "fld_1343",
       "fieldName": "Delong-Meyer",
       "enterprise": "Conv Soy",
@@ -646,11 +648,11 @@
       "code": "MISSING_BUYER",
       "message": "Delong-Meyer: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_fspw",
+      "id": "aud_mtc4nta9_cx6k",
       "fieldId": "fld_1384",
       "fieldName": "Gessert",
       "enterprise": "Conv Soy",
@@ -659,11 +661,11 @@
       "code": "MISSING_BUYER",
       "message": "Gessert: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_84tx",
+      "id": "aud_mtc4nta9_kivc",
       "fieldId": "fld_1427",
       "fieldName": "Hoff",
       "enterprise": "Conv Soy",
@@ -672,11 +674,11 @@
       "code": "MISSING_BUYER",
       "message": "Hoff: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_p5o0",
+      "id": "aud_mtc4nta9_dfev",
       "fieldId": "fld_1462",
       "fieldName": "Brad Inman's",
       "enterprise": "Conv Soy",
@@ -685,11 +687,11 @@
       "code": "MISSING_BUYER",
       "message": "Brad Inman's: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_hd7l",
+      "id": "aud_mtc4nta9_fzni",
       "fieldId": "fld_1542",
       "fieldName": "Klug Davis",
       "enterprise": "Conv Soy",
@@ -698,11 +700,11 @@
       "code": "MISSING_BUYER",
       "message": "Klug Davis: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_jwfg",
+      "id": "aud_mtc4nta9_oei9",
       "fieldId": "fld_1581",
       "fieldName": "Lake",
       "enterprise": "Conv Soy",
@@ -711,11 +713,11 @@
       "code": "MISSING_BUYER",
       "message": "Lake: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_9ign",
+      "id": "aud_mtc4nta9_6cnz",
       "fieldId": "fld_1619",
       "fieldName": "Murray",
       "enterprise": "Conv Soy",
@@ -724,11 +726,11 @@
       "code": "MISSING_BUYER",
       "message": "Murray: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_u40a",
+      "id": "aud_mtc4nta9_1wl5",
       "fieldId": "fld_1652",
       "fieldName": "Noss, Torkelson East a.k.a. Noss Pond",
       "enterprise": "Conv Soy",
@@ -737,11 +739,11 @@
       "code": "MISSING_BUYER",
       "message": "Noss, Torkelson East a.k.a. Noss Pond: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_d2rz",
+      "id": "aud_mtc4nta9_2un0",
       "fieldId": "fld_1691",
       "fieldName": "Twist Farm",
       "enterprise": "Conv Soy",
@@ -750,11 +752,11 @@
       "code": "MISSING_BUYER",
       "message": "Twist Farm: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_37fa",
+      "id": "aud_mtc4nta9_tswa",
       "fieldId": "fld_1765",
       "fieldName": "suiter",
       "enterprise": "Conv Soy",
@@ -763,11 +765,11 @@
       "code": "MISSING_BUYER",
       "message": "suiter: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_sweo",
+      "id": "aud_mtc4nta9_3rw1",
       "fieldId": "fld_1801",
       "fieldName": "Daun",
       "enterprise": "Conv Soy",
@@ -776,11 +778,11 @@
       "code": "MISSING_BUYER",
       "message": "Daun: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_aglp",
+      "id": "aud_mtc4nta9_0uys",
       "fieldId": "fld_1836",
       "fieldName": "Inman",
       "enterprise": "Conv Soy",
@@ -789,11 +791,11 @@
       "code": "MISSING_BUYER",
       "message": "Inman: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_swdf",
+      "id": "aud_mtc4nta9_4rf7",
       "fieldId": "fld_1874",
       "fieldName": "Bakke",
       "enterprise": "Conv Soy",
@@ -802,11 +804,11 @@
       "code": "MISSING_BUYER",
       "message": "Bakke: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_ggbi",
+      "id": "aud_mtc4nta9_gbdl",
       "fieldId": "fld_1900",
       "fieldName": "Gessert west 111",
       "enterprise": "Canning",
@@ -815,11 +817,11 @@
       "code": "MISSING_BUYER",
       "message": "Gessert west 111: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_f1eh",
+      "id": "aud_mtc4nta9_pshw",
       "fieldId": "fld_1937",
       "fieldName": "Gessert",
       "enterprise": "Canning",
@@ -828,11 +830,11 @@
       "code": "MISSING_BUYER",
       "message": "Gessert: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_psj9",
+      "id": "aud_mtc4nta9_njvn",
       "fieldId": "fld_1965",
       "fieldName": "Home",
       "enterprise": "Canning",
@@ -841,11 +843,11 @@
       "code": "MISSING_BUYER",
       "message": "Home: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_dkod",
+      "id": "aud_mtc4nta9_mo94",
       "fieldId": "fld_2018",
       "fieldName": "phillhower east",
       "enterprise": "Canning",
@@ -854,11 +856,11 @@
       "code": "MISSING_BUYER",
       "message": "phillhower east: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_qesp",
+      "id": "aud_mtc4nta9_ssit",
       "fieldId": "fld_2055",
       "fieldName": "phillhower east",
       "enterprise": "Canning",
@@ -867,11 +869,11 @@
       "code": "MISSING_BUYER",
       "message": "phillhower east: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_e6r1",
+      "id": "aud_mtc4nta9_c95p",
       "fieldId": "fld_2132",
       "fieldName": "Fletcher-Cribben",
       "enterprise": "Org Sm Grain",
@@ -880,24 +882,24 @@
       "code": "MISSING_BUYER",
       "message": "Fletcher-Cribben: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_487b",
+      "id": "aud_mtc4nta9_9j37",
       "fieldId": "fld_2146",
       "fieldName": "OM1",
-      "enterprise": "Conv SM Grain",
+      "enterprise": "Org Sm Grain",
       "category": "missing",
       "severity": "warning",
       "code": "MISSING_BUYER",
       "message": "OM1: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_jkvo",
+      "id": "aud_mtc4nta9_6yw1",
       "fieldId": "fld_2158",
       "fieldName": "OM2",
       "enterprise": "Org Sm Grain",
@@ -906,24 +908,11 @@
       "code": "MISSING_BUYER",
       "message": "OM2: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_rmcj",
-      "fieldId": "fld_2172",
-      "fieldName": "Turkey Deer",
-      "enterprise": "Org Sm Grain",
-      "category": "missing",
-      "severity": "warning",
-      "code": "MISSING_BUYER",
-      "message": "Turkey Deer: no buyer/delivery destination set",
-      "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
-      "resolved": false
-    },
-    {
-      "id": "aud_mrdpn5fz_oic6",
+      "id": "aud_mtc4nta9_ier6",
       "fieldId": "fld_2184",
       "fieldName": "Caravilla",
       "enterprise": "Org Sm Grain",
@@ -932,11 +921,11 @@
       "code": "MISSING_BUYER",
       "message": "Caravilla: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_id2t",
+      "id": "aud_mtc4nta9_1r5n",
       "fieldId": "fld_2204",
       "fieldName": "OMNI BIG SOUTH",
       "enterprise": "Org Broadleaf",
@@ -945,11 +934,11 @@
       "code": "MISSING_BUYER",
       "message": "OMNI BIG SOUTH: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_4k1h",
+      "id": "aud_mtc4nta9_v509",
       "fieldId": "fld_2223",
       "fieldName": "Omni GRASSY KNOLL",
       "enterprise": "Org Corn",
@@ -958,11 +947,11 @@
       "code": "MISSING_BUYER",
       "message": "Omni GRASSY KNOLL: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_i504",
+      "id": "aud_mtc4nta9_769x",
       "fieldId": "fld_2244",
       "fieldName": "Goat pasture",
       "enterprise": "Org Broadleaf",
@@ -971,11 +960,11 @@
       "code": "MISSING_BUYER",
       "message": "Goat pasture: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_f7ej",
+      "id": "aud_mtc4nta9_6bwd",
       "fieldId": "fld_mm05o9z2_6q3z",
       "fieldName": "New South 40",
       "enterprise": "unassigned",
@@ -984,11 +973,11 @@
       "code": "MISSING_CROP",
       "message": "New South 40: no crop assigned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_91g9",
+      "id": "aud_mtc4nta9_scn5",
       "fieldId": "fld_mm05o9z2_6q3z",
       "fieldName": "New South 40",
       "enterprise": "unassigned",
@@ -997,11 +986,11 @@
       "code": "MISSING_YIELD",
       "message": "New South 40: projected yield is 0 — budget cannot forecast income",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_1e7z",
+      "id": "aud_mtc4nta9_nei1",
       "fieldId": "fld_mm05o9z2_6q3z",
       "fieldName": "New South 40",
       "enterprise": "unassigned",
@@ -1010,11 +999,11 @@
       "code": "MISSING_INPUTS",
       "message": "New South 40: no inputs (fertilizer/chemical) planned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_9std",
+      "id": "aud_mtc4nta9_az0a",
       "fieldId": "fld_mm05o9z2_6q3z",
       "fieldName": "New South 40",
       "enterprise": "unassigned",
@@ -1023,11 +1012,11 @@
       "code": "MISSING_SEED",
       "message": "New South 40: no seed variety assigned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_mrkq",
+      "id": "aud_mtc4nta9_ausb",
       "fieldId": "fld_mm05o9z2_6q3z",
       "fieldName": "New South 40",
       "enterprise": "unassigned",
@@ -1036,11 +1025,11 @@
       "code": "MISSING_MACHINERY",
       "message": "New South 40: no machinery operations planned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_m6zb",
+      "id": "aud_mtc4nta9_rhko",
       "fieldId": "fld_mm05o9z2_6q3z",
       "fieldName": "New South 40",
       "enterprise": "unassigned",
@@ -1049,11 +1038,11 @@
       "code": "MISSING_BUYER",
       "message": "New South 40: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_yddb",
+      "id": "aud_mtc4nta9_nscy",
       "fieldId": "fld_mm05o9z2_6q3z",
       "fieldName": "New South 40",
       "enterprise": "unassigned",
@@ -1062,11 +1051,11 @@
       "code": "MISSING_ENTERPRISE",
       "message": "New South 40: not assigned to a valid enterprise",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_50dj",
+      "id": "aud_mtc4nta9_xoo6",
       "fieldId": "fld_mnjaw6kh_bt4x",
       "fieldName": "Phillhower West",
       "enterprise": "Canning",
@@ -1075,11 +1064,11 @@
       "code": "MISSING_SEED",
       "message": "Phillhower West: no seed variety assigned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_ntv8",
+      "id": "aud_mtc4nta9_ze06",
       "fieldId": "fld_mnjaw6kh_bt4x",
       "fieldName": "Phillhower West",
       "enterprise": "Canning",
@@ -1088,11 +1077,11 @@
       "code": "MISSING_BUYER",
       "message": "Phillhower West: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_x70x",
+      "id": "aud_mtc4nta9_gd68",
       "fieldId": "fld_mnjbjz2a_n07c",
       "fieldName": "Kopp",
       "enterprise": "Org Corn",
@@ -1101,11 +1090,11 @@
       "code": "MISSING_SEED",
       "message": "Kopp: no seed variety assigned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_a3o9",
+      "id": "aud_mtc4nta9_usmt",
       "fieldId": "fld_mnjbjz2a_n07c",
       "fieldName": "Kopp",
       "enterprise": "Org Corn",
@@ -1114,11 +1103,11 @@
       "code": "MISSING_BUYER",
       "message": "Kopp: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_mi91",
+      "id": "aud_mtc4nta9_8538",
       "fieldId": "fld_mnjbla6z_4e0a",
       "fieldName": "Simpsons",
       "enterprise": "Org Broadleaf",
@@ -1127,11 +1116,11 @@
       "code": "MISSING_BUYER",
       "message": "Simpsons: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.015Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5fz_2tjv",
+      "id": "aud_mtc4nta9_cfyf",
       "fieldId": "fld_mnjqcuum_9ghz",
       "fieldName": "Omni",
       "enterprise": "Canning",
@@ -1140,11 +1129,11 @@
       "code": "MISSING_BUYER",
       "message": "Omni: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_rhpa",
+      "id": "aud_mtc4nta9_ha8j",
       "fieldId": "fld_mnjqhr9y_wkgu",
       "fieldName": "Omni",
       "enterprise": "Canning",
@@ -1153,11 +1142,11 @@
       "code": "MISSING_BUYER",
       "message": "Omni: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_v3h2",
+      "id": "aud_mtc4nta9_auiv",
       "fieldId": "fld_mnjqppog_z92w",
       "fieldName": "Simpsons",
       "enterprise": "Org Corn",
@@ -1166,11 +1155,11 @@
       "code": "MISSING_SEED",
       "message": "Simpsons: no seed variety assigned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_6k41",
+      "id": "aud_mtc4nta9_1131",
       "fieldId": "fld_mnjqppog_z92w",
       "fieldName": "Simpsons",
       "enterprise": "Org Corn",
@@ -1179,11 +1168,11 @@
       "code": "MISSING_BUYER",
       "message": "Simpsons: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_2wdt",
+      "id": "aud_mtc4nta9_2mgj",
       "fieldId": "fld_mnjrbea3_rfv6",
       "fieldName": "Jehovah",
       "enterprise": "Conv Corn",
@@ -1192,11 +1181,11 @@
       "code": "MISSING_BUYER",
       "message": "Jehovah: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_ilkx",
+      "id": "aud_mtc4nta9_u84t",
       "fieldId": "fld_mnjsjgb1_75gz",
       "fieldName": "Juniors",
       "enterprise": "Conv SM Grain",
@@ -1205,11 +1194,11 @@
       "code": "MISSING_SEED",
       "message": "Juniors: no seed variety assigned",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_nv71",
+      "id": "aud_mtc4nta9_r6u0",
       "fieldId": "fld_mnjsjgb1_75gz",
       "fieldName": "Juniors",
       "enterprise": "Conv SM Grain",
@@ -1218,11 +1207,11 @@
       "code": "MISSING_BUYER",
       "message": "Juniors: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_vr81",
+      "id": "aud_mtc4nta9_m1bf",
       "fieldId": "fld_mo1mgsa0_egd7",
       "fieldName": "Kopp",
       "enterprise": "Org Broadleaf",
@@ -1231,11 +1220,11 @@
       "code": "MISSING_BUYER",
       "message": "Kopp: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_j3pc",
+      "id": "aud_mtc4nta9_h4ie",
       "fieldId": "fld_moblero3_b3gb",
       "fieldName": "Wes's",
       "enterprise": "Conv Soy",
@@ -1244,11 +1233,11 @@
       "code": "MISSING_BUYER",
       "message": "Wes's: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_brxb",
+      "id": "aud_mtc4nta9_yyky",
       "fieldId": "fld_mq71nmdz_35ah",
       "fieldName": "Wes's",
       "enterprise": "Conv Corn",
@@ -1257,11 +1246,24 @@
       "code": "MISSING_BUYER",
       "message": "Wes's: no buyer/delivery destination set",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.473Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_gk28",
+      "id": "aud_mtc4nta9_5kfl",
+      "fieldId": "fld_mtam6v2c_izkh",
+      "fieldName": "Wes's",
+      "enterprise": "Conv Soy",
+      "category": "missing",
+      "severity": "warning",
+      "code": "MISSING_BUYER",
+      "message": "Wes's: no buyer/delivery destination set",
+      "detail": {},
+      "createdAt": "2026-08-27T23:02:01.473Z",
+      "resolved": false
+    },
+    {
+      "id": "aud_mtc4ntaa_3ljc",
       "fieldId": "fld_0606",
       "fieldName": "Buchanon",
       "enterprise": "Conv Corn",
@@ -1270,11 +1272,11 @@
       "code": "CONFIG_INPUT_UNKNOWN",
       "message": "Buchanon: input \"Outlook\" not found in products list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_lruq",
+      "id": "aud_mtc4ntaa_dn81",
       "fieldId": "fld_0678",
       "fieldName": "Cuffs",
       "enterprise": "Conv Corn",
@@ -1283,11 +1285,11 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Cuffs: implement \"Soil Finish\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_pcly",
+      "id": "aud_mtc4ntaa_ojtr",
       "fieldId": "fld_0942",
       "fieldName": "Larson",
       "enterprise": "Conv Corn",
@@ -1296,11 +1298,24 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Larson: implement \"Soil Finish\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g0_7l62",
+      "id": "aud_mtc4ntaa_gnwy",
+      "fieldId": "fld_1128",
+      "fieldName": "Townline",
+      "enterprise": "Conv SM Grain",
+      "category": "config",
+      "severity": "info",
+      "code": "CONFIG_INPUT_UNKNOWN",
+      "message": "Townline: input \"18-46-0\" not found in products list",
+      "detail": {},
+      "createdAt": "2026-08-27T23:02:01.474Z",
+      "resolved": false
+    },
+    {
+      "id": "aud_mtc4ntaa_jz79",
       "fieldId": "fld_1128",
       "fieldName": "Townline",
       "enterprise": "Conv SM Grain",
@@ -1309,11 +1324,11 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Townline: implement \"soi\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.016Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_rthj",
+      "id": "aud_mtc4ntaa_5d3s",
       "fieldId": "fld_1232",
       "fieldName": "Gessley",
       "enterprise": "Conv Corn",
@@ -1322,11 +1337,11 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Gessley: implement \"scraper\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_pmhh",
+      "id": "aud_mtc4ntaa_qaji",
       "fieldId": "fld_1384",
       "fieldName": "Gessert",
       "enterprise": "Conv Soy",
@@ -1335,11 +1350,11 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Gessert: implement \"Soil Finish\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_oesv",
+      "id": "aud_mtc4ntaa_srvp",
       "fieldId": "fld_1652",
       "fieldName": "Noss, Torkelson East a.k.a. Noss Pond",
       "enterprise": "Conv Soy",
@@ -1348,11 +1363,11 @@
       "code": "CONFIG_INPUT_UNKNOWN",
       "message": "Noss, Torkelson East a.k.a. Noss Pond: input \"Sonic\" not found in products list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_h9hs",
+      "id": "aud_mtc4ntaa_89no",
       "fieldId": "fld_1652",
       "fieldName": "Noss, Torkelson East a.k.a. Noss Pond",
       "enterprise": "Conv Soy",
@@ -1361,11 +1376,11 @@
       "code": "CONFIG_INPUT_UNKNOWN",
       "message": "Noss, Torkelson East a.k.a. Noss Pond: input \"Mauler\" not found in products list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_pgz7",
+      "id": "aud_mtc4ntaa_741j",
       "fieldId": "fld_1765",
       "fieldName": "suiter",
       "enterprise": "Conv Soy",
@@ -1374,11 +1389,11 @@
       "code": "CONFIG_INPUT_UNKNOWN",
       "message": "suiter: input \"Sonic\" not found in products list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_whxk",
+      "id": "aud_mtc4ntaa_w590",
       "fieldId": "fld_1965",
       "fieldName": "Home",
       "enterprise": "Canning",
@@ -1387,11 +1402,11 @@
       "code": "CONFIG_INPUT_UNKNOWN",
       "message": "Home: input \"Pemex\" not found in products list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_v9y6",
+      "id": "aud_mtc4ntaa_9gsv",
       "fieldId": "fld_2223",
       "fieldName": "Omni GRASSY KNOLL",
       "enterprise": "Org Corn",
@@ -1400,11 +1415,11 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Omni GRASSY KNOLL: implement \"Cultimulched\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_8hj4",
+      "id": "aud_mtc4ntaa_ck3a",
       "fieldId": "fld_2244",
       "fieldName": "Goat pasture",
       "enterprise": "Org Broadleaf",
@@ -1413,11 +1428,11 @@
       "code": "CONFIG_INPUT_UNKNOWN",
       "message": "Goat pasture: input \"Rotary Hoe\" not found in products list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_rwt2",
+      "id": "aud_mtc4ntaa_fi0z",
       "fieldId": "fld_2244",
       "fieldName": "Goat pasture",
       "enterprise": "Org Broadleaf",
@@ -1426,11 +1441,11 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Goat pasture: implement \"Cultimulched\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_p4aw",
+      "id": "aud_mtc4ntaa_e34i",
       "fieldId": "fld_mnjbjz2a_n07c",
       "fieldName": "Kopp",
       "enterprise": "Org Corn",
@@ -1439,11 +1454,11 @@
       "code": "CONFIG_INPUT_UNKNOWN",
       "message": "Kopp: input \"Tine Weed\" not found in products list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_xwpo",
+      "id": "aud_mtc4ntaa_wya8",
       "fieldId": "fld_mnjbjz2a_n07c",
       "fieldName": "Kopp",
       "enterprise": "Org Corn",
@@ -1452,11 +1467,11 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Kopp: implement \"Cultimulched\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     },
     {
-      "id": "aud_mrdpn5g1_0381",
+      "id": "aud_mtc4ntaa_6p8r",
       "fieldId": "fld_moblero3_b3gb",
       "fieldName": "Wes's",
       "enterprise": "Conv Soy",
@@ -1465,19 +1480,19 @@
       "code": "CONFIG_IMPL_UNKNOWN",
       "message": "Wes's: implement \"Vertical Till\" not found in implements list",
       "detail": {},
-      "createdAt": "2026-07-09T16:17:44.017Z",
+      "createdAt": "2026-08-27T23:02:01.474Z",
       "resolved": false
     }
   ],
   "summary": {
     "errors": 0,
     "warnings": 92,
-    "info": 16,
+    "info": 17,
     "byCategory": {
       "math": 0,
       "anomaly": 24,
       "missing": 68,
-      "config": 16
+      "config": 17
     }
   }
 }

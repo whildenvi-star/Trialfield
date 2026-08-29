@@ -147,13 +147,24 @@
           "id": "inp_0510",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-04",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0511",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-04",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0512",
@@ -220,31 +231,92 @@
           "id": "inp_0520",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003260",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 135,
+          "invoiceQtyTotal": 135,
+          "invoiceCostTotal": 1552.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_0516",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003260",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 135,
+          "invoiceQtyTotal": 101.25,
+          "invoiceCostTotal": 2126.25,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         },
         {
           "id": "inp_0519",
           "productName": "Atrazine 4L",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003260",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 135,
+          "invoiceQtyTotal": 16.68,
+          "invoiceCostTotal": 303.84,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.12
         },
         {
           "id": "inp_0517",
           "productName": "Crop Oil, Insource (2x2.5 Gal)",
           "quantity": 0.08,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003260",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 135,
+          "invoiceQtyTotal": 13.5,
+          "invoiceCostTotal": 270,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_0518",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003260",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 135,
+          "invoiceQtyTotal": 270,
+          "invoiceCostTotal": 148.5,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
         },
         {
           "id": "inp_0521",
@@ -537,7 +609,7 @@
       "crop": "Hybrid Seed Rye",
       "cropType": "SINGLE CROP",
       "acres": 48,
-      "rentPerAcre": 45.83,
+      "rentPerAcre": 208.33,
       "inputs": [
         {
           "id": "inp_mm89sw6j_mzgz",
@@ -798,7 +870,7 @@
         }
       ],
       "seed": {
-        "variety": "Serafino",
+        "variety": "Rixor",
         "population": 750000
       },
       "machinery": [
@@ -833,7 +905,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 80,
+      "yieldPerAcre": 84,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
@@ -855,7 +927,7 @@
       "registryFieldId": "fld_007",
       "seeds": [
         {
-          "variety": "Serafino",
+          "variety": "Rixor",
           "population": 750000,
           "acres": 0
         }
@@ -870,7 +942,7 @@
       "crop": "Yellow Corn",
       "cropType": "SINGLE CROP",
       "acres": 48,
-      "rentPerAcre": 45.83,
+      "rentPerAcre": 208.33,
       "inputs": [
         {
           "id": "inp_mm06qhk5_e2ma",
@@ -1585,6 +1657,177 @@
           "invoiceCostTotal": 292.28,
           "invoiceUnit": "Acre",
           "actualQuantity": 1
+        },
+        {
+          "id": "inp_mrv2v53o_ylsn",
+          "productName": "Approach Prima",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-15",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004455",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-15",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 136,
+          "invoiceCostTotal": 2474.14,
+          "invoiceUnit": "Gallon",
+          "actualQuantity": 0.99
+        },
+        {
+          "id": "inp_mrv2wvif_nweu",
+          "productName": "Application - Post",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-15",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004455",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-15",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 136,
+          "invoiceCostTotal": 2244,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 0.99
+        },
+        {
+          "id": "inp_mrv2zlrb_wwiz",
+          "productName": "Water",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004409",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 15,
+          "invoiceCostTotal": null,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.11
+        },
+        {
+          "id": "inp_mrv2zzjn_infp",
+          "productName": "Interline (250 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004409",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 15,
+          "invoiceCostTotal": 109.88,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.11
+        },
+        {
+          "id": "inp_mrv30clr_h6yp",
+          "productName": "Enlist",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004409",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 15,
+          "invoiceCostTotal": 283.16,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.11
+        },
+        {
+          "id": "inp_mrv30kmf_avbk",
+          "productName": "Volunteer (2x2.5 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004409",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 15,
+          "invoiceCostTotal": 54.21,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.11
+        },
+        {
+          "id": "inp_mrv30tkz_uujb",
+          "productName": "Crop Oil, Insource (2x2.5 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004409",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 15,
+          "invoiceCostTotal": 51.86,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.11
+        },
+        {
+          "id": "inp_mrv314bn_ami6",
+          "productName": "Premium Ams (51 Lb)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004409",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 15,
+          "invoiceCostTotal": 27.9,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 0.11
+        },
+        {
+          "id": "inp_mrv31zxf_tug2",
+          "productName": "Application - Post",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004409",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 137.1,
+          "invoiceQtyTotal": 15,
+          "invoiceCostTotal": 172.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 0.11
         }
       ],
       "seed": {
@@ -1794,14 +2037,25 @@
           "id": "inp_0659",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-03",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0660",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-03",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0661",
@@ -1868,31 +2122,92 @@
           "id": "inp_0665",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003266",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 149,
+          "invoiceQtyTotal": 111.75,
+          "invoiceCostTotal": 2346.75,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         },
         {
           "id": "inp_0666",
           "productName": "Meth Oil, Insource (2.25 Gal)",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003266",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 149,
+          "invoiceQtyTotal": 14.9,
+          "invoiceCostTotal": 298,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_0667",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003266",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 149,
+          "invoiceQtyTotal": 298,
+          "invoiceCostTotal": 163.9,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
         },
         {
           "id": "inp_0668",
           "productName": "Atrazine 4L",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003266",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 149,
+          "invoiceQtyTotal": 18.63,
+          "invoiceCostTotal": 335.34,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
         },
         {
           "id": "inp_0669",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003266",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 149,
+          "invoiceQtyTotal": 149,
+          "invoiceCostTotal": 1713.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_0670",
@@ -1992,6 +2307,25 @@
           "invoiceCostTotal": 12.4,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.13
+        },
+        {
+          "id": "inp_mrdybclc_jjfo",
+          "productName": "Sparrow",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003266",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 149,
+          "invoiceQtyTotal": 111.75,
+          "invoiceCostTotal": 2674.18,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         }
       ],
       "seed": {
@@ -2273,12 +2607,6 @@
           "season": "Spring"
         },
         {
-          "id": "inp_0698",
-          "productName": "Palisade Maxx (2x2.5 Gal)",
-          "quantity": 14,
-          "season": "Spring"
-        },
-        {
           "id": "inp_0699",
           "productName": "Application - Post",
           "quantity": 1,
@@ -2534,7 +2862,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 85,
+      "yieldPerAcre": 95,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
@@ -2583,13 +2911,24 @@
           "id": "inp_0727",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0728",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0729",
@@ -2859,14 +3198,25 @@
           "id": "inp_0765",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0766",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0767",
@@ -3230,13 +3580,24 @@
           "id": "inp_0802",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0803",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0804",
@@ -3385,7 +3746,7 @@
           "invoiceDate": "2025-11-11",
           "invoiceAcres": 9,
           "invoiceQtyTotal": 0.6,
-          "invoiceCostTotal": 445,
+          "invoiceCostTotal": 267,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.07
         },
@@ -3403,7 +3764,7 @@
           "invoiceDate": "2025-11-11",
           "invoiceAcres": 9,
           "invoiceQtyTotal": 0.4,
-          "invoiceCostTotal": 795,
+          "invoiceCostTotal": 318,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.04
         },
@@ -3535,14 +3896,24 @@
           "id": "inp_0841",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-08",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0842",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
           "season": "Spring",
-          "operationGroup": "Post-emerge"
+          "operationGroup": "Fertility",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-08",
+          "statusNote": null,
+          "confirmedBy": "tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0843",
@@ -3608,31 +3979,92 @@
           "id": "inp_0847",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003270",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 47,
+          "invoiceQtyTotal": 35.25,
+          "invoiceCostTotal": 740.25,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         },
         {
           "id": "inp_0848",
           "productName": "Meth Oil, Insource (2.25 Gal)",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003270",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 47,
+          "invoiceQtyTotal": 4.7,
+          "invoiceCostTotal": 94,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_0849",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003270",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 47,
+          "invoiceQtyTotal": 94,
+          "invoiceCostTotal": 51.7,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
         },
         {
           "id": "inp_0850",
           "productName": "Atrazine 4L",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003270",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 47,
+          "invoiceQtyTotal": 5.88,
+          "invoiceCostTotal": 105.84,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
         },
         {
           "id": "inp_0851",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003270",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 47,
+          "invoiceQtyTotal": 47,
+          "invoiceCostTotal": 540.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_0852",
@@ -3653,12 +4085,6 @@
           "operationGroup": "Pre-emerge"
         },
         {
-          "id": "inp_0854",
-          "productName": "Application - Post",
-          "quantity": 1,
-          "season": "Spring"
-        },
-        {
           "id": "inp_0855",
           "productName": "KWS CC rye",
           "quantity": 50,
@@ -3677,7 +4103,7 @@
           "invoiceVendor": "Delong",
           "invoiceDate": "2025-10-31",
           "invoiceAcres": 40,
-          "invoiceQtyTotal": 2.95,
+          "invoiceQtyTotal": 1.95,
           "invoiceCostTotal": 867.75,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.07
@@ -3921,21 +4347,34 @@
           "id": "inp_0882",
           "productName": "46-0-0  Urea",
           "quantity": 200,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "planned",
+          "confirmedDate": null,
+          "actualQuantity": null
         },
         {
           "id": "inp_0883",
           "productName": "10-34-0",
           "quantity": 5,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-11",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": null
         },
         {
           "id": "inp_0884",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0885",
@@ -4299,7 +4738,7 @@
           "perAcre": 60
         }
       ],
-      "plantedAcres": 14.2,
+      "plantedAcres": 14.14,
       "registryFieldName": null,
       "splitGroupId": null,
       "registryFieldId": "fld_020",
@@ -4338,13 +4777,24 @@
           "id": "inp_0922",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-04",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0923",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-04",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0924",
@@ -4374,31 +4824,92 @@
           "id": "inp_0928",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003267",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 56.2,
+          "invoiceQtyTotal": 42.15,
+          "invoiceCostTotal": 885.15,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         },
         {
           "id": "inp_0929",
           "productName": "Meth Oil, Insource (2.25 Gal)",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003267",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 56.2,
+          "invoiceQtyTotal": 5.62,
+          "invoiceCostTotal": null,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_0930",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003267",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 56.2,
+          "invoiceQtyTotal": 56.2,
+          "invoiceCostTotal": 91.82,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 1
         },
         {
           "id": "inp_0931",
           "productName": "Atrazine 4L",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003267",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 56.2,
+          "invoiceQtyTotal": 7.03,
+          "invoiceCostTotal": 126.54,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
         },
         {
           "id": "inp_0932",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003267",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 56.2,
+          "invoiceQtyTotal": 56.2,
+          "invoiceCostTotal": 646.3,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_0933",
@@ -4466,6 +4977,25 @@
           "invoiceCostTotal": 3.92,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.1
+        },
+        {
+          "id": "inp_mrdyl2zg_yhrb",
+          "productName": "Sparrow",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003267",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 56.2,
+          "invoiceQtyTotal": 42.15,
+          "invoiceCostTotal": 1008.65,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         }
       ],
       "seed": {
@@ -4563,13 +5093,24 @@
           "id": "inp_0960",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-04-25",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0961",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-04-25",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_0962",
@@ -4927,13 +5468,24 @@
           "id": "inp_0998",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-04-25",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_0999",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-04-25",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_1000",
@@ -4968,7 +5520,7 @@
           "invoiceDate": "2026-04-25",
           "invoiceAcres": 102,
           "invoiceQtyTotal": 2.719,
-          "invoiceCostTotal": 395,
+          "invoiceCostTotal": 1074,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.03
         },
@@ -5235,13 +5787,24 @@
           "id": "inp_1036",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-06",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_1037",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-06",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_1038",
@@ -5283,7 +5846,8 @@
           "id": "inp_1044",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge"
         },
         {
           "id": "inp_1045",
@@ -5328,7 +5892,7 @@
           "invoiceDate": "2025-10-31",
           "invoiceAcres": 28.59,
           "invoiceQtyTotal": 2.42,
-          "invoiceCostTotal": 10746.9,
+          "invoiceCostTotal": 1076.9,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.08
         },
@@ -5406,6 +5970,13 @@
           "invoiceCostTotal": 2.71,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.14
+        },
+        {
+          "id": "inp_mrfexht8_1lq6",
+          "productName": "Status (4x125 Oz)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge"
         }
       ],
       "seed": {
@@ -5494,13 +6065,24 @@
           "id": "inp_1074",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-05",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_1075",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-05",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_1076",
@@ -5579,31 +6161,92 @@
           "id": "inp_1080",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003271",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 105,
+          "invoiceQtyTotal": 78.75,
+          "invoiceCostTotal": 1653.75,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         },
         {
           "id": "inp_1081",
           "productName": "Meth Oil, Insource (2.25 Gal)",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "10.50",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 105,
+          "invoiceQtyTotal": 10.5,
+          "invoiceCostTotal": 210,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_1082",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003271",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 105,
+          "invoiceQtyTotal": 210,
+          "invoiceCostTotal": 115.5,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
         },
         {
           "id": "inp_1083",
           "productName": "Atrazine 4L",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003271",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 105,
+          "invoiceQtyTotal": 13.13,
+          "invoiceCostTotal": 236.34,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
         },
         {
           "id": "inp_1084",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003271",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 105,
+          "invoiceQtyTotal": 105,
+          "invoiceCostTotal": 1207.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_1085",
@@ -5714,6 +6357,25 @@
           "invoiceCostTotal": 9.5,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.14
+        },
+        {
+          "id": "inp_mrfesum0_2hvp",
+          "productName": "Status (4x125 Oz)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003271",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 105,
+          "invoiceQtyTotal": 105,
+          "invoiceCostTotal": 580.65,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 1
         }
       ],
       "seed": {
@@ -5883,7 +6545,8 @@
           "confirmedDate": "2026-03-30",
           "statusNote": "Blended",
           "confirmedBy": "Willie",
-          "actualQuantity": 105
+          "actualQuantity": 105,
+          "operationGroup": "Pre-emerge"
         },
         {
           "id": "inp_1110",
@@ -6015,7 +6678,20 @@
           "id": "inp_1119",
           "productName": "0-0-60 Potash",
           "quantity": 40,
-          "season": "Fall"
+          "season": "Fall",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2025-10-08",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "1061670",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2025-10-08",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 6.695,
+          "invoiceCostTotal": 2979.28,
+          "invoiceUnit": "Ton",
+          "actualQuantity": 0.03
         },
         {
           "id": "inp_1120",
@@ -6136,6 +6812,196 @@
           "invoiceUnit": "Gal",
           "invoiceCostTotal": 1336.96,
           "actualQuantity": 0.03
+        },
+        {
+          "id": "inp_mstdx46u_e70l",
+          "productName": "18-46-0",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2025-10-08",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "1061670",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2025-10-08",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 16.068,
+          "invoiceCostTotal": 13175.73,
+          "invoiceUnit": "",
+          "actualQuantity": 0.06
+        },
+        {
+          "id": "inp_mstdyjle_aunq",
+          "productName": "21-0-0-24s AMS Granular",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2025-10-08",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "1061670",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2025-10-08",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 3.347,
+          "invoiceCostTotal": 1389.01,
+          "invoiceUnit": "Ton",
+          "actualQuantity": 0.01
+        },
+        {
+          "id": "inp_mste0tdy_fbbl",
+          "productName": "Wi Tonnage Tax",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2025-10-08",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "1061670",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2025-10-08",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 26.11,
+          "invoiceCostTotal": 17.49,
+          "invoiceUnit": "Tons",
+          "actualQuantity": 0.1
+        },
+        {
+          "id": "inp_mste53sm_vmzj",
+          "productName": "Durango DMA (Bulk)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-10",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004732",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-08-10",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 33.43,
+          "invoiceCostTotal": 915.65,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
+        },
+        {
+          "id": "inp_mste5p8d_eg1i",
+          "productName": "Interline (250 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-10",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004732",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-08-10",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 66.85,
+          "invoiceCostTotal": 1958.71,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.25
+        },
+        {
+          "id": "inp_mste5ynu_vnbn",
+          "productName": "Ester 2,4-D LV (2x2.5 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-10",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004732",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-08-10",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 16.17,
+          "invoiceCostTotal": 601.56,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.06
+        },
+        {
+          "id": "inp_mste6c4e_ucja",
+          "productName": "Veracity Elite II",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-10",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004732",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-08-10",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 10.03,
+          "invoiceCostTotal": 394.28,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.04
+        },
+        {
+          "id": "inp_mste7e82_0uio",
+          "productName": "Premium Ams (51 Lb)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-10",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004732",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-08-10",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 509.94,
+          "invoiceCostTotal": 474.24,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 1.91
+        },
+        {
+          "id": "inp_mste7yau_tohx",
+          "productName": "Application - Liquid Pre",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-10",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004732",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-08-10",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 267.4,
+          "invoiceCostTotal": 2740.95,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
+        },
+        {
+          "id": "inp_mste8ife_k2k9",
+          "productName": "DeLco Hammer Down (2X2.5 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-08-10",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "2.470",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-08-10",
+          "invoiceAcres": 267.4,
+          "invoiceQtyTotal": 2.47,
+          "invoiceCostTotal": 131.65,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.01
         }
       ],
       "seed": {
@@ -6161,7 +7027,8 @@
         {
           "id": "mach_1124",
           "implementName": "Spinner",
-          "passes": 2
+          "passes": 2,
+          "operationGroup": "Fertility"
         },
         {
           "id": "mach_1125",
@@ -6179,7 +7046,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 85,
+      "yieldPerAcre": 90,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
@@ -6214,21 +7081,31 @@
       "name": "Wes's",
       "systemCode": "CON",
       "crop": "Seed grade Winter Barley",
-      "cropType": "DBL CROP",
+      "cropType": "SINGLE CROP",
       "acres": 143,
-      "rentPerAcre": 125.87,
+      "rentPerAcre": 200,
       "inputs": [
         {
           "id": "inp_1139",
           "productName": "46-0-0  Urea",
           "quantity": 180,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-03-30",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 285
         },
         {
           "id": "inp_1140",
           "productName": "21-0-0-24s AMS Granular",
           "quantity": 106.44,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-03-30",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 285
         },
         {
           "id": "inp_1141",
@@ -6413,7 +7290,11 @@
         {
           "id": "mach_1153",
           "implementName": "Trucking",
-          "passes": 1
+          "passes": 1,
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": "204 alb Lea",
+          "confirmedBy": "Bob"
         },
         {
           "id": "mach_1154",
@@ -6423,7 +7304,11 @@
         {
           "id": "mach_1155",
           "implementName": "Chisle Plow",
-          "passes": 1
+          "passes": 1,
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-11-13",
+          "statusNote": null,
+          "confirmedBy": "gary"
         }
       ],
       "yieldPerAcre": 78,
@@ -6458,7 +7343,8 @@
           "acres": 24
         }
       ],
-      "tillage": "Till"
+      "tillage": "Till",
+      "dblSharedAcres": 25
     },
     {
       "id": "fld_1195",
@@ -6485,13 +7371,24 @@
           "id": "inp_1174",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-08",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_1175",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-08",
+          "statusNote": null,
+          "confirmedBy": "tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_1176",
@@ -6521,13 +7418,26 @@
           "id": "inp_1180",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Fertility"
         },
         {
           "id": "inp_1181",
           "productName": "Meth Oil, Insource (2.25 Gal)",
           "quantity": 0.08,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004410",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 47.7,
+          "invoiceQtyTotal": 17,
+          "invoiceCostTotal": 58.76,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.36
         },
         {
           "id": "inp_1182",
@@ -6545,7 +7455,19 @@
           "id": "inp_1184",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004410",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 47.7,
+          "invoiceQtyTotal": 17,
+          "invoiceCostTotal": 195.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 0.36
         },
         {
           "id": "inp_1185",
@@ -6596,7 +7518,19 @@
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
           "season": "Spring",
-          "operationGroup": "Post-emerge"
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004410",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 47.7,
+          "invoiceQtyTotal": 17,
+          "invoiceCostTotal": 31.62,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 0.36
         },
         {
           "id": "inp_mo93o63e_tzx7",
@@ -6635,6 +7569,120 @@
           "invoiceCostTotal": 6.16,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.16
+        },
+        {
+          "id": "inp_mrv39b0i_0666",
+          "productName": "Water",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004410",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 47.7,
+          "invoiceQtyTotal": 17,
+          "invoiceCostTotal": null,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.36
+        },
+        {
+          "id": "inp_mrv3aenm_1uhn",
+          "productName": "Interline (250 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004410",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 47.7,
+          "invoiceQtyTotal": 17,
+          "invoiceCostTotal": 124.53,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.36
+        },
+        {
+          "id": "inp_mrv3aqy2_ynxn",
+          "productName": "Enlist",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004410",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 47.7,
+          "invoiceQtyTotal": 17,
+          "invoiceCostTotal": 75.51,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.36
+        },
+        {
+          "id": "inp_mrv3b3xi_b1ux",
+          "productName": "Volunteer (2x2.5 Gal)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-14",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004410",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-14",
+          "invoiceAcres": 47.7,
+          "invoiceQtyTotal": 17,
+          "invoiceCostTotal": 61.13,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.36
+        },
+        {
+          "id": "inp_msdg1asc_q3qr",
+          "productName": "Approach Prima",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Fertility",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-24",
+          "statusNote": "Fungicided",
+          "confirmedBy": null,
+          "invoiceNumber": "8004593",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-07-24",
+          "invoiceAcres": 47,
+          "invoiceQtyTotal": 2.5,
+          "invoiceCostTotal": 853.15,
+          "invoiceUnit": "Gallon",
+          "actualQuantity": 0.05
+        },
+        {
+          "id": "inp_msdg1jv1_wbia",
+          "productName": "Aerial application",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Fertility",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-24",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "800593",
+          "invoiceVendor": "delong",
+          "invoiceDate": "2026-07-24",
+          "invoiceAcres": 47,
+          "invoiceQtyTotal": 47,
+          "invoiceCostTotal": 681.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         }
       ],
       "seed": {
@@ -6678,7 +7726,11 @@
         {
           "id": "mach_1194",
           "implementName": "Chisle Plow",
-          "passes": 1
+          "passes": 1,
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": "Gary"
         }
       ],
       "yieldPerAcre": 220,
@@ -6735,13 +7787,24 @@
           "id": "inp_1212",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-03",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_1213",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-03",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_1214",
@@ -6820,31 +7883,92 @@
           "id": "inp_1218",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003265",
+          "invoiceVendor": "delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 193,
+          "invoiceQtyTotal": 144.75,
+          "invoiceCostTotal": 3039.75,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         },
         {
           "id": "inp_1219",
           "productName": "Meth Oil, Insource (2.25 Gal)",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003265",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 193,
+          "invoiceQtyTotal": 19.3,
+          "invoiceCostTotal": 386,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_1220",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003265",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 193,
+          "invoiceQtyTotal": 386,
+          "invoiceCostTotal": 212.3,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
         },
         {
           "id": "inp_1221",
           "productName": "Atrazine 4L",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003265",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 193,
+          "invoiceQtyTotal": 24.13,
+          "invoiceCostTotal": 434.34,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
         },
         {
           "id": "inp_1222",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003265",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 193,
+          "invoiceQtyTotal": 193,
+          "invoiceCostTotal": 2219.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_1223",
@@ -6949,6 +8073,63 @@
           "invoiceCostTotal": 20.44,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.16
+        },
+        {
+          "id": "inp_mrdx7xx8_yq0i",
+          "productName": "Sparrow",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003265",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 193,
+          "invoiceQtyTotal": 144.75,
+          "invoiceCostTotal": 3463.87,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
+        },
+        {
+          "id": "inp_msdg4hst_de4p",
+          "productName": "Approach Prima",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Fertility",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-24",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004592",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-24",
+          "invoiceAcres": 181,
+          "invoiceQtyTotal": 6.62,
+          "invoiceCostTotal": 3282.92,
+          "invoiceUnit": "Gallon",
+          "actualQuantity": 0.04
+        },
+        {
+          "id": "inp_msdg4rt9_mcjv",
+          "productName": "Aerial application",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Fertility",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-24",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004592",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-07-24",
+          "invoiceAcres": 181,
+          "invoiceQtyTotal": 181,
+          "invoiceCostTotal": 2624.5,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         }
       ],
       "seed": {
@@ -6997,7 +8178,7 @@
           "confirmedBy": "Gary"
         }
       ],
-      "yieldPerAcre": 210,
+      "yieldPerAcre": 219,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
@@ -7137,14 +8318,24 @@
           "id": "inp_1250",
           "productName": "10-34-0",
           "quantity": 5,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-03",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_1251",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Fertility",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-03",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_1252",
@@ -7205,31 +8396,92 @@
           "id": "inp_1256",
           "productName": "Armezon (6x32 Oz)",
           "quantity": 0.75,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003268",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 84,
+          "invoiceQtyTotal": 63,
+          "invoiceCostTotal": 1323,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         },
         {
           "id": "inp_1257",
           "productName": "Meth Oil, Insource (2.25 Gal)",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003268",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 84,
+          "invoiceQtyTotal": 8.4,
+          "invoiceCostTotal": 168,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_1258",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003268",
+          "invoiceVendor": "Delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 84,
+          "invoiceQtyTotal": 168,
+          "invoiceCostTotal": 92.4,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
         },
         {
           "id": "inp_1259",
           "productName": "Atrazine 4L",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003268",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 84,
+          "invoiceQtyTotal": 10.5,
+          "invoiceCostTotal": 189,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
         },
         {
           "id": "inp_1260",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003268",
+          "invoiceVendor": "delongs",
+          "invoiceDate": "2026-06-01",
+          "invoiceAcres": 84,
+          "invoiceQtyTotal": 84,
+          "invoiceCostTotal": 966,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_1261",
@@ -7323,6 +8575,25 @@
           "invoiceCostTotal": 0.67,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.15
+        },
+        {
+          "id": "inp_mrdz3gsv_gzmd",
+          "productName": "Sparrow",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003268",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 84,
+          "invoiceQtyTotal": 63,
+          "invoiceCostTotal": 1507.59,
+          "invoiceUnit": "OZ",
+          "actualQuantity": 0.75
         }
       ],
       "seed": {
@@ -7783,6 +9054,120 @@
           "invoiceCostTotal": 1494.54,
           "invoiceUnit": "Gal",
           "actualQuantity": 0.25
+        },
+        {
+          "id": "inp_mrnsg2av_n47r",
+          "productName": "Water",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-07",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004256",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-07",
+          "invoiceAcres": 259.909,
+          "invoiceQtyTotal": 3898.64,
+          "invoiceCostTotal": null,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 15
+        },
+        {
+          "id": "inp_mrnsgbcs_qum7",
+          "productName": "Buccaneer 5 Extra",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-07",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004256",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-07",
+          "invoiceAcres": 259.909,
+          "invoiceQtyTotal": 62,
+          "invoiceCostTotal": 1426,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.24
+        },
+        {
+          "id": "inp_mrnsgx6n_85m4",
+          "productName": "Enlist",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-07",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004256",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-07",
+          "invoiceAcres": 259.909,
+          "invoiceQtyTotal": 64.98,
+          "invoiceCostTotal": 4906.64,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.25
+        },
+        {
+          "id": "inp_mrnsh583_uahb",
+          "productName": "Veracity Elite II",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-07",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004256",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-07",
+          "invoiceAcres": 259.909,
+          "invoiceQtyTotal": 19.49,
+          "invoiceCostTotal": 749.59,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.07
+        },
+        {
+          "id": "inp_mrnshjr0_8xja",
+          "productName": "Premium Ams (51 Lb)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-07",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004256",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-07",
+          "invoiceAcres": 259.909,
+          "invoiceQtyTotal": 519.82,
+          "invoiceCostTotal": 483.43,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
+        },
+        {
+          "id": "inp_mrnshxwg_t8ms",
+          "productName": "Application - Post",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-07",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8004256",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-07",
+          "invoiceAcres": 259.909,
+          "invoiceQtyTotal": 259.91,
+          "invoiceCostTotal": 2988.97,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         }
       ],
       "seed": {
@@ -8067,7 +9452,7 @@
           "invoiceDate": "2025-11-06",
           "invoiceAcres": 56.11,
           "invoiceQtyTotal": 4.09,
-          "invoiceCostTotal": 445,
+          "invoiceCostTotal": 1820.05,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.07
         },
@@ -8085,7 +9470,7 @@
           "invoiceDate": "2025-11-06",
           "invoiceAcres": 56.11,
           "invoiceQtyTotal": 6.11,
-          "invoiceCostTotal": 795,
+          "invoiceCostTotal": 4857.45,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.11
         },
@@ -8654,7 +10039,7 @@
       "enterpriseId": "ent_1272",
       "name": "Hoff",
       "systemCode": "CON",
-      "crop": "DF seed beans",
+      "crop": "Non-GMO Seed Grade Beans",
       "cropType": "SINGLE CROP",
       "acres": 74.24,
       "rentPerAcre": 272.54,
@@ -9286,7 +10671,7 @@
           "invoiceVendor": "Delongs",
           "invoiceDate": "2025-10-31",
           "invoiceAcres": 52,
-          "invoiceQtyTotal": 37.775,
+          "invoiceQtyTotal": 3.775,
           "invoiceCostTotal": 3001.13,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.73
@@ -9959,7 +11344,7 @@
           "invoiceDate": "2026-04-22",
           "invoiceAcres": 17,
           "invoiceQtyTotal": 36.8,
-          "invoiceCostTotal": 0.55,
+          "invoiceCostTotal": 20.24,
           "invoiceUnit": "Lbs",
           "actualQuantity": 2.16
         },
@@ -10669,6 +12054,16 @@
           "id": "mach_1651",
           "implementName": "Trucking",
           "passes": 0.2
+        },
+        {
+          "id": "mach_mrp5sm48_ntuv",
+          "implementName": "Crumbler",
+          "passes": 1,
+          "operationGroup": "Tillage",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-01",
+          "statusNote": null,
+          "confirmedBy": "Gary"
         }
       ],
       "yieldPerAcre": 60,
@@ -10871,7 +12266,7 @@
           "invoiceVendor": "Delong",
           "invoiceDate": "2026-06-04",
           "invoiceAcres": 28.36,
-          "invoiceQtyTotal": 56720.6,
+          "invoiceQtyTotal": 56.72,
           "invoiceCostTotal": 31.2,
           "invoiceUnit": "Lbs",
           "actualQuantity": 2000.02
@@ -12853,7 +14248,7 @@
       "name": "Gessert west 111",
       "systemCode": "CANNING CON IRR",
       "crop": "Peas",
-      "cropType": "DBL CROP",
+      "cropType": "SINGLE CROP",
       "acres": 364.8,
       "rentPerAcre": 281.81,
       "inputs": [
@@ -13066,7 +14461,8 @@
           "acres": 0
         }
       ],
-      "tillage": "Till"
+      "tillage": "Till",
+      "dblSharedAcres": 111
     },
     {
       "id": "fld_1937",
@@ -13222,7 +14618,8 @@
           "acres": 0
         }
       ],
-      "tillage": "Till"
+      "tillage": "Till",
+      "dblPartnerFieldId": "fld_1900"
     },
     {
       "id": "fld_1965",
@@ -13445,6 +14842,12 @@
           "id": "mach_1964",
           "implementName": "Weed Zapper",
           "passes": 1
+        },
+        {
+          "id": "mach_mrp5rn3h_3x05",
+          "implementName": "Crumbler",
+          "passes": 1,
+          "operationGroup": "Tillage"
         }
       ],
       "yieldPerAcre": 1.2,
@@ -13477,7 +14880,7 @@
       "name": "phillhower east",
       "systemCode": "CANNING CON IRR",
       "crop": "Peas",
-      "cropType": "DBL CROP",
+      "cropType": "SINGLE CROP",
       "acres": 135.2,
       "rentPerAcre": 199.7,
       "inputs": [
@@ -13668,6 +15071,18 @@
           "invoiceCostTotal": 2.46,
           "invoiceUnit": "Tons",
           "actualQuantity": 0.03
+        },
+        {
+          "id": "inp_mrz6tdey_7c90",
+          "productName": "Oats Ogle (Bulk)",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Other",
+          "passStatus": "confirmed",
+          "confirmedDate": "2025-09-12",
+          "statusNote": "Recleaned",
+          "confirmedBy": "Willie",
+          "actualQuantity": 270.625
         }
       ],
       "seed": {
@@ -13718,7 +15133,8 @@
           "acres": 0
         }
       ],
-      "tillage": "Till"
+      "tillage": "Till",
+      "dblSharedAcres": 107.3
     },
     {
       "id": "fld_2055",
@@ -13872,7 +15288,7 @@
       "buyerId": "",
       "templateId": "",
       "auxPayments": [],
-      "plantedAcres": 0,
+      "plantedAcres": 107.3,
       "registryFieldName": null,
       "splitGroupId": null,
       "registryFieldId": "fld_045",
@@ -13883,7 +15299,8 @@
           "acres": 0
         }
       ],
-      "tillage": "Till"
+      "tillage": "Till",
+      "dblPartnerFieldId": "fld_2018"
     },
     {
       "id": "fld_2132",
@@ -13960,7 +15377,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 60,
+      "yieldPerAcre": 40,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 20,
       "insuranceIncomePerAcre": 0,
@@ -13991,7 +15408,7 @@
     },
     {
       "id": "fld_2146",
-      "enterpriseId": "ent_0492",
+      "enterpriseId": "ent_2120",
       "name": "OM1",
       "systemCode": "ORG",
       "crop": "ORG seed wheat",
@@ -14106,7 +15523,7 @@
           "confirmedBy": "Gavin"
         }
       ],
-      "yieldPerAcre": 55,
+      "yieldPerAcre": 40,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 20,
       "insuranceIncomePerAcre": 0,
@@ -14199,7 +15616,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 55,
+      "yieldPerAcre": 40,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 45,
       "insuranceIncomePerAcre": 0,
@@ -14232,7 +15649,7 @@
       "id": "fld_2172",
       "enterpriseId": "ent_2120",
       "name": "Turkey Deer",
-      "systemCode": "ORG IRR",
+      "systemCode": "ORG",
       "crop": "ORG Wheat",
       "cropType": "SINGLE CROP",
       "acres": 40,
@@ -14298,15 +15715,15 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 60,
+      "yieldPerAcre": 40,
       "yieldUnit": "Bu",
-      "cropInsurancePerAcre": 45,
+      "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
       "govPaymentLabel": "Delong GCS",
       "govPaymentsPerAcre": 70,
       "tariffsPerAcre": 0,
       "harvestMoisture": 0,
-      "buyerId": "",
+      "buyerId": "buy_mrdqfcof_dthn",
       "templateId": "",
       "auxPayments": [
         {
@@ -14391,7 +15808,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 55,
+      "yieldPerAcre": 40,
       "yieldUnit": "Bu",
       "cropInsurancePerAcre": 25,
       "insuranceIncomePerAcre": 0,
@@ -14446,20 +15863,37 @@
           "id": "inp_2192",
           "productName": "BioActive Liquilife +",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_2193",
           "productName": "TeraFed",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mp5gpall_9c5i",
           "productName": "Acomplish Max",
           "quantity": 25,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 25
         }
       ],
       "seed": {
@@ -14584,13 +16018,20 @@
           "id": "inp_2211",
           "productName": "BioActive Liquilife +",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge"
         },
         {
           "id": "inp_2212",
           "productName": "TeraFed",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mod78m8c_bh9v",
@@ -14609,7 +16050,12 @@
           "productName": "Acomplish Max",
           "quantity": 25,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 25
         },
         {
           "id": "inp_mqeknbtu_kfjo",
@@ -14624,6 +16070,42 @@
           "quantity": 5000,
           "season": "Spring",
           "operationGroup": "Fertility"
+        },
+        {
+          "id": "inp_mrzdppi2_udnd",
+          "productName": "Eco Tec",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 6
+        },
+        {
+          "id": "inp_mrzdpxw1_kxak",
+          "productName": "BioRepel",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 2
+        },
+        {
+          "id": "inp_mrzdt6ed_5q66",
+          "productName": "BioActive Liquilife +",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-14",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 3
         }
       ],
       "seed": {
@@ -14787,26 +16269,37 @@
           "id": "inp_2231",
           "productName": "BioActive Liquilife +",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-19",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_2232",
           "productName": "TeraFed",
           "quantity": 2.5,
-          "season": "Spring"
-        },
-        {
-          "id": "inp_2233",
-          "productName": "Rye seed",
-          "quantity": 1,
-          "season": "Fall"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-19",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mp4d973v_3btz",
           "productName": "Acomplish Max",
           "quantity": 25,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-19",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 25
         },
         {
           "id": "inp_mq9zlrgs_ds51",
@@ -14863,7 +16356,11 @@
           "id": "mach_2239",
           "implementName": "Tine weed 60",
           "passes": 2,
-          "operationGroup": "Tillage"
+          "operationGroup": "Tillage",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": "Gary"
         },
         {
           "id": "mach_2240",
@@ -15010,7 +16507,7 @@
           "invoiceDate": "2026-03-26",
           "invoiceAcres": 154,
           "invoiceQtyTotal": 11.793,
-          "invoiceCostTotal": 525,
+          "invoiceCostTotal": 6191.33,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.08
         },
@@ -15036,7 +16533,19 @@
           "id": "inp_mnjawd3o_4zh6",
           "productName": "32% Nitrogen",
           "quantity": 170,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-22",
+          "statusNote": "Picked up",
+          "confirmedBy": null,
+          "invoiceNumber": "8004516",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-07-22",
+          "invoiceAcres": 154,
+          "invoiceQtyTotal": 154,
+          "invoiceCostTotal": 4112.96,
+          "invoiceUnit": "Ton",
+          "actualQuantity": 1
         },
         {
           "id": "inp_mnjawdl4_ai2f",
@@ -15199,7 +16708,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 70,
+      "yieldPerAcre": 82,
       "yieldUnit": "Lbs",
       "cropInsurancePerAcre": 0,
       "insuranceIncomePerAcre": 0,
@@ -15264,13 +16773,20 @@
           "id": "inp_mnjbl26f_bkca",
           "productName": "BioActive Liquilife +",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge"
         },
         {
           "id": "inp_mnjbl26f_8izj",
           "productName": "TeraFed",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mnjbl26f_kp3c",
@@ -15282,7 +16798,13 @@
           "id": "inp_mnjbl26f_j4tf",
           "productName": "Eco Tec",
           "quantity": 6,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 6
         },
         {
           "id": "inp_mnjbl26f_rcaj",
@@ -15294,7 +16816,13 @@
           "id": "inp_mnjbl26f_l8zv",
           "productName": "Acomplish Max",
           "quantity": 25,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 25
         },
         {
           "id": "inp_mq9zu0bz_7736",
@@ -15307,6 +16835,18 @@
           "statusNote": "Robert",
           "confirmedBy": null,
           "actualQuantity": 1
+        },
+        {
+          "id": "inp_mrzdjgdq_9zas",
+          "productName": "BioRepel",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 2
         }
       ],
       "seed": null,
@@ -15414,20 +16954,37 @@
           "id": "inp_2270",
           "productName": "BioActive Liquilife +",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_2271",
           "productName": "TeraFed",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mp5gokn8_m8xf",
           "productName": "Acomplish Max",
           "quantity": 25,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 25
         }
       ],
       "seed": {
@@ -15467,7 +17024,8 @@
         {
           "id": "mach_2277",
           "implementName": "Tine weed 60",
-          "passes": 2
+          "passes": 2,
+          "operationGroup": "Post-emerge"
         },
         {
           "id": "mach_2278",
@@ -15512,7 +17070,7 @@
       "name": "Omni",
       "systemCode": "CANNING ORG",
       "crop": "ORG Peas",
-      "cropType": "DBL CROP",
+      "cropType": "SINGLE CROP",
       "acres": 440,
       "rentPerAcre": 273.42,
       "inputs": [
@@ -15585,7 +17143,7 @@
           "confirmedBy": "Gary"
         }
       ],
-      "yieldPerAcre": 0.6,
+      "yieldPerAcre": 1.1,
       "yieldUnit": "Tons",
       "cropInsurancePerAcre": 0,
       "insuranceIncomePerAcre": 0,
@@ -15597,7 +17155,8 @@
       "templateId": "",
       "registryFieldName": null,
       "splitGroupId": null,
-      "tillage": "Till"
+      "tillage": "Till",
+      "dblSharedAcres": 267
     },
     {
       "id": "fld_mnjqhr9y_wkgu",
@@ -15728,7 +17287,7 @@
           "passes": 1
         }
       ],
-      "yieldPerAcre": 4,
+      "yieldPerAcre": 2.1,
       "yieldUnit": "Tons",
       "cropInsurancePerAcre": 0,
       "insuranceIncomePerAcre": 0,
@@ -15740,7 +17299,8 @@
       "registryFieldId": "fld_042",
       "registryFieldName": null,
       "splitGroupId": null,
-      "tillage": "Till"
+      "tillage": "Till",
+      "dblPartnerFieldId": "fld_mnjqcuum_9ghz"
     },
     {
       "id": "fld_mnjqppog_z92w",
@@ -15780,28 +17340,43 @@
           "productName": "BioActive Liquilife +",
           "quantity": 2.5,
           "season": "Spring",
-          "operationGroup": "Planting"
+          "operationGroup": "Pre-emerge"
         },
         {
           "id": "inp_mnjqpf1g_esvs",
           "productName": "TeraFed",
           "quantity": 2.5,
           "season": "Spring",
-          "operationGroup": "Planting"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mnjqpf1g_8ie7",
           "productName": "BioRepel",
           "quantity": 2,
           "season": "Spring",
-          "operationGroup": "Planting"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 2
         },
         {
           "id": "inp_mnjqpf1g_jbwo",
           "productName": "Eco Tec",
           "quantity": 6,
           "season": "Spring",
-          "operationGroup": "Planting"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 6
         },
         {
           "id": "inp_mnjqpf1g_y9sc",
@@ -15815,7 +17390,12 @@
           "productName": "Acomplish Max",
           "quantity": 25,
           "season": "Spring",
-          "operationGroup": "Planting"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 25
         }
       ],
       "seed": null,
@@ -15919,14 +17499,24 @@
           "productName": "10-34-0",
           "quantity": 5,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 5
         },
         {
           "id": "inp_mobovwuu_08km",
           "productName": "Batallion LFC (2x2.5 Gal)",
           "quantity": 11,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-02",
+          "statusNote": null,
+          "confirmedBy": "Tim",
+          "actualQuantity": 11
         },
         {
           "id": "inp_mobovwuu_offa",
@@ -15960,7 +17550,7 @@
           "invoiceDate": "2026-05-05",
           "invoiceAcres": 22.28,
           "invoiceQtyTotal": 0.626,
-          "invoiceCostTotal": 395,
+          "invoiceCostTotal": 247.27,
           "invoiceUnit": "Ton",
           "actualQuantity": 0.03,
           "operationGroup": "Pre-emerge"
@@ -16334,20 +17924,37 @@
           "id": "inp_mo1mitq2_jtay",
           "productName": "BioActive Liquilife +",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-07-24",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mo1miug0_8tv6",
           "productName": "TeraFed",
           "quantity": 2.5,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Willie",
+          "actualQuantity": 3
         },
         {
           "id": "inp_mp4d6ven_0jyt",
           "productName": "Acomplish Max",
           "quantity": 25,
           "season": "Spring",
-          "operationGroup": "Fertility"
+          "operationGroup": "Pre-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-05-22",
+          "statusNote": null,
+          "confirmedBy": "Willoe",
+          "actualQuantity": 25
         }
       ],
       "seed": {
@@ -16441,7 +18048,7 @@
       "crop": "High Oil Soybeans",
       "cropType": "SINGLE CROP",
       "acres": 143,
-      "rentPerAcre": 125.87,
+      "rentPerAcre": 200,
       "inputs": [
         {
           "id": "inp_mok4d4be_ze5e",
@@ -16502,19 +18109,56 @@
           "id": "inp_mok4d4be_rdwi",
           "productName": "Application - Post",
           "quantity": 1,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003275",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 34,
+          "invoiceQtyTotal": 34,
+          "invoiceCostTotal": 391,
+          "invoiceUnit": "Acre",
+          "actualQuantity": 1
         },
         {
           "id": "inp_mok4d4be_jslt",
           "productName": "Volunteer (2x2.5 Gal)",
           "quantity": 8,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003275",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 34,
+          "invoiceQtyTotal": 2.66,
+          "invoiceCostTotal": 146.3,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.08
         },
         {
           "id": "inp_mok4d4be_ehjo",
           "productName": "Forsyte 1.88 SL (2x2.5 Gal)",
           "quantity": 1.25,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003275",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 34,
+          "invoiceQtyTotal": 4.25,
+          "invoiceCostTotal": 221,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.13
         },
         {
           "id": "inp_mok4d4be_t9me",
@@ -16526,13 +18170,38 @@
           "id": "inp_mok4d4be_g0y0",
           "productName": "Crop Oil, Insource (2x2.5 Gal)",
           "quantity": 1.27,
-          "season": "Spring"
+          "season": "Spring",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003275",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 34,
+          "invoiceQtyTotal": 5.461,
+          "invoiceCostTotal": 68.85,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 0.16
         },
         {
           "id": "inp_mok4d4be_stmq",
           "productName": "Premium Ams (51 Lb)",
           "quantity": 2,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003275",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 34,
+          "invoiceQtyTotal": 68,
+          "invoiceCostTotal": 37.4,
+          "invoiceUnit": "Lbs",
+          "actualQuantity": 2
         },
         {
           "id": "inp_mok4d4be_98dv",
@@ -16556,7 +18225,8 @@
           "id": "inp_mok4d4be_ui2o",
           "productName": "PowerMax",
           "quantity": 22,
-          "season": "Spring"
+          "season": "Spring",
+          "operationGroup": "Fertility"
         },
         {
           "id": "inp_mok4d4be_tjj2",
@@ -16575,6 +18245,44 @@
           "productName": "0-46-0 Triple Super 15C",
           "quantity": 104.3478261,
           "season": "Fall"
+        },
+        {
+          "id": "inp_mrjo8t4v_22d4",
+          "productName": "Water",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": null,
+          "confirmedBy": null,
+          "invoiceNumber": "8003275",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 34,
+          "invoiceQtyTotal": 510,
+          "invoiceCostTotal": null,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 15
+        },
+        {
+          "id": "inp_mrjob34b_7txh",
+          "productName": "Zidua sc",
+          "quantity": 1,
+          "season": "Spring",
+          "operationGroup": "Post-emerge",
+          "passStatus": "confirmed",
+          "confirmedDate": "2026-06-02",
+          "statusNote": "303.81",
+          "confirmedBy": null,
+          "invoiceNumber": "8003275",
+          "invoiceVendor": "Delong",
+          "invoiceDate": "2026-06-02",
+          "invoiceAcres": 34,
+          "invoiceQtyTotal": 34,
+          "invoiceCostTotal": 0.533,
+          "invoiceUnit": "Gal",
+          "actualQuantity": 1
         }
       ],
       "seed": {
@@ -16652,7 +18360,7 @@
       "crop": "Yellow Corn",
       "cropType": "SINGLE CROP",
       "acres": 143,
-      "rentPerAcre": 125.87,
+      "rentPerAcre": 200,
       "inputs": [
         {
           "id": "inp_mq71lgrw_3dsj",
@@ -16985,6 +18693,90 @@
       "registryFieldId": "fld_056",
       "registryFieldName": null,
       "splitGroupId": null
+    },
+    {
+      "id": "fld_mtam6v2c_izkh",
+      "enterpriseId": "ent_1272",
+      "name": "Wes's",
+      "systemCode": "CON",
+      "crop": "RR Soybeans",
+      "cropType": "DBL CROP",
+      "acres": 25,
+      "rentPerAcre": 200,
+      "inputs": [
+        {
+          "id": "inp_mtam2lns_wzx7",
+          "productName": "Application - Post",
+          "quantity": 1,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mtam2lns_ez22",
+          "productName": "PowerMax",
+          "quantity": 22,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mtam2lns_fxps",
+          "productName": "Enlist",
+          "quantity": 1.4,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mtam2lns_ogrd",
+          "productName": "Crop Oil, Insource (2x2.5 Gal)",
+          "quantity": 0.5,
+          "season": "Spring"
+        },
+        {
+          "id": "inp_mtam2lns_9ipw",
+          "productName": "Premium Ams (51 Lb)",
+          "quantity": 2,
+          "season": "Spring"
+        }
+      ],
+      "seed": {
+        "variety": "P26Z86E",
+        "population": 143757
+      },
+      "seeds": [
+        {
+          "variety": "P26Z86E",
+          "population": 143757,
+          "acres": 0
+        }
+      ],
+      "machinery": [
+        {
+          "id": "mach_mtam2lns_mw3z",
+          "implementName": "Planter",
+          "passes": 1
+        },
+        {
+          "id": "mach_mtam2lns_i2iq",
+          "implementName": "Combine + Buggy",
+          "passes": 1
+        },
+        {
+          "id": "mach_mtam2lns_1f5p",
+          "implementName": "Trucking",
+          "passes": 0.2
+        }
+      ],
+      "yieldPerAcre": 35,
+      "yieldUnit": "Bu",
+      "cropInsurancePerAcre": 0,
+      "insuranceIncomePerAcre": 0,
+      "auxPayments": [],
+      "harvestMoisture": 13,
+      "buyerId": "",
+      "tillage": "Till",
+      "plantedAcres": 0,
+      "templateId": "prog_mm9lcoao_kk12",
+      "registryFieldId": "fld_056",
+      "registryFieldName": null,
+      "splitGroupId": null,
+      "dblPartnerFieldId": "fld_1156"
     }
   ],
   "products": [
@@ -18313,23 +20105,6 @@
       "k20": 0,
       "supplierId": "",
       "category": "Fertilizer",
-      "purchaseUnit": "Gal",
-      "organic": false,
-      "organicGround": false
-    },
-    {
-      "id": "prod_0084",
-      "name": "Durango DMA (2X2.5 Gal)",
-      "unitBilledPrice": 24.54,
-      "conversionRate": 128,
-      "increasePercent": 1,
-      "unit": "OZ",
-      "applicationPrice": 0.19171875,
-      "p205": 0,
-      "k20": 0,
-      "supplierId": "",
-      "category": "Chemical",
-      "_recatV2": true,
       "purchaseUnit": "Gal",
       "organic": false,
       "organicGround": false
@@ -20452,6 +22227,80 @@
       "conversionRate": 1,
       "p205": 0,
       "k20": 0
+    },
+    {
+      "id": "prod_mrtqn8fh_vft1",
+      "name": "Pilot 4E",
+      "category": "Fertilizer",
+      "unit": "Pints",
+      "purchaseUnit": "Pints",
+      "unitBilledPrice": 0,
+      "conversionRate": 1,
+      "organic": false,
+      "organicGround": false,
+      "supplierId": "sup_mmc6qn29_9569"
+    },
+    {
+      "id": "prod_mrtqry7u_2nwh",
+      "name": "Last Chance Pro",
+      "category": "Fertilizer",
+      "unit": "gallons",
+      "purchaseUnit": "gallons",
+      "unitBilledPrice": 0,
+      "conversionRate": 1,
+      "organic": false,
+      "organicGround": false,
+      "supplierId": "sup_mmc6qn29_9569"
+    },
+    {
+      "id": "prod_mrv16vj5_dsm0",
+      "name": "L-CBF Terra Fed",
+      "category": "Fertilizer",
+      "unit": "gallons",
+      "purchaseUnit": "gallons",
+      "unitBilledPrice": 0,
+      "conversionRate": 1,
+      "organic": false,
+      "organicGround": false,
+      "supplierId": "sup_mmc6qn29_9569"
+    },
+    {
+      "id": "prod_mrv2pvew_mfsu",
+      "name": "Approach Prima",
+      "category": "Chemical",
+      "unit": "Oz",
+      "purchaseUnit": "Gallon",
+      "unitBilledPrice": 0,
+      "conversionRate": 1,
+      "organic": false,
+      "organicGround": false,
+      "supplierId": "sup_mmc6qn29_9569"
+    },
+    {
+      "id": "prod_ms6k3ob0_zhij",
+      "name": "glufosinate 28SL",
+      "category": "Chemical",
+      "unit": "Gal",
+      "purchaseUnit": "Gallon",
+      "unitBilledPrice": 0,
+      "conversionRate": 1,
+      "organic": false,
+      "organicGround": false,
+      "supplierId": "sup_mmc6qn29_9569"
+    },
+    {
+      "id": "prod_mst1gl5p_jp3d",
+      "name": "DeLco Hammer Down (2X2.5 Gal)",
+      "category": "Chemical",
+      "unit": "Quart",
+      "purchaseUnit": "Gal",
+      "unitBilledPrice": 0,
+      "conversionRate": 4,
+      "organic": false,
+      "organicGround": false,
+      "supplierId": "sup_mmc6qn29_9569",
+      "p205": 0,
+      "k20": 0
     }
   ],
   "implements": [
@@ -21439,7 +23288,7 @@
     },
     {
       "id": "cp_0309",
-      "crop": "DF seed beans",
+      "crop": "Non-GMO Seed Grade Beans",
       "pricePerUnit": 14.05,
       "basis": 0,
       "interestRate": 0.06,
@@ -21625,7 +23474,7 @@
       "id": "seed_0332",
       "crop": "Hybrid_Rye",
       "brand": "KWS",
-      "variety": "Receptor",
+      "variety": "Rixor",
       "pricePerUnit": 175,
       "seedsPerUnit": 750000,
       "supplierId": "sup_mmc6qmnv_eqcf",
@@ -21863,13 +23712,14 @@
     },
     {
       "id": "seed_mnncy35h_8x8o",
-      "crop": "Barley",
-      "brand": "KWS",
+      "crop": "",
+      "brand": "Albert Lea",
       "variety": "ORBIT",
-      "pricePerUnit": 15,
+      "pricePerUnit": 16,
       "seedsPerUnit": 675000,
       "supplierId": "sup_mnncyrdn_adsi",
-      "organicGround": false
+      "organicGround": false,
+      "maturity": ""
     },
     {
       "id": "seed_mobhtivv_4y5p",
@@ -21950,6 +23800,17 @@
       "seedsPerUnit": 140000,
       "supplierId": "sup_mma12zm8_t4vm",
       "organicGround": true
+    },
+    {
+      "id": "seed_mrz3hjk7_r3eu",
+      "crop": "",
+      "brand": "Delong",
+      "variety": "ProBox",
+      "maturity": "",
+      "pricePerUnit": 500,
+      "seedsPerUnit": 1,
+      "organicGround": false,
+      "supplierId": ""
     }
   ],
   "rent": [
@@ -22997,7 +24858,7 @@
       "cropBasis": {}
     },
     {
-      "id": "buy_mrdoldw0_fmlq",
+      "id": "buy_mrdqfcof_dthn",
       "name": "Cashton Farm Supply",
       "shortCode": "CFS",
       "basis": 0,
@@ -25264,9 +27125,9 @@
     },
     {
       "id": "prog_mmfx45ty_t8o7",
-      "name": "DF seed beans (CON)",
+      "name": "Non-GMO Seed Grade Beans (CON)",
       "description": "From Hoff",
-      "crop": "DF seed beans",
+      "crop": "Non-GMO Seed Grade Beans",
       "systemCode": "CON",
       "cropType": "SINGLE CROP",
       "inputs": [
@@ -25632,7 +27493,7 @@
           "enterpriseId": "ent_1272"
         },
         {
-          "name": "DF seed beans",
+          "name": "Non-GMO Seed Grade Beans",
           "pricingMode": "cbot",
           "pricePerUnit": 14.05,
           "basisDefault": 3.5,
@@ -25679,7 +27540,7 @@
         {
           "name": "ORG Wheat",
           "pricingMode": "contract",
-          "pricePerUnit": 7.75,
+          "pricePerUnit": 9.5,
           "basisDefault": 0,
           "unit": "Bu",
           "dryingRate": 0.3,
@@ -26262,9 +28123,9 @@
     },
     {
       "key": "wheat",
-      "symbol": "ZWN26.CBT",
+      "symbol": "ZWN27.CBT",
       "label": "WHEAT",
-      "contract": "JUL 26"
+      "contract": "JUL 27"
     }
   ],
   "unitPacks": [
@@ -26665,5 +28526,6 @@
       ]
     }
   ],
-  "quickPlanConfig": []
+  "quickPlanConfig": [],
+  "strawSales": []
 }

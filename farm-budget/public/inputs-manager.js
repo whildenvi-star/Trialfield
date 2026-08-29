@@ -14,6 +14,7 @@
   });
 
   var allSuppliers = [];
+  var allQuotes = [];
 
   var procurementByName = {};
 
@@ -24,7 +25,8 @@
       api.get('/api/fields?all=true'),
       api.get('/api/labor-overhead'),
       api.get('/api/suppliers'),
-      api.get('/api/procurement-status').catch(function () { return { offline: true, byName: {} }; })
+      api.get('/api/procurement-status').catch(function () { return { offline: true, byName: {} }; }),
+      api.get('/api/input-quotes').catch(function () { return []; })
     ]).then(function (results) {
       allProducts = results[0];
       allImplements = results[1];
@@ -32,6 +34,7 @@
       allLaborOverhead = results[3];
       allSuppliers = results[4];
       procurementByName = (results[5] && results[5].byName) ? results[5].byName : {};
+      allQuotes = results[6];
       computeProductDemandTotals(allFields, allProducts);
       renderProductTable(allProducts);
       renderImplTable(allImplements);
@@ -39,6 +42,8 @@
       renderImplUsage(allFields, allImplements);
       renderLaborOverhead(allLaborOverhead);
       renderSupplierTable(allSuppliers);
+      populateQuoteControls();
+      renderQuotesTable(allQuotes);
       loaded = true;
     });
   }
@@ -1088,6 +1093,126 @@
     });
 
     document.getElementById('sup-count').textContent = suppliers.length + ' suppliers';
+  }
+
+  // === INPUT QUOTES ===
+  // Dated vendor bids per product. Record-only: nothing here ever writes to
+  // /api/products, so planning prices (unitBilledPrice) are untouched by design.
+
+  function populateQuoteControls() {
+    var prodSel = document.getElementById('iq-product');
+    var supSel = document.getElementById('iq-supplier');
+    var unitSel = document.getElementById('iq-unit');
+    var prevProd = prodSel.value, prevSup = supSel.value, prevUnit = unitSel.value;
+
+    prodSel.innerHTML = '<option value="">Product...</option>' +
+      allProducts.slice().sort(function (a, b) {
+        return (a.name || '').localeCompare(b.name || '');
+      }).map(function (p) {
+        return '<option value="' + p.id + '">' + util.escHtml(p.name) + '</option>';
+      }).join('');
+
+    supSel.innerHTML = '<option value="">Supplier...</option>' +
+      allSuppliers.filter(function (s) { return s.type === 'product'; })
+        .sort(function (a, b) { return (a.name || '').localeCompare(b.name || ''); })
+        .map(function (s) {
+          return '<option value="' + s.id + '">' + util.escHtml(s.name) + '</option>';
+        }).join('');
+
+    unitSel.innerHTML = getPurchaseUnits().map(function (u) {
+      return '<option value="' + util.escHtml(u) + '">' + util.escHtml(u) + '</option>';
+    }).join('');
+
+    prodSel.value = prevProd;
+    supSel.value = prevSup;
+    if (prevUnit) unitSel.value = prevUnit;
+
+    var dateInput = document.getElementById('iq-date');
+    if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+  }
+
+  // Default the unit to the selected product's purchase unit
+  document.getElementById('iq-product').addEventListener('change', function () {
+    var prod = null;
+    for (var i = 0; i < allProducts.length; i++) {
+      if (allProducts[i].id === this.value) { prod = allProducts[i]; break; }
+    }
+    if (prod && prod.purchaseUnit) {
+      document.getElementById('iq-unit').value = prod.purchaseUnit;
+    }
+  });
+
+  document.getElementById('iq-add').addEventListener('click', function () {
+    var prodSel = document.getElementById('iq-product');
+    var supSel = document.getElementById('iq-supplier');
+    var price = parseFloat(document.getElementById('iq-price').value);
+    if (!prodSel.value || !supSel.value || !(price > 0)) {
+      util.showToast('Pick a product, supplier, and price');
+      return;
+    }
+    api.post('/api/input-quotes', {
+      productId: prodSel.value,
+      productName: prodSel.options[prodSel.selectedIndex].textContent,
+      supplierId: supSel.value,
+      supplierName: supSel.options[supSel.selectedIndex].textContent,
+      price: price,
+      priceUnit: document.getElementById('iq-unit').value,
+      quoteDate: document.getElementById('iq-date').value || new Date().toISOString().slice(0, 10),
+      expiresOn: '',
+      notes: (document.getElementById('iq-notes').value || '').trim()
+    }).then(function () {
+      document.getElementById('iq-price').value = '';
+      document.getElementById('iq-notes').value = '';
+      loaded = false;
+      loadAll();
+      util.showToast('Quote added');
+    });
+  });
+
+  function renderQuotesTable(quotes) {
+    var tbody = document.getElementById('iq-tbody');
+    var sorted = quotes.slice().sort(function (a, b) {
+      return (b.quoteDate || '').localeCompare(a.quoteDate || '');
+    });
+    var html = '';
+    sorted.forEach(function (q) {
+      // Resolve live names by id (rename wins), fall back to snapshot
+      var prod = null, sup = null;
+      for (var i = 0; i < allProducts.length; i++) {
+        if (allProducts[i].id === q.productId) { prod = allProducts[i]; break; }
+      }
+      for (var j = 0; j < allSuppliers.length; j++) {
+        if (allSuppliers[j].id === q.supplierId) { sup = allSuppliers[j]; break; }
+      }
+      var prodName = prod ? prod.name : (q.productName || 'Unknown');
+      var supName = sup ? sup.name : (q.supplierName || 'Unknown');
+
+      // $/Applied — bid price per application unit, comparable to planning applicationPrice
+      var appliedCell = '--';
+      if (prod && prod.conversionRate) {
+        var perApp = (q.price || 0) / prod.conversionRate;
+        var planning = prod.applicationPrice ? ('planning: $' + prod.applicationPrice) : '';
+        appliedCell = '<span title="' + util.escHtml(planning) + '">$' + perApp.toFixed(4) +
+          (prod.unit ? '/' + util.escHtml(prod.unit) : '') + '</span>';
+      }
+
+      html += '<tr>' +
+        '<td>' + util.escHtml(prodName) + '</td>' +
+        '<td>' + util.escHtml(supName) + '</td>' +
+        '<td class="editable number" data-id="' + q.id + '" data-field="price" data-type="input-quotes">' +
+          util.formatMoney(q.price) + '</td>' +
+        '<td>' + util.escHtml(q.priceUnit || '') + '</td>' +
+        '<td class="number">' + appliedCell + '</td>' +
+        '<td>' + util.escHtml(q.quoteDate || '') + '</td>' +
+        '<td style="font-size:0.78rem;color:var(--text-light);max-width:220px;white-space:normal">' +
+          util.escHtml(q.notes || '') + '</td>' +
+        '<td><button class="btn-danger" data-del-id="' + q.id + '" data-del-type="input-quotes">Del</button></td>' +
+        '</tr>';
+    });
+    tbody.innerHTML = html;
+    bindEditing(tbody, 'input-quotes');
+    bindDelete(tbody, 'input-quotes');
+    document.getElementById('iq-count').textContent = quotes.length + ' quotes';
   }
 
   // === SHARED EDITING HELPERS ===

@@ -166,6 +166,7 @@ function loadData() {
   // Guard collections added after initial data.json was created
   if (!store.quickPlanConfig) store.quickPlanConfig = [];
   if (!store.strawSales) store.strawSales = [];
+  if (!store.inputQuotes) store.inputQuotes = [];
   recomputeDblSharedAcres();
 }
 
@@ -642,8 +643,8 @@ app.get('/api/enterprise-invoice-totals', (req, res) => {
         crop: field.crop || '',
         enterpriseId: entId,
         registryFieldId: field.registryFieldId || null,
-      });
         pendingCount
+      });
     }
   });
 
@@ -1029,8 +1030,8 @@ app.get('/api/field-shapes', async (req, res) => {
   }
 });
 
-  try {
 app.post('/api/fields/sync-registry', async (req, res) => {
+  try {
     const resp = await fetch(registryUrl('/api/fields?active=true'));
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);
     const regFields = await resp.json();
@@ -1379,6 +1380,9 @@ crudRoutes('buyers', 'buyers', 'buy', null, clearPricingCache);
 
 // Suppliers
 crudRoutes('suppliers', 'suppliers', 'sup');
+
+// Input quotes — dated vendor bids per product; record-only, never syncs to unitBilledPrice
+crudRoutes('input-quotes', 'inputQuotes', 'iq');
 
 // Unit/Pack Definitions — configurable unit types with pack sizing
 crudRoutes('unit-packs', 'unitPacks', 'up');

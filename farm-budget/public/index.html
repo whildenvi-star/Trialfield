@@ -446,6 +446,7 @@
         <button class="ref-sub-btn" data-ref-sub="seeds">Seeds</button>
         <button class="ref-sub-btn" data-ref-sub="implements">Implements</button>
         <button class="ref-sub-btn" data-ref-sub="suppliers">Suppliers</button>
+        <button class="ref-sub-btn" data-ref-sub="quotes">Quotes</button>
         <button class="ref-sub-btn" data-ref-sub="unit-packs">Unit/Packs</button>
         <button class="ref-sub-btn role-hide-office" data-ref-sub="labor">Labor &amp; Overhead</button>
         <button class="ref-sub-btn" data-ref-sub="forecast">Forecast</button>
@@ -589,6 +590,39 @@
       </div>
 
       </div><!-- /ref-sub-suppliers -->
+
+      <!-- Input Quotes Sub-section -->
+      <div id="ref-sub-quotes" class="ref-sub-content">
+      <h3>Input Quotes</h3>
+      <p class="edit-hint">Vendor bids for reference only — quotes never change planning prices. Double-click a price to edit.</p>
+      <div class="filters">
+        <select id="iq-product"><option value="">Product...</option></select>
+        <select id="iq-supplier"><option value="">Supplier...</option></select>
+        <input type="number" id="iq-price" step="0.01" min="0" placeholder="Price" style="width:100px">
+        <select id="iq-unit"></select>
+        <input type="date" id="iq-date">
+        <input type="text" id="iq-notes" placeholder="Notes" style="width:160px">
+        <button id="iq-add" class="btn-primary btn-sm">+ Add Quote</button>
+      </div>
+      <div class="table-info"><span id="iq-count"></span></div>
+      <div class="table-wrap">
+        <table id="iq-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Supplier</th>
+              <th>Price</th>
+              <th>Unit</th>
+              <th title="Price ÷ product conversion rate — comparable to planning $/applied unit">$/Applied</th>
+              <th>Quote Date</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="iq-tbody"></tbody>
+        </table>
+      </div>
+      </div><!-- /ref-sub-quotes -->
 
       <!-- Unit/Pack Definitions Sub-section -->
       <div id="ref-sub-unit-packs" class="ref-sub-content">
@@ -1478,7 +1512,7 @@
   <script src="field-editor.js?v=20260827"></script>
   <script src="field-strips.js?v=20260811b"></script>
   <script src="programs.js?v=20260403h"></script>
-  <script src="inputs-manager.js?v=20260806a"></script>
+  <script src="inputs-manager.js?v=20260827"></script>
   <script src="ref-overview.js?v=2"></script>
   <script src="seed-manager.js?v=20260806a"></script>
   <script src="inventory.js?v=20260828"></script>
