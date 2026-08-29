@@ -131,11 +131,12 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
     map.setPaintProperty('fields-hover', 'fill-color', expr)
   }, [view])
 
-  // Toggle the precip-fill layer visibility whenever showPrecip changes.
+  // Crossfade the precip-fill layer whenever showPrecip changes — the
+  // renderer animates fill-opacity per the transition set at addLayer.
   useEffect(() => {
     const map = mapRef.current
     if (!map || !map.getLayer('precip-fill')) return
-    map.setLayoutProperty('precip-fill', 'visibility', showPrecip ? 'visible' : 'none')
+    map.setPaintProperty('precip-fill', 'fill-opacity', showPrecip ? 1 : 0)
   }, [showPrecip])
 
   const refreshBoundaries = useCallback(async () => {
@@ -229,11 +230,14 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
             paint: { 'fill-color': colorExpr, 'fill-opacity': FILL_OPACITY },
           })
 
-          // Layer 2: precip overlay (hidden by default)
+          // Layer 2: precip overlay (hidden by default via fill-opacity: 0,
+          // not visibility, so the GL renderer can crossfade the toggle —
+          // the 300ms fade keeps the eye anchored instead of popping layers)
           mapInstance.addLayer({
             id: 'precip-fill', type: 'fill', source: 'fields',
-            layout: { visibility: 'none' },
             paint: {
+              'fill-opacity': 0,
+              'fill-opacity-transition': { duration: 300 },
               'fill-color': [
                 'step',
                 ['coalesce', ['get', 'last_7d_in'], -1],
@@ -243,7 +247,6 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
                 1.5,  'rgba(50,120,220,0.60)',
                 3.0,  'rgba(20,80,200,0.72)',
               ] as unknown as ExpressionSpecification,
-              'fill-opacity': 1,
             },
           })
 
@@ -313,12 +316,17 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
 
             const lng = (props.centroid_lng ?? e.lngLat.lng) as number
             const lat = (props.centroid_lat ?? e.lngLat.lat) as number
+            // Pad the camera for the 384px detail panel so the selected field
+            // frames in the visible area instead of sliding under the panel.
+            // On narrow screens the panel covers ~90vw — padding is pointless.
+            const panelPad = window.innerWidth > 768 ? 384 : 0
             mapInstance.flyTo({
               center:   [lng, lat],
               zoom:     Math.max(mapInstance.getZoom(), 14),
               pitch:    30,
               bearing:  DEFAULT_BEARING,
               duration: 1000,
+              padding:  { top: 0, bottom: 0, left: 0, right: panelPad },
               essential: true,
             })
 
@@ -485,7 +493,15 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
       {/* Field detail panel */}
       <FieldDetailPanel
         field={selectedField}
-        onClose={() => setSelectedField(null)}
+        onClose={() => {
+          setSelectedField(null)
+          // Ease the camera padding back out as the panel leaves — the map
+          // recenters itself instead of jumping when the panel disappears
+          mapRef.current?.easeTo({
+            padding: { top: 0, bottom: 0, left: 0, right: 0 },
+            duration: 500,
+          })
+        }}
       />
 
       <style>{`

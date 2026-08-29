@@ -241,7 +241,14 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
     }
     walk(next.geometry.coordinates)
     if (count === 0) return
-    mapRef.current?.easeTo({ center: [lngSum / count, latSum / count], zoom: 16, duration: 600 })
+    mapRef.current?.easeTo({
+        center: [lngSum / count, latSum / count],
+        zoom: 16,
+        duration: 600,
+        // Pad for the 320px detail panel so the CLU frames in the visible
+        // area instead of centering under the panel (skip on narrow screens)
+        padding: { top: 0, bottom: 0, left: 0, right: window.innerWidth > 768 ? 320 : 0 },
+      })
     mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], next.properties.id])
     setSelectedClu(next.properties)
   }, [selectedClu, activeFarm])
@@ -258,7 +265,14 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
     }
     walk(feature.geometry.coordinates)
     if (!count) return
-    mapRef.current?.easeTo({ center: [lngSum / count, latSum / count], zoom: 16, duration: 600 })
+    mapRef.current?.easeTo({
+        center: [lngSum / count, latSum / count],
+        zoom: 16,
+        duration: 600,
+        // Pad for the 320px detail panel so the CLU frames in the visible
+        // area instead of centering under the panel (skip on narrow screens)
+        padding: { top: 0, bottom: 0, left: 0, right: window.innerWidth > 768 ? 320 : 0 },
+      })
     mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], a.clu_record_id])
     setSelectedClu(feature.properties)
   }, [])
@@ -284,7 +298,14 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
       }
       walk(feat.geometry.coordinates)
       if (count > 0) {
-        mapRef.current?.easeTo({ center: [lngSum / count, latSum / count], zoom: 16, duration: 600 })
+        mapRef.current?.easeTo({
+        center: [lngSum / count, latSum / count],
+        zoom: 16,
+        duration: 600,
+        // Pad for the 320px detail panel so the CLU frames in the visible
+        // area instead of centering under the panel (skip on narrow screens)
+        padding: { top: 0, bottom: 0, left: 0, right: window.innerWidth > 768 ? 320 : 0 },
+      })
       }
     }
     mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], props.id])
@@ -1101,6 +1122,11 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
             onClose={() => {
               setSelectedClu(null)
               mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], ''])
+              // Ease the panel padding back out so the map recenters smoothly
+              mapRef.current?.easeTo({
+                padding: { top: 0, bottom: 0, left: 0, right: 0 },
+                duration: 500,
+              })
             }}
             onRecordUpdated={handleRecordUpdated}
             onNavigateNext={handleNavigateNext}
