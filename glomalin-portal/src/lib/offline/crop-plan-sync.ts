@@ -119,7 +119,8 @@ export async function confirmPass(
   passId: string,
   passType: string,
   operationDate?: string,
-  operatorCertUserId?: string
+  operatorCertUserId?: string,
+  fieldEnterpriseId?: string
 ): Promise<{ fieldOperationId: string; queued?: boolean }> {
   try {
     const res = await fetch('/api/mobile/passes/confirm', {
@@ -128,7 +129,7 @@ export async function confirmPass(
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ fieldId, passId, passType, operationDate, operatorCertUserId }),
+      body: JSON.stringify({ fieldId, passId, passType, operationDate, operatorCertUserId, fieldEnterpriseId }),
     })
 
     if (!res.ok) {
@@ -148,6 +149,7 @@ export async function confirmPass(
         operationDate: operationDate ?? new Date().toISOString().slice(0, 10),
         operatorId: operatorCertUserId ?? '',
         operatorName: '',
+        fieldEnterpriseId,
       })
       await setSyncToken(token)
       requestBackgroundSync()
@@ -168,7 +170,8 @@ export async function addPass(
   operationType: string,
   operationDate?: string,
   notes?: string,
-  operatorCertUserId?: string
+  operatorCertUserId?: string,
+  fieldEnterpriseId?: string
 ): Promise<{ fieldOperationId: string; pass: object; queued?: boolean }> {
   try {
     const res = await fetch('/api/mobile/passes/add', {
@@ -177,7 +180,7 @@ export async function addPass(
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ fieldId, operationType, operationDate, notes, operatorCertUserId }),
+      body: JSON.stringify({ fieldId, operationType, operationDate, notes, operatorCertUserId, fieldEnterpriseId }),
     })
 
     if (!res.ok) {
@@ -198,6 +201,7 @@ export async function addPass(
         description: notes,
         operatorId: operatorCertUserId ?? '',
         operatorName: '',
+        fieldEnterpriseId,
       })
       await setSyncToken(token)
       requestBackgroundSync()

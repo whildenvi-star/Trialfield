@@ -146,6 +146,7 @@ async function replayOpInSW(
           passType: op['passType'],
           operationDate: op['operationDate'],
           operatorCertUserId: op['operatorId'],
+          fieldEnterpriseId: op['fieldEnterpriseId'],
         }),
         signal,
       })
@@ -162,6 +163,7 @@ async function replayOpInSW(
           operationDate: op['operationDate'],
           notes: op['description'],
           operatorCertUserId: op['operatorId'],
+          fieldEnterpriseId: op['fieldEnterpriseId'],
         }),
         signal,
       })

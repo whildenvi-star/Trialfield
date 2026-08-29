@@ -36,6 +36,7 @@ export async function POST(request: Request) {
     operationDate?: string
     notes?: string
     operatorCertUserId?: string
+    fieldEnterpriseId?: string
   }
 
   try {
@@ -63,10 +64,13 @@ export async function POST(request: Request) {
     )
   }
 
-  // Resolve organic-cert fieldEnterpriseId from farm-budget registryId
+  // Resolve organic-cert fieldEnterpriseId from the farm-budget field id;
+  // an explicit fieldEnterpriseId from the client (split fields) wins after validation.
   let fieldEnterpriseId: string
   try {
-    fieldEnterpriseId = await resolveFieldEnterpriseId(fieldId)
+    fieldEnterpriseId = await resolveFieldEnterpriseId(fieldId, {
+      enterpriseId: body.fieldEnterpriseId ?? null,
+    })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return NextResponse.json({ error: msg }, { status: 404 })

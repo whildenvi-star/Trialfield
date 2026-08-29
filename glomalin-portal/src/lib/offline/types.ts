@@ -22,12 +22,13 @@ export interface QueuedOperation {
 
 // Cached crop plan — field + enterprise + inputs + passes snapshot
 export interface CachedCropPlan {
-  fieldId: string;               // key — farm-registry field ID
+  fieldId: string;               // key — farm-budget field ID
   fieldName: string;
   crop: string;
   variety?: string;
   acres: number;
   enterprise?: string;
+  fieldEnterpriseId?: string | null; // resolved organic-cert enterprise for this field+crop
   inputs: Array<{
     product: string;
     rate: string;
@@ -40,6 +41,7 @@ export interface CachedCropPlan {
     status: 'PLANNED' | 'CONFIRMED';
     operationDate?: string;
     operatorName?: string;
+    fieldEnterpriseId?: string | null;
   }>;
   cachedAt: string;              // ISO timestamp of cache write
 }

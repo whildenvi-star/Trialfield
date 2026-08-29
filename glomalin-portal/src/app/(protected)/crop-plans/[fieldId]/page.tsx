@@ -408,6 +408,7 @@ export default function CropPlanDetailPage() {
     operationDate: string
     operatorCertUserId: string
     operatorName: string
+    fieldEnterpriseId?: string
     prevPasses: PassState[]
   } | null>(null)
 
@@ -549,7 +550,8 @@ export default function CropPlanDetailPage() {
         pending.passId,
         pending.passType,
         pending.operationDate,
-        pending.operatorCertUserId
+        pending.operatorCertUserId,
+        pending.fieldEnterpriseId
       )
       if (result.queued && result.fieldOperationId) {
         setPasses((prev) =>
@@ -706,6 +708,7 @@ export default function CropPlanDetailPage() {
       operationDate: opDate,
       operatorCertUserId: operatorCertId,
       operatorName,
+      fieldEnterpriseId: pass.fieldEnterpriseId ?? undefined,
       prevPasses,
     }
 
@@ -729,7 +732,8 @@ export default function CropPlanDetailPage() {
           pending.passId,
           pending.passType,
           pending.operationDate,
-          pending.operatorCertUserId
+          pending.operatorCertUserId,
+          pending.fieldEnterpriseId
         )
         // If queued offline, update the pass with the pending fieldOperationId
         if (result.queued && result.fieldOperationId) {
@@ -823,7 +827,8 @@ export default function CropPlanDetailPage() {
         addOpType,
         addDate,
         addNotes || undefined,
-        addOperatorCertId || undefined
+        addOperatorCertId || undefined,
+        plan?.fieldEnterpriseId ?? undefined
       )
 
       // Replace temp entry with real one
