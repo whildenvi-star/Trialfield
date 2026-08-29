@@ -243,19 +243,23 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
         {/* ── Brand header ───────────────────────────────────── */}
         <div className="flex items-center h-14 flex-shrink-0 border-b border-glomalin-border">
           <Link
-            href="/dashboard"
+            href="/app/farm-budget"
             aria-label="Glomalin home"
             className="flex items-center justify-center h-full w-16 flex-shrink-0"
           >
             <span className="text-glomalin-accent font-bold tracking-widest font-mono text-xs select-none">◈</span>
           </Link>
-          <span className={[
-            'text-glomalin-accent font-bold tracking-widest font-mono text-xs select-none whitespace-nowrap',
-            'transition-opacity duration-150 ease-out motion-reduce:transition-none',
-            isOpen ? 'opacity-100' : 'opacity-0',
-          ].join(' ')}>
+          <Link
+            href="/app/farm-budget"
+            tabIndex={isOpen ? 0 : -1}
+            className={[
+              'text-glomalin-accent font-bold tracking-widest font-mono text-xs select-none whitespace-nowrap',
+              'transition-opacity duration-150 ease-out motion-reduce:transition-none',
+              isOpen ? 'opacity-100' : 'opacity-0',
+            ].join(' ')}
+          >
             GLOMALIN
-          </span>
+          </Link>
         </div>
 
         {/* ── Module navigation ──────────────────────────────── */}

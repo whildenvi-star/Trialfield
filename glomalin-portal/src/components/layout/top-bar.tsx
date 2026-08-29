@@ -99,7 +99,7 @@ export default function TopBar({ user }: TopBarProps) {
 
             {/* Brand */}
             <Link
-              href="/dashboard"
+              href="/app/farm-budget"
               className="flex items-center flex-shrink-0 text-glomalin-accent font-bold tracking-widest font-mono text-xs hover:opacity-75 transition-opacity"
             >
               ◈ GLOMALIN

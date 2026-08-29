@@ -19,8 +19,9 @@ export default async function DashboardPage() {
     ? null
     : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)
 
-  // Office (Sandy) homes on MACRO, same as admins.
-  if (user.app_metadata?.app_role === 'office') redirect('/app/farm-budget')
+  // Admins and office (Sandy) home on MACRO — /dashboard is never their landing,
+  // even when Cloudflare returns the browser to a remembered /dashboard URL.
+  if (role === 'admin' || user.app_metadata?.app_role === 'office') redirect('/app/farm-budget')
 
   // Only send operators to the crew app if they hold the module grant —
   // otherwise middleware bounces /app/crew back here and the client loops.

@@ -240,9 +240,8 @@ export default function FarmNodeMap() {
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
-      if (node.id !== 'hub') {
-        router.push('/login')
-      }
+      void node
+      router.push('/login')
     },
     [router]
   )
