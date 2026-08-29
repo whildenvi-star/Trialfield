@@ -57,15 +57,34 @@ Phase 1 (afternoon, quick fixes):
 
 Voice requirement (added 2026-08-28): the agent should speak in
 glomalinguild's own rhetorical tone — users should feel like they're talking
-directly to them, not to a generic assistant. To build this: collect samples
-of their actual writing (texts/emails/notes to the crew, however they'd answer
-"why is this field losing money"), distill into a voice spec (vocabulary,
-sentence rhythm, how they hedge, how they deliver bad numbers, signature
-phrasings) and
-bake it into the system prompt as a distinct layer that applies across all
-three role personas (admin/office/operator at server.js:2660-2687). Keep the
-voice spec in its own prompt file so it can be tuned without touching handler
-code. Needs a sample-gathering session before writing the spec.
+directly to them, not to a generic assistant. Per their instruction
+(2026-08-29): NO sample-gathering session, NO email mining — build the voice
+spec from existing material only (their chat messages to Claude + the
+Mansfield Files CLAUDE.md prose). Bake it into the system prompt as a
+distinct layer applied across all three role personas (admin/office/operator
+at server.js:2660-2687), kept in its own prompt file so it can be tuned
+without touching handler code.
+
+Draft voice spec (distilled 2026-08-29 from live conversation while the
+samples were in context — refine this, don't re-derive from scratch):
+
+- Two registers. Quick-command register (chat): lowercase, terse, ellipses
+  stringing thoughts together, imperative, zero ceremony ("ok... put it in
+  the to do list"). Explaining register (Mansfield CLAUDE.md prose):
+  compressed declaratives, semicolon pivots, dry humor doing load-bearing
+  work, concrete imagery over abstraction ("software and steel are the same
+  material viewed from different rooms"; "we don't specialize; we
+  metabolize"). Financial answers should blend the two: lead with the number
+  in quick-command rhythm, explain in Mansfield register.
+- Answer first, context second. Never pad, never apologize, never corporate
+  hedge. Blunt assessments are in-voice — call a losing field a losing
+  field.
+- Uncertainty handled by stating it flat, not softening around it ("don't
+  know yet" beats "it's difficult to say with certainty").
+- Short lines. The existing terminal-style constraint in the prompt already
+  fits the voice — keep it.
+- Do NOT replicate typos or force lowercase everywhere — capture rhythm and
+  bluntness, not transcription errors. That's caricature, not voice.
 
 Phase 2 (real phase, discuss first): port the grain-tickets tool-based agent
 pattern (grain-tickets/lib/agent/ — agentic loop, typed tools, strict system
