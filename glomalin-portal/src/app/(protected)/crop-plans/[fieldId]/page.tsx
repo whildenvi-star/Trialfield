@@ -1257,7 +1257,7 @@ export default function CropPlanDetailPage() {
                           style={{ backgroundColor: 'rgba(200,134,10,0.15)', color: '#C8860A' }}
                         >
                           <ClockBadgeIcon />
-                          Pending sync
+                          Saved on phone — will upload
                         </span>
                       )}
                     </div>
