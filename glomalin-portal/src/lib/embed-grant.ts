@@ -13,19 +13,28 @@ const EMBED_APP_BY_KEY: Record<string, string> = {
 const GRANT_TTL_SECONDS = 24 * 60 * 60
 
 /**
- * Mint a per-user, per-app embed grant: `v1.<app>.<userId>.<exp>.<hmac>`.
+ * Mint a per-user, per-app embed grant.
+ *
+ *   v1.<app>.<userId>.<exp>.<hmac>          — legacy, no role claim
+ *   v2.<app>.<userId>.<role>.<exp>.<hmac>   — role rides inside the signed payload
  *
  * Signed with the server-held EMBED_TOKEN, which never reaches the browser —
  * the Express apps verify app-match + expiry + HMAC. Module restriction is
  * enforced by which grants the portal chooses to mint (the module page only
  * renders after middleware checks module_access).
+ *
+ * Pass `role` to mint v2 so the backend can authorize server-side instead of
+ * trusting the ?role= URL param. Only apps whose verifier accepts v2 may get
+ * one (farm-budget today) — v1-only verifiers reject 6-part grants outright.
  */
-export function mintEmbedGrant(embedKey: string, userId: string): string | null {
+export function mintEmbedGrant(embedKey: string, userId: string, role?: string): string | null {
   const app = EMBED_APP_BY_KEY[embedKey]
   const secret = process.env.EMBED_TOKEN
   if (!app || !secret) return null
   const exp = Math.floor(Date.now() / 1000) + GRANT_TTL_SECONDS
-  const payload = `v1.${app}.${userId}.${exp}`
+  const payload = role
+    ? `v2.${app}.${userId}.${role}.${exp}`
+    : `v1.${app}.${userId}.${exp}`
   const sig = createHmac('sha256', secret).update(payload).digest('hex')
   return `${payload}.${sig}`
 }

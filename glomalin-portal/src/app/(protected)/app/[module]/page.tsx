@@ -76,7 +76,12 @@ export default async function ModulePage({ params }: ModulePageProps) {
 
     // Per-user signed grant — middleware has already verified module_access
     // for this route, so minting here is the enforcement boundary.
-    const grant = user && mod.embedKey ? mintEmbedGrant(mod.embedKey, user.id) : null
+    // farm-budget gets a v2 grant with the role in the signed payload (its
+    // chat endpoint authorizes financials server-side); other apps still
+    // verify v1-only, so they keep getting v1.
+    const grant = user && mod.embedKey
+      ? mintEmbedGrant(mod.embedKey, user.id, mod.embedKey === 'FARM_BUDGET' ? embedRole : undefined)
+      : null
     if (grant) {
       roleUrl += '&grant=' + encodeURIComponent(grant)
     }
