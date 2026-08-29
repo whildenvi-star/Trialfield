@@ -58,16 +58,21 @@ export default async function ModulePage({ params }: ModulePageProps) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     let embedRole = 'admin'
+    let embedUserName = ''
     if (user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, full_name')
         .eq('id', user.id)
         .single()
       const dbRole = profile?.role ?? 'viewer'
       embedRole = EMBED_ROLE_MAP[dbRole] ?? dbRole
+      embedUserName = (profile?.full_name ?? '').trim()
     }
     let roleUrl = embedUrl + (embedUrl.includes('?') ? '&' : '?') + 'role=' + embedRole
+    if (embedUserName) {
+      roleUrl += '&user=' + encodeURIComponent(embedUserName)
+    }
 
     // Per-user signed grant — middleware has already verified module_access
     // for this route, so minting here is the enforcement boundary.

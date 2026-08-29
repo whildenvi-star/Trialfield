@@ -652,7 +652,7 @@
       (isInput
         ? '<label class="fs-pop-lab">Actual rate<span class="fs-pop-inline"><input type="number" step="any" min="0" class="fs-pop-qty" value="' + (item.quantity || 0) + '"><span class="fs-pop-unit">' + esc(unit) + '/ac</span></span></label>'
         : '') +
-      '<label class="fs-pop-lab">By<input type="text" class="fs-pop-by" value="' + esc(item.confirmedBy || '') + '" placeholder="who applied it"></label>' +
+      '<label class="fs-pop-lab">By<input type="text" class="fs-pop-by" value="' + esc(item.confirmedBy || window.APP_USER_FIRST || '') + '" placeholder="who applied it"></label>' +
       '<label class="fs-pop-lab">Note<input type="text" class="fs-pop-note" value="' + esc(item.statusNote || '') + '"></label>' +
       (isInput
         ? '<details class="fs-pop-inv"><summary>Invoice (optional)</summary>' +

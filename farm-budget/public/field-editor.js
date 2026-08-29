@@ -1148,7 +1148,7 @@
           // Confirmed — show edit invoice form pre-filled with existing values
           if (currentStatus === 'confirmed' && isInputType) {
             var eDate   = sourceItem.confirmedDate || today;
-            var eBy     = sourceItem.confirmedBy || '';
+            var eBy     = sourceItem.confirmedBy || window.APP_USER_FIRST || '';
             var eNote   = sourceItem.statusNote || '';
             var eInvNum = sourceItem.invoiceNumber || '';
             var eVendor = sourceItem.invoiceVendor || '';
@@ -1202,7 +1202,7 @@
             '<span style="font-size:0.72rem;color:var(--text-light)">Note:</span>' +
             '<input type="text" class="fo-cf-note" placeholder="optional" style="font-size:0.75rem;width:80px;padding:0.15rem">' +
             '<span style="font-size:0.72rem;color:var(--text-light)">By:</span>' +
-            '<input type="text" class="fo-cf-by" placeholder="name" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+            '<input type="text" class="fo-cf-by" placeholder="name" value="' + util.escHtml(window.APP_USER_FIRST || '') + '" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
             '<button class="btn-sm btn-primary fo-cf-confirm" style="font-size:0.72rem">&#10003; Confirm</button>' +
             '<button class="btn-sm fo-cf-disregard" style="font-size:0.72rem">&#8212; Disregard</button>' +
             '<button class="btn-sm fo-cf-cancel" style="font-size:0.72rem">Cancel</button>';
@@ -1216,7 +1216,7 @@
           formHtml += '<span style="font-size:0.72rem;color:var(--text-light)">Note:</span>' +
             '<input type="text" class="fo-cf-note" placeholder="optional" style="font-size:0.75rem;width:90px;padding:0.15rem">' +
             '<span style="font-size:0.72rem;color:var(--text-light)">By:</span>' +
-            '<input type="text" class="fo-cf-by" placeholder="name" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
+            '<input type="text" class="fo-cf-by" placeholder="name" value="' + util.escHtml(window.APP_USER_FIRST || '') + '" style="font-size:0.75rem;width:65px;padding:0.15rem">' +
             '<button class="btn-sm btn-primary fo-cf-confirm" style="font-size:0.72rem">&#10003; Confirm</button>' +
             '<button class="btn-sm fo-cf-disregard" style="font-size:0.72rem">&#8212; Disregard</button>' +
             '<button class="btn-sm fo-cf-cancel" style="font-size:0.72rem">Cancel</button>';
@@ -1460,7 +1460,7 @@
           '<input type="number" class="fo-inv-acres" value="' + fieldAcres + '" step="0.1" style="width:55px;font-size:0.75rem;padding:0.15rem">' +
           '<span style="font-size:0.7rem;color:var(--text-light)">(crop ac: ' + cropAcres + ')</span>' +
           '<span style="font-size:0.72rem;color:var(--text-light)">By:</span>' +
-          '<input type="text" class="fo-inv-by" style="width:65px;font-size:0.75rem;padding:0.15rem">' +
+          '<input type="text" class="fo-inv-by" value="' + util.escHtml(window.APP_USER_FIRST || '') + '" style="width:65px;font-size:0.75rem;padding:0.15rem">' +
           '<span style="font-size:0.72rem;color:var(--text-light)">Note:</span>' +
           '<input type="text" class="fo-inv-note" style="width:90px;font-size:0.75rem;padding:0.15rem">' +
           '</div>' +

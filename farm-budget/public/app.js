@@ -10,6 +10,13 @@
   window.APP_ROLE = _role;
   document.documentElement.setAttribute('data-role', _role);
 
+  // Logged-in user's full name, injected by the portal via ?user= URL param.
+  // Empty on direct access (no portal). Used to default "By" boxes to the
+  // current user's first name (existing confirmedBy data is first names).
+  var _userName = new URLSearchParams(window.location.search).get('user') || '';
+  window.APP_USER = _userName;
+  window.APP_USER_FIRST = _userName.trim().split(/\s+/)[0] || '';
+
   // --- View mode ---
   // ?view=reference: solo Reference mode — the portal's "Reference Data"
   // module embeds this app pinned to the Reference tab (chrome hidden via
