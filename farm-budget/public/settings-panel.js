@@ -133,9 +133,10 @@
     if (e.key === WEIGHT_KEY && e.newValue) applyWeightVar(e.newValue);
   });
 
-  // NOTE: the panel UI now renders inside iframes too. The old early-return
-  // ("portal handles it") left the settings unreachable — nothing in the
-  // portal ever offered this UI, and users only enter through the portal.
+  // Inside an embed, the TOP window (portal) renders the settings UI from its
+  // own copy of this file — rendering here too stacks two trigger tabs. The
+  // storage listener above keeps this frame in sync with the portal's panel.
+  if (isIframe) return;
 
   // --- Wait for DOM ---
   function init() {

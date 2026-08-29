@@ -264,10 +264,7 @@ body.light .settings-panel .sp-theme-btn {
 }
 
 /* Text size buttons */
-.settings-panel .sp-size-row {
-  display: flex;
-  gap: 0.35rem;
-}
+
 .settings-panel .sp-size-btn {
   flex: 1;
   padding: 0.45rem 0;
@@ -441,4 +438,76 @@ body.light .settings-panel .sp-preview {
   .settings-tab-trigger,
   .settings-panel,
   .settings-panel-backdrop { display: none !important; }
+}
+
+/* --- Font / weight pickers (synced from farm-budget copy 2026-08-29) --- */
+.settings-panel .sp-size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.settings-panel .sp-size-row .sp-size-btn { flex: 1 0 20%; }
+
+/* Font picker — each button previews in its own face */
+.settings-panel .sp-font-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.settings-panel .sp-font-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  color: var(--text, #cbd5e1);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.settings-panel .sp-font-btn .sp-font-name { font-size: 0.9rem; font-weight: 600; }
+.settings-panel .sp-font-btn .sp-font-hint { font-size: 0.68rem; color: var(--text-light, #64748b); }
+.settings-panel .sp-font-btn.active {
+  border-color: var(--primary, #14b8a6);
+  color: var(--primary, #14b8a6);
+}
+body.light .settings-panel .sp-font-btn {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text, #1e293b);
+}
+body.light .settings-panel .sp-font-btn.active {
+  border-color: var(--primary, #0d9488);
+  color: var(--primary, #0d9488);
+}
+
+/* Weight picker */
+.settings-panel .sp-weight-row {
+  display: flex;
+  gap: 0.35rem;
+}
+.settings-panel .sp-weight-btn {
+  flex: 1;
+  padding: 0.45rem 0;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  color: var(--text, #cbd5e1);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.68rem;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.settings-panel .sp-weight-btn.active {
+  border-color: var(--primary, #14b8a6);
+  color: var(--primary, #14b8a6);
+}
+body.light .settings-panel .sp-weight-btn {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text, #1e293b);
 }
