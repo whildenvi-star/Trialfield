@@ -1,10 +1,7 @@
-import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { MODULES } from '@/lib/modules'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
-import { DashboardDesktop } from '@/components/dashboard/DashboardDesktop'
-import { FieldMap } from '@/components/maps/field-map'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -22,6 +19,9 @@ export default async function DashboardPage() {
     ? null
     : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)
 
+  // Office (Sandy) homes on MACRO, same as admins.
+  if (user.app_metadata?.app_role === 'office') redirect('/app/farm-budget')
+
   // Only send operators to the crew app if they hold the module grant —
   // otherwise middleware bounces /app/crew back here and the client loops.
   if (role === 'operator' && grantedModules?.includes('crew')) redirect('/app/crew')
@@ -30,21 +30,11 @@ export default async function DashboardPage() {
     ? MODULES.map((m) => m.id)
     : grantedModules
 
+  // Card grid at every size — the map dashboard was demoted to the
+  // Field Map module (/app/maps), same FieldMap component.
   return (
-    <>
-      {/* Mobile: card grid */}
-      <div className="md:hidden overflow-y-auto h-full">
-        <DashboardGrid role={role} grantedModuleIds={grantedModuleIds} />
-      </div>
-
-      {/* Desktop: map + command panel */}
-      <div className="hidden md:block">
-        <DashboardDesktop>
-          <Suspense fallback={<div className="w-full h-full bg-glomalin-bg animate-pulse" />}>
-            <FieldMap isAdmin={role === 'admin'} />
-          </Suspense>
-        </DashboardDesktop>
-      </div>
-    </>
+    <div className="overflow-y-auto h-full">
+      <DashboardGrid role={role} grantedModuleIds={grantedModuleIds} />
+    </div>
   )
 }

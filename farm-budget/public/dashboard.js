@@ -119,6 +119,7 @@
     var s = window.refData.settings;
     var cropYear = s.year || 2026;
     document.getElementById('dash-year').textContent = cropYear;
+    renderMarketingWidget();
     var brandYear = document.getElementById('brand-year');
     if (brandYear) brandYear.textContent = cropYear;
     document.title = 'MACRO ' + cropYear;
@@ -507,6 +508,106 @@
     tbody.innerHTML = html;
   }
 
+  // --- Marketing position widget (portal embed) ---
+  // Only when MACRO runs inside the portal iframe: same-origin under the Caddy
+  // /embed/ proxy, so the portal's session cookie flows and no CORS is needed.
+  // Standalone (localhost:3001 direct) has no portal to serve it — stays hidden.
+  var marketingWidgetInjected = false;
+  function renderMarketingWidget() {
+    if (marketingWidgetInjected) return;
+    var el = document.getElementById('dash-marketing-widget');
+    if (!el) return;
+    var embedded = window.__BASE || document.body.classList.contains('in-iframe');
+    if (!embedded) return;
+    marketingWidgetInjected = true;
+    var frame = document.createElement('iframe');
+    frame.src = '/marketing/position';
+    frame.title = 'Marketing position';
+    frame.style.cssText = 'width:100%;height:200px;border:1px solid var(--border);border-radius:4px;background:var(--surface);display:block';
+    frame.setAttribute('loading', 'lazy');
+    el.appendChild(frame);
+    el.style.display = 'block';
+  }
+
+  // --- Field boundary SVG thumbnails (ported from farm-registry buildSvgThumb) ---
+  var fieldShapesPromise = null;
+  function ensureFieldShapes() {
+    if (!fieldShapesPromise) {
+      fieldShapesPromise = api.get('/api/field-shapes').catch(function () { return {}; });
+    }
+    return fieldShapesPromise;
+  }
+
+  function pendingThumbSize() {
+    var w = window.innerWidth;
+    return w >= 1800 ? 44 : w >= 1400 ? 36 : w >= 1000 ? 28 : 22;
+  }
+
+  function buildFieldShapeThumb(geometry, size) {
+    size = size || 32;
+    if (!geometry || !geometry.coordinates) return '';
+    var allBbox = [];
+    function collectRing(ring) {
+      for (var i = 0; i < ring.length; i++) allBbox.push(ring[i]);
+    }
+    if (geometry.type === 'Polygon') {
+      if (geometry.coordinates[0]) collectRing(geometry.coordinates[0]);
+    } else if (geometry.type === 'MultiPolygon') {
+      for (var pi = 0; pi < geometry.coordinates.length; pi++) {
+        if (geometry.coordinates[pi][0]) collectRing(geometry.coordinates[pi][0]);
+      }
+    } else {
+      return '';
+    }
+    if (!allBbox.length) return '';
+
+    var minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (var i = 0; i < allBbox.length; i++) {
+      var c = allBbox[i];
+      if (c[0] < minX) minX = c[0];
+      if (c[0] > maxX) maxX = c[0];
+      if (c[1] < minY) minY = c[1];
+      if (c[1] > maxY) maxY = c[1];
+    }
+
+    var dX = maxX - minX || 0.001;
+    var dY = maxY - minY || 0.001;
+    var pad = size * 0.1;
+    var usable = size - 2 * pad;
+    var scale = Math.min(usable / dX, usable / dY);
+    var offX = pad + (usable - dX * scale) / 2;
+    var offY = pad + (usable - dY * scale) / 2;
+
+    function project(coord) {
+      return [
+        (offX + (coord[0] - minX) * scale).toFixed(1),
+        ((size - offY) - (coord[1] - minY) * scale).toFixed(1)
+      ];
+    }
+    function ringPath(ring) {
+      return ring.map(function (c, j) {
+        var pt = project(c);
+        return (j === 0 ? 'M' : 'L') + pt[0] + ' ' + pt[1];
+      }).join(' ') + ' Z';
+    }
+
+    var paths = [];
+    if (geometry.type === 'Polygon') {
+      geometry.coordinates.forEach(function (ring) { paths.push(ringPath(ring)); });
+    } else {
+      geometry.coordinates.forEach(function (poly) {
+        poly.forEach(function (ring) { paths.push(ringPath(ring)); });
+      });
+    }
+
+    var strokeW = Math.max(1, size / 22).toFixed(1);
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="' + size + '" height="' + size +
+      '" viewBox="0 0 ' + size + ' ' + size + '" style="display:block;flex-shrink:0;">' +
+      '<path d="' + paths.join(' ') + '" fill="currentColor" fill-opacity="0.12" stroke="currentColor"' +
+      ' stroke-width="' + strokeW + '" stroke-linejoin="round" fill-rule="evenodd"/>' +
+      '</svg>';
+  }
+
   // --- Field Check Off Bar ---
   function renderPendingBar(invoiceTotals) {
     var el = document.getElementById('dash-pending-bar');
@@ -555,6 +656,11 @@
       var chip = document.createElement('button');
       chip.className = 'dash-pending-chip';
       chip.setAttribute('data-field-id', pf.fieldId);
+      if (pf.registryFieldId) chip.setAttribute('data-registry-id', pf.registryFieldId);
+
+      var thumbSpan = document.createElement('span');
+      thumbSpan.className = 'dash-pending-thumb';
+      chip.appendChild(thumbSpan);
 
       var nameSpan = document.createElement('span');
       nameSpan.textContent = pf.fieldName;
@@ -597,6 +703,17 @@
     el.innerHTML = '';
     el.appendChild(wrap);
     el.style.display = 'block';
+
+    // Decorate chips with field boundary shapes once geometry arrives —
+    // icon size scales with the screen.
+    ensureFieldShapes().then(function (shapes) {
+      var size = pendingThumbSize();
+      chipsDiv.querySelectorAll('.dash-pending-chip[data-registry-id]').forEach(function (chip) {
+        var geom = shapes[chip.getAttribute('data-registry-id')];
+        var slot = chip.querySelector('.dash-pending-thumb');
+        if (geom && slot) slot.innerHTML = buildFieldShapeThumb(geom, size);
+      });
+    });
   }
 
   // --- Whole-Farm Stat Bar ---

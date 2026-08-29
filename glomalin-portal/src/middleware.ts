@@ -57,13 +57,14 @@ export async function middleware(request: NextRequest) {
   // Public routes: pass through (but redirect authenticated users on / to dashboard)
   if (isPublicRoute(pathname)) {
     if (pathname === '/' && user) {
-      // Admins land on MACRO (farm-budget); everyone else on /dashboard
+      // Admins and office (Sandy) land on MACRO (farm-budget); everyone else on /dashboard
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-      const landing = profile?.role === 'admin' ? '/app/farm-budget' : '/dashboard'
+      const isOffice = user.app_metadata?.app_role === 'office'
+      const landing = profile?.role === 'admin' || isOffice ? '/app/farm-budget' : '/dashboard'
       return redirectWithCookies(new URL(landing, request.url), response)
     }
     return response

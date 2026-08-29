@@ -642,6 +642,7 @@ app.get('/api/enterprise-invoice-totals', (req, res) => {
         crop: field.crop || '',
         enterpriseId: entId,
         pendingCount
+        registryFieldId: field.registryFieldId || null,
       });
     }
   });
@@ -977,6 +978,27 @@ function registryUrl(path) {
 }
 
 app.post('/api/fields/sync-registry', async (req, res) => {
+// Field boundary shapes for dashboard thumbnails — registry geometry keyed by
+// registryFieldId, 5-min cache (registry is the boundary source of truth).
+const fieldShapesCache = { data: null, ts: 0 };
+app.get('/api/field-shapes', async (req, res) => {
+  try {
+    if (fieldShapesCache.data && Date.now() - fieldShapesCache.ts < 5 * 60 * 1000) {
+      return res.json(fieldShapesCache.data);
+    }
+    const resp = await fetch(registryUrl('/api/fields?active=true'));
+    if (!resp.ok) throw new Error('Registry returned ' + resp.status);
+    const regFields = await resp.json();
+    const shapes = {};
+    regFields.forEach(rf => { if (rf.geometry) shapes[rf.id] = rf.geometry; });
+    fieldShapesCache.data = shapes;
+    fieldShapesCache.ts = Date.now();
+    res.json(shapes);
+  } catch (err) {
+    res.json({});
+  }
+});
+
   try {
     const resp = await fetch(registryUrl('/api/fields?active=true'));
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);

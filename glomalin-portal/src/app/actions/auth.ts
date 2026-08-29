@@ -22,7 +22,7 @@ export async function login(formData: FormData) {
 
   revalidatePath('/', 'layout')
 
-  // Admins land on MACRO (farm-budget); everyone else keeps /dashboard
+  // Admins and office (Sandy) land on MACRO (farm-budget); everyone else keeps /dashboard
   // (operators are bounced onward to /app/crew by the dashboard page).
   const { data: { user } } = await supabase.auth.getUser()
   if (user) {
@@ -31,7 +31,7 @@ export async function login(formData: FormData) {
       .select('role')
       .eq('id', user.id)
       .single()
-    if (profile?.role === 'admin') {
+    if (profile?.role === 'admin' || user.app_metadata?.app_role === 'office') {
       redirect('/app/farm-budget')
     }
   }
