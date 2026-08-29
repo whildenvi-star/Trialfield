@@ -55,6 +55,18 @@ Phase 1 (afternoon, quick fixes):
   EMBED_TOKEN mandatory, add kill switch + daily cap + conversation logging
   (copy grain-tickets patterns: daily-cap.js, AgentConversation).
 
+Voice requirement (added 2026-08-28): the agent should speak in
+glomalinguild's own rhetorical tone — users should feel like they're talking
+directly to them, not to a generic assistant. To build this: collect samples
+of their actual writing (texts/emails/notes to the crew, however they'd answer
+"why is this field losing money"), distill into a voice spec (vocabulary,
+sentence rhythm, how they hedge, how they deliver bad numbers, signature
+phrasings) and
+bake it into the system prompt as a distinct layer that applies across all
+three role personas (admin/office/operator at server.js:2660-2687). Keep the
+voice spec in its own prompt file so it can be tuned without touching handler
+code. Needs a sample-gathering session before writing the spec.
+
 Phase 2 (real phase, discuss first): port the grain-tickets tool-based agent
 pattern (grain-tickets/lib/agent/ — agentic loop, typed tools, strict system
 prompt) to farm-budget with tools like get_enterprise_summary,
