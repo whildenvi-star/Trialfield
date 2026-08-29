@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MACRO archive</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌾</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="platform-tokens.css?v=2">
+  <link rel="stylesheet" href="style.css?v=20260828">
+  <style>
+    .season-page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem; font-family: 'JetBrains Mono', monospace; }
+    .season-head { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .season-head h1 { margin: 0; font-size: 1.3rem; letter-spacing: 0.04em; }
+    .season-ro { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.15rem 0.5rem; border: 1px solid var(--amber, #C8860A); color: var(--amber, #C8860A); border-radius: 3px; }
+    .season-back { margin-left: auto; font-size: 0.75rem; color: var(--text-light); text-decoration: none; }
+    .season-back:hover { color: var(--primary); }
+    .season-totals { display: flex; gap: 1.5rem; flex-wrap: wrap; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); margin-bottom: 1rem; }
+    .season-totals .cell { font-size: 0.72rem; color: var(--text-light); }
+    .season-totals .cell b { display: block; font-size: 0.95rem; color: var(--text); }
+    .season-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+    .season-table th, .season-table td { padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+    .season-table th:first-child, .season-table td:first-child,
+    .season-table th:nth-child(2), .season-table td:nth-child(2) { text-align: left; }
+    .season-table th { text-transform: uppercase; font-size: 0.62rem; letter-spacing: 0.06em; color: var(--text-light); }
+    .season-status { padding: 2rem; color: var(--text-light); font-size: 0.8rem; }
+    .neg { color: var(--danger, #c0392b); }
+  </style>
+</head>
+<body>
+  <div class="season-page">
+    <div class="season-head">
+      <h1>MACRO <span id="season-year">…</span></h1>
+      <span class="season-ro">archived season · read only</span>
+      <a class="season-back" href="index.html">&larr; back to live MACRO</a>
+    </div>
+    <div class="season-totals" id="season-totals" style="display:none"></div>
+    <div class="season-status" id="season-status">loading archive&hellip;</div>
+    <table class="season-table" id="season-table" style="display:none">
+      <thead>
+        <tr>
+          <th>Field</th><th>Crop</th><th>Acres</th>
+          <th>Exp/Ac</th><th>Income/Ac</th><th>Profit/Ac</th><th>Total Exp</th>
+        </tr>
+      </thead>
+      <tbody id="season-tbody"></tbody>
+    </table>
+  </div>
+
+  <script src="calc.js?v=20260827"></script>
+  <script>
+    (function () {
+      var year = new URLSearchParams(location.search).get('year');
+      document.getElementById('season-year').textContent = year || '?';
+      document.title = 'MACRO ' + (year || '') + ' archive';
+      var statusEl = document.getElementById('season-status');
+      if (!year || !/^\d{4}$/.test(year)) { statusEl.textContent = 'No season year given.'; return; }
+
+      function money(n) { return '$' + Math.round(n).toLocaleString('en-US'); }
+      function num(n, d) { return Number(n || 0).toLocaleString('en-US', { maximumFractionDigits: d == null ? 0 : d }); }
+
+      fetch('api/season-data/' + year)
+        .then(function (r) { if (!r.ok) throw new Error('No archive for ' + year); return r.json(); })
+        .then(function (store) {
+          var fields = (store.fields || []).slice().sort(function (a, b) {
+            return (a.name || '').localeCompare(b.name || '');
+          });
+          var tbody = document.getElementById('season-tbody');
+          var totals = { acres: 0, exp: 0, income: 0 };
+          fields.forEach(function (f) {
+            var b = {};
+            try { b = window.Calc.computeFieldBudget(f, store, store.settings) || {}; } catch (e) { /* render zeros */ }
+            var acres = b.effectiveAcres || f.acres || 0;
+            var exp = b.expTotal || 0;
+            var income = b.cropIncomeTotal || 0;
+            totals.acres += acres; totals.exp += exp; totals.income += income;
+            var profitAc = b.profitPerAcre || 0;
+            var tr = document.createElement('tr');
+            tr.innerHTML =
+              '<td>' + (f.name || '') + '</td><td>' + (f.crop || '') + '</td>' +
+              '<td>' + num(acres, 1) + '</td>' +
+              '<td>' + (acres > 0 ? money(exp / acres) : '—') + '</td>' +
+              '<td>' + (acres > 0 ? money(income / acres) : '—') + '</td>' +
+              '<td class="' + (profitAc < 0 ? 'neg' : '') + '">' + money(profitAc) + '</td>' +
+              '<td>' + money(exp) + '</td>';
+            tbody.appendChild(tr);
+          });
+
+          var t = document.getElementById('season-totals');
+          var profit = totals.income - totals.exp;
+          t.innerHTML =
+            '<span class="cell">Fields<b>' + fields.length + '</b></span>' +
+            '<span class="cell">Acres<b>' + num(totals.acres, 0) + '</b></span>' +
+            '<span class="cell">Budgeted Exp<b>' + money(totals.exp) + '</b></span>' +
+            '<span class="cell">Proj Income<b>' + money(totals.income) + '</b></span>' +
+            '<span class="cell">Profit<b class="' + (profit < 0 ? 'neg' : '') + '">' + money(profit) + '</b></span>' +
+            '<span class="cell">Profit/Ac<b>' + (totals.acres > 0 ? money(profit / totals.acres) : '—') + '</b></span>';
+          t.style.display = 'flex';
+          statusEl.style.display = 'none';
+          document.getElementById('season-table').style.display = 'table';
+        })
+        .catch(function (e) { statusEl.textContent = e.message; });
+    })();
+  </script>
+</body>
+</html>

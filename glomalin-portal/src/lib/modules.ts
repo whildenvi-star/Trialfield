@@ -69,7 +69,7 @@ export const MODULES: Module[] = [
   },
   {
     id: 'compliance',
-    label: 'Compliance',
+    label: 'FSA Side',
     sublabel: 'FSA · Insurance · Claims',
     route: '/app/compliance',
     status: 'live',

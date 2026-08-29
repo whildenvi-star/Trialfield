@@ -123,6 +123,7 @@
     var brandYear = document.getElementById('brand-year');
     if (brandYear) brandYear.textContent = cropYear;
     document.title = 'MACRO ' + cropYear;
+    renderSeasonSwitcher();
     // Only populate inputs on first load — not on every reloadRefData() call
     // (reloadRefData fires ref-data-loaded after saveSettings, which would reset
     // the inputs mid-edit before the server round-trip completes)
@@ -506,6 +507,27 @@
     });
 
     tbody.innerHTML = html;
+  }
+
+  // --- Season switcher (MACRO #YEAR flipping) ---
+  // Lists archived seasons under the sidebar brand; hidden until the first
+  // rollover archive exists (scripts/rollover-season.js).
+  var seasonSwitcherRendered = false;
+  function renderSeasonSwitcher() {
+    if (seasonSwitcherRendered) return;
+    seasonSwitcherRendered = true;
+    var el = document.getElementById('season-switcher');
+    if (!el) return;
+    api.get('/api/seasons').then(function (seasons) {
+      if (!seasons || seasons.length < 2) return;
+      el.innerHTML = seasons.map(function (s) {
+        return s.current
+          ? '<span style="color:var(--primary)">' + s.year + ' &#9679;</span>'
+          : '<a href="season.html?year=' + s.year + '" style="color:var(--text-light);text-decoration:none" ' +
+            'title="MACRO ' + s.year + ' — archived, read only">' + s.year + '</a>';
+      }).join('<span style="opacity:0.4"> · </span>');
+      el.style.display = 'block';
+    }).catch(function () { /* seasons endpoint unavailable — stay hidden */ });
   }
 
   // --- Marketing position widget (portal embed) ---

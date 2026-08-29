@@ -641,9 +641,9 @@ app.get('/api/enterprise-invoice-totals', (req, res) => {
         fieldName: field.name,
         crop: field.crop || '',
         enterpriseId: entId,
-        pendingCount
         registryFieldId: field.registryFieldId || null,
       });
+        pendingCount
     }
   });
 
@@ -977,7 +977,37 @@ function registryUrl(path) {
   return REGISTRY_URL + path + (REGISTRY_TOKEN ? sep + 'token=' + encodeURIComponent(REGISTRY_TOKEN) : '');
 }
 
-app.post('/api/fields/sync-registry', async (req, res) => {
+// --- Archived seasons (MACRO #YEAR flipping) ---
+// scripts/rollover-season.js writes data/seasons/<year>.json at rollover;
+// these serve them read-only for the sidebar season switcher + season.html.
+const SEASONS_DIR = path.join(__dirname, 'data', 'seasons');
+
+app.get('/api/seasons', (req, res) => {
+  let archived = [];
+  try {
+    archived = fs.readdirSync(SEASONS_DIR)
+      .filter(f => /^\d{4}\.json$/.test(f))
+      .map(f => parseInt(f.slice(0, 4), 10));
+  } catch (e) { /* no seasons dir yet */ }
+  const current = (store.settings && store.settings.year) || new Date().getFullYear();
+  const seasons = [{ year: current, current: true }]
+    .concat(archived.filter(y => y !== current).map(y => ({ year: y, current: false })))
+    .sort((a, b) => b.year - a.year);
+  res.json(seasons);
+});
+
+app.get('/api/season-data/:year', (req, res) => {
+  const year = String(req.params.year);
+  if (!/^\d{4}$/.test(year)) return res.status(400).json({ error: 'Bad year' });
+  if (store.settings && String(store.settings.year) === year) {
+    return res.status(400).json({ error: 'That is the live season — use the live APIs' });
+  }
+  const file = path.join(SEASONS_DIR, year + '.json');
+  if (!fs.existsSync(file)) return res.status(404).json({ error: 'No archive for ' + year });
+  res.set('Cache-Control', 'public, max-age=3600');
+  res.sendFile(file);
+});
+
 // Field boundary shapes for dashboard thumbnails — registry geometry keyed by
 // registryFieldId, 5-min cache (registry is the boundary source of truth).
 const fieldShapesCache = { data: null, ts: 0 };
@@ -1000,6 +1030,7 @@ app.get('/api/field-shapes', async (req, res) => {
 });
 
   try {
+app.post('/api/fields/sync-registry', async (req, res) => {
     const resp = await fetch(registryUrl('/api/fields?active=true'));
     if (!resp.ok) throw new Error('Registry returned ' + resp.status);
     const regFields = await resp.json();
