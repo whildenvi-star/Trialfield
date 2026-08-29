@@ -24,39 +24,49 @@ import type { GrainContractForPosition } from './position'
 // premiumDefault mirrors farm-budget cropTypes[].subCrops[].basisDefault:
 // the expected $/bu over (or under) CBOT for unsold bushels of that variant.
 
+/**
+ * Marketing tier — the hard wall between the two jobs:
+ *   'futures'  — job 1: crops marketed on CBOT futures. Their totals drive
+ *                selling decisions and must NEVER be padded by other bushels.
+ *   'tracking' — organics & specialty: tracked, but never blended into a
+ *                futures total (blue corn bushels are not shell corn bushels).
+ */
+export type MarketingTier = 'futures' | 'tracking'
+
 export interface CrosswalkEntry {
   variantName: string       // marketing GrainVariant.name
   budgetCrops: string[]     // farm-budget field.crop values (case-insensitive)
   ticketCrops: string[]     // grain-tickets crop names (case-insensitive)
   premiumDefault: number    // $/bu vs CBOT for unsold bu (0 = trades flat)
+  tier: MarketingTier
 }
 
 export const ENTERPRISE_CROSSWALK: CrosswalkEntry[] = [
   // Corn
-  { variantName: 'Shell Corn', budgetCrops: ['Yellow Corn'], ticketCrops: ['Yellow Corn', 'Non-GMO Yellow Corn'], premiumDefault: 0 },
-  { variantName: 'Non-GMO Yellow Corn', budgetCrops: ['White corn'], ticketCrops: ['White Corn'], premiumDefault: 0 },
-  { variantName: 'Organic Blue Corn', budgetCrops: ['ORG Blue Corn'], ticketCrops: ['Organic Blue Corn'], premiumDefault: 0 },
-  { variantName: 'Organic Yellow Corn', budgetCrops: ['ORG Yellow Corn'], ticketCrops: ['Organic Yellow Corn'], premiumDefault: 0 },
-  { variantName: 'Seed Corn', budgetCrops: ['ORG Seed Corn'], ticketCrops: [], premiumDefault: 0 }, // PER_ACRE — bushel math excluded anyway
+  { variantName: 'Shell Corn', budgetCrops: ['Yellow Corn'], ticketCrops: ['Yellow Corn', 'Non-GMO Yellow Corn'], premiumDefault: 0, tier: 'futures' },
+  { variantName: 'Non-GMO Yellow Corn', budgetCrops: ['White corn'], ticketCrops: ['White Corn'], premiumDefault: 0, tier: 'futures' },
+  { variantName: 'Organic Blue Corn', budgetCrops: ['ORG Blue Corn'], ticketCrops: ['Organic Blue Corn'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Organic Yellow Corn', budgetCrops: ['ORG Yellow Corn'], ticketCrops: ['Organic Yellow Corn'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Seed Corn', budgetCrops: ['ORG Seed Corn'], ticketCrops: [], premiumDefault: 0, tier: 'tracking' }, // PER_ACRE — bushel math excluded anyway
   // Soybeans
-  { variantName: 'Soybeans', budgetCrops: ['RR Soybeans'], ticketCrops: ['RR Soybeans', 'Enlist Soybeans'], premiumDefault: -0.75 },
-  { variantName: 'Non-GMO Food Beans', budgetCrops: ['Soybeans'], ticketCrops: ['Food Beans', 'Pioneer 21A20 Food beans'], premiumDefault: 1.5 },
-  { variantName: 'High Oil Soybeans', budgetCrops: ['High Oil Soybeans'], ticketCrops: ['High Oil Soybeans'], premiumDefault: 2.15 },
-  { variantName: 'Non-GMO Seed Grade Beans', budgetCrops: ['Non-GMO Seed Grade Beans'], ticketCrops: ['Non-GMO Seed Grade Beans'], premiumDefault: 3.5 },
-  { variantName: 'Organic Soybeans', budgetCrops: ['ORG Soybeans'], ticketCrops: ['Organic Soybeans'], premiumDefault: 0 },
-  { variantName: 'Organic Food Beans', budgetCrops: ['ORG Food Beans'], ticketCrops: ['Organic Food Beans'], premiumDefault: 0 },
-  { variantName: 'Organic Natto Beans', budgetCrops: ['ORG Natto Beans', 'ORG Natto Beans (ORG IRR)'], ticketCrops: ['Organic Natto Beans'], premiumDefault: 0 },
-  { variantName: 'Organic Seed Soybeans', budgetCrops: [], ticketCrops: ['262 OR Seed beans'], premiumDefault: 0 },
+  { variantName: 'Soybeans', budgetCrops: ['RR Soybeans'], ticketCrops: ['RR Soybeans', 'Enlist Soybeans'], premiumDefault: -0.75, tier: 'futures' },
+  { variantName: 'Non-GMO Food Beans', budgetCrops: ['Soybeans'], ticketCrops: ['Food Beans', 'Pioneer 21A20 Food beans'], premiumDefault: 1.5, tier: 'futures' },
+  { variantName: 'High Oil Soybeans', budgetCrops: ['High Oil Soybeans'], ticketCrops: ['High Oil Soybeans'], premiumDefault: 2.15, tier: 'futures' },
+  { variantName: 'Non-GMO Seed Grade Beans', budgetCrops: ['Non-GMO Seed Grade Beans'], ticketCrops: ['Non-GMO Seed Grade Beans'], premiumDefault: 3.5, tier: 'futures' },
+  { variantName: 'Organic Soybeans', budgetCrops: ['ORG Soybeans'], ticketCrops: ['Organic Soybeans'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Organic Food Beans', budgetCrops: ['ORG Food Beans'], ticketCrops: ['Organic Food Beans'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Organic Natto Beans', budgetCrops: ['ORG Natto Beans', 'ORG Natto Beans (ORG IRR)'], ticketCrops: ['Organic Natto Beans'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Organic Seed Soybeans', budgetCrops: [], ticketCrops: ['262 OR Seed beans'], premiumDefault: 0, tier: 'tracking' },
   // Wheat
-  { variantName: 'Wheat', budgetCrops: ['Wheat'], ticketCrops: ['Wheat'], premiumDefault: 0 },
-  { variantName: 'Organic Wheat', budgetCrops: ['ORG Wheat'], ticketCrops: ['Organic Wheat'], premiumDefault: 0 },
-  { variantName: 'Organic Seed Wheat', budgetCrops: ['ORG seed wheat'], ticketCrops: ['Organic Seed Wheat'], premiumDefault: 0 },
-  // Barley / Rye
-  { variantName: 'Barley', budgetCrops: [], ticketCrops: ['Barley'], premiumDefault: 0 },
-  { variantName: 'Organic Barley', budgetCrops: ['ORG Barley', 'ORG feed barley'], ticketCrops: ['Organic Barley'], premiumDefault: 0 },
-  { variantName: 'Seed Barley', budgetCrops: ['Seed grade Winter Barley'], ticketCrops: ['Seed Barley'], premiumDefault: 0 },
-  { variantName: 'Organic Seed Barley', budgetCrops: [], ticketCrops: ['Organic Seed Barley'], premiumDefault: 0 },
-  { variantName: 'Hybrid Rye', budgetCrops: ['Hybrid Seed Rye'], ticketCrops: ['Hybrid Rye'], premiumDefault: 0 },
+  { variantName: 'Wheat', budgetCrops: ['Wheat'], ticketCrops: ['Wheat'], premiumDefault: 0, tier: 'futures' },
+  { variantName: 'Organic Wheat', budgetCrops: ['ORG Wheat'], ticketCrops: ['Organic Wheat'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Organic Seed Wheat', budgetCrops: ['ORG seed wheat'], ticketCrops: ['Organic Seed Wheat'], premiumDefault: 0, tier: 'tracking' },
+  // Barley / Rye — contract-grown specialty, not futures-marketed
+  { variantName: 'Barley', budgetCrops: [], ticketCrops: ['Barley'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Organic Barley', budgetCrops: ['ORG Barley', 'ORG feed barley'], ticketCrops: ['Organic Barley'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Seed Barley', budgetCrops: ['Seed grade Winter Barley'], ticketCrops: ['Seed Barley'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Organic Seed Barley', budgetCrops: [], ticketCrops: ['Organic Seed Barley'], premiumDefault: 0, tier: 'tracking' },
+  { variantName: 'Hybrid Rye', budgetCrops: ['Hybrid Seed Rye'], ticketCrops: ['Hybrid Rye'], premiumDefault: 0, tier: 'tracking' },
 ]
 
 // ── Input shapes ───────────────────────────────────────────────────────────
@@ -124,6 +134,8 @@ export interface VariantRollupRow {
 
 export interface CommodityRollupRow {
   commodityName: string
+  /** futures = job-1 marketed crops; tracking = organics & specialty. Totals never cross tiers. */
+  tier: MarketingTier
   cropYear: number
   cbotSymbol: string | null
   cbotContract: string | null
@@ -222,15 +234,22 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
   const budgetByCrop = new Map<string, BudgetCropRow>()
   for (const b of budgetRows ?? []) budgetByCrop.set(lower(b.crop), b)
 
-  // Group contracts by commodity name
-  const byCommodity = new Map<string, { symbol: string | null; contracts: RollupContract[] }>()
+  // Tier wall: a variant's bushels only ever total with its own tier —
+  // organic blue corn never pads the shell corn number someone sells against.
+  const tierOf = (variantName: string | undefined | null): MarketingTier =>
+    xwalkByVariant.get(lower(variantName ?? ''))?.tier ?? 'tracking'
+
+  // Group contracts by (commodity name, tier)
+  const byCommodity = new Map<string, { commodityName: string; tier: MarketingTier; symbol: string | null; contracts: RollupContract[] }>()
   for (const c of contracts) {
     if (c.cropYear !== cropYear) continue
     const meta = c.variant ? variantMeta.get(c.variant.id) : undefined
     const commodityName = meta?.commodity?.name ?? 'Other'
     const symbol = meta?.commodity?.symbol ?? null
-    if (!byCommodity.has(commodityName)) byCommodity.set(commodityName, { symbol, contracts: [] })
-    byCommodity.get(commodityName)!.contracts.push(c)
+    const tier = tierOf(c.variant?.name)
+    const key = tier + '|' + commodityName
+    if (!byCommodity.has(key)) byCommodity.set(key, { commodityName, tier, symbol, contracts: [] })
+    byCommodity.get(key)!.contracts.push(c)
   }
 
   // Which commodity does each crosswalk variant belong to? (from variant list)
@@ -239,20 +258,22 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     if (v.commodity) commodityByVariantName.set(lower(v.name), { name: v.commodity.name, symbol: v.commodity.symbol })
   }
 
-  // Ensure commodities with budget acres but zero contracts still get a row
+  // Ensure (commodity, tier) groups with budget acres but zero contracts still get a row
   for (const e of ENTERPRISE_CROSSWALK) {
     const hasBudget = e.budgetCrops.some((bc) => budgetByCrop.has(lower(bc)))
     if (!hasBudget) continue
     const commodity = commodityByVariantName.get(lower(e.variantName))
     if (!commodity) continue
-    if (!byCommodity.has(commodity.name)) {
-      byCommodity.set(commodity.name, { symbol: commodity.symbol, contracts: [] })
+    const key = e.tier + '|' + commodity.name
+    if (!byCommodity.has(key)) {
+      byCommodity.set(key, { commodityName: commodity.name, tier: e.tier, symbol: commodity.symbol, contracts: [] })
     }
   }
 
   const rows: CommodityRollupRow[] = []
 
-  for (const [commodityName, group] of Array.from(byCommodity.entries())) {
+  for (const group of Array.from(byCommodity.values())) {
+    const commodityName = group.commodityName
     const position = computePosition(group.contracts)
 
     // Pool WAP: futures-equivalent across all priced bushels of the commodity
@@ -275,6 +296,7 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     const variantNames = new Set<string>()
     for (const c of group.contracts) if (c.variant?.name) variantNames.add(c.variant.name)
     for (const e of ENTERPRISE_CROSSWALK) {
+      if (e.tier !== group.tier) continue
       const commodity = commodityByVariantName.get(lower(e.variantName))
       if (commodity?.name === commodityName && e.budgetCrops.some((bc) => budgetByCrop.has(lower(bc)))) {
         variantNames.add(e.variantName)
@@ -353,7 +375,10 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     const settledVariants = variantRows.filter((v) => v.settledRevenue != null)
     const settledRevenue = settledVariants.length ? sum(settledVariants.map((v) => v.settledRevenue!)) : null
 
-    const cbotPriceDollars = group.symbol ? (cbotBySymbol[group.symbol] ?? null) : null
+    // Tracking rows carry no CBOT reference — quoting futures against organic
+    // or specialty bushels implies a marketability they don't have.
+    const rowSymbol = group.tier === 'futures' ? group.symbol : null
+    const cbotPriceDollars = rowSymbol ? (cbotBySymbol[rowSymbol] ?? null) : null
 
     // Blended price if the unpriced remainder of the projection sold today
     let blendedIfSoldTodayCents: number | null = null
@@ -367,10 +392,11 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     }
 
     rows.push({
-      commodityName,
+      commodityName: group.tier === 'tracking' ? commodityName + ' — Specialty/Organic' : commodityName,
+      tier: group.tier,
       cropYear,
-      cbotSymbol: group.symbol,
-      cbotContract: group.symbol ? (cbotContractBySymbol?.[group.symbol] ?? null) : null,
+      cbotSymbol: rowSymbol,
+      cbotContract: rowSymbol ? (cbotContractBySymbol?.[rowSymbol] ?? null) : null,
       cbotPriceDollars,
       acres,
       projYieldPerAcre,
@@ -392,7 +418,11 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
     })
   }
 
-  // Largest sold position first, then largest planned acres
-  rows.sort((a, b) => (b.soldBu - a.soldBu) || (b.acres ?? 0) - (a.acres ?? 0))
+  // Futures crops (job 1) always ahead of tracking; within a tier, largest
+  // sold position first, then largest planned acres
+  rows.sort((a, b) =>
+    (a.tier === 'futures' ? 0 : 1) - (b.tier === 'futures' ? 0 : 1) ||
+    (b.soldBu - a.soldBu) || (b.acres ?? 0) - (a.acres ?? 0)
+  )
   return rows
 }

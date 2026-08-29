@@ -213,3 +213,63 @@ describe('stripRollupFinancials — office payload', () => {
     }
   })
 })
+
+describe('buildEnterpriseRollup — tier wall (futures vs tracking)', () => {
+  const cornVariants: RollupVariantMeta[] = [
+    { id: 'v-shell2', name: 'Shell Corn', cropYear: 2026, commodity: { name: 'Corn', symbol: 'C' } },
+    { id: 'v-blue', name: 'Organic Blue Corn', cropYear: 2026, commodity: { name: 'Corn', symbol: 'C' } },
+  ]
+  const cornContracts: RollupContract[] = [
+    { id: 's1', cropYear: 2026, instrument: 'PRICED', contractedBushels: 40000, finalCashPrice: 4.5, variant: { id: 'v-shell2', name: 'Shell Corn' } },
+    { id: 'o1', cropYear: 2026, instrument: 'PRICED', contractedBushels: 15000, finalCashPrice: 9.0, variant: { id: 'v-blue', name: 'Organic Blue Corn' } },
+  ]
+  const cornBudget = [
+    { crop: 'Yellow Corn', acres: 200, avgYield: 250, projectedTotal: 50000, cop: 3.8 },
+    { crop: 'ORG Blue Corn', acres: 100, avgYield: 100, projectedTotal: 10000, cop: 6.5 },
+  ]
+  const input = () => baseInput({
+    variants: cornVariants,
+    contracts: cornContracts,
+    budgetRows: cornBudget,
+    cbotBySymbol: { C: 4.2 },
+  })
+
+  it('never blends organic bushels into the futures corn total', () => {
+    const rows = buildEnterpriseRollup(input())
+    expect(rows).toHaveLength(2)
+    const futures = rows.find((r) => r.tier === 'futures')!
+    const tracking = rows.find((r) => r.tier === 'tracking')!
+    expect(futures.commodityName).toBe('Corn')
+    expect(futures.soldBu).toBe(40000)          // shell only — no blue corn padding
+    expect(futures.projectedBu).toBe(50000)
+    expect(tracking.commodityName).toBe('Corn — Specialty/Organic')
+    expect(tracking.soldBu).toBe(15000)
+    expect(tracking.projectedBu).toBe(10000)
+  })
+
+  it('detects overhedge per tier — organic bushels cannot hide an oversold futures position', () => {
+    const oversold = buildEnterpriseRollup(baseInput({
+      variants: cornVariants,
+      contracts: [{ ...cornContracts[0], contractedBushels: 55000 }],
+      budgetRows: cornBudget,
+    }))
+    const futures = oversold.find((r) => r.tier === 'futures')!
+    // 55,000 sold vs 50,000 projected shell corn — the old lumped total
+    // (60,000 with blue corn) would have masked this
+    expect(futures.overhedged).toBe(true)
+  })
+
+  it('tracking rows carry no CBOT reference and sort after futures rows', () => {
+    const rows = buildEnterpriseRollup(input())
+    expect(rows[0].tier).toBe('futures')
+    const tracking = rows.find((r) => r.tier === 'tracking')!
+    expect(tracking.cbotSymbol).toBeNull()
+    expect(tracking.cbotPriceDollars).toBeNull()
+  })
+
+  it('keeps tier on office-stripped rows', () => {
+    const rows = buildEnterpriseRollup(input())
+    const stripped = stripRollupFinancials(rows)
+    expect(stripped.map((r) => r.tier).sort()).toEqual(['futures', 'tracking'])
+  })
+})

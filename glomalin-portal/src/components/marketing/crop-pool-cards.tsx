@@ -74,16 +74,42 @@ export function CropPoolCards({ rows: rawRows, isOwner, contracts }: CropPoolCar
     )
   }
 
-  return (
+  // Hard wall between the two jobs: futures crops (marketed on CBOT) never
+  // share a section — or a total — with organics & specialty (tracked only).
+  const futures = rows.filter((r) => r.tier !== 'tracking')
+  const tracking = rows.filter((r) => r.tier === 'tracking')
+
+  const grid = (sectionRows: RowView[]) => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {rows.map((row) => (
+      {sectionRows.map((row) => (
         <PoolCard
-          key={`${row.commodityName}-${row.cropYear}`}
+          key={`${row.tier}-${row.commodityName}-${row.cropYear}`}
           row={row}
           isOwner={isOwner}
           contracts={contractsForRow(row, contracts)}
         />
       ))}
+    </div>
+  )
+
+  return (
+    <div className="space-y-5">
+      {futures.length > 0 && (
+        <div>
+          <div className="mb-2 text-[11px] font-mono font-bold uppercase tracking-widest text-glomalin-muted">
+            Futures Position — Job 1
+          </div>
+          {grid(futures)}
+        </div>
+      )}
+      {tracking.length > 0 && (
+        <div>
+          <div className="mb-2 text-[11px] font-mono font-bold uppercase tracking-widest text-glomalin-muted">
+            Organics &amp; Specialty — tracking only, never in futures totals
+          </div>
+          {grid(tracking)}
+        </div>
+      )}
     </div>
   )
 }

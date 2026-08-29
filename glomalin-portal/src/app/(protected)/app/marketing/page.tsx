@@ -39,14 +39,17 @@ interface GrainDeliveryRow {
   variant: { id: string; name: string }
 }
 
-// Farm-wide totals for the summary strip, from rollup rows. Office rows have
-// financial keys omitted — exposure comes back null there.
+// Farm-wide totals for the summary strip — FUTURES rows only. Organics &
+// specialty (tracking tier) never blend into the numbers selling decisions
+// are made against. Office rows have financial keys omitted — exposure
+// comes back null there.
 function farmSummary(rows: Array<CommodityRollupRow | OfficeCommodityRollupRow>, isOwner: boolean) {
   let projectedBu = 0
   let pricedBu = 0
   let soldBu = 0
   let exposure: number | null = isOwner ? 0 : null
   for (const row of rows) {
+    if (row.tier !== 'futures') continue
     pricedBu += row.pricedBu
     soldBu += row.soldBu
     if (row.projectedBu != null) {
@@ -175,9 +178,9 @@ export default async function MarketingPage({
       {/* Farm summary strip — mirrors the macro-rollup hedging dashboard strip */}
       <KpiStrip cols={4}>
         <StatCard
-          label="FARM % PRICED"
+          label="FUTURES % PRICED"
           value={summary.pctPriced != null ? formatPct(summary.pctPriced) : '—'}
-          sublabel={`of ${formatBu(Math.round(summary.projectedBu))} projected bu`}
+          sublabel={`of ${formatBu(Math.round(summary.projectedBu))} projected bu · futures crops only`}
           variant="default"
         />
         <StatCard
@@ -197,7 +200,7 @@ export default async function MarketingPage({
           <StatCard
             label="PROJECTED BUSHELS"
             value={formatBu(Math.round(summary.projectedBu))}
-            sublabel="from crop plan"
+            sublabel="futures crops · from crop plan"
             variant="default"
           />
         )}
