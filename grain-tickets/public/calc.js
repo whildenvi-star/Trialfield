@@ -40,11 +40,14 @@
     // printed on the elevator's paper scale ticket.
     var scaleBU = testWeight > 0 ? netWeight / testWeight : 0;
 
-    // Gross BU = (((100 - ((moisture - moistureShrink) * discount)) * netWeight) / testWeight) / 100
-    // This matches the spreadsheet formula exactly: moisture adjustment is part of Gross BU
+    // Gross BU = (((100 - (pointsOverBase * discount)) * netWeight) / testWeight) / 100
+    // This matches the spreadsheet formula, with one correction: points over base
+    // are clamped at 0 — grain drier than the base moisture earns no shrink and
+    // no bonus bushels (elevators never pay extra for dry grain).
+    var pointsOverBase = Math.max(0, moisture - moistureShrink);
     var grossBU = 0;
     if (testWeight > 0) {
-      grossBU = (((100 - ((moisture - moistureShrink) * discount)) * netWeight) / testWeight) / 100;
+      grossBU = (((100 - (pointsOverBase * discount)) * netWeight) / testWeight) / 100;
     }
 
     // Net BU If Sold = Gross BU * (1 - fmDiscountFactor)
