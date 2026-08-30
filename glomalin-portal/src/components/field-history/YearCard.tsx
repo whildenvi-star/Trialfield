@@ -110,8 +110,8 @@ const INPUT_TYPES = [
 
 const inputBase = 'w-full px-2 py-1 text-xs bg-glomalin-surface border border-glomalin-border text-glomalin-text rounded placeholder:text-glomalin-muted'
 
-export function YearCard({ ent, aphRecords }: { ent: Enterprise; aphRecords: AphRecord[] }) {
-  const [open, setOpen] = useState(false)
+export function YearCard({ ent, aphRecords, defaultOpen = false }: { ent: Enterprise; aphRecords: AphRecord[]; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen)
 
   // Local copies of mutable event lists — updated optimistically on submit
   const [localFertility, setLocalFertility] = useState<FertilityEvent[]>(ent.fertilityEvents)

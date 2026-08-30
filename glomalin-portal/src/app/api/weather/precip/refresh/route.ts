@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { PrecipAppAdapter } from '@/lib/weather/precip-adapter'
+import { activePrecipAdapter } from '@/lib/weather/precip-adapter'
 
 // POST /api/weather/precip/refresh
 // Fetches fresh precipitation data (30 days back + 7 days forecast) from Precip.ai
@@ -22,15 +22,8 @@ export async function POST() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!PrecipAppAdapter.isConfigured()) {
-    return NextResponse.json(
-      {
-        error:  'Precip.ai not configured',
-        detail: 'Set PRECIP_APP_API_KEY (and optionally PRECIP_APP_BASE_URL) in your environment.',
-      },
-      { status: 422 }
-    )
-  }
+  // Precip.ai when configured; otherwise the free Open-Meteo fallback (always available)
+  const adapter = activePrecipAdapter()
 
   const { data: boundaries, error: boundaryErr } = await supabase
     .from('field_boundaries')
@@ -55,7 +48,7 @@ export async function POST() {
   let points
   try {
     // 30 days historical + 7 days forecast in a single fetch pass
-    points = await PrecipAppAdapter.fetchPrecip(fields, { days: 30, forecastDays: 7 })
+    points = await adapter.fetchPrecip(fields, { days: 30, forecastDays: 7 })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     return NextResponse.json({ error: `Precip fetch failed: ${msg}` }, { status: 502 })

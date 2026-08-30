@@ -109,3 +109,78 @@ export const PrecipAppAdapter: PrecipAdapter = {
     return results
   },
 }
+
+// ── Open-Meteo adapter (free, no API key) ────────────────────────────────────
+// Fallback when Precip.ai is not configured. Multi-location in one request via
+// comma-separated latitude/longitude; when >1 location the response is an array.
+// https://open-meteo.com/en/docs — daily precipitation_sum, unit set to inch.
+
+interface OpenMeteoDaily {
+  time:                          string[]
+  precipitation_sum:             (number | null)[]
+  precipitation_probability_max?: (number | null)[]
+}
+
+interface OpenMeteoResult {
+  daily: OpenMeteoDaily
+}
+
+export const OpenMeteoAdapter: PrecipAdapter = {
+  isConfigured: () => true, // no key needed
+
+  async fetchPrecip(fields, options = {}): Promise<PrecipPoint[]> {
+    if (fields.length === 0) return []
+
+    const pastDays     = Math.min(options.days ?? 30, 92)
+    const forecastDays = Math.min(options.forecastDays ?? 0, 16)
+    const lats = fields.map(f => f.lat).join(',')
+    const lngs = fields.map(f => f.lng).join(',')
+
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}` +
+      `&daily=precipitation_sum,precipitation_probability_max` +
+      `&past_days=${pastDays}&forecast_days=${Math.max(forecastDays, 1)}` +
+      `&precipitation_unit=inch&timezone=auto`
+
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json' },
+      signal: AbortSignal.timeout(30_000),
+    })
+    if (!res.ok) return []
+
+    const raw = await res.json() as OpenMeteoResult | OpenMeteoResult[]
+    const perField: OpenMeteoResult[] = Array.isArray(raw) ? raw : [raw]
+
+    const todayIso = toISO(new Date())
+    const results: PrecipPoint[] = []
+
+    for (let i = 0; i < perField.length; i++) {
+      const field = fields[i]
+      const daily = perField[i]?.daily
+      if (!field || !daily?.time) continue
+      for (let j = 0; j < daily.time.length; j++) {
+        const date = daily.time[j]
+        const sum = daily.precipitation_sum[j]
+        if (!date || sum == null) continue
+        // stop at the requested forecast horizon (we always request >=1 forecast day)
+        if (forecastDays === 0 && date > todayIso) continue
+        const prob = daily.precipitation_probability_max?.[j]
+        results.push({
+          registry_field_id: field.id,
+          lat:               field.lat,
+          lng:               field.lng,
+          date,
+          precip_in:         Number(sum.toFixed(3)),
+          forecast_prob:     date > todayIso && prob != null ? Number(prob) : null,
+        })
+      }
+    }
+
+    return results
+  },
+}
+
+/** The adapter to use: Precip.ai when configured, otherwise the free Open-Meteo fallback. */
+export function activePrecipAdapter(): PrecipAdapter {
+  return PrecipAppAdapter.isConfigured() ? PrecipAppAdapter : OpenMeteoAdapter
+}

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { YearCard, type Enterprise, type AphRecord } from '@/components/field-history/YearCard'
+import { SituationBoard } from '@/components/field-history/SituationBoard'
 import { buildSvgThumb, type GeoJsonGeometry } from '@/lib/utils/field-thumb'
 
 interface FieldSummary {
@@ -10,6 +11,7 @@ interface FieldSummary {
   name: string
   totalAcres: number
   organicStatus: string
+  registryId: string | null
   mostRecentYear: number | null
   mostRecentCrop: string | null
   mostRecentVariety: string | null
@@ -47,6 +49,7 @@ export default function FieldHistoryPage() {
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [detailCache, setDetailCache] = useState<Map<string, DetailCache>>(new Map())
   const [loadingDetail, setLoadingDetail] = useState<string | null>(null)
   const [thumbs, setThumbs] = useState<Map<string, GeoJsonGeometry>>(new Map())
@@ -96,6 +99,7 @@ export default function FieldHistoryPage() {
       return
     }
     setExpandedId(field.id)
+    setSelectedYear(null) // default to the most recent year for the newly expanded field
 
     // Scroll into view after render
     setTimeout(() => expandedRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50)
@@ -234,13 +238,48 @@ export default function FieldHistoryPage() {
                       <div className="text-xs text-glomalin-muted py-4 text-center">Loading history…</div>
                     ) : !cached || cached.enterprises.length === 0 ? (
                       <div className="text-xs text-glomalin-muted py-4 text-center">No history on record</div>
-                    ) : (
-                      <div className="space-y-1">
-                        {cached.enterprises.map(ent => (
-                          <YearCard key={ent.id} ent={ent} aphRecords={cached.aphRecords} />
-                        ))}
-                      </div>
-                    )}
+                    ) : (() => {
+                      const years = Array.from(new Set(cached.enterprises.map(e => e.cropYear))).sort((a, b) => b - a)
+                      const activeYear = selectedYear && years.includes(selectedYear) ? selectedYear : years[0]
+                      const activeEnts = cached.enterprises.filter(e => e.cropYear === activeYear)
+                      return (
+                        <>
+                          {/* Situation board — this year at a glance */}
+                          {activeYear === years[0] && (
+                            <SituationBoard
+                              enterprises={activeEnts}
+                              cropYear={activeYear}
+                              registryId={field.registryId}
+                            />
+                          )}
+
+                          {/* Year selector — current year shown by default, tap to view another */}
+                          {years.length > 1 && (
+                            <div className="mb-2 flex items-center gap-1.5 flex-wrap">
+                              {years.map(y => (
+                                <button
+                                  key={y}
+                                  onClick={() => setSelectedYear(y)}
+                                  className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                                    y === activeYear
+                                      ? 'border-glomalin-accent/60 bg-glomalin-accent/15 text-glomalin-accent'
+                                      : 'border-glomalin-border text-glomalin-muted hover:text-glomalin-text hover:border-glomalin-accent/40'
+                                  }`}
+                                >
+                                  {y}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="space-y-1">
+                            {activeEnts.map(ent => (
+                              <YearCard key={`${ent.id}-${activeYear}`} ent={ent} aphRecords={cached.aphRecords} defaultOpen />
+                            ))}
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
                 )}
               </div>
