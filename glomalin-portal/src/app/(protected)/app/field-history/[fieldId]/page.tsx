@@ -95,7 +95,7 @@ export default function FieldHistoryDetailPage() {
           </Link>
           <Link
             href={`/app/field-history/${fieldId}/audit`}
-            className="text-xs px-3 py-1 border border-glomalin-border rounded text-glomalin-muted hover:text-glomalin-text hover:border-glomalin-accent/60 transition-colors"
+            className="text-xs px-3 py-1.5 rounded border border-glomalin-accent/50 bg-glomalin-accent/10 text-glomalin-accent hover:bg-glomalin-accent/20 transition-colors font-medium"
           >
             Organic Audit Record
           </Link>

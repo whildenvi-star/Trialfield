@@ -206,19 +206,15 @@ export default function FieldHistoryPage() {
                     ref={expandedRowRef}
                     className="border border-glomalin-accent/40 border-t-0 rounded-b bg-glomalin-bg px-4 py-4"
                   >
-                    {isLoadingThis ? (
-                      <div className="text-xs text-glomalin-muted py-4 text-center">Loading history…</div>
-                    ) : !cached || cached.enterprises.length === 0 ? (
-                      <div className="text-xs text-glomalin-muted py-4 text-center">No history on record</div>
-                    ) : (
-                      <div className="space-y-1">
-                        {cached.enterprises.map(ent => (
-                          <YearCard key={ent.id} ent={ent} aphRecords={cached.aphRecords} />
-                        ))}
-                      </div>
-                    )}
-                    {/* Navigation links */}
-                    <div className="mt-3 pt-3 border-t border-glomalin-border flex items-center gap-4">
+                    {/* Actions — at the top so they're visible without scrolling past the history */}
+                    <div className="mb-3 pb-3 border-b border-glomalin-border flex items-center gap-3 flex-wrap">
+                      <Link
+                        href={`/app/field-history/${field.id}/audit`}
+                        className="text-xs px-3 py-1.5 rounded border border-glomalin-accent/50 bg-glomalin-accent/10 text-glomalin-accent hover:bg-glomalin-accent/20 transition-colors font-medium"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        Organic Audit Record
+                      </Link>
                       <Link
                         href={`/app/field-history/${field.id}`}
                         className="text-xs text-glomalin-muted hover:text-glomalin-accent transition-colors"
@@ -233,14 +229,18 @@ export default function FieldHistoryPage() {
                       >
                         Activity timeline →
                       </Link>
-                      <Link
-                        href={`/app/field-history/${field.id}/audit`}
-                        className="text-xs text-glomalin-muted hover:text-glomalin-accent transition-colors"
-                        onClick={e => e.stopPropagation()}
-                      >
-                        Organic audit →
-                      </Link>
                     </div>
+                    {isLoadingThis ? (
+                      <div className="text-xs text-glomalin-muted py-4 text-center">Loading history…</div>
+                    ) : !cached || cached.enterprises.length === 0 ? (
+                      <div className="text-xs text-glomalin-muted py-4 text-center">No history on record</div>
+                    ) : (
+                      <div className="space-y-1">
+                        {cached.enterprises.map(ent => (
+                          <YearCard key={ent.id} ent={ent} aphRecords={cached.aphRecords} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
