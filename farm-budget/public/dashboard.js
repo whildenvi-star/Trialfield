@@ -280,12 +280,24 @@
           var variance = actualYield - budgetYield;
           var varSign = variance >= 0 ? '+' : '';
           var varCls = variance >= 0 ? 'color:#4af626' : 'color:#ff6e40';
+          // Heat-bar meter: marker at actual as a % of plan, tick at plan.
+          // Track spans 0–130% of plan; marker clamps, tooltip keeps the real %.
+          var meterHtml = '';
+          if (budgetYield > 0) {
+            var pctOfPlan = (actualYield / budgetYield) * 100;
+            var markerPos = Math.max(0, Math.min(130, pctOfPlan)) / 1.3;
+            meterHtml = '<span class="yield-meter" title="Actual is ' +
+              util.formatNum(pctOfPlan, 0) + '% of the budgeted yield">' +
+              '<span class="ym-plan"></span>' +
+              '<span class="ym-ind" style="left:' + markerPos.toFixed(1) + '%"></span>' +
+              '</span>';
+          }
           actualYieldText = ' <span style="font-size:0.78em;opacity:0.9;" title="Measured yield from grain tickets (' + grainMatch.ticketCount + ' tickets)">' +
             '<span style="color:#4af626;font-size:0.8em;vertical-align:middle;margin-right:2px;">GT</span>' +
             'Actual ' + util.formatNum(actualYield, 1) + ' ' + util.escHtml(row.unit) + '/ac ' +
             'vs Budget ' + util.formatNum(budgetYield, 1) + ' ' +
             '<span style="' + varCls + '">(' + varSign + util.formatNum(variance, 1) + ')</span>' +
-            '</span>';
+            '</span>' + meterHtml;
         } else {
           actualYieldText = ' <span style="font-size:0.7em;opacity:0.5;font-style:italic;" title="No yield data yet">(no GT data)</span>';
         }

@@ -1075,6 +1075,45 @@ body.light .actual-cell {
 .yield-coverage.full { color: var(--success); }
 .yield-coverage.partial { color: var(--orange); }
 
+/* Plan-vs-actual yield meter (grain-ticket overlay). Heat track scaled to
+   0–130% of plan: deficit → on-plan blend, hard switch to teal for the
+   beyond-plan zone. The tick is plan (100%, at 76.9% of track width);
+   the bright marker is where actual sits, clamped to the track. */
+.yield-meter {
+  position: relative;
+  display: inline-block;
+  width: 74px;
+  height: 8px;
+  margin: 0 2px 0 6px;
+  border-radius: 4px;
+  vertical-align: middle;
+  background: linear-gradient(90deg,
+    var(--danger) 0%, var(--danger) 38%,
+    var(--amber) 57%,
+    var(--success) 72%, var(--success) 76.9%,
+    var(--teal) 77%, var(--teal) 100%);
+  opacity: 0.9;
+}
+.yield-meter .ym-plan {
+  position: absolute;
+  left: 76.9%;
+  top: -2px;
+  width: 2px;
+  height: 12px;
+  background: var(--text);
+  opacity: 0.75;
+}
+.yield-meter .ym-ind {
+  position: absolute;
+  top: -3px;
+  width: 4px;
+  height: 14px;
+  transform: translateX(-50%);
+  background: var(--text-bright);
+  border: 1px solid var(--bg);
+  border-radius: 2px;
+}
+
 .ent-summary-bar {
   display: flex;
   gap: 1.5rem;
