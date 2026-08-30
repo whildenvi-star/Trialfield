@@ -1761,10 +1761,12 @@
         var responseEl = appendLine('term-chat-response', '');
         var fullText = '';
         var buffer = '';
+        var statusEl = null;
 
         function read() {
           reader.read().then(function (result) {
             if (result.done) {
+              if (statusEl && statusEl.parentNode) statusEl.parentNode.removeChild(statusEl);
               history.push({ role: 'assistant', content: fullText });
               busy = false;
               chatInput.disabled = false;
@@ -1783,7 +1785,17 @@
                 if (data === '[DONE]') continue;
                 try {
                   var parsed = JSON.parse(data);
+                  if (parsed.status) {
+                    // Agent is running a tool — show what it's looking up
+                    if (!statusEl) statusEl = appendLine('term-chat-thinking', '');
+                    statusEl.textContent = '· ' + parsed.status.replace(/_/g, ' ');
+                    chatLog.scrollTop = chatLog.scrollHeight;
+                  }
                   if (parsed.text) {
+                    if (statusEl && statusEl.parentNode) {
+                      statusEl.parentNode.removeChild(statusEl);
+                      statusEl = null;
+                    }
                     fullText += parsed.text;
                     responseEl.innerHTML = escHtml(fullText);
                     chatLog.scrollTop = chatLog.scrollHeight;
