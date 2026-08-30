@@ -65,6 +65,8 @@ export async function GET(
     grain: () => fetchGrainActivities(fieldId, year),
     observation: () => fetchObservationActivities(fieldId),
     claim: () => fetchClaimActivities(fieldId),
+    // group calendar is farm-wide — served by /api/timeline/schedule, not per-field
+    schedule: async () => [],
   }
 
   try {

@@ -15,12 +15,14 @@ const SOURCE_LABELS: Record<string, string> = {
   cert: 'Organic',
   fieldops: 'FieldOps',
   grain: 'Grain',
+  schedule: 'Calendar',
 }
 
 const STATUS_COLORS: Record<string, string> = {
   planned: 'text-glomalin-accent',
   confirmed: 'text-glomalin-green',
   completed: 'text-glomalin-green',
+  scheduled: 'text-pink-300',
 }
 
 function fmtDate(dateStr: string | null): string {

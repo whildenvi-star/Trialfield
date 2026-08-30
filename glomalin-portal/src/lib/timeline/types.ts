@@ -6,8 +6,9 @@
  * Sources: budget, cert, fieldops, grain, observation, claim.
  */
 
-/** The 6 data sources that contribute to a field's activity timeline. */
-export type TimelineSource = 'budget' | 'cert' | 'fieldops' | 'grain' | 'observation' | 'claim'
+/** The data sources that contribute to a field's activity timeline.
+ * 'schedule' is the shared group calendar (ICS feed) — farm-wide, not per-field. */
+export type TimelineSource = 'budget' | 'cert' | 'fieldops' | 'grain' | 'observation' | 'claim' | 'schedule'
 
 /**
  * A unified activity record in the timeline, regardless of source.
@@ -43,9 +44,10 @@ export interface TimelineEntry {
   detail: Record<string, unknown>
   /**
    * Pass status where applicable.
+   * 'scheduled' = a future commitment (group-calendar event).
    * null for entries that don't have a pass lifecycle (e.g. grain deliveries).
    */
-  status: 'planned' | 'confirmed' | 'completed' | null
+  status: 'planned' | 'confirmed' | 'completed' | 'scheduled' | null
   /**
    * ID of the paired entry when a budget planned pass and an organic-cert
    * confirmed operation represent the same real-world activity.

@@ -7,8 +7,9 @@ import type { TimelineEntry, TimelineSource, SingleSourceResponse } from '@/lib/
 import { TimelineFilters } from './timeline-filters'
 import { TimelineEntryCard } from './timeline-entry-card'
 import { TimelineExport } from './timeline-export'
+import { CalendarView, type CalendarMode } from './calendar-view'
 
-const ALL_SOURCES: TimelineSource[] = ['budget', 'cert', 'fieldops', 'grain', 'observation', 'claim']
+const ALL_SOURCES: TimelineSource[] = ['budget', 'cert', 'fieldops', 'grain', 'observation', 'claim', 'schedule']
 
 export const SOURCE_COLORS: Record<TimelineSource, string> = {
   budget: '#C8860A',
@@ -17,6 +18,7 @@ export const SOURCE_COLORS: Record<TimelineSource, string> = {
   grain: '#B87333',
   observation: '#14b8a6',
   claim: '#a78bfa',
+  schedule: '#f472b6',
 }
 
 /** Sort entries by sortDate ascending, then by source priority (cert before budget for same date). */
@@ -27,6 +29,7 @@ const SOURCE_PRIORITY: Record<TimelineSource, number> = {
   grain: 3,
   observation: 4,
   claim: 5,
+  schedule: 6,
 }
 
 function sortByDate(entries: TimelineEntry[]): TimelineEntry[] {
@@ -79,12 +82,16 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
     grain: false,
     observation: false,
     claim: false,
+    schedule: false,
   })
   const [activeSources, setActiveSources] = useState<Set<TimelineSource>>(
     new Set(ALL_SOURCES)
   )
   const [year, setYear] = useState<number>(CURRENT_CROP_YEAR)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [viewMode, setViewMode] = useState<CalendarMode | 'list'>('month')
+  const [anchor, setAnchor] = useState<string>(new Date().toISOString().slice(0, 10))
+  const [selectedDay, setSelectedDay] = useState<string | null>(null)
 
   // Abort controller ref — cancelled when fieldId or year changes
   const abortRef = useRef<AbortController | null>(null)
@@ -101,19 +108,27 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
     setEntries([])
     setWarnings([])
     setExpandedIds(new Set())
-    setSourceLoading({ budget: true, cert: true, fieldops: true, grain: true, observation: true, claim: true })
+    setSourceLoading({ budget: true, cert: true, fieldops: true, grain: true, observation: true, claim: true, schedule: true })
 
-    // Fire independent parallel fetches per source — each resolves/fails independently
+    // Fire independent parallel fetches per source — each resolves/fails independently.
+    // 'schedule' is the farm-wide group calendar — not keyed by field.
     ALL_SOURCES.forEach((source) => {
-      fetch(`/api/timeline/${fieldId}/${source}?year=${year}`, {
+      const url =
+        source === 'schedule'
+          ? `/api/timeline/schedule?year=${year}`
+          : `/api/timeline/${fieldId}/${source}?year=${year}`
+      fetch(url, {
         signal: controller.signal,
       })
         .then((res) => res.json())
         .then((data: SingleSourceResponse) => {
           if (data.error) {
-            setWarnings((prev) =>
-              prev.includes(`${source}: ${data.error}`) ? prev : [...prev, `${source}: ${data.error}`]
-            )
+            // An unconfigured group calendar is an absent feature, not a failure
+            if (!(source === 'schedule' && data.error.includes('not configured'))) {
+              setWarnings((prev) =>
+                prev.includes(`${source}: ${data.error}`) ? prev : [...prev, `${source}: ${data.error}`]
+              )
+            }
           } else {
             setEntries((prev) => sortByDate([...prev, ...data.entries]))
           }
@@ -206,6 +221,23 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
     }
   }
 
+  // Calendar partitions
+  const datedEntries = filteredEntries.filter((e) => e.date && e.date !== '9999-12-31')
+  const unscheduledEntries = filteredEntries.filter((e) => !e.date || e.date === '9999-12-31')
+
+  function shiftAnchor(direction: -1 | 1) {
+    const d = new Date(anchor + 'T00:00:00Z')
+    if (viewMode === 'month') d.setUTCMonth(d.getUTCMonth() + direction)
+    else d.setUTCDate(d.getUTCDate() + 7 * direction)
+    setAnchor(d.toISOString().slice(0, 10))
+    setSelectedDay(null)
+  }
+
+  const anchorLabel =
+    viewMode === 'month'
+      ? new Date(anchor + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+      : `Week of ${new Date(anchor + 'T00:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}`
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Toolbar: field name, filters, export */}
@@ -249,6 +281,52 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
           plannedCount={plannedCount}
           lastActivityDate={lastActivityDate}
         />
+
+        {/* View switcher + calendar navigation */}
+        <div className="flex items-center gap-2 px-4 py-2 flex-wrap">
+          <div className="flex rounded border border-glomalin-border overflow-hidden">
+            {(['month', 'week', 'list'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => { setViewMode(m); setSelectedDay(null) }}
+                className={`text-xs font-mono px-3 py-1 capitalize transition-colors ${
+                  viewMode === m
+                    ? 'bg-glomalin-accent/20 text-glomalin-accent'
+                    : 'text-glomalin-muted hover:text-glomalin-text'
+                }`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+          {viewMode !== 'list' && (
+            <>
+              <button
+                onClick={() => shiftAnchor(-1)}
+                className="text-sm font-mono px-2 py-0.5 rounded border border-glomalin-border text-glomalin-muted hover:text-glomalin-text"
+                aria-label="Previous"
+              >
+                ‹
+              </button>
+              <span className="text-sm font-mono font-semibold text-glomalin-text min-w-32 text-center">
+                {anchorLabel}
+              </span>
+              <button
+                onClick={() => shiftAnchor(1)}
+                className="text-sm font-mono px-2 py-0.5 rounded border border-glomalin-border text-glomalin-muted hover:text-glomalin-text"
+                aria-label="Next"
+              >
+                ›
+              </button>
+              <button
+                onClick={() => { setAnchor(new Date().toISOString().slice(0, 10)); setSelectedDay(null) }}
+                className="text-xs font-mono px-2 py-1 rounded border border-glomalin-border text-glomalin-muted hover:text-glomalin-text"
+              >
+                Today
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Warning banner */}
@@ -259,7 +337,20 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
         </div>
       )}
 
-      {/* Timeline scroll area */}
+      {/* Calendar views */}
+      {viewMode !== 'list' ? (
+        <CalendarView
+          mode={viewMode}
+          anchor={anchor}
+          entries={datedEntries}
+          unscheduled={unscheduledEntries}
+          selectedDay={selectedDay}
+          onSelectDay={setSelectedDay}
+          expandedIds={expandedIds}
+          onToggleExpanded={toggleExpanded}
+          sourceColors={SOURCE_COLORS}
+        />
+      ) : (
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
         {filteredEntries.length === 0 && !isAnyLoading && (
           <div className="flex items-center justify-center py-16">
@@ -324,6 +415,7 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

@@ -22,6 +22,7 @@ const SOURCE_LABELS: Record<TimelineSource, string> = {
   grain: 'Grain',
   observation: 'Observations',
   claim: 'Claims',
+  schedule: 'Calendar',
 }
 
 const SOURCE_COLORS: Record<TimelineSource, string> = {
@@ -31,6 +32,7 @@ const SOURCE_COLORS: Record<TimelineSource, string> = {
   grain: '#B87333',
   observation: '#14b8a6',
   claim: '#a78bfa',
+  schedule: '#f472b6',
 }
 
 function SmallSpinner() {
