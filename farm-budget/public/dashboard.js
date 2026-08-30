@@ -10,22 +10,30 @@
   // Map keyed by "registryFieldId|registryCropId" (same key as grain-tickets uses).
   // Falls back to {} if fetch fails — dashboard renders budget estimates unchanged.
   var grainYields = {};
+  var grainByCrop = {};    // registryCropId -> crop-wide aggregate {yieldPerAcre, totalNetBU, acres, ticketCount, unit}
+  var grainNameIndex = {}; // normalized crop name/alias -> registryCropId (registry crosswalk)
 
   // fetchGrainYields: loads cached yield summaries from farm-budget server memory.
   // The server caches data pushed from grain-tickets — no direct grain-tickets dependency here.
   function fetchGrainYields() {
     return fetch('/api/yield-from-grain').then(function (r) {
-      if (!r.ok) return {};
-      return r.json().then(function (d) { return d.yields || {}; });
-    }).catch(function () { return {}; });
+      if (!r.ok) return { yields: {} };
+      return r.json();
+    }).catch(function () { return { yields: {} }; });
   }
 
   // findGrainYieldForCrop: looks up grain yield for a crop name string.
-  // Matches on cropName (case-insensitive) across all keys in the yields map.
+  // Resolves the name through the registry alias crosswalk first (MACRO's
+  // "Hybrid Seed Rye" and grain-tickets' "Hybrid Rye" are aliases of one
+  // registry crop) and returns the crop-wide aggregate across all fields.
+  // Falls back to the legacy exact-cropName scan of per-field entries.
   // Returns { yieldPerAcre, ticketCount, syncedAt } or null if no match.
   function findGrainYieldForCrop(cropName) {
-    if (!cropName || !grainYields || typeof grainYields !== 'object') return null;
     var normCrop = (cropName || '').toLowerCase().trim();
+    if (!normCrop) return null;
+    var cropId = grainNameIndex[normCrop];
+    if (cropId && grainByCrop[cropId]) return grainByCrop[cropId];
+    if (!grainYields || typeof grainYields !== 'object') return null;
     var keys = Object.keys(grainYields);
     for (var i = 0; i < keys.length; i++) {
       var entry = grainYields[keys[i]];
@@ -191,7 +199,10 @@
       api.get('/api/enterprise-invoice-totals').catch(function () { return { byEnterprise: {} }; })
     ]).then(function (results) {
       var data = results[0];
-      grainYields = results[1] || {};
+      var grainData = results[1] || {};
+      grainYields = grainData.yields || {};
+      grainByCrop = grainData.byCrop || {};
+      grainNameIndex = grainData.nameIndex || {};
       var salesData = results[2] || {};
       var forecastData = results[3] || { categories: [] };
       var invoiceTotals = results[4] || { byEnterprise: {} };

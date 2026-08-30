@@ -430,6 +430,9 @@ app.post('/api/yield-from-grain', (req, res) => {
         ticketCount: s.ticketCount,
         cropName: s.cropName,
         farmName: s.farmName,
+        acres: s.acres,
+        registryFieldId: s.registryFieldId,
+        registryCropId: s.registryCropId,
         cropYear: cropYear,
         syncedAt: new Date().toISOString()
       };
@@ -464,6 +467,9 @@ async function pullGrainYields() {
           ticketCount: s.ticketCount,
           cropName: s.cropName,
           farmName: s.farmName,
+          acres: s.acres,
+          registryFieldId: s.registryFieldId,
+          registryCropId: s.registryCropId,
           cropYear: json.cropYear || cropYear,
           syncedAt: new Date().toISOString()
         };
@@ -476,11 +482,80 @@ async function pullGrainYields() {
   }
 }
 
+// Registry crop lookup for yield aggregation — id → {name, unit, aliases[]}.
+// The registry is the crop-name crosswalk: MACRO's names ("Hybrid Seed Rye")
+// and grain-tickets' names ("Hybrid Rye") are both aliases of one registry crop.
+const REGISTRY_API_URL = process.env.REGISTRY_API_URL || 'http://localhost:3005';
+let _registryCrops = { data: null, ts: 0 };
+async function fetchRegistryCrops() {
+  if (_registryCrops.data && Date.now() - _registryCrops.ts < 10 * 60 * 1000) return _registryCrops.data;
+  try {
+    const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
+    const r = await fetch(`${REGISTRY_API_URL}/api/crops`, {
+      headers: token ? { 'x-embed-token': token } : {},
+      signal: AbortSignal.timeout(5000)
+    });
+    if (r.ok) {
+      const crops = await r.json();
+      if (Array.isArray(crops)) _registryCrops = { data: crops, ts: Date.now() };
+    }
+  } catch { /* keep stale cache on failure */ }
+  return _registryCrops.data;
+}
+
 // GET /api/yield-from-grain — client fetches cached grain yield data for dashboard overlay
 // and inline card editing. Falls back to a live pull when the push cache is empty.
+// Ships two extra views for the dashboard: byCrop (per-registry-crop aggregates across
+// fields) and nameIndex (normalized name/alias → registryCropId) so the client can
+// resolve any crop spelling to the crop-wide actual.
 app.get('/api/yield-from-grain', async (req, res) => {
   if (!_grainYields.data) await pullGrainYields();
-  res.json({ yields: _grainYields.data, updatedAt: _grainYields.updatedAt });
+  const crops = (await fetchRegistryCrops()) || [];
+
+  const byCrop = {};
+  const entries = _grainYields.data || {};
+  Object.keys(entries).forEach(key => {
+    const e = entries[key];
+    const cropId = e.registryCropId || key.split('|')[1];
+    if (!cropId) return;
+    if (!byCrop[cropId]) {
+      const reg = crops.find(c => c.id === cropId);
+      byCrop[cropId] = {
+        cropName: reg ? reg.name : e.cropName,
+        unit: reg ? reg.unit : 'Bu',
+        totalNetBU: 0, acres: 0, ticketCount: 0, fieldCount: 0,
+        yieldPerAcre: 0, cropYear: e.cropYear, syncedAt: e.syncedAt
+      };
+    }
+    const g = byCrop[cropId];
+    g.totalNetBU += e.totalNetBU || 0;
+    // Acres may be missing on entries cached before this field existed —
+    // derive from yieldPerAcre so weighted averages stay honest.
+    g.acres += e.acres || (e.yieldPerAcre > 0 ? (e.totalNetBU || 0) / e.yieldPerAcre : 0);
+    g.ticketCount += e.ticketCount || 0;
+    g.fieldCount++;
+  });
+  Object.values(byCrop).forEach(g => {
+    g.totalNetBU = Math.round(g.totalNetBU * 100) / 100;
+    g.acres = Math.round(g.acres * 100) / 100;
+    g.yieldPerAcre = g.acres > 0 ? Math.round((g.totalNetBU / g.acres) * 100) / 100 : 0;
+  });
+
+  // Built after byCrop so alias collisions resolve toward the crop that has
+  // ticket data (e.g. registry's conventional and organic Peas both carry the
+  // alias "Peas" — the one with yields wins the name).
+  const nameIndex = {};
+  crops.forEach(c => {
+    [c.name].concat(c.aliases || []).forEach(n => {
+      if (!n) return;
+      const norm = String(n).trim().toLowerCase();
+      const existing = nameIndex[norm];
+      if (existing && byCrop[existing] && !byCrop[c.id]) return;
+      nameIndex[norm] = c.id;
+    });
+  });
+
+  res.json({ yields: _grainYields.data, updatedAt: _grainYields.updatedAt, byCrop, nameIndex });
 });
 
 // --- Dashboard ---

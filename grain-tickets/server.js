@@ -599,7 +599,10 @@ async function pushYieldUpdates(cropYear) {
     return;
   }
 
-  const portalUrl = process.env.PORTAL_ORIGIN || 'http://localhost:3010';
+  // PORTAL_API_URL: server-to-server portal base (localhost on the droplet).
+  // PORTAL_ORIGIN is the browser-facing origin used for CORS — going through it
+  // from the droplet hits Cloudflare's challenge and the push never lands.
+  const portalUrl = process.env.PORTAL_API_URL || 'http://localhost:3010';
   const budgetUrl = process.env.BUDGET_API_URL || 'http://localhost:3001';
   const payload = JSON.stringify({ summaries, cropYear });
   const headers = { 'Content-Type': 'application/json', 'x-ecosystem-token': token };
@@ -1330,7 +1333,7 @@ app.get('/api/settlement-summary', async (req, res) => {
     });
 
     // Fetch contract prices from portal — graceful degradation if portal is down
-    const portalUrl = process.env.PORTAL_ORIGIN || 'http://localhost:3010';
+    const portalUrl = process.env.PORTAL_API_URL || 'http://localhost:3010';
     let contracts = [];
     let contractsAvailable = false;
     try {
