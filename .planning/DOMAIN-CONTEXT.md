@@ -71,6 +71,7 @@ Every time a truck crosses a scale at a grain elevator, a ticket is generated:
 - Bushel calculation: `grossBU = (((100 - ((moisture - shrink) * discount)) * netWeight) / testWeight) / 100`
 - One field's harvest = many tickets over several days
 - The master grain ticket spreadsheet is the farmer's "source of truth" for what was actually harvested
+- **Moisture discounts (wheat, verified 2026-08-29):** 13.5% base MC trade-wide; posted shrink ~1.6–3.0%/pt in half-point brackets (water-only is 1.156%/pt); drying charge is a SEPARATE $/bu-per-point line with per-elevator onset; schedules are clamped at base — no premium for dry grain; no national standard (NGFA rules are silent — model per-buyer). See `.planning/research/wheat-moisture-discounts.md`
 
 ### Chain of Custody (Organic Traceability)
 Organic certification requires traceable chain from seed → field → bin → truck → buyer:
