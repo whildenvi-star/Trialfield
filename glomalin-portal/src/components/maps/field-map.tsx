@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   CROP_COLORS,
   FILL_OPACITY,
@@ -103,12 +104,40 @@ function getColorExpr(view: MapView): ExpressionSpecification {
   return view === 'fsa' ? FSA_COLOR_EXPR : CROP_COLOR_EXPR
 }
 
+/**
+ * Frame a field with the detail panel accounted for. The panel is a 384px
+ * overlay rather than a reflow, so the camera gets padding instead of the
+ * container getting narrower — the map never re-lays-out, and the selected
+ * field lands in the visible strip rather than under the panel.
+ * Below 768px the panel covers ~90vw, so padding would be meaningless.
+ */
+function flyToField(map: Map, lng: number, lat: number, animate = true) {
+  const panelPad = window.innerWidth > 768 ? 384 : 0
+  map.flyTo({
+    center:    [lng, lat],
+    zoom:      Math.max(map.getZoom(), 14),
+    pitch:     30,
+    bearing:   DEFAULT_BEARING,
+    duration:  animate ? 1000 : 0,
+    padding:   { top: 0, bottom: 0, left: 0, right: panelPad },
+    essential: true,
+  })
+}
+
 export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
   const mapContainerRef  = useRef<HTMLDivElement>(null)
   const mapRef           = useRef<Map | null>(null)
   const popupRef         = useRef<Popup | null>(null)
   const hoveredIdRef     = useRef<string | number | null>(null)
   const viewRef          = useRef<MapView>('enterprise')
+  // Loaded features, kept so ?field=<id> can resolve a field without re-querying
+  // the source (querySourceFeatures only sees what is currently tiled).
+  const featuresRef      = useRef<GeoJSONFeature[]>([])
+  const deepLinkedRef    = useRef<string | null>(null)
+
+  const searchParams     = useSearchParams()
+  const fieldParam       = searchParams.get('field')
+  const [dataVersion, setDataVersion] = useState(0)
 
   const [selectedField, setSelectedField]   = useState<FieldProperties | null>(null)
   const [activeCrops, setActiveCrops]       = useState<string[]>([])
@@ -146,7 +175,9 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
       const fc: BoundaryResponse = await res.json()
       const source = mapRef.current?.getSource('fields') as { setData?: (d: unknown) => void } | undefined
       source?.setData?.(fc)
+      featuresRef.current = fc.features
       if (fc.meta) setMapMeta(fc.meta)
+      setDataVersion((v) => v + 1)
     } catch {/* non-blocking */}
   }, [])
 
@@ -193,6 +224,7 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
 
           if (!mapInstance) return
           if (fc.meta) setMapMeta(fc.meta)
+          featuresRef.current = fc.features
 
           // Auto-zoom to all fields, preserving tilt
           let minLng = Infinity, maxLng = -Infinity, minLat = Infinity, maxLat = -Infinity
@@ -316,19 +348,7 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
 
             const lng = (props.centroid_lng ?? e.lngLat.lng) as number
             const lat = (props.centroid_lat ?? e.lngLat.lat) as number
-            // Pad the camera for the 384px detail panel so the selected field
-            // frames in the visible area instead of sliding under the panel.
-            // On narrow screens the panel covers ~90vw — padding is pointless.
-            const panelPad = window.innerWidth > 768 ? 384 : 0
-            mapInstance.flyTo({
-              center:   [lng, lat],
-              zoom:     Math.max(mapInstance.getZoom(), 14),
-              pitch:    30,
-              bearing:  DEFAULT_BEARING,
-              duration: 1000,
-              padding:  { top: 0, bottom: 0, left: 0, right: panelPad },
-              essential: true,
-            })
+            flyToField(mapInstance, lng, lat)
 
             setSelectedField({
               ...props,
@@ -337,6 +357,9 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
               last_30d_in:  props.last_30d_in ?? null,
             })
           })
+
+          // Signals the deep-link effect that features are available.
+          setDataVersion((v) => v + 1)
         })
 
         mapInstance.on('error', (e) => {
@@ -353,6 +376,33 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
     initMap()
     return () => { mapInstance?.remove(); mapRef.current = null }
   }, [])
+
+  // ?field=<registry_field_id> — opens a field directly from the command palette
+  // or any shared link. Every object needs a URL; a jump that can't be linked to
+  // is a jump only the palette can make.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !fieldParam) return
+    if (deepLinkedRef.current === fieldParam) return
+    if (featuresRef.current.length === 0) return
+
+    const match = featuresRef.current.find(
+      (f) => f.properties?.registry_field_id === fieldParam
+    )
+    if (!match) return
+
+    deepLinkedRef.current = fieldParam
+    const props = match.properties
+    if (props.centroid_lng != null && props.centroid_lat != null) {
+      flyToField(map, Number(props.centroid_lng), Number(props.centroid_lat))
+    }
+    setSelectedField({
+      ...props,
+      fsa_reported: props.fsa_reported ?? null,
+      last_7d_in:   props.last_7d_in  ?? null,
+      last_30d_in:  props.last_30d_in ?? null,
+    })
+  }, [fieldParam, dataVersion])
 
   const precipAvg     = mapMeta?.precip_avg_7d
   const precipUpdated = mapMeta?.precip_last_fetched

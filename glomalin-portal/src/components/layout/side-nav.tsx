@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { logout } from '@/app/actions/auth'
 import { MODULES, MODULE_GROUPS } from '@/lib/modules'
+import { openCommandPalette } from '@/lib/palette-bus'
 import { type SceneType, nextScene } from '@/components/layout/scene-types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -77,6 +78,17 @@ function RailIcon({ type, className }: { type: 'field' | 'ops' | 'finance' | 'in
       <line x1="8" y1="14" x2="8" y2="7" />
       <path d="M8 7C8 5 10.5 2.5 13.5 2.5C13.5 6 11 8.5 8 7Z" />
       <path d="M8 9.5C8 7.5 5.5 5.5 2.5 6C2.5 9 5 11 8 9.5Z" />
+    </svg>
+  )
+}
+
+function SearchIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+      stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"
+      className={className} aria-hidden="true">
+      <circle cx="6.5" cy="6.5" r="4.5" />
+      <line x1="10" y1="10" x2="14" y2="14" />
     </svg>
   )
 }
@@ -253,6 +265,39 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
           >
             GLOMALIN
           </Link>
+        </div>
+
+        {/* ── Search — the pointer path into the palette ─────── */}
+        <div className="flex-shrink-0 border-b border-glomalin-border">
+          <Tooltip.Root open={isOpen ? false : undefined}>
+            <Tooltip.Trigger asChild>
+              <button
+                type="button"
+                onClick={() => openCommandPalette()}
+                aria-label="Search fields, contracts and modules"
+                className="relative flex items-center h-11 w-full text-glomalin-muted hover:text-glomalin-text hover:bg-glomalin-border/40 transition-colors duration-100"
+              >
+                <span className="w-16 flex-shrink-0 flex items-center justify-center">
+                  <SearchIcon className="w-[18px] h-[18px]" />
+                </span>
+                <span className={[
+                  'flex flex-1 items-center justify-between pr-3 whitespace-nowrap',
+                  'transition-opacity duration-150 ease-out motion-reduce:transition-none',
+                  isOpen ? 'opacity-100' : 'opacity-0',
+                ].join(' ')}>
+                  <span className="text-sm font-sans">Search</span>
+                  <kbd className="text-[10px] font-mono border border-glomalin-border rounded px-1.5 py-0.5">
+                    ⌘K
+                  </kbd>
+                </span>
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Portal>
+              <Tooltip.Content side="right" sideOffset={8} className={tooltipCls}>
+                Search — ⌘K
+              </Tooltip.Content>
+            </Tooltip.Portal>
+          </Tooltip.Root>
         </div>
 
         {/* ── Module navigation ──────────────────────────────── */}
