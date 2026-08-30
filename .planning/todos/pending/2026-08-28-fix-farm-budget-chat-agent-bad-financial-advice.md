@@ -45,6 +45,13 @@ Investigated 2026-08-28; root causes confirmed:
 
 ## Solution
 
+PHASE 1 SHIPPED 2026-08-30 (commits f9e6644, 463bedc; deployed to droplet,
+verified live: no-auth 403, v2-grant role enforcement, per-acre answers
+correct, chat-log.jsonl capturing). Voice layer in farm-budget/lib/voice.js.
+Grant format now v1 + v2 (v2 = role in signed payload); portal mints v2 for
+farm-budget only — sibling app verifiers are still v1-only, roll v2 out
+per-app if wanted. REMAINING: Phase 2 below.
+
 Phase 1 (afternoon, quick fixes):
 - Send `avgProfitPerAcre` (and/or correctly-labeled totals) in enterprise
   summary; drop the bogus `/ac` suffix on totals.

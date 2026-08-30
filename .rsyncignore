@@ -19,6 +19,10 @@ data/photos
 data/data.json.pre-*
 */data/audit-results.json
 data/audit-results.json
+*/data/chat-log.jsonl
+data/chat-log.jsonl
+*/data/chat-usage.json
+data/chat-usage.json
 
 # Environment files
 *.env
