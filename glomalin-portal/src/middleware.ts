@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/middleware'
 
 // Routes that are accessible without authentication
 const PUBLIC_ROUTES = ['/', '/login', '/forgot-password', '/reset-password']
-const PUBLIC_PREFIXES = ['/_next', '/favicon.ico', '/api/auth', '/auth/callback', '/api/mobile']
+// /api/insurance/yield-push does its own x-ecosystem-token auth (machine-to-machine
+// push from grain-tickets) — the session redirect here was bouncing every push to /login.
+const PUBLIC_PREFIXES = ['/_next', '/favicon.ico', '/api/auth', '/auth/callback', '/api/mobile', '/api/insurance/yield-push']
 const PUBLIC_EXTENSIONS = ['.js', '.css', '.json', '.ico', '.svg', '.png', '.jpg', '.webp']
 
 function isPublicRoute(pathname: string): boolean {
