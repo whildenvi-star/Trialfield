@@ -88,8 +88,9 @@ export default async function ModulePage({ params }: ModulePageProps) {
 
     return (
       <>
-        {/* Mobile fallback — shown on screens below md (768px) */}
-        <div className="md:hidden flex flex-col items-center justify-center min-h-[60vh] text-center px-6 py-12">
+        {/* Mobile fallback — only on narrow touch devices (coarse pointer),
+            so a desktop browser in a narrow/zoomed window still gets the embed */}
+        <div className="hidden [@media(max-width:767px)_and_(pointer:coarse)]:flex flex-col items-center justify-center min-h-[60vh] text-center px-6 py-12">
           <p className="text-glomalin-text font-mono text-sm font-semibold mb-2">
             {mod.label}
           </p>
@@ -101,8 +102,8 @@ export default async function ModulePage({ params }: ModulePageProps) {
           </p>
         </div>
 
-        {/* Desktop embed — shown on md+ */}
-        <div className="hidden md:block">
+        {/* Embed — hidden only on narrow touch devices */}
+        <div className="block [@media(max-width:767px)_and_(pointer:coarse)]:hidden">
           <EmbedBreadcrumb moduleLabel={mod.label} moduleSublabel={mod.sublabel} />
           <EmbedFrame src={roleUrl} title={mod.label} />
         </div>
