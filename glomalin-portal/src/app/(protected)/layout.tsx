@@ -59,7 +59,7 @@ export default async function ProtectedLayout({
 
       {/* Mobile: Header + sync banner — visible on mobile only */}
       <div className="md:hidden">
-        <MobileHeader pageTitle="Portal" />
+        <MobileHeader />
         <SyncStatusProvider />
         <ConflictDrawer />
       </div>

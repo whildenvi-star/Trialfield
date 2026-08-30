@@ -7,7 +7,11 @@ export interface Module {
   type: 'native' | 'embed'
   embedKey?: string
   query?: string
+  /** Extra terms the palette matches against — how people actually say it. */
+  aliases?: string[]
 }
+
+export type GroupIcon = 'field' | 'ops' | 'finance' | 'inputs'
 
 // Same-origin embed paths — Caddy proxies /embed/<app>/* to Express ports.
 // This keeps iframes on the portal's origin so they share localStorage
@@ -50,6 +54,7 @@ export const MODULES: Module[] = [
     route: '/app/crew',
     status: 'live',
     type: 'native',
+    aliases: ['crew', 'tasks', 'operators', 'jobs'],
   },
   {
     id: 'maps',
@@ -58,6 +63,7 @@ export const MODULES: Module[] = [
     route: '/app/maps',
     status: 'live',
     type: 'native',
+    aliases: ['map', 'boundaries', 'polygons', 'satellite', 'canvas'],
   },
   {
     id: 'weather',
@@ -66,6 +72,7 @@ export const MODULES: Module[] = [
     route: '/app/weather',
     status: 'live',
     type: 'native',
+    aliases: ['rain', 'precip', 'precipitation', 'forecast', 'weather'],
   },
   {
     id: 'compliance',
@@ -74,6 +81,7 @@ export const MODULES: Module[] = [
     route: '/app/compliance',
     status: 'live',
     type: 'native',
+    aliases: ['fsa', 'acreage', 'reporting', '578', 'clu'],
   },
   {
     id: 'field-ops',
@@ -82,6 +90,7 @@ export const MODULES: Module[] = [
     route: '/app/field-ops',
     status: 'live',
     type: 'native',
+    aliases: ['tc', 'sign-off', 'nop', 'passes', 'applied'],
   },
   {
     id: 'marketing',
@@ -90,6 +99,7 @@ export const MODULES: Module[] = [
     route: '/app/marketing',
     status: 'live',
     type: 'native',
+    aliases: ['contracts', 'basis', 'sales', 'position', 'bushels', 'priced'],
   },
   {
     id: 'field-history',
@@ -98,6 +108,7 @@ export const MODULES: Module[] = [
     route: '/app/field-history',
     status: 'live',
     type: 'native',
+    aliases: ['rotation', 'as-applied', 'history', 'farm info'],
   },
   {
     id: 'performance',
@@ -106,6 +117,7 @@ export const MODULES: Module[] = [
     route: '/app/performance',
     status: 'live',
     type: 'native',
+    aliases: ['season', 'health', 'yield', 'overview'],
   },
   {
     id: 'enterprise-summary',
@@ -114,6 +126,7 @@ export const MODULES: Module[] = [
     route: '/app/enterprise-summary',
     status: 'live',
     type: 'native',
+    aliases: ['enterprise', 'costs', 'revenue', 'by crop', 'margin'],
   },
   {
     id: 'field-timeline',
@@ -122,6 +135,7 @@ export const MODULES: Module[] = [
     route: '/app/field-timeline',
     status: 'live',
     type: 'native',
+    aliases: ['activity', 'timeline', 'events'],
   },
   {
     id: 'farm-budget',
@@ -131,6 +145,7 @@ export const MODULES: Module[] = [
     status: 'live',
     type: 'embed',
     embedKey: 'FARM_BUDGET',
+    aliases: ['macro', 'budget', 'planning', 'crop plans', 'p&l', 'enterprise planner'],
   },
   {
     id: 'grain-tickets',
@@ -140,6 +155,7 @@ export const MODULES: Module[] = [
     status: 'live',
     type: 'embed',
     embedKey: 'GRAIN_TICKETS',
+    aliases: ['tickets', 'loads', 'hauled', 'scale', 'moisture', 'deliveries'],
   },
   {
     id: 'farm-registry',
@@ -149,6 +165,7 @@ export const MODULES: Module[] = [
     status: 'live',
     type: 'embed',
     embedKey: 'FARM_REGISTRY',
+    aliases: ['registry', 'fields', 'acres', 'source of truth'],
   },
   {
     id: 'org-cert',
@@ -158,6 +175,7 @@ export const MODULES: Module[] = [
     status: 'live',
     type: 'embed',
     embedKey: 'ORG_CERT',
+    aliases: ['organic', 'cert', 'certification', 'nop', 'audit'],
   },
   {
     id: 'meristem-malt',
@@ -167,6 +185,7 @@ export const MODULES: Module[] = [
     status: 'live',
     type: 'embed',
     embedKey: 'MERISTEM_MALT',
+    aliases: ['malt', 'barley', 'batch', 'brewing'],
   },
   {
     id: 'seed-inventory',
@@ -176,6 +195,7 @@ export const MODULES: Module[] = [
     status: 'live',
     type: 'embed',
     embedKey: 'SEED_INVENTORY',
+    aliases: ['seed', 'inputs', 'receiving', 'deliveries', 'chemical', 'fertilizer'],
   },
   {
     id: 'reference-data',
@@ -186,5 +206,83 @@ export const MODULES: Module[] = [
     type: 'embed',
     embedKey: 'FARM_BUDGET',
     query: 'view=reference',
+    aliases: ['products', 'suppliers', 'catalog', 'varieties'],
   },
 ]
+
+// ─── Navigation grouping ──────────────────────────────────────────────────────
+// Single source of truth. SideNav, MobileBottomNav, and the module drawer all
+// read this — previously it was hand-duplicated and 'crew' had fallen out of
+// every group, making it unreachable from the desktop rail.
+
+export interface ModuleGroup {
+  label: string
+  icon: GroupIcon
+  ids: string[]
+}
+
+export const MODULE_GROUPS: ModuleGroup[] = [
+  { label: 'Field',      icon: 'field',   ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
+  { label: 'Operations', icon: 'ops',     ids: ['crew', 'field-ops', 'compliance', 'org-cert', 'farm-registry'] },
+  { label: 'Finance',    icon: 'finance', ids: ['performance', 'enterprise-summary', 'marketing', 'farm-budget', 'grain-tickets'] },
+  { label: 'Inputs',     icon: 'inputs',  ids: ['seed-inventory', 'reference-data', 'meristem-malt'] },
+]
+
+/** Every module id that appears in some group — guards against future drift. */
+export const GROUPED_MODULE_IDS = new Set(MODULE_GROUPS.flatMap((g) => g.ids))
+
+/** Modules defined but not placed in any group. Should always be empty. */
+export const UNGROUPED_MODULES = MODULES.filter((m) => !GROUPED_MODULE_IDS.has(m.id))
+
+// ─── Secondary pages ──────────────────────────────────────────────────────────
+// Real destinations that aren't modules: they're reached from dashboard cards,
+// deep links, or from inside another module. They get no rail entry (the rail is
+// for the 17 modules) but they are reachable from the command palette, which is
+// the difference between "not in the nav" and "unreachable".
+
+export interface PortalPage {
+  id: string
+  label: string
+  sublabel: string
+  route: string
+  /** Module whose access grant governs this page, if any. */
+  requires?: string
+  aliases?: string[]
+}
+
+// Note: /app/macro and /app/macro-rollup are deliberate redirect stubs that keep
+// old deep links alive (→ farm-budget, → marketing). They are not listed here.
+export const PAGES: PortalPage[] = [
+  { id: 'dashboard',  label: 'Dashboard',    sublabel: 'Summary & action items',      route: '/dashboard',     aliases: ['home', 'start'] },
+  { id: 'crop-plans', label: 'Field Passes', sublabel: 'In-field tap-confirm logger', route: '/crop-plans',    aliases: ['log a pass', 'passes', 'phone', 'confirm'] },
+  { id: 'fsa-578',    label: 'FSA-578',      sublabel: 'Acreage report & audit',      route: '/app/fsa-578',   requires: 'compliance', aliases: ['578', 'acreage report'] },
+  { id: 'insurance',  label: 'Insurance',    sublabel: 'Policies & APH',              route: '/app/insurance', requires: 'compliance', aliases: ['policy', 'aph', 'rma'] },
+  { id: 'claims',     label: 'Claims',       sublabel: 'Open & settled claims',       route: '/app/claims',    requires: 'compliance', aliases: ['claim', 'loss', 'adjuster'] },
+]
+
+/**
+ * Human name for whatever route the user is on. Falls back to the last path
+ * segment title-cased, so a new route always shows *something* real rather
+ * than a hardcoded placeholder.
+ */
+export function resolveRouteTitle(pathname: string): string {
+  const destinations: { route: string; label: string }[] = [
+    ...MODULES.map((m) => ({ route: m.route, label: m.label })),
+    ...PAGES.map((p) => ({ route: p.route, label: p.label })),
+    { route: '/admin', label: 'User Management' },
+  ]
+
+  // Longest matching route wins, so /app/field-history beats a shorter prefix.
+  const match = destinations
+    .filter((d) => pathname === d.route || pathname.startsWith(d.route + '/'))
+    .sort((a, b) => b.route.length - a.route.length)[0]
+
+  if (match) return match.label
+
+  const segment = pathname.split('/').filter(Boolean).pop()
+  if (!segment) return 'Glomalin'
+  return segment
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}

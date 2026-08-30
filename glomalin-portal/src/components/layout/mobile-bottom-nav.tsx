@@ -3,18 +3,11 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MODULES } from '@/lib/modules'
+import { MODULES, MODULE_GROUPS } from '@/lib/modules'
 
 interface MobileBottomNavProps {
   grantedModuleIds: string[]
 }
-
-const MODULE_GROUPS: { label: string; ids: string[] }[] = [
-  { label: 'Field',      ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
-  { label: 'Operations', ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
-  { label: 'Finance',    ids: ['performance', 'enterprise-summary', 'marketing', 'farm-budget', 'grain-tickets'] },
-  { label: 'Inputs',     ids: ['seed-inventory', 'reference-data', 'meristem-malt'] },
-]
 
 const MAIN_TABS = [
   { label: 'Home',         href: '/dashboard',          action: undefined,      icon: 'home'  as const },

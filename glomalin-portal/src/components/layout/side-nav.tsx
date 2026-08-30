@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { logout } from '@/app/actions/auth'
-import { MODULES } from '@/lib/modules'
+import { MODULES, MODULE_GROUPS } from '@/lib/modules'
 import { type SceneType, nextScene } from '@/components/layout/scene-types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -19,13 +19,6 @@ const PINNED_KEY  = 'glomalin-sidebar-pinned'
 const VALID_SCENES: SceneType[] = ['mycelium', 'drone', 'seasonal']
 const RAIL_W = '64px'
 const OPEN_W = '240px'
-
-const MODULE_GROUPS: { label: string; icon: 'field' | 'ops' | 'finance' | 'inputs'; ids: string[] }[] = [
-  { label: 'Field',      icon: 'field',   ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
-  { label: 'Operations', icon: 'ops',     ids: ['field-ops', 'compliance', 'org-cert', 'farm-registry'] },
-  { label: 'Finance',    icon: 'finance', ids: ['performance', 'enterprise-summary', 'marketing', 'farm-budget', 'grain-tickets'] },
-  { label: 'Inputs',     icon: 'inputs',  ids: ['seed-inventory', 'reference-data', 'meristem-malt'] },
-]
 
 // ─── localStorage helpers ─────────────────────────────────────────────────────
 
