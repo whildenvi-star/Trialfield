@@ -523,22 +523,15 @@ app.get('/api/yield-from-grain', async (req, res) => {
       byCrop[cropId] = {
         cropName: reg ? reg.name : e.cropName,
         unit: reg ? reg.unit : 'Bu',
-        totalNetBU: 0, acres: 0, ticketCount: 0, fieldCount: 0,
+        totalNetBU: 0, acres: 0, ticketAcres: 0, ticketCount: 0, fieldCount: 0,
         yieldPerAcre: 0, cropYear: e.cropYear, syncedAt: e.syncedAt
       };
     }
     const g = byCrop[cropId];
     g.totalNetBU += e.totalNetBU || 0;
-    // Acres may be missing on entries cached before this field existed —
-    // derive from yieldPerAcre so weighted averages stay honest.
-    g.acres += e.acres || (e.yieldPerAcre > 0 ? (e.totalNetBU || 0) / e.yieldPerAcre : 0);
+    g.ticketAcres += e.acres || (e.yieldPerAcre > 0 ? (e.totalNetBU || 0) / e.yieldPerAcre : 0);
     g.ticketCount += e.ticketCount || 0;
     g.fieldCount++;
-  });
-  Object.values(byCrop).forEach(g => {
-    g.totalNetBU = Math.round(g.totalNetBU * 100) / 100;
-    g.acres = Math.round(g.acres * 100) / 100;
-    g.yieldPerAcre = g.acres > 0 ? Math.round((g.totalNetBU / g.acres) * 100) / 100 : 0;
   });
 
   // Built after byCrop so alias collisions resolve toward the crop that has
@@ -553,6 +546,28 @@ app.get('/api/yield-from-grain', async (req, res) => {
       if (existing && byCrop[existing] && !byCrop[c.id]) return;
       nameIndex[norm] = c.id;
     });
+  });
+
+  // Denominator: crop acres from the enterprise budgets (MACRO fields), not
+  // grain-tickets Farm rows — Farm rows hold one crop per farm, so subfields
+  // and double-cropped ground get the wrong acres. Same acre basis as
+  // calc.js computeFieldBudget: plantedAcres when set, else field.acres.
+  const enterpriseAcres = {};
+  (store.fields || []).forEach(f => {
+    const cropId = nameIndex[(f.crop || '').trim().toLowerCase()];
+    if (!cropId) return;
+    const acres = (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0;
+    enterpriseAcres[cropId] = (enterpriseAcres[cropId] || 0) + acres;
+  });
+
+  Object.keys(byCrop).forEach(cropId => {
+    const g = byCrop[cropId];
+    g.totalNetBU = Math.round(g.totalNetBU * 100) / 100;
+    g.ticketAcres = Math.round(g.ticketAcres * 100) / 100;
+    // Fall back to ticket-derived acres when MACRO has no field for the crop.
+    g.acres = enterpriseAcres[cropId] > 0 ? Math.round(enterpriseAcres[cropId] * 100) / 100 : g.ticketAcres;
+    g.acresSource = enterpriseAcres[cropId] > 0 ? 'enterprise' : 'tickets';
+    g.yieldPerAcre = g.acres > 0 ? Math.round((g.totalNetBU / g.acres) * 100) / 100 : 0;
   });
 
   res.json({ yields: _grainYields.data, updatedAt: _grainYields.updatedAt, byCrop, nameIndex });
