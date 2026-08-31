@@ -1214,10 +1214,14 @@ function nutrientSources(key, organicOnly) {
         product: p.name,
         organic: !!p.organic,
         analysis: Number(p[key]) || 0,
+        placeholder: !!p.analysisPlaceholder,
         perLb: Math.round((perLbProduct / (Number(p[key]) || 1)) * 1000) / 1000
       };
     })
-    .sort((a, b) => a.perLb - b.perLb);
+    // A measured analysis outranks a guessed one: cheapest wins only within a
+    // tier, so a $4/ton by-product carrying placeholder numbers can't displace
+    // the potash you'd actually spread.
+    .sort((a, b) => (a.placeholder - b.placeholder) || (a.perLb - b.perLb));
 }
 
 // Every product whose stored analysis disagrees with its own name — the straw

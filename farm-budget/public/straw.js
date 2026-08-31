@@ -308,7 +308,8 @@
           nutrient: key === 'k20' ? 'K₂O' : 'P₂O₅',
           product: src.product,
           perLb: src.perLb,
-          fallback: !!src.fallback
+          fallback: !!src.fallback,
+          placeholder: !!src.placeholder
         });
       });
     });
@@ -320,12 +321,18 @@
         html += '<tr><td>' + l.ground + '</td><td>' + l.nutrient + '</td>' +
           '<td>' + util.escHtml(l.product) +
             (l.fallback ? ' <span style="color:var(--danger)" title="No organic-approved source carries this nutrient — figure understates the real replacement cost">⚠ not approved</span>' : '') +
+            (l.placeholder ? ' <span style="color:var(--warning,#d97706)" title="Book placeholder analysis, not a manure test — replace with real numbers when you have them">placeholder</span>' : '') +
           '</td>' +
           '<td class="number">' + util.formatMoney(l.perLb, 3) + '</td></tr>';
       });
       html += '</tbody></table></div>';
       html += '<p style="color:var(--text-dim);font-size:0.8rem;margin:0.25rem 0 0">' +
         'Cheapest source carrying that nutrient, from the products table — organic ground prices against approved products only.</p>';
+      if (lines.some(function (l) { return l.placeholder; })) {
+        html += '<p style="color:var(--warning,#d97706);font-size:0.8rem;margin:0.25rem 0 0">' +
+          'Rows marked <strong>placeholder</strong> use book mid-range analysis, not a manure test. Manure varies hugely by source, ' +
+          'bedding and storage — replace these with real numbers before leaning on the organic figures.</p>';
+      }
     }
 
     var suspect = summary.suspectAnalyses || [];
