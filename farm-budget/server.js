@@ -175,6 +175,9 @@ function loadData() {
   if (!store.strawSales) store.strawSales = [];
   if (!store.strawOps) store.strawOps = [];
   if (!store.strawProduction) store.strawProduction = [];
+  if (!store.strawRemovalRates || !store.strawRemovalRates.length) {
+    store.strawRemovalRates = STRAW_REMOVAL_DEFAULTS.map(r => Object.assign({ id: generateId('srate') }, r));
+  }
   if (!store.inputQuotes) store.inputQuotes = [];
   recomputeDblSharedAcres();
 }
@@ -1129,6 +1132,123 @@ function strawOpQty(op, ctx) {
   }
 }
 
+// ── Fertility removal ──
+// Baling carries nutrients off the field that a chopped-and-spread residue would
+// have left behind. Book rates in lb per ton of straw, by crop family, priced
+// from the products table's own analysis and billed price. N is carried for the
+// record but not costed — straw N largely immobilizes at that C:N ratio.
+const STRAW_REMOVAL_DEFAULTS = [
+  { crop: 'Wheat',  n: 12, p205: 4, k20: 25 },
+  { crop: 'Rye',    n: 11, p205: 4, k20: 22 },
+  { crop: 'Barley', n: 13, p205: 5, k20: 30 },
+  { crop: 'Kernza', n: 12, p205: 4, k20: 25 },
+  { crop: 'Other',  n: 12, p205: 4, k20: 25 }
+];
+const STRAW_COSTED_NUTRIENTS = ['p205', 'k20'];
+
+crudRoutes('straw-removal-rates', 'strawRemovalRates', 'srate');
+
+// Which cropTypes family a field's crop belongs to — "ORG seed wheat" → "Wheat".
+function strawCropFamily(cropName) {
+  const key = (cropName || '').trim().toLowerCase();
+  if (!key) return 'Other';
+  const cts = store.cropTypes || [];
+  for (const ct of cts) {
+    if ((ct.name || '').trim().toLowerCase() === key) return ct.name;
+    for (const sub of (ct.subCrops || [])) {
+      if ((sub.name || '').trim().toLowerCase() === key) return ct.name;
+    }
+  }
+  return 'Other';
+}
+
+function strawRemovalRate(family) {
+  const rates = store.strawRemovalRates || [];
+  return rates.find(r => (r.crop || '').toLowerCase() === (family || '').toLowerCase()) ||
+         rates.find(r => (r.crop || '').toLowerCase() === 'other') ||
+         { crop: 'Other', n: 0, p205: 0, k20: 0 };
+}
+
+// A fertilizer's name states its own analysis — "18-46-0 DAP" is 46% P2O5. When
+// the stored fraction contradicts the name, the stored value is a typo, and
+// cheapest-source picking would happily price phosphorus off a product that has
+// none. Suspect rows are excluded from pricing and reported instead.
+const NPK_IN_NAME = /^\s*(\d{1,2})-(\d{1,2})-(\d{1,2})/;
+
+function analysisFromName(name, key) {
+  const m = NPK_IN_NAME.exec(name || '');
+  if (!m) return null;
+  return (key === 'p205' ? Number(m[2]) : Number(m[3])) / 100;
+}
+
+function analysisIsSuspect(product, key) {
+  const expected = analysisFromName(product.name, key);
+  if (expected === null) return false;
+  return Math.abs(expected - (Number(product[key]) || 0)) > 0.02;
+}
+
+// $/lb of actual nutrient: billed price ÷ conversion gives $/lb of product,
+// divided again by the analysis fraction. 0-0-60 at $445/ton → $0.371/lb K2O.
+function nutrientSources(key, organicOnly) {
+  return (store.products || [])
+    .filter(p => (Number(p[key]) || 0) > 0 && (Number(p.unitBilledPrice) || 0) > 0)
+    .filter(p => (organicOnly ? !!p.organic : true))
+    .filter(p => !analysisIsSuspect(p, key))
+    .map(p => ({
+      productId: p.id,
+      product: p.name,
+      organic: !!p.organic,
+      analysis: Number(p[key]) || 0,
+      perLb: Calc.round2(((Number(p.unitBilledPrice) || 0) / (Number(p.conversionRate) || 1)) / (Number(p[key]) || 1) * 1000) / 1000
+    }))
+    .sort((a, b) => a.perLb - b.perLb);
+}
+
+// Every product whose stored analysis disagrees with its own name — the straw
+// tab surfaces these so a typo shows up as a warning, not as a wrong dollar.
+function suspectAnalyses() {
+  const out = [];
+  (store.products || []).forEach(p => {
+    ['p205', 'k20'].forEach(key => {
+      if (!analysisIsSuspect(p, key)) return;
+      out.push({
+        productId: p.id,
+        product: p.name,
+        nutrient: key === 'p205' ? 'P2O5' : 'K2O',
+        stored: Number(p[key]) || 0,
+        expected: analysisFromName(p.name, key)
+      });
+    });
+  });
+  return out;
+}
+
+// Cheapest legitimate source by default; a pinned product in settings wins.
+// Organic ground has to be replaced with an approved product, so it prices
+// against the organic list and only falls back when that list is empty.
+function priceNutrient(key, organic) {
+  const pinnedBy = (store.settings.strawRemovalSources || {})[organic ? 'org' : 'conv'] || {};
+  const conventional = nutrientSources(key, false);
+  if (pinnedBy[key]) {
+    const hit = conventional.find(s => s.productId === pinnedBy[key]);
+    if (hit) return hit;
+  }
+  if (!organic) return conventional[0] || null;
+  const approved = nutrientSources(key, true);
+  if (approved[0]) return approved[0];
+  // No approved source to price against — fall back so the row still carries a
+  // number, but say so: organic replacement runs well above the conventional
+  // rate, so this figure understates the real cost.
+  return conventional[0] ? Object.assign({}, conventional[0], { fallback: true }) : null;
+}
+
+function isOrganicField(f) {
+  if ((f.systemCode || '').toUpperCase() === 'ORG') return true;
+  const ent = (store.enterprises || []).find(e =>
+    e.id === Calc.resolveEnterpriseId(f, store.cropTypes || [], store.enterprises));
+  return /organic/i.test((ent && ent.name) || '');
+}
+
 // GET /api/straw/summary?year= — small-grain fields with straw work + sales rolled up per farm
 app.get('/api/straw/summary', (req, res) => {
   const year = parseInt(req.query.year, 10) || store.settings.year;
@@ -1165,6 +1285,34 @@ app.get('/api/straw/summary', (req, res) => {
     });
     const costTotal = fOps.reduce((s, o) => s + o.cost, 0);
 
+    // Removal follows the bales off the field, so it costs against tons made —
+    // not tons sold. Straw still stacked in the yard already left the ground.
+    const organic = isOrganicField(f);
+    const family = strawCropFamily(f.crop);
+    const rate = strawRemovalRate(family);
+    const removalLbs = {
+      n: Calc.round2(tonsMade * (Number(rate.n) || 0)),
+      p205: Calc.round2(tonsMade * (Number(rate.p205) || 0)),
+      k20: Calc.round2(tonsMade * (Number(rate.k20) || 0))
+    };
+    const removalSources = {};
+    let removalCost = 0;
+    STRAW_COSTED_NUTRIENTS.forEach(key => {
+      const src = priceNutrient(key, organic);
+      removalSources[key] = src;
+      if (src) removalCost += removalLbs[key] * src.perLb;
+    });
+    const removal = {
+      family: family,
+      organic: organic,
+      rates: { n: Number(rate.n) || 0, p205: Number(rate.p205) || 0, k20: Number(rate.k20) || 0 },
+      lbs: removalLbs,
+      sources: removalSources,
+      costTotal: Calc.round2(removalCost),
+      costPerAcre: acres > 0 ? Calc.round2(removalCost / acres) : 0,
+      costPerTon: tonsMade > 0 ? Calc.round2(removalCost / tonsMade) : 0
+    };
+
     const aux = (f.auxPayments || []).find(a => (a.label || '').trim().toUpperCase() === 'STRAW');
     const auxCost = (f.auxPayments || []).find(a => (a.label || '').trim().toUpperCase() === 'STRAW COST');
     return {
@@ -1188,6 +1336,9 @@ app.get('/api/straw/summary', (req, res) => {
       costPerBale: bales > 0 ? Calc.round2(costTotal / bales) : 0,
       netTotal: Calc.round2(dollars - costTotal),
       netPerAcre: acres > 0 ? Calc.round2((dollars - costTotal) / acres) : 0,
+      removal: removal,
+      netAfterRemovalTotal: Calc.round2(dollars - costTotal - removal.costTotal),
+      netPerAcreAfterRemoval: acres > 0 ? Calc.round2((dollars - costTotal - removal.costTotal) / acres) : 0,
       ops: fOps,
       production: prod,
       budgetStrawPerAcre: aux ? (Number(aux.perAcre) || 0) : null,
@@ -1198,6 +1349,9 @@ app.get('/api/straw/summary', (req, res) => {
     year: year,
     settingsYear: store.settings.year,
     bases: STRAW_BASES,
+    removalRates: store.strawRemovalRates || [],
+    costedNutrients: STRAW_COSTED_NUTRIENTS,
+    suspectAnalyses: suspectAnalyses(),
     fields: rows,
     sales: sales,
     ops: ops,

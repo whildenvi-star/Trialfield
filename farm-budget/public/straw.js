@@ -8,6 +8,7 @@
   var summary = null;   // { year, settingsYear, fields, sales, ops, production }
   var loaded = false;
   var year = null;      // resolved from server settings on first load
+  var ratesOpen = false; // the removal panel survives the reload an edit triggers
 
   var OPS = ['Mow', 'Rake', 'Bale', 'Stack', 'Haul'];
   var BASES = ['/ac', '/bale', '/ton', 'flat'];
@@ -85,14 +86,18 @@
       '<th>Farm</th><th>Crop</th><th class="number">Acres</th><th class="number">Bales</th>' +
       '<th class="number">Bales/AC</th><th class="number">Tons</th><th class="number">Avg $/Ton</th>' +
       '<th class="number">Rev $/AC</th><th class="number">Cost $/AC</th><th class="number">Cost $/Bale</th>' +
-      '<th class="number">Net $/AC</th><th class="number">In Budget $/AC</th><th></th>' +
+      '<th class="number">Net $/AC</th><th class="number">Removal $/AC</th>' +
+      '<th class="number">After Removal $/AC</th><th class="number">In Budget $/AC</th><th></th>' +
       '</tr></thead><tbody>';
 
-    var tAcres = 0, tBales = 0, tTons = 0, tRev = 0, tCost = 0, tAcresActive = 0;
+    var tAcres = 0, tBales = 0, tTons = 0, tRev = 0, tCost = 0, tAcresActive = 0, tRemoval = 0;
     fields.forEach(function (f) {
       var active = f.tons > 0 || f.bales > 0 || f.opCount > 0;
       tAcres += f.acres;
-      if (active) { tBales += f.bales; tTons += f.tons; tRev += f.dollars; tCost += f.costTotal; tAcresActive += f.acres; }
+      if (active) {
+        tBales += f.bales; tTons += f.tons; tRev += f.dollars; tCost += f.costTotal;
+        tRemoval += f.removal.costTotal; tAcresActive += f.acres;
+      }
       var applied = f.budgetStrawPerAcre !== null || f.budgetStrawCostPerAcre !== null;
       var budgetNet = (f.budgetStrawPerAcre || 0) + (f.budgetStrawCostPerAcre || 0);
       var inSync = applied &&
@@ -109,7 +114,9 @@
         '<td class="number">' + (f.dollarsPerAcre ? util.formatMoney(f.dollarsPerAcre) : '--') + '</td>' +
         '<td class="number">' + (f.costPerAcre ? util.formatMoney(f.costPerAcre) : '--') + '</td>' +
         '<td class="number">' + (f.costPerBale ? util.formatMoney(f.costPerBale) : '--') + '</td>' +
-        '<td class="number"><strong>' + (active ? util.formatMoney(f.netPerAcre) : '--') + '</strong></td>' +
+        '<td class="number">' + (active ? util.formatMoney(f.netPerAcre) : '--') + '</td>' +
+        '<td class="number" style="color:var(--danger)">' + (f.removal.costPerAcre ? '-' + util.formatMoney(f.removal.costPerAcre) : '--') + '</td>' +
+        '<td class="number"><strong>' + (active ? util.formatMoney(f.netPerAcreAfterRemoval) : '--') + '</strong></td>' +
         '<td class="number">' + (applied ? util.formatMoney(budgetNet) : '--') + '</td>' +
         '<td>' + (active
           ? '<button class="btn-secondary straw-apply" data-field-id="' + f.fieldId + '"' +
@@ -129,7 +136,9 @@
       '<td class="number">' + (tAcresActive > 0 ? util.formatMoney(tRev / tAcresActive) : '--') + '</td>' +
       '<td class="number">' + (tAcresActive > 0 ? util.formatMoney(tCost / tAcresActive) : '--') + '</td>' +
       '<td class="number">' + (tBales > 0 ? util.formatMoney(tCost / tBales) : '--') + '</td>' +
-      '<td class="number"><strong>' + (tAcresActive > 0 ? util.formatMoney(tNet / tAcresActive) : '--') + '</strong></td>' +
+      '<td class="number">' + (tAcresActive > 0 ? util.formatMoney(tNet / tAcresActive) : '--') + '</td>' +
+      '<td class="number" style="color:var(--danger)">' + (tRemoval > 0 && tAcresActive > 0 ? '-' + util.formatMoney(tRemoval / tAcresActive) : '--') + '</td>' +
+      '<td class="number"><strong>' + (tAcresActive > 0 ? util.formatMoney((tNet - tRemoval) / tAcresActive) : '--') + '</strong></td>' +
       '<td></td><td></td></tr>';
     html += '</tbody></table></div>';
     if (tAcresActive > 0 && Math.abs(tAcresActive - tAcres) > 0.05) {
@@ -138,11 +147,13 @@
     }
 
     // ── Bales made ──
-    html += '<h3 style="margin:1.25rem 0 0.5rem">Bales Made — ' + year + '</h3>';
+    html += '<h3 style="margin:1.25rem 0 0.5rem">Bales Made &amp; Nutrient Removal — ' + year + '</h3>';
     html += '<div class="table-wrap"><table><thead><tr>' +
       '<th>Farm</th><th>Crop</th><th class="number">Acres</th><th class="number">Bales</th>' +
       '<th class="number">Avg Bale lbs</th><th class="number">Tons Made</th><th class="number">Tons Sold</th>' +
-      '<th class="number">Unsold Tons</th>' +
+      '<th class="number">Unsold Tons</th><th>Rate</th><th class="number">P₂O₅ lb</th>' +
+      '<th class="number">K₂O lb</th><th class="number">N lb</th><th class="number">Removal $</th>' +
+      '<th class="number">Removal $/AC</th>' +
       '</tr></thead><tbody>';
     fields.forEach(function (f) {
       var unsold = f.tonsMade - f.tons;
@@ -155,12 +166,22 @@
         '<td class="number">' + util.formatNum(f.tonsMade, 2) + '</td>' +
         '<td class="number">' + util.formatNum(f.tons, 2) + '</td>' +
         '<td class="number">' + (Math.abs(unsold) > 0.01 ? util.formatNum(unsold, 2) : '--') + '</td>' +
+        '<td title="' + util.escHtml(f.removal.family) + (f.removal.organic ? ' (organic ground)' : '') + '">' +
+          util.escHtml(f.removal.family) + (f.removal.organic ? ' · ORG' : '') + '</td>' +
+        '<td class="number">' + (f.removal.lbs.p205 ? util.formatNum(f.removal.lbs.p205, 0) : '--') + '</td>' +
+        '<td class="number">' + (f.removal.lbs.k20 ? util.formatNum(f.removal.lbs.k20, 0) : '--') + '</td>' +
+        '<td class="number" style="color:var(--text-dim)">' + (f.removal.lbs.n ? util.formatNum(f.removal.lbs.n, 0) : '--') + '</td>' +
+        '<td class="number">' + (f.removal.costTotal ? util.formatMoney(f.removal.costTotal) : '--') + '</td>' +
+        '<td class="number"><strong>' + (f.removal.costPerAcre ? util.formatMoney(f.removal.costPerAcre) : '--') + '</strong></td>' +
         '</tr>';
     });
     html += '</tbody></table></div>';
-    html += '<p style="color:var(--text-dim);font-size:0.8rem;margin:0.25rem 0 1rem">' +
-      'Bales × avg weight gives tons made — that\'s what per-ton work costs out against. ' +
-      'Farms with no bale count fall back to tons sold.</p>';
+    html += '<p style="color:var(--text-dim);font-size:0.8rem;margin:0.25rem 0 0.75rem">' +
+      'Bales × avg weight gives tons made — that\'s what per-ton work and nutrient removal cost out against. ' +
+      'Farms with no bale count fall back to tons sold. ' +
+      'N is shown for the record but not costed: at that C:N ratio straw N largely immobilizes rather than replacing fertilizer.</p>';
+
+    html += renderRemovalRates();
 
     // ── Straw work log ──
     html += '<h3 style="margin:1.25rem 0 0.5rem">Straw Work — ' + year + '</h3>';
@@ -243,6 +264,90 @@
     wireEvents(root);
   }
 
+  // Book rates per crop family, plus the products the dollars are priced from —
+  // shown, not hidden, because a wrong analysis on a product silently skews
+  // every removal figure on the page.
+  function renderRemovalRates() {
+    var rates = (summary.removalRates || []).slice().sort(function (a, b) {
+      return (a.crop || '').localeCompare(b.crop || '');
+    });
+    var costed = summary.costedNutrients || ['p205', 'k20'];
+
+    var html = '<details id="straw-rates-panel"' + (ratesOpen ? ' open' : '') + ' style="margin:0 0 1.25rem"><summary style="cursor:pointer;color:var(--text-dim);font-size:0.9rem">' +
+      'Removal rates &amp; pricing — lb per ton of straw, and what replacement costs</summary>' +
+      '<div style="margin-top:0.75rem">';
+
+    html += '<div class="table-wrap" style="max-width:640px"><table><thead><tr>' +
+      '<th>Crop</th><th class="number">N lb/ton</th><th class="number">P₂O₅ lb/ton</th><th class="number">K₂O lb/ton</th>' +
+      '</tr></thead><tbody>';
+    rates.forEach(function (r) {
+      html += '<tr>' +
+        '<td>' + util.escHtml(r.crop) + '</td>' +
+        '<td class="editable number" data-rate-id="' + r.id + '" data-rate-field="n">' + util.formatNum(r.n || 0, 1) + '</td>' +
+        '<td class="editable number" data-rate-id="' + r.id + '" data-rate-field="p205">' + util.formatNum(r.p205 || 0, 1) + '</td>' +
+        '<td class="editable number" data-rate-id="' + r.id + '" data-rate-field="k20">' + util.formatNum(r.k20 || 0, 1) + '</td>' +
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    html += '<p style="color:var(--text-dim);font-size:0.8rem;margin:0.25rem 0 0.75rem">' +
+      'Seeded with published mid-range values — dbl-click to set your own. K₂O especially varies: ' +
+      'straw rained on in the windrow leaches badly, so a straw test beats any book number.</p>';
+
+    // Price book — one line per nutrient per ground type, naming its source product.
+    var seen = {};
+    var lines = [];
+    (summary.fields || []).forEach(function (f) {
+      costed.forEach(function (key) {
+        var src = f.removal.sources[key];
+        if (!src) return;
+        var tag = (f.removal.organic ? 'org' : 'conv') + ':' + key;
+        if (seen[tag]) return;
+        seen[tag] = true;
+        lines.push({
+          ground: f.removal.organic ? 'Organic' : 'Conventional',
+          nutrient: key === 'k20' ? 'K₂O' : 'P₂O₅',
+          product: src.product,
+          perLb: src.perLb,
+          fallback: !!src.fallback
+        });
+      });
+    });
+    if (lines.length) {
+      html += '<div class="table-wrap" style="max-width:640px"><table><thead><tr>' +
+        '<th>Ground</th><th>Nutrient</th><th>Priced from</th><th class="number">$/lb</th>' +
+        '</tr></thead><tbody>';
+      lines.forEach(function (l) {
+        html += '<tr><td>' + l.ground + '</td><td>' + l.nutrient + '</td>' +
+          '<td>' + util.escHtml(l.product) +
+            (l.fallback ? ' <span style="color:var(--danger)" title="No organic-approved source carries this nutrient — figure understates the real replacement cost">⚠ not approved</span>' : '') +
+          '</td>' +
+          '<td class="number">' + util.formatMoney(l.perLb, 3) + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<p style="color:var(--text-dim);font-size:0.8rem;margin:0.25rem 0 0">' +
+        'Cheapest source carrying that nutrient, from the products table — organic ground prices against approved products only.</p>';
+    }
+
+    var suspect = summary.suspectAnalyses || [];
+    if (suspect.length) {
+      html += '<p style="color:var(--danger);font-size:0.85rem;margin:0.75rem 0 0.25rem">' +
+        '⚠ ' + suspect.length + ' product' + (suspect.length === 1 ? '' : 's') +
+        ' whose stored analysis contradicts its own name — skipped when pricing removal. Fix in Reference → Inputs:</p>';
+      html += '<div class="table-wrap" style="max-width:640px"><table><thead><tr>' +
+        '<th>Product</th><th>Nutrient</th><th class="number">Stored</th><th class="number">Name says</th>' +
+        '</tr></thead><tbody>';
+      suspect.forEach(function (x) {
+        html += '<tr><td>' + util.escHtml(x.product) + '</td><td>' + util.escHtml(x.nutrient) + '</td>' +
+          '<td class="number">' + util.formatNum(x.stored * 100, 0) + '%</td>' +
+          '<td class="number"><strong>' + util.formatNum(x.expected * 100, 0) + '%</strong></td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    html += '</div></details>';
+    return html;
+  }
+
   // --- Mutations -----------------------------------------------------------
 
   function endpoint(kind, id) {
@@ -321,6 +426,13 @@
     root.querySelectorAll('td.editable[data-prod-field]').forEach(function (td) {
       td.addEventListener('dblclick', function () { startProdEdit(td); });
     });
+
+    root.querySelectorAll('td.editable[data-rate-id]').forEach(function (td) {
+      td.addEventListener('dblclick', function () { startRateEdit(td); });
+    });
+
+    var ratesPanel = document.getElementById('straw-rates-panel');
+    if (ratesPanel) ratesPanel.addEventListener('toggle', function () { ratesOpen = ratesPanel.open; });
 
     root.querySelectorAll('.straw-del').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -428,6 +540,30 @@
       api.put(endpoint(kind, id), data).then(load);
     }
 
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') input.blur();
+      if (e.key === 'Escape') load();
+    });
+  }
+
+  function startRateEdit(td) {
+    if (td.classList.contains('editing')) return;
+    td.classList.add('editing');
+    var input = document.createElement('input');
+    input.type = 'number';
+    input.step = '0.1';
+    input.value = td.textContent.trim();
+    td.textContent = '';
+    td.appendChild(input);
+    input.focus();
+    if (input.select) input.select();
+
+    function save() {
+      var data = {};
+      data[td.getAttribute('data-rate-field')] = parseFloat(input.value) || 0;
+      api.put('/api/straw-removal-rates/' + td.getAttribute('data-rate-id'), data).then(load);
+    }
     input.addEventListener('blur', save);
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Enter') input.blur();
