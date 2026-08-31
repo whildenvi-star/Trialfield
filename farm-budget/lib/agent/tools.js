@@ -16,6 +16,16 @@ const Calc = require('../../public/calc.js');
 const FULL = ['admin', 'agronomist'];
 const isFull = (role) => FULL.indexOf(role) !== -1;
 
+// Sibling services. Defaults match the droplet's pm2 port map — grain-tickets
+// is 3007; 3000 is the portal, which is what the old hardcoded URL was hitting
+// (silently, so the miss went unnoticed for as long as it existed).
+// Env var names match the ones server.js already uses for these services.
+const SIBLINGS = {
+  registry: process.env.FARM_REGISTRY_URL || process.env.REGISTRY_API_URL || 'http://localhost:3005',
+  grain: process.env.GRAIN_API_URL || 'http://localhost:3007',
+  fsa: process.env.FSA_ACRES_URL || 'http://localhost:3002'
+};
+
 // ---------------------------------------------------------------------------
 // Tool definitions
 // ---------------------------------------------------------------------------
@@ -210,7 +220,8 @@ function enterpriseRows(ctx) {
       profit_per_acre: t.avgProfitPerAcre != null ? money(t.avgProfitPerAcre) : perAcre(t.cropProfit),
       profit_with_payments_total: money(t.profitWithPayments),
       profit_with_payments_per_acre: perAcre(t.profitWithPayments),
-      cop_per_bushel: money(t.cop)
+      cop_per_bushel: money(t.cop),
+      projected_total_yield: money(t.totalYield)
     };
   });
 }
@@ -389,17 +400,24 @@ async function executeTool(name, input, ctx, role) {
 
     case 'get_network_status': {
       const queries = [
-        { name: 'farm_registry', url: 'http://localhost:3005/api/fields', transform: (d) => (Array.isArray(d) ? {
+        { name: 'farm_registry', url: SIBLINGS.registry + '/api/fields', transform: (d) => (Array.isArray(d) ? {
           registered_fields: d.length,
           total_acres: money(d.reduce((s, f) => s + (f.reportingAcres || 0), 0)),
           organic_acres: money(d.reduce((s, f) => s + (f.organicAcres || 0), 0))
         } : null) },
-        { name: 'grain_tickets', url: 'http://localhost:3000/api/stats', transform: (d) => (d ? {
-          note: 'ACTUAL loads hauled — not projections',
-          total_tickets: d.totalTickets, total_pounds: d.totalWeight ? Math.round(d.totalWeight) : undefined,
-          by_crop: d.byCrop
+        { name: 'grain_tickets', url: SIBLINGS.grain + '/api/stats', transform: (d) => (d ? {
+          note: 'ACTUAL harvested volume delivered to date — not projections. Bushels here are net (moisture-adjusted).',
+          total_tickets: d.totalTickets,
+          farms_delivering: d.totalFarms,
+          avg_moisture_pct: d.avgMoisture,
+          actual_by_crop: (d.cropSummary || []).map((c) => ({
+            crop: c.crop,
+            actual_bushels: c.totalBU,
+            actual_pounds: c.totalWeight,
+            loads: c.ticketCount
+          }))
         } : null) },
-        { name: 'fsa_acres', url: 'http://localhost:3002/api/rollup/summary-metrics', transform: (d) => (d ? {
+        { name: 'fsa_acres', url: SIBLINGS.fsa + '/api/rollup/summary-metrics', transform: (d) => (d ? {
           enrolled_acres: d.totalEnrolledAcres, farms: d.totalFarms,
           compliance_rate: d.complianceRate, reporting_progress: d.reportingProgress
         } : null) }
