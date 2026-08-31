@@ -439,7 +439,9 @@ app.post('/api/yield-from-grain', (req, res) => {
     }
   }
 
-  _grainYields = { data: map, updatedAt: new Date().toISOString() };
+  // Stamp the year this payload belongs to. grain-tickets pushes whichever crop
+  // year the edited ticket carried, so the cache is not necessarily MACRO's year.
+  _grainYields = { data: map, updatedAt: new Date().toISOString(), cropYear: Number(cropYear) || null };
   res.json({ ok: true, count: summaries.length });
 });
 
@@ -475,7 +477,11 @@ async function pullGrainYields() {
         };
       }
     });
-    _grainYields = { data: map, updatedAt: new Date().toISOString() };
+    _grainYields = {
+      data: map,
+      updatedAt: new Date().toISOString(),
+      cropYear: Number(json.cropYear) || cropYear
+    };
     return map;
   } catch {
     return null;
@@ -509,11 +515,19 @@ async function fetchRegistryCrops() {
 // fields) and nameIndex (normalized name/alias → registryCropId) so the client can
 // resolve any crop spelling to the crop-wide actual.
 app.get('/api/yield-from-grain', async (req, res) => {
-  if (!_grainYields.data) await pullGrainYields();
+  // The numerator (bushels) comes from the push cache, the denominator (acres)
+  // from store.fields — which are always settings.year. grain-tickets replaces
+  // the cache wholesale with whatever year the last edited ticket carried, so
+  // correcting a 2025 ticket would otherwise render 2025 bushels over 2026 acres
+  // as this year's "GT Actual". Re-pull on mismatch, and serve nothing rather
+  // than a cross-year ratio we can't repair.
+  const macroYear = Number(store.settings.year) || new Date().getFullYear();
+  if (!_grainYields.data || Number(_grainYields.cropYear) !== macroYear) await pullGrainYields();
+  const yearMatches = Number(_grainYields.cropYear) === macroYear;
   const crops = (await fetchRegistryCrops()) || [];
 
   const byCrop = {};
-  const entries = _grainYields.data || {};
+  const entries = (yearMatches && _grainYields.data) || {};
   Object.keys(entries).forEach(key => {
     const e = entries[key];
     const cropId = e.registryCropId || key.split('|')[1];
@@ -535,16 +549,30 @@ app.get('/api/yield-from-grain', async (req, res) => {
   });
 
   // Built after byCrop so alias collisions resolve toward the crop that has
-  // ticket data (e.g. registry's conventional and organic Peas both carry the
-  // alias "Peas" — the one with yields wins the name).
+  // ticket data. Collisions are legal and expected: the registry's uniqueness
+  // key is name + organic flag, so conventional and organic records share a
+  // `name` ("Peas", "Soybeans", "Snap Beans", ...) and are told apart only by
+  // their aliases ("Peas"/"Field Peas" vs "ORG Peas"/"Organic Peas").
+  // So match the token's OWN organic-ness against the crop's flag first — bare
+  // "Soybeans" must stay conventional even when the organic record is the one
+  // carrying tickets. Ticket presence only breaks ties on the same side of the
+  // flag; without this the acres denominator and the dashboard's "GT Actual"
+  // both land on the wrong crop.
+  const ORGANIC_TOKEN = /^(org|organic)\b/;
   const nameIndex = {};
+  const nameFits = {};
   crops.forEach(c => {
     [c.name].concat(c.aliases || []).forEach(n => {
       if (!n) return;
       const norm = String(n).trim().toLowerCase();
+      const fits = ORGANIC_TOKEN.test(norm) === !!c.organic;
       const existing = nameIndex[norm];
-      if (existing && byCrop[existing] && !byCrop[c.id]) return;
+      if (existing) {
+        if (nameFits[norm] && !fits) return;
+        if (fits === nameFits[norm] && byCrop[existing] && !byCrop[c.id]) return;
+      }
       nameIndex[norm] = c.id;
+      nameFits[norm] = fits;
     });
   });
 
@@ -570,7 +598,14 @@ app.get('/api/yield-from-grain', async (req, res) => {
     g.yieldPerAcre = g.acres > 0 ? Math.round((g.totalNetBU / g.acres) * 100) / 100 : 0;
   });
 
-  res.json({ yields: _grainYields.data, updatedAt: _grainYields.updatedAt, byCrop, nameIndex });
+  res.json({
+    yields: entries,
+    updatedAt: _grainYields.updatedAt,
+    cropYear: macroYear,
+    cacheCropYear: _grainYields.cropYear || null,
+    byCrop,
+    nameIndex
+  });
 });
 
 // --- Dashboard ---

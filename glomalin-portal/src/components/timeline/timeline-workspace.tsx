@@ -226,7 +226,12 @@ export function TimelineWorkspace({ fieldId, fieldName }: TimelineWorkspaceProps
   const unscheduledEntries = filteredEntries.filter((e) => !e.date || e.date === '9999-12-31')
 
   function shiftAnchor(direction: -1 | 1) {
-    const d = new Date(anchor + 'T00:00:00Z')
+    // Snap to the 1st before stepping months: setUTCMonth on a 29th-31st anchor
+    // overflows into the next month (2026-08-31 +1mo -> 2026-10-01), which skips a
+    // month going forward and dead-clicks going back. The anchor defaults to today,
+    // so any 31st reaches this. monthGrid already normalizes the same way to render.
+    const base = viewMode === 'month' ? anchor.slice(0, 7) + '-01' : anchor
+    const d = new Date(base + 'T00:00:00Z')
     if (viewMode === 'month') d.setUTCMonth(d.getUTCMonth() + direction)
     else d.setUTCDate(d.getUTCDate() + 7 * direction)
     setAnchor(d.toISOString().slice(0, 10))

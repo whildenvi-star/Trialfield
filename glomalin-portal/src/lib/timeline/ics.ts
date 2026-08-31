@@ -64,6 +64,8 @@ interface RawEvent {
 }
 
 const MAX_OCCURRENCES = 120
+/** Steps we'll walk from DTSTART up to the window — ~54 years of a daily series. */
+const MAX_SKIPS = 20_000
 
 /** Expand one event (applying a simple RRULE) into dated occurrences inside [from, to]. */
 function expand(ev: RawEvent, from: string, to: string): IcsEvent[] {
@@ -107,12 +109,32 @@ function expand(ev: RawEvent, from: string, to: string): IcsEvent[] {
 
   const out: IcsEvent[] = []
   let cursor = ev.dtstart
-  for (let i = 0; i < MAX_OCCURRENCES; i++) {
-    if (count != null && i >= count) break
+  let idx = 0
+
+  // Fast-forward to the window before spending the occurrence budget. Google
+  // exports a standing series with its original DTSTART, so a weekly meeting
+  // begun in 2023 sits ~160 steps before a 2026 window — counting those against
+  // MAX_OCCURRENCES made the whole series silently vanish from the calendar.
+  // `idx` still tracks the true occurrence number, which COUNT and the UID need.
+  while (cursor < from && idx < MAX_SKIPS) {
+    if (count != null && idx >= count) break
+    if (until && cursor > until) break
+    const next = step(cursor)
+    if (next <= cursor) break // no forward progress (unknown FREQ) — stop
+    cursor = next
+    idx++
+  }
+
+  // Cap what we emit inside [from, to], not how far we walked to get here.
+  for (let emitted = 0; emitted < MAX_OCCURRENCES; emitted++) {
+    if (count != null && idx >= count) break
     if (until && cursor > until) break
     if (cursor > to) break
-    if (cursor >= from) out.push(make(cursor, i))
-    cursor = step(cursor)
+    if (cursor >= from) out.push(make(cursor, idx))
+    const next = step(cursor)
+    if (next <= cursor) break
+    cursor = next
+    idx++
   }
   return out
 }
