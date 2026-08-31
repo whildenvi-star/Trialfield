@@ -200,7 +200,7 @@
           "invoiceQtyTotal": 3.699,
           "invoiceCostTotal": 1461.11,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03,
+          "actualQuantity": 54.9629,
           "operationGroup": "Pre-emerge"
         },
         {
@@ -225,7 +225,7 @@
           "invoiceQtyTotal": 92.599,
           "invoiceCostTotal": 6157.83,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.69
+          "actualQuantity": 2.7518
         },
         {
           "id": "inp_0520",
@@ -279,7 +279,7 @@
           "invoiceQtyTotal": 16.68,
           "invoiceCostTotal": 303.84,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.12
+          "actualQuantity": 0.9884
         },
         {
           "id": "inp_0517",
@@ -297,7 +297,7 @@
           "invoiceQtyTotal": 13.5,
           "invoiceCostTotal": 270,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0518",
@@ -667,7 +667,7 @@
           "invoiceQtyTotal": 1.88,
           "invoiceCostTotal": 410.84,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.016
         },
         {
           "id": "inp_mm89sw6j_n20q",
@@ -692,7 +692,7 @@
           "invoiceQtyTotal": 1.2,
           "invoiceUnit": "Gal",
           "invoiceCostTotal": null,
-          "actualQuantity": 0.03
+          "actualQuantity": 0.12
         },
         {
           "id": "inp_mm89sw6j_8ow3",
@@ -734,7 +734,7 @@
           "invoiceQtyTotal": 4.6,
           "invoiceCostTotal": 1096.2,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.12
+          "actualQuantity": 14.72
         },
         {
           "id": "inp_mm89sw6j_rkvm",
@@ -847,7 +847,7 @@
           "invoiceQtyTotal": 1.25,
           "invoiceUnit": "Gal",
           "invoiceCostTotal": 200,
-          "actualQuantity": 0.03
+          "actualQuantity": 4
         },
         {
           "id": "inp_mqv2uhrm_y5mg",
@@ -990,7 +990,7 @@
           "invoiceQtyTotal": 0.314,
           "invoiceCostTotal": 385,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03,
+          "actualQuantity": 55.0877,
           "operationGroup": "Pre-emerge"
         },
         {
@@ -1046,7 +1046,7 @@
           "invoiceQtyTotal": 1.43,
           "invoiceCostTotal": 25.74,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0035
         },
         {
           "id": "inp_mm06qhk5_pihx",
@@ -1094,7 +1094,7 @@
           "invoiceQtyTotal": 0.8,
           "invoiceCostTotal": 356,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.08
+          "actualQuantity": 160
         },
         {
           "id": "inp_mm06qhk5_auon",
@@ -1112,7 +1112,7 @@
           "invoiceQtyTotal": 0.55,
           "invoiceCostTotal": 437.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 110
         },
         {
           "id": "inp_mp5tgseu_wo3j",
@@ -1131,7 +1131,7 @@
           "invoiceQtyTotal": 1.16,
           "invoiceCostTotal": 214.59,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 13.0246
         },
         {
           "id": "inp_mp5tjakd_5pd6",
@@ -1169,7 +1169,7 @@
           "invoiceQtyTotal": 1.43,
           "invoiceCostTotal": 32.89,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 0.5018
         },
         {
           "id": "inp_mp5tpbr1_e4wr",
@@ -1188,7 +1188,7 @@
           "invoiceQtyTotal": 5.7,
           "invoiceCostTotal": 50.28,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.5
+          "actualQuantity": 64
         },
         {
           "id": "inp_mp5tqm6u_pqr5",
@@ -1245,7 +1245,7 @@
           "invoiceQtyTotal": 1.14,
           "invoiceCostTotal": null,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         }
       ],
       "seed": {
@@ -1378,7 +1378,7 @@
           "confirmedDate": "2026-04-22",
           "statusNote": null,
           "confirmedBy": null,
-          "actualQuantity": 0.03,
+          "actualQuantity": 54.9793,
           "operationGroup": "Pre-emerge",
           "invoiceNumber": "8001874",
           "invoiceVendor": "Delong",
@@ -1397,7 +1397,7 @@
           "confirmedDate": "2026-04-22",
           "statusNote": null,
           "confirmedBy": null,
-          "actualQuantity": 0.69,
+          "actualQuantity": 2.7465,
           "foSortOrder": 2,
           "invoiceCostTotal": 6620.81,
           "invoiceQtyTotal": 99.5618,
@@ -1452,7 +1452,7 @@
           "invoiceQtyTotal": 13.64,
           "invoiceCostTotal": 272.8,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_mm06qhk5_3tgc",
@@ -1489,7 +1489,7 @@
           "invoiceQtyTotal": 17.5,
           "invoiceCostTotal": 306.9,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0264
         },
         {
           "id": "inp_mm06qhk5_f1by",
@@ -1542,7 +1542,7 @@
           "invoiceQtyTotal": 8.742,
           "invoiceCostTotal": 3890.19,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 116.6455
         },
         {
           "id": "inp_mm06qhk5_bz0l",
@@ -1560,7 +1560,7 @@
           "invoiceQtyTotal": 5.828,
           "invoiceCostTotal": 4649.4,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 77.7637
         },
         {
           "id": "inp_mohheyqn_ne3c",
@@ -1732,7 +1732,7 @@
           "invoiceQtyTotal": 15,
           "invoiceCostTotal": 109.88,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.11
+          "actualQuantity": 14.0044
         },
         {
           "id": "inp_mrv30clr_h6yp",
@@ -1751,7 +1751,7 @@
           "invoiceQtyTotal": 15,
           "invoiceCostTotal": 283.16,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.11
+          "actualQuantity": 0.8753
         },
         {
           "id": "inp_mrv30kmf_avbk",
@@ -1770,7 +1770,7 @@
           "invoiceQtyTotal": 15,
           "invoiceCostTotal": 54.21,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.11
+          "actualQuantity": 14.0044
         },
         {
           "id": "inp_mrv30tkz_uujb",
@@ -1789,7 +1789,7 @@
           "invoiceQtyTotal": 15,
           "invoiceCostTotal": 51.86,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.11
+          "actualQuantity": 0.8753
         },
         {
           "id": "inp_mrv314bn_ami6",
@@ -2092,7 +2092,7 @@
           "invoiceQtyTotal": 4.073,
           "invoiceCostTotal": 1608.84,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 55.0368
         },
         {
           "id": "inp_0663",
@@ -2110,7 +2110,7 @@
           "invoiceQtyTotal": 101.919,
           "invoiceCostTotal": 6777.6,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.69
+          "actualQuantity": 2.7544
         },
         {
           "id": "inp_0664",
@@ -2152,7 +2152,7 @@
           "invoiceQtyTotal": 14.9,
           "invoiceCostTotal": 298,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0667",
@@ -2189,7 +2189,7 @@
           "invoiceQtyTotal": 18.63,
           "invoiceCostTotal": 335.34,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0003
         },
         {
           "id": "inp_0669",
@@ -2231,7 +2231,7 @@
           "invoiceQtyTotal": 11.0801,
           "invoiceCostTotal": 4960.6,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 149.7311
         },
         {
           "id": "inp_0672",
@@ -2249,7 +2249,7 @@
           "invoiceQtyTotal": 7.42,
           "invoiceCostTotal": 5898.9,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.05
+          "actualQuantity": 100.2703
         },
         {
           "id": "inp_mp4jklue_esup",
@@ -2561,7 +2561,7 @@
           "invoiceQtyTotal": 3.19,
           "invoiceCostTotal": 697.11,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 5.9985
         },
         {
           "id": "inp_0695",
@@ -2598,7 +2598,7 @@
           "invoiceQtyTotal": 1.703,
           "invoiceUnit": "Gal",
           "invoiceCostTotal": null,
-          "actualQuantity": 0.03
+          "actualQuantity": 0.1017
         },
         {
           "id": "inp_0697",
@@ -2641,7 +2641,7 @@
           "invoiceQtyTotal": 4.286,
           "invoiceCostTotal": 1907.27,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 50.1287
         },
         {
           "id": "inp_0702",
@@ -2685,7 +2685,7 @@
           "invoiceQtyTotal": 10.286,
           "invoiceCostTotal": 8434.52,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 120.3041
         },
         {
           "id": "inp_mphf8q2g_2rik",
@@ -2704,7 +2704,7 @@
           "invoiceQtyTotal": 2.143,
           "invoiceCostTotal": 889.35,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.01
+          "actualQuantity": 25.0643
         },
         {
           "id": "inp_mphfbvol_5zjm",
@@ -2742,7 +2742,7 @@
           "invoiceQtyTotal": 6.88,
           "invoiceCostTotal": 1857.6,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 13.008
         },
         {
           "id": "inp_mpojttmr_drpd",
@@ -2799,7 +2799,7 @@
           "invoiceQtyTotal": 2.094,
           "invoiceUnit": "Gal",
           "invoiceCostTotal": 335.04,
-          "actualQuantity": 0.03
+          "actualQuantity": 4.0005
         },
         {
           "id": "inp_mqtqivko_2am4",
@@ -2995,7 +2995,7 @@
           "invoiceQtyTotal": 0.88,
           "invoiceCostTotal": 17.6,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0736",
@@ -3032,7 +3032,7 @@
           "invoiceQtyTotal": 1.1,
           "invoiceCostTotal": 19.8,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1
         },
         {
           "id": "inp_0738",
@@ -3074,7 +3074,7 @@
           "invoiceQtyTotal": 0.7,
           "invoiceCostTotal": 311.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 186.9658
         },
         {
           "id": "inp_0741",
@@ -3092,7 +3092,7 @@
           "invoiceQtyTotal": 0.45,
           "invoiceCostTotal": 357.75,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 120.1923
         },
         {
           "id": "inp_mppzmts1_vvha",
@@ -3253,7 +3253,7 @@
           "invoiceQtyTotal": 0.306,
           "invoiceCostTotal": 120.87,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 53.2174
         },
         {
           "id": "inp_0769",
@@ -3271,7 +3271,7 @@
           "invoiceQtyTotal": 1.13,
           "invoiceCostTotal": 209.05,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 12.5774
         },
         {
           "id": "inp_0770",
@@ -3289,7 +3289,7 @@
           "invoiceQtyTotal": 0.87,
           "invoiceCostTotal": 108.75,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 9.6835
         },
         {
           "id": "inp_0771",
@@ -3332,7 +3332,7 @@
           "invoiceQtyTotal": 1.11,
           "invoiceCostTotal": 22.2,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.7978
         },
         {
           "id": "inp_0774",
@@ -3369,7 +3369,7 @@
           "invoiceQtyTotal": 1.39,
           "invoiceCostTotal": 25.02,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.12
+          "actualQuantity": 0.9991
         },
         {
           "id": "inp_0776",
@@ -3424,7 +3424,7 @@
           "invoiceQtyTotal": 1.39,
           "invoiceCostTotal": 31.97,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.12
+          "actualQuantity": 0.4835
         },
         {
           "id": "inp_mp7ddgfd_snaj",
@@ -3462,7 +3462,7 @@
           "invoiceQtyTotal": 0.35,
           "invoiceCostTotal": 17.6,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.03
+          "actualQuantity": 3.8957
         },
         {
           "id": "inp_mp7djbls_qr3h",
@@ -3669,7 +3669,7 @@
           "invoiceQtyTotal": 0.91,
           "invoiceCostTotal": 18.2,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0810",
@@ -3706,7 +3706,7 @@
           "invoiceQtyTotal": 1.14,
           "invoiceCostTotal": 20.52,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0022
         },
         {
           "id": "inp_0812",
@@ -3748,7 +3748,7 @@
           "invoiceQtyTotal": 0.6,
           "invoiceCostTotal": 267,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 133.3333
         },
         {
           "id": "inp_0815",
@@ -3766,7 +3766,7 @@
           "invoiceQtyTotal": 0.4,
           "invoiceCostTotal": 318,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 88.8889
         },
         {
           "id": "inp_mppumo56_h2o9",
@@ -3955,7 +3955,7 @@
           "invoiceQtyTotal": 4.47,
           "invoiceCostTotal": 826.95,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 13.0036
         },
         {
           "id": "inp_0846",
@@ -3973,7 +3973,7 @@
           "invoiceQtyTotal": 3.446,
           "invoiceCostTotal": 430.75,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.0247
         },
         {
           "id": "inp_0847",
@@ -4009,7 +4009,7 @@
           "invoiceQtyTotal": 4.7,
           "invoiceCostTotal": 94,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0849",
@@ -4046,7 +4046,7 @@
           "invoiceQtyTotal": 5.88,
           "invoiceCostTotal": 105.84,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0009
         },
         {
           "id": "inp_0851",
@@ -4124,7 +4124,7 @@
           "invoiceQtyTotal": 2.95,
           "invoiceCostTotal": 2345.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 147.5
         },
         {
           "id": "inp_mpfx0oul_h9gj",
@@ -4143,7 +4143,7 @@
           "invoiceQtyTotal": 1.206,
           "invoiceCostTotal": 476.37,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 54.8182
         },
         {
           "id": "inp_mpfx2bn7_1s8c",
@@ -4219,7 +4219,7 @@
           "invoiceQtyTotal": 0.775,
           "invoiceCostTotal": 616.13,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.1
+          "actualQuantity": 193.75
         },
         {
           "id": "inp_mppvwzx3_8ez2",
@@ -4238,7 +4238,7 @@
           "invoiceQtyTotal": 0.525,
           "invoiceCostTotal": 233.63,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 131.25
         },
         {
           "id": "inp_mppvx7g7_7s5h",
@@ -4411,7 +4411,7 @@
           "invoiceQtyTotal": 0.393,
           "invoiceCostTotal": 395,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 54.965
         },
         {
           "id": "inp_0887",
@@ -4429,7 +4429,7 @@
           "invoiceQtyTotal": 1.45,
           "invoiceCostTotal": 268.25,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 12.979
         },
         {
           "id": "inp_0888",
@@ -4447,7 +4447,7 @@
           "invoiceQtyTotal": 1.12,
           "invoiceCostTotal": 140,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0
+          "actualQuantity": 0.1091
         },
         {
           "id": "inp_0889",
@@ -4490,7 +4490,7 @@
           "invoiceQtyTotal": 1.43,
           "invoiceCostTotal": 28.6,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0892",
@@ -4527,7 +4527,7 @@
           "invoiceQtyTotal": 1.79,
           "invoiceCostTotal": 32.22,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0014
         },
         {
           "id": "inp_0894",
@@ -4576,7 +4576,7 @@
           "invoiceQtyTotal": 1.225,
           "invoiceCostTotal": 545.13,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 175
         },
         {
           "id": "inp_0898",
@@ -4594,7 +4594,7 @@
           "invoiceQtyTotal": 0.825,
           "invoiceCostTotal": 655.88,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 117.8571
         },
         {
           "id": "inp_mp7dljxg_8pc6",
@@ -4651,7 +4651,7 @@
           "invoiceQtyTotal": 1.79,
           "invoiceCostTotal": 41.07,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 0.5007
         },
         {
           "id": "inp_mp7dmmgl_7eyt",
@@ -4670,7 +4670,7 @@
           "invoiceQtyTotal": 0.45,
           "invoiceCostTotal": 22.63,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.03
+          "actualQuantity": 4.028
         },
         {
           "id": "inp_mpbo2fzk_v594",
@@ -4854,7 +4854,7 @@
           "invoiceQtyTotal": 5.62,
           "invoiceCostTotal": null,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0930",
@@ -4891,7 +4891,7 @@
           "invoiceQtyTotal": 7.03,
           "invoiceCostTotal": 126.54,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0007
         },
         {
           "id": "inp_0932",
@@ -4939,7 +4939,7 @@
           "invoiceQtyTotal": 3.5,
           "invoiceCostTotal": 1557.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 122.807
         },
         {
           "id": "inp_0936",
@@ -4957,7 +4957,7 @@
           "invoiceQtyTotal": 2.35,
           "invoiceCostTotal": 1868.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 82.4561
         },
         {
           "id": "inp_mphf0wo5_y6er",
@@ -5147,7 +5147,7 @@
           "invoiceQtyTotal": 0.838,
           "invoiceCostTotal": 331.01,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 54.0645
         },
         {
           "id": "inp_0964",
@@ -5165,7 +5165,7 @@
           "invoiceQtyTotal": 21.436,
           "invoiceCostTotal": 1425.49,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.69
+          "actualQuantity": 2.7659
         },
         {
           "id": "inp_0966",
@@ -5201,7 +5201,7 @@
           "invoiceQtyTotal": 3.4,
           "invoiceCostTotal": 76.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_0968",
@@ -5238,7 +5238,7 @@
           "invoiceQtyTotal": 4.25,
           "invoiceCostTotal": 76.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1
         },
         {
           "id": "inp_0970",
@@ -5291,7 +5291,7 @@
           "invoiceQtyTotal": 2.16,
           "invoiceCostTotal": 961.2,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 141.6393
         },
         {
           "id": "inp_0974",
@@ -5309,7 +5309,7 @@
           "invoiceQtyTotal": 1.44,
           "invoiceCostTotal": 1144.8,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.05
+          "actualQuantity": 94.4262
         },
         {
           "id": "inp_moued3l9_va9c",
@@ -5522,7 +5522,7 @@
           "invoiceQtyTotal": 2.719,
           "invoiceCostTotal": 1074,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 53.3137
         },
         {
           "id": "inp_1002",
@@ -5540,7 +5540,7 @@
           "invoiceQtyTotal": 69.928,
           "invoiceCostTotal": 669.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.69
+          "actualQuantity": 2.7423
         },
         {
           "id": "inp_1003",
@@ -5582,7 +5582,7 @@
           "invoiceQtyTotal": 9.89,
           "invoiceCostTotal": 197.8,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.7998
         },
         {
           "id": "inp_1006",
@@ -5619,7 +5619,7 @@
           "invoiceQtyTotal": 12.37,
           "invoiceCostTotal": 222.66,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0004
         },
         {
           "id": "inp_1008",
@@ -5894,7 +5894,7 @@
           "invoiceQtyTotal": 2.42,
           "invoiceCostTotal": 1076.9,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.08
+          "actualQuantity": 169.29
         },
         {
           "id": "inp_1050",
@@ -5912,7 +5912,7 @@
           "invoiceQtyTotal": 1.63,
           "invoiceCostTotal": 1295.85,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 114.0259
         },
         {
           "id": "inp_mph8fahy_bqzm",
@@ -6119,7 +6119,7 @@
           "invoiceQtyTotal": 2.684,
           "invoiceCostTotal": 1060.18,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 54.7308
         },
         {
           "id": "inp_1078",
@@ -6137,7 +6137,7 @@
           "invoiceQtyTotal": 9.96,
           "invoiceCostTotal": 1842.6,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.01
+          "actualQuantity": 1.2968
         },
         {
           "id": "inp_1079",
@@ -6155,7 +6155,7 @@
           "invoiceQtyTotal": 7.635,
           "invoiceCostTotal": 954.38,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 9.9641
         },
         {
           "id": "inp_1080",
@@ -6191,7 +6191,7 @@
           "invoiceQtyTotal": 10.5,
           "invoiceCostTotal": 210,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_1082",
@@ -6228,7 +6228,7 @@
           "invoiceQtyTotal": 13.13,
           "invoiceCostTotal": 236.34,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0004
         },
         {
           "id": "inp_1084",
@@ -6281,7 +6281,7 @@
           "invoiceQtyTotal": 8.486,
           "invoiceCostTotal": null,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 173.0424
         },
         {
           "id": "inp_1088",
@@ -6299,7 +6299,7 @@
           "invoiceQtyTotal": 5.694,
           "invoiceCostTotal": 4626.73,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 116.1093
         },
         {
           "id": "inp_mp7b3lx3_h2v7",
@@ -6582,7 +6582,7 @@
           "invoiceQtyTotal": 22.98,
           "invoiceUnit": "Gal",
           "invoiceCostTotal": null,
-          "actualQuantity": 0.09
+          "actualQuantity": 10.9999
         },
         {
           "id": "inp_1112",
@@ -6606,7 +6606,7 @@
           "invoiceQtyTotal": 6.685,
           "invoiceUnit": "Gal",
           "invoiceCostTotal": null,
-          "actualQuantity": 0.02
+          "actualQuantity": 0.1
         },
         {
           "id": "inp_1114",
@@ -6666,7 +6666,7 @@
           "invoiceQtyTotal": 21.37,
           "invoiceCostTotal": 5769.9,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.2295
         },
         {
           "id": "inp_1118",
@@ -6691,7 +6691,7 @@
           "invoiceQtyTotal": 6.695,
           "invoiceCostTotal": 2979.28,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 50.0748
         },
         {
           "id": "inp_1120",
@@ -6754,7 +6754,7 @@
           "invoiceQtyTotal": 5.79,
           "invoiceCostTotal": 1845.62,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.02
+          "actualQuantity": 2.7716
         },
         {
           "id": "inp_mpok640j_hu1t",
@@ -6811,7 +6811,7 @@
           "invoiceQtyTotal": 8.356,
           "invoiceUnit": "Gal",
           "invoiceCostTotal": 1336.96,
-          "actualQuantity": 0.03
+          "actualQuantity": 3.9999
         },
         {
           "id": "inp_mstdx46u_e70l",
@@ -6849,7 +6849,7 @@
           "invoiceQtyTotal": 3.347,
           "invoiceCostTotal": 1389.01,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.01
+          "actualQuantity": 25.0337
         },
         {
           "id": "inp_mste0tdy_fbbl",
@@ -6887,7 +6887,7 @@
           "invoiceQtyTotal": 33.43,
           "invoiceCostTotal": 915.65,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 16.0024
         },
         {
           "id": "inp_mste5p8d_eg1i",
@@ -6906,7 +6906,7 @@
           "invoiceQtyTotal": 66.85,
           "invoiceCostTotal": 1958.71,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 32
         },
         {
           "id": "inp_mste5ynu_vnbn",
@@ -6925,7 +6925,7 @@
           "invoiceQtyTotal": 16.17,
           "invoiceCostTotal": 601.56,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.06
+          "actualQuantity": 0.4838
         },
         {
           "id": "inp_mste6c4e_ucja",
@@ -6944,7 +6944,7 @@
           "invoiceQtyTotal": 10.03,
           "invoiceCostTotal": 394.28,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.04
+          "actualQuantity": 4.8012
         },
         {
           "id": "inp_mste7e82_0uio",
@@ -7001,7 +7001,7 @@
           "invoiceQtyTotal": 2.47,
           "invoiceCostTotal": 131.65,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.01
+          "actualQuantity": 0.0369
         }
       ],
       "seed": {
@@ -7143,7 +7143,7 @@
           "invoiceQtyTotal": 3.05,
           "invoiceCostTotal": 218.53,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.0062
         },
         {
           "id": "inp_1143",
@@ -7192,7 +7192,7 @@
           "invoiceQtyTotal": 4.06,
           "invoiceCostTotal": 1096.2,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 12.992
         },
         {
           "id": "inp_1147",
@@ -7437,7 +7437,7 @@
           "invoiceQtyTotal": 17,
           "invoiceCostTotal": 58.76,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.36
+          "actualQuantity": 2.8512
         },
         {
           "id": "inp_1182",
@@ -7497,7 +7497,7 @@
           "invoiceQtyTotal": 3.59,
           "invoiceCostTotal": 1642.05,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 122.0673
         },
         {
           "id": "inp_mo93b5e3_6gp5",
@@ -7549,7 +7549,7 @@
           "invoiceQtyTotal": 5.51,
           "invoiceCostTotal": 4380.45,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 187.3512
         },
         {
           "id": "inp_mpptu7am_3m98",
@@ -7606,7 +7606,7 @@
           "invoiceQtyTotal": 17,
           "invoiceCostTotal": 124.53,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.36
+          "actualQuantity": 45.6184
         },
         {
           "id": "inp_mrv3aqy2_ynxn",
@@ -7625,7 +7625,7 @@
           "invoiceQtyTotal": 17,
           "invoiceCostTotal": 75.51,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.36
+          "actualQuantity": 2.8512
         },
         {
           "id": "inp_mrv3b3xi_b1ux",
@@ -7644,7 +7644,7 @@
           "invoiceQtyTotal": 17,
           "invoiceCostTotal": 61.13,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.36
+          "actualQuantity": 45.6184
         },
         {
           "id": "inp_msdg1asc_q3qr",
@@ -7841,7 +7841,7 @@
           "invoiceQtyTotal": 5.17,
           "invoiceCostTotal": 2042.15,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 55
         },
         {
           "id": "inp_1216",
@@ -7859,7 +7859,7 @@
           "invoiceQtyTotal": 19.9,
           "invoiceCostTotal": 3531.65,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.11
+          "actualQuantity": 13.5489
         },
         {
           "id": "inp_1217",
@@ -7877,7 +7877,7 @@
           "invoiceQtyTotal": 14.475,
           "invoiceCostTotal": 1809.38,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 9.8553
         },
         {
           "id": "inp_1218",
@@ -7913,7 +7913,7 @@
           "invoiceQtyTotal": 19.3,
           "invoiceCostTotal": 386,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_1220",
@@ -7950,7 +7950,7 @@
           "invoiceQtyTotal": 24.13,
           "invoiceCostTotal": 434.34,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.0002
         },
         {
           "id": "inp_1222",
@@ -7997,7 +7997,7 @@
           "invoiceQtyTotal": 12.2,
           "invoiceCostTotal": 5429,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 130.628
         },
         {
           "id": "inp_1225",
@@ -8015,7 +8015,7 @@
           "invoiceQtyTotal": 18.3,
           "invoiceCostTotal": 14548.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.1
+          "actualQuantity": 195.942
         },
         {
           "id": "inp_mp5vb1p0_4idd",
@@ -8372,7 +8372,7 @@
           "invoiceQtyTotal": 2.437,
           "invoiceCostTotal": 962.62,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 55.1794
         },
         {
           "id": "inp_1254",
@@ -8390,7 +8390,7 @@
           "invoiceQtyTotal": 603800,
           "invoiceCostTotal": 4043.2,
           "invoiceUnit": "Gal",
-          "actualQuantity": 6835.73
+          "actualQuantity": 27342.9186
         },
         {
           "id": "inp_1256",
@@ -8426,7 +8426,7 @@
           "invoiceQtyTotal": 8.4,
           "invoiceCostTotal": 168,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_1258",
@@ -8463,7 +8463,7 @@
           "invoiceQtyTotal": 10.5,
           "invoiceCostTotal": 189,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1
         },
         {
           "id": "inp_1260",
@@ -8517,7 +8517,7 @@
           "invoiceQtyTotal": 8.12,
           "invoiceCostTotal": 6455.4,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 183.856
         },
         {
           "id": "inp_mp7c2m3a_drya",
@@ -8765,7 +8765,7 @@
           "invoiceQtyTotal": 64.98,
           "invoiceCostTotal": 4223.7,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 2.0001
         },
         {
           "id": "inp_1293",
@@ -8783,7 +8783,7 @@
           "invoiceQtyTotal": 21.303,
           "invoiceCostTotal": 491.03,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 0.6557
         },
         {
           "id": "inp_1294",
@@ -8844,7 +8844,7 @@
           "invoiceQtyTotal": 15.397,
           "invoiceCostTotal": 4560.36,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 130.8601
         },
         {
           "id": "inp_1300",
@@ -8862,7 +8862,7 @@
           "invoiceQtyTotal": 12240.62,
           "invoiceCostTotal": null,
           "invoiceUnit": "Ton",
-          "actualQuantity": 795
+          "actualQuantity": 1590000.6495
         },
         {
           "id": "inp_mnx9vina_md4d",
@@ -8881,7 +8881,7 @@
           "invoiceQtyTotal": 8.95,
           "invoiceCostTotal": 344.22,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.4
         },
         {
           "id": "inp_mnx9wfy0_e7c8",
@@ -8919,7 +8919,7 @@
           "invoiceQtyTotal": 67.13,
           "invoiceCostTotal": 1727.25,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.38
+          "actualQuantity": 1.5001
         },
         {
           "id": "inp_mnx9yhnl_2qsq",
@@ -8938,7 +8938,7 @@
           "invoiceQtyTotal": 335.6,
           "invoiceCostTotal": 1379.99,
           "invoiceUnit": "Gal",
-          "actualQuantity": 1.87
+          "actualQuantity": 14.9989
         },
         {
           "id": "inp_mohhoyyr_wm0b",
@@ -8958,7 +8958,7 @@
           "invoiceQtyTotal": 11.77,
           "invoiceCostTotal": null,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 5.9946
         },
         {
           "id": "inp_mpprv5il_1chr",
@@ -8996,7 +8996,7 @@
           "invoiceQtyTotal": 17.687,
           "invoiceCostTotal": 238.77,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.07
+          "actualQuantity": 0.5444
         },
         {
           "id": "inp_mq9uzlcf_m7g0",
@@ -9053,7 +9053,7 @@
           "invoiceQtyTotal": 64.98,
           "invoiceCostTotal": 1494.54,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 1
         },
         {
           "id": "inp_mrnsg2av_n47r",
@@ -9091,7 +9091,7 @@
           "invoiceQtyTotal": 62,
           "invoiceCostTotal": 1426,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.24
+          "actualQuantity": 0.9542
         },
         {
           "id": "inp_mrnsgx6n_85m4",
@@ -9110,7 +9110,7 @@
           "invoiceQtyTotal": 64.98,
           "invoiceCostTotal": 4906.64,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 2.0001
         },
         {
           "id": "inp_mrnsh583_uahb",
@@ -9129,7 +9129,7 @@
           "invoiceQtyTotal": 19.49,
           "invoiceCostTotal": 749.59,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.07
+          "actualQuantity": 9.5984
         },
         {
           "id": "inp_mrnshjr0_8xja",
@@ -9282,7 +9282,7 @@
           "invoiceQtyTotal": 3.03,
           "invoiceCostTotal": 62,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.0037
         },
         {
           "id": "inp_1322",
@@ -9336,7 +9336,7 @@
           "invoiceQtyTotal": 5.05,
           "invoiceCostTotal": 277.75,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.0062
         },
         {
           "id": "inp_mo94qzr5_fy7m",
@@ -9362,7 +9362,7 @@
           "invoiceQtyTotal": 10.0905,
           "invoiceCostTotal": 624.68,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.16
+          "actualQuantity": 1.2496
         },
         {
           "id": "inp_1328",
@@ -9386,7 +9386,7 @@
           "invoiceQtyTotal": 9.69,
           "invoiceCostTotal": 254.56,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.2
         },
         {
           "id": "inp_1330",
@@ -9454,7 +9454,7 @@
           "invoiceQtyTotal": 4.09,
           "invoiceCostTotal": 1820.05,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 145.7851
         },
         {
           "id": "inp_1337",
@@ -9472,7 +9472,7 @@
           "invoiceQtyTotal": 6.11,
           "invoiceCostTotal": 4857.45,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.11
+          "actualQuantity": 217.7865
         },
         {
           "id": "inp_mo94rqdl_ktb7",
@@ -9491,7 +9491,7 @@
           "invoiceQtyTotal": 1.01,
           "invoiceCostTotal": 575.7,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.02
+          "actualQuantity": 2.0012
         },
         {
           "id": "inp_mo94zzql_bau5",
@@ -9653,7 +9653,7 @@
           "invoiceQtyTotal": 11.86,
           "invoiceCostTotal": 735.32,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 5.9767
         },
         {
           "id": "inp_1363",
@@ -9707,7 +9707,7 @@
           "invoiceQtyTotal": 19.77,
           "invoiceCostTotal": 1087.35,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.0022
         },
         {
           "id": "inp_1366",
@@ -9726,7 +9726,7 @@
           "invoiceQtyTotal": 39.53,
           "invoiceCostTotal": 2055.56,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.16
+          "actualQuantity": 1.25
         },
         {
           "id": "inp_1367",
@@ -9751,7 +9751,7 @@
           "invoiceQtyTotal": 34.926,
           "invoiceCostTotal": 471.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.14
+          "actualQuantity": 1.1044
         },
         {
           "id": "inp_1369",
@@ -9824,7 +9824,7 @@
           "invoiceQtyTotal": 22.79,
           "invoiceCostTotal": 10141.55,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 124.8767
         },
         {
           "id": "inp_1377",
@@ -9842,7 +9842,7 @@
           "invoiceQtyTotal": 34.21,
           "invoiceCostTotal": 27196.95,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 187.4521
         },
         {
           "id": "inp_mod8v9m1_8ldt",
@@ -9892,7 +9892,7 @@
           "invoiceQtyTotal": 3.953,
           "invoiceCostTotal": 2253.21,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.02
+          "actualQuantity": 1.9999
         },
         {
           "id": "inp_mq9t4nox_5ckk",
@@ -9911,7 +9911,7 @@
           "invoiceQtyTotal": 3.024,
           "invoiceCostTotal": 79.44,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.01
+          "actualQuantity": 0.0956
         },
         {
           "id": "inp_mq9t7edv_4v5q",
@@ -10125,7 +10125,7 @@
           "invoiceQtyTotal": 5.78,
           "invoiceCostTotal": 317.9,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 9.9978
         },
         {
           "id": "inp_1408",
@@ -10153,7 +10153,7 @@
           "invoiceQtyTotal": 1.158,
           "invoiceCostTotal": 660.06,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.02
+          "actualQuantity": 2.003
         },
         {
           "id": "inp_1410",
@@ -10172,7 +10172,7 @@
           "invoiceQtyTotal": 11.1,
           "invoiceCostTotal": 149.85,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.2
         },
         {
           "id": "inp_1411",
@@ -10255,7 +10255,7 @@
           "invoiceQtyTotal": 4.124,
           "invoiceCostTotal": 1835.18,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 111.4595
         },
         {
           "id": "inp_1420",
@@ -10273,7 +10273,7 @@
           "invoiceQtyTotal": 6.211,
           "invoiceCostTotal": 4937.75,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.08
+          "actualQuantity": 167.8649
         },
         {
           "id": "inp_moudnurx_71vx",
@@ -10292,7 +10292,7 @@
           "invoiceQtyTotal": 20.81,
           "invoiceCostTotal": 23,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.28
+          "actualQuantity": 1.1212
         },
         {
           "id": "inp_moudoytd_qhkn",
@@ -10311,7 +10311,7 @@
           "invoiceQtyTotal": 6.94,
           "invoiceCostTotal": 36,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.09
+          "actualQuantity": 0.7478
         },
         {
           "id": "inp_moudqgca_lmjj",
@@ -10330,7 +10330,7 @@
           "invoiceQtyTotal": 3.7,
           "invoiceCostTotal": 39.31,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.3793
         },
         {
           "id": "inp_moudrqga_havy",
@@ -10406,7 +10406,7 @@
           "invoiceQtyTotal": 7.23,
           "invoiceCostTotal": 54.55,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 12.5059
         }
       ],
       "seed": {
@@ -10527,7 +10527,7 @@
           "invoiceQtyTotal": 2.5,
           "invoiceCostTotal": 155,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.1538
         },
         {
           "id": "inp_1445",
@@ -10564,7 +10564,7 @@
           "invoiceQtyTotal": 13,
           "invoiceCostTotal": 299,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 1
         },
         {
           "id": "inp_mnxi6rsg_jyje",
@@ -10656,7 +10656,7 @@
           "invoiceQtyTotal": 2.55,
           "invoiceCostTotal": 1134.75,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.05
+          "actualQuantity": 98.0769
         },
         {
           "id": "inp_1457",
@@ -10693,7 +10693,7 @@
           "invoiceQtyTotal": 2.6,
           "invoiceCostTotal": 102.21,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.4
         },
         {
           "id": "inp_mpg01kyp_g4ld",
@@ -10712,7 +10712,7 @@
           "invoiceQtyTotal": 5,
           "invoiceCostTotal": 180,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.7692
         },
         {
           "id": "inp_mppsxvkh_46xl",
@@ -10839,7 +10839,7 @@
           "invoiceQtyTotal": 3.68,
           "invoiceCostTotal": 226.16,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 5.9956
         },
         {
           "id": "inp_1521",
@@ -10942,7 +10942,7 @@
           "invoiceQtyTotal": 8.3,
           "invoiceCostTotal": 3693.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 123.4109
         },
         {
           "id": "inp_1534",
@@ -10960,7 +10960,7 @@
           "invoiceQtyTotal": 12.45,
           "invoiceCostTotal": 9897.75,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 185.1163
         },
         {
           "id": "inp_mppy2twg_61ef",
@@ -10998,7 +10998,7 @@
           "invoiceQtyTotal": 4.65,
           "invoiceCostTotal": 2069.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 118.3748
         },
         {
           "id": "inp_mppy7db5_3htl",
@@ -11017,7 +11017,7 @@
           "invoiceQtyTotal": 6.95,
           "invoiceCostTotal": 5525.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 176.9258
         },
         {
           "id": "inp_mppy7mdo_wriz",
@@ -11252,7 +11252,7 @@
           "invoiceQtyTotal": 1.05,
           "invoiceCostTotal": 467.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 114.1304
         },
         {
           "id": "inp_1574",
@@ -11270,7 +11270,7 @@
           "invoiceQtyTotal": 1.6,
           "invoiceCostTotal": 1272,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 173.913
         },
         {
           "id": "inp_moui0l8n_22mq",
@@ -11289,7 +11289,7 @@
           "invoiceQtyTotal": 4.6,
           "invoiceCostTotal": 23,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.27
+          "actualQuantity": 1.0824
         },
         {
           "id": "inp_moui216o_kzas",
@@ -11308,7 +11308,7 @@
           "invoiceQtyTotal": 1.73,
           "invoiceCostTotal": 36,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8141
         },
         {
           "id": "inp_moui3g1f_bk7u",
@@ -11327,7 +11327,7 @@
           "invoiceQtyTotal": 0.92,
           "invoiceCostTotal": 39.31,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.9271
         },
         {
           "id": "inp_moui4se8_lc53",
@@ -11568,7 +11568,7 @@
           "invoiceQtyTotal": 8.1,
           "invoiceCostTotal": 3604.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 125.5814
         },
         {
           "id": "inp_1613",
@@ -11586,7 +11586,7 @@
           "invoiceQtyTotal": 12.1,
           "invoiceCostTotal": 9619.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 187.5969
         },
         {
           "id": "inp_mppz5514_czno",
@@ -11774,7 +11774,7 @@
           "invoiceQtyTotal": 11.75,
           "invoiceCostTotal": 887.24,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 2
         },
         {
           "id": "inp_1640",
@@ -11792,7 +11792,7 @@
           "invoiceQtyTotal": 7.05,
           "invoiceCostTotal": 23.05,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.2
         },
         {
           "id": "inp_1641",
@@ -11853,7 +11853,7 @@
           "invoiceQtyTotal": 5.006,
           "invoiceCostTotal": 2227.67,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 127.5414
         },
         {
           "id": "inp_1647",
@@ -11871,7 +11871,7 @@
           "invoiceQtyTotal": 7.509,
           "invoiceCostTotal": 5969.66,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.1
+          "actualQuantity": 191.3121
         },
         {
           "id": "inp_mpokv2g4_dmzo",
@@ -11890,7 +11890,7 @@
           "invoiceQtyTotal": 2.25,
           "invoiceCostTotal": 139.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6
         },
         {
           "id": "inp_mpr76mp2_tgvi",
@@ -12004,7 +12004,7 @@
           "invoiceQtyTotal": 11.7,
           "invoiceCostTotal": 344.28,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 31.8638
         },
         {
           "id": "inp_mqb8zpzi_embp",
@@ -12023,7 +12023,7 @@
           "invoiceQtyTotal": 3.67,
           "invoiceCostTotal": 201.85,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 9.9949
         }
       ],
       "seed": {
@@ -12139,7 +12139,7 @@
           "invoiceQtyTotal": 1.35,
           "invoiceCostTotal": 164.42,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.04,
+          "actualQuantity": 5.4857,
           "operationGroup": "Pre-emerge"
         },
         {
@@ -12194,7 +12194,7 @@
           "invoiceQtyTotal": 2.22,
           "invoiceCostTotal": 122.1,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.0197
         },
         {
           "id": "inp_1674",
@@ -12213,7 +12213,7 @@
           "invoiceQtyTotal": 4.43,
           "invoiceCostTotal": 230.36,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.16
+          "actualQuantity": 1.2496
         },
         {
           "id": "inp_1675",
@@ -12232,7 +12232,7 @@
           "invoiceQtyTotal": 0.443,
           "invoiceCostTotal": 252.51,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.02
+          "actualQuantity": 1.9994
         },
         {
           "id": "inp_1676",
@@ -12250,7 +12250,7 @@
           "invoiceQtyTotal": 4.25,
           "invoiceCostTotal": 57.38,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.1989
         },
         {
           "id": "inp_1677",
@@ -12317,7 +12317,7 @@
           "invoiceQtyTotal": 1.625,
           "invoiceCostTotal": 723.13,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 112.4996
         },
         {
           "id": "inp_1684",
@@ -12335,7 +12335,7 @@
           "invoiceQtyTotal": 2.5,
           "invoiceCostTotal": 1987.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 173.0763
         },
         {
           "id": "inp_mph7rtoh_4kpd",
@@ -12523,7 +12523,7 @@
           "invoiceQtyTotal": 0.7,
           "invoiceCostTotal": 43.4,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05,
+          "actualQuantity": 5.9733,
           "operationGroup": "Pre-emerge"
         },
         {
@@ -12585,7 +12585,7 @@
           "invoiceQtyTotal": 3.78,
           "invoiceCostTotal": 285.43,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 2.0026
         },
         {
           "id": "inp_1751",
@@ -12603,7 +12603,7 @@
           "invoiceQtyTotal": 2.27,
           "invoiceCostTotal": 52.32,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.2026
         },
         {
           "id": "inp_1752",
@@ -12664,7 +12664,7 @@
           "invoiceQtyTotal": 0.563,
           "invoiceCostTotal": 250.54,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 75.0667
         },
         {
           "id": "inp_1758",
@@ -12682,7 +12682,7 @@
           "invoiceQtyTotal": 0.938,
           "invoiceCostTotal": 745.71,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 125.0667
         },
         {
           "id": "inp_mpokriao_gsxf",
@@ -12739,7 +12739,7 @@
           "invoiceQtyTotal": 3.78,
           "invoiceCostTotal": 110.75,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 32.0424
         },
         {
           "id": "inp_mqb9p5xr_3f03",
@@ -12758,7 +12758,7 @@
           "invoiceQtyTotal": 1.18,
           "invoiceCostTotal": 64.9,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.0026
         },
         {
           "id": "inp_mqba36nm_krhy",
@@ -12888,7 +12888,7 @@
           "invoiceQtyTotal": 2.72,
           "invoiceCostTotal": 23,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 0.9891
         },
         {
           "id": "inp_mo94c52j_5aab",
@@ -12907,7 +12907,7 @@
           "invoiceQtyTotal": 1.02,
           "invoiceCostTotal": 36,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.09
+          "actualQuantity": 0.7418
         },
         {
           "id": "inp_1782",
@@ -12951,7 +12951,7 @@
           "invoiceQtyTotal": 0.55,
           "invoiceCostTotal": 39.31,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.4
         },
         {
           "id": "inp_1780",
@@ -13005,7 +13005,7 @@
           "invoiceQtyTotal": 2.73,
           "invoiceCostTotal": 177.45,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 2.0037
         },
         {
           "id": "inp_1787",
@@ -13053,7 +13053,7 @@
           "invoiceQtyTotal": 0.45,
           "invoiceCostTotal": 200.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 75
         },
         {
           "id": "inp_1793",
@@ -13071,7 +13071,7 @@
           "invoiceQtyTotal": 0.75,
           "invoiceCostTotal": 596.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 125
         },
         {
           "id": "inp_mo92zksa_wnbh",
@@ -13097,7 +13097,7 @@
           "invoiceQtyTotal": 1.64,
           "invoiceCostTotal": 23.05,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.2037
         },
         {
           "id": "inp_mo94f1c2_j8nq",
@@ -13135,7 +13135,7 @@
           "invoiceQtyTotal": 2.73,
           "invoiceCostTotal": 29.3,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 32.0587
         },
         {
           "id": "inp_mppt96zh_ms3z",
@@ -13173,7 +13173,7 @@
           "invoiceQtyTotal": 0.85,
           "invoiceCostTotal": 46.75,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 9.9817
         },
         {
           "id": "inp_mqbd0bay_1zl9",
@@ -13324,7 +13324,7 @@
           "invoiceQtyTotal": 7.26,
           "invoiceCostTotal": 450.12,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.0023
         },
         {
           "id": "inp_1818",
@@ -13385,7 +13385,7 @@
           "invoiceQtyTotal": 10,
           "invoiceCostTotal": 650,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 2
         },
         {
           "id": "inp_1822",
@@ -13403,7 +13403,7 @@
           "invoiceQtyTotal": 4,
           "invoiceCostTotal": 54,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_1823",
@@ -13451,7 +13451,7 @@
           "invoiceQtyTotal": 9.05,
           "invoiceCostTotal": 4027.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 116.4886
         },
         {
           "id": "inp_1829",
@@ -13469,7 +13469,7 @@
           "invoiceQtyTotal": 13.55,
           "invoiceCostTotal": 10772.25,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.09
+          "actualQuantity": 176.6854
         },
         {
           "id": "inp_mppx3w4r_mhp4",
@@ -13507,7 +13507,7 @@
           "invoiceQtyTotal": 10,
           "invoiceCostTotal": 230,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 1
         },
         {
           "id": "inp_mpy6hobq_rvhu",
@@ -13564,7 +13564,7 @@
           "invoiceQtyTotal": 29,
           "invoiceCostTotal": 849.7,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 32
         },
         {
           "id": "inp_mqbc13kr_xzte",
@@ -13583,7 +13583,7 @@
           "invoiceQtyTotal": 29,
           "invoiceCostTotal": 2189.79,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 2
         },
         {
           "id": "inp_mqbc1e3b_ojf7",
@@ -13602,7 +13602,7 @@
           "invoiceQtyTotal": 4.81,
           "invoiceCostTotal": 264.55,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.04
+          "actualQuantity": 5.3076
         },
         {
           "id": "inp_mqbc1ks2_vl22",
@@ -13621,7 +13621,7 @@
           "invoiceQtyTotal": 4.25,
           "invoiceCostTotal": 233.75,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.04
+          "actualQuantity": 4.6897
         },
         {
           "id": "inp_mqbc1u22_xgbb",
@@ -13640,7 +13640,7 @@
           "invoiceQtyTotal": 17.4,
           "invoiceCostTotal": 401.07,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.2
         },
         {
           "id": "inp_mqbc27nf_m8ho",
@@ -13846,7 +13846,7 @@
           "invoiceQtyTotal": 1.3,
           "invoiceCostTotal": 85.15,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 0.3866
         },
         {
           "id": "inp_mmbkp7ig_x2sj",
@@ -13864,7 +13864,7 @@
           "invoiceQtyTotal": 4.04,
           "invoiceCostTotal": 93.12,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.15
+          "actualQuantity": 1.2015
         },
         {
           "id": "inp_mnxa5tfv_atmg",
@@ -13884,7 +13884,7 @@
           "invoiceQtyTotal": 6.73,
           "invoiceCostTotal": 154.79,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 1.0007
         },
         {
           "id": "inp_mnxa6r5v_kjba",
@@ -13904,7 +13904,7 @@
           "invoiceQtyTotal": 2.52,
           "invoiceCostTotal": 90.72,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.09
+          "actualQuantity": 0.7494
         },
         {
           "id": "inp_mnxahfgs_qfru",
@@ -13923,7 +13923,7 @@
           "invoiceQtyTotal": 6.73,
           "invoiceCostTotal": 197.19,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.25
+          "actualQuantity": 32.0238
         },
         {
           "id": "inp_mmbkp7ig_1nrc",
@@ -13949,7 +13949,7 @@
           "invoiceQtyTotal": 1.35,
           "invoiceCostTotal": 53,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.05
+          "actualQuantity": 6.4238
         },
         {
           "id": "inp_mmbkp7ig_uh0j",
@@ -13980,7 +13980,7 @@
           "invoiceQtyTotal": 1,
           "invoiceCostTotal": 445,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 74.3494
         },
         {
           "id": "inp_mmbkp7ig_b7ir",
@@ -13998,7 +13998,7 @@
           "invoiceQtyTotal": 1.5,
           "invoiceCostTotal": 1192.5,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 111.5242
         },
         {
           "id": "inp_mohg031q_mvb7",
@@ -14056,7 +14056,7 @@
           "invoiceQtyTotal": 2.769,
           "invoiceCostTotal": 2201.36,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.1
+          "actualQuantity": 205.8736
         },
         {
           "id": "inp_mppsjl12_c4gk",
@@ -14075,7 +14075,7 @@
           "invoiceQtyTotal": 1.856,
           "invoiceCostTotal": 825.92,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.07
+          "actualQuantity": 137.9926
         },
         {
           "id": "inp_mppsju6x_7pso",
@@ -14113,7 +14113,7 @@
           "invoiceQtyTotal": 5.42,
           "invoiceCostTotal": 75.51,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.2
+          "actualQuantity": 1.6119
         },
         {
           "id": "inp_mqb5t3ea_8bow",
@@ -14132,7 +14132,7 @@
           "invoiceQtyTotal": 2.1,
           "invoiceCostTotal": 115.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 9.9926
         },
         {
           "id": "inp_mqb5tmai_biev",
@@ -14286,7 +14286,7 @@
           "invoiceQtyTotal": 20.813,
           "invoiceCostTotal": 1248.78,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.19
+          "actualQuantity": 1.5
         },
         {
           "id": "inp_1888",
@@ -14304,7 +14304,7 @@
           "invoiceQtyTotal": 0.65,
           "invoiceCostTotal": 438.75,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.01
+          "actualQuantity": 0.7495
         },
         {
           "id": "inp_1890",
@@ -14322,7 +14322,7 @@
           "invoiceQtyTotal": 3.052,
           "invoiceCostTotal": 1205.54,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03,
+          "actualQuantity": 54.991,
           "operationGroup": "Pre-emerge"
         },
         {
@@ -14654,7 +14654,7 @@
           "invoiceQtyTotal": 1.073,
           "invoiceCostTotal": 423.84,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 56.9533
         },
         {
           "id": "inp_1951",
@@ -14672,7 +14672,7 @@
           "invoiceQtyTotal": 11.775,
           "invoiceCostTotal": 706.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.31
+          "actualQuantity": 2.5
         },
         {
           "id": "inp_1952",
@@ -14920,7 +14920,7 @@
           "invoiceQtyTotal": 25.2,
           "invoiceCostTotal": 1512,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.19
+          "actualQuantity": 1.5
         },
         {
           "id": "inp_2006",
@@ -14939,7 +14939,7 @@
           "invoiceQtyTotal": 0.788,
           "invoiceCostTotal": 531.9,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.01
+          "actualQuantity": 0.7505
         },
         {
           "id": "inp_2008",
@@ -14957,7 +14957,7 @@
           "invoiceQtyTotal": 3.705,
           "invoiceCostTotal": 1463.48,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.11
+          "actualQuantity": 215.407
         },
         {
           "id": "inp_2009",
@@ -16509,7 +16509,7 @@
           "invoiceQtyTotal": 11.793,
           "invoiceCostTotal": 6191.33,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.08
+          "actualQuantity": 153.1558
         },
         {
           "id": "inp_mnjawckx_wvnn",
@@ -16527,7 +16527,7 @@
           "invoiceQtyTotal": 5.5897,
           "invoiceCostTotal": 580,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 72.5935
         },
         {
           "id": "inp_mnjawd3o_4zh6",
@@ -16545,7 +16545,7 @@
           "invoiceQtyTotal": 154,
           "invoiceCostTotal": 4112.96,
           "invoiceUnit": "Ton",
-          "actualQuantity": 1
+          "actualQuantity": 181.1594
         },
         {
           "id": "inp_mnjawdl4_ai2f",
@@ -16638,7 +16638,7 @@
           "invoiceQtyTotal": 0.077,
           "invoiceCostTotal": 13.3,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0
+          "actualQuantity": 0.9979
         },
         {
           "id": "inp_mppzss1t_p8yk",
@@ -16657,7 +16657,7 @@
           "invoiceQtyTotal": 8.875,
           "invoiceCostTotal": 3949.38,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 115.0133
         },
         {
           "id": "inp_mppzsxe9_3yvs",
@@ -17552,7 +17552,7 @@
           "invoiceQtyTotal": 0.626,
           "invoiceCostTotal": 247.27,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03,
+          "actualQuantity": 56.1939,
           "operationGroup": "Pre-emerge"
         },
         {
@@ -17571,7 +17571,7 @@
           "invoiceQtyTotal": 2.31,
           "invoiceCostTotal": 185,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 13.2711
         },
         {
           "id": "inp_mobovwuu_etqi",
@@ -17589,7 +17589,7 @@
           "invoiceQtyTotal": 1.78,
           "invoiceCostTotal": 125,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.2262
         },
         {
           "id": "inp_mobovwuu_iar4",
@@ -17625,7 +17625,7 @@
           "invoiceQtyTotal": 2.28,
           "invoiceCostTotal": 45.6,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8018
         },
         {
           "id": "inp_mobovwuu_2ia6",
@@ -17662,7 +17662,7 @@
           "invoiceQtyTotal": 2.84,
           "invoiceCostTotal": 51.12,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.12
+          "actualQuantity": 0.9987
         },
         {
           "id": "inp_mobovwuu_73aq",
@@ -17716,7 +17716,7 @@
           "invoiceQtyTotal": 1.945,
           "invoiceCostTotal": 865.53,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.04
+          "actualQuantity": 70.7273
         },
         {
           "id": "inp_mobovwuu_phpu",
@@ -17734,7 +17734,7 @@
           "invoiceQtyTotal": 1.315,
           "invoiceCostTotal": 1045.43,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.06
+          "actualQuantity": 119.5455
         },
         {
           "id": "inp_movymabb_tevn",
@@ -17753,7 +17753,7 @@
           "invoiceQtyTotal": 2.84,
           "invoiceCostTotal": 23,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 0.5099
         },
         {
           "id": "inp_movynptu_iovq",
@@ -17772,7 +17772,7 @@
           "invoiceQtyTotal": 0.71,
           "invoiceCostTotal": 50.28,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.03
+          "actualQuantity": 4.079
         },
         {
           "id": "inp_movypywb_2lcz",
@@ -18085,7 +18085,7 @@
           "invoiceQtyTotal": 1.59,
           "invoiceCostTotal": 164.42,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.01
+          "actualQuantity": 1.4232
         },
         {
           "id": "inp_mok4d4be_25w6",
@@ -18139,7 +18139,7 @@
           "invoiceQtyTotal": 2.66,
           "invoiceCostTotal": 146.3,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.0141
         },
         {
           "id": "inp_mok4d4be_ehjo",
@@ -18158,7 +18158,7 @@
           "invoiceQtyTotal": 4.25,
           "invoiceCostTotal": 221,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1
         },
         {
           "id": "inp_mok4d4be_t9me",
@@ -18182,7 +18182,7 @@
           "invoiceQtyTotal": 5.461,
           "invoiceCostTotal": 68.85,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.16
+          "actualQuantity": 1.2849
         },
         {
           "id": "inp_mok4d4be_stmq",
@@ -18282,7 +18282,7 @@
           "invoiceQtyTotal": 34,
           "invoiceCostTotal": 0.533,
           "invoiceUnit": "Gal",
-          "actualQuantity": 1
+          "actualQuantity": 128
         }
       ],
       "seed": {
@@ -18416,7 +18416,7 @@
           "invoiceQtyTotal": 0.028,
           "invoiceCostTotal": 11.6,
           "invoiceUnit": "Ton",
-          "actualQuantity": 0.03
+          "actualQuantity": 56
         },
         {
           "id": "inp_mq71lgrw_ipyx",
@@ -18434,7 +18434,7 @@
           "invoiceQtyTotal": 1,
           "invoiceCostTotal": 18.5,
           "invoiceUnit": "Gal",
-          "actualQuantity": 1
+          "actualQuantity": 128
         },
         {
           "id": "inp_mq71lgrw_qifn",
@@ -18452,7 +18452,7 @@
           "invoiceQtyTotal": 0.08,
           "invoiceCostTotal": 10,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.08
+          "actualQuantity": 10.24
         },
         {
           "id": "inp_mq71lgrw_blej",
@@ -18488,7 +18488,7 @@
           "invoiceQtyTotal": 0.1,
           "invoiceCostTotal": 2,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.1
+          "actualQuantity": 0.8
         },
         {
           "id": "inp_mq71lgrw_pfec",
@@ -18525,7 +18525,7 @@
           "invoiceQtyTotal": 0.13,
           "invoiceCostTotal": 2.34,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 1.04
         },
         {
           "id": "inp_mq71lgrw_gr3d",
@@ -18599,7 +18599,7 @@
           "invoiceQtyTotal": 0.03,
           "invoiceCostTotal": 50.28,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.03
+          "actualQuantity": 3.84
         },
         {
           "id": "inp_mq9ynagz_nbkn",
@@ -18618,7 +18618,7 @@
           "invoiceQtyTotal": 0.13,
           "invoiceCostTotal": 2.99,
           "invoiceUnit": "Gal",
-          "actualQuantity": 0.13
+          "actualQuantity": 0.52
         },
         {
           "id": "inp_mq9yo5b7_sui2",
@@ -28527,5 +28527,6 @@
     }
   ],
   "quickPlanConfig": [],
-  "strawSales": []
+  "strawSales": [],
+  "inputQuotes": []
 }
