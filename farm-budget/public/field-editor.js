@@ -1260,8 +1260,14 @@
               sourceItem.invoiceAcres = invAcres || null;
               sourceItem.invoiceQtyTotal = invQty || null;
               sourceItem.invoiceCostTotal = invCost || null;
-              sourceItem.invoiceUnit = sourcePurchaseUnit || sourceUnit;
-              sourceItem.actualQuantity = invAcres > 0 && invQty > 0 ? Calc.round2(invQty / invAcres) : (sourceItem.quantity || 0);
+              // Keep any unit the row already carries (batch entry allows a custom
+              // unit); only fall back to the product's purchase unit.
+              var invUnit = sourceItem.invoiceUnit || sourcePurchaseUnit || sourceUnit;
+              sourceItem.invoiceUnit = invUnit;
+              // invQty is a purchase-unit total (Gal, Ton) — convert to the
+              // application unit before deriving the per-acre as-applied rate.
+              var appRate = Calc.invoiceRatePerAcre(sourceProduct, invQty, invAcres, invUnit);
+              sourceItem.actualQuantity = appRate != null ? appRate : (sourceItem.quantity || 0);
             } else {
               var qtyInput = formRow.querySelector('.fo-cf-qty');
               if (isInputType && qtyInput) sourceItem.actualQuantity = parseFloat(qtyInput.value) || sourceItem.quantity;
@@ -1506,6 +1512,9 @@
             if (!inp) return;
             var qty  = parseFloat(row.querySelector('.fo-inv-item-qty').value) || null;
             var unit = row.querySelector('.fo-inv-item-unit').value.trim() || null;
+            var rowProd = (window.refData.products || []).find(function (p) {
+              return (p.name || '').trim().toLowerCase() === (inp.productName || '').trim().toLowerCase();
+            });
             var cost = parseFloat(row.querySelector('.fo-inv-item-cost').value) || null;
             inp.passStatus       = 'confirmed';
             inp.confirmedDate    = invDate || today2;
@@ -1518,7 +1527,10 @@
             inp.invoiceQtyTotal  = qty;
             inp.invoiceUnit      = unit;
             inp.invoiceCostTotal = cost;
-            inp.actualQuantity   = (invAcres > 0 && qty) ? Calc.round2(qty / invAcres) : inp.quantity;
+            // qty is entered in `unit` — the product's purchase unit unless the
+            // operator overrode it — so convert to the application unit first.
+            var rowRate = Calc.invoiceRatePerAcre(rowProd, qty, invAcres, unit);
+            inp.actualQuantity   = rowRate != null ? rowRate : inp.quantity;
           });
 
           renderFieldOpsPanel();

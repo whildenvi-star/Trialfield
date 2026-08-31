@@ -146,6 +146,24 @@
     return product.unitBilledPrice / product.conversionRate;
   }
 
+  // --- Invoice quantity -> as-applied rate ---
+  // Invoice totals are entered in the product's PURCHASE unit (Gal, Ton), but
+  // quantity/actualQuantity are per-acre in the APPLICATION unit (OZ, Quart, Lbs).
+  // conversionRate is application-units-per-purchase-unit, so the purchase-unit
+  // total must be multiplied by it before dividing by acres. Returns null when
+  // the rate can't be computed.
+  function invoiceRatePerAcre(product, qtyTotal, acres, enteredUnit) {
+    var qty = parseFloat(qtyTotal);
+    var ac = parseFloat(acres);
+    if (!(qty > 0) || !(ac > 0)) return null;
+    var convRate = (product && product.conversionRate) || 1;
+    var appUnit = product ? (product.unit || '') : '';
+    var norm = function (u) { return (u || '').trim().toLowerCase(); };
+    // A quantity already typed in the application unit needs no conversion.
+    var factor = (enteredUnit && appUnit && norm(enteredUnit) === norm(appUnit)) ? 1 : convRate;
+    return round4(qty * factor / ac);
+  }
+
   // --- Per-Field Budget Calculation ---
   // field: the field object from data.json
   // refs: { products, implements, cropPricing, laborOverhead, seeds }
@@ -673,6 +691,7 @@
   exports.computeDashboardByCrop = computeDashboardByCrop;
   exports.computeDashboard = computeDashboard;
   exports.computeApplicationPrice = computeApplicationPrice;
+  exports.invoiceRatePerAcre = invoiceRatePerAcre;
   exports.computeMoistureDiscount = computeMoistureDiscount;
   exports.clearCropPricingCache = clearCropPricingCache;
   exports.round2 = round2;

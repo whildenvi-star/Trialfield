@@ -709,8 +709,11 @@
           item.invoiceQtyTotal = invQty || null;
           item.invoiceCostTotal = invCost || null;
           item.invoiceUnit = purchaseUnit || unit;
-          item.actualQuantity = invAcres > 0 && invQty > 0
-            ? Calc.round2(invQty / invAcres)
+          // invQty is a purchase-unit total (the field is labelled with
+          // purchaseUnit) — convert to the application unit before rating it.
+          var popRate = Calc.invoiceRatePerAcre(product, invQty, invAcres, purchaseUnit);
+          item.actualQuantity = popRate != null
+            ? popRate
             : (parseFloat(val('.fs-pop-qty')) || item.quantity || 0);
         } else {
           var actual = parseFloat(val('.fs-pop-qty'));
