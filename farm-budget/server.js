@@ -1187,20 +1187,36 @@ function analysisIsSuspect(product, key) {
   return Math.abs(expected - (Number(product[key]) || 0)) > 0.02;
 }
 
-// $/lb of actual nutrient: billed price ÷ conversion gives $/lb of product,
-// divided again by the analysis fraction. 0-0-60 at $445/ton → $0.371/lb K2O.
+// An analysis is a percent by WEIGHT, so it only means something against a
+// weight unit. A liquid billed by the fluid ounce can't be converted without
+// its density, and reading $/oz as $/lb inflates the result 16-fold — so
+// volume-priced products are left out of removal pricing entirely.
+const LBS_PER_APP_UNIT = { lbs: 1, lb: 1, pound: 1, pounds: 1, ton: 2000, tons: 2000 };
+
+function appUnitLbs(product) {
+  return LBS_PER_APP_UNIT[String(product.unit || '').trim().toLowerCase()] || null;
+}
+
+// $/lb of actual nutrient: billed price ÷ conversion gives $ per application
+// unit, converted to $/lb of product, divided again by the analysis fraction.
+// 0-0-60 at $445/ton → $0.371/lb K2O.
 function nutrientSources(key, organicOnly) {
   return (store.products || [])
     .filter(p => (Number(p[key]) || 0) > 0 && (Number(p.unitBilledPrice) || 0) > 0)
     .filter(p => (organicOnly ? !!p.organic : true))
     .filter(p => !analysisIsSuspect(p, key))
-    .map(p => ({
-      productId: p.id,
-      product: p.name,
-      organic: !!p.organic,
-      analysis: Number(p[key]) || 0,
-      perLb: Calc.round2(((Number(p.unitBilledPrice) || 0) / (Number(p.conversionRate) || 1)) / (Number(p[key]) || 1) * 1000) / 1000
-    }))
+    .filter(p => appUnitLbs(p) !== null)
+    .map(p => {
+      const perAppUnit = (Number(p.unitBilledPrice) || 0) / (Number(p.conversionRate) || 1);
+      const perLbProduct = perAppUnit / appUnitLbs(p);
+      return {
+        productId: p.id,
+        product: p.name,
+        organic: !!p.organic,
+        analysis: Number(p[key]) || 0,
+        perLb: Math.round((perLbProduct / (Number(p[key]) || 1)) * 1000) / 1000
+      };
+    })
     .sort((a, b) => a.perLb - b.perLb);
 }
 
