@@ -294,9 +294,9 @@
           }
           actualYieldText = ' <span style="font-size:0.78em;opacity:0.9;" title="Measured yield from grain tickets (' + grainMatch.ticketCount + ' tickets)">' +
             '<span style="color:#4af626;font-size:0.8em;vertical-align:middle;margin-right:2px;">GT</span>' +
-            'Actual ' + util.formatNum(actualYield, 1) + ' ' + util.escHtml(row.unit) + '/ac ' +
-            'vs Budget ' + util.formatNum(budgetYield, 1) + ' ' +
-            '<span style="' + varCls + '">(' + varSign + util.formatNum(variance, 1) + ')</span>' +
+            '<span style="font-weight:600;font-size:1.1em;">Actual ' + util.formatNum(actualYield, 1) + '</span> ' + util.escHtml(row.unit) + '/ac ' +
+            '<span style="font-size:0.75em;opacity:0.75;">(Budget ' + util.formatNum(budgetYield, 1) + ' ' +
+            '<span style="' + varCls + '">(' + varSign + util.formatNum(variance, 1) + ')</span>)</span>' +
             '</span>' + meterHtml;
         } else {
           actualYieldText = ' <span style="font-size:0.7em;opacity:0.5;font-style:italic;" title="No yield data yet">(no GT data)</span>';
