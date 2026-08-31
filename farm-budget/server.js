@@ -173,6 +173,8 @@ function loadData() {
   // Guard collections added after initial data.json was created
   if (!store.quickPlanConfig) store.quickPlanConfig = [];
   if (!store.strawSales) store.strawSales = [];
+  if (!store.strawOps) store.strawOps = [];
+  if (!store.strawProduction) store.strawProduction = [];
   if (!store.inputQuotes) store.inputQuotes = [];
   recomputeDblSharedAcres();
 }
@@ -1085,10 +1087,49 @@ crudRoutes('implements', 'implements', 'impl');
 // Seeds
 crudRoutes('seeds', 'seeds', 'seed');
 
-// Straw sales — small-grain straw sold by the ton, back-calculated to $/ac
-crudRoutes('straw-sales', 'strawSales', 'straw');
+// ── STRAW ──────────────────────────────────────────────────────────────────
+// Small-grain straw baled off after grain harvest: the work (mow / rake / bale /
+// stack / haul) on one side, tons sold to a straw buyer on the other. Nets to a
+// $/ac pair written onto the field budget as STRAW (income) + STRAW COST.
 
-// GET /api/straw/summary?year= — small-grain fields with straw sales rolled up per farm
+crudRoutes('straw-sales', 'strawSales', 'straw');
+crudRoutes('straw-ops', 'strawOps', 'strawop');
+
+// Bales made per field per year — one row each, upserted rather than CRUDed.
+app.post('/api/straw-production', async (req, res) => {
+  const fieldId = req.body.fieldId;
+  const cropYear = parseInt(req.body.cropYear, 10) || store.settings.year;
+  if (!fieldId) return res.status(400).json({ error: 'fieldId required' });
+  if (!Array.isArray(store.strawProduction)) store.strawProduction = [];
+  let row = store.strawProduction.find(p => p.fieldId === fieldId && p.cropYear === cropYear);
+  if (!row) {
+    row = { id: generateId('strawprod'), fieldId, cropYear, bales: 0, avgBaleLbs: 0, notes: '' };
+    store.strawProduction.push(row);
+  }
+  ['bales', 'avgBaleLbs'].forEach(k => {
+    if (req.body[k] !== undefined) row[k] = Number(req.body[k]) || 0;
+  });
+  if (req.body.notes !== undefined) row.notes = req.body.notes;
+  await saveData();
+  res.json(row);
+});
+
+// Cost basis for one straw op. Quantity comes from the field unless overridden.
+const STRAW_BASES = ['/ac', '/bale', '/ton', 'flat'];
+
+function strawOpQty(op, ctx) {
+  if (op.qtyOverride !== undefined && op.qtyOverride !== null && op.qtyOverride !== '') {
+    return Number(op.qtyOverride) || 0;
+  }
+  switch (op.basis) {
+    case '/bale': return ctx.bales;
+    case '/ton': return ctx.tonsMade;
+    case 'flat': return 1;
+    default: return ctx.acres;
+  }
+}
+
+// GET /api/straw/summary?year= — small-grain fields with straw work + sales rolled up per farm
 app.get('/api/straw/summary', (req, res) => {
   const year = parseInt(req.query.year, 10) || store.settings.year;
   const refs = getRefs();
@@ -1097,7 +1138,10 @@ app.get('/api/straw/summary', (req, res) => {
     .map(e => e.id);
   const sgFields = store.fields.filter(f =>
     sgEntIds.includes(Calc.resolveEnterpriseId(f, store.cropTypes || [], store.enterprises)));
-  const sales = (store.strawSales || []).filter(s => (parseInt(s.cropYear, 10) || store.settings.year) === year);
+  const inYear = row => (parseInt(row.cropYear, 10) || store.settings.year) === year;
+  const sales = (store.strawSales || []).filter(inYear);
+  const ops = (store.strawOps || []).filter(inYear);
+  const production = (store.strawProduction || []).filter(inYear);
 
   const rows = sgFields.map(f => {
     const b = Calc.computeFieldBudget(f, refs, store.settings);
@@ -1105,36 +1149,88 @@ app.get('/api/straw/summary', (req, res) => {
     const fSales = sales.filter(s => s.fieldId === f.id);
     const tons = fSales.reduce((s, x) => s + (Number(x.tons) || 0), 0);
     const dollars = fSales.reduce((s, x) => s + (Number(x.tons) || 0) * (Number(x.pricePerTon) || 0), 0);
+
+    const prod = production.find(p => p.fieldId === f.id) || null;
+    const bales = prod ? (Number(prod.bales) || 0) : 0;
+    const avgBaleLbs = prod ? (Number(prod.avgBaleLbs) || 0) : 0;
+    // Tons made from bales when weighed; otherwise fall back to tons sold so
+    // per-ton ops still cost out on farms that sold everything off the field.
+    const tonsMade = bales > 0 && avgBaleLbs > 0 ? (bales * avgBaleLbs) / 2000 : tons;
+
+    const ctx = { acres, bales, tonsMade };
+    const fOps = ops.filter(o => o.fieldId === f.id).map(o => {
+      const qty = strawOpQty(o, ctx);
+      const cost = (Number(o.rate) || 0) * qty;
+      return Object.assign({}, o, { qty: Calc.round2(qty), cost: Calc.round2(cost) });
+    });
+    const costTotal = fOps.reduce((s, o) => s + o.cost, 0);
+
     const aux = (f.auxPayments || []).find(a => (a.label || '').trim().toUpperCase() === 'STRAW');
+    const auxCost = (f.auxPayments || []).find(a => (a.label || '').trim().toUpperCase() === 'STRAW COST');
     return {
       fieldId: f.id,
       farm: f.name,
       crop: f.crop,
       acres: Calc.round2(acres),
+      bales: bales,
+      avgBaleLbs: avgBaleLbs,
+      tonsMade: Calc.round2(tonsMade),
+      balesPerAcre: acres > 0 ? Calc.round2(bales / acres) : 0,
       saleCount: fSales.length,
       tons: Calc.round2(tons),
       tonsPerAcre: acres > 0 ? Calc.round2(tons / acres) : 0,
       avgPricePerTon: tons > 0 ? Calc.round2(dollars / tons) : 0,
       dollars: Calc.round2(dollars),
       dollarsPerAcre: acres > 0 ? Calc.round2(dollars / acres) : 0,
-      budgetStrawPerAcre: aux ? (Number(aux.perAcre) || 0) : null
+      opCount: fOps.length,
+      costTotal: Calc.round2(costTotal),
+      costPerAcre: acres > 0 ? Calc.round2(costTotal / acres) : 0,
+      costPerBale: bales > 0 ? Calc.round2(costTotal / bales) : 0,
+      netTotal: Calc.round2(dollars - costTotal),
+      netPerAcre: acres > 0 ? Calc.round2((dollars - costTotal) / acres) : 0,
+      ops: fOps,
+      production: prod,
+      budgetStrawPerAcre: aux ? (Number(aux.perAcre) || 0) : null,
+      budgetStrawCostPerAcre: auxCost ? (Number(auxCost.perAcre) || 0) : null
     };
   });
-  res.json({ year: year, settingsYear: store.settings.year, fields: rows, sales: sales });
+  res.json({
+    year: year,
+    settingsYear: store.settings.year,
+    bases: STRAW_BASES,
+    fields: rows,
+    sales: sales,
+    ops: ops,
+    production: production
+  });
 });
 
-// POST /api/straw/apply/:fieldId — write computed $/ac onto the field as a STRAW aux payment
+// POST /api/straw/apply/:fieldId — write straw income and cost onto the field as
+// two aux payment lines: STRAW (+$/ac gross) and STRAW COST (−$/ac).
 app.post('/api/straw/apply/:fieldId', async (req, res) => {
   const f = store.fields.find(x => x.id === req.params.fieldId);
   if (!f) return res.status(404).json({ error: 'Field not found' });
   const perAcre = Number(req.body.perAcre);
   if (!isFinite(perAcre) || perAcre < 0) return res.status(400).json({ error: 'perAcre required' });
+  const costPerAcre = Number(req.body.costPerAcre) || 0;
+  if (costPerAcre < 0) return res.status(400).json({ error: 'costPerAcre must be positive' });
   if (!Array.isArray(f.auxPayments)) f.auxPayments = [];
-  const aux = f.auxPayments.find(a => (a.label || '').trim().toUpperCase() === 'STRAW');
-  if (aux) aux.perAcre = perAcre;
-  else f.auxPayments.push({ label: 'STRAW', perAcre: perAcre });
+
+  const upsert = (label, value) => {
+    const existing = f.auxPayments.find(a => (a.label || '').trim().toUpperCase() === label);
+    if (value === 0) {
+      // Don't leave a zero line lying around in the budget.
+      if (existing) f.auxPayments.splice(f.auxPayments.indexOf(existing), 1);
+      return;
+    }
+    if (existing) existing.perAcre = value;
+    else f.auxPayments.push({ label: label, perAcre: value });
+  };
+  upsert('STRAW', Calc.round2(perAcre));
+  upsert('STRAW COST', Calc.round2(-Math.abs(costPerAcre)));
+
   await saveData();
-  res.json({ ok: true, fieldId: f.id, perAcre: perAcre });
+  res.json({ ok: true, fieldId: f.id, perAcre: perAcre, costPerAcre: costPerAcre });
 });
 
 // Rent — removed (managed in Farm Registry app)
