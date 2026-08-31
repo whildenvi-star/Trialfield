@@ -45,12 +45,32 @@ Investigated 2026-08-28; root causes confirmed:
 
 ## Solution
 
-PHASE 1 SHIPPED 2026-08-30 (commits f9e6644, 463bedc; deployed to droplet,
-verified live: no-auth 403, v2-grant role enforcement, per-acre answers
-correct, chat-log.jsonl capturing). Voice layer in farm-budget/lib/voice.js.
-Grant format now v1 + v2 (v2 = role in signed payload); portal mints v2 for
-farm-budget only — sibling app verifiers are still v1-only, roll v2 out
-per-app if wanted. REMAINING: Phase 2 below.
+DONE — both phases shipped and deployed 2026-08-30.
+
+PHASE 1 (commits f9e6644, 463bedc): per-acre unit fix, data-honesty header,
+voice layer (farm-budget/lib/voice.js), server-side role from v2 embed grant,
+kill switch + daily cap + chat-log.jsonl. Grant format now v1 + v2 (v2 = role
+in signed payload); portal mints v2 for farm-budget only — sibling verifiers
+are still v1-only, roll v2 out per-app if wanted.
+
+PHASE 2 (commits 6aed2d8, 63704a9): tool-based agent in farm-budget/lib/agent/
+(tools.js / prompt.js / loop.js) replaced the 433-line context blob. 11
+role-gated tools compute from Calc at answer time; compare_enterprises ranks
+server-side so the model never sorts; agentic loop on raw fetch (no new dep);
+audit log records which tools produced each answer; terminal shows tool
+activity. Verified in production across admin/office/operator.
+
+FOUND AND FIXED EN ROUTE: grain-tickets was hardcoded to localhost:3000, which
+is the PORTAL on the droplet — that section had never populated in production
+and the silent-catch hid it. Now uses GRAIN_API_URL (default 3007). This is the
+concrete argument for loud failures: the honest "UNAVAILABLE" marker surfaced a
+bug that silent omission had hidden indefinitely.
+
+FOLLOW-UPS worth considering (not blocking):
+- Roll v2 grants out to the other Express apps so they can authorize per-role.
+- Consider a get_field_history / prior-year tool — the agent correctly says
+  prior-year actuals are not in view, but the data exists in organic-cert.
+- chat-log.jsonl grows unbounded; add rotation if it gets big.
 
 Phase 1 (afternoon, quick fixes):
 - Send `avgProfitPerAcre` (and/or correctly-labeled totals) in enterprise

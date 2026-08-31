@@ -259,9 +259,8 @@ Progress: v9.0 [██████████] SHIPPED | v10.0 [█████
 
 ### Pending Todos
 
-6 pending todos:
+5 pending todos:
 
-- Fix farm-budget chat agent bad financial advice + auth hole (farm-budget) — 2026-08-28, /ac unit bug + client-trusted admin role
 - Fix field registry acres and ownership save bug (farm-registry)
 - Add field editor category totals and red negative profit (farm-budget)
 - Complete phases 55-57 actionable dashboard APH grain marketing (planning)
