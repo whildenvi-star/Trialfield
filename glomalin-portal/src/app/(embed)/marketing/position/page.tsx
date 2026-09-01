@@ -2,8 +2,8 @@
 // Sales vs projected for the four primary crops (Shell Corn, Non-GMO Yellow
 // Corn, RR Soybeans, Food Beans — which pools High Oil Soybeans) plus
 // one-line quick info on the specialty crops. Owners additionally get a
-// WAP · COP line per crop; office rows arrive with financial keys stripped
-// server-side, so that line simply never renders for them.
+// WAP · COP · F-IT line per crop; office rows arrive with financial keys
+// stripped server-side, so that line simply never renders for them.
 //
 // Theming: MACRO passes ?theme=light|dark to match its own mode. Light is
 // the default (MACRO defaults white for readability).
@@ -16,7 +16,7 @@ import { CURRENT_CROP_YEAR } from '@/lib/config'
 
 // Office rows omit the financial keys, owner rows carry them — model both.
 type VariantVolume = OfficeCommodityRollupRow['variants'][number] &
-  Partial<Pick<VariantRollupRow, 'wapCents' | 'copPerBu'>>
+  Partial<Pick<VariantRollupRow, 'wapCents' | 'copPerBu' | 'blendedIfSoldTodayCents'>>
 
 // crosswalk variantName(s) → one widget card; volumes are summed across them
 const PRIMARY: Array<{ variants: string[]; label: string }> = [
@@ -35,6 +35,8 @@ interface Pooled {
   wapCents: number | null
   /** projected-bushel-weighted cost of production, $/bu; null when no budget or office */
   copPerBu: number | null
+  /** blended $/bu if the unpriced remainder sold today, cents/bu; null when no live quote or office */
+  fitCents: number | null
 }
 
 function pool(variants: VariantVolume[]): Pooled | null {
@@ -64,7 +66,21 @@ function pool(variants: VariantVolume[]): Pooled | null {
     ? budgeted.reduce((s, v) => s + (v.copPerBu as number) * (v.projectedBu as number), 0) / budgetedProj
     : null
 
-  return { soldBu, projectedBu, actualBu, pctSold, wapCents, copPerBu }
+  // F-IT re-blends exactly rather than averaging averages: each variant's F-IT
+  // carries its own denominator, max(projected, priced), so Σ(fit × den) / Σ den
+  // reconstructs the pooled blend the same way a single-variant card computes it.
+  const withFit = variants.filter((v) => v.blendedIfSoldTodayCents != null)
+  let fitNum = 0
+  let fitDen = 0
+  for (const v of withFit) {
+    const den = Math.max(v.projectedBu ?? 0, v.pricedBu ?? 0)
+    if (den <= 0) continue
+    fitNum += (v.blendedIfSoldTodayCents as number) * den
+    fitDen += den
+  }
+  const fitCents = fitDen > 0 ? fitNum / fitDen : null
+
+  return { soldBu, projectedBu, actualBu, pctSold, wapCents, copPerBu, fitCents }
 }
 
 function barColor(pct: number | null): string {
@@ -176,7 +192,7 @@ export default async function MarketingPositionEmbedPage({
                   <span className="mpw-actual"> · actual {formatBu(Math.round(pooled.actualBu))}</span>
                 )}
               </div>
-              {(pooled?.wapCents != null || pooled?.copPerBu != null) && (
+              {(pooled?.wapCents != null || pooled?.copPerBu != null || pooled?.fitCents != null) && (
                 <div className="mpw-fin">
                   WAP{' '}
                   <b
@@ -190,6 +206,21 @@ export default async function MarketingPositionEmbedPage({
                     {pooled.wapCents != null ? formatPricePerBu(pooled.wapCents / 100) : '—'}
                   </b>
                   {' '}· COP <b>{pooled.copPerBu != null ? formatPricePerBu(pooled.copPerBu) : '—'}</b>
+                  {pooled.fitCents != null && (
+                    <>
+                      {' '}· F-IT{' '}
+                      <b
+                        title="Blended price if every unpriced projected bushel sold today at futures + projected basis"
+                        className={
+                          pooled.copPerBu != null && pooled.fitCents / 100 < pooled.copPerBu
+                            ? 'below'
+                            : undefined
+                        }
+                      >
+                        {formatPricePerBu(pooled.fitCents / 100)}
+                      </b>
+                    </>
+                  )}
                 </div>
               )}
             </div>

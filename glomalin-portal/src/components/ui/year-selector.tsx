@@ -30,7 +30,10 @@ export function YearSelector({ currentYear, availableYears }: YearSelectorProps)
       <select
         value={currentYear}
         onChange={handleChange}
-        className="text-xs font-mono px-2 py-1 bg-[#080a0f] border border-glomalin-border text-glomalin-text rounded focus:outline-none focus:ring-1 focus:ring-glomalin-accent cursor-pointer"
+        // bg was hardcoded #080a0f while the text stayed token-driven — in day
+        // mode that put near-black text on a near-black box. Both sides come
+        // from tokens now so the pair flips together.
+        className="text-xs font-mono px-2 py-1 bg-glomalin-elevated border border-glomalin-border text-glomalin-text rounded focus:outline-none focus:ring-1 focus:ring-glomalin-accent cursor-pointer"
       >
         {years.map((y) => (
           <option key={y} value={y}>

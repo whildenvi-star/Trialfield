@@ -132,6 +132,15 @@ export interface VariantRollupRow {
   pooledPriceCents: number | null
   copPerBu: number | null
   settledRevenue: number | null
+  /** bushels with a locked price — the F-IT denominator's priced half */
+  pricedBu: number
+  /**
+   * This variant's own F-IT, same formula as the commodity row but using the
+   * variant's projected basis. Exposed per-variant so surfaces that pool by
+   * variant (the MACRO position widget crosswalks several variants into one
+   * card) can re-blend exactly: Σ(fit × den) / Σ den, den = max(proj, priced).
+   */
+  blendedIfSoldTodayCents: number | null
 }
 
 export interface CommodityRollupRow {
@@ -181,6 +190,7 @@ const COMMODITY_FINANCIAL_KEYS = [
 ] as const
 const VARIANT_FINANCIAL_KEYS = [
   'wapCents', 'premiumPerBu', 'pooledPriceCents', 'copPerBu', 'settledRevenue',
+  'blendedIfSoldTodayCents',
 ] as const
 
 export type OfficeCommodityRollupRow = Omit<CommodityRollupRow, (typeof COMMODITY_FINANCIAL_KEYS)[number] | 'variants'> & {
@@ -372,9 +382,23 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
       const premiumPerBu = premDen > 0 ? premNum / premDen : (xwalk?.premiumDefault ?? 0)
 
       const vRemainingBu = Math.max((projectedBu ?? 0) - vPos.pricedBu, 0)
+      const vProjectedBasis = projectedBasisByVariantName.get(lower(variantName)) ?? 0
       if (vRemainingBu > 0) {
-        remainderBasisNum += vRemainingBu * (projectedBasisByVariantName.get(lower(variantName)) ?? 0)
+        remainderBasisNum += vRemainingBu * vProjectedBasis
         remainderBasisDen += vRemainingBu
+      }
+
+      // Variant-level F-IT. Tracking-tier variants have no board to mark
+      // against, so they stay null rather than implying a marketable price.
+      const vSymbol = group.tier === 'futures' ? group.symbol : null
+      const vCbot = vSymbol ? (cbotBySymbol[vSymbol] ?? null) : null
+      let vBlendedCents: number | null = null
+      if (projectedBu != null && projectedBu > 0 && vCbot != null) {
+        const vDen = Math.max(projectedBu, vPos.pricedBu)
+        vBlendedCents = Math.round(
+          (vPos.avgPriceCents * vPos.pricedBu +
+            vRemainingBu * (Math.round(vCbot * 100) + Math.round(vProjectedBasis * 100))) / vDen
+        )
       }
 
       variantRows.push({
@@ -391,6 +415,8 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
         pooledPriceCents: poolWapCents != null ? poolWapCents + Math.round(premiumPerBu * 100) : null,
         copPerBu,
         settledRevenue,
+        pricedBu: vPos.pricedBu,
+        blendedIfSoldTodayCents: vBlendedCents,
       })
     }
     variantRows.sort((a, b) => (b.soldBu - a.soldBu) || (b.acres ?? 0) - (a.acres ?? 0))

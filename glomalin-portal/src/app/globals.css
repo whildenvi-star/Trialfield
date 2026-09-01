@@ -57,6 +57,11 @@
    RGB triplets enable Tailwind opacity modifiers (bg-color/50).    */
 
 :root {
+  /* Tell the browser which way the theme runs, so native controls — <select>
+     option popups, scrollbars, date pickers, checkboxes — are painted by the
+     UA in matching colors instead of defaulting to light chrome. */
+  color-scheme: dark;
+
   /* Base surfaces */
   --c-bg:           6 8 13;
   --c-bg-raised:    11 15 22;
@@ -98,6 +103,8 @@
 /* Day mode — .light on body or html flips all colors */
 .light,
 :root.light {
+  color-scheme: light;
+
   --c-bg:           248 250 252;
   --c-bg-raised:    255 255 255;
   --c-card:         241 245 249;

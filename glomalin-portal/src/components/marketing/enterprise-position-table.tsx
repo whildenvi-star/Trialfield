@@ -99,8 +99,8 @@ export function EnterprisePositionTable({
                     <>
                       <Th>Avg Sale</Th>
                       <Th>COP/bu</Th>
-                      <Th>Gross Sales</Th>
                       <Th>F-IT</Th>
+                      <Th>Gross Sales</Th>
                     </>
                   )}
                 </tr>
@@ -294,14 +294,14 @@ function CommodityTr({
           <Num tone="text-glomalin-muted">
             {row.copPerBu != null ? formatPricePerBu(row.copPerBu) : EM}
           </Num>
-          <Num>
-            {row.grossSalesDollars != null && row.grossSalesDollars > 0
-              ? formatUsd(row.grossSalesDollars)
-              : EM}
-          </Num>
           <Num tone="text-glomalin-bright font-semibold">
             {row.blendedIfSoldTodayCents != null
               ? formatPricePerBu(row.blendedIfSoldTodayCents / 100)
+              : EM}
+          </Num>
+          <Num>
+            {row.grossSalesDollars != null && row.grossSalesDollars > 0
+              ? formatUsd(row.grossSalesDollars)
               : EM}
           </Num>
         </>

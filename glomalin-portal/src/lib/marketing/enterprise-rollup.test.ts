@@ -171,6 +171,93 @@ describe('buildEnterpriseRollup — blended price at today CBOT', () => {
   })
 })
 
+describe('buildEnterpriseRollup — per-variant F-IT', () => {
+  const budgetRows = [{ crop: 'RR Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
+
+  it('gives the variant its own blend, matching the commodity row when there is one variant', () => {
+    const [row] = buildEnterpriseRollup(baseInput({
+      contracts: [
+        { id: 'b', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 10000, futuresPrice: 12.0, variant: { id: 'v-rr', name: 'Soybeans' } },
+      ],
+      budgetRows,
+      cbotBySymbol: { S: 11.0 },
+    }))
+    const v = row.variants.find((x) => x.variantName === 'Soybeans')!
+    expect(v.pricedBu).toBe(10000)
+    expect(v.blendedIfSoldTodayCents).toBe(1117)
+    expect(v.blendedIfSoldTodayCents).toBe(row.blendedIfSoldTodayCents)
+  })
+
+  it('re-blends across variants exactly — sum(fit x den) / sum(den) equals the commodity blend', () => {
+    const [row] = buildEnterpriseRollup(baseInput({
+      contracts: [
+        { id: 'b', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 10000, futuresPrice: 12.0, variant: { id: 'v-rr', name: 'Soybeans' } },
+      ],
+      budgetRows,
+      cbotBySymbol: { S: 11.0 },
+    }))
+    let num = 0
+    let den = 0
+    for (const v of row.variants) {
+      if (v.blendedIfSoldTodayCents == null) continue
+      const d = Math.max(v.projectedBu ?? 0, v.pricedBu)
+      if (d <= 0) continue
+      num += v.blendedIfSoldTodayCents * d
+      den += d
+    }
+    expect(Math.round(num / den)).toBe(row.blendedIfSoldTodayCents)
+  })
+
+  it('re-blends two variants the way the MACRO widget pools them', () => {
+    // Food Beans card = Non-GMO Food Beans (budget crop "Soybeans") pooled with
+    // High Oil Soybeans (its own budget crop). Both mark against S.
+    const [row] = buildEnterpriseRollup(baseInput({
+      contracts: [
+        { id: 'f', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 10000, futuresPrice: 12.0, variant: { id: 'v-food', name: 'Non-GMO Food Beans' } },
+        { id: 'h', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 4000, futuresPrice: 13.0, variant: { id: 'v-ho', name: 'High Oil Soybeans' } },
+      ],
+      budgetRows: [
+        { crop: 'Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 },
+        { crop: 'High Oil Soybeans', acres: 200, avgYield: 55, projectedTotal: 11000, cop: 9.5 },
+      ],
+      cbotBySymbol: { S: 11.0 },
+    }))
+
+    const food = row.variants.find((v) => v.variantName === 'Non-GMO Food Beans')!
+    const ho = row.variants.find((v) => v.variantName === 'High Oil Soybeans')!
+    // food: (1200x10000 + 1100x50000) / 60000 = 1117
+    expect(food.blendedIfSoldTodayCents).toBe(1117)
+    // high oil: (1300x4000 + 1100x7000) / 11000 = 1172.7 -> 1173
+    expect(ho.blendedIfSoldTodayCents).toBe(1173)
+
+    // Widget pooling: sum(fit x den) / sum(den) over just these two
+    const pooled = [food, ho].reduce(
+      (acc, v) => {
+        const d = Math.max(v.projectedBu ?? 0, v.pricedBu)
+        return { num: acc.num + (v.blendedIfSoldTodayCents as number) * d, den: acc.den + d }
+      },
+      { num: 0, den: 0 }
+    )
+    // (1117x60000 + 1173x11000) / 71000 = 1125.7
+    expect(Math.round(pooled.num / pooled.den)).toBe(1126)
+    // pooling two variants must land between them, never outside
+    expect(pooled.num / pooled.den).toBeGreaterThan(1117)
+    expect(pooled.num / pooled.den).toBeLessThan(1173)
+  })
+
+  it('leaves the variant blend null with no live quote', () => {
+    const [row] = buildEnterpriseRollup(baseInput({
+      contracts: [
+        { id: 'b', cropYear: 2026, instrument: 'FUTURES_FIXED', contractedBushels: 10000, futuresPrice: 12.0, variant: { id: 'v-rr', name: 'Soybeans' } },
+      ],
+      budgetRows,
+      cbotBySymbol: {},
+    }))
+    const v = row.variants.find((x) => x.variantName === 'Soybeans')!
+    expect(v.blendedIfSoldTodayCents).toBeNull()
+  })
+})
+
 describe('buildEnterpriseRollup — actuals join', () => {
   it('sums actual bu and settled revenue via tickets crop names', () => {
     const [row] = buildEnterpriseRollup(baseInput({
@@ -208,9 +295,11 @@ describe('stripRollupFinancials — office payload', () => {
       expect(k in asRecord, `${k} should be stripped`).toBe(false)
     }
     const v = stripped.variants[0] as unknown as Record<string, unknown>
-    for (const k of ['wapCents', 'premiumPerBu', 'pooledPriceCents', 'copPerBu', 'settledRevenue']) {
+    for (const k of ['wapCents', 'premiumPerBu', 'pooledPriceCents', 'copPerBu', 'settledRevenue', 'blendedIfSoldTodayCents']) {
       expect(k in v, `variant ${k} should be stripped`).toBe(false)
     }
+    // pricedBu is a volume, not a financial — office keeps it
+    expect('pricedBu' in v).toBe(true)
   })
 })
 

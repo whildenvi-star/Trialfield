@@ -18,6 +18,7 @@ interface GrainContractRow {
   id: string
   instrument: 'PRICED' | 'SPOT' | 'FOB' | 'PRICED_LATER' | 'BASIS_FIXED' | 'FUTURES_FIXED' | 'MIN_PRICE' | 'ACCUMULATOR'
   contractedBushels: number
+  buyerTakesAll?: boolean
   appliedBushels: number
   futuresPrice?: number | null
   basis?: number | null
@@ -25,6 +26,11 @@ interface GrainContractRow {
   cropYear: number
   deliveryStart?: string | null
   deliveryEnd?: string | null
+  // No contract-number column exists on GrainContract — imports tag the buyer's
+  // number into `notes` as "Buyer #NUMBER" and the pool-card drilldown reads it
+  // back out of there.
+  location?: string | null
+  notes?: string | null
   customer: { id: string; name: string; shortCode: string }
   variant: { id: string; name: string }
   status: 'OPEN' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELLED' | 'EXPIRED'

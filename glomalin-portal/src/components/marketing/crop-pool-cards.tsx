@@ -6,6 +6,7 @@
 
 import { formatBu, formatUsd, formatPricePerBu, formatPct } from '@/lib/fmt'
 import { Empty } from '@/components/ui/empty'
+import { VariantContractRows } from './variant-contract-rows'
 import type {
   CommodityRollupRow,
   OfficeCommodityRollupRow,
@@ -19,12 +20,24 @@ export type Instrument =
   | 'PRICED' | 'SPOT' | 'FOB' | 'PRICED_LATER'
   | 'BASIS_FIXED' | 'FUTURES_FIXED' | 'MIN_PRICE' | 'ACCUMULATOR'
 
-/** Minimal contract shape the cards need for mix strips + open-leg badges. */
+/**
+ * Contract shape the cards need for mix strips, open-leg badges, and the
+ * per-variety contract drilldown. Office payloads arrive with the three
+ * financial keys stripped server-side, hence the optionals.
+ */
 export interface PoolCardContract {
+  id?: string
   instrument: Instrument
   contractedBushels: number
+  buyerTakesAll?: boolean
   basis?: number | null
   futuresPrice?: number | null
+  finalCashPrice?: number | null
+  deliveryStart?: string | null
+  deliveryEnd?: string | null
+  location?: string | null
+  notes?: string | null
+  customer?: { id?: string; name: string; shortCode?: string }
   variant: { name: string }
   status: 'OPEN' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELLED' | 'EXPIRED'
 }
@@ -53,7 +66,12 @@ const MIX_LABELS: Record<Instrument, string> = {
 // Owner rows carry financials; office rows omit them. Render through one view
 // type where every financial field is optional (same trick as the table).
 type RowView = OfficeCommodityRollupRow &
-  Partial<Pick<CommodityRollupRow, 'cbotPriceDollars' | 'poolWapCents' | 'wapCents'>>
+  Partial<
+    Pick<
+      CommodityRollupRow,
+      'cbotPriceDollars' | 'poolWapCents' | 'wapCents' | 'blendedIfSoldTodayCents'
+    >
+  >
 type VariantView = Partial<VariantRollupRow> & OfficeCommodityRollupRow['variants'][number]
 
 interface CropPoolCardsProps {
@@ -148,6 +166,12 @@ function PoolCard({
   const wap = row.wapCents != null && row.wapCents > 0 ? row.wapCents / 100 : null
   const wapDelta = wap != null && cbot != null ? wap - cbot : null
 
+  // F-IT ("sell the rest today") — comes off the rollup already blended; the
+  // delta against WAP is what says whether finishing the crop out at today's
+  // board helps or hurts the season average.
+  const fit = row.blendedIfSoldTodayCents != null ? row.blendedIfSoldTodayCents / 100 : null
+  const fitDelta = fit != null && wap != null ? fit - wap : null
+
   // Unpriced exposure — projected bushels not yet priced, valued at today's CBOT
   const unpricedBu =
     row.projectedBu != null ? Math.max(0, row.projectedBu - row.pricedBu) : null
@@ -171,6 +195,18 @@ function PoolCard({
   const visVariants = (row.variants as VariantView[]).filter(
     (v) => v.soldBu > 0 || (v.projectedBu ?? 0) > 0
   )
+
+  // Contracts indexed by variety, for the per-variety drilldown. Same
+  // name-match rule contractsForRow() uses to pick the card's contracts,
+  // applied one level down. Earliest delivery window first.
+  const byVariant: Record<string, PoolCardContract[]> = {}
+  for (const c of contracts) {
+    const key = c.variant.name.toLowerCase()
+    ;(byVariant[key] ??= []).push(c)
+  }
+  for (const list of Object.values(byVariant)) {
+    list.sort((a, b) => (a.deliveryStart ?? '').localeCompare(b.deliveryStart ?? ''))
+  }
 
   return (
     <div className="rounded-lg border border-glomalin-border bg-glomalin-surface p-4 space-y-2.5">
@@ -241,6 +277,27 @@ function PoolCard({
         </div>
       )}
 
+      {/* F-IT — the WAP you land on if the unpriced remainder went today at
+          futures + projected basis. Same number the position table computes;
+          surfaced here because the table is collapsed by default and this is
+          the card you actually read. */}
+      {isOwner && fit != null && (
+        <div className="text-[11px] font-mono tabular-nums text-glomalin-muted">
+          <span
+            className="uppercase tracking-wider text-[9px] text-glomalin-muted/70 mr-1"
+            title="Blended WAP if every unpriced projected bushel sold today at futures + projected basis"
+          >
+            F-IT
+          </span>
+          <span className="text-glomalin-bright font-semibold">{formatPricePerBu(fit)}</span>
+          {fitDelta != null && (
+            <span className={fitDelta >= 0 ? 'text-glomalin-success' : 'text-glomalin-warning'}>
+              {' '}({fitDelta >= 0 ? '+' : ''}{formatPricePerBu(fitDelta)} vs WAP)
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Contract-mix strip */}
       {mixTotal > 0 && (
         <div className="flex h-1 rounded-full overflow-hidden">
@@ -303,31 +360,17 @@ function PoolCard({
               )}
             </tr>
           </thead>
-          <tbody>
-            {visVariants.map((v) => (
-              <tr key={v.variantName} className="border-b border-glomalin-border/30 last:border-0">
-                <td className="py-1 text-glomalin-text">{v.variantName}</td>
-                <td className="py-1 text-right tabular-nums text-glomalin-muted">
-                  {v.projectedBu != null ? formatBu(Math.round(v.projectedBu)) : EM}
-                </td>
-                <td className="py-1 text-right tabular-nums text-glomalin-text">
-                  {formatBu(v.soldBu)}
-                </td>
-                {isOwner && (
-                  <>
-                    <td className={`py-1 text-right tabular-nums ${(v.premiumPerBu ?? 0) >= 0 ? 'text-glomalin-success' : 'text-glomalin-warning'}`}>
-                      {v.premiumPerBu != null && v.premiumPerBu !== 0
-                        ? `${v.premiumPerBu > 0 ? '+' : ''}${formatPricePerBu(v.premiumPerBu)}`
-                        : EM}
-                    </td>
-                    <td className="py-1 text-right tabular-nums text-glomalin-accent-light">
-                      {v.pooledPriceCents != null ? formatPricePerBu(v.pooledPriceCents / 100) : EM}
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))}
-          </tbody>
+          <VariantContractRows
+            variants={visVariants.map((v) => ({
+              variantName: v.variantName,
+              projectedBu: v.projectedBu,
+              soldBu: v.soldBu,
+              premiumPerBu: v.premiumPerBu,
+              pooledPriceCents: v.pooledPriceCents,
+            }))}
+            contractsByVariant={byVariant}
+            isOwner={isOwner}
+          />
         </table>
       )}
     </div>
