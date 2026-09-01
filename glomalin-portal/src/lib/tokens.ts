@@ -31,6 +31,37 @@ export const colors = {
   green:       '#7A9E7E',
 } as const
 
+// ── Canvas chrome (the map's own palette) ──────────────────────────
+// The dark, earthy surface the map wears — previously hardcoded as bare hex
+// across seven map components, which is why it had drifted from `colors` above.
+//
+// Deliberately theme-INDEPENDENT: this chrome floats over satellite imagery,
+// which is dark in both themes, so it must not flip with `.light` the way the
+// --c-* variables do. Hence literal hex here rather than CSS custom properties.
+// Tailwind still computes opacity modifiers from hex, so bg-glomalin-canvas-
+// surface/90 works as expected.
+export const canvasColors = {
+  bg:       '#080604',   // beneath the map — full-bleed page ground
+  surface:  '#0e0c0b',   // floating panels, bars, sheets
+  elevated: '#1a1510',   // raised rows inside a panel
+  border:   '#2a2218',   // hairlines on canvas chrome
+  muted:    '#6a5a4a',   // secondary label text
+  text:     '#e8d8c0',   // primary text on canvas chrome
+  accent:   '#C8860A',   // amber — selection, active state, wheat
+} as const
+
+/**
+ * hex → `rgba(...)`, for the inline styles and MapLibre popup CSS that need a
+ * translucent canvas surface. Keeps those from re-hardcoding the same hex.
+ */
+export function withAlpha(hex: string, alpha: number): string {
+  const h = hex.replace('#', '')
+  const r = parseInt(h.slice(0, 2), 16)
+  const g = parseInt(h.slice(2, 4), 16)
+  const b = parseInt(h.slice(4, 6), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
 // ── Banner gradient (cyan brightness ramp for canvas rendering) ─────
 // Used by ascii-noise.ts charColor() — ordered brightest to faintest
 export const bannerGradient = {
@@ -89,6 +120,15 @@ export const tailwindColors: Record<string, string> = {
   // Agricultural semantic
   field:            'rgb(var(--c-field) / <alpha-value>)',
   earth:            'rgb(var(--c-earth) / <alpha-value>)',
+
+  // Canvas chrome — literal hex on purpose; see canvasColors above.
+  'canvas-bg':       canvasColors.bg,
+  'canvas-surface':  canvasColors.surface,
+  'canvas-elevated': canvasColors.elevated,
+  'canvas-border':   canvasColors.border,
+  'canvas-muted':    canvasColors.muted,
+  'canvas-text':     canvasColors.text,
+  'canvas-accent':   canvasColors.accent,
 
   // Legacy alias — keep so existing `text-glomalin-green` still works
   green:            'rgb(var(--c-success) / <alpha-value>)',

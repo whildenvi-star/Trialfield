@@ -71,6 +71,36 @@ export const DEFAULT_MAP_CENTER: [number, number] = [-92.5, 41.9]
 export const DEFAULT_MAP_ZOOM = 13
 
 // ---------------------------------------------------------------------------
+// Canvas panel geometry
+// ---------------------------------------------------------------------------
+// Detail panels are overlays, not reflows: the map container keeps its size and
+// the *camera* gets padded instead. That is what stops the map re-laying-out on
+// every selection, and it is why these widths have to be shared — the panel CSS
+// width and the camera padding are the same number in two places, and they
+// silently disagree the moment one of them is edited alone.
+
+/** Field detail panel on the main map (`w-96`). */
+export const FIELD_PANEL_W = 384
+
+/** CLU panel on the FSA reporting map. */
+export const CLU_PANEL_W = 320
+
+/** Below this width a panel covers most of the screen, so padding is pointless. */
+export const PANEL_PAD_MIN_VIEWPORT = 768
+
+/** Camera padding for a right-docked panel, or zero on narrow screens. */
+export function panelPadding(panelWidth: number) {
+  const right =
+    typeof window !== 'undefined' && window.innerWidth > PANEL_PAD_MIN_VIEWPORT
+      ? panelWidth
+      : 0
+  return { top: 0, bottom: 0, left: 0, right }
+}
+
+/** Camera padding reset — used when a panel closes so the map recenters. */
+export const NO_PANEL_PADDING = { top: 0, bottom: 0, left: 0, right: 0 }
+
+// ---------------------------------------------------------------------------
 // Satellite tile style URL
 // ---------------------------------------------------------------------------
 

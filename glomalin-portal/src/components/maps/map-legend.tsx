@@ -27,7 +27,7 @@ export function MapLegend({ crops, showPrecip = false }: MapLegendProps) {
 
   return (
     <div
-      className="absolute bottom-4 left-4 z-10 rounded border border-[#2a2218] p-3"
+      className="absolute bottom-4 left-4 z-10 rounded border border-glomalin-canvas-border p-3"
       style={{ backgroundColor: 'rgba(14, 12, 11, 0.92)' }}
       role="note"
       aria-label="Map legend"
@@ -43,7 +43,7 @@ export function MapLegend({ crops, showPrecip = false }: MapLegendProps) {
         <LegendSwatch color={CROP_COLORS.__unassigned} label="No crop" />
 
         {/* Divider before organic indicator */}
-        <div className="border-t border-[#2a2218] my-2" />
+        <div className="border-t border-glomalin-canvas-border my-2" />
 
         {/* Organic certified indicator — dashed line */}
         <div className="flex items-center gap-2">
@@ -52,7 +52,7 @@ export function MapLegend({ crops, showPrecip = false }: MapLegendProps) {
             style={{ borderTop: `2px dashed ${ORGANIC_BORDER_COLOR}` }}
             aria-hidden="true"
           />
-          <span className="text-xs font-mono text-[#e8d8c0] leading-none">
+          <span className="text-xs font-mono text-glomalin-canvas-text leading-none">
             Organic certified
           </span>
         </div>
@@ -60,8 +60,8 @@ export function MapLegend({ crops, showPrecip = false }: MapLegendProps) {
         {/* Precip gradient legend — only when precip layer is active */}
         {showPrecip && (
           <>
-            <div className="border-t border-[#2a2218] my-2" />
-            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-[#6a5a4a] leading-none block mb-1.5">
+            <div className="border-t border-glomalin-canvas-border my-2" />
+            <span className="text-[10px] font-mono uppercase tracking-[0.15em] text-glomalin-canvas-muted leading-none block mb-1.5">
               Rainfall (7d)
             </span>
             <PrecipSwatch color="rgba(180,210,255,0.55)" label='&lt; 0.5&Prime;' />
@@ -85,7 +85,7 @@ function PrecipSwatch({ color, label }: { color: string; label: string }) {
         aria-hidden="true"
       />
       <span
-        className="text-xs font-mono text-[#e8d8c0] leading-none"
+        className="text-xs font-mono text-glomalin-canvas-text leading-none"
         dangerouslySetInnerHTML={{ __html: label }}
       />
     </div>
@@ -101,7 +101,7 @@ function LegendSwatch({ color, label }: { color: string; label: string }) {
         style={{ backgroundColor: color }}
         aria-hidden="true"
       />
-      <span className="text-xs font-mono text-[#e8d8c0] leading-none truncate max-w-[120px]">
+      <span className="text-xs font-mono text-glomalin-canvas-text leading-none truncate max-w-[120px]">
         {label}
       </span>
     </div>

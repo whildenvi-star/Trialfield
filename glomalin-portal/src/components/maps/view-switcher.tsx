@@ -32,8 +32,8 @@ export function ViewSwitcher({ view, onChange }: ViewSwitcherProps) {
               isLast  ? 'rounded-r' : '',
               !isFirst ? 'border-l-0' : '',
               active
-                ? 'bg-[#C8860A]/20 border-[#C8860A] text-[#C8860A]'
-                : 'bg-[#0e0c0b]/90 border-[#2a2218] text-[#6a5a4a] hover:text-[#e8d8c0] hover:border-[#6a5a4a]',
+                ? 'bg-glomalin-canvas-accent/20 border-glomalin-canvas-accent text-glomalin-canvas-accent'
+                : 'bg-glomalin-canvas-surface/90 border-glomalin-canvas-border text-glomalin-canvas-muted hover:text-glomalin-canvas-text hover:border-glomalin-canvas-muted',
             ].join(' ')}
           >
             {v.label}

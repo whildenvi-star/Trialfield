@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
+import { canvasColors } from '@/lib/tokens'
 import type { Map as MaplibreMap } from 'maplibre-gl'
 import { getSatelliteStyle, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/map-config'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
@@ -853,17 +854,17 @@ export function OverlayMap({ cropYear = CURRENT_CROP_YEAR }: OverlayMapProps) {
       {/* MapLibre popup styles */}
       <style>{`
         .maplibregl-popup-content {
-          background: #0e0c0b;
-          border: 1px solid #2a2218;
+          background: ${canvasColors.surface};
+          border: 1px solid ${canvasColors.border};
           border-radius: 4px;
           padding: 7px 11px;
           font-family: ui-monospace, monospace;
           font-size: 11px;
-          color: #e8d8c0;
+          color: ${canvasColors.text};
           box-shadow: 0 2px 10px rgba(0,0,0,0.7);
           line-height: 1.6;
         }
-        .maplibregl-popup-tip { border-top-color: #2a2218; }
+        .maplibregl-popup-tip { border-top-color: ${canvasColors.border}; }
       `}</style>
     </div>
   )

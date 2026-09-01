@@ -18,7 +18,7 @@ export default async function MapsPage() {
 
   return (
     <div className="fixed top-0 bottom-0 right-0 left-0 md:left-[var(--sidebar-w)]">
-      <Suspense fallback={<div className="w-full h-full bg-[#080604] animate-pulse" />}>
+      <Suspense fallback={<div className="w-full h-full bg-glomalin-canvas-bg animate-pulse" />}>
         <FieldMap isAdmin={isAdmin} />
       </Suspense>
     </div>

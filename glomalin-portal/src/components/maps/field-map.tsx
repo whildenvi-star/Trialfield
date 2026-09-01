@@ -13,8 +13,12 @@ import {
   STANDARD_BORDER_WIDTH,
   DEFAULT_MAP_CENTER,
   DEFAULT_MAP_ZOOM,
-  getSatelliteStyleUrl,
+  FIELD_PANEL_W,
+  NO_PANEL_PADDING,
+  panelPadding,
+  getSatelliteStyle,
 } from '@/lib/map-config'
+import { canvasColors, colors, withAlpha } from '@/lib/tokens'
 import { FieldDetailPanel, type FieldProperties } from './field-detail-panel'
 import { BoundaryImport } from './boundary-import'
 import { MapLegend } from './map-legend'
@@ -63,9 +67,9 @@ const CROP_COLOR_EXPR: ExpressionSpecification = [
 // FSA status view: green = all CLUs reported, orange = any unreported, dark = no FSA data
 const FSA_COLOR_EXPR: ExpressionSpecification = [
   'case',
-  ['==', ['get', 'fsa_reported'], true],  '#7A9E7E',
-  ['==', ['get', 'fsa_reported'], false], '#C8860A',
-  '#3a3028',
+  ['==', ['get', 'fsa_reported'], true],  colors.success,
+  ['==', ['get', 'fsa_reported'], false], canvasColors.accent,
+  CROP_COLORS.__unknown,
 ] as unknown as ExpressionSpecification
 
 const DEFAULT_PITCH   = 25
@@ -105,21 +109,17 @@ function getColorExpr(view: MapView): ExpressionSpecification {
 }
 
 /**
- * Frame a field with the detail panel accounted for. The panel is a 384px
- * overlay rather than a reflow, so the camera gets padding instead of the
- * container getting narrower — the map never re-lays-out, and the selected
- * field lands in the visible strip rather than under the panel.
- * Below 768px the panel covers ~90vw, so padding would be meaningless.
+ * Frame a field with the detail panel accounted for — see panelPadding() in
+ * map-config for why the camera is padded instead of the container resized.
  */
 function flyToField(map: Map, lng: number, lat: number, animate = true) {
-  const panelPad = window.innerWidth > 768 ? 384 : 0
   map.flyTo({
     center:    [lng, lat],
     zoom:      Math.max(map.getZoom(), 14),
     pitch:     30,
     bearing:   DEFAULT_BEARING,
     duration:  animate ? 1000 : 0,
-    padding:   { top: 0, bottom: 0, left: 0, right: panelPad },
+    padding:   panelPadding(FIELD_PANEL_W),
     essential: true,
   })
 }
@@ -206,7 +206,13 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
 
         mapInstance = new maplibregl.Map({
           container:          mapContainerRef.current,
-          style:              getSatelliteStyleUrl(),
+          // getSatelliteStyle, not getSatelliteStyleUrl: without a MapTiler key
+          // the URL variant falls back to MapLibre demotiles — a blank political
+          // basemap — so the field map rendered as an empty green void anywhere
+          // the key is unset, while the two FSA maps (already on this helper)
+          // showed real ESRI imagery. Same fallback everywhere now.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          style:              getSatelliteStyle() as any,
           center:             DEFAULT_MAP_CENTER,
           zoom:               DEFAULT_MAP_ZOOM,
           pitch:              DEFAULT_PITCH,
@@ -413,10 +419,10 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
 
       {/* Error state */}
       {mapError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-[#080604]">
-          <div className="rounded border border-[#2a2218] bg-[#0e0c0b] px-8 py-10 text-center max-w-md">
-            <p className="text-[#C8860A] font-mono text-sm font-semibold mb-2">Map Error</p>
-            <p className="text-[#6a5a4a] font-mono text-sm">{mapError}</p>
+        <div className="absolute inset-0 flex items-center justify-center bg-glomalin-canvas-bg">
+          <div className="rounded border border-glomalin-canvas-border bg-glomalin-canvas-surface px-8 py-10 text-center max-w-md">
+            <p className="text-glomalin-canvas-accent font-mono text-sm font-semibold mb-2">Map Error</p>
+            <p className="text-glomalin-canvas-muted font-mono text-sm">{mapError}</p>
           </div>
         </div>
       )}
@@ -425,22 +431,22 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
       {(mapMeta || isAdmin) && (
         <div
           className="absolute top-0 left-0 right-0 z-10 flex items-center gap-5 px-4 h-10 font-mono text-xs"
-          style={{ backgroundColor: 'rgba(8, 6, 4, 0.82)', backdropFilter: 'blur(4px)', borderBottom: '1px solid #2a2218' }}
+          style={{ backgroundColor: withAlpha(canvasColors.bg, 0.82), backdropFilter: 'blur(4px)', borderBottom: `1px solid ${canvasColors.border}` }}
         >
           {mapMeta && (
             <>
-              <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Farm</span>
-              <span className="text-[#e8d8c0]">{mapMeta.total_acres.toLocaleString()} ac</span>
-              <span className="text-[#2a2218]">·</span>
+              <span className="text-glomalin-canvas-muted uppercase tracking-widest text-[10px]">Farm</span>
+              <span className="text-glomalin-canvas-text">{mapMeta.total_acres.toLocaleString()} ac</span>
+              <span className="text-glomalin-canvas-border">·</span>
               <span className="text-[#7A9E7E]">{mapMeta.organic_acres.toLocaleString()} organic</span>
 
               {mapMeta.precip_configured && precipAvg != null && (
                 <>
-                  <span className="text-[#2a2218]">·</span>
-                  <span className="text-[#6a5a4a] uppercase tracking-widest text-[10px]">Precip (7d avg)</span>
+                  <span className="text-glomalin-canvas-border">·</span>
+                  <span className="text-glomalin-canvas-muted uppercase tracking-widest text-[10px]">Precip (7d avg)</span>
                   <span className="text-[#7BAFD4]">{precipAvg.toFixed(2)}&Prime;</span>
-                  <span className="text-[#2a2218]">·</span>
-                  <span className="text-[#6a5a4a]">Updated {formatTimeAgo(precipUpdated ?? null)}</span>
+                  <span className="text-glomalin-canvas-border">·</span>
+                  <span className="text-glomalin-canvas-muted">Updated {formatTimeAgo(precipUpdated ?? null)}</span>
                 </>
               )}
             </>
@@ -456,7 +462,7 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
                   'px-2.5 py-1 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
                   showPrecip
                     ? 'border-[#7BAFD4] text-[#7BAFD4] bg-[#7BAFD4]/10'
-                    : 'border-[#2a2218] text-[#6a5a4a] hover:border-[#6a5a4a] hover:text-[#e8d8c0]',
+                    : 'border-glomalin-canvas-border text-glomalin-canvas-muted hover:border-glomalin-canvas-muted hover:text-glomalin-canvas-text',
                 ].join(' ')}
               >
                 ☁ Precip
@@ -465,7 +471,7 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
                 onClick={handlePrecipRefresh}
                 disabled={isRefreshing}
                 title="Refresh precipitation data"
-                className="text-[#6a5a4a] hover:text-[#e8d8c0] disabled:opacity-40 transition-colors text-xs px-1"
+                className="text-glomalin-canvas-muted hover:text-glomalin-canvas-text disabled:opacity-40 transition-colors text-xs px-1"
               >
                 {isRefreshing ? '…' : '↻'}
               </button>
@@ -478,8 +484,8 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
               className={[
                 'px-2.5 py-1 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
                 showImportPanel
-                  ? 'border-[#C8860A] text-[#C8860A] bg-[#C8860A]/10'
-                  : 'border-[#2a2218] text-[#6a5a4a] hover:border-[#6a5a4a] hover:text-[#e8d8c0]',
+                  ? 'border-glomalin-canvas-accent text-glomalin-canvas-accent bg-glomalin-canvas-accent/10'
+                  : 'border-glomalin-canvas-border text-glomalin-canvas-muted hover:border-glomalin-canvas-muted hover:text-glomalin-canvas-text',
               ].join(' ')}
             >
               ⬆ Boundaries
@@ -492,38 +498,38 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
       {isAdmin && showImportPanel && (
         <div
           className="absolute top-10 right-0 bottom-0 z-30 w-[400px] overflow-y-auto"
-          style={{ backgroundColor: 'rgba(8, 6, 4, 0.96)', borderLeft: '1px solid #2a2218', backdropFilter: 'blur(6px)' }}
+          style={{ backgroundColor: withAlpha(canvasColors.bg, 0.96), borderLeft: `1px solid ${canvasColors.border}`, backdropFilter: 'blur(6px)' }}
         >
           <div className="p-6">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="font-mono text-sm text-[#C8860A] uppercase tracking-wider">
+              <h2 className="font-mono text-sm text-glomalin-canvas-accent uppercase tracking-wider">
                 Import Boundaries
               </h2>
               <button
                 onClick={() => setShowImportPanel(false)}
-                className="text-[#6a5a4a] hover:text-[#e8d8c0] font-mono text-sm transition-colors px-1"
+                className="text-glomalin-canvas-muted hover:text-glomalin-canvas-text font-mono text-sm transition-colors px-1"
               >
                 ✕
               </button>
             </div>
 
             {mapMeta && mapMeta.total_registry_fields != null && (
-              <div className="mb-5 p-3 border border-[#2a2218] rounded bg-[#0a0805]">
-                <p className="font-mono text-[10px] text-[#6a5a4a] uppercase tracking-wider mb-1">
+              <div className="mb-5 p-3 border border-glomalin-canvas-border rounded bg-[#0a0805]">
+                <p className="font-mono text-[10px] text-glomalin-canvas-muted uppercase tracking-wider mb-1">
                   Boundary Coverage
                 </p>
-                <p className="font-mono text-sm text-[#e8d8c0]">
+                <p className="font-mono text-sm text-glomalin-canvas-text">
                   {mapMeta.fields_with_boundaries}{' '}
-                  <span className="text-[#6a5a4a]">of</span>{' '}
+                  <span className="text-glomalin-canvas-muted">of</span>{' '}
                   {mapMeta.total_registry_fields} registry fields
                 </p>
               </div>
             )}
 
-            <p className="font-mono text-xs text-[#6a5a4a] mb-5 leading-relaxed">
+            <p className="font-mono text-xs text-glomalin-canvas-muted mb-5 leading-relaxed">
               Upload a .zip shapefile export from SMS. Feature names are matched
               to field names and aliases in the Farm Registry via{' '}
-              <span className="text-[#e8d8c0]">registry_field_id</span>.
+              <span className="text-glomalin-canvas-text">registry_field_id</span>.
               Import replaces all existing boundaries.
             </p>
 
@@ -548,7 +554,7 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
           // Ease the camera padding back out as the panel leaves — the map
           // recenters itself instead of jumping when the panel disappears
           mapRef.current?.easeTo({
-            padding: { top: 0, bottom: 0, left: 0, right: 0 },
+            padding: NO_PANEL_PADDING,
             duration: 500,
           })
         }}
@@ -557,18 +563,18 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
       <style>{`
         .maplibregl-popup .maplibregl-popup-content,
         .field-map-popup .maplibregl-popup-content {
-          background: #0e0c0b;
-          border: 1px solid #2a2218;
+          background: ${canvasColors.surface};
+          border: 1px solid ${canvasColors.border};
           border-radius: 4px;
           padding: 6px 10px;
           font-family: ui-monospace, monospace;
           font-size: 12px;
-          color: #e8d8c0;
+          color: ${canvasColors.text};
           box-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
         .maplibregl-popup .maplibregl-popup-tip,
         .field-map-popup .maplibregl-popup-tip {
-          border-top-color: #2a2218;
+          border-top-color: ${canvasColors.border};
         }
       `}</style>
     </div>

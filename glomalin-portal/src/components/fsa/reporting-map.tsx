@@ -2,8 +2,16 @@
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
+import { canvasColors } from '@/lib/tokens'
 import type { Map as MaplibreMap, Popup } from 'maplibre-gl'
-import { getSatelliteStyle, DEFAULT_MAP_CENTER, DEFAULT_MAP_ZOOM } from '@/lib/map-config'
+import {
+  getSatelliteStyle,
+  DEFAULT_MAP_CENTER,
+  DEFAULT_MAP_ZOOM,
+  CLU_PANEL_W,
+  NO_PANEL_PADDING,
+  panelPadding,
+} from '@/lib/map-config'
 import { CURRENT_CROP_YEAR } from '@/lib/config'
 import { ReportingCluPanel } from './reporting-clu-panel'
 import type { CluMapProperties, ReportingStatus, CluAnomalyResult } from './reporting-clu-panel'
@@ -247,7 +255,7 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
         duration: 600,
         // Pad for the 320px detail panel so the CLU frames in the visible
         // area instead of centering under the panel (skip on narrow screens)
-        padding: { top: 0, bottom: 0, left: 0, right: window.innerWidth > 768 ? 320 : 0 },
+        padding: panelPadding(CLU_PANEL_W),
       })
     mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], next.properties.id])
     setSelectedClu(next.properties)
@@ -271,7 +279,7 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
         duration: 600,
         // Pad for the 320px detail panel so the CLU frames in the visible
         // area instead of centering under the panel (skip on narrow screens)
-        padding: { top: 0, bottom: 0, left: 0, right: window.innerWidth > 768 ? 320 : 0 },
+        padding: panelPadding(CLU_PANEL_W),
       })
     mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], a.clu_record_id])
     setSelectedClu(feature.properties)
@@ -304,7 +312,7 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
         duration: 600,
         // Pad for the 320px detail panel so the CLU frames in the visible
         // area instead of centering under the panel (skip on narrow screens)
-        padding: { top: 0, bottom: 0, left: 0, right: window.innerWidth > 768 ? 320 : 0 },
+        padding: panelPadding(CLU_PANEL_W),
       })
       }
     }
@@ -549,7 +557,7 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
             source: 'clus',
             filter: ['==', ['get', 'id'], ''],
             paint: {
-              'line-color': '#C8860A',
+              'line-color': canvasColors.accent,
               'line-width': 3,
             },
           })
@@ -659,11 +667,11 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
             }
 
             const p = f.properties as CluMapProperties
-            const cropLine = p.crop ? `<br/><span style="color:#C8860A">${p.crop}</span>` : '<br/><span style="color:#6a5a4a">No crop</span>'
+            const cropLine = p.crop ? `<br/><span style="color:${canvasColors.accent}">${p.crop}</span>` : `<br/><span style="color:${canvasColors.muted}">No crop</span>`
             popup
               .setLngLat(e.lngLat)
               .setHTML(
-                `<span style="color:#e8d8c0;font-weight:600">${p.field_name ?? `F${p.farm_number} T${p.tract_number} C${p.clu}`}</span>${cropLine}<br/><span style="color:#6a5a4a">${p.fsa_acres} ac</span>`
+                `<span style="color:${canvasColors.text};font-weight:600">${p.field_name ?? `F${p.farm_number} T${p.tract_number} C${p.clu}`}</span>${cropLine}<br/><span style="color:${canvasColors.muted}">${p.fsa_acres} ac</span>`
               )
               .addTo(mapInstance)
           })
@@ -1124,7 +1132,7 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
               mapRef.current?.setFilter('clu-selected', ['==', ['get', 'id'], ''])
               // Ease the panel padding back out so the map recenters smoothly
               mapRef.current?.easeTo({
-                padding: { top: 0, bottom: 0, left: 0, right: 0 },
+                padding: NO_PANEL_PADDING,
                 duration: 500,
               })
             }}
@@ -1138,18 +1146,18 @@ export function ReportingMap({ farmFilter, className }: { farmFilter?: string; c
       {/* MapLibre popup styles */}
       <style>{`
         .clu-map-popup .maplibregl-popup-content {
-          background: #0e0c0b;
-          border: 1px solid #2a2218;
+          background: ${canvasColors.surface};
+          border: 1px solid ${canvasColors.border};
           border-radius: 4px;
           padding: 7px 11px;
           font-family: ui-monospace, monospace;
           font-size: 11px;
-          color: #e8d8c0;
+          color: ${canvasColors.text};
           box-shadow: 0 2px 10px rgba(0,0,0,0.7);
           line-height: 1.6;
         }
         .clu-map-popup .maplibregl-popup-tip {
-          border-top-color: #2a2218;
+          border-top-color: ${canvasColors.border};
         }
       `}</style>
     </div>
