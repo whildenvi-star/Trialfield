@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 type StatVariant = 'default' | 'success' | 'warning' | 'danger'
@@ -20,6 +21,10 @@ interface StatCardProps {
   trend?: 'up' | 'down' | 'flat'
   variant?: StatVariant
   onClick?: () => void
+  /** Turns the whole tile into a shortcut. Takes precedence over onClick. */
+  href?: string
+  /** Affordance shown in the corner of a linked tile. Default: '→' */
+  linkHint?: string
   className?: string
 }
 
@@ -38,20 +43,20 @@ export function StatCard({
   trend,
   variant = 'default',
   onClick,
+  href,
+  linkHint = '→',
   className,
 }: StatCardProps) {
-  const clickable = onClick != null
-  return (
-    <div
-      onClick={onClick}
-      className={cn(
-        'bg-glomalin-surface border border-glomalin-border rounded-lg p-4',
-        clickable && 'cursor-pointer hover:border-glomalin-accent transition-colors',
-        className
-      )}
-    >
-      <p className="text-xs text-glomalin-muted font-sans font-medium uppercase tracking-wider mb-1">
-        {label}
+  const clickable = href != null || onClick != null
+  const body = (
+    <>
+      <p className="text-xs text-glomalin-muted font-sans font-medium uppercase tracking-wider mb-1 flex items-center justify-between gap-2">
+        <span>{label}</span>
+        {href && (
+          <span className="font-mono text-glomalin-muted/70 group-hover:text-glomalin-accent transition-colors">
+            {linkHint}
+          </span>
+        )}
       </p>
       <p className={cn('text-2xl font-mono font-bold leading-none', valueColors[variant])}>
         {value}
@@ -70,6 +75,26 @@ export function StatCard({
           )}
         </div>
       )}
+    </>
+  )
+
+  const shell = cn(
+    'group block bg-glomalin-surface border border-glomalin-border rounded-lg p-4',
+    clickable && 'cursor-pointer hover:border-glomalin-accent transition-colors',
+    className
+  )
+
+  if (href) {
+    return (
+      <Link href={href} className={shell}>
+        {body}
+      </Link>
+    )
+  }
+
+  return (
+    <div onClick={onClick} className={shell}>
+      {body}
     </div>
   )
 }

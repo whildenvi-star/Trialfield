@@ -6,7 +6,8 @@ import { PageHeader } from '@/components/ui/page-header'
 import { YearSelector } from '@/components/ui/year-selector'
 import { KpiStrip } from '@/components/ui/kpi-strip'
 import { StatCard } from '@/components/ui/stat-card'
-import { formatBu, formatUsd, formatPct } from '@/lib/fmt'
+import { formatBu, formatUsd } from '@/lib/fmt'
+import { PricedBreakdownCards } from '@/components/marketing/priced-breakdown-cards'
 import { CropPoolCards } from '@/components/marketing/crop-pool-cards'
 import { BasisExposurePanel } from '@/components/marketing/basis-exposure-panel'
 import { ReconQueue } from '@/components/marketing/recon-queue'
@@ -181,20 +182,18 @@ export default async function MarketingPage({
         </div>
       )}
 
+      {/* Priced position, broken out per crop — the farm-wide number stays the
+          headline, but "62% priced" is useless without knowing WHICH crop is
+          still open, so each commodity gets its glyph and its own bar. */}
+      <PricedBreakdownCards
+        rows={enterprise.rows}
+        totalProjectedBu={summary.projectedBu}
+        totalPricedBu={summary.pricedBu}
+        totalSoldBu={summary.soldBu}
+      />
+
       {/* Farm summary strip — mirrors the macro-rollup hedging dashboard strip */}
-      <KpiStrip cols={4}>
-        <StatCard
-          label="FUTURES % PRICED"
-          value={summary.pctPriced != null ? formatPct(summary.pctPriced) : '—'}
-          sublabel={`of ${formatBu(Math.round(summary.projectedBu))} projected bu · futures crops only`}
-          variant="default"
-        />
-        <StatCard
-          label="PRICED BUSHELS"
-          value={formatBu(summary.pricedBu)}
-          sublabel={`${formatBu(summary.soldBu)} bu contracted`}
-          variant="default"
-        />
+      <KpiStrip cols={2}>
         {enterprise.isOwner && summary.exposure != null ? (
           <StatCard
             label="UNPRICED EXPOSURE"
@@ -213,8 +212,9 @@ export default async function MarketingPage({
         <StatCard
           label="CONTRACTS"
           value={activeContracts.length}
-          sublabel={`${cropYear} crop year`}
+          sublabel={`${cropYear} crop year · open the contract list`}
           variant="default"
+          href="/app/marketing/contracts"
         />
       </KpiStrip>
 
