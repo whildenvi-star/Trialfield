@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="platform-tokens.css?v=4">
-  <link rel="stylesheet" href="style.css?v=20260829c">
+  <link rel="stylesheet" href="style.css?v=20260904">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <meta name="theme-color" content="#080a0f">
   <script>
@@ -53,6 +53,10 @@
       <button class="tab-btn" data-tab="reference">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
         Reference
+      </button>
+      <button class="tab-btn" data-tab="documents">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+        Documents
       </button>
       <button class="tab-btn" data-tab="programs">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
@@ -914,6 +918,14 @@
     <!-- Sales & Marketing tab removed 2026-08-14 — replaced by the portal Marketing Command Center (/app/marketing) -->
 
     <!-- STRAW -->
+    <section id="tab-documents" class="tab-content">
+      <div class="section-header">
+        <h2>Documents</h2>
+        <p class="section-sub">Upload a DeLong invoice or contract. The invoice confirms field passes against what was actually billed; the contract checks the sale is on the book exactly as it was papered.</p>
+      </div>
+      <div id="doc-intake-root"></div>
+    </section>
+
     <section id="tab-straw" class="tab-content">
       <h2>Straw</h2>
       <p class="edit-hint">Small-grain straw baled off after grain harvest &mdash; the work (mow, rake, bale, stack, haul), the bales made, and the tons sold to the straw buyer. Nets to $/AC and writes back to the field budget as STRAW + STRAW COST.</p>
@@ -1526,6 +1538,7 @@
   <script src="field-ops-groups.js"></script>
   <script src="field-editor.js?v=20260831"></script>
   <script src="field-strips.js?v=20260831"></script>
+  <script src="doc-intake.js?v=20260904"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js?v=20260827"></script>
   <script src="ref-overview.js?v=2"></script>

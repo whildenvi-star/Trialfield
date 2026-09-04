@@ -5387,3 +5387,86 @@ body.light .fs-band-income { background: #e6f9f4; }
 .fs-pop-ok { border-color: var(--success, #22c55e) !important; color: var(--success, #22c55e) !important; font-weight: 700; }
 .fs-pop-ok:hover { background: var(--success, #22c55e) !important; color: var(--bg) !important; }
 .fs-pop-cancel:hover { border-color: var(--danger, #ef4444); color: var(--danger, #ef4444); }
+
+/* ── Document intake ─────────────────────────────────────────────
+   A sheet, not a wizard: the scan's numbers, our planned numbers and the
+   delta sit on one row so a mis-read is visible without clicking. */
+.di-section { margin-bottom: 1.75rem; }
+.di-h {
+  font-size: 0.95rem; font-weight: 600; color: var(--text-bright);
+  margin: 0 0 0.25rem; display: flex; align-items: baseline; gap: 0.6rem;
+}
+.di-sub { font-size: 0.75rem; color: var(--text-light); margin: 0 0 0.75rem; max-width: 70ch; }
+.di-link { font-size: 0.7rem; font-weight: 400; color: var(--primary-light); text-decoration: none; }
+.di-link:hover { text-decoration: underline; }
+.di-muted { color: var(--text-light); }
+
+.di-drop {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 92px; padding: 1rem;
+  border: 1px dashed var(--border-light); border-radius: 8px;
+  background: var(--card); color: var(--text-light);
+  font-size: 0.82rem; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.di-drop:hover, .di-drop-over { border-color: var(--primary); color: var(--text); background: var(--hover); }
+.di-drop-busy { cursor: progress; border-style: solid; border-color: var(--primary); color: var(--primary-light); }
+
+.di-invoice {
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--card); margin-bottom: 1rem; overflow: hidden;
+}
+.di-head { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--border); background: var(--card-alt); }
+.di-head-grid {
+  display: grid; gap: 0.4rem 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.di-kv { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.di-k { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); }
+.di-v { font-size: 0.8rem; color: var(--text); overflow-wrap: anywhere; }
+.di-v select { max-width: 100%; font-size: 0.75rem; padding: 0.15rem 0.25rem; }
+
+.di-flags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.6rem; }
+.di-flag { font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 4px; }
+.di-flag-bad { background: rgba(255, 59, 48, 0.14); color: var(--danger); }
+.di-flag-warn { background: rgba(255, 184, 0, 0.14); color: var(--amber); }
+
+/* Wide sheets scroll inside their own box — the page never scrolls sideways. */
+.di-scroll { overflow-x: auto; }
+.di-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+.di-table th {
+  text-align: left; font-weight: 600; font-size: 0.62rem;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light);
+  padding: 0.45rem 0.5rem; border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.di-table td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.di-table tbody tr:hover { background: var(--hover); }
+.di-table .di-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.di-table .di-tick { width: 28px; }
+.di-desc { color: var(--text-bright); min-width: 180px; }
+.di-table select { font-size: 0.72rem; padding: 0.1rem 0.2rem; max-width: 220px; }
+
+.di-delta { color: var(--amber); font-variant-numeric: tabular-nums; }
+.di-delta-big { color: var(--danger); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.di-status { min-width: 150px; }
+.di-note { font-size: 0.66rem; color: var(--text-light); margin-top: 0.2rem; line-height: 1.35; }
+.di-badge {
+  display: inline-block; font-size: 0.62rem; font-weight: 600;
+  padding: 0.1rem 0.4rem; border-radius: 4px; white-space: nowrap;
+}
+.di-badge-ready, .di-badge-new { background: rgba(20, 184, 166, 0.16); color: var(--primary-light); }
+.di-badge-new-line { background: rgba(255, 184, 0, 0.16); color: var(--amber); }
+.di-badge-unknown-product, .di-badge-conflict, .di-badge-blocked, .di-badge-differs {
+  background: rgba(255, 59, 48, 0.14); color: var(--danger);
+}
+.di-badge-already-applied, .di-badge-in-sync { background: var(--surface-2); color: var(--text-light); }
+.di-badge-not-checked { background: var(--surface-2); color: var(--text-light); }
+
+.di-row.di-st-already-applied { opacity: 0.62; }
+
+.di-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;
+  padding: 0.6rem 0.9rem; border-top: 1px solid var(--border); background: var(--card-alt);
+}
+.di-actions .di-sub { margin: 0; margin-right: auto; }

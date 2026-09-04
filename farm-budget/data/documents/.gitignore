@@ -1,0 +1,5 @@
+# Uploaded originals and the ledger are operational records, not source.
+# They live on the droplet and are covered by the nightly backup — keeping
+# them out of git also keeps scanned invoices out of the repo history.
+*
+!.gitignore

@@ -2778,6 +2778,189 @@ app.post('/api/audit/resolve', async (req, res) => {
 });
 
 // --- Glomalin Terminal Chat (Claude API) ---
+
+// ── Document intake ──────────────────────────────────────────────
+// Upload a DeLong invoice or contract; the server transcribes it, matches it
+// against fields/products (or against the marketing contract book), and returns
+// a proposal. Nothing is written until the operator approves rows.
+const docExtract = require('./lib/docintake/extract');
+const docMatch = require('./lib/docintake/match');
+const docApply = require('./lib/docintake/apply');
+const docStore = require('./lib/docintake/store');
+
+const DOC_MAX_BYTES = 20 * 1024 * 1024;
+const DOC_MEDIA = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+
+app.get('/api/documents', (req, res) => {
+  res.json({ documents: docStore.list(parseInt(req.query.limit, 10) || 50) });
+});
+
+app.get('/api/documents/:id', (req, res) => {
+  const rec = docStore.get(req.params.id);
+  if (!rec) return res.status(404).json({ error: 'Not found' });
+  res.json(rec);
+});
+
+app.get('/api/documents/:id/original', (req, res) => {
+  const rec = docStore.get(req.params.id);
+  const full = docStore.originalPath(req.params.id);
+  if (!rec || !full || !fs.existsSync(full)) return res.status(404).json({ error: 'Not found' });
+  res.setHeader('Content-Type', rec.mediaType);
+  res.setHeader('Content-Disposition', 'inline; filename="' + rec.filename.replace(/"/g, '') + '"');
+  fs.createReadStream(full).pipe(res);
+});
+
+// Upload + transcribe + match. The expensive step is the model call, so a
+// re-upload of a scan we already read returns the stored proposal instead.
+app.post('/api/documents', async (req, res) => {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured in .env' });
+
+  const { filename, mediaType, base64 } = req.body || {};
+  if (!base64) return res.status(400).json({ error: 'base64 is required' });
+  if (DOC_MEDIA.indexOf(mediaType) === -1) {
+    return res.status(400).json({ error: 'Unsupported type ' + mediaType + ' — PDF, JPEG, PNG or WebP' });
+  }
+
+  let buffer;
+  try { buffer = Buffer.from(base64, 'base64'); }
+  catch (e) { return res.status(400).json({ error: 'base64 did not decode' }); }
+  if (!buffer.length) return res.status(400).json({ error: 'Empty file' });
+  if (buffer.length > DOC_MAX_BYTES) {
+    return res.status(413).json({ error: 'File is ' + (buffer.length / 1048576).toFixed(1) + 'MB; limit is 20MB' });
+  }
+
+  const saved = docStore.saveOriginal(buffer, mediaType, filename);
+  const prior = docStore.get(saved.id);
+
+  // Transcription is the expensive half and the scan never changes, so a
+  // re-upload reuses it. Matching is NOT reused: statuses like "already on
+  // file" are a statement about the budget as it stands right now, and a
+  // cached one would hide a row that has since been reverted.
+  const reused = !!(prior && prior.extracted && !req.query.force);
+
+  let extracted;
+  if (reused) {
+    extracted = { invoices: prior.extracted.invoices || [], contracts: prior.extracted.contracts || [],
+                  unreadable: !!prior.unreadable, usage: prior.usage || null };
+  } else {
+    try {
+      extracted = await docExtract.extractDocuments(apiKey, {
+        base64: buffer.toString('base64'), mediaType: mediaType, filename: saved.filename
+      });
+    } catch (e) {
+      console.error('[documents] extract failed:', e.message, e.detail || '');
+      return res.status(502).json({ error: e.message, detail: e.detail || null });
+    }
+  }
+
+  const proposals = extracted.invoices.map(function (inv) {
+    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products });
+  });
+
+  const docKind = extracted.contracts.length && !extracted.invoices.length ? 'contract'
+    : extracted.invoices.length && !extracted.contracts.length ? 'invoice'
+    : extracted.invoices.length ? 'mixed' : 'unrecognised';
+
+  const record = docStore.upsert(Object.assign({}, saved, {
+    uploadedAt: new Date().toISOString(),
+    uploadedBy: (req.query.user || req.get('x-user-name') || null),
+    docKind: docKind,
+    unreadable: extracted.unreadable,
+    summary: docKind === 'contract'
+      ? extracted.contracts.length + ' contract(s)'
+      : proposals.map(function (p) { return '#' + (p.invoiceNumber || '?') + ' ' + (p.fieldName || 'unmatched'); }).join(', '),
+    extracted: { invoices: extracted.invoices, contracts: extracted.contracts },
+    proposals: proposals,
+    usage: extracted.usage
+  }));
+
+  res.json(Object.assign({}, record, { reused: reused }));
+});
+
+// Apply approved invoice rows. Body: { confirmedBy, invoices: [{ invoiceNumber,
+// invoiceVendor, invoiceDate, acres, rows: [{ fieldId, productId, inputId,
+// invoiceQty, invoiceUnit, lineTotal }] }] }
+app.post('/api/documents/:id/apply', async (req, res) => {
+  const rec = docStore.get(req.params.id);
+  if (!rec) return res.status(404).json({ error: 'Not found' });
+
+  const invoices = Array.isArray(req.body && req.body.invoices) ? req.body.invoices : [];
+  if (!invoices.length) return res.status(400).json({ error: 'No invoices supplied' });
+
+  const outcomes = [];
+  for (const inv of invoices) {
+    const header = {
+      invoiceNumber: inv.invoiceNumber || null,
+      invoiceVendor: inv.invoiceVendor || null,
+      invoiceDate: inv.invoiceDate || null,
+      acres: inv.acres,
+      confirmedBy: req.body.confirmedBy || null
+    };
+    const result = docApply.applyInvoice(store, header, inv.rows || []);
+    if (!result.ok) return res.status(400).json({ error: 'Nothing applied', errors: result.errors });
+    outcomes.push({ invoiceNumber: header.invoiceNumber, confirmed: result.confirmed, added: result.added, results: result.results });
+  }
+
+  await saveData();
+
+  const applied = outcomes.reduce(function (n, o) { return n + o.confirmed + o.added; }, 0);
+
+  // Re-match against what we just wrote. The refreshed proposal is what the
+  // next upload of this same scan would produce — applied rows now read
+  // "already on file", which is how a double-apply is prevented visibly.
+  const proposals = ((rec.extracted && rec.extracted.invoices) || []).map(function (inv) {
+    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products });
+  });
+
+  docStore.upsert({
+    id: rec.id,
+    appliedAt: new Date().toISOString(),
+    appliedCount: (rec.appliedCount || 0) + applied,
+    appliedDetail: outcomes,
+    proposals: proposals
+  });
+
+  res.json({ ok: true, applied: applied, outcomes: outcomes, document: docStore.get(rec.id) });
+});
+
+// Contracts go to the marketing book in organic-cert, which owns them.
+// mode=diff is read-only; mode=create only inserts contracts we have no record of.
+app.post('/api/documents/:id/contracts', async (req, res) => {
+  const rec = docStore.get(req.params.id);
+  if (!rec) return res.status(404).json({ error: 'Not found' });
+  const contracts = (rec.extracted && rec.extracted.contracts) || [];
+  if (!contracts.length) return res.status(400).json({ error: 'No contracts were found in this document' });
+
+  const certUrl = process.env.PORTAL_API_URL || 'http://localhost:3002';
+  const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN || '';
+  if (!token) return res.status(503).json({ error: 'ECOSYSTEM_TOKEN not configured — cannot reach the marketing book' });
+
+  const mode = (req.body && req.body.mode) === 'create' ? 'create' : 'diff';
+  try {
+    const upstream = await fetch(certUrl + '/api/marketing/ingest-contract', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-ecosystem-token': token },
+      body: JSON.stringify({
+        mode: mode,
+        documentId: rec.id,
+        contracts: contracts,
+        overrides: (req.body && req.body.overrides) || {}
+      })
+    });
+    const json = await upstream.json().catch(function () { return null; });
+    if (!upstream.ok) {
+      return res.status(upstream.status).json({ error: 'Marketing book refused', detail: json });
+    }
+    if (mode === 'create') {
+      docStore.upsert({ id: rec.id, contractsCreatedAt: new Date().toISOString(), contractsCreated: json.created });
+    }
+    res.json(json);
+  } catch (e) {
+    res.status(502).json({ error: 'Could not reach the marketing book', detail: e.message });
+  }
+});
+
 // ── Chat agent guardrails: daily cap + audit log ─────────────────
 var CHAT_USAGE_FILE = path.join(__dirname, 'data', 'chat-usage.json');
 var CHAT_LOG_FILE = path.join(__dirname, 'data', 'chat-log.jsonl');
