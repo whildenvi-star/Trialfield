@@ -14,6 +14,20 @@ data/data.json
 data/data.json.bak.*
 data/photos
 
+# Droplet-side rotation writes data.json.bak-<label>-<ISO>, with a HYPHEN after
+# "bak" — the data.json.bak.* patterns above use a dot and do not match it, so
+# --delete was removing production snapshots that exist only on the droplet.
+*/data/data.json.bak-*
+data/data.json.bak-*
+
+# Generated on the droplet by a backfill run; no local counterpart to sync.
+*/backfill-crop-report.json
+backfill-crop-report.json
+
+# Previous build kept on the droplet as a rollback copy (379MB). .next is
+# already excluded above, but .next.old is not covered by that pattern.
+.next.old
+
 # Droplet-side data snapshots and generated files — never delete/overwrite
 */data/data.json.pre-*
 data/data.json.pre-*
