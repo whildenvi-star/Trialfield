@@ -87,6 +87,7 @@ export function InstallPrompt() {
       role="banner"
       aria-label="Install Glomalin app"
       className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-md rounded border border-[#2a2218] bg-[#0e0c0b] p-4 shadow-lg"
+      style={{ bottom: 'calc(1rem + var(--safe-bottom))' }}
     >
       {showBanner && (
         <div className="flex items-center justify-between gap-3">

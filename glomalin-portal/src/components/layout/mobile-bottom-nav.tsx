@@ -212,6 +212,9 @@ export function MobileBottomNav({ grantedModuleIds }: MobileBottomNavProps) {
       <nav
         aria-label="Mobile navigation"
         className="fixed bottom-0 inset-x-0 z-50 bg-glomalin-bg border-t border-glomalin-border flex"
+        // Lift the tab row above the home indicator on Face ID devices — without
+        // this the bottom row of labels sits under the swipe bar.
+        style={{ paddingBottom: 'var(--safe-bottom)' }}
       >
         {MAIN_TABS.map((tab) => {
           const active = tab.action === 'more' ? sheetOpen : isTabActive(tab.href)

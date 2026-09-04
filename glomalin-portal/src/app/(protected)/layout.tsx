@@ -65,8 +65,11 @@ export default async function ProtectedLayout({
       </div>
 
       {/* Content area: offset on desktop, bottom-padded on mobile */}
+      {/* pb clears the fixed bottom tab bar: 56px plus whatever the home
+          indicator claims. Stays a class so md:pb-0 can still win — an inline
+          style would outrank the breakpoint and pad the desktop layout too. */}
       <div
-        className="md:ml-[var(--sidebar-w)] pb-[56px] md:pb-0"
+        className="md:ml-[var(--sidebar-w)] pb-[calc(56px_+_var(--safe-bottom))] md:pb-0"
         style={{ transition: 'margin-left 300ms cubic-bezier(0.4,0,0.2,1)' }}
       >
         <Suspense fallback={null}>

@@ -16,6 +16,36 @@ interface SyncEvent extends ExtendableEvent {
   tag: string
 }
 
+// ─── Cloudflare Access guard ──────────────────────────────────────────────────
+//
+// The portal sits behind Cloudflare Access. Any request made without a valid
+// CF_Authorization cookie 302s to whughesfarms.cloudflareaccess.com and, once
+// the redirect is followed, resolves to a 200 carrying the OTP login page.
+//
+// That response looks perfectly cacheable — right status, right URL — so a
+// naive cache stores the login page under the app's own URLs. This bites
+// hardest on an installed iOS home-screen app, which keeps a cookie jar
+// separate from Safari: its first launch is always unauthenticated, and
+// whatever it caches then is what it keeps serving afterwards.
+//
+// `redirected` is the tell: our own routes never redirect cross-origin.
+const isAccessRedirect = (response: Response): boolean =>
+  response.redirected || response.type === 'opaqueredirect'
+
+const rejectAccessRedirects = {
+  cacheWillUpdate: async ({ response }: { response: Response }) =>
+    isAccessRedirect(response) ? null : response,
+}
+
+// defaultCache ships pre-instantiated strategies, so the plugin gets pushed
+// onto each one rather than passed in at construction.
+for (const entry of defaultCache) {
+  const handler = entry.handler as unknown as { plugins?: unknown[] }
+  if (Array.isArray(handler.plugins)) {
+    handler.plugins.push(rejectAccessRedirects)
+  }
+}
+
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
@@ -27,6 +57,12 @@ const serwist = new Serwist({
     // deploys take effect immediately without a 24-hour SW cache delay.
     {
       matcher: ({ url }: { url: URL }) => url.pathname.startsWith('/embed/'),
+      handler: new NetworkOnly(),
+    },
+    // Cloudflare's own endpoints (the Access login handshake) are never ours to
+    // cache or replay.
+    {
+      matcher: ({ url }: { url: URL }) => url.pathname.startsWith('/cdn-cgi/'),
       handler: new NetworkOnly(),
     },
     ...defaultCache,
@@ -292,6 +328,16 @@ function isDashboardRequest(url: string): boolean {
   return DASHBOARD_URL_PATTERNS.some((pattern) => url.includes(pattern))
 }
 
+/**
+ * True only for a response that is genuinely this API's JSON. Filters out the
+ * Cloudflare Access login page, which otherwise passes a bare `.ok` check.
+ */
+function isCacheableApiResponse(response: Response): boolean {
+  if (!response.ok) return false
+  if (isAccessRedirect(response)) return false
+  return (response.headers.get('content-type') ?? '').includes('application/json')
+}
+
 /** Store a response clone + timestamp companion entry in the dashboard cache */
 async function storeDashboardResponse(request: Request, response: Response): Promise<void> {
   const cache = await caches.open(DASHBOARD_CACHE_NAME)
@@ -312,7 +358,10 @@ async function handleDashboardFetch(event: FetchEvent): Promise<Response> {
 
   // Fire background network request regardless of cache state
   const networkPromise = fetch(event.request.clone()).then(async (networkResponse) => {
-    if (networkResponse.ok) {
+    // Only cache something that is actually an API response. A Cloudflare Access
+    // bounce arrives here as a redirected 200 of HTML, and storing that would
+    // leave the dashboard reading a login page out of cache as if it were data.
+    if (isCacheableApiResponse(networkResponse)) {
       await storeDashboardResponse(event.request.clone(), networkResponse)
     }
     return networkResponse

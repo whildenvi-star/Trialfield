@@ -69,7 +69,10 @@ export function BulkActionBar({ selectedCount, onAction, onClear }: BulkActionBa
       )}
 
       {/* Sticky bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-glomalin-surface border-t border-glomalin-accent px-6 py-3 flex items-center gap-4">
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50 bg-glomalin-surface border-t border-glomalin-accent px-6 py-3 flex items-center gap-4"
+        style={{ paddingBottom: 'calc(0.75rem + var(--safe-bottom))' }}
+      >
         {/* Selection count */}
         <span className="font-mono text-sm font-bold text-glomalin-accent flex-shrink-0">
           {selectedCount} selected

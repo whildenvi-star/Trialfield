@@ -18,7 +18,17 @@ export function MobileHeader({ pageTitle }: MobileHeaderProps) {
   if (pathname.startsWith('/app/maps')) return null
 
   return (
-    <header className="sticky top-0 z-40 h-14 bg-glomalin-bg border-b border-glomalin-border flex items-center gap-3 px-4">
+    // The status bar is black-translucent, so it overlays this header. Grow the
+    // box by the top inset and pad the content down out from under the clock.
+    <header
+      className="sticky top-0 z-40 bg-glomalin-bg border-b border-glomalin-border flex items-center gap-3"
+      style={{
+        height: 'calc(3.5rem + var(--safe-top))',
+        paddingTop: 'var(--safe-top)',
+        paddingLeft: 'calc(1rem + var(--safe-left))',
+        paddingRight: 'calc(1rem + var(--safe-right))',
+      }}
+    >
       <span className="text-xs font-mono font-bold text-glomalin-accent select-none flex-shrink-0">
         W. HUGHES
       </span>

@@ -242,7 +242,14 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
     <Tooltip.Provider delayDuration={0} skipDelayDuration={0}>
       <nav
         ref={navRef}
-        style={{ width: isOpen ? OPEN_W : RAIL_W }}
+        style={{
+          width: isOpen ? OPEN_W : RAIL_W,
+          // inset-y-0 runs the rail edge to edge, under the translucent status
+          // bar and the home indicator. Pad both ends so the brand mark and the
+          // bottom-most nav item stay tappable on iPad.
+          paddingTop: 'var(--safe-top)',
+          paddingBottom: 'var(--safe-bottom)',
+        }}
         className={[
           'fixed left-0 inset-y-0 z-50 flex flex-col',
           'bg-glomalin-surface border-r border-glomalin-border overflow-hidden',
