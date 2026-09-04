@@ -20,6 +20,12 @@ data/photos
 */data/data.json.bak-*
 data/data.json.bak-*
 
+# Uploaded invoice/contract originals + their ledger. Written on the droplet by
+# document intake; the local tree holds only a .gitignore, so without this
+# --delete would wipe the evidence behind every confirmed pass.
+*/data/documents
+data/documents
+
 # Generated on the droplet by a backfill run; no local counterpart to sync.
 */backfill-crop-report.json
 backfill-crop-report.json
