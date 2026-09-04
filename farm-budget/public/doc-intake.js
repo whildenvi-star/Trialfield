@@ -446,7 +446,9 @@
   // ── boot ────────────────────────────────────────────────────────
   window.addEventListener('tab-activate', function (e) {
     if (e.detail && e.detail.tab === 'documents') {
-      if (!root().innerHTML) render();
+      var el = root();
+      if (!el) return;
+      if (!el.innerHTML) render();
       loadLedger();
     }
   });
