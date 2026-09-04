@@ -13,6 +13,10 @@ export function MobileHeader({ pageTitle }: MobileHeaderProps) {
   const pathname = usePathname()
   const title = pageTitle ?? resolveRouteTitle(pathname)
 
+  // The canvas is full-bleed and carries its own floating search pill; a sticky
+  // header there would just re-frame the map from the top.
+  if (pathname.startsWith('/app/maps')) return null
+
   return (
     <header className="sticky top-0 z-40 h-14 bg-glomalin-bg border-b border-glomalin-border flex items-center gap-3 px-4">
       <span className="text-xs font-mono font-bold text-glomalin-accent select-none flex-shrink-0">

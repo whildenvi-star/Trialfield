@@ -143,14 +143,22 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
 
   const isOpen = pinned || peeking
 
+  // On the map canvas the shell provides its own rail, so the global one steps
+  // aside and the map goes truly full-bleed. Every module stays reachable there
+  // via the canvas rail's Modules drawer and the palette.
+  const onCanvas = pathname.startsWith('/app/maps')
+
   const displayName = user.fullName || user.email
   const avatarChar  = displayName.charAt(0).toUpperCase()
 
   // --sidebar-w changes only on pin/unpin. Peek is an overlay — content does not reflow.
   useEffect(() => {
-    document.documentElement.style.setProperty('--sidebar-w', pinned ? OPEN_W : RAIL_W)
+    document.documentElement.style.setProperty(
+      '--sidebar-w',
+      onCanvas ? '0px' : pinned ? OPEN_W : RAIL_W
+    )
     document.documentElement.style.setProperty('--portal-header-h', '0px')
-  }, [pinned])
+  }, [pinned, onCanvas])
 
   useEffect(() => { setUserMenuOpen(false) }, [pathname])
 
@@ -227,6 +235,8 @@ export default function SideNav({ user, grantedModules }: SideNavProps) {
       .map(m => m.id)
   )
   const moduleById = Object.fromEntries(MODULES.map(m => [m.id, m]))
+
+  if (onCanvas) return null
 
   return (
     <Tooltip.Provider delayDuration={0} skipDelayDuration={0}>

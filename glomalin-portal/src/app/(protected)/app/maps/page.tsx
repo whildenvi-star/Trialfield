@@ -8,18 +8,23 @@ export default async function MapsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const [{ data: profile }, { data: accessRows }] = await Promise.all([
+    supabase.from('profiles').select('role').eq('id', user.id).single(),
+    supabase.from('module_access').select('module, granted').eq('user_id', user.id),
+  ])
 
   const isAdmin = profile?.role === 'admin'
+  // null = admin, sees every module in the canvas rail's Modules drawer.
+  const grantedModules = isAdmin
+    ? null
+    : (accessRows ?? []).filter((r) => r.granted).map((r) => r.module as string)
 
   return (
-    <div className="fixed top-0 bottom-0 right-0 left-0 md:left-[var(--sidebar-w)]">
+    // Full-bleed: the canvas is the shell here, so it is not inset by the
+    // global sidebar (SideNav stands down on this route and zeroes --sidebar-w).
+    <div className="fixed inset-0 bg-glomalin-canvas-bg">
       <Suspense fallback={<div className="w-full h-full bg-glomalin-canvas-bg animate-pulse" />}>
-        <FieldMap isAdmin={isAdmin} />
+        <FieldMap isAdmin={isAdmin} grantedModules={grantedModules} />
       </Suspense>
     </div>
   )

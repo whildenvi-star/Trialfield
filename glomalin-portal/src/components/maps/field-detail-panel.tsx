@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { BottomSheet } from '@/components/canvas/bottom-sheet'
 
 export interface FieldProperties {
   registry_field_id: string
@@ -29,6 +30,15 @@ interface ScorecardData {
 interface FieldDetailPanelProps {
   field: FieldProperties | null
   onClose: () => void
+  /**
+   * 'panel' docks to the right edge (desktop); 'sheet' presents the same
+   * content in a draggable bottom sheet (mobile), where a right-docked panel
+   * would cover the map entirely. Same content, two presentations — the sheet
+   * supplies its own title row, so the inline header is dropped there.
+   */
+  variant?: 'panel' | 'sheet'
+  /** Space below the sheet, e.g. the 56px mobile tab bar. */
+  sheetBottomOffset?: number
 }
 
 /**
@@ -50,7 +60,12 @@ interface FieldDetailPanelProps {
  * Scorecard section is appended below the rainfall divider — fetched on field selection,
  * all data is best-effort (partial results render, sections are omitted when null).
  */
-export function FieldDetailPanel({ field, onClose }: FieldDetailPanelProps) {
+export function FieldDetailPanel({
+  field,
+  onClose,
+  variant = 'panel',
+  sheetBottomOffset = 0,
+}: FieldDetailPanelProps) {
   const isOpen = field !== null
 
   const [scorecard, setScorecard] = useState<ScorecardData | null>(null)
@@ -92,46 +107,28 @@ export function FieldDetailPanel({ field, onClose }: FieldDetailPanelProps) {
       scorecard.open_claims > 0 ||
       scorecard.recent_observations > 0)
 
-  return (
-    <>
-      {/* Click-outside overlay — transparent, fills viewport, behind the panel */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-10"
-          aria-hidden="true"
-          onClick={onClose}
-        />
-      )}
+  const isSheet = variant === 'sheet'
 
-      {/* Slide-in panel */}
-      <div
-        className={[
-          'fixed right-0 top-0 h-screen w-96 max-w-[90vw] z-20',
-          'bg-glomalin-canvas-surface border-l border-glomalin-canvas-border',
-          'transition-transform duration-300',
-          isOpen ? 'translate-x-0' : 'translate-x-full',
-        ].join(' ')}
-        role="complementary"
-        aria-label="Field details"
-      >
-        {field && (
-          <div className="flex flex-col h-full p-5 overflow-y-auto">
-            {/* Header row: field name + close button */}
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <h2 className="text-glomalin-canvas-accent font-mono text-lg font-semibold leading-snug">
-                {field.name}
-              </h2>
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-shrink-0 text-glomalin-canvas-muted hover:text-glomalin-canvas-text transition-colors mt-0.5"
-                aria-label="Close panel"
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                  <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
+  const body = field ? (
+    <div className={isSheet ? 'pb-2' : 'flex flex-col h-full p-5 overflow-y-auto'}>
+      {/* Header row — the sheet supplies its own title, so skip it there */}
+      {!isSheet && (
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <h2 className="text-glomalin-canvas-accent font-mono text-lg font-semibold leading-snug">
+            {field.name}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-shrink-0 text-glomalin-canvas-muted hover:text-glomalin-canvas-text transition-colors mt-0.5"
+            aria-label="Close panel"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      )}
 
             {/* Crop + organic badges */}
             <div className="flex flex-wrap gap-2 mb-5">
@@ -299,18 +296,65 @@ export function FieldDetailPanel({ field, onClose }: FieldDetailPanelProps) {
               </>
             )}
 
-            {/* Divider */}
-            <div className="my-5 border-t border-glomalin-canvas-border" />
+      {/* Divider */}
+      <div className="my-5 border-t border-glomalin-canvas-border" />
 
-            {/* Timeline link — future page, not yet built */}
-            <a
-              href={`/app/fields/${field.registry_field_id}/timeline`}
-              className="text-sm font-mono text-glomalin-canvas-accent hover:underline"
-            >
-              View Field Activity Timeline →
-            </a>
-          </div>
-        )}
+      {/* Out to the full module, scoped to this field — the object → function
+          hop. /app/fields/<id>/timeline was never built and 404'd. */}
+      <a
+        href={`/app/field-timeline?field=${encodeURIComponent(field.registry_field_id)}`}
+        className="text-sm font-mono text-glomalin-canvas-accent hover:underline"
+      >
+        View Field Activity Timeline →
+      </a>
+    </div>
+  ) : null
+
+  if (isSheet) {
+    return (
+      <BottomSheet
+        open={isOpen}
+        onClose={onClose}
+        title={field?.name ?? ''}
+        subtitle={
+          field
+            ? [
+                field.crop ?? 'No crop',
+                `${field.reportingAcres.toLocaleString()} ac`,
+                field.organic ? 'organic' : null,
+              ].filter(Boolean).join(' · ')
+            : undefined
+        }
+        bottomOffset={sheetBottomOffset}
+      >
+        {body}
+      </BottomSheet>
+    )
+  }
+
+  return (
+    <>
+      {/* Click-outside overlay — transparent, fills viewport, behind the panel */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-10"
+          aria-hidden="true"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Slide-in panel */}
+      <div
+        className={[
+          'fixed right-0 top-0 h-screen w-96 max-w-[90vw] z-20',
+          'bg-glomalin-canvas-surface border-l border-glomalin-canvas-border',
+          'transition-transform duration-300',
+          isOpen ? 'translate-x-0' : 'translate-x-full',
+        ].join(' ')}
+        role="complementary"
+        aria-label="Field details"
+      >
+        {body}
       </div>
     </>
   )

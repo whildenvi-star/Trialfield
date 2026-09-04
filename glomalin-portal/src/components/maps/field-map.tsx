@@ -19,10 +19,16 @@ import {
   getSatelliteStyle,
 } from '@/lib/map-config'
 import { canvasColors, colors, withAlpha } from '@/lib/tokens'
+import { useIsCompact } from '@/lib/use-media-query'
+import { CanvasRail } from '@/components/canvas/canvas-rail'
+import { CanvasSearchPill } from '@/components/canvas/canvas-search-pill'
 import { FieldDetailPanel, type FieldProperties } from './field-detail-panel'
 import { BoundaryImport } from './boundary-import'
 import { MapLegend } from './map-legend'
 import { ViewSwitcher } from './view-switcher'
+
+/** Height of the mobile bottom tab bar the sheet has to clear. */
+const MOBILE_TABBAR_H = 56
 
 import type { Map, Popup, ExpressionSpecification } from 'maplibre-gl'
 
@@ -124,7 +130,14 @@ function flyToField(map: Map, lng: number, lat: number, animate = true) {
   })
 }
 
-export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
+export function FieldMap({
+  isAdmin,
+  grantedModules = null,
+}: {
+  isAdmin?: boolean
+  grantedModules?: string[] | null
+}) {
+  const isCompact = useIsCompact()
   const mapContainerRef  = useRef<HTMLDivElement>(null)
   const mapRef           = useRef<Map | null>(null)
   const popupRef         = useRef<Popup | null>(null)
@@ -195,6 +208,12 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
     if (!mapContainerRef.current || mapRef.current) return
 
     let mapInstance: Map | null = null
+    // initMap is async, so an unmount can land *before* mapInstance is assigned.
+    // Without this flag the cleanup had nothing to remove and the next mount
+    // built a second MapLibre instance on the same container — two canvases,
+    // two tile pipelines, two sets of handlers. React's development double-mount
+    // reproduced it every time.
+    let cancelled = false
 
     async function initMap() {
       try {
@@ -202,7 +221,7 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
         // @ts-expect-error — CSS module import
         await import('maplibre-gl/dist/maplibre-gl.css')
 
-        if (!mapContainerRef.current) return
+        if (cancelled || !mapContainerRef.current) return
 
         mapInstance = new maplibregl.Map({
           container:          mapContainerRef.current,
@@ -219,6 +238,8 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
           bearing:            DEFAULT_BEARING,
           attributionControl: { compact: true },
         })
+        // Unmounted while the style was loading — drop it rather than leaking.
+        if (cancelled) { mapInstance.remove(); mapInstance = null; return }
         mapRef.current = mapInstance
 
         mapInstance.on('load', async () => {
@@ -380,7 +401,14 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
     }
 
     initMap()
-    return () => { mapInstance?.remove(); mapRef.current = null }
+    return () => {
+      cancelled = true
+      // Prefer the ref: if init finished, that is the live instance. The local
+      // is the fallback for a teardown that lands mid-init.
+      const live = mapRef.current ?? mapInstance
+      live?.remove()
+      mapRef.current = null
+    }
   }, [])
 
   // ?field=<registry_field_id> — opens a field directly from the command palette
@@ -427,69 +455,89 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
         </div>
       )}
 
-      {/* Summary bar — always visible for admins, conditionally for others once mapMeta loads */}
-      {(mapMeta || isAdmin) && (
-        <div
-          className="absolute top-0 left-0 right-0 z-10 flex items-center gap-5 px-4 h-10 font-mono text-xs"
-          style={{ backgroundColor: withAlpha(canvasColors.bg, 0.82), backdropFilter: 'blur(4px)', borderBottom: `1px solid ${canvasColors.border}` }}
-        >
-          {mapMeta && (
-            <>
-              <span className="text-glomalin-canvas-muted uppercase tracking-widest text-[10px]">Farm</span>
-              <span className="text-glomalin-canvas-text">{mapMeta.total_acres.toLocaleString()} ac</span>
-              <span className="text-glomalin-canvas-border">·</span>
-              <span className="text-[#7A9E7E]">{mapMeta.organic_acres.toLocaleString()} organic</span>
+      {/* ── Canvas chrome ──────────────────────────────────────────────────
+          Corner slots over a full-bleed map, rather than a bar across the top.
+          The rail is desktop-only: on a phone the bottom tab bar already
+          carries module reach, and 48px of rail would just be another edge. */}
 
-              {mapMeta.precip_configured && precipAvg != null && (
-                <>
-                  <span className="text-glomalin-canvas-border">·</span>
-                  <span className="text-glomalin-canvas-muted uppercase tracking-widest text-[10px]">Precip (7d avg)</span>
-                  <span className="text-[#7BAFD4]">{precipAvg.toFixed(2)}&Prime;</span>
-                  <span className="text-glomalin-canvas-border">·</span>
-                  <span className="text-glomalin-canvas-muted">Updated {formatTimeAgo(precipUpdated ?? null)}</span>
-                </>
-              )}
-            </>
-          )}
+      <CanvasRail
+        grantedModules={grantedModules}
+        layersContent={
+          <div className="px-4 space-y-3">
+            {mapMeta?.precip_configured ? (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowPrecip((v) => !v)}
+                  aria-pressed={showPrecip}
+                  className={[
+                    'flex-1 px-2.5 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
+                    showPrecip
+                      ? 'border-[#7BAFD4] text-[#7BAFD4] bg-[#7BAFD4]/10'
+                      : 'border-glomalin-canvas-border text-glomalin-canvas-muted hover:border-glomalin-canvas-muted hover:text-glomalin-canvas-text',
+                  ].join(' ')}
+                >
+                  ☁ Precipitation
+                </button>
+                <button
+                  onClick={handlePrecipRefresh}
+                  disabled={isRefreshing}
+                  title="Refresh precipitation data"
+                  aria-label="Refresh precipitation data"
+                  className="w-8 h-8 flex items-center justify-center rounded border border-glomalin-canvas-border text-glomalin-canvas-muted hover:text-glomalin-canvas-text disabled:opacity-40 transition-colors text-xs"
+                >
+                  {isRefreshing ? '…' : '↻'}
+                </button>
+              </div>
+            ) : (
+              <p className="text-glomalin-canvas-muted font-mono text-xs">
+                Precipitation layer not configured.
+              </p>
+            )}
 
-          <div className="flex-1" />
+            {precipAvg != null && (
+              <p className="font-mono text-[11px] text-glomalin-canvas-muted">
+                7d avg <span className="text-[#7BAFD4]">{precipAvg.toFixed(2)}&Prime;</span>
+                {' · '}updated {formatTimeAgo(precipUpdated ?? null)}
+              </p>
+            )}
 
-          {mapMeta?.precip_configured && (
-            <div className="flex items-center gap-2">
+            {isAdmin && (
               <button
-                onClick={() => setShowPrecip((v) => !v)}
+                onClick={() => setShowImportPanel((v) => !v)}
                 className={[
-                  'px-2.5 py-1 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
-                  showPrecip
-                    ? 'border-[#7BAFD4] text-[#7BAFD4] bg-[#7BAFD4]/10'
+                  'w-full px-2.5 py-1.5 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
+                  showImportPanel
+                    ? 'border-glomalin-canvas-accent text-glomalin-canvas-accent bg-glomalin-canvas-accent/10'
                     : 'border-glomalin-canvas-border text-glomalin-canvas-muted hover:border-glomalin-canvas-muted hover:text-glomalin-canvas-text',
                 ].join(' ')}
               >
-                ☁ Precip
+                ⬆ Import boundaries
               </button>
-              <button
-                onClick={handlePrecipRefresh}
-                disabled={isRefreshing}
-                title="Refresh precipitation data"
-                className="text-glomalin-canvas-muted hover:text-glomalin-canvas-text disabled:opacity-40 transition-colors text-xs px-1"
-              >
-                {isRefreshing ? '…' : '↻'}
-              </button>
-            </div>
-          )}
+            )}
+          </div>
+        }
+      />
 
-          {isAdmin && (
-            <button
-              onClick={() => setShowImportPanel((v) => !v)}
-              className={[
-                'px-2.5 py-1 rounded border text-[10px] font-mono uppercase tracking-widest transition-colors',
-                showImportPanel
-                  ? 'border-glomalin-canvas-accent text-glomalin-canvas-accent bg-glomalin-canvas-accent/10'
-                  : 'border-glomalin-canvas-border text-glomalin-canvas-muted hover:border-glomalin-canvas-muted hover:text-glomalin-canvas-text',
-              ].join(' ')}
-            >
-              ⬆ Boundaries
-            </button>
+      {/* Top-left: search pill — clears the rail on desktop */}
+      <div className="absolute top-3 left-3 md:left-[60px] z-20">
+        <CanvasSearchPill />
+      </div>
+
+      {/* Top-right: farm stats, read-only */}
+      {mapMeta && (
+        <div
+          className="absolute top-3 right-3 z-20 hidden sm:flex items-center gap-3 h-10 px-4 rounded-full font-mono text-xs border border-glomalin-canvas-border shadow-lg"
+          style={{ backgroundColor: withAlpha(canvasColors.bg, 0.85), backdropFilter: 'blur(8px)' }}
+        >
+          <span className="text-glomalin-canvas-muted uppercase tracking-widest text-[10px]">Farm</span>
+          <span className="text-glomalin-canvas-text tabular-nums">{mapMeta.total_acres.toLocaleString()} ac</span>
+          <span className="text-glomalin-canvas-border">·</span>
+          <span className="text-[#7A9E7E] tabular-nums">{mapMeta.organic_acres.toLocaleString()} organic</span>
+          {showPrecip && precipAvg != null && (
+            <>
+              <span className="text-glomalin-canvas-border">·</span>
+              <span className="text-[#7BAFD4] tabular-nums">{precipAvg.toFixed(2)}&Prime;</span>
+            </>
           )}
         </div>
       )}
@@ -497,7 +545,7 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
       {/* Boundary import panel — admin only, slides in from right */}
       {isAdmin && showImportPanel && (
         <div
-          className="absolute top-10 right-0 bottom-0 z-30 w-[400px] overflow-y-auto"
+          className="absolute top-0 right-0 bottom-0 z-40 w-[400px] max-w-[92vw] overflow-y-auto"
           style={{ backgroundColor: withAlpha(canvasColors.bg, 0.96), borderLeft: `1px solid ${canvasColors.border}`, backdropFilter: 'blur(6px)' }}
         >
           <div className="p-6">
@@ -546,9 +594,11 @@ export function FieldMap({ isAdmin }: { isAdmin?: boolean }) {
       {/* View switcher */}
       <ViewSwitcher view={view} onChange={setView} />
 
-      {/* Field detail panel */}
+      {/* Field detail — right-docked panel on desktop, bottom sheet on mobile */}
       <FieldDetailPanel
         field={selectedField}
+        variant={isCompact ? 'sheet' : 'panel'}
+        sheetBottomOffset={MOBILE_TABBAR_H}
         onClose={() => {
           setSelectedField(null)
           // Ease the camera padding back out as the panel leaves — the map
