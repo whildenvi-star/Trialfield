@@ -2932,8 +2932,12 @@ app.post('/api/documents/:id/contracts', async (req, res) => {
   const contracts = (rec.extracted && rec.extracted.contracts) || [];
   if (!contracts.length) return res.status(400).json({ error: 'No contracts were found in this document' });
 
-  const certUrl = process.env.PORTAL_API_URL || 'http://localhost:3002';
-  const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN || '';
+  // organic-cert owns the marketing book and listens on 3004. Deliberately NOT
+  // PORTAL_API_URL: that name is already used here for a different host (and is
+  // set to the portal on 3000 elsewhere in the ecosystem), so overloading it
+  // would send contracts to whatever happens to answer that port.
+  const certUrl = process.env.CERT_API_URL || 'http://localhost:3004';
+  const token = process.env.ECOSYSTEM_TOKEN || '';
   if (!token) return res.status(503).json({ error: 'ECOSYSTEM_TOKEN not configured — cannot reach the marketing book' });
 
   const mode = (req.body && req.body.mode) === 'create' ? 'create' : 'diff';
