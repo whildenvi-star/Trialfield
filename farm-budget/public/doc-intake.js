@@ -56,7 +56,10 @@
     'ready': 'go', 'new': 'go',
     'new-line': 'add',
     'unknown-product': 'stop', 'conflict': 'stop', 'differs': 'stop', 'blocked': 'stop',
-    'already-applied': 'done', 'in-sync': 'done', 'not checked': 'done'
+    'already-applied': 'done', 'in-sync': 'done', 'not checked': 'done',
+    // We already hold this contract, split into amendments — nothing to write,
+    // and creating would duplicate it. Grey, with the pieces listed.
+    'amended': 'done'
   };
   function tone(status) { return TONE[status] || 'done'; }
 
@@ -219,6 +222,11 @@
         }).join('<br>') + '</div>';
       } else if (d && d.blockers && d.blockers.length) {
         detail = '<div class="di-note">' + d.blockers.map(esc).join('<br>') + '</div>';
+      }
+      if (d && (d.amendments || []).length) {
+        detail += '<div class="di-note">already on the book as ' + d.amendments.map(function (a) {
+          return esc(a.number) + ' (' + n2(a.contractedBushels) + ' bu)';
+        }).join(' + ') + ' — creating would duplicate it</div>';
       }
       return '<tr class="di-row di-tone-row-' + tone(status) + '">' +
         '<td><strong>' + esc(c.contractNumber || '—') + '</strong></td>' +
