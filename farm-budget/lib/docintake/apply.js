@@ -44,6 +44,20 @@ function applyRow(data, header, decision) {
 
   let action = 'confirmed';
   if (!item) {
+    // Re-entry guard. Before adding a line, look for one this same invoice
+    // LINE already produced. Keying on (invoiceNumber, lineIndex) rather than
+    // the invoice number alone is deliberate: an invoice that bills the same
+    // product twice must still produce two rows, but applying the same line a
+    // second time must not.
+    if (header.invoiceNumber != null && decision.lineIndex != null) {
+      item = field.inputs.find(function (i) {
+        return i.invoiceNumber && String(i.invoiceNumber) === String(header.invoiceNumber) &&
+          i.invoiceLineIndex === decision.lineIndex;
+      }) || null;
+    }
+  }
+
+  if (!item) {
     // No planned line for this product on this field — the invoice is evidence
     // the pass happened anyway, so record it rather than lose it.
     item = {
@@ -72,6 +86,9 @@ function applyRow(data, header, decision) {
   item.invoiceQtyTotal = qty != null ? Calc.round4(qty) : null;
   item.invoiceCostTotal = cost != null ? Calc.round2(cost) : null;
   item.invoiceUnit = decision.invoiceUnit || purchaseUnit;
+  // Which line of which invoice this row came from — the key that makes a
+  // repeat apply idempotent without collapsing two genuine same-product lines.
+  if (decision.lineIndex != null) item.invoiceLineIndex = decision.lineIndex;
 
   const rate = Calc.invoiceRatePerAcre(product, qty, acres, decision.invoiceUnit || purchaseUnit);
   item.actualQuantity = rate != null ? rate : (item.quantity || 0);
@@ -89,6 +106,23 @@ function applyInvoice(data, header, decisions) {
     else if (!findProduct(data, d.productId)) errors.push('row ' + (i + 1) + ': unknown product');
   });
   if (errors.length) return { ok: false, errors: errors, results: [] };
+
+  // Two ticked rows must never resolve onto the same planned line — that would
+  // write one over the other and lose a line without saying so.
+  const seenInput = {};
+  for (let i = 0; i < decisions.length; i++) {
+    const id = decisions[i].inputId;
+    if (!id) continue;
+    if (seenInput[id]) {
+      return {
+        ok: false,
+        errors: ['rows ' + seenInput[id] + ' and ' + (i + 1) + ' both target the same planned line — ' +
+                 'point one of them at a different line, or leave it to be added'],
+        results: []
+      };
+    }
+    seenInput[id] = i + 1;
+  }
 
   const results = decisions.map(function (d) { return applyRow(data, header, d); });
   return {

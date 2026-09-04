@@ -5455,15 +5455,36 @@ body.light .fs-band-income { background: #e6f9f4; }
   display: inline-block; font-size: 0.62rem; font-weight: 600;
   padding: 0.1rem 0.4rem; border-radius: 4px; white-space: nowrap;
 }
-.di-badge-ready, .di-badge-new { background: rgba(20, 184, 166, 0.16); color: var(--primary-light); }
-.di-badge-new-line { background: rgba(255, 184, 0, 0.16); color: var(--amber); }
-.di-badge-unknown-product, .di-badge-conflict, .di-badge-blocked, .di-badge-differs {
-  background: rgba(255, 59, 48, 0.14); color: var(--danger);
-}
-.di-badge-already-applied, .di-badge-in-sync { background: var(--surface-2); color: var(--text-light); }
-.di-badge-not-checked { background: var(--surface-2); color: var(--text-light); }
+/* Four tones, one meaning each, used identically on invoices and contracts:
+   go   = will be written as it stands
+   add  = will be written, and creates a row that was not planned
+   stop = will NOT be written until you resolve it
+   done = no change; already on file
+   Tone is carried by a badge AND a row stripe, so the sheet reads at a glance
+   without relying on colour alone — the badge always spells the status out. */
+.di-badge.di-tone-go   { background: rgba(20, 184, 166, 0.16); color: var(--primary-light); }
+.di-badge.di-tone-add  { background: rgba(255, 184, 0, 0.16);  color: var(--amber); }
+.di-badge.di-tone-stop { background: rgba(255, 59, 48, 0.14);  color: var(--danger); }
+.di-badge.di-tone-done { background: var(--surface-2);          color: var(--text-light); }
 
-.di-row.di-st-already-applied { opacity: 0.62; }
+.di-row.di-tone-row-go   { box-shadow: inset 3px 0 0 var(--primary); }
+.di-row.di-tone-row-add  { box-shadow: inset 3px 0 0 var(--amber); }
+.di-row.di-tone-row-stop { box-shadow: inset 3px 0 0 var(--danger); background: rgba(255, 59, 48, 0.045); }
+.di-row.di-tone-row-done { box-shadow: inset 3px 0 0 var(--border-light); opacity: 0.62; }
+
+.di-legend {
+  display: flex; flex-wrap: wrap; gap: 0.35rem 1.1rem;
+  padding: 0.5rem 0.6rem; margin-bottom: 0.5rem;
+  border-radius: 6px; background: var(--card-alt);
+  font-size: 0.68rem; color: var(--text-light);
+}
+.di-legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+.di-legend-item strong { color: var(--text); font-weight: 600; }
+.di-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
+.di-swatch.di-tone-go   { background: var(--primary); }
+.di-swatch.di-tone-add  { background: var(--amber); }
+.di-swatch.di-tone-stop { background: var(--danger); }
+.di-swatch.di-tone-done { background: var(--border-light); }
 
 .di-actions {
   display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem;

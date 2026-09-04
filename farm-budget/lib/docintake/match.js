@@ -135,6 +135,27 @@ function proposeInvoice(invoice, refs) {
     ? Number(invoice.acres)
     : (field ? ((field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0) : 0);
 
+  // Where else this invoice number already appears. A DeLong invoice covering
+  // two fields is a real pattern (#8003075 does), so this is a note, not a
+  // block — but landing the same invoice on the wrong field twice is exactly
+  // the double entry we're trying to prevent, so it has to be visible.
+  const elsewhere = [];
+  if (invoice.invoiceNumber) {
+    fields.forEach(function (f) {
+      if (field && f.id === field.id) return;
+      const hit = (f.inputs || []).some(function (i) {
+        return i.invoiceNumber && String(i.invoiceNumber) === String(invoice.invoiceNumber);
+      });
+      if (hit) elsewhere.push(f.name);
+    });
+  }
+
+  // Each line claims its OWN planned row. 91 of our fields carry the same
+  // product on two input lines (two passes), and an invoice can bill the same
+  // product twice — without this, both lines grab the first open row and one
+  // silently overwrites the other.
+  const claimed = {};
+
   const rows = (invoice.lines || []).map(function (line, i) {
     const prodCands = matchProducts(products, line.description);
     const product = prodCands.length && prodCands[0].score >= 0.6 ? prodCands[0].item : null;
@@ -177,10 +198,22 @@ function proposeInvoice(invoice, refs) {
       .map(function (inp, idx) { return { inp: inp, idx: idx }; })
       .filter(function (h) { return coreName(h.inp.productName) === coreName(product.name); });
 
-    const sameInvoice = hits.find(function (h) {
-      return h.inp.invoiceNumber && String(h.inp.invoiceNumber) === String(invoice.invoiceNumber);
+    // Already on file? Prefer an exact line-level match — a row written by this
+    // pipeline records which invoice line it came from, so an invoice that
+    // bills the same product twice maps to two rows, not one. Rows entered by
+    // hand before this existed have no line index, so fall back to the invoice
+    // number alone.
+    const sameLine = hits.find(function (h) {
+      return h.inp.invoiceNumber && String(h.inp.invoiceNumber) === String(invoice.invoiceNumber) &&
+        h.inp.invoiceLineIndex === i;
     });
+    const sameInvoiceLegacy = hits.find(function (h) {
+      return h.inp.invoiceNumber && String(h.inp.invoiceNumber) === String(invoice.invoiceNumber) &&
+        h.inp.invoiceLineIndex == null && !claimed[h.inp.id];
+    });
+    const sameInvoice = sameLine || sameInvoiceLegacy;
     if (sameInvoice) {
+      claimed[sameInvoice.inp.id] = true;
       row.status = ALREADY;
       row.inputId = sameInvoice.inp.id;
       row.plannedRate = sameInvoice.inp.quantity;
@@ -189,22 +222,30 @@ function proposeInvoice(invoice, refs) {
       return row;
     }
 
-    const open = hits.filter(function (h) { return h.inp.passStatus !== 'confirmed'; });
+    const open = hits.filter(function (h) {
+      return h.inp.passStatus !== 'confirmed' && !claimed[h.inp.id];
+    });
     const target = open.length ? open[0] : null;
 
     if (!target) {
-      if (hits.length) {
+      const unclaimed = hits.filter(function (h) { return !claimed[h.inp.id]; });
+      if (unclaimed.length) {
+        claimed[unclaimed[0].inp.id] = true;
         row.status = CONFLICT;
-        row.inputId = hits[0].inp.id;
+        row.inputId = unclaimed[0].inp.id;
         row.note = 'Row already confirmed under invoice ' +
-          (hits[0].inp.invoiceNumber || '(none)') + ' — resolve by hand.';
+          (unclaimed[0].inp.invoiceNumber || '(none)') + ' — resolve by hand.';
         return row;
       }
       row.status = NEW_LINE;
-      row.note = 'No planned line for this product on ' + field.name + '; applying adds one.';
+      row.note = hits.length
+        ? 'This invoice bills ' + product.name + ' more than once and every planned row on ' +
+          field.name + ' is spoken for; applying adds another line.'
+        : 'No planned line for this product on ' + field.name + '; applying adds one.';
       return row;
     }
 
+    claimed[target.inp.id] = true;
     row.status = READY;
     row.inputId = target.inp.id;
     row.plannedRate = target.inp.quantity;
@@ -237,6 +278,7 @@ function proposeInvoice(invoice, refs) {
     fieldId: field ? field.id : null,
     fieldName: field ? field.name : null,
     fieldCandidates: fieldCands.map(toCand('name')),
+    alsoOnFields: elsewhere,
     totalsOk: totalsOk,
     lineSum: Calc.round2(lineSum),
     rows: rows

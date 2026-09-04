@@ -24,6 +24,11 @@
   var n3 = function (v) { return v == null || isNaN(v) ? '' : util.formatNum(v, 3); };
   var money = function (v) { return v == null || isNaN(v) ? '' : util.formatMoney(v); };
 
+  // One colour rule across invoices and contracts:
+  //   teal  — will write, cleanly
+  //   amber — will write, but creates something new; look before ticking
+  //   red   — will NOT write; needs a decision from you
+  //   grey  — no-op, already on file
   var STATUS_LABEL = {
     'ready': 'Ready',
     'new-line': 'Adds line',
@@ -31,6 +36,29 @@
     'already-applied': 'Already on file',
     'conflict': 'Conflict'
   };
+
+  var LEGEND = [
+    ['go', 'Ready / new', 'will be written as it stands'],
+    ['add', 'Adds a line', 'will be written, and creates a row that was not planned'],
+    ['stop', 'Needs you', 'will not be written until you resolve it'],
+    ['done', 'Already on file', 'no change — locked so it cannot be entered twice']
+  ];
+
+  function legendHtml() {
+    return '<div class="di-legend">' + LEGEND.map(function (l) {
+      return '<span class="di-legend-item"><span class="di-swatch di-tone-' + l[0] + '"></span>' +
+        '<strong>' + esc(l[1]) + '</strong> ' + esc(l[2]) + '</span>';
+    }).join('') + '</div>';
+  }
+
+  // Which of the four tones a status carries.
+  var TONE = {
+    'ready': 'go', 'new': 'go',
+    'new-line': 'add',
+    'unknown-product': 'stop', 'conflict': 'stop', 'differs': 'stop', 'blocked': 'stop',
+    'already-applied': 'done', 'in-sync': 'done', 'not checked': 'done'
+  };
+  function tone(status) { return TONE[status] || 'done'; }
 
   function root() { return document.getElementById('doc-intake-root'); }
 
@@ -83,6 +111,11 @@
     }
     if (p.confidence === 'low') flags.push('<span class="di-flag di-flag-warn">Low-confidence scan</span>');
     if (!p.fieldId) flags.push('<span class="di-flag di-flag-bad">Field not matched</span>');
+    if ((p.alsoOnFields || []).length) {
+      flags.push('<span class="di-flag di-flag-warn">Invoice ' + esc(p.invoiceNumber || '') +
+        ' is already on ' + esc(p.alsoOnFields.join(', ')) +
+        ' — fine if it covered several fields, a double entry if it did not</span>');
+    }
 
     var fieldSel = '<select class="di-field" data-pi="' + pi + '">' +
       '<option value="">— pick a field —</option>' +
@@ -146,7 +179,7 @@
           (r.qtyDelta > 0 ? '+' : '') + n3(r.qtyDelta) + '</span>';
       }
 
-      return '<tr class="di-row di-st-' + r.status + '">' +
+      return '<tr class="di-row di-tone-row-' + tone(r.status) + '">' +
         '<td class="di-tick">' + tick + '</td>' +
         '<td class="di-desc">' + esc(r.description) + '</td>' +
         '<td>' + prodSel + '</td>' +
@@ -156,14 +189,14 @@
         '<td class="di-num">' + deltaCell + '</td>' +
         '<td class="di-num di-muted">' + money(r.unitPrice) + '</td>' +
         '<td class="di-num">' + money(r.lineTotal) + '</td>' +
-        '<td class="di-status"><span class="di-badge di-badge-' + r.status + '">' +
+        '<td class="di-status"><span class="di-badge di-tone-' + tone(r.status) + '">' +
           esc(STATUS_LABEL[r.status] || r.status) + '</span>' +
           (r.note ? '<div class="di-note">' + esc(r.note) + '</div>' : '') +
         '</td>' +
       '</tr>';
     }).join('');
 
-    return '<table class="di-table">' + head + '<tbody>' + body + '</tbody></table>';
+    return legendHtml() + '<table class="di-table">' + head + '<tbody>' + body + '</tbody></table>';
   }
 
   // ── contract sheet ──────────────────────────────────────────────
@@ -187,7 +220,7 @@
       } else if (d && d.blockers && d.blockers.length) {
         detail = '<div class="di-note">' + d.blockers.map(esc).join('<br>') + '</div>';
       }
-      return '<tr class="di-row di-ct-' + status.replace(/\s+/g, '-') + '">' +
+      return '<tr class="di-row di-tone-row-' + tone(status) + '">' +
         '<td><strong>' + esc(c.contractNumber || '—') + '</strong></td>' +
         '<td>' + esc(c.commodity || '—') + '</td>' +
         '<td class="di-num">' + n2(c.quantity) + ' ' + esc(c.quantityUnit || '') + '</td>' +
@@ -197,7 +230,7 @@
         '<td class="di-num">' + (c.basis == null ? '<span class="di-muted">open</span>' : n2(c.basis)) + '</td>' +
         '<td class="di-num">' + n2(c.cashPrice) + '</td>' +
         '<td>' + esc(c.destination || '') + '</td>' +
-        '<td class="di-status"><span class="di-badge di-badge-' + status.replace(/\s+/g, '-') + '">' +
+        '<td class="di-status"><span class="di-badge di-tone-' + tone(status) + '">' +
           esc(status) + '</span>' + detail + '</td>' +
       '</tr>';
     }).join('');
@@ -209,6 +242,7 @@
       '<h3 class="di-h">Contracts on this document</h3>' +
       '<p class="di-sub">Checked against the marketing book. Contracts already on file are never ' +
       'overwritten here — a difference is a finding to act on, not something to auto-apply.</p>' +
+      legendHtml() +
       '<div class="di-scroll"><table class="di-table"><thead><tr>' +
         '<th>Contract #</th><th>Commodity</th><th class="di-num">Quantity</th><th>Instrument</th>' +
         '<th class="di-num">Futures</th><th>Month</th><th class="di-num">Basis</th>' +
@@ -394,6 +428,9 @@
         rows.push({
           fieldId: p.fieldId,
           productId: r.productId,
+          // Line identity — lets the server tell a repeat apply from an
+          // invoice that genuinely bills the same product twice.
+          lineIndex: r.lineIndex,
           // A row whose product the operator changed no longer points at the
           // originally matched line — let the server add a fresh one.
           inputId: r.status === 'ready' ? r.inputId : null,
