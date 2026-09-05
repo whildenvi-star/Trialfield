@@ -734,25 +734,46 @@ app.get('/api/dashboard-with-actuals', async (req, res) => {
   const dashboard = Calc.computeDashboard(store.fields, store.enterprises, getRefs(), store.settings, { yieldMode });
 
   if (yieldMode === 'actual') {
-    // Overlay Sandy's actuals onto enterprise summaries
-    const actualsMap = await fetchPortalActuals(store.settings.year);
-    if (actualsMap) {
-      dashboard.enterpriseSummaries.forEach(es => {
-        es.budgets.forEach(fb => {
-          const key = (fb.field.name || '').toLowerCase() + '|' + (fb.field.crop || '').toLowerCase();
-          const actual = actualsMap[key];
-          if (actual) {
-            fb.actuals = {
-              seedTotal: actual.actualSeedTotal,
-              fertTotal: actual.actualFertTotal,
-              chemTotal: actual.actualChemTotal,
-              opsTotal: actual.actualOpsTotal,
-              total: actual.actualTotal,
-              acres: actual.acres
-            };
-          }
+    // Overlay Sandy's actuals onto enterprise summaries.
+    //
+    // This block indexes es.budgets[], a per-field breakdown that
+    // computeDashboard does NOT return — its summaries are
+    // {enterprise, cropRows, totals}, aggregated by crop. The overlay has
+    // therefore never populated anything, and until PORTAL_API_URL was
+    // corrected that went unnoticed: actualsMap was always null, so nothing
+    // below ran. With a real map it threw TypeError on es.budgets.forEach,
+    // and because an exception in an async Express handler becomes an
+    // unhandled rejection rather than a 500, the request hung forever with no
+    // error and no CPU.
+    //
+    // Guarded rather than rewritten: attaching crop-level actuals to
+    // crop-level rows is a reporting decision, not a mechanical repair. The
+    // client already tolerates the absence (dashboard.js checks `es.budgets &&`),
+    // so a guarded no-op is exactly today's behaviour, minus the hang.
+    try {
+      const actualsMap = await fetchPortalActuals(store.settings.year);
+      if (actualsMap) {
+        (dashboard.enterpriseSummaries || []).forEach(es => {
+          (es.budgets || []).forEach(fb => {
+            const field = fb.field || {};
+            const key = (field.name || '').toLowerCase() + '|' + (field.crop || '').toLowerCase();
+            const actual = actualsMap[key];
+            if (actual) {
+              fb.actuals = {
+                seedTotal: actual.actualSeedTotal,
+                fertTotal: actual.actualFertTotal,
+                chemTotal: actual.actualChemTotal,
+                opsTotal: actual.actualOpsTotal,
+                total: actual.actualTotal,
+                acres: actual.acres
+              };
+            }
+          });
         });
-      });
+      }
+    } catch (e) {
+      // Never let the overlay take the dashboard down with it.
+      console.error('[dashboard-with-actuals] overlay skipped:', e.message);
     }
   }
 
