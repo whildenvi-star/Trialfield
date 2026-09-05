@@ -699,7 +699,10 @@ async function fetchPortalActuals(year) {
   const now = Date.now();
   if (_actualsCache.data && _actualsCache.expiry > now) return _actualsCache.data;
 
-  const portalUrl = process.env.PORTAL_API_URL || 'http://localhost:3002';
+  // organic-cert (3004) owns /api/budget-actuals. The old default of 3002 is
+  // fsa-acres, which 403s — and because the catch below swallows it, the
+  // dashboard's Actual mode silently showed no actuals at all in production.
+  const portalUrl = process.env.PORTAL_API_URL || process.env.CERT_API_URL || 'http://localhost:3004';
   const token = process.env.ECOSYSTEM_TOKEN || '';
   try {
     const res = await fetch(`${portalUrl}/api/budget-actuals?year=${year}&token=${encodeURIComponent(token)}`);
