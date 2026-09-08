@@ -656,6 +656,7 @@
     tbl.innerHTML = '<thead><tr>' +
       '<th>Ticket No</th><th>Date</th><th class="number">Net Wt</th><th class="number">Moist%</th>' +
       '<th class="number">Net Bu</th><th class="number">Price</th><th class="number">Deductions</th>' +
+      '<th class="number" title="What the published discount schedule says this load should have been docked, from the matched ticket\'s grade data">Sched. says</th>' +
       '<th class="number">Net Pay</th><th>Notes</th><th></th>' +
       '</tr></thead>';
 
@@ -671,6 +672,7 @@
         '<td class="number">' + fmtNum(line.netBushels, 2) + '</td>' +
         '<td class="number">' + fmtNum(line.price, 4) + '</td>' +
         '<td class="number">' + fmtNum(line.deductions, 2) + '</td>' +
+        expectedCell(line) +
         '<td class="number">' + fmtNum(line.netPayment, 2) + '</td>' +
         '<td>' + escHtml(line.notes || '') + '</td>' +
         '<td style="white-space:nowrap;">' +
@@ -1023,6 +1025,33 @@
   }
 
   // --- Render detail view lines table (with inline edit/delete, same as manual entry) ---
+
+  // What the published discount schedule says this load should have been
+  // docked (server computes it from the matched ticket's grades). A red delta
+  // means the charge disagrees with the buyer's own sheet by more than the
+  // greater of $2 or 10% — the lines worth pulling the settlement sheet on.
+  function expectedCell(line) {
+    var exp = line.expected;
+    if (!exp) return '<td class="number" style="color:var(--text-light)">\u2014</td>';
+    if (!exp.ok) return '<td class="number" style="color:var(--text-light)" title="' + escHtml(exp.reason || '') + '">n/a</td>';
+    var detail = exp.items.map(function (i) {
+      return i.label + (i.perBu != null ? ' $' + i.perBu + '/bu' : '') + (i.shrinkPct != null ? ' ' + i.shrinkPct + '% wt' : '');
+    }).join('\n');
+    if (exp.shrinkBushels) detail += '\nshrink ' + exp.shrinkBushels + ' bu';
+    detail += '\n' + exp.schedule;
+    var delta = line.dedDelta;
+    var flag = '';
+    if (delta != null) {
+      var tol = Math.max(2, exp.totalDollars * 0.10);
+      if (Math.abs(delta) > tol) {
+        flag = ' <span style="color:var(--danger);font-weight:600" title="charged minus schedule">' +
+          (delta > 0 ? '+' : '') + fmtNum(delta, 2) + '</span>';
+      }
+    }
+    return '<td class="number" style="color:var(--text-light)" title="' + escHtml(detail) + '">' +
+      fmtNum(exp.totalDollars, 2) + flag + '</td>';
+  }
+
   function renderDetailLinesTable(container, sId, lines) {
     container.innerHTML = '';
 
@@ -1038,6 +1067,7 @@
     tbl.innerHTML = '<thead><tr>' +
       '<th>Ticket No</th><th>Date</th><th class="number">Net Wt</th><th class="number">Moist%</th>' +
       '<th class="number">Net Bu</th><th class="number">Price</th><th class="number">Deductions</th>' +
+      '<th class="number" title="What the published discount schedule says this load should have been docked, from the matched ticket\'s grade data">Sched. says</th>' +
       '<th class="number">Net Pay</th><th>Notes</th><th></th>' +
       '</tr></thead>';
 
@@ -1053,6 +1083,7 @@
         '<td class="number">' + fmtNum(line.netBushels, 2) + '</td>' +
         '<td class="number">' + fmtNum(line.price, 4) + '</td>' +
         '<td class="number">' + fmtNum(line.deductions, 2) + '</td>' +
+        expectedCell(line) +
         '<td class="number">' + fmtNum(line.netPayment, 2) + '</td>' +
         '<td>' + escHtml(line.notes || '') + '</td>' +
         '<td style="white-space:nowrap;">' +

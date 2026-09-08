@@ -11,6 +11,7 @@ const XLSX = require('xlsx');
 const Anthropic = require('@anthropic-ai/sdk');
 const prisma = require('./lib/db');
 const cropSync = require('./lib/crop-sync');
+const { expectedDeductions } = require('./lib/discount-schedules');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -2594,10 +2595,36 @@ app.get('/api/settlements/:id/lines', async (req, res) => {
 
     const lines = await prisma.settlementLine.findMany({
       where: { settlementId },
-      orderBy: { id: 'asc' }
+      orderBy: { id: 'asc' },
+      include: { ticket: { select: { crop: true, moisture: true, fm: true, testWeight: true, date: true } } }
     });
 
-    res.json(lines);
+    // For buyers whose discount schedule is on file, attach what the
+    // deductions SHOULD be per the published sheet, computed from the matched
+    // ticket's grade data — so the reconcile can flag a line where DeLong's
+    // charge disagrees with DeLong's own schedule. Advisory only; nothing is
+    // written.
+    const buyerIsDelong = /delong/i.test(settlement.buyer && settlement.buyer.name || '') ||
+      String(settlement.buyer && settlement.buyer.shortCode || '').toUpperCase() === 'DELONG';
+    const enriched = lines.map(l => {
+      if (!buyerIsDelong || !l.ticket) return l;
+      const dateISO = (l.date || l.ticket.date || new Date()).toISOString().slice(0, 10);
+      const exp = expectedDeductions({
+        crop: l.ticket.crop,
+        bushels: l.netBushels != null ? Number(l.netBushels) : 0,
+        moisture: l.ticket.moisture != null ? l.ticket.moisture : (l.moisture != null ? Number(l.moisture) : null),
+        testWeight: l.ticket.testWeight,
+        fm: l.ticket.fm,
+        date: dateISO
+      });
+      const out = { ...l, expected: exp };
+      if (exp.ok && l.deductions != null) {
+        out.dedDelta = Math.round((Number(l.deductions) - exp.totalDollars) * 100) / 100;
+      }
+      return out;
+    });
+
+    res.json(enriched);
   } catch (e) {
     console.error('GET /api/settlements/:id/lines error:', e);
     res.status(500).json({ error: 'Internal server error' });
