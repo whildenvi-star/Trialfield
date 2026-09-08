@@ -92,17 +92,18 @@ describe('buildCropSlices', () => {
 })
 
 describe('FuturesPercentPricedCard', () => {
-  it('leads with the most-open crop and a row per crop — never a blended pct', () => {
+  it('is just the table — a row per crop with %, bar, and open bu; no headline', () => {
     render(<FuturesPercentPricedCard slices={buildCropSlices(ROWS)} />)
     expect(screen.getByText('FUTURES % PRICED')).toBeTruthy()
-    // headline names the crop with the most open, not a farm-wide blend
-    expect(screen.getByText(/most open crop/)).toBeTruthy()
+    expect(screen.queryByText(/most open crop/)).toBeNull()
     expect(screen.getAllByText('Corn').length).toBeGreaterThan(0)
     expect(screen.getByText('Soybeans')).toBeTruthy()
     expect(screen.getByText('Wheat')).toBeTruthy()
     // per-crop percentages
     expect(screen.getAllByText('40%').length).toBeGreaterThan(0)
     expect(screen.getByText('75%')).toBeTruthy()
+    // each row states its own open bushels
+    expect(screen.getAllByText(/open$/).length).toBe(3)
   })
 
   it('falls back to an empty state with no futures crops', () => {
