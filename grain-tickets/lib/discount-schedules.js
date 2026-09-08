@@ -23,7 +23,7 @@ const SCHEDULES = [
   {
     buyer: 'DELONG',
     effective: '2025-09-20',
-    expires: '2026-09-30',
+    expires: '2026-09-30', // printed expiry — informational; see scheduleFor
     crops: {
       corn: {
         moistureBase: { sold: 15, stored: 14 },
@@ -85,10 +85,15 @@ function scheduleCropFor(cropName) {
 
 function scheduleFor(buyerCode, dateISO) {
   const d = dateISO || new Date().toISOString().slice(0, 10);
-  return SCHEDULES.find(s =>
-    s.buyer === String(buyerCode || '').toUpperCase() &&
-    s.effective <= d && d <= s.expires
-  ) || null;
+  // The newest sheet already in effect governs, even past its printed
+  // expiry — "Discounts subject to change without notice" cuts both ways, and
+  // the operator's call (2026-09-08) is that the 2025-26 numbers ride through
+  // fall until DeLong publishes a new sheet. Appending the new sheet with its
+  // own effective date supersedes this one automatically.
+  const inForce = SCHEDULES
+    .filter(s => s.buyer === String(buyerCode || '').toUpperCase() && s.effective <= d)
+    .sort((a, b) => (a.effective < b.effective ? 1 : -1));
+  return inForce[0] || null;
 }
 
 function tierRateByValue(tiers, value) {
