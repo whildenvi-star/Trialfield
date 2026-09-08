@@ -80,8 +80,8 @@ const EXTRACT_TOOL = {
           required: [
             'contractNumber', 'buyer', 'commodity', 'quantity', 'quantityUnit',
             'instrument', 'futuresPrice', 'futuresMonth', 'basis', 'cashPrice',
-            'contractDate', 'deliveryStart', 'deliveryEnd', 'destination',
-            'cropYear', 'premiums', 'notes', 'confidence'
+            'contractFees', 'contractDate', 'deliveryStart', 'deliveryEnd',
+            'destination', 'cropYear', 'premiums', 'notes', 'confidence'
           ],
           properties: {
             contractNumber: { type: ['string', 'null'] },
@@ -92,12 +92,19 @@ const EXTRACT_TOOL = {
             instrument: {
               type: ['string', 'null'],
               enum: ['PRICED', 'HTA', 'FUTURES_FIXED', 'BASIS_FIXED', 'ACCUMULATOR', 'SPOT', 'MIN_PRICE', null],
-              description: 'FUTURES ONLY / HTA on the paper means the basis is OPEN — do not invent one.'
+              description: 'Taken from the "Contract Type" header field ONLY — FUTURES ONLY means HTA. ' +
+                'An option or min-price structure described in a note does not change the instrument; ' +
+                'it belongs in notes.'
             },
             futuresPrice: { type: ['number', 'null'] },
             futuresMonth: { type: ['string', 'null'], description: 'e.g. CZ26, SX26' },
             basis: { type: ['number', 'null'], description: 'null when the contract leaves basis open' },
             cashPrice: { type: ['number', 'null'], description: 'flat/delivered price when the paper states one' },
+            contractFees: {
+              type: ['number', 'null'],
+              description: 'The printed "Contract Fees" / net fee column, signed $/bu. This is a NET ' +
+                'figure — do not compute it from the fee arithmetic in the notes.'
+            },
             contractDate: { type: ['string', 'null'], description: 'ISO yyyy-mm-dd' },
             deliveryStart: { type: ['string', 'null'], description: 'ISO yyyy-mm-dd' },
             deliveryEnd: { type: ['string', 'null'], description: 'ISO yyyy-mm-dd' },
@@ -105,7 +112,8 @@ const EXTRACT_TOOL = {
             cropYear: { type: ['integer', 'null'] },
             premiums: {
               type: 'array',
-              description: 'Stated premiums and fees, e.g. +2.15 grower agreement, -.05 service fee',
+              description: 'Stated premium/fee LINE ITEMS for reference (e.g. +2.15 grower agreement). ' +
+                'These are descriptive and may overlap contractFees — they are never summed into it.',
               items: {
                 type: 'object',
                 additionalProperties: false,
@@ -138,7 +146,14 @@ const SYSTEM = [
   '- A value you cannot read is null. Guessing is worse than a gap — a null gets',
   '  asked about, a wrong number gets filed.',
   '- On a grain contract, "FUTURES ONLY" / "HTA" means the basis is still open:',
-  '  leave basis null. Do not derive a basis from a cash price.',
+  '  leave basis null. A printed Basis of $0.0000 on an unpriced amendment is',
+  '  "not set", not a zero basis. Do not derive a basis from a cash price.',
+  '- The "Contract Type" header decides the instrument. Notes often describe',
+  '  option legs (min-price calls, rolls) — record that story in notes, never',
+  '  as the instrument.',
+  '- The printed "Contract Fees" column is already the NET of every fee and',
+  '  option gain. Copy it to contractFees; list the note-level fee arithmetic',
+  '  in premiums for reference only, since adding it to the net would double-count.',
   '- Dates become ISO yyyy-mm-dd. A two-digit year on farm paperwork is 20xx.',
   '- Set confidence "low" on any document where the scan forced you to squint at',
   '  a digit.',
