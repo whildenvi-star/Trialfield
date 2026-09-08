@@ -599,12 +599,114 @@
   }
 
   // --- Field Ops Unified Panel ---
+
+  // ── "What happened" pass log ──────────────────────────────────
+  // The Field Entries list is the plan; this block is the story. One line per
+  // real-world event, built from confirmed rows grouped by the invoice that
+  // evidences them (hand confirmations without an invoice group by date). It
+  // answers "what happened on this field" without reading sixteen rows.
+  function buildPassLog(field) {
+    var events = {};
+    function bucket(key) {
+      if (!events[key]) events[key] = { date: null, vendor: null, invoice: null, acres: null, by: null, items: [], cost: 0, hasCost: false };
+      return events[key];
+    }
+    function addItem(item, name, qty, unit) {
+      var key = item.invoiceNumber ? 'inv:' + item.invoiceNumber : 'day:' + (item.confirmedDate || '?');
+      var ev = bucket(key);
+      ev.date = ev.date || item.invoiceDate || item.confirmedDate || null;
+      ev.vendor = ev.vendor || item.invoiceVendor || null;
+      ev.invoice = ev.invoice || item.invoiceNumber || null;
+      ev.acres = ev.acres || item.invoiceAcres || null;
+      ev.by = ev.by || item.confirmedBy || null;
+      if (item.invoiceCostTotal != null) { ev.cost += item.invoiceCostTotal; ev.hasCost = true; }
+      ev.items.push({ name: name, qty: qty, unit: unit });
+    }
+    (field.inputs || []).forEach(function (inp) {
+      if (inp.passStatus !== 'confirmed') return;
+      addItem(inp, inp.productName || '', inp.invoiceQtyTotal != null ? inp.invoiceQtyTotal : null,
+        inp.invoiceUnit || '');
+    });
+    (field.machinery || []).forEach(function (m) {
+      if (m.passStatus !== 'confirmed') return;
+      addItem(m, m.implementName || '', null, '');
+    });
+    var list = Object.keys(events).map(function (k) { return events[k]; });
+    list.sort(function (a, b) { return String(a.date || '') < String(b.date || '') ? -1 : 1; });
+    return list;
+  }
+
+  function passLabel(ev) {
+    // The custom-application service line names the pass on DeLong paperwork
+    // ("Application - Post"); fall back to the classifier's read of the items.
+    for (var i = 0; i < ev.items.length; i++) {
+      var m = /^application\s*-\s*(.+)$/i.exec(ev.items[i].name || '');
+      if (m) return m[1].trim() + ' pass';
+    }
+    var groups = {};
+    ev.items.forEach(function (it) {
+      var g = window.FieldOpsGroups ? window.FieldOpsGroups.classifyItem(it.name || '', 'input') : 'Other';
+      groups[g] = (groups[g] || 0) + 1;
+    });
+    var best = null;
+    Object.keys(groups).forEach(function (g) { if (!best || groups[g] > groups[best]) best = g; });
+    return best && best !== 'Other' ? best + ' pass' : 'Pass';
+  }
+
+  function fmtDay(d) {
+    if (!d) return '?';
+    var t = new Date(d + 'T00:00:00');
+    if (isNaN(t)) return d;
+    var s = t.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    // Fall fert from the previous calendar year sits in the same log — carry
+    // the year whenever it is not the current one, or "Oct 29" lies.
+    if (t.getFullYear() !== new Date().getFullYear()) s += " '" + String(t.getFullYear()).slice(2);
+    return s;
+  }
+
+  function renderPassLog() {
+    var el = document.getElementById('fo-pass-log');
+    if (!el || !currentField) return;
+    var log = buildPassLog(currentField);
+    var planned = (currentField.inputs || []).filter(function (i) { return i.passStatus !== 'confirmed' && i.passStatus !== 'disregarded'; }).length +
+      (currentField.machinery || []).filter(function (m) { return m.passStatus !== 'confirmed' && m.passStatus !== 'disregarded'; }).length;
+
+    var h = '<div class="fo-passlog"><div class="fo-passlog-head">WHAT HAPPENED</div>';
+    if (!log.length) {
+      h += '<div class="fo-passlog-empty">Nothing confirmed yet — ' + planned + ' planned entr' + (planned === 1 ? 'y' : 'ies') + ' below, no evidence on any of them.</div>';
+    } else {
+      log.forEach(function (ev) {
+        var itemsTxt = ev.items.map(function (it) {
+          return util.escHtml(it.name) + (it.qty != null ? ' <span class="fo-passlog-qty">' + util.formatNum(it.qty, 2) + ' ' + util.escHtml(it.unit || '') + '</span>' : '');
+        }).join(' · ');
+        h += '<div class="fo-passlog-row">' +
+          '<span class="fo-passlog-date">' + fmtDay(ev.date) + '</span>' +
+          '<span class="fo-passlog-label">' + util.escHtml(passLabel(ev)) + '</span>' +
+          '<span class="fo-passlog-items">' + itemsTxt + '</span>' +
+          '<span class="fo-passlog-meta">' +
+            (ev.acres ? util.formatNum(ev.acres, 1) + ' ac · ' : '') +
+            (ev.vendor ? util.escHtml(ev.vendor) + ' ' : '') +
+            (ev.invoice ? '#' + util.escHtml(ev.invoice) + ' · ' : '') +
+            (ev.hasCost ? '<strong>' + util.formatMoney(ev.cost) + '</strong>' : (ev.by ? 'by ' + util.escHtml(ev.by) : '')) +
+          '</span>' +
+        '</div>';
+      });
+      if (planned > 0) {
+        h += '<div class="fo-passlog-empty">' + planned + ' planned entr' + (planned === 1 ? 'y' : 'ies') + ' below not confirmed yet.</div>';
+      }
+    }
+    h += '</div>';
+    el.innerHTML = h;
+  }
+
   function renderFieldOpsPanel() {
     var container = document.getElementById('fo-groups-container');
     var grandTotalEl = document.getElementById('fo-grand-total');
     var grandValEl = document.getElementById('fo-grand-val');
     var grandFieldEl = document.getElementById('fo-grand-total-field');
     if (!container || !currentField) return;
+
+    renderPassLog();
 
     var acres = (currentField.plantedAcres > 0 ? currentField.plantedAcres : currentField.acres) || 0;
 

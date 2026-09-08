@@ -5491,3 +5491,26 @@ body.light .fs-band-income { background: #e6f9f4; }
   padding: 0.6rem 0.9rem; border-top: 1px solid var(--border); background: var(--card-alt);
 }
 .di-actions .di-sub { margin: 0; margin-right: auto; }
+
+/* ── "What happened" pass log — top of Field Entries ───────────── */
+.fo-passlog {
+  border: 1px solid var(--border); border-left: 3px solid var(--primary);
+  border-radius: 6px; background: var(--card-alt);
+  padding: 0.5rem 0.7rem; margin-bottom: 0.85rem;
+}
+.fo-passlog-head {
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--text-light); margin-bottom: 0.35rem;
+}
+.fo-passlog-row {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.45rem;
+  padding: 0.25rem 0; border-top: 1px solid var(--border); font-size: 0.76rem;
+}
+.fo-passlog-row:first-of-type { border-top: none; }
+.fo-passlog-date { color: var(--text-bright); font-weight: 600; min-width: 3.2em; }
+.fo-passlog-label { color: var(--primary-light); font-weight: 600; }
+.fo-passlog-items { color: var(--text); flex: 1 1 14rem; min-width: 10rem; }
+.fo-passlog-qty { color: var(--text-light); font-variant-numeric: tabular-nums; }
+.fo-passlog-meta { color: var(--text-light); white-space: nowrap; }
+.fo-passlog-meta strong { color: var(--text-bright); }
+.fo-passlog-empty { font-size: 0.7rem; color: var(--text-light); padding-top: 0.3rem; }
