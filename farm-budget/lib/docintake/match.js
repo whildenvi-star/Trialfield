@@ -311,7 +311,26 @@ function proposeInvoice(invoice, refs) {
     const open = hits.filter(function (h) {
       return h.inp.passStatus !== 'confirmed' && !claimed[h.inp.id];
     });
-    const target = open.length ? open[0] : null;
+
+    // A field can plan the same product twice at different rates — phillhower
+    // east has Basagran at 19.85 and at 31.57 OZ/ac. The invoice's as-applied
+    // rate says which pass it is (32 OZ/ac is the 31.57 row, not the 19.85
+    // one), so when several rows are open, take the one whose planned rate
+    // sits closest to what was actually put on.
+    let target = open.length ? open[0] : null;
+    let ratePicked = false;
+    if (open.length > 1) {
+      const asApplied = Calc.invoiceRatePerAcre(product, line.quantity, acres, line.unit);
+      if (asApplied != null) {
+        open.sort(function (a, b) {
+          const da = a.inp.quantity != null ? Math.abs(Number(a.inp.quantity) - asApplied) : Infinity;
+          const db = b.inp.quantity != null ? Math.abs(Number(b.inp.quantity) - asApplied) : Infinity;
+          return da - db;
+        });
+        target = open[0];
+        ratePicked = true;
+      }
+    }
 
     if (!target) {
       const unclaimed = hits.filter(function (h) { return !claimed[h.inp.id]; });
@@ -336,6 +355,10 @@ function proposeInvoice(invoice, refs) {
     row.inputId = target.inp.id;
     row.plannedRate = target.inp.quantity;
     row.plannedUnit = product.unit || null;
+    if (ratePicked) {
+      row.note = 'Field plans this product more than once — matched the pass whose planned rate (' +
+        target.inp.quantity + ') is closest to what was applied.';
+    }
 
     // The planned figure is a rate in the APPLICATION unit (Basagran is
     // 19.85 OZ/ac); the invoice bills in the PURCHASE unit (27 Gal). Comparing
