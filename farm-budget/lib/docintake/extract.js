@@ -108,8 +108,19 @@ const EXTRACT_TOOL = {
             contractDate: { type: ['string', 'null'], description: 'ISO yyyy-mm-dd' },
             deliveryStart: { type: ['string', 'null'], description: 'ISO yyyy-mm-dd' },
             deliveryEnd: { type: ['string', 'null'], description: 'ISO yyyy-mm-dd' },
-            destination: { type: ['string', 'null'], description: 'delivery point / branch as printed' },
-            cropYear: { type: ['integer', 'null'] },
+            destination: {
+              type: ['string', 'null'],
+              description: 'The DELIVERY destination only — a field labelled Destination or ' +
+                'delivered-to. A "Contract Location" / branch-office column names where the ' +
+                'contract was written, not where grain goes: leave destination null and put ' +
+                'it in notes.'
+            },
+            cropYear: {
+              type: ['integer', 'null'],
+              description: 'The crop year. When not printed, infer it as the harvest year the ' +
+                'delivery period implies (corn delivered Oct-Dec 2026 is 2026 crop; wheat ' +
+                'delivered Jul-Aug 2027 is 2027 crop).'
+            },
             premiums: {
               type: 'array',
               description: 'Stated premium/fee LINE ITEMS for reference (e.g. +2.15 grower agreement). ' +
