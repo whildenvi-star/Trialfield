@@ -92,60 +92,42 @@ describe('buildCropSlices', () => {
 })
 
 describe('FuturesPercentPricedCard', () => {
-  it('shows the farm-wide headline plus a row per crop', () => {
-    render(
-      <FuturesPercentPricedCard
-        slices={buildCropSlices(ROWS)}
-        totalProjectedBu={290_000}
-        totalPricedBu={158_000}
-      />
-    )
+  it('leads with the most-open crop and a row per crop — never a blended pct', () => {
+    render(<FuturesPercentPricedCard slices={buildCropSlices(ROWS)} />)
     expect(screen.getByText('FUTURES % PRICED')).toBeTruthy()
-    expect(screen.getByText('Corn')).toBeTruthy()
+    // headline names the crop with the most open, not a farm-wide blend
+    expect(screen.getByText(/most open crop/)).toBeTruthy()
+    expect(screen.getAllByText('Corn').length).toBeGreaterThan(0)
     expect(screen.getByText('Soybeans')).toBeTruthy()
     expect(screen.getByText('Wheat')).toBeTruthy()
-    // per-crop percentages, not just the blended one
-    expect(screen.getByText('40%')).toBeTruthy()
+    // per-crop percentages
+    expect(screen.getAllByText('40%').length).toBeGreaterThan(0)
     expect(screen.getByText('75%')).toBeTruthy()
   })
 
   it('falls back to an empty state with no futures crops', () => {
-    render(
-      <FuturesPercentPricedCard slices={[]} totalProjectedBu={0} totalPricedBu={0} />
-    )
+    render(<FuturesPercentPricedCard slices={[]} />)
     expect(screen.getByText(/No futures crop plan/)).toBeTruthy()
   })
 })
 
 describe('PricedBushelsCard', () => {
-  it('breaks the total into per-crop bushels', () => {
-    render(
-      <PricedBushelsCard
-        slices={buildCropSlices(ROWS)}
-        totalPricedBu={158_000}
-        totalSoldBu={183_000}
-      />
-    )
+  it('shows per-crop bushels and no cross-crop sum', () => {
+    render(<PricedBushelsCard slices={buildCropSlices(ROWS)} />)
     expect(screen.getByText('PRICED BUSHELS')).toBeTruthy()
-    expect(screen.getByText('158,000')).toBeTruthy()
     expect(screen.getByText('80,000')).toBeTruthy()
     expect(screen.getByText('45,000')).toBeTruthy()
     expect(screen.getByText('33,000')).toBeTruthy()
+    // 80k + 45k + 33k must never appear as one number
+    expect(screen.queryByText('158,000')).toBeNull()
   })
 })
 
 describe('PricedBreakdownCards', () => {
   it('renders both cards off one set of slices', () => {
-    render(
-      <PricedBreakdownCards
-        rows={ROWS}
-        totalProjectedBu={290_000}
-        totalPricedBu={158_000}
-        totalSoldBu={183_000}
-      />
-    )
+    render(<PricedBreakdownCards rows={ROWS} />)
     expect(screen.getByText('FUTURES % PRICED')).toBeTruthy()
     expect(screen.getByText('PRICED BUSHELS')).toBeTruthy()
-    expect(screen.getAllByText('Corn')).toHaveLength(2)
+    expect(screen.getAllByText('Corn').length).toBeGreaterThanOrEqual(2)
   })
 })

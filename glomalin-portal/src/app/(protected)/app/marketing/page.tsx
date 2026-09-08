@@ -46,36 +46,23 @@ interface GrainDeliveryRow {
   variant: { id: string; name: string }
 }
 
-// Farm-wide totals for the summary strip — FUTURES rows only. Organics &
-// specialty (tracking tier) never blend into the numbers selling decisions
-// are made against. Office rows have financial keys omitted — exposure
-// comes back null there.
+// The one cross-crop figure on this page, and it is in DOLLARS: each futures
+// crop's open bushels valued at its own CBOT price, then summed. Bushels are
+// never blended across commodities anywhere here — a corn bushel plus a bean
+// bushel is not a number anyone markets with. Office rows have financial keys
+// omitted, so exposure comes back null there.
 function farmSummary(rows: Array<CommodityRollupRow | OfficeCommodityRollupRow>, isOwner: boolean) {
-  let projectedBu = 0
-  let pricedBu = 0
-  let soldBu = 0
   let exposure: number | null = isOwner ? 0 : null
   for (const row of rows) {
     if (row.tier !== 'futures') continue
-    pricedBu += row.pricedBu
-    soldBu += row.soldBu
-    if (row.projectedBu != null) {
-      projectedBu += row.projectedBu
-      if (isOwner && exposure != null) {
-        const cbot = (row as CommodityRollupRow).cbotPriceDollars
-        if (cbot != null) {
-          exposure += Math.max(0, row.projectedBu - row.pricedBu) * cbot
-        }
+    if (row.projectedBu != null && isOwner && exposure != null) {
+      const cbot = (row as CommodityRollupRow).cbotPriceDollars
+      if (cbot != null) {
+        exposure += Math.max(0, row.projectedBu - row.pricedBu) * cbot
       }
     }
   }
-  return {
-    projectedBu,
-    pricedBu,
-    soldBu,
-    pctPriced: projectedBu > 0 ? pricedBu / projectedBu : null,
-    exposure,
-  }
+  return { exposure }
 }
 
 export default async function MarketingPage({
@@ -182,15 +169,11 @@ export default async function MarketingPage({
         </div>
       )}
 
-      {/* Priced position, broken out per crop — the farm-wide number stays the
-          headline, but "62% priced" is useless without knowing WHICH crop is
-          still open, so each commodity gets its glyph and its own bar. */}
-      <PricedBreakdownCards
-        rows={enterprise.rows}
-        totalProjectedBu={summary.projectedBu}
-        totalPricedBu={summary.pricedBu}
-        totalSoldBu={summary.soldBu}
-      />
+      {/* Priced position, strictly per crop. There is deliberately no
+          farm-wide bushel number anywhere on this page: a corn bushel plus a
+          bean bushel is not a figure anyone markets with (owner, 2026-09-09).
+          Dollars pool; bushels don't. */}
+      <PricedBreakdownCards rows={enterprise.rows} />
 
       {/* Farm summary strip — mirrors the macro-rollup hedging dashboard strip */}
       <KpiStrip cols={2}>
@@ -203,9 +186,9 @@ export default async function MarketingPage({
           />
         ) : (
           <StatCard
-            label="PROJECTED BUSHELS"
-            value={formatBu(Math.round(summary.projectedBu))}
-            sublabel="futures crops · from crop plan"
+            label="FUTURES CROPS"
+            value={String(enterprise.rows.filter((r) => r.tier === 'futures').length)}
+            sublabel="each crop's projection lives in its own card above"
             variant="default"
           />
         )}

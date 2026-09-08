@@ -123,20 +123,22 @@ function EmptyBreakdown({ label, sublabel }: { label: string; sublabel: string }
 
 export function FuturesPercentPricedCard({
   slices,
-  totalProjectedBu,
-  totalPricedBu,
 }: {
   slices: CropSlice[]
-  totalProjectedBu: number
-  totalPricedBu: number
 }) {
-  const pct = totalProjectedBu > 0 ? totalPricedBu / totalProjectedBu : null
+  // A corn bushel plus a bean bushel is not a number anyone markets with
+  // (owner, 2026-09-09), so there is no farm-wide blend here. The headline is
+  // the decision signal a blend was hiding: the crop with the most open.
+  const rated = slices.filter((s) => s.pctPriced != null)
+  const mostOpen = rated.length
+    ? rated.reduce((worst, s) => ((s.pctPriced as number) < (worst.pctPriced as number) ? s : worst))
+    : null
 
   if (slices.length === 0) {
     return (
       <EmptyBreakdown
         label="FUTURES % PRICED"
-        sublabel="futures crops only"
+        sublabel="per crop · futures only"
       />
     )
   }
@@ -144,8 +146,8 @@ export function FuturesPercentPricedCard({
   return (
     <Card
       label="FUTURES % PRICED"
-      value={pct != null ? formatPct(pct) : EM}
-      sublabel={`of ${formatBu(Math.round(totalProjectedBu))} projected bu · futures crops only`}
+      value={mostOpen ? `${mostOpen.commodityName} ${formatPct(mostOpen.pctPriced as number)}` : EM}
+      sublabel="most open crop · each priced against its own projection"
     >
       {slices.map((s) => {
         const fill = s.pctPriced != null ? Math.min(1, s.pctPriced) : 0
@@ -182,26 +184,23 @@ export function FuturesPercentPricedCard({
 
 export function PricedBushelsCard({
   slices,
-  totalPricedBu,
-  totalSoldBu,
 }: {
   slices: CropSlice[]
-  totalPricedBu: number
-  totalSoldBu: number
 }) {
   if (slices.length === 0) {
-    return <EmptyBreakdown label="PRICED BUSHELS" sublabel="futures crops only" />
+    return <EmptyBreakdown label="PRICED BUSHELS" sublabel="per crop · futures only" />
   }
 
   // One shared scale across crops — bar length means bushels here, not percent,
-  // so a small pool can't look like a big one.
+  // so a small pool can't look like a big one. No summed headline: bushels of
+  // different commodities never add.
   const scale = Math.max(...slices.map((s) => Math.max(s.projectedBu, s.pricedBu)), 1)
 
   return (
     <Card
       label="PRICED BUSHELS"
-      value={formatBu(totalPricedBu)}
-      sublabel={`${formatBu(totalSoldBu)} bu contracted · bars share one bushel scale`}
+      value="by crop"
+      sublabel="bars share one bushel scale · bushels never add across crops"
     >
       {slices.map((s) => {
         const pool = Math.max(s.projectedBu, s.pricedBu)
@@ -243,28 +242,14 @@ export function PricedBushelsCard({
 /** Both breakdown cards side by side, sharing one set of crop slices. */
 export function PricedBreakdownCards({
   rows,
-  totalProjectedBu,
-  totalPricedBu,
-  totalSoldBu,
 }: {
   rows: Array<CommodityRollupRow | OfficeCommodityRollupRow>
-  totalProjectedBu: number
-  totalPricedBu: number
-  totalSoldBu: number
 }) {
   const slices = buildCropSlices(rows)
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      <FuturesPercentPricedCard
-        slices={slices}
-        totalProjectedBu={totalProjectedBu}
-        totalPricedBu={totalPricedBu}
-      />
-      <PricedBushelsCard
-        slices={slices}
-        totalPricedBu={totalPricedBu}
-        totalSoldBu={totalSoldBu}
-      />
+      <FuturesPercentPricedCard slices={slices} />
+      <PricedBushelsCard slices={slices} />
     </div>
   )
 }

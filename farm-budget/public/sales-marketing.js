@@ -272,15 +272,25 @@
     var root = document.getElementById('mkt-dashboard-root');
     if (!root) return;
 
-    var totalEst    = pools.reduce(function (s, p) { return s + p.totalEst; }, 0);
-    var totalPriced = pools.reduce(function (s, p) { return s + p.pricedBu; }, 0);
-    var totalExp    = pools.reduce(function (s, p) { return s + p.exposure; }, 0);
-    var farmPct     = totalEst > 0 ? (totalPriced / totalEst) * 100 : 0;
+    // Dollars pool; bushels don't. A corn bushel plus a bean bushel is not a
+    // number anyone markets with (owner, 2026-09-09), so the strip never
+    // blends bushels across commodities — % priced reads per crop, and the
+    // only cross-crop figure is exposure in dollars, where each pool was
+    // already valued at its own reference price before summing.
+    var totalExp = pools.reduce(function (s, p) { return s + p.exposure; }, 0);
+
+    var pctChips = pools
+      .filter(function (p) { return p.totalEst > 0; })
+      .map(function (p) {
+        var pct = p.pctPriced;
+        var color = pct >= 80 ? 'var(--success)' : pct >= 50 ? '#ffb800' : 'var(--danger)';
+        return '<span class="mkt-summary-chip">' + util.escHtml(p.name) +
+          ' <b style="color:' + color + '">' + util.formatNum(pct, 0) + '%</b></span>';
+      }).join('');
 
     var html =
       '<div class="mkt-summary-strip">' +
-        '<div class="mkt-summary-item"><span class="mkt-summary-val">' + util.formatNum(farmPct, 1) + '%</span><span class="mkt-summary-lbl">Farm % Priced</span></div>' +
-        '<div class="mkt-summary-item"><span class="mkt-summary-val">' + util.formatNum(totalPriced, 0) + ' bu</span><span class="mkt-summary-lbl">Priced Bushels</span></div>' +
+        '<div class="mkt-summary-item mkt-summary-item-wide"><span class="mkt-summary-chips">' + (pctChips || '—') + '</span><span class="mkt-summary-lbl">% Priced, by crop</span></div>' +
         '<div class="mkt-summary-item' + (totalExp > 500000 ? ' mkt-summary-warn' : '') + '"><span class="mkt-summary-val">' + util.formatMoney(totalExp, 0) + '</span><span class="mkt-summary-lbl">Unpriced Exposure</span></div>' +
         '<div class="mkt-summary-item"><span class="mkt-summary-val">' + instruments.length + '</span><span class="mkt-summary-lbl">Instruments</span></div>' +
       '</div>';
