@@ -124,7 +124,8 @@
       '<option value="">— pick a field —</option>' +
       (p.fieldCandidates || []).map(function (c) {
         return '<option value="' + esc(c.id) + '"' + (c.id === p.fieldId ? ' selected' : '') + '>' +
-          esc(c.label) + ' (' + Math.round(c.score * 100) + '% · ' + esc(c.why) + ')</option>';
+          esc(c.label) + (c.crop ? ' · ' + esc(c.crop) : '') +
+          ' (' + Math.round(c.score * 100) + '% · ' + esc(c.why) + ')</option>';
       }).join('') +
       '<option value="__all">— show all fields —</option>' +
       '</select>';
@@ -156,6 +157,7 @@
       '<th>Our product</th>' +
       '<th class="di-num">Inv qty</th>' +
       '<th>Unit</th>' +
+      '<th class="di-num">Planned rate</th>' +
       '<th class="di-num">Planned total</th>' +
       '<th class="di-num">Δ</th>' +
       '<th class="di-num">Unit $</th>' +
@@ -175,12 +177,24 @@
             esc(c.label) + ' (' + Math.round(c.score * 100) + '%)</option>';
         }).join('') + '</select>';
 
+      // Planned is a rate in the application unit; the invoice bills in the
+      // purchase unit. match.js converts before subtracting, so both columns
+      // are in the invoice's unit — label them or the numbers invite a misread.
       var deltaCell = '';
       if (r.qtyDelta != null && Math.abs(r.qtyDelta) > 0.0001) {
-        var pct = r.plannedQtyTotal ? Math.abs(r.qtyDelta / r.plannedQtyTotal) : 1;
+        var pct = r.qtyDeltaPct != null ? Math.abs(r.qtyDeltaPct)
+          : (r.plannedQtyTotal ? Math.abs(r.qtyDelta / r.plannedQtyTotal) : 1);
         deltaCell = '<span class="' + (pct > 0.1 ? 'di-delta-big' : 'di-delta') + '">' +
-          (r.qtyDelta > 0 ? '+' : '') + n3(r.qtyDelta) + '</span>';
+          (r.qtyDelta > 0 ? '+' : '') + n3(r.qtyDelta) +
+          (r.qtyDeltaPct != null ? ' <small>(' + (r.qtyDeltaPct > 0 ? '+' : '') +
+            Math.round(r.qtyDeltaPct * 100) + '%)</small>' : '') +
+          '</span>';
       }
+      var plannedCell = r.plannedQtyTotal == null ? ''
+        : n3(r.plannedQtyTotal) + (r.plannedQtyUnit ? ' <small>' + esc(r.plannedQtyUnit) + '</small>' : '');
+      var rateCell = r.plannedRate == null ? ''
+        : n3(r.plannedRate) + (r.plannedUnit ? ' <small>' + esc(r.plannedUnit) + '/ac</small>' : '') +
+          (r.actualRate != null ? '<br><span class="di-delta">as applied ' + n3(r.actualRate) + '</span>' : '');
 
       return '<tr class="di-row di-tone-row-' + tone(r.status) + '">' +
         '<td class="di-tick">' + tick + '</td>' +
@@ -188,7 +202,8 @@
         '<td>' + prodSel + '</td>' +
         '<td class="di-num">' + n3(r.invoiceQty) + '</td>' +
         '<td>' + esc(r.invoiceUnit || '') + '</td>' +
-        '<td class="di-num di-muted">' + n3(r.plannedQtyTotal) + '</td>' +
+        '<td class="di-num di-muted">' + rateCell + '</td>' +
+        '<td class="di-num di-muted">' + plannedCell + '</td>' +
         '<td class="di-num">' + deltaCell + '</td>' +
         '<td class="di-num di-muted">' + money(r.unitPrice) + '</td>' +
         '<td class="di-num">' + money(r.lineTotal) + '</td>' +

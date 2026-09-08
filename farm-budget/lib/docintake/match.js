@@ -335,12 +335,34 @@ function proposeInvoice(invoice, refs) {
     row.status = READY;
     row.inputId = target.inp.id;
     row.plannedRate = target.inp.quantity;
-    row.plannedQtyTotal = acres > 0 && target.inp.quantity != null
-      ? Calc.round4(Number(target.inp.quantity) * acres)
-      : null;
+    row.plannedUnit = product.unit || null;
+
+    // The planned figure is a rate in the APPLICATION unit (Basagran is
+    // 19.85 OZ/ac); the invoice bills in the PURCHASE unit (27 Gal). Comparing
+    // them raw reported a delta of -2116.8 on a line that was really 16.75 Gal
+    // planned against 27 billed. Convert the plan into whatever unit the
+    // invoice used before subtracting — the mirror of Calc.invoiceRatePerAcre,
+    // which multiplies by conversionRate going the other way.
+    const appUnit = product.unit || '';
+    const invUnit = line.unit || product.purchaseUnit || '';
+    const conv = Number(product.conversionRate) || 1;
+    const sameUnit = normalize(invUnit) === normalize(appUnit);
+
+    if (acres > 0 && target.inp.quantity != null) {
+      const plannedApp = Number(target.inp.quantity) * acres;
+      row.plannedQtyTotal = Calc.round4(sameUnit ? plannedApp : plannedApp / conv);
+      row.plannedQtyUnit = invUnit || null;
+    } else {
+      row.plannedQtyTotal = null;
+      row.plannedQtyUnit = null;
+    }
+
     row.actualRate = Calc.invoiceRatePerAcre(product, line.quantity, acres, line.unit);
     if (row.plannedQtyTotal != null && line.quantity != null) {
       row.qtyDelta = Calc.round4(Number(line.quantity) - row.plannedQtyTotal);
+      if (row.plannedQtyTotal > 0) {
+        row.qtyDeltaPct = Calc.round4(row.qtyDelta / row.plannedQtyTotal);
+      }
     }
     return row;
   });
