@@ -20,6 +20,7 @@ export type GroupIcon = 'field' | 'ops' | 'finance' | 'inputs'
 const EMBED_PATHS: Record<string, string> = {
   GRAIN_TICKETS: '/embed/grain-tickets/',
   FARM_BUDGET: '/embed/farm-budget/',
+  FARM_BUDGET_2027: '/embed/farm-budget-2027/',
   MERISTEM_MALT: '/embed/meristem-malt/',
   ORG_CERT: 'https://cert.whughesfarms.com/',
   FARM_REGISTRY: '/embed/farm-registry/',
@@ -29,6 +30,7 @@ const EMBED_PATHS: Record<string, string> = {
 const EMBED_URL_OVERRIDES: Record<string, string | undefined> = {
   GRAIN_TICKETS: process.env.NEXT_PUBLIC_EMBED_URL_GRAIN_TICKETS,
   FARM_BUDGET: process.env.NEXT_PUBLIC_EMBED_URL_FARM_BUDGET,
+  FARM_BUDGET_2027: process.env.NEXT_PUBLIC_EMBED_URL_FARM_BUDGET_2027,
   MERISTEM_MALT: process.env.NEXT_PUBLIC_EMBED_URL_MERISTEM_MALT,
   ORG_CERT: process.env.NEXT_PUBLIC_EMBED_URL_ORG_CERT,
   FARM_REGISTRY: process.env.NEXT_PUBLIC_EMBED_URL_FARM_REGISTRY,
@@ -148,6 +150,16 @@ export const MODULES: Module[] = [
     aliases: ['macro', 'budget', 'planning', 'crop plans', 'p&l', 'enterprise planner'],
   },
   {
+    id: 'farm-budget-2027',
+    label: 'MACRO 2027',
+    sublabel: 'Next-Year Planning',
+    route: '/app/farm-budget-2027',
+    status: 'live',
+    type: 'embed',
+    embedKey: 'FARM_BUDGET_2027',
+    aliases: ['macro 2027', '2027', 'next year', '2027 plan', 'rotation'],
+  },
+  {
     id: 'grain-tickets',
     label: 'Grain Tickets',
     sublabel: 'Grain Traceability',
@@ -224,7 +236,7 @@ export interface ModuleGroup {
 export const MODULE_GROUPS: ModuleGroup[] = [
   { label: 'Field',      icon: 'field',   ids: ['maps', 'weather', 'field-history', 'field-timeline'] },
   { label: 'Operations', icon: 'ops',     ids: ['crew', 'field-ops', 'compliance', 'org-cert', 'farm-registry'] },
-  { label: 'Finance',    icon: 'finance', ids: ['performance', 'enterprise-summary', 'marketing', 'farm-budget', 'grain-tickets'] },
+  { label: 'Finance',    icon: 'finance', ids: ['performance', 'enterprise-summary', 'marketing', 'farm-budget', 'farm-budget-2027', 'grain-tickets'] },
   { label: 'Inputs',     icon: 'inputs',  ids: ['seed-inventory', 'reference-data', 'meristem-malt'] },
 ]
 

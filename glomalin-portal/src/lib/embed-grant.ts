@@ -4,6 +4,9 @@ import { createHmac } from 'crypto'
 // purpose — organic-cert has its own NextAuth login and takes no grant.
 const EMBED_APP_BY_KEY: Record<string, string> = {
   FARM_BUDGET: 'farm-budget',
+  // The planning-year instance runs the same codebase and verifies the same
+  // app scope — one grant opens whichever year you walk into.
+  FARM_BUDGET_2027: 'farm-budget',
   GRAIN_TICKETS: 'grain-tickets',
   MERISTEM_MALT: 'meristem-malt',
   FARM_REGISTRY: 'farm-registry',

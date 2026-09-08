@@ -41,6 +41,10 @@ portal.{$DOMAIN:whughesfarms.com} {
 	handle_path /embed/farm-budget/* {
 		reverse_proxy localhost:3001
 	}
+	handle_path /embed/farm-budget-2027/* {
+		# MACRO 2027 — the parallel planning-year instance (same code, own data)
+		reverse_proxy localhost:3011
+	}
 	handle_path /embed/grain-tickets/* {
 		reverse_proxy localhost:3007
 	}

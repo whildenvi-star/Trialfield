@@ -80,7 +80,7 @@ export default async function ModulePage({ params }: ModulePageProps) {
     // chat endpoint authorizes financials server-side); other apps still
     // verify v1-only, so they keep getting v1.
     const grant = user && mod.embedKey
-      ? mintEmbedGrant(mod.embedKey, user.id, mod.embedKey === 'FARM_BUDGET' ? embedRole : undefined)
+      ? mintEmbedGrant(mod.embedKey, user.id, mod.embedKey === 'FARM_BUDGET' || mod.embedKey === 'FARM_BUDGET_2027' ? embedRole : undefined)
       : null
     if (grant) {
       roleUrl += '&grant=' + encodeURIComponent(grant)
