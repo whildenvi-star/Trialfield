@@ -190,6 +190,28 @@
     ]).then(function (results) {
       window.refData.enterprises = results[0];
       window.refData.settings = results[1];
+
+      // Two MACRO instances can run at once (the live year + a planning year
+      // on another port). The tab title and a banner follow the DATA, so the
+      // wrong-year tab announces itself before anyone edits in it.
+      (function () {
+        var yr = (window.refData.settings && window.refData.settings.year) || null;
+        if (!yr) return;
+        document.title = 'MACRO ' + yr;
+        var isPlanning = yr > new Date().getFullYear();
+        var b = document.getElementById('macro-year-banner');
+        if (isPlanning && !b) {
+          b = document.createElement('div');
+          b.id = 'macro-year-banner';
+          b.style.cssText = 'position:sticky;top:0;z-index:2000;text-align:center;' +
+            'font-size:0.72rem;font-weight:700;letter-spacing:0.12em;padding:0.28rem;' +
+            'background:var(--amber);color:#1a1a1a;';
+          b.textContent = 'PLANNING YEAR ' + yr + ' — THE ' + (yr - 1) + ' SEASON IS TRACKED IN THE OTHER MACRO';
+          document.body.insertBefore(b, document.body.firstChild);
+        } else if (!isPlanning && b) {
+          b.remove(); // rolls itself off in January when this year becomes current
+        }
+      })();
       window.refData.products = results[2];
       window.refData.implements = results[3];
       window.refData.seeds = results[4];
