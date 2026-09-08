@@ -19,7 +19,13 @@ const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const DATA_FILE = path.join(__dirname, 'data', 'data.json');
+// DATA_FILE is overridable so a second MACRO instance can run a different
+// plan year in parallel (MACRO 2027 on its own port + data file) while this
+// one keeps tracking the current season. Backups and the save lock all derive
+// from this constant, so the two instances never touch each other's files.
+const DATA_FILE = process.env.DATA_FILE
+  ? path.resolve(process.env.DATA_FILE)
+  : path.join(__dirname, 'data', 'data.json');
 const MAX_BACKUPS = 5;
 
 // Health check — before CORS/middleware for fast, dependency-free response

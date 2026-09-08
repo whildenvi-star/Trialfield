@@ -14,6 +14,15 @@ data/data.json
 data/data.json.bak.*
 data/photos
 
+# The 2027 plan lives its whole life on the droplet (seeded there, edited
+# there) — same protection as data.json or a code sync eats next year's plan.
+*/data/data-2027.json
+*/data/data-2027.json.bak.*
+*/data/data-2027.json.tmp
+data/data-2027.json
+data/data-2027.json.bak.*
+data/data-2027.json.tmp
+
 # Droplet-side rotation writes data.json.bak-<label>-<ISO>, with a HYPHEN after
 # "bak" — the data.json.bak.* patterns above use a dot and do not match it, so
 # --delete was removing production snapshots that exist only on the droplet.

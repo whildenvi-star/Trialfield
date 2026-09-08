@@ -90,6 +90,30 @@ module.exports = {
     },
 
     {
+      // MACRO 2027 — the NEXT-year plan, running in parallel so 2027 planning
+      // can happen while 2026 keeps tracking. Same codebase, own data file
+      // (data/data-2027.json, seeded by scripts/build-2027-plan.js). Syncs are
+      // off: this instance is a planning sandbox, it must never push
+      // confirmations to organic-cert or pull live actuals into the plan.
+      name: 'farm-budget-2027',
+      script: 'server.js',
+      cwd: './farm-budget',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3011,
+        DATA_FILE: 'data/data-2027.json',
+        FIELDOPS_SYNC_ENABLED: 'false',
+        CHAT_AGENT_ENABLED: 'false',
+      },
+      instances: 1,
+      autorestart: true,
+      max_restarts: 10,
+      restart_delay: 5000,
+      watch: false,
+      max_memory_restart: '256M',
+    },
+
+    {
       name: 'fsa-acres',
       script: 'server.js',
       cwd: './fsa-acres',
