@@ -32,27 +32,71 @@ function coreName(s) {
   return normalize(stripPack(s));
 }
 
-// "Bakke Bakke" — DeLong prints Field ID and Farm ID as a joined pair and often
-// repeats the same word. Collapse runs of the identical token.
+// DeLong prints Field ID and Farm ID as a joined pair, and they are usually the
+// same string ("PhilEast Philhower East PhilEast Philhower East"). Dedupe the
+// whole token set, not just adjacent runs — leaving the repeat in place inflates
+// the token count and drags every score down by half.
 function dedupeTokens(s) {
   const seen = [];
+  const has = {};
   normalize(s).split(' ').forEach(function (t) {
-    if (t && seen[seen.length - 1] !== t) seen.push(t);
+    if (!t || has[t]) return;
+    has[t] = true;
+    seen.push(t);
   });
   return seen.join(' ');
 }
 
-// Token-overlap score in 0..1, weighted so a shared leading token counts most —
-// farm and product names lead with the distinguishing word.
+// Levenshtein distance, iterative with a single row. Only ever run on short
+// name tokens, so the O(n*m) cost is irrelevant.
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(
+        prev[j] + 1,
+        cur[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// How alike two name tokens are, 0..1. Farm paperwork misspells names — the
+// invoice says "Philhower", our register says "Phillhower" — and a strict
+// equality test scores that pair zero, which is how the right field stopped
+// being offered at all. Below 0.72 the pair is treated as unrelated, so this
+// tolerates a slip without inventing matches between genuinely different names.
+function tokenSim(a, b) {
+  if (a === b) return 1;
+  const max = Math.max(a.length, b.length);
+  if (!max) return 0;
+  const sim = 1 - levenshtein(a, b) / max;
+  return sim >= 0.72 ? sim : 0;
+}
+
+// Token-overlap score in 0..1, each token credited by its best fuzzy partner.
+// A shared leading token counts extra — farm and product names lead with the
+// distinguishing word.
 function tokenScore(a, b) {
   const at = a.split(' ').filter(Boolean);
   const bt = b.split(' ').filter(Boolean);
   if (!at.length || !bt.length) return 0;
-  const bSet = new Set(bt);
-  let hit = 0;
-  at.forEach(function (t) { if (bSet.has(t)) hit++; });
-  const overlap = hit / Math.max(at.length, bt.length);
-  const leadBonus = at[0] === bt[0] ? 0.15 : 0;
+  let credit = 0;
+  at.forEach(function (t) {
+    let best = 0;
+    bt.forEach(function (u) { const s = tokenSim(t, u); if (s > best) best = s; });
+    credit += best;
+  });
+  const overlap = credit / Math.max(at.length, bt.length);
+  const leadBonus = tokenSim(at[0], bt[0]) >= 0.72 ? 0.15 : 0;
   return Math.min(1, overlap + leadBonus);
 }
 
@@ -84,25 +128,67 @@ function rank(list, label, query, floor) {
 }
 
 // ── field matching ──────────────────────────────────────────────
-// The invoice names a field in the vendor's words; acres is the tiebreaker,
-// which is what actually separates split fields sharing a parcel name.
+// The invoice names a field in the vendor's words. Three signals, in order of
+// how much they can be trusted: the name, the crop named in the Comments line,
+// and acres.
+//
+// The crop matters more than it looks. A split field appears once per crop
+// under ONE parcel name with identical acreage — "phillhower east" is both Peas
+// and Snap Beans at 135.2 ac — so name and acres together cannot separate them.
+// The Comments line ("Post Snap Beans With Basagran") is the only thing on the
+// page that can, and reading it is the difference between confirming the right
+// pass and inventing new lines on the wrong crop.
+function cropSignal(invoice) {
+  return normalize(
+    (invoice.comments || '') + ' ' + (invoice.fieldLabel || '') + ' ' + (invoice.farmLabel || '')
+  );
+}
+
+// Does the invoice's comment name this field's crop? Compared token-wise and
+// fuzzily so "Snap Beans" finds "snap beans" and "Soybeans" does not.
+function cropMentioned(signal, crop) {
+  const ct = normalize(crop).split(' ').filter(Boolean);
+  if (!ct.length) return false;
+  const st = signal.split(' ').filter(Boolean);
+  if (!st.length) return false;
+  let hit = 0;
+  ct.forEach(function (t) {
+    if (t.length < 3) { hit++; return; } // ignore noise words like "rr"
+    if (st.some(function (u) { return tokenSim(t, u) >= 0.85; })) hit++;
+  });
+  return hit === ct.length;
+}
+
 function matchFields(fields, invoice) {
   const label = (invoice.fieldLabel || '') + ' ' + (invoice.farmLabel || '');
   const query = dedupeTokens(label);
   if (!query) return [];
   const cands = rank(fields, function (f) { return f.name; }, query, 0.3);
 
+  const signal = cropSignal(invoice);
   const invAcres = Number(invoice.acres);
+
   cands.forEach(function (c) {
     const acres = (c.item.plantedAcres > 0 ? c.item.plantedAcres : c.item.acres) || 0;
     c.acres = acres;
+    c.crop = c.item.crop || null;
+
+    if (cropMentioned(signal, c.item.crop)) {
+      c.score = Math.min(1, c.score + 0.3);
+      c.why += ', invoice names ' + c.item.crop;
+    }
+
+    // Acres stays a tiebreaker, never a veto. On this paperwork it is often
+    // the sprayed area rather than the parcel or the planted acreage — 108 ac
+    // treated on a 135.2 ac field with 91.7 ac of the crop — so a large
+    // penalty here would sink a field the name and crop both agree on.
     if (invAcres > 0 && acres > 0) {
       const drift = Math.abs(acres - invAcres) / invAcres;
       if (drift <= 0.01) { c.score = Math.min(1, c.score + 0.2); c.why += ', acres match'; }
       else if (drift <= 0.1) { c.score = Math.min(1, c.score + 0.05); c.why += ', acres close'; }
-      else { c.score = Math.max(0, c.score - 0.15); c.why += ', acres differ (' + acres + ' vs ' + invAcres + ')'; }
-      c.score = Math.round(c.score * 100) / 100;
+      else { c.score = Math.max(0, c.score - 0.08); c.why += ', acres differ (' + acres + ' vs ' + invAcres + ')'; }
     }
+    c.score = Math.round(c.score * 100) / 100;
   });
   cands.sort(function (a, b) { return b.score - a.score; });
   return cands;
@@ -292,7 +378,8 @@ function toCand(labelKey) {
       label: c.item[labelKey],
       score: c.score,
       why: c.why,
-      acres: c.acres != null ? c.acres : undefined
+      acres: c.acres != null ? c.acres : undefined,
+      crop: c.crop != null ? c.crop : undefined
     };
   };
 }
