@@ -165,7 +165,13 @@ function CommodityCard({ crop, isOwner }: { crop: CropMarketingData; isOwner: bo
           <MiniStat
             label="Break-even"
             value={budget != null ? formatPricePerBu(budget.copPerBu) : EM}
-            sub={budget != null ? 'COP / bu' : 'set costs in Budget tab'}
+            sub={
+              budget == null
+                ? 'set costs in Budget tab'
+                : budget.opCopPerBu != null
+                  ? `ex-overhead ${formatPricePerBu(budget.opCopPerBu)}`
+                  : 'COP / bu'
+            }
             tone="bright"
           />
           <MiniStat

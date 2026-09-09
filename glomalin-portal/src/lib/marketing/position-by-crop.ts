@@ -24,6 +24,8 @@ export interface BudgetFieldRow {
   acres: number
   expPerAcre: number
   yieldPerAcre: number
+  /** expPerAcre without the overhead pools (Layer A + B). Absent on older budget servers. */
+  opExpPerAcre?: number
 }
 
 // Contract shape as consumed here — position fields plus display metadata
@@ -61,6 +63,8 @@ export interface CropBudget {
   expPerAcre: number       // weighted avg across all fields for this crop
   yieldPerAcre: number     // weighted avg
   copPerBu: number         // break-even: expPerAcre / yieldPerAcre (≡ totalCost / totalEstimatedBu)
+  /** break-even before overhead pools: opExpPerAcre / yieldPerAcre; null when the budget server doesn't send it */
+  opCopPerBu: number | null
   totalEstimatedBu: number // projected production: acres × yieldPerAcre
   totalCost: number        // total COP: acres × expPerAcre
 }
@@ -256,11 +260,18 @@ export function buildCropMarketingDataList(
     const expPerAcre = fields.reduce((s: number, f: BudgetFieldRow) => s + f.expPerAcre * f.acres, 0) / totalAcres
     const yieldPerAcre = fields.reduce((s: number, f: BudgetFieldRow) => s + f.yieldPerAcre * f.acres, 0) / totalAcres
     if (yieldPerAcre <= 0) continue
+    // Operating (ex-overhead) cost: only when every row carries it, so a
+    // mixed response never blends full and operating figures.
+    const hasOp = fields.every((f: BudgetFieldRow) => typeof f.opExpPerAcre === 'number')
+    const opExpPerAcre = hasOp
+      ? fields.reduce((s: number, f: BudgetFieldRow) => s + (f.opExpPerAcre as number) * f.acres, 0) / totalAcres
+      : null
     budgetByCrop.set(cropKey, {
       acres: totalAcres,
       expPerAcre,
       yieldPerAcre,
       copPerBu: expPerAcre / yieldPerAcre,
+      opCopPerBu: opExpPerAcre != null ? opExpPerAcre / yieldPerAcre : null,
       totalEstimatedBu: totalAcres * yieldPerAcre,
       totalCost: totalAcres * expPerAcre,
     })

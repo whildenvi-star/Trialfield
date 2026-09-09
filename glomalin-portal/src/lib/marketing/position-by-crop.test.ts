@@ -113,6 +113,27 @@ describe('break-even (COP per bushel)', () => {
     )
   })
 
+  it('operating COP (ex-overhead) is acre-weighted like full COP', () => {
+    const budget: BudgetFieldRow[] = [
+      { crop: 'Corn', acres: 100, expPerAcre: 800, yieldPerAcre: 200, opExpPerAcre: 650 },
+      { crop: 'Corn', acres: 100, expPerAcre: 700, yieldPerAcre: 100, opExpPerAcre: 550 },
+    ]
+    const crop = buildCorn([pricedContract('v-corn', 1_000, 4.00)], budget)
+    // weighted op exp = 600, weighted yield = 150 → 4.00, below full COP 5.00
+    expect(crop.budget!.opCopPerBu).toBeCloseTo(4.0, 4)
+    expect(crop.budget!.opCopPerBu!).toBeLessThan(crop.budget!.copPerBu)
+  })
+
+  it('operating COP is null when any row lacks it (never blends full and operating)', () => {
+    const budget: BudgetFieldRow[] = [
+      { crop: 'Corn', acres: 100, expPerAcre: 800, yieldPerAcre: 200, opExpPerAcre: 650 },
+      { crop: 'Corn', acres: 100, expPerAcre: 700, yieldPerAcre: 100 },
+    ]
+    const crop = buildCorn([pricedContract('v-corn', 1_000, 4.00)], budget)
+    expect(crop.budget!.opCopPerBu).toBeNull()
+    expect(crop.budget!.copPerBu).toBeCloseTo(5.0, 4)
+  })
+
   it('margin locked = (WAP − break-even) × priced bushels', () => {
     // 10,000 bu @ $4.50 vs $4.00 break-even → +$0.50/bu, +$5,000 total
     const crop = buildCorn([pricedContract('v-corn', 10_000, 4.50)])

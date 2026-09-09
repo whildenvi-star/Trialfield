@@ -373,6 +373,7 @@ function RowWhatIf({ row }: { row: RowView }) {
               expPerAcre: (row.totalCost ?? 0) / row.acres,
               yieldPerAcre: row.projectedBu / row.acres,
               copPerBu: row.copPerBu,
+              opCopPerBu: null, // enterprise rollup carries full COP only
               totalEstimatedBu: row.projectedBu,
               totalCost: row.totalCost ?? 0,
             }
