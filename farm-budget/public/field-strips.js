@@ -203,6 +203,10 @@
         '<div class="fs-band-head"><span>FIXED /AC</span><span></span></div>' +
         kvRow('Labor', util.formatMoney(b.laborPerAcre || 0)) +
         kvRow('Overhead', util.formatMoney(b.overheadPerAcre || 0)) +
+        // Pool breakdown when overhead is allocated from the P&L pools
+        (b.overheadPools || []).map(function (p) {
+          return kvRow('&nbsp;&nbsp;· ' + esc(p.name), util.formatMoney(p.perAcre || 0), 'fs-dim');
+        }).join('') +
         kvRow('Fuel', util.formatMoney(b.fuelPerAcre || 0)) +
         kvRow('Drying', util.formatMoney(b.dryingPerAcre || 0)) +
         kvRow('Interest', util.formatMoney(b.interestPerAcre || 0)) +
@@ -229,6 +233,9 @@
       var p = b.profitPerAcre || 0;
       h += kvRow('PROFIT /AC', util.formatMoney(p), 'fs-hl ' + (p >= 0 ? 'fs-pos' : 'fs-neg'));
       h += kvRow('Breakeven', util.formatMoney(b.cop || 0) + ' <span class="fs-unit">/' + esc(b.yieldUnit || 'Bu') + '</span>');
+      if (b.overheadPerAcre > 0) {
+        h += kvRow('Ex-overhead', util.formatMoney(b.opCop || 0) + ' <span class="fs-unit">/' + esc(b.yieldUnit || 'Bu') + '</span>', 'fs-dim');
+      }
       h += '<div class="fs-band fs-band-totals">' +
         '<div class="fs-band-head"><span>FIELD TOTALS</span><span></span></div>' +
         kvRow('Expense', util.formatMoney(b.expTotal || 0, 0)) +

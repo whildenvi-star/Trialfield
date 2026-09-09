@@ -685,6 +685,61 @@
           <tbody id="lo-tbody"></tbody>
         </table>
       </div>
+
+      <!-- Overhead pools: annual dollars from the P&L, landed on fields by driver -->
+      <h3 style="margin-top:2rem">Overhead Pools</h3>
+      <p class="edit-hint">Annual dollars per pool, spread across fields by the driver that causes the cost. When any pool carries dollars it replaces the flat Overhead/AC above. Double-click to edit.</p>
+      <div class="filters">
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem"><input type="checkbox" id="ohp-use"> Use pools for overhead</label>
+        <button id="ohp-add" class="btn-primary btn-sm">+ Add Pool</button>
+      </div>
+      <div class="table-info"><span id="ohp-count"></span></div>
+      <div class="table-wrap">
+        <table id="ohp-table">
+          <thead>
+            <tr>
+              <th>Pool</th>
+              <th title="What spreads the dollars across fields">Driver</th>
+              <th title="Annual dollars, from the QuickBooks P&amp;L">Annual $</th>
+              <th title="Farm-wide total of the driver units">Farm Units</th>
+              <th title="Dollars per driver unit">$/Unit</th>
+              <th title="Farm-wide average per crop acre">Avg $/AC</th>
+              <th title="P&amp;L year the dollars came from">Source Yr</th>
+              <th>Note</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ohp-tbody"></tbody>
+        </table>
+      </div>
+      <div id="ohp-stack" class="edit-hint" style="margin-top:0.5rem"></div>
+
+      <!-- QuickBooks P&L import + account map -->
+      <h3 style="margin-top:2rem">QuickBooks P&amp;L</h3>
+      <p class="edit-hint">Export Profit &amp; Loss to CSV (columns by year, account numbers on). Pick the amount column, import, then give every account a destination. Mapped totals can be applied to the pools above.</p>
+      <div class="filters" style="flex-wrap:wrap;align-items:center">
+        <input type="file" id="pl-file" accept=".csv,text/csv" style="flex:0 1 auto">
+        <select id="pl-col" style="display:none"></select>
+        <label style="font-size:0.85rem">Year <input type="number" id="pl-year" style="width:5.5rem" placeholder="2025"></label>
+        <button id="pl-import" class="btn-primary btn-sm" disabled>Import</button>
+        <span style="flex:1"></span>
+        <label style="font-size:0.85rem">Show <select id="pl-view"></select></label>
+        <button id="pl-apply" class="btn-primary btn-sm" disabled>Apply mapped totals to pools</button>
+      </div>
+      <div id="pl-preview" class="table-info"></div>
+      <div id="pl-summary" class="table-wrap"></div>
+      <div class="table-wrap">
+        <table id="pl-table">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th title="Amount for the selected year">Amount</th>
+              <th title="Where this account lands in the cost stack">Destination</th>
+            </tr>
+          </thead>
+          <tbody id="pl-tbody"></tbody>
+        </table>
+      </div>
       </div><!-- /ref-sub-labor -->
 
       <!-- Seeds Sub-section — Seed Command Center -->
@@ -1531,18 +1586,19 @@
       document.currentScript.parentNode.insertBefore(s, document.currentScript.nextSibling);
     })();
   </script>
-  <script src="calc.js?v=20260831"></script>
+  <script src="calc.js?v=20260909a"></script>
   <script src="crop-colors.js"></script>
-  <script src="app.js?v=20260909"></script>
+  <script src="app.js?v=20260909a"></script>
   <script src="dashboard.js?v=20260829a"></script>
   <script src="enterprise.js?v=20260828b"></script>
   <script src="field-ops-groups.js"></script>
   <script src="field-editor.js?v=20260908"></script>
-  <script src="field-strips.js?v=20260831"></script>
+  <script src="field-strips.js?v=20260909a"></script>
   <script src="doc-intake.js?v=20260908"></script>
   <script src="programs.js?v=20260403h"></script>
   <script src="inputs-manager.js?v=20260827"></script>
   <script src="ref-overview.js?v=2"></script>
+  <script src="overhead-pools.js?v=20260909a"></script>
   <script src="seed-manager.js?v=20260806a"></script>
   <script src="inventory.js?v=20260828"></script>
   <script src="demand-manager.js"></script>

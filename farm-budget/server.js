@@ -135,6 +135,9 @@ let store = {
   cropPricing: [],
   cropTypes: [],
   laborOverhead: [],
+  overheadPools: [],
+  glAccountMap: [],
+  plImports: [],
   seeds: [],
   rent: [],
   buyers: [],
@@ -378,6 +381,8 @@ function getRefs() {
     cropPricing: store.cropPricing,
     cropTypes: store.cropTypes,
     laborOverhead: store.laborOverhead,
+    overheadPools: store.overheadPools || [],
+    overheadRates: Calc.computeOverheadRates(store.fields, store.overheadPools || []),
     seeds: store.seeds,
     buyers: store.buyers
   };
@@ -403,7 +408,7 @@ app.get('/api/settings', (req, res) => {
 });
 
 app.put('/api/settings', async (req, res) => {
-  const allowed = ['year', 'fuelPricePerGal', 'useFixedMachineryRate', 'fixedMachineryRate', 'useFlatRentRate', 'wageRate', 'interestRate', 'carryMonths'];
+  const allowed = ['year', 'fuelPricePerGal', 'useFixedMachineryRate', 'fixedMachineryRate', 'useFlatRentRate', 'wageRate', 'interestRate', 'carryMonths', 'useOverheadPools'];
   allowed.forEach(k => {
     if (req.body[k] !== undefined) store.settings[k] = req.body[k];
   });
@@ -654,6 +659,14 @@ app.get('/api/budget-field-details', (req, res) => {
       interestPerAcre: b.interestPerAcre,
       insurancePerAcre: b.cropInsurancePerAcre,
       expPerAcre: b.expPerAcre,
+      // Overhead split out (laborPerAcre above still lumps labor + overhead
+      // for the older consumers). opExpPerAcre = everything except overhead.
+      overheadPerAcre: b.overheadPerAcre,
+      overheadSource: b.overheadSource,
+      overheadPools: b.overheadPools,
+      opExpPerAcre: b.opExpPerAcre,
+      cop: b.cop,
+      opCop: b.opCop,
       // Financial (organic-cert RBAC will gate visibility)
       yieldPerAcre: b.yieldPerAcre,
       pricePerUnit: b.pricePerUnit,
@@ -1841,6 +1854,95 @@ crudRoutes('crop-types', 'cropTypes', 'ctype', null, clearPricingCache);
 
 // Labor/Overhead
 crudRoutes('labor-overhead', 'laborOverhead', 'lo');
+
+// --- Overhead pools (QuickBooks-fed, allocated by driver) ---
+// Pool: { id, name, driver, annualDollars, sourceYear, note }
+crudRoutes('overhead-pools', 'overheadPools', 'ohp');
+// Account map: { id, account, destination } — destination is a pool id or one
+// of 'direct' (already a field line), 'fieldops' (calibrates implements),
+// 'exclude', 'unmapped'.
+crudRoutes('gl-account-map', 'glAccountMap', 'gla');
+
+// Farm-wide driver totals, $/unit per pool, and the budget's current stack so
+// the QuickBooks total can be reconciled against it.
+app.get('/api/overhead-rates', (req, res) => {
+  const refs = getRefs();
+  const stack = { overhead: 0, machinery: 0, labor: 0, fuel: 0, acres: 0, flatOverhead: 0 };
+  const flatRefs = Object.assign({}, refs, { overheadRates: null });
+  store.fields.forEach(f => {
+    const b = Calc.computeFieldBudget(f, refs, store.settings);
+    stack.overhead += b.overheadTotal;
+    stack.machinery += b.machineryTotal;
+    stack.labor += b.laborTotal;
+    stack.fuel += b.fuelTotal;
+    stack.acres += b.effectiveAcres;
+    stack.flatOverhead += Calc.computeFieldBudget(f, flatRefs, store.settings).overheadTotal;
+  });
+  Object.keys(stack).forEach(k => { stack[k] = Calc.round2(stack[k]); });
+  res.json(Object.assign({}, refs.overheadRates, {
+    drivers: Calc.OVERHEAD_DRIVERS,
+    useOverheadPools: store.settings.useOverheadPools !== false,
+    budgetStack: stack
+  }));
+});
+
+// --- QuickBooks P&L import ---
+// plImports: [{ year, importedAt, rows: [{ account, amount }] }]
+app.get('/api/pl-import', (req, res) => {
+  res.json(store.plImports || []);
+});
+
+app.post('/api/pl-import', async (req, res) => {
+  const year = parseInt(req.body.year, 10);
+  const rows = Array.isArray(req.body.rows) ? req.body.rows : [];
+  if (!year || !rows.length) return res.status(400).json({ error: 'year and rows required' });
+  const clean = rows
+    .map(r => ({ account: String(r.account || '').trim(), amount: Math.round((parseFloat(r.amount) || 0) * 100) / 100 }))
+    .filter(r => r.account);
+  store.plImports = (store.plImports || []).filter(p => p.year !== year);
+  store.plImports.push({ year, importedAt: new Date().toISOString(), rows: clean });
+  store.plImports.sort((a, b) => a.year - b.year);
+  // Every account gets a map row once; existing decisions are kept.
+  store.glAccountMap = store.glAccountMap || [];
+  const known = {};
+  store.glAccountMap.forEach(m => { known[m.account.toLowerCase()] = true; });
+  let added = 0;
+  clean.forEach(r => {
+    const k = r.account.toLowerCase();
+    if (!known[k]) {
+      store.glAccountMap.push({ id: generateId('gla'), account: r.account, destination: 'unmapped' });
+      known[k] = true;
+      added++;
+    }
+  });
+  await saveData();
+  res.json({ ok: true, year, rows: clean.length, newAccounts: added });
+});
+
+// Set each pool's annual dollars to the sum of its mapped accounts for a year.
+app.post('/api/overhead-pools/apply-import', async (req, res) => {
+  const year = parseInt(req.body.year, 10);
+  const imp = (store.plImports || []).find(p => p.year === year);
+  if (!imp) return res.status(404).json({ error: 'No import for ' + year });
+  const byAccount = {};
+  imp.rows.forEach(r => { byAccount[r.account.toLowerCase()] = (byAccount[r.account.toLowerCase()] || 0) + r.amount; });
+  const sums = {};
+  (store.glAccountMap || []).forEach(m => {
+    const amt = byAccount[m.account.toLowerCase()];
+    if (amt === undefined) return;
+    sums[m.destination] = (sums[m.destination] || 0) + amt;
+  });
+  const applied = [];
+  (store.overheadPools || []).forEach(p => {
+    if (sums[p.id] !== undefined) {
+      p.annualDollars = Calc.round2(sums[p.id]);
+      p.sourceYear = year;
+      applied.push({ id: p.id, name: p.name, annualDollars: p.annualDollars });
+    }
+  });
+  await saveData();
+  res.json({ ok: true, year, applied, sums });
+});
 
 // Sales
 crudRoutes('sales', 'sales', 'sale');
@@ -3172,6 +3274,14 @@ app.get('/api/fieldops/yield-history/:fieldId', (req, res) => {
 // --- Data migration: add overhead subcategories if missing ---
 function migrateData() {
   var changed = false;
+  // Overhead pools + QuickBooks account map (2026-09)
+  ['overheadPools', 'glAccountMap', 'plImports'].forEach(function (k) {
+    if (!Array.isArray(store[k])) { store[k] = []; changed = true; }
+  });
+  if (store.settings && store.settings.useOverheadPools === undefined) {
+    store.settings.useOverheadPools = true;
+    changed = true;
+  }
   // Add overhead breakdown fields to laborOverhead
   (store.laborOverhead || []).forEach(function (lo) {
     if (lo.cropInsurance === undefined) {

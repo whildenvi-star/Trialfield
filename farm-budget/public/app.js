@@ -160,6 +160,8 @@
     cropPricing: [],
     cropTypes: [],
     laborOverhead: [],
+    overheadPools: [],
+    overheadRates: null,
     buyers: [],
     suppliers: [],
     programs: [],
@@ -186,7 +188,9 @@
       api.get('/api/programs'),
       api.get('/api/unit-packs'),
       api.get('/api/machinery-programs'),
-      api.get('/api/quick-plan-config')
+      api.get('/api/quick-plan-config'),
+      api.get('/api/overhead-pools').catch(function () { return []; }),
+      api.get('/api/overhead-rates').catch(function () { return null; })
     ]).then(function (results) {
       window.refData.enterprises = results[0];
       window.refData.settings = results[1];
@@ -224,6 +228,8 @@
       window.refData.unitPacks = results[11] || [];
       window.refData.machineryPrograms = results[12] || [];
       window.refData.quickPlanConfig = results[13] || [];
+      window.refData.overheadPools = results[14] || [];
+      window.refData.overheadRates = results[15] || null;
 
       // Derive convenience lists client-side (saves 4 HTTP round-trips)
       deriveConvenienceLists();
@@ -326,7 +332,8 @@
         'crop-types': 'cropTypes', 'labor-overhead': 'laborOverhead',
         'buyers': 'buyers', 'suppliers': 'suppliers', 'programs': 'programs',
         'unit-packs': 'unitPacks', 'machinery-programs': 'machineryPrograms',
-        'quick-plan-config': 'quickPlanConfig'
+        'quick-plan-config': 'quickPlanConfig',
+        'overhead-pools': 'overheadPools', 'overhead-rates': 'overheadRates'
       };
       keyList.forEach(function (k, i) {
         var refKey = apiToRef[k];

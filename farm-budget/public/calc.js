@@ -164,6 +164,82 @@
     return round4(qty * factor / ac);
   }
 
+  // --- OVERHEAD POOLS ---
+  // A pool is an annual dollar figure (from the QuickBooks P&L) landed on
+  // fields by the driver that causes the cost:
+  //   acres     — general farm overhead (office, mgmt, insurance, utilities)
+  //   passAcres — machinery ownership (depreciation, equipment interest, shop)
+  //   irrAcres  — irrigation (power, pivot repairs, water)
+  //   orgAcres  — organic-only overhead (certification, record keeping)
+  // Rates are farm-wide ($ per driver unit) and are computed once per request
+  // by computeOverheadRates, then passed in as refs.overheadRates. When no
+  // pool carries dollars the flat laborOverhead rate is used unchanged.
+  var OVERHEAD_DRIVERS = {
+    acres:     { label: 'Crop acres',      unit: 'ac' },
+    passAcres: { label: 'Pass-acres',      unit: 'pass-ac' },
+    irrAcres:  { label: 'Irrigated acres', unit: 'irr ac' },
+    orgAcres:  { label: 'Organic acres',   unit: 'org ac' }
+  };
+
+  function cropTypeMultiplierFor(field, acres) {
+    if ((field.cropType || '').toUpperCase().indexOf('DBL') >= 0) return 0.5;
+    if (field.dblSharedAcres > 0 && acres > 0) {
+      var sharedAc = Math.min(field.dblSharedAcres, acres);
+      return round4((acres - 0.5 * sharedAc) / acres);
+    }
+    return 1;
+  }
+
+  // Driver units one field contributes. Acre-based drivers honour the
+  // double-crop ground-sharing rule (second crop pays half); pass-acres do
+  // not, because every pass is a real trip across the field.
+  function fieldDriverUnits(field) {
+    var acres = (field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0;
+    var mult = cropTypeMultiplierFor(field, acres);
+    var code = (field.systemCode || '').toUpperCase();
+    var passes = 0;
+    (field.machinery || []).forEach(function (m) {
+      if (m.passStatus !== 'disregarded') passes += (m.passes || 1);
+    });
+    return {
+      acres: acres * mult,
+      passAcres: passes * acres,
+      irrAcres: code.indexOf('IRR') >= 0 ? acres * mult : 0,
+      orgAcres: code.indexOf('ORG') >= 0 ? acres * mult : 0
+    };
+  }
+
+  function computeOverheadRates(fields, pools) {
+    var totals = { acres: 0, passAcres: 0, irrAcres: 0, orgAcres: 0 };
+    (fields || []).forEach(function (f) {
+      var u = fieldDriverUnits(f);
+      totals.acres += u.acres;
+      totals.passAcres += u.passAcres;
+      totals.irrAcres += u.irrAcres;
+      totals.orgAcres += u.orgAcres;
+    });
+    var rated = (pools || []).filter(function (p) {
+      return (p.annualDollars || 0) > 0 && OVERHEAD_DRIVERS[p.driver];
+    }).map(function (p) {
+      var denom = totals[p.driver] || 0;
+      return {
+        id: p.id, name: p.name, driver: p.driver,
+        annualDollars: p.annualDollars,
+        driverTotal: round2(denom),
+        ratePerUnit: denom > 0 ? round4(p.annualDollars / denom) : 0
+      };
+    });
+    return { totals: totals, pools: rated, active: rated.length > 0 };
+  }
+
+  function resolveOverheadRates(refs) {
+    if (refs && refs.overheadRates) return refs.overheadRates;
+    if (typeof window !== 'undefined' && window.refData && window.refData.overheadRates) {
+      return window.refData.overheadRates;
+    }
+    return null;
+  }
+
   // --- Per-Field Budget Calculation ---
   // field: the field object from data.json
   // refs: { products, implements, cropPricing, laborOverhead, seeds }
@@ -318,8 +394,28 @@
     var rawLaborPerAcre = laborHours > 0 ? (laborHours * (settings.wageRate || 25)) : (lo ? lo.laborPerAcre : 0);
     result.laborPerAcre = round2(rawLaborPerAcre);
     result.laborTotal = round2(rawLaborPerAcre * acres);
-    var rawOverheadPerAcre = (lo ? lo.overheadPerAcre : 0) * cropTypeMultiplier;
-    result.overheadPerAcre = rawOverheadPerAcre;
+    var ohRates = resolveOverheadRates(refs);
+    var usePools = !!(ohRates && ohRates.active && settings.useOverheadPools !== false);
+    var rawOverheadPerAcre;
+    result.overheadPools = [];
+    if (usePools) {
+      var units = fieldDriverUnits(field);
+      var ohDollars = 0;
+      ohRates.pools.forEach(function (p) {
+        var d = p.ratePerUnit * (units[p.driver] || 0);
+        ohDollars += d;
+        result.overheadPools.push({
+          id: p.id, name: p.name, driver: p.driver,
+          perAcre: acres > 0 ? round2(d / acres) : 0
+        });
+      });
+      rawOverheadPerAcre = acres > 0 ? ohDollars / acres : 0;
+      result.overheadSource = 'pools';
+    } else {
+      rawOverheadPerAcre = (lo ? lo.overheadPerAcre : 0) * cropTypeMultiplier;
+      result.overheadSource = 'flat';
+    }
+    result.overheadPerAcre = round2(rawOverheadPerAcre);
     result.overheadTotal = round2(rawOverheadPerAcre * acres);
     result.laborOverheadTotal = round2((rawLaborPerAcre + rawOverheadPerAcre) * acres);
 
@@ -464,6 +560,11 @@
 
     // --- COP (Cost of Production per unit) ---
     result.cop = result.totalYield > 0 ? round2(result.expTotal / result.totalYield) : 0;
+    // Operating COP: everything except the overhead pools (Layer A + B).
+    // Marketing reads both — cover operating first, then the farm.
+    result.opExpTotal = round2(result.expTotal - result.overheadTotal);
+    result.opExpPerAcre = acres > 0 ? round2(result.opExpTotal / acres) : 0;
+    result.opCop = result.totalYield > 0 ? round2(result.opExpTotal / result.totalYield) : 0;
 
     return result;
   }
@@ -687,6 +788,9 @@
   // --- Exports ---
   exports.resolveEnterpriseId = resolveEnterpriseId;
   exports.computeFieldBudget = computeFieldBudget;
+  exports.computeOverheadRates = computeOverheadRates;
+  exports.fieldDriverUnits = fieldDriverUnits;
+  exports.OVERHEAD_DRIVERS = OVERHEAD_DRIVERS;
   exports.computeEnterpriseSummary = computeEnterpriseSummary;
   exports.computeDashboardByCrop = computeDashboardByCrop;
   exports.computeDashboard = computeDashboard;
