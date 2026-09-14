@@ -1023,7 +1023,11 @@ body.light .actual-cell {
   cursor: pointer;
   color: var(--blue);
   text-decoration: underline;
+  white-space: normal;      /* long field names wrap inside max-width instead of spilling into the subtotal column */
+  overflow-wrap: anywhere;
+  vertical-align: bottom;
 }
+.cat-subtotal-header { vertical-align: bottom; }
 .field-name-header:hover { color: var(--primary); }
 
 /* ============================================================
@@ -2144,8 +2148,9 @@ body.light .audit-badge.warn { background: #c08800; }
   overflow-x: auto;
 }
 
-.editor-sections .form-group label {
-  white-space: normal; /* long labels wrap instead of overlapping the next column */
+.editor-panel .editor-sections .form-group label {
+  white-space: normal; /* long labels wrap instead of overlapping the next column; must outrank .editor-panel .form-group label nowrap below */
+  overflow-wrap: anywhere;
 }
 
 .editor-section-panel {
