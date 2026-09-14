@@ -56,6 +56,15 @@ for (const field of data.fields || []) {
       continue;
     }
 
+    // More than 100 purchase units (gal, tons) per acre is not a rate, it's a
+    // typo in qty or acres. Converting it multiplies the typo by conversionRate,
+    // and on a row priced from the rate (no invoiceCostTotal) that lands in the
+    // P&L — Airport's 12,240 t over 15.4 ac became $148M. Leave those for a human.
+    if (qty / acres > 100) {
+      skipped.push({ ...row, reason: `qty/acres = ${Math.round(qty / acres)} ${inp.invoiceUnit || ''}/ac — typo, not a rate` });
+      continue;
+    }
+
     const rate = Calc.invoiceRatePerAcre(prod, qty, acres, inp.invoiceUnit);
     if (rate == null) {
       skipped.push({ ...row, reason: 'rate not computable' });

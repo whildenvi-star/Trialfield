@@ -8390,7 +8390,7 @@
           "invoiceQtyTotal": 603800,
           "invoiceCostTotal": 4043.2,
           "invoiceUnit": "Gal",
-          "actualQuantity": 27342.9186
+          "actualQuantity": 6835.73
         },
         {
           "id": "inp_1256",
@@ -8862,7 +8862,7 @@
           "invoiceQtyTotal": 12240.62,
           "invoiceCostTotal": null,
           "invoiceUnit": "Ton",
-          "actualQuantity": 1590000.6495
+          "actualQuantity": 795
         },
         {
           "id": "inp_mnx9vina_md4d",
