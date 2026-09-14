@@ -91,6 +91,71 @@
     _cropPricingCache = {};
   }
 
+  // --- Explain where a field's $/unit price comes from (UI hint, no math change) ---
+  // Reads the same resolution computeFieldBudget uses, then describes it:
+  //   cbot     → CBOT <contract> $X ± basis (default or buyer-specific)
+  //   flat     → fixed price typed in Reference Data
+  //   contract → contracted price typed in Reference Data
+  //   legacy   → old cropPricing table
+  //   none     → nothing found for this crop name
+  // `futures` is the /api/futures-config list (optional) — used only to label
+  // the CBOT contract ("DEC 26"). Basis is derived as price − CBOT so the text
+  // always agrees with the number the budget actually used.
+  function explainCropPrice(field, refs, futures) {
+    var crop = (field && field.crop) || '';
+    var out = { price: 0, mode: 'none', cbot: 0, basis: 0, basisSource: '', contract: '',
+                cropType: '', subCrop: '', text: '', short: '' };
+    if (!crop) { out.text = 'No crop set on this field'; out.short = 'no crop'; return out; }
+    var buyer = field.buyerId && refs.buyers ? findById(refs.buyers, field.buyerId) : null;
+    var pricing = resolveCropPricing(crop, refs, buyer) || {};
+    out.price = pricing.pricePerUnit || 0;
+    var ct = pricing.cropType, sc = pricing.subCrop;
+    var m2 = function (v) { return '$' + (Math.round(v * 100) / 100).toFixed(2); };
+    if (sc) {
+      out.cropType = ct.name || '';
+      out.subCrop = sc.name || '';
+      var mode = sc.pricingMode || 'flat';
+      out.mode = mode;
+      var where = ' · Reference Data › ' + out.cropType + ' › ' + out.subCrop;
+      if (mode === 'cbot') {
+        out.cbot = ct.cbotPrice || 0;
+        out.basis = round4(out.price - out.cbot);
+        var buyerBasis = buyer && buyer.cropBasis && buyer.cropBasis[crop] !== undefined;
+        out.basisSource = buyerBasis ? (buyer.name || 'buyer') : 'default';
+        var fc = null;
+        (futures || []).forEach(function (c) {
+          if (fc) return;
+          var k = (c.key || '').toLowerCase();
+          var sym = (ct.cbotSymbol || '').toUpperCase();
+          if ((ct.name || '').toLowerCase() === k || (sym && (c.symbol || '').toUpperCase().indexOf(sym) === 0)) fc = c;
+        });
+        out.contract = fc ? (fc.contract || '') : '';
+        var sign = out.basis < 0 ? '−' : '+';
+        var basisStr = sign + ' ' + m2(Math.abs(out.basis)) + ' basis' +
+          (buyerBasis ? ' (' + out.basisSource + ')' : '');
+        out.text = 'CBOT ' + (out.contract ? out.contract + ' ' : '') + m2(out.cbot) + ' ' + basisStr +
+          ' = ' + m2(out.price) + where;
+        out.short = 'CBOT ' + m2(out.cbot) + ' ' + basisStr;
+      } else if (mode === 'contract') {
+        out.text = 'Contract price ' + m2(out.price) + ' entered by hand' + where;
+        out.short = 'contract price · Ref Data';
+      } else {
+        out.text = 'Flat ' + m2(out.price) + ' entered by hand' + where;
+        out.short = 'flat price · Ref Data';
+      }
+      return out;
+    }
+    if (out.price > 0) {
+      out.mode = 'legacy';
+      out.text = m2(out.price) + ' from the legacy crop pricing table (not in Crop Types)';
+      out.short = 'legacy pricing table';
+      return out;
+    }
+    out.text = 'No price found for "' + crop + '" — add it under Reference Data › Crop Types';
+    out.short = 'no price set';
+    return out;
+  }
+
   // --- Resolve crop pricing from crop types hierarchy ---
   function resolveCropPricing(cropName, refs, buyer) {
     if (!cropName) return { pricePerUnit: 0, dryingRate: 0, interestRate: 0.06 };
@@ -798,6 +863,7 @@
   exports.invoiceRatePerAcre = invoiceRatePerAcre;
   exports.computeMoistureDiscount = computeMoistureDiscount;
   exports.clearCropPricingCache = clearCropPricingCache;
+  exports.explainCropPrice = explainCropPrice;
   exports.round2 = round2;
   exports.round4 = round4;
 

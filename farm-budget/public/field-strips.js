@@ -222,8 +222,16 @@
         editCell(cellN, 'fkey', 'yieldPerAcre', util.formatNum(f.yieldPerAcre || 0, 1)) +
         ' <span class="fs-unit">' + esc(b.yieldUnit || 'Bu') + '</span>');
     if (profit) {
-      h += kvRow('Price /Unit', util.formatMoney(b.pricePerUnit || 0)) +
-        kvRow('Income /AC', util.formatMoney(b.cropIncomePerAcre || 0)) +
+      // Why this price: source line + marketing position (price-source.js)
+      var px = window.PriceSource ? PriceSource.explain(f, buildRefs()) : null;
+      h += kvRow('Price /Unit', util.formatMoney(b.pricePerUnit || 0));
+      if (px) {
+        h += kvRow('&nbsp;&nbsp;· source', '<span title="' + esc(px.sourceText) + '">' + esc(px.sourceShort) + '</span>', 'fs-why');
+        if (px.mktShort) {
+          h += kvRow('&nbsp;&nbsp;· marketing', '<span title="' + esc(px.mktText) + '">' + esc(px.mktShort) + '</span>', 'fs-why');
+        }
+      }
+      h += kvRow('Income /AC', util.formatMoney(b.cropIncomePerAcre || 0)) +
         kvRow('Gov Pmt /AC', editCell(cellN, 'fkey', 'govPaymentsPerAcre', util.formatMoney(f.govPaymentsPerAcre || 0)));
     }
     h += '</div>';
@@ -778,6 +786,16 @@
     }).catch(function () {
       dirtyIds[fid] = true;
       setDot(fid, 'error');
+    });
+  }
+
+  // Marketing rollup lands async — repaint the sheet once so the price-source
+  // rows fill in. One-shot, and skipped while a cell is being edited.
+  if (window.PriceSource) {
+    PriceSource.onReady(function () {
+      if (root && root.isConnected && stripFields.length && !root.querySelector('.fs-input')) {
+        render(root, stripFields, ctx);
+      }
     });
   }
 

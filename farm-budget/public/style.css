@@ -2207,6 +2207,15 @@ body.light .audit-badge.warn { background: #c08800; }
   margin-bottom: 0.4rem;
 }
 
+/* ── Price source (Yield & Income) ── */
+.ed-price-source { margin-top: 0.65rem; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; }
+.ed-price-line { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+.ed-price-lbl { color: var(--text-light); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.64rem; min-width: 5.5rem; }
+.ed-price-val { font-weight: 700; color: var(--amber); font-variant-numeric: tabular-nums; }
+.ed-price-why { color: var(--text-light); }
+.ed-price-mkt .ed-price-why { color: var(--text); }
+body.light .ed-price-val { color: #333; }
+
 /* ── Budget Sidebar ── */
 .editor-budget-sidebar {
   border-left: 1px solid var(--border);
@@ -5279,6 +5288,9 @@ body.light .fs-band-income { background: #e6f9f4; }
 
 /* --- key/value rows (rent, fixed, income, profit) --- */
 .fs-krow { justify-content: space-between; }
+/* price-source hint rows under Price /Unit: quiet, right-aligned, full text in title */
+.fs-why .fs-klabel { font-size: 0.62rem; opacity: 0.75; }
+.fs-why .fs-kval { font-weight: 400; font-size: 0.64rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 11rem; }
 .fs-klabel { color: var(--text-light); font-size: 0.7rem; }
 .fs-kval { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
 .fs-sub { color: var(--text-light); font-weight: 400; font-size: 0.66rem; }

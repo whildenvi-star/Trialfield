@@ -2469,6 +2469,9 @@
 
     document.getElementById('ed-preview-grid').innerHTML = html;
 
+    // Price this field is using + why (Yield & Income section)
+    renderPriceSource(previewField, refs);
+
     // Render cost detail panel
     renderCostDetail(budget);
 
@@ -2484,6 +2487,31 @@
       kpiProfit.className = 'ed-kpi-val ' + util.profitClass(budget.profitPerAcre);
     }
     if (kpiCop) kpiCop.textContent = util.formatMoney(budget.cop);
+  }
+
+  // --- Price source line (Yield & Income) ---
+  // "$4.67 /Bu — CBOT DEC 26 $4.95 − $0.28 basis" plus the marketing position
+  // for the crop (WAP of current sales, % sold, pooled price) when the portal
+  // rollup is reachable. Pure display: the number is budget.pricePerUnit.
+  function renderPriceSource(field, refs) {
+    var el = document.getElementById('ed-price-source');
+    if (!el || typeof PriceSource === 'undefined') return;
+    var ex = PriceSource.explain(field, refs);
+    var unit = field.yieldUnit || 'Bu';
+    var html = '<div class="ed-price-line">' +
+      '<span class="ed-price-lbl">Price /' + util.escHtml(unit) + '</span>' +
+      '<span class="ed-price-val">' + util.formatMoney(ex.price) + '</span>' +
+      '<span class="ed-price-why">' + util.escHtml(ex.sourceText) + '</span></div>';
+    if (ex.mktText) {
+      html += '<div class="ed-price-line ed-price-mkt">' +
+        '<span class="ed-price-lbl">Marketing</span>' +
+        '<span class="ed-price-why">' + util.escHtml(ex.mktText) + '</span></div>';
+    }
+    el.innerHTML = html;
+  }
+  if (window.PriceSource) {
+    // Rollup arrives async — repaint the open editor once it lands.
+    PriceSource.onReady(function () { if (currentField) updatePreview(); });
   }
 
   // --- Cost Detail panel ---
