@@ -2207,6 +2207,11 @@ body.light .audit-badge.warn { background: #c08800; }
   margin-bottom: 0.4rem;
 }
 
+/* Crop Types › Price from (auto / marketing / ref data) */
+.ctype-src-select { font-size: 0.72rem; padding: 0.1rem 0.25rem; max-width: 11rem; }
+.ctype-src-select.is-mkt { color: var(--blue); border-color: var(--blue); }
+.ed-price-val.is-mkt { color: var(--blue); }
+
 /* ── Price source (Yield & Income) ── */
 .ed-price-source { margin-top: 0.65rem; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.72rem; }
 .ed-price-line { display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }

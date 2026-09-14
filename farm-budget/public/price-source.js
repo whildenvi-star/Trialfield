@@ -37,13 +37,59 @@
         .then(function (d) { rollup = d && Array.isArray(d.rows) ? d : null; })
         .catch(function () { rollup = null; });
     }
-    Promise.all([pF, pR]).then(function () {
+    Promise.all([pF, pR]).then(saveSnapshot).then(function () {
       state = 'ready';
       var cbs = readyCbs.slice();
       readyCbs = [];
       cbs.forEach(function (fn) { try { fn(); } catch (e) { console.error('[price-source]', e); } });
     });
   }
+
+  // Persist the per-crop marketing prices so calc.js (client AND server-side
+  // dashboards) can price fields from the blend. Owner sessions only — office
+  // rows arrive without prices. Keyed by farm-budget crop line via the
+  // rollup's crosswalk; one variant can back several crop lines.
+  function buildSnapshot() {
+    if (!rollup || !rollup.isOwner) return null;
+    var byCrop = {};
+    rollup.rows.forEach(function (row) {
+      (row.variants || []).forEach(function (v) {
+        (v.budgetCropNames || []).forEach(function (name) {
+          byCrop[String(name).trim().toLowerCase()] = {
+            crop: name,
+            variant: v.variantName,
+            commodity: row.commodityName,
+            tier: row.tier,
+            blendDollars: v.blendedIfSoldTodayCents != null ? v.blendedIfSoldTodayCents / 100 : null,
+            wapDollars: v.wapCents > 0 ? v.wapCents / 100 : null,
+            pooledDollars: v.pooledPriceCents != null ? v.pooledPriceCents / 100 : null,
+            premiumPerBu: v.premiumPerBu != null ? v.premiumPerBu : null,
+            cbot: row.cbotPriceDollars != null ? row.cbotPriceDollars : null,
+            cbotContract: row.cbotContract ? String(row.cbotContract).replace(/\.CBT$/i, '') : '',
+            pctSold: v.pctSold != null ? v.pctSold : null,
+            soldBu: v.soldBu || 0,
+            projectedBu: v.projectedBu != null ? v.projectedBu : null
+          };
+        });
+      });
+    });
+    return { cropYear: rollup.cropYear || null, byCrop: byCrop };
+  }
+
+  function saveSnapshot() {
+    var snap = buildSnapshot();
+    if (!snap) return Promise.resolve();
+    return api.put('/api/marketing-prices', snap).then(function (saved) {
+      window.refData.marketingPrices = saved;
+      if (window.Calc && Calc.clearCropPricingCache) Calc.clearCropPricingCache();
+      window.dispatchEvent(new CustomEvent('marketing-prices-updated', { detail: saved }));
+    }).catch(function (err) {
+      console.warn('[price-source] snapshot not saved', err && err.message);
+    });
+  }
+
+  // Kick off once reference data (and its settings.year) is in.
+  window.addEventListener('ref-data-loaded', function () { load(); });
 
   // Registers a repaint callback. Does NOT start the fetch — the first
   // explain() does, after refData (and its settings.year) has loaded.

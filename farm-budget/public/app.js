@@ -162,6 +162,7 @@
     laborOverhead: [],
     overheadPools: [],
     overheadRates: null,
+    marketingPrices: null,
     buyers: [],
     suppliers: [],
     programs: [],
@@ -190,7 +191,8 @@
       api.get('/api/machinery-programs'),
       api.get('/api/quick-plan-config'),
       api.get('/api/overhead-pools').catch(function () { return []; }),
-      api.get('/api/overhead-rates').catch(function () { return null; })
+      api.get('/api/overhead-rates').catch(function () { return null; }),
+      api.get('/api/marketing-prices').catch(function () { return null; })
     ]).then(function (results) {
       window.refData.enterprises = results[0];
       window.refData.settings = results[1];
@@ -230,6 +232,7 @@
       window.refData.quickPlanConfig = results[13] || [];
       window.refData.overheadPools = results[14] || [];
       window.refData.overheadRates = results[15] || null;
+      window.refData.marketingPrices = results[16] || null;
 
       // Derive convenience lists client-side (saves 4 HTTP round-trips)
       deriveConvenienceLists();
@@ -333,12 +336,14 @@
         'buyers': 'buyers', 'suppliers': 'suppliers', 'programs': 'programs',
         'unit-packs': 'unitPacks', 'machinery-programs': 'machineryPrograms',
         'quick-plan-config': 'quickPlanConfig',
-        'overhead-pools': 'overheadPools', 'overhead-rates': 'overheadRates'
+        'overhead-pools': 'overheadPools', 'overhead-rates': 'overheadRates',
+        'marketing-prices': 'marketingPrices'
       };
       keyList.forEach(function (k, i) {
         var refKey = apiToRef[k];
         if (refKey) window.refData[refKey] = results[i];
       });
+      if (typeof Calc !== 'undefined' && Calc.clearCropPricingCache) Calc.clearCropPricingCache();
       deriveConvenienceLists();
       populateDataLists();
       window.dispatchEvent(new Event('ref-data-loaded'));

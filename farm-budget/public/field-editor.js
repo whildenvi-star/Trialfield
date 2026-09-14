@@ -2295,6 +2295,7 @@
       products: window.refData.products,
       implements: window.refData.implements,
       cropPricing: window.refData.cropPricing,
+      marketingPrices: window.refData.marketingPrices || null,
       cropTypes: window.refData.cropTypes,
       laborOverhead: window.refData.laborOverhead,
       seeds: window.refData.seeds,
@@ -2338,6 +2339,7 @@
       products: window.refData.products,
       implements: window.refData.implements,
       cropPricing: window.refData.cropPricing,
+      marketingPrices: window.refData.marketingPrices || null,
       cropTypes: window.refData.cropTypes,
       laborOverhead: window.refData.laborOverhead,
       seeds: window.refData.seeds,
@@ -2500,7 +2502,7 @@
     var unit = field.yieldUnit || 'Bu';
     var html = '<div class="ed-price-line">' +
       '<span class="ed-price-lbl">Price /' + util.escHtml(unit) + '</span>' +
-      '<span class="ed-price-val">' + util.formatMoney(ex.price) + '</span>' +
+      '<span class="ed-price-val' + (ex.source.priceSource === 'marketing' ? ' is-mkt' : '') + '">' + util.formatMoney(ex.price) + '</span>' +
       '<span class="ed-price-why">' + util.escHtml(ex.sourceText) + '</span></div>';
     if (ex.mktText) {
       html += '<div class="ed-price-line ed-price-mkt">' +

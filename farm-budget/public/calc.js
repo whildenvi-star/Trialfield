@@ -91,6 +91,14 @@
     _cropPricingCache = {};
   }
 
+  // Snapshot entry for a crop line: refs.marketingPrices.byCrop keyed by the
+  // lower-cased farm-budget crop name (price-source.js writes it, server keeps it).
+  function marketingEntryFor(cropName, refs) {
+    var snap = refs && refs.marketingPrices;
+    if (!snap || !snap.byCrop) return null;
+    return snap.byCrop[(cropName || '').trim().toLowerCase()] || null;
+  }
+
   // --- Explain where a field's $/unit price comes from (UI hint, no math change) ---
   // Reads the same resolution computeFieldBudget uses, then describes it:
   //   cbot     → CBOT <contract> $X ± basis (default or buyer-specific)
@@ -116,7 +124,37 @@
       out.subCrop = sc.name || '';
       var mode = sc.pricingMode || 'flat';
       out.mode = mode;
+      out.priceSource = pricing.priceSource || 'reference';
+      out.referencePrice = pricing.referencePrice != null ? pricing.referencePrice : out.price;
       var where = ' · Reference Data › ' + out.cropType + ' › ' + out.subCrop;
+      if (out.priceSource === 'marketing') {
+        var mk = pricing.marketing || {};
+        var isBlend = mk.blendDollars > 0 && Math.abs(mk.blendDollars - out.price) < 0.005;
+        var bits = [];
+        if (mk.soldBu > 0) {
+          bits.push((mk.pctSold != null ? Math.round(mk.pctSold * 100) + '% sold' : 'sold bu') +
+            (mk.wapDollars > 0 ? ' at WAP ' + m2(mk.wapDollars) : ''));
+          if (isBlend) bits.push('rest at ' + (mk.cbotContract ? mk.cbotContract + ' ' : 'futures ') + m2(mk.cbot || 0) + ' + projected basis');
+        } else if (isBlend) {
+          bits.push('nothing sold yet — all at ' + (mk.cbotContract ? mk.cbotContract + ' ' : 'futures ') + m2(mk.cbot || 0) + ' + projected basis');
+        } else {
+          bits.push('pooled WAP + premium');
+        }
+        var asOf = '';
+        if (pricing.marketingAsOf) {
+          var d = new Date(pricing.marketingAsOf);
+          var hrs = (Date.now() - d.getTime()) / 36e5;
+          asOf = ' · as of ' + d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) +
+            (hrs > 24 ? ' (STALE)' : '');
+        }
+        out.mode = 'marketing';
+        out.text = 'Marketing ' + (isBlend ? 'blend (F-IT) ' : 'pooled price ') + m2(out.price) +
+          ' · ' + (mk.commodity || '') + ' pool › ' + (mk.variant || '') + ': ' + bits.join(', ') + asOf +
+          ' · Ref Data would be ' + m2(out.referencePrice);
+        out.short = 'marketing ' + (isBlend ? 'blend (F-IT)' : 'pooled') + (asOf.indexOf('STALE') >= 0 ? ' · STALE' : '');
+        return out;
+      }
+      var wanted = sc.priceSource === 'marketing' ? ' · marketing price unavailable, using Ref Data' : '';
       if (mode === 'cbot') {
         out.cbot = ct.cbotPrice || 0;
         out.basis = round4(out.price - out.cbot);
@@ -134,13 +172,13 @@
         var basisStr = sign + ' ' + m2(Math.abs(out.basis)) + ' basis' +
           (buyerBasis ? ' (' + out.basisSource + ')' : '');
         out.text = 'CBOT ' + (out.contract ? out.contract + ' ' : '') + m2(out.cbot) + ' ' + basisStr +
-          ' = ' + m2(out.price) + where;
+          ' = ' + m2(out.price) + where + wanted;
         out.short = 'CBOT ' + m2(out.cbot) + ' ' + basisStr;
       } else if (mode === 'contract') {
-        out.text = 'Contract price ' + m2(out.price) + ' entered by hand' + where;
+        out.text = 'Contract price ' + m2(out.price) + ' entered by hand' + where + wanted;
         out.short = 'contract price · Ref Data';
       } else {
-        out.text = 'Flat ' + m2(out.price) + ' entered by hand' + where;
+        out.text = 'Flat ' + m2(out.price) + ' entered by hand' + where + wanted;
         out.short = 'flat price · Ref Data';
       }
       return out;
@@ -180,8 +218,31 @@
           } else {
             effectivePrice = sc.pricePerUnit || 0;
           }
+          // Marketing override (owner decision 2026-09-14, "option 1"): price
+          // the field at the marketing blend — sold bushels at their WAP plus
+          // the unsold remainder at live futures + projected basis (F-IT) —
+          // from the snapshot the browser saves off the portal rollup.
+          //   sc.priceSource: 'auto' (default) → marketing when the crop is a
+          //                   futures-tier variant with a live blend
+          //                   'marketing'      → marketing whenever a blend
+          //                                      (or pooled price) exists
+          //                   'reference'      → always the price above
+          // Falls back to the Reference Data price whenever the snapshot has
+          // nothing usable, so a dead portal never zeroes income.
+          var mk = marketingEntryFor(cropName, refs);
+          var src = sc.priceSource || 'auto';
+          var mkPrice = null;
+          if (mk && src !== 'reference') {
+            if (mk.blendDollars > 0 && (src === 'marketing' || mk.tier === 'futures')) mkPrice = mk.blendDollars;
+            else if (src === 'marketing' && mk.pooledDollars > 0) mkPrice = mk.pooledDollars;
+          }
           var result = {
-            pricePerUnit: effectivePrice,
+            pricePerUnit: mkPrice != null ? mkPrice : effectivePrice,
+            referencePrice: effectivePrice,
+            priceSource: mkPrice != null ? 'marketing' : 'reference',
+            priceSourceSetting: src,
+            marketing: mk || null,
+            marketingAsOf: refs.marketingPrices ? refs.marketingPrices.updatedAt : null,
             dryingRate: sc.dryingRate !== undefined ? sc.dryingRate : (ct.dryingRate || 0),
             interestRate: ct.interestRate || 0.06,
             defaultMoisture: ct.defaultMoisture || 0,
@@ -588,6 +649,8 @@
     // --- INCOME ---
     var pricePerUnit = pricing ? pricing.pricePerUnit : 0;
     result.pricePerUnit = pricePerUnit;
+    result.priceSource = (pricing && pricing.priceSource) || 'reference';
+    result.referencePricePerUnit = pricing && pricing.referencePrice != null ? pricing.referencePrice : pricePerUnit;
     var rawCropIncomePerAcre = result.yieldPerAcre * pricePerUnit;
     result.cropIncomePerAcre = round2(rawCropIncomePerAcre);
     result.cropIncomeTotal = round2(rawCropIncomePerAcre * acres);
@@ -864,6 +927,7 @@
   exports.computeMoistureDiscount = computeMoistureDiscount;
   exports.clearCropPricingCache = clearCropPricingCache;
   exports.explainCropPrice = explainCropPrice;
+  exports.marketingEntryFor = marketingEntryFor;
   exports.round2 = round2;
   exports.round4 = round4;
 

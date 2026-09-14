@@ -24,6 +24,7 @@
       products: window.refData.products,
       implements: window.refData.implements,
       cropPricing: window.refData.cropPricing,
+      marketingPrices: window.refData.marketingPrices || null,
       cropTypes: window.refData.cropTypes,
       laborOverhead: window.refData.laborOverhead,
       seeds: window.refData.seeds,

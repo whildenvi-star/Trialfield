@@ -96,6 +96,7 @@
       html += '<table class="ctype-sub-table"><thead><tr>';
       html += '<th>Sub-Crop</th><th>Mode</th><th class="number">Price</th>';
       if (isCbot) html += '<th class="number">Basis</th>';
+      html += '<th title="Which $/bu the field budgets use: Auto = marketing blend for futures crops with a live position, else this table">Price from</th>';
       html += '<th class="number">Drying</th><th>Unit</th><th>Enterprise</th><th></th>';
       html += '</tr></thead><tbody>';
 
@@ -113,6 +114,20 @@
         if (isCbot) {
           html += '<td class="number editable" data-field="basis">' + (sc.pricingMode === 'cbot' ? '$' + util.formatNum(sc.basisDefault || 0, 2) : '—') + '</td>';
         }
+        // Price from — auto / marketing / reference. Label shows what Auto
+        // resolves to right now so the choice is legible without a legend.
+        var mk = (window.Calc && Calc.marketingEntryFor) ? Calc.marketingEntryFor(sc.name, window.refData) : null;
+        var srcSetting = sc.priceSource || 'auto';
+        var autoUsesMkt = mk && mk.blendDollars > 0 && mk.tier === 'futures';
+        var mktLabel = mk ? (mk.blendDollars > 0 ? 'Marketing blend $' + util.formatNum(mk.blendDollars, 2)
+                              : mk.pooledDollars > 0 ? 'Marketing pooled $' + util.formatNum(mk.pooledDollars, 2)
+                              : 'Marketing (no price yet)') : 'Marketing (not tracked)';
+        var usingMkt = srcSetting === 'marketing' ? !!(mk && (mk.blendDollars > 0 || mk.pooledDollars > 0)) : (srcSetting === 'auto' && autoUsesMkt);
+        html += '<td><select class="ctype-src-select' + (usingMkt ? ' is-mkt' : '') + '" data-ctype-id="' + ct.id + '" data-sub-idx="' + idx + '">' +
+          '<option value="auto"' + (srcSetting === 'auto' ? ' selected' : '') + '>Auto → ' + (autoUsesMkt ? 'marketing $' + util.formatNum(mk.blendDollars, 2) : 'this table') + '</option>' +
+          '<option value="marketing"' + (srcSetting === 'marketing' ? ' selected' : '') + '>' + mktLabel + '</option>' +
+          '<option value="reference"' + (srcSetting === 'reference' ? ' selected' : '') + '>This table</option>' +
+          '</select></td>';
         html += '<td class="number editable" data-field="drying">$' + util.formatNum(sc.dryingRate || 0, 2) + '</td>';
         html += '<td>' + util.escHtml(sc.unit || ct.unit || '') + '</td>';
         html += '<td><select class="subcrop-enterprise-select" data-ctype-id="' + ct.id + '" data-sub-idx="' + idx + '">';
@@ -206,6 +221,22 @@
             util.showToast(subcropName + ' → ' + entName + fieldNote);
             reloadCropTypes();
           });
+      });
+    });
+
+    container.querySelectorAll('.ctype-src-select').forEach(function (sel) {
+      sel.addEventListener('change', function () {
+        var ctypeId = sel.getAttribute('data-ctype-id');
+        var subIdx = parseInt(sel.getAttribute('data-sub-idx'));
+        var ct = cropTypes.find(function (c) { return c.id === ctypeId; });
+        if (!ct) return;
+        var subs = (ct.subCrops || []).slice();
+        subs[subIdx] = Object.assign({}, subs[subIdx], { priceSource: sel.value });
+        api.put('/api/crop-types/' + ctypeId, { subCrops: subs }).then(function () {
+          if (window.Calc && Calc.clearCropPricingCache) Calc.clearCropPricingCache();
+          util.showToast(subs[subIdx].name + ' price from: ' + sel.options[sel.selectedIndex].text);
+          reloadCropTypes();
+        });
       });
     });
 

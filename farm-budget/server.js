@@ -384,7 +384,8 @@ function getRefs() {
     overheadPools: store.overheadPools || [],
     overheadRates: Calc.computeOverheadRates(store.fields, store.overheadPools || []),
     seeds: store.seeds,
-    buyers: store.buyers
+    buyers: store.buyers,
+    marketingPrices: store.marketingPrices || null
   };
 }
 
@@ -2781,6 +2782,55 @@ function getFuturesContracts() {
     ? store.futuresConfig
     : DEFAULT_FUTURES_CONFIG;
 }
+
+// ── Marketing price snapshot ────────────────────────────────────────────────
+// The browser (owner session inside the portal) reads the pooled rollup from
+// /marketing/position/data and saves a per-crop snapshot here. calc.js prices
+// futures-tier crops from it (see resolveCropPricing). Server-side dashboards
+// read the saved copy — never fetched inline, because the portal's rollup
+// itself calls this app's /api/dashboard for bushels and COP.
+app.get('/api/marketing-prices', (req, res) => {
+  res.json(store.marketingPrices || null);
+});
+
+app.put('/api/marketing-prices', async (req, res) => {
+  const body = req.body || {};
+  if (!body.byCrop || typeof body.byCrop !== 'object') {
+    return res.status(400).json({ error: 'byCrop object required' });
+  }
+  const year = parseInt(body.cropYear, 10);
+  if (year && store.settings && store.settings.year && year !== store.settings.year) {
+    return res.status(400).json({ error: 'cropYear ' + year + ' does not match this MACRO (' + store.settings.year + ')' });
+  }
+  const byCrop = {};
+  Object.keys(body.byCrop).forEach(k => {
+    const e = body.byCrop[k] || {};
+    const num = v => (v == null || v === '' || isNaN(Number(v))) ? null : Number(v);
+    byCrop[String(k).trim().toLowerCase()] = {
+      crop: String(e.crop || k),
+      variant: String(e.variant || ''),
+      commodity: String(e.commodity || ''),
+      tier: e.tier === 'futures' ? 'futures' : 'tracking',
+      blendDollars: num(e.blendDollars),
+      wapDollars: num(e.wapDollars),
+      pooledDollars: num(e.pooledDollars),
+      premiumPerBu: num(e.premiumPerBu),
+      cbot: num(e.cbot),
+      cbotContract: e.cbotContract ? String(e.cbotContract) : '',
+      pctSold: num(e.pctSold),
+      soldBu: num(e.soldBu),
+      projectedBu: num(e.projectedBu)
+    };
+  });
+  store.marketingPrices = {
+    updatedAt: new Date().toISOString(),
+    cropYear: year || (store.settings && store.settings.year) || null,
+    byCrop
+  };
+  clearPricingCache();
+  await saveData();
+  res.json(store.marketingPrices);
+});
 
 app.get('/api/futures-config', (req, res) => {
   res.json(getFuturesContracts());
