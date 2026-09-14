@@ -31,8 +31,11 @@
       .catch(function () { futures = []; });
     var pR = Promise.resolve();
     if (embedded()) {
-      // Absolute path on purpose: resolves to the portal root, not /embed/farm-budget/.
-      pR = fetch('/marketing/position/data' + (year ? '?year=' + year : ''), { credentials: 'same-origin' })
+      // Full origin URL on purpose: index.html wraps window.fetch to prefix
+      // every root-relative path with /embed/farm-budget, which would send
+      // this to MACRO itself (404) instead of the portal route.
+      var url = window.location.origin + '/marketing/position/data' + (year ? '?year=' + year : '');
+      pR = fetch(url, { credentials: 'same-origin' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (d) { rollup = d && Array.isArray(d.rows) ? d : null; })
         .catch(function () { rollup = null; });
