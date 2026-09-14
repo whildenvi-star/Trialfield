@@ -28,6 +28,8 @@ function row(over: Partial<CommodityRollupRow>): CommodityRollupRow {
     pctSold: 0.5,
     overhedged: false,
     poolWapCents: 470,
+    poolFuturesWapCents: 470,
+    poolFuturesBlendCents: 470,
     wapCents: 470,
     copPerBu: 3.9,
     copPerAcre: 780,

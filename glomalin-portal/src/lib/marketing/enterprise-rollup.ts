@@ -161,6 +161,21 @@ export interface CommodityRollupRow {
   overhedged: boolean
   /** pool weighted-avg futures-equivalent price, cents/bu (premiums stripped) */
   poolWapCents: number | null
+  /**
+   * Pool futures LEG, cents/bu — the board price the pooled bushels were sold
+   * at, basis and premium both stripped (owner model 2026-09-14: "the average
+   * sale price is pooled between all the farms, then each variant gets its
+   * basis"). HTAs contribute futuresPrice; cash sales contribute cash − basis
+   * (contract's, else the variant's projected) − premium. Null when nothing priced.
+   */
+  poolFuturesWapCents: number | null
+  /**
+   * Pool futures blend if the unsold projection sold on today's board:
+   * (futuresWap × pricedBu + max(projected − priced, 0) × cbot) / max(projected, priced).
+   * Farm-budget adds each sub-crop's Reference Data basis on top to price a
+   * field. Null when there is no live quote and bushels remain unsold.
+   */
+  poolFuturesBlendCents: number | null
   /** realized WAP incl. premiums, cents/bu */
   wapCents: number
   copPerBu: number | null
@@ -185,7 +200,7 @@ export interface CommodityRollupRow {
 // keys are OMITTED from the payload, not nulled.
 
 const COMMODITY_FINANCIAL_KEYS = [
-  'cbotPriceDollars', 'poolWapCents', 'wapCents', 'copPerBu', 'copPerAcre',
+  'cbotPriceDollars', 'poolWapCents', 'poolFuturesWapCents', 'poolFuturesBlendCents', 'wapCents', 'copPerBu', 'copPerAcre',
   'totalCost', 'grossSalesDollars', 'settledRevenue', 'blendedIfSoldTodayCents',
 ] as const
 const VARIANT_FINANCIAL_KEYS = [
@@ -224,6 +239,21 @@ export function futuresEquivalentCents(c: RollupContract): number | null {
   const premiumCents = Math.round((c.contractPremium?.netPremium ?? 0) * 100)
   if (c.finalCashPrice != null) return Math.round(c.finalCashPrice * 100) - premiumCents
   if (c.futuresPrice != null) return Math.round((c.futuresPrice + (c.basis ?? 0)) * 100)
+  return null
+}
+
+/**
+ * Futures leg of a priced contract in cents — basis AND premium stripped.
+ * `projectedBasis` stands in when a cash sale has no basis recorded.
+ */
+export function futuresLegCents(c: RollupContract, projectedBasis: number | null): number | null {
+  if (!isPricedContract(c) || c.paymentBasis === 'PER_UNIT') return null
+  if (c.futuresPrice != null) return Math.round(c.futuresPrice * 100)
+  if (c.finalCashPrice != null) {
+    const basis = c.basis ?? projectedBasis ?? 0
+    const premium = c.contractPremium?.netPremium ?? 0
+    return Math.round((c.finalCashPrice - basis - premium) * 100)
+  }
   return null
 }
 
@@ -326,6 +356,18 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
       grossCents += (fe + (c.finalCashPrice != null ? premiumCents : 0)) * c.contractedBushels
     }
     const poolWapCents = poolDen > 0 ? Math.round(poolNum / poolDen) : null
+
+    // Pool futures leg — the number every farm's bushels share
+    let futNum = 0
+    let futDen = 0
+    for (const c of group.contracts) {
+      const pb = c.variant?.name ? (projectedBasisByVariantName.get(lower(c.variant.name)) ?? null) : null
+      const fl = futuresLegCents(c, pb)
+      if (fl == null) continue
+      futNum += fl * c.contractedBushels
+      futDen += c.contractedBushels
+    }
+    const poolFuturesWapCents = futDen > 0 ? Math.round(futNum / futDen) : null
 
     // Variant sub-rows: every variant of this commodity that has contracts OR
     // budget acres. Keyed by variant name.
@@ -458,6 +500,18 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
       )
     }
 
+    // Pool futures blend: sold at the pooled futures WAP, unsold on today's board.
+    let poolFuturesBlendCents: number | null = null
+    {
+      const remaining = Math.max((projectedBu ?? 0) - futDen, 0)
+      const den = Math.max(projectedBu ?? 0, futDen)
+      if (den > 0 && (remaining === 0 || cbotPriceDollars != null)) {
+        poolFuturesBlendCents = Math.round(
+          (futNum + remaining * Math.round((cbotPriceDollars ?? 0) * 100)) / den
+        )
+      }
+    }
+
     rows.push({
       commodityName: group.tier === 'tracking' ? commodityName + ' — Specialty/Organic' : commodityName,
       tier: group.tier,
@@ -474,6 +528,8 @@ export function buildEnterpriseRollup(input: RollupInput): CommodityRollupRow[] 
       pctSold: projectedBu && projectedBu > 0 ? position.contractedBu / projectedBu : null,
       overhedged: projectedBu != null && position.contractedBu > projectedBu,
       poolWapCents,
+      poolFuturesWapCents,
+      poolFuturesBlendCents,
       wapCents: position.avgPriceCents,
       copPerBu,
       copPerAcre,

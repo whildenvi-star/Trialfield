@@ -118,13 +118,18 @@
         // resolves to right now so the choice is legible without a legend.
         var mk = (window.Calc && Calc.marketingEntryFor) ? Calc.marketingEntryFor(sc.name, window.refData) : null;
         var srcSetting = sc.priceSource || 'auto';
-        var autoUsesMkt = mk && mk.blendDollars > 0 && mk.tier === 'futures';
-        var mktLabel = mk ? (mk.blendDollars > 0 ? 'Marketing blend $' + util.formatNum(mk.blendDollars, 2)
-                              : mk.pooledDollars > 0 ? 'Marketing pooled $' + util.formatNum(mk.pooledDollars, 2)
-                              : 'Marketing (no price yet)') : 'Marketing (not tracked)';
-        var usingMkt = srcSetting === 'marketing' ? !!(mk && (mk.blendDollars > 0 || mk.pooledDollars > 0)) : (srcSetting === 'auto' && autoUsesMkt);
+        var isCbotSub = sc.pricingMode === 'cbot';
+        var poolPrice = (mk && mk.poolBlend > 0) ? mk.poolBlend + (sc.basisDefault || 0) : null;
+        var autoUsesMkt = isCbotSub && poolPrice != null;
+        var mktLabel = mk
+          ? (isCbotSub && poolPrice != null ? 'Pool futures $' + util.formatNum(mk.poolBlend, 2) + ' + basis = $' + util.formatNum(poolPrice, 2)
+            : mk.blendDollars > 0 ? 'Marketing blend $' + util.formatNum(mk.blendDollars, 2)
+            : mk.pooledDollars > 0 ? 'Marketing pooled $' + util.formatNum(mk.pooledDollars, 2)
+            : 'Marketing (no price yet)')
+          : 'Marketing (not tracked)';
+        var usingMkt = srcSetting === 'marketing' ? !!(mk && (poolPrice != null || mk.blendDollars > 0 || mk.pooledDollars > 0)) : (srcSetting === 'auto' && autoUsesMkt);
         html += '<td><select class="ctype-src-select' + (usingMkt ? ' is-mkt' : '') + '" data-ctype-id="' + ct.id + '" data-sub-idx="' + idx + '">' +
-          '<option value="auto"' + (srcSetting === 'auto' ? ' selected' : '') + '>Auto → ' + (autoUsesMkt ? 'marketing $' + util.formatNum(mk.blendDollars, 2) : 'this table') + '</option>' +
+          '<option value="auto"' + (srcSetting === 'auto' ? ' selected' : '') + '>Auto → ' + (autoUsesMkt ? 'pool $' + util.formatNum(poolPrice, 2) : 'this table') + '</option>' +
           '<option value="marketing"' + (srcSetting === 'marketing' ? ' selected' : '') + '>' + mktLabel + '</option>' +
           '<option value="reference"' + (srcSetting === 'reference' ? ' selected' : '') + '>This table</option>' +
           '</select></td>';

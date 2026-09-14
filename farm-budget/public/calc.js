@@ -129,6 +129,31 @@
       var where = ' · Reference Data › ' + out.cropType + ' › ' + out.subCrop;
       if (out.priceSource === 'marketing') {
         var mk = pricing.marketing || {};
+        var asOf0 = '';
+        if (pricing.marketingAsOf) {
+          var d0 = new Date(pricing.marketingAsOf);
+          asOf0 = ' · as of ' + d0.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) +
+            (((Date.now() - d0.getTime()) / 36e5) > 24 ? ' (STALE)' : '');
+        }
+        if (pricing.marketingMode === 'pool') {
+          var b = pricing.basisUsed || 0;
+          var bs = (b < 0 ? '− ' : '+ ') + m2(Math.abs(b)) + ' basis' +
+            (pricing.buyerBasis ? ' (' + pricing.buyerBasis + ')' : '');
+          var poolBits = [];
+          if (mk.poolSoldBu > 0) {
+            poolBits.push((mk.poolPctSold != null ? Math.round(mk.poolPctSold * 100) + '% of the pool sold' : 'pool sold') +
+              (mk.poolFutures > 0 ? ' at futures WAP ' + m2(mk.poolFutures) : ''));
+            poolBits.push('rest at ' + (mk.cbotContract ? mk.cbotContract + ' ' : 'board ') + m2(mk.cbot || 0));
+          } else {
+            poolBits.push('nothing sold yet — all at ' + (mk.cbotContract ? mk.cbotContract + ' ' : 'board ') + m2(mk.cbot || 0));
+          }
+          out.mode = 'marketing';
+          out.cbot = mk.poolBlend; out.basis = b;
+          out.text = (mk.commodity || out.cropType) + ' pool futures ' + m2(mk.poolBlend) + ' (' + poolBits.join(', ') + ') ' +
+            bs + ' = ' + m2(out.price) + asOf0 + ' · Ref Data would be ' + m2(out.referencePrice);
+          out.short = 'pool ' + m2(mk.poolBlend) + ' ' + bs + (asOf0.indexOf('STALE') >= 0 ? ' · STALE' : '');
+          return out;
+        }
         var isBlend = mk.blendDollars > 0 && Math.abs(mk.blendDollars - out.price) < 0.005;
         var bits = [];
         if (mk.soldBu > 0) {
@@ -208,12 +233,14 @@
         if (subs[j].name.toLowerCase() === key) {
           var sc = subs[j];
           var effectivePrice;
+          var basisUsed = null;
           if (sc.pricingMode === 'cbot') {
             // CBOT price + basis (buyer-specific or default)
             var basis = sc.basisDefault || 0;
             if (buyer && buyer.cropBasis && buyer.cropBasis[cropName] !== undefined) {
               basis = buyer.cropBasis[cropName];
             }
+            basisUsed = basis;
             effectivePrice = (ct.cbotPrice || 0) + basis;
           } else {
             effectivePrice = sc.pricePerUnit || 0;
@@ -229,17 +256,31 @@
           //                   'reference'      → always the price above
           // Falls back to the Reference Data price whenever the snapshot has
           // nothing usable, so a dead portal never zeroes income.
+          // Pooled model (2026-09-14): every CBOT-mode sub-crop of a commodity
+          // shares ONE pool futures number — sold bushels at the pooled futures
+          // WAP, unsold at today's board — and keeps its OWN basis from this
+          // table. The stale typed ct.cbotPrice is simply replaced by the pool
+          // blend; the basis math is unchanged. Non-CBOT sub-crops only follow
+          // marketing when explicitly set to it (their own variant price).
           var mk = marketingEntryFor(cropName, refs);
           var src = sc.priceSource || 'auto';
           var mkPrice = null;
+          var mkMode = '';
           if (mk && src !== 'reference') {
-            if (mk.blendDollars > 0 && (src === 'marketing' || mk.tier === 'futures')) mkPrice = mk.blendDollars;
-            else if (src === 'marketing' && mk.pooledDollars > 0) mkPrice = mk.pooledDollars;
+            if (sc.pricingMode === 'cbot' && mk.poolBlend > 0) {
+              mkPrice = round4(mk.poolBlend + (basisUsed || 0));
+              mkMode = 'pool';
+            } else if (src === 'marketing') {
+              if (mk.blendDollars > 0) { mkPrice = mk.blendDollars; mkMode = 'variant'; }
+              else if (mk.pooledDollars > 0) { mkPrice = mk.pooledDollars; mkMode = 'pooled'; }
+            }
           }
           var result = {
             pricePerUnit: mkPrice != null ? mkPrice : effectivePrice,
             referencePrice: effectivePrice,
             priceSource: mkPrice != null ? 'marketing' : 'reference',
+            marketingMode: mkMode,
+            basisUsed: basisUsed,
             priceSourceSetting: src,
             marketing: mk || null,
             marketingAsOf: refs.marketingPrices ? refs.marketingPrices.updatedAt : null,
