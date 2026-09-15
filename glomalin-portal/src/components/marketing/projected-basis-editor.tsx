@@ -68,7 +68,10 @@ export function ProjectedBasisEditor({ variants }: { variants: VariantWithBasis[
           Projected Basis
         </h2>
         <span className="text-xs text-glomalin-muted font-sans">
-          planning placeholder, $/bu — used in WAP for any sale whose basis isn&apos;t set yet
+          planning placeholder, $/bu — what an unpriced bushel earns over futures. Used in
+          WAP for any sale whose basis isn&apos;t set yet, and to value the unsold remainder
+          in F-IT. For contracts priced off CBOT with no elevator basis (seed beans), this
+          is simply the premium: enter it positive.
         </span>
       </div>
       <div className="flex flex-wrap gap-x-6 gap-y-2">

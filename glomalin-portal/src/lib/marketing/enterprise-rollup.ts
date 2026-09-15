@@ -52,7 +52,8 @@ export const ENTERPRISE_CROSSWALK: CrosswalkEntry[] = [
   { variantName: 'Soybeans', budgetCrops: ['RR Soybeans'], ticketCrops: ['RR Soybeans', 'Enlist Soybeans'], premiumDefault: -0.75, tier: 'futures' },
   { variantName: 'Non-GMO Food Beans', budgetCrops: ['Soybeans'], ticketCrops: ['Food Beans', 'Pioneer 21A20 Food beans'], premiumDefault: 1.5, tier: 'futures' },
   { variantName: 'High Oil Soybeans', budgetCrops: ['High Oil Soybeans'], ticketCrops: ['High Oil Soybeans'], premiumDefault: 2.15, tier: 'futures' },
-  { variantName: 'Non-GMO Seed Grade Beans', budgetCrops: ['Non-GMO Seed Grade Beans'], ticketCrops: ['Non-GMO Seed Grade Beans'], premiumDefault: 3.5, tier: 'futures' },
+  // Gro Alliance SEED 26-403: $3.75/raw bu premium, priced off CBOT directly
+  { variantName: 'Non-GMO Seed Grade Beans', budgetCrops: ['Non-GMO Seed Grade Beans'], ticketCrops: ['Non-GMO Seed Grade Beans'], premiumDefault: 3.75, tier: 'futures' },
   { variantName: 'Organic Soybeans', budgetCrops: ['ORG Soybeans'], ticketCrops: ['Organic Soybeans'], premiumDefault: 0, tier: 'tracking' },
   { variantName: 'Organic Food Beans', budgetCrops: ['ORG Food Beans'], ticketCrops: ['Organic Food Beans'], premiumDefault: 0, tier: 'tracking' },
   { variantName: 'Organic Natto Beans', budgetCrops: ['ORG Natto Beans', 'ORG Natto Beans (ORG IRR)'], ticketCrops: ['Organic Natto Beans'], premiumDefault: 0, tier: 'tracking' },
