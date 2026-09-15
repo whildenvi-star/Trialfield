@@ -61,11 +61,20 @@ export const ENTERPRISE_CROSSWALK: CrosswalkEntry[] = [
   // Wheat
   { variantName: 'Wheat', budgetCrops: ['Wheat'], ticketCrops: ['Wheat'], premiumDefault: 0, tier: 'futures' },
   { variantName: 'Organic Wheat', budgetCrops: ['ORG Wheat'], ticketCrops: ['Organic Wheat'], premiumDefault: 0, tier: 'tracking' },
-  { variantName: 'Organic Seed Wheat', budgetCrops: ['ORG seed wheat'], ticketCrops: ['Organic Seed Wheat'], premiumDefault: 0, tier: 'tracking' },
+  // Seed grade is decided by the elevator at delivery, not by which field it was
+  // planted on — so seed wheat carries NO budget acres of its own (same shape as
+  // Organic Seed Soybeans). All wheat acres project as the ORG Wheat pool; what
+  // grades out as seed just earns the Albert Lea premium over feed. Splitting
+  // acres up front is what put this variant at 388% sold.
+  // Premium: Albert Lea seed 10.50 vs Cashton feed 9.50 = +1.00/bu.
+  { variantName: 'Organic Seed Wheat', budgetCrops: [], ticketCrops: ['Organic Seed Wheat'], premiumDefault: 1.0, tier: 'tracking' },
   // Barley / Rye — contract-grown specialty, not futures-marketed
   { variantName: 'Barley', budgetCrops: [], ticketCrops: ['Barley'], premiumDefault: 0, tier: 'tracking' },
   { variantName: 'Organic Barley', budgetCrops: ['ORG Barley', 'ORG feed barley'], ticketCrops: ['Organic Barley'], premiumDefault: 0, tier: 'tracking' },
-  { variantName: 'Seed Barley', budgetCrops: ['Seed grade Winter Barley'], ticketCrops: ['Seed Barley'], premiumDefault: 0, tier: 'tracking' },
+  // Albert Lea 2026 settlement: $1.40/bu premium over market, identical on both
+  // varieties (MN Equinox, KWS Orbit) — pooled here on purpose; the variety
+  // breakout lives in the field record, not in a second marketing variant.
+  { variantName: 'Seed Barley', budgetCrops: ['Seed grade Winter Barley'], ticketCrops: ['Seed Barley'], premiumDefault: 1.4, tier: 'tracking' },
   { variantName: 'Organic Seed Barley', budgetCrops: [], ticketCrops: ['Organic Seed Barley'], premiumDefault: 0, tier: 'tracking' },
   { variantName: 'Hybrid Rye', budgetCrops: ['Hybrid Seed Rye'], ticketCrops: ['Hybrid Rye'], premiumDefault: 0, tier: 'tracking' },
 ]
