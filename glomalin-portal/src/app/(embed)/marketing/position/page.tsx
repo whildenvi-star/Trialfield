@@ -112,6 +112,9 @@ const WIDGET_CSS = `
   .mpw-nums { margin-top: 7px; font-size: 14.5px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
   .mpw-nums b { color: var(--w-text); font-weight: 700; }
   .mpw-actual { color: var(--w-muted); opacity: 0.9; }
+  /* label+value pairs never split across lines — a narrow card wraps between
+     segments ("· F-IT" + price stay together) instead of orphaning a price */
+  .mpw-seg { white-space: nowrap; }
   .mpw-fin { margin-top: 5px; font-size: 14px; color: var(--w-muted); font-variant-numeric: tabular-nums; }
   .mpw-fin b { color: var(--w-text); font-weight: 700; }
   .mpw-fin .below { color: var(--w-bad); }
@@ -189,36 +192,49 @@ export default async function MarketingPositionEmbedPage({
                   <>no data</>
                 )}
                 {pooled?.actualBu != null && (
-                  <span className="mpw-actual"> · actual {formatBu(Math.round(pooled.actualBu))}</span>
+                  <>
+                    {' '}
+                    <span className="mpw-actual mpw-seg">· actual {formatBu(Math.round(pooled.actualBu))}</span>
+                  </>
                 )}
               </div>
               {(pooled?.wapCents != null || pooled?.copPerBu != null || pooled?.fitCents != null) && (
                 <div className="mpw-fin">
-                  WAP{' '}
-                  <b
-                    className={
-                      pooled.wapCents != null && pooled.copPerBu != null &&
-                      pooled.wapCents / 100 < pooled.copPerBu
-                        ? 'below'
-                        : undefined
-                    }
-                  >
-                    {pooled.wapCents != null ? formatPricePerBu(pooled.wapCents / 100) : '—'}
-                  </b>
-                  {' '}· COP <b>{pooled.copPerBu != null ? formatPricePerBu(pooled.copPerBu) : '—'}</b>
+                  <span className="mpw-seg">
+                    WAP{' '}
+                    <b
+                      className={
+                        pooled.wapCents != null && pooled.copPerBu != null &&
+                        pooled.wapCents / 100 < pooled.copPerBu
+                          ? 'below'
+                          : undefined
+                      }
+                    >
+                      {pooled.wapCents != null ? formatPricePerBu(pooled.wapCents / 100) : '—'}
+                    </b>
+                  </span>
+                  {' '}
+                  <span className="mpw-seg">
+                    · COP <b>{pooled.copPerBu != null ? formatPricePerBu(pooled.copPerBu) : '—'}</b>
+                  </span>
                   {pooled.fitCents != null && (
                     <>
-                      {' '}· F-IT{' '}
-                      <b
+                      {' '}
+                      <span
+                        className="mpw-seg"
                         title="Blended price if every unpriced projected bushel sold today at futures + projected basis"
-                        className={
-                          pooled.copPerBu != null && pooled.fitCents / 100 < pooled.copPerBu
-                            ? 'below'
-                            : undefined
-                        }
                       >
-                        {formatPricePerBu(pooled.fitCents / 100)}
-                      </b>
+                        · F-IT{' '}
+                        <b
+                          className={
+                            pooled.copPerBu != null && pooled.fitCents / 100 < pooled.copPerBu
+                              ? 'below'
+                              : undefined
+                          }
+                        >
+                          {formatPricePerBu(pooled.fitCents / 100)}
+                        </b>
+                      </span>
                     </>
                   )}
                 </div>

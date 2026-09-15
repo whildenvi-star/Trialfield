@@ -32,6 +32,8 @@ interface GrainContractRow {
   // back out of there.
   location?: string | null
   notes?: string | null
+  // Owner-only in the API response (hedging-strategy detail, absent for office)
+  htaDetails?: { futuresMonth?: string | null } | null
   customer: { id: string; name: string; shortCode: string }
   variant: { id: string; name: string }
   status: 'OPEN' | 'PARTIALLY_FILLED' | 'FILLED' | 'CANCELLED' | 'EXPIRED'

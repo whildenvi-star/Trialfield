@@ -120,6 +120,12 @@
   window.addEventListener('tab-activate', function (e) {
     if (e.detail.tab === 'dashboard') loadDashboard();
   });
+  // Marketing price snapshot saved (price-source.js) — server-side income now
+  // prices futures crops from the blend, so re-pull the dashboard if it's up.
+  window.addEventListener('marketing-prices-updated', function () {
+    var panel = document.getElementById('tab-dashboard');
+    if (!panel || panel.classList.contains('active')) loadDashboard();
+  });
 
   var settingsInitialized = false;
 
@@ -571,8 +577,33 @@
     frame.title = 'Marketing position';
     frame.style.cssText = 'width:100%;height:250px;border:1px solid var(--border);border-radius:4px;background:var(--surface);display:block';
     frame.setAttribute('loading', 'lazy');
+    frame.setAttribute('scrolling', 'no');
     el.appendChild(frame);
     el.style.display = 'block';
+
+    // Size the frame to the widget, not a fixed 250px. The cards reflow from
+    // four across to two below 1100px, and the WAP · COP · F-IT line wraps on
+    // narrow cards — a fixed height clipped both. Same-origin (Caddy /embed/
+    // proxy), so the inner document is readable. Measure .mpw rather than the
+    // document: the portal layout gives body min-height 100vh, which would just
+    // echo the frame's own height back. Falls back to 250px if unreadable.
+    function fitFrame() {
+      try {
+        var doc = frame.contentDocument;
+        var box = doc && doc.querySelector('.mpw');
+        if (!box) return;
+        var h = Math.ceil(box.getBoundingClientRect().height) + 2; // + border
+        if (h > 40 && Math.abs(h - frame.offsetHeight) > 1) frame.style.height = h + 'px';
+      } catch (e) { /* cross-origin or torn down — keep current height */ }
+    }
+    frame.addEventListener('load', function () {
+      fitFrame();
+      // The widget only reflows when the frame's width changes, and that fires
+      // resize inside the frame. Setting the height fires it too, but fitFrame
+      // no-ops once the height matches, so it settles in one pass.
+      try { frame.contentWindow.addEventListener('resize', fitFrame); }
+      catch (e) { window.addEventListener('resize', fitFrame); }
+    });
   }
 
   // --- Field boundary SVG thumbnails (ported from farm-registry buildSvgThumb) ---
