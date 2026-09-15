@@ -39,6 +39,17 @@ interface SummaryRow {
   dryingPerAcre: number
   insurancePerAcre: number
   totalCostPerAcre: number
+  /**
+   * Provenance of totalCostPerAcre. Revenue has carried a source marker since this
+   * page was built; cost never did, so an actual-settlement revenue figure sat next
+   * to a budgeted cost figure with nothing saying so — and the row read as profit.
+   *
+   * Every cost category currently comes from farm-budget's computeFieldBudget(),
+   * which derives from reference rates, so this is 'Budget' for every row today.
+   * It becomes per-field once actual spend is captured (seed receipts first).
+   * See docs/DOMAIN.md §4.
+   */
+  costSource: 'Actual' | 'Budget'
   revenuePerAcre: number | null
   revenueSource: 'Actual' | 'Budget Est.' | null
 }
@@ -73,6 +84,11 @@ function subtotal(rows: SummaryRow[]) {
     dryingPerAcre: wavg('dryingPerAcre'),
     insurancePerAcre: wavg('insurancePerAcre'),
     totalCostPerAcre: wavg('totalCostPerAcre'),
+    // A subtotal is only as good as its weakest row: one budgeted field makes the
+    // whole subtotal budgeted. Never round this up to 'Actual'.
+    costSource: rows.every(r => r.costSource === 'Actual')
+      ? ('Actual' as const)
+      : ('Budget' as const),
     revenuePerAcre: revPerAcre,
   }
 }
@@ -183,6 +199,10 @@ export default async function EnterpriseSummaryPage({
       dryingPerAcre: r2(f.dryingPerAcre),
       insurancePerAcre: r2(f.insurancePerAcre),
       totalCostPerAcre: r2(f.expPerAcre),
+      // expPerAcre is computeFieldBudget() output — planned rates, not actual spend.
+      // Hardcoded until a real cost source exists; do not flip this to 'Actual'
+      // without the underlying category actually coming from receipts or invoices.
+      costSource: 'Budget',
       revenuePerAcre,
       revenueSource,
     }
@@ -196,7 +216,7 @@ export default async function EnterpriseSummaryPage({
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-glomalin-text mb-1">Enterprise Summary</h1>
-          <p className="text-sm text-glomalin-muted">{cropYear} crop year · seed, inputs, drying &amp; insurance costs</p>
+          <p className="text-sm text-glomalin-muted">{cropYear} crop year · budgeted seed, inputs, drying &amp; insurance costs</p>
         </div>
         <YearSelector currentYear={cropYear} />
       </div>
@@ -210,6 +230,13 @@ export default async function EnterpriseSummaryPage({
       {!settlementAvailable && !budgetOffline && (
         <div className="mb-4 px-4 py-3 bg-glomalin-surface border border-glomalin-border text-glomalin-muted text-sm rounded">
           Revenue shows budget estimates — no settlement data on record for {cropYear}
+        </div>
+      )}
+      {!budgetOffline && rows.length > 0 && (
+        <div className="mb-4 px-4 py-3 bg-glomalin-surface border border-glomalin-border text-glomalin-muted text-sm rounded">
+          All cost figures are budgeted from planned rates, not actual spend. Where revenue
+          is marked Actual, this page compares settled revenue against a budgeted cost —
+          the difference is not realised margin.
         </div>
       )}
 
@@ -251,10 +278,11 @@ export default async function EnterpriseSummaryPage({
                       </div>
                       {(role === 'admin' || role === 'office') && (
                         <div className="text-xs font-mono text-glomalin-muted mt-1">
-                          Cost: {fmt(row.totalCostPerAcre)}/ac
+                          Cost: {fmt(row.totalCostPerAcre)}/ac ({row.costSource})
                           {row.revenuePerAcre != null && (
                             <span className="ml-3 text-glomalin-success">
                               Rev: {fmt(row.revenuePerAcre)}/ac
+                              {row.revenueSource && ` (${row.revenueSource === 'Actual' ? 'Actual' : 'Est.'})`}
                             </span>
                           )}
                         </div>
@@ -279,8 +307,9 @@ export default async function EnterpriseSummaryPage({
                         <th className="text-right px-4 py-2.5 font-medium">Drying/ac</th>
                         <th className="text-right px-4 py-2.5 font-medium">Ins/ac</th>
                         <th className="text-right px-4 py-2.5 font-medium">Total Cost/ac</th>
+                        <th className="text-center px-4 py-2.5 font-medium">Cost Src</th>
                         <th className="text-right px-4 py-2.5 font-medium">Revenue/ac</th>
-                        <th className="text-center px-4 py-2.5 font-medium">Src</th>
+                        <th className="text-center px-4 py-2.5 font-medium">Rev Src</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-glomalin-border">
@@ -301,6 +330,13 @@ export default async function EnterpriseSummaryPage({
                           <td className="px-4 py-2.5 text-right">{fmt(row.dryingPerAcre)}</td>
                           <td className="px-4 py-2.5 text-right">{fmt(row.insurancePerAcre)}</td>
                           <td className="px-4 py-2.5 text-right font-medium text-glomalin-text">{fmt(row.totalCostPerAcre)}</td>
+                          <td className="px-4 py-2.5 text-center">
+                            {row.costSource === 'Actual' ? (
+                              <Badge variant="success" size="sm">Actual</Badge>
+                            ) : (
+                              <Badge variant="warning" size="sm">Budget</Badge>
+                            )}
+                          </td>
                           <td className="px-4 py-2.5 text-right text-glomalin-success">{fmt(row.revenuePerAcre)}</td>
                           <td className="px-4 py-2.5 text-center">
                             {row.revenueSource === 'Actual' && (
@@ -321,6 +357,13 @@ export default async function EnterpriseSummaryPage({
                         <td className="px-4 py-2.5 text-right">{fmt(sub.dryingPerAcre)}</td>
                         <td className="px-4 py-2.5 text-right">{fmt(sub.insurancePerAcre)}</td>
                         <td className="px-4 py-2.5 text-right font-bold">{fmt(sub.totalCostPerAcre)}</td>
+                        <td className="px-4 py-2.5 text-center">
+                          {sub.costSource === 'Actual' ? (
+                            <Badge variant="success" size="sm">Actual</Badge>
+                          ) : (
+                            <Badge variant="warning" size="sm">Budget</Badge>
+                          )}
+                        </td>
                         <td className="px-4 py-2.5 text-right font-bold text-glomalin-success">{fmt(sub.revenuePerAcre)}</td>
                         <td />
                       </tr>

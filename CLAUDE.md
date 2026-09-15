@@ -16,6 +16,11 @@ of us forgets everything by morning. Treat half-formed ideas as load-bearing
 until proven otherwise. The mess is the substrate, not a bug. Don't tidy what
 hasn't finished growing.
 
+## One thing that is settled
+Glomalin's numbers have definitions now — acres, bushels, priced, cost. They live in
+`glomalin-portal/docs/DOMAIN.md` and they are not up for reinvention. Half-formed is
+load-bearing everywhere else; a farm's acre count is not the place for it.
+
 ## The two at the bench
 glomalinguild has done this before. docfoxtapus is finding out.
 Both run their own Claude. Neither is in charge. The files are in charge.
