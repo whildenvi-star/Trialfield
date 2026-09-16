@@ -311,17 +311,44 @@ doing the trait field's job and doing it wrong.
 **Invoiced rows flagged: 26 → 2.** Nothing DeLong billed sits on the wrong trait. The two are
 Townline's mis-grouped burndown, unchanged.
 
-**12 planned rows flag, and they are one defect, not twelve.** `PowerMax` (glyphosate) is budgeted on
-six conventional bean enterprises — Gessert, Klug Davis, Lake, Murray, Twist Farm, Wes's — and
-`Liberty` (glufosinate) on Hoff. In-crop on conventional beans either one kills the crop; as a
-pre-plant burndown both are fine. **The rows do not say which**: nine of the twelve have a blank
-`operationGroup`, and three say **"Fertility"** for a herbicide. Across the whole book, **291 of 377
-planned rows (77%) carry no `operationGroup`**, so the burndown exemption cannot fire on planned
-rows at all.
+### The hooded sprayer — a third exemption, and the rule engine was wrong without it
 
-That does not block enforcement — the matcher only ever sees invoiced lines, which is why the audit
-reports the two sets separately — but those seven glyphosate/glufosinate budget lines on non-GMO
-beans are worth a look on their own terms, and the three "Fertility" groupings are simply wrong.
+Owner's correction, 2026-09-16: glyphosate and glufosinate on the conventional food beans are
+**correct**. The farm bands them between the rows under a hood, so the crop is never touched and the
+seed trait does not come into it — the same logic as the burndown exemption, for the same reason:
+nothing the pass can kill is exposed.
+
+The implement is already in the book — **`Hooded Redball`**, `impl_0255`, $8/ac — and **six
+enterprises already book a planned pass with it**: Gessert/Soybeans, Hoff, Klug Davis, Lake,
+Home/Lima Beans, and Kopp/ORG Soybeans. (I first reported that no enterprise used it. That was
+wrong: machinery passes reference `implementName`, not the implement id, and I matched on the id.)
+
+`crop-fit.js` now reads the method from, in order: `applicationMethod` on the row, the note, an
+"Application - Hooded" service line, the invoice comment, then the applicator machinery the
+enterprise carries. Where a shield *would* explain the pass and nothing records one, the verdict is
+a new **`unrecorded-method`** rather than `wrong-trait` — calling a correct pass a violation is how
+an operator learns to dismiss the queue, so it says what to write down instead and names the
+implement.
+
+**Safety-checked:** no corn enterprise carries a hooded pass — not Carrol, not Christopherson, not
+any of the 18 — so the exemption cannot mask a bean pass landing on corn, which is the bug this
+check exists to catch.
+
+**Planned flags 12 → 6, `wrong-trait` 8 → 0.** What is left is a short, real list:
+
+| enterprise | planted | planned product | verdict |
+|---|---|---|---|
+| Murray / High Oil Soybeans | 0 | PowerMax | `unrecorded-method` — no hooded pass booked |
+| Twist Farm / High Oil Soybeans | 30.8 | PowerMax | `unrecorded-method` — no hooded pass booked |
+| Wes's / High Oil Soybeans | 34.4 | PowerMax | `unrecorded-method` — no hooded pass booked |
+| Gessert / Snap Beans | 114.8 | PowerMax | `wrong-crop` — no hooded pass booked |
+| phillhower east / Snap Beans | 91.7 | PowerMax | `wrong-crop` — no hooded pass booked |
+| Brad Inman's / Enlist Soybeans | 49.9 | Ester 2,4-D | `wrong-crop` — burndown row with no operation group |
+
+Either those five are missing their hooded pass, or the herbicide line is wrong. At $8/ac the
+machinery cost is small; the point is that the record does not currently say how the crop survives
+the pass. Separately, three of those rows file a herbicide under **"Fertility"**, and across the
+whole book **291 of 377 planned rows (77%) carry no `operationGroup` at all**.
 
 Also note the "RR Soybeans" labelling problem has already been half-fixed: the rows now read "Enlist
 Soybeans", which is right, but the crop name is doing a job the trait field should do. Once
