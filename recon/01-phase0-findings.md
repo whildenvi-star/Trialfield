@@ -299,8 +299,29 @@ record a seed trait**. Setting the trait clears all 24.
 | OMNI BIG SOUTH, Simpsons, Kopp | ORG Soybeans | VIKING 2155 | `ORGANIC` |
 | Goat pasture | ORG Natto Beans | PS162 | `ORGANIC` |
 | Hoff | Non-GMO Seed Grade Beans | SG1499H | `CONVENTIONAL` |
-| **Delong-Meyer, Klug Davis, Lake, Murray, Twist Farm, Wes's** | **High Oil Soybeans** | **DF 262** | **? — you said DF 262 is non-GMO food beans, which makes it `CONVENTIONAL`. Confirm, because it decides whether glyphosate may ever be confirmed on these six** |
-| **Gessert** | **Soybeans** | **DF 214** | **?** |
+| Delong-Meyer, Klug Davis, Lake, Murray, Twist Farm, Wes's | High Oil Soybeans | DF 262 | `CONVENTIONAL` — **owner-confirmed 2026-09-16** |
+| Gessert | Soybeans | DF 214 | `CONVENTIONAL` — **owner-confirmed 2026-09-16** |
+
+**22 of 22 now resolve, none unknown.** Note that "High Oil Soybeans" as a crop name is actively
+misleading once the trait is recorded: DF 262 is a conventional food bean. The crop name has been
+doing the trait field's job and doing it wrong.
+
+### The sweep with the trait table applied (simulated in memory, nothing written)
+
+**Invoiced rows flagged: 26 → 2.** Nothing DeLong billed sits on the wrong trait. The two are
+Townline's mis-grouped burndown, unchanged.
+
+**12 planned rows flag, and they are one defect, not twelve.** `PowerMax` (glyphosate) is budgeted on
+six conventional bean enterprises — Gessert, Klug Davis, Lake, Murray, Twist Farm, Wes's — and
+`Liberty` (glufosinate) on Hoff. In-crop on conventional beans either one kills the crop; as a
+pre-plant burndown both are fine. **The rows do not say which**: nine of the twelve have a blank
+`operationGroup`, and three say **"Fertility"** for a herbicide. Across the whole book, **291 of 377
+planned rows (77%) carry no `operationGroup`**, so the burndown exemption cannot fire on planned
+rows at all.
+
+That does not block enforcement — the matcher only ever sees invoiced lines, which is why the audit
+reports the two sets separately — but those seven glyphosate/glufosinate budget lines on non-GMO
+beans are worth a look on their own terms, and the three "Fertility" groupings are simply wrong.
 
 Also note the "RR Soybeans" labelling problem has already been half-fixed: the rows now read "Enlist
 Soybeans", which is right, but the crop name is doing a job the trait field should do. Once
@@ -361,13 +382,14 @@ Changed: `grain-tickets/public/farms.js`, `public/style.css` (one class), `publi
 
 ## What I need from you
 
-**One number**
-
-1. DF 262 and DF 214 seed trait — `CONVENTIONAL`, or something else? It decides whether glyphosate
-   or glufosinate may ever be confirmed on seven enterprises (Delong-Meyer, Klug Davis, Lake,
-   Murray, Twist Farm, Wes's, Gessert). Nothing wrong is on them today.
+**Answered:** DF 262 and DF 214 are conventional non-GMO (2026-09-16). The trait table is complete —
+22 of 22 enterprises resolve, and applying it takes invoiced flags from 26 to 2.
 
 **Approvals, each independent**
+
+0. **Write the trait table:** add `seedTrait` to 22 soybean enterprise rows. Purely additive — a new
+   field, no existing value touched or overwritten — and it is what clears the 24 `unknown-trait`
+   flags. The exact 22 assignments are in the table above.
 
 2. **Step 3 leftovers:** correct `invoiceAcres` (137.1 → 15, 47.7 → 17) and `invoiceQtyTotal`
    (acreage → book quantities) on the 14 moved rows.
