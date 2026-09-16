@@ -11,11 +11,15 @@
  *   cd /srv/farm-ops/grain-tickets && node scripts/repush-deliveries.cjs
  *
  * Payload mirrors server.js pushDeliveryToMarketing — keep the two in sync.
+ * Also persists the same marketingSync* status columns server.js writes on
+ * every push branch (Phase 17), through the shared lib/marketing-sync.js
+ * helper — keep that in sync too.
  */
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const path = require('path');
 const prisma = require(path.join(__dirname, '..', 'lib', 'db.js'));
 const Calc = require(path.join(__dirname, '..', 'public', 'calc.js'));
+const { classifyPushOutcome, persistMarketingSyncResult } = require('../lib/marketing-sync.js');
 
 const CERT_URL = process.env.CERT_SERVICE_URL || 'http://localhost:3004';
 const TOKEN = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
@@ -107,9 +111,11 @@ async function main() {
       if (!res.ok) {
         outcomes.push({ ticket: t.id, crop: t.crop, outcome: `http-${res.status} ${result.error || ''}` });
         await recordSkip(t, `http-${res.status}: ${result.error || 'error'}`);
+        await persistMarketingSyncResult(prisma, t.id, classifyPushOutcome({ ok: false, httpStatus: res.status, result }));
       } else if (result.status === 'skipped') {
         outcomes.push({ ticket: t.id, crop: t.crop, outcome: `skipped (${result.reason}: "${result.cropName}" ${result.cropYear})` });
         await recordSkip(t, result.reason || 'skipped');
+        await persistMarketingSyncResult(prisma, t.id, classifyPushOutcome({ ok: true, result }));
       } else {
         outcomes.push({
           ticket: t.id,
@@ -117,10 +123,12 @@ async function main() {
           outcome: `${result.status} (${result.applyOutcome || 'n/a'}, ${result.appliedBushels || 0} bu applied)`
         });
         await prisma.marketingPushSkip.deleteMany({ where: { ticketId: t.id } }).catch(() => {});
+        await persistMarketingSyncResult(prisma, t.id, classifyPushOutcome({ ok: true, result }));
       }
     } catch (e) {
       outcomes.push({ ticket: t.id, crop: t.crop, outcome: `error: ${e.message}` });
       await recordSkip(t, `push-failed: ${e.message}`);
+      await persistMarketingSyncResult(prisma, t.id, classifyPushOutcome({ error: e }));
     }
   }
 
