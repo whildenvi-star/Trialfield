@@ -51,13 +51,21 @@ export default function RootLayout({
         {/* iOS picks the 180x180 for the home screen; giving it the exact size
             avoids Safari downscaling the 192 and softening the mark. */}
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){var s=localStorage.getItem('mru-text-scale');if(s)document.documentElement.style.setProperty('--text-scale',s);if(localStorage.getItem('mru-theme')==='light')document.documentElement.classList.add('light')})();`,
-          }}
-        />
+        {/* Pre-paint theme + text restore. Shared with the six Express apps
+            from shared/platform/theme-boot.js so the default lives in one
+            place — the portal previously defaulted to dark here while
+            settings-panel.js defaulted to light, and the shell visibly
+            swapped themes on first load. Plain <script> rather than next/script:
+            this has to block paint, which beforeInteractive does not guarantee. */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-boot.js?v=1" />
       </head>
       <body className={`${jetbrains.variable} antialiased`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var r=document.documentElement,m=r.className.match(/([a-z]+)-pending/);if(m){r.classList.add(m[1]);document.body.classList.add(m[1]);r.classList.remove(m[1]+'-pending')}if(r.classList.contains('in-iframe'))document.body.classList.add('in-iframe')})();`,
+          }}
+        />
         {children}
         <InstallPrompt />
         <Script src="/settings-panel.js" strategy="afterInteractive" />

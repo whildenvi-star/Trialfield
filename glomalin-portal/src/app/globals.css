@@ -71,6 +71,13 @@
      UA in matching colors instead of defaulting to light chrome. */
   color-scheme: dark;
 
+  /* The shell runs at 14px while the six Express apps run at 18px — their
+     grids are dense and were tuned for it, the portal chrome was not.
+     Declared here rather than in @layer base because platform-tokens.css
+     is unlayered and would otherwise win with its 18px. Change this line,
+     not the shared file, if the shell should follow the apps. */
+  --base-size: 14px;
+
   /* Base surfaces */
   --c-bg:           6 8 13;
   --c-bg-raised:    11 15 22;

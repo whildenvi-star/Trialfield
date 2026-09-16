@@ -9,8 +9,11 @@
 :root {
   --bg: #080a0f;
   --bg-raised: #0e1118;
+  --surface: #111520;
+  --surface-2: #1a2130;
   --card: #0c1015;
   --card-alt: #0a0e14;
+  --hover: #0f1a26;
   --primary: #14b8a6;
   --primary-dim: #0d9488;
   --primary-light: #2dd4bf;
@@ -29,13 +32,16 @@
 .light, :root.light {
   --bg: #f8fafc;
   --bg-raised: #ffffff;
+  --surface: #eef1f5;
+  --surface-2: #dde3ec;
   --card: #f1f5f9;
   --card-alt: #e2e8f0;
+  --hover: #e2e8f0;
   --primary: #0d9488;
   --primary-dim: #0f766e;
   --primary-light: #14b8a6;
   --text: #1e293b;
-  --text-light: #64748b;
+  --text-light: #475569; /* was #64748b — higher contrast for readability */
   --text-bright: #0f172a;
   --border: #cbd5e1;
   --border-light: #e2e8f0;
@@ -54,7 +60,7 @@
      --text-scale is set via JS (settings-panel.js) and persisted to localStorage
   */
   --text-scale: 1;
-  --base-size: 14px;
+  --base-size: 18px;
 
   /* Semantic size tokens — all typography should reference these */
   --size-xs:   calc(var(--base-size) * 0.78 * var(--text-scale));  /* ~10.9px at M */
@@ -105,6 +111,44 @@ h4 { font-size: var(--size-md) !important; }
 /* Small/muted helper text stays proportionally smaller */
 small, .text-xs, .text-muted, .sub {
   font-size: var(--size-xs) !important;
+}
+
+/* Harvest theme — earthy agricultural palette */
+body.harvest {
+  --bg: #f7f3eb;
+  --bg-raised: #ffffff;
+  --card: #ffffff;
+  --card-alt: #f0ede4;
+  --primary: #2d5a27;
+  --primary-dim: #1e3d1a;
+  --primary-light: #4a7c3f;
+  --text: #2c1a0e;
+  --text-light: #7a5c3a;
+  --text-bright: #1a0f05;
+  --border: #d4c4a8;
+  --border-light: #e8dcc8;
+  --highlight: #f0ede4;
+  --danger: #9b1c1c;
+  --success: #2d5a27;
+  --amber: #b87d0a;
+  --blue: #1a5276;
+  --orange: #a04000;
+  --glow: none;
+  --shadow-hover: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Status pill tokens — used in ticket log */
+:root {
+  --pill-matched-bg:        rgba(45, 90, 39, 0.12);
+  --pill-matched-text:      #2d5a27;
+  --pill-disputed-bg:       rgba(155, 28, 28, 0.12);
+  --pill-disputed-text:     #9b1c1c;
+  --pill-pending-bg:        rgba(184, 125, 10, 0.15);
+  --pill-pending-text:      #b87d0a;
+  --pill-unreconciled-bg:   rgba(100, 116, 139, 0.12);
+  --pill-unreconciled-text: #64748b;
+  --pill-manual-bg:         rgba(255, 149, 0, 0.15);
+  --pill-manual-text:       #7a4500;
 }
 
 /* Hide legacy theme toggles — settings panel is the single source */
@@ -264,7 +308,76 @@ body.light .settings-panel .sp-theme-btn {
 }
 
 /* Text size buttons */
+.settings-panel .sp-size-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.settings-panel .sp-size-row .sp-size-btn { flex: 1 0 20%; }
 
+/* Font picker — each button previews in its own face */
+.settings-panel .sp-font-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.settings-panel .sp-font-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  padding: 0.5rem 0.7rem;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  color: var(--text, #cbd5e1);
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+.settings-panel .sp-font-btn .sp-font-name { font-size: 0.9rem; font-weight: 600; }
+.settings-panel .sp-font-btn .sp-font-hint { font-size: 0.68rem; color: var(--text-light, #64748b); }
+.settings-panel .sp-font-btn.active {
+  border-color: var(--primary, #14b8a6);
+  color: var(--primary, #14b8a6);
+}
+body.light .settings-panel .sp-font-btn {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text, #1e293b);
+}
+body.light .settings-panel .sp-font-btn.active {
+  border-color: var(--primary, #0d9488);
+  color: var(--primary, #0d9488);
+}
+
+/* Weight picker */
+.settings-panel .sp-weight-row {
+  display: flex;
+  gap: 0.35rem;
+}
+.settings-panel .sp-weight-btn {
+  flex: 1;
+  padding: 0.45rem 0;
+  background: var(--card, #0c1015);
+  border: 1px solid var(--border, #1e293b);
+  color: var(--text, #cbd5e1);
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.68rem;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.settings-panel .sp-weight-btn.active {
+  border-color: var(--primary, #14b8a6);
+  color: var(--primary, #14b8a6);
+}
+body.light .settings-panel .sp-weight-btn {
+  background: var(--card, #f1f5f9);
+  border-color: var(--border, #cbd5e1);
+  color: var(--text, #1e293b);
+}
 .settings-panel .sp-size-btn {
   flex: 1;
   padding: 0.45rem 0;
@@ -438,76 +551,4 @@ body.light .settings-panel .sp-preview {
   .settings-tab-trigger,
   .settings-panel,
   .settings-panel-backdrop { display: none !important; }
-}
-
-/* --- Font / weight pickers (synced from farm-budget copy 2026-08-29) --- */
-.settings-panel .sp-size-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-.settings-panel .sp-size-row .sp-size-btn { flex: 1 0 20%; }
-
-/* Font picker — each button previews in its own face */
-.settings-panel .sp-font-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-.settings-panel .sp-font-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1rem;
-  padding: 0.5rem 0.7rem;
-  background: var(--card, #0c1015);
-  border: 1px solid var(--border, #1e293b);
-  color: var(--text, #cbd5e1);
-  border-radius: 4px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-.settings-panel .sp-font-btn .sp-font-name { font-size: 0.9rem; font-weight: 600; }
-.settings-panel .sp-font-btn .sp-font-hint { font-size: 0.68rem; color: var(--text-light, #64748b); }
-.settings-panel .sp-font-btn.active {
-  border-color: var(--primary, #14b8a6);
-  color: var(--primary, #14b8a6);
-}
-body.light .settings-panel .sp-font-btn {
-  background: var(--card, #f1f5f9);
-  border-color: var(--border, #cbd5e1);
-  color: var(--text, #1e293b);
-}
-body.light .settings-panel .sp-font-btn.active {
-  border-color: var(--primary, #0d9488);
-  color: var(--primary, #0d9488);
-}
-
-/* Weight picker */
-.settings-panel .sp-weight-row {
-  display: flex;
-  gap: 0.35rem;
-}
-.settings-panel .sp-weight-btn {
-  flex: 1;
-  padding: 0.45rem 0;
-  background: var(--card, #0c1015);
-  border: 1px solid var(--border, #1e293b);
-  color: var(--text, #cbd5e1);
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 0.68rem;
-  transition: all 0.15s ease;
-  text-align: center;
-}
-.settings-panel .sp-weight-btn.active {
-  border-color: var(--primary, #14b8a6);
-  color: var(--primary, #14b8a6);
-}
-body.light .settings-panel .sp-weight-btn {
-  background: var(--card, #f1f5f9);
-  border-color: var(--border, #cbd5e1);
-  color: var(--text, #1e293b);
 }

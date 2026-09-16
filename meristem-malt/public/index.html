@@ -11,10 +11,7 @@
   <link rel="stylesheet" href="platform-tokens.css?v=2">
   <link rel="stylesheet" href="style.css?v=2">
   <meta name="theme-color" content="#080a0f">
-  <script>
-    (function(){var t=localStorage.getItem('mru-theme');if(t==='light')document.documentElement.classList.add('light-pending')})();
-    if(window!==window.top)document.documentElement.classList.add('in-iframe');
-  </script>
+  <script src="theme-boot.js?v=1"></script>
   <script>
     // Embed base-path + fetch override — MUST run before any app scripts
     (function(){var m=window.location.pathname.match(/^(\/embed\/[^/]+)/);window.__BASE=m?m[1]:'';if(window.__BASE){var _f=window.fetch;window.fetch=function(u,o){if(typeof u==='string'&&u.charAt(0)==='/'&&u.indexOf('/embed/')!==0)u=window.__BASE+u;return _f.call(this,u,o)}}})();
@@ -22,7 +19,7 @@
 </head>
 <body>
   <script>
-    if(document.documentElement.classList.contains('light-pending')){document.body.classList.add('light');document.documentElement.classList.remove('light-pending')}
+    (function(){var r=document.documentElement,m=r.className.match(/([a-z]+)-pending/);if(m){r.classList.add(m[1]);document.body.classList.add(m[1]);r.classList.remove(m[1]+'-pending')}if(r.classList.contains('in-iframe'))document.body.classList.add('in-iframe')})();
   </script>
 
   <!-- STICKY BREAK-EVEN DASHBOARD -->

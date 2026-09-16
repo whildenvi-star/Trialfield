@@ -32,6 +32,18 @@
   var FONT_KEY   = 'mru-font';
   var WEIGHT_KEY = 'mru-font-weight';
 
+  /* Must stay identical to DEFAULT_THEME in theme-boot.js — if the boot
+     script and the panel disagree, the page paints one theme and then
+     swaps to the other. scripts/sync-shared.sh --check enforces it. */
+  var DEFAULT_THEME = 'light';
+
+  /* An app may register one extra body-class theme (grain-tickets uses
+     'harvest'). Null everywhere else, which leaves the picker at two. */
+  var EXTRA_THEME = window.__THEME_EXTRA || null;
+  var EXTRA_LABEL = EXTRA_THEME
+    ? EXTRA_THEME.charAt(0).toUpperCase() + EXTRA_THEME.slice(1)
+    : '';
+
   var SCALES = [
     { label: 'XS',  value: 0.85 },
     { label: 'S',   value: 0.93 },
@@ -99,11 +111,12 @@
   if (savedScale) {
     document.documentElement.style.setProperty('--text-scale', savedScale);
   }
-  var savedTheme = localStorage.getItem(THEME_KEY);
-  // Light is the default — dark only when explicitly chosen
-  if (savedTheme !== 'dark') {
+  var savedTheme = localStorage.getItem(THEME_KEY) || DEFAULT_THEME;
+  if (savedTheme === 'light') {
     document.documentElement.classList.add('light');
     document.body ? document.body.classList.add('light') : document.addEventListener('DOMContentLoaded', function() { document.body.classList.add('light'); });
+  } else if (EXTRA_THEME && savedTheme === EXTRA_THEME) {
+    document.body ? document.body.classList.add(EXTRA_THEME) : document.addEventListener('DOMContentLoaded', function() { document.body.classList.add(EXTRA_THEME); });
   }
   var savedFont = localStorage.getItem(FONT_KEY);
   if (savedFont && savedFont !== 'jetbrains') applyFontVars(savedFont);
@@ -173,6 +186,7 @@
     var closeBtn = panel.querySelector('.sp-close');
     var dayBtn   = panel.querySelector('[data-theme="day"]');
     var nightBtn = panel.querySelector('[data-theme="night"]');
+    var extraBtn = panel.querySelector('[data-theme="extra"]');
     var sizeBtns = panel.querySelectorAll('.sp-size-btn');
     var fontBtns = panel.querySelectorAll('.sp-font-btn');
     var weightBtns = panel.querySelectorAll('.sp-weight-btn');
@@ -217,18 +231,27 @@
     // --- Theme Control ---
     function applyTheme(theme) {
       var meta = document.querySelector('meta[name="theme-color"]');
+
+      // Clear every theme first, so switching never leaves two classes on.
+      document.documentElement.classList.remove('light');
+      document.body.classList.remove('light');
+      if (EXTRA_THEME) document.body.classList.remove(EXTRA_THEME);
+      [dayBtn, nightBtn, extraBtn].forEach(function (b) {
+        if (b) b.classList.remove('active');
+      });
+
       if (theme === 'light') {
         document.documentElement.classList.add('light');
         document.body.classList.add('light');
         if (meta) meta.content = '#f8fafc';
-        dayBtn.classList.add('active');
-        nightBtn.classList.remove('active');
+        if (dayBtn) dayBtn.classList.add('active');
+      } else if (EXTRA_THEME && theme === EXTRA_THEME) {
+        document.body.classList.add(EXTRA_THEME);
+        if (meta) meta.content = '#f7f3eb';
+        if (extraBtn) extraBtn.classList.add('active');
       } else {
-        document.documentElement.classList.remove('light');
-        document.body.classList.remove('light');
         if (meta) meta.content = '#080a0f';
-        nightBtn.classList.add('active');
-        dayBtn.classList.remove('active');
+        if (nightBtn) nightBtn.classList.add('active');
       }
       localStorage.setItem(THEME_KEY, theme);
 
@@ -250,20 +273,19 @@
     }
 
     function getCurrentTheme() {
+      if (EXTRA_THEME && document.body.classList.contains(EXTRA_THEME)) return EXTRA_THEME;
       return document.body.classList.contains('light') ? 'light' : 'dark';
     }
 
     dayBtn.addEventListener('click', function () { applyTheme('light'); });
     nightBtn.addEventListener('click', function () { applyTheme('dark'); });
+    if (extraBtn) extraBtn.addEventListener('click', function () { applyTheme(EXTRA_THEME); });
 
     // Sync initial state
-    if (getCurrentTheme() === 'light') {
-      dayBtn.classList.add('active');
-      nightBtn.classList.remove('active');
-    } else {
-      nightBtn.classList.add('active');
-      dayBtn.classList.remove('active');
-    }
+    var initTheme = getCurrentTheme();
+    if (EXTRA_THEME && initTheme === EXTRA_THEME && extraBtn) extraBtn.classList.add('active');
+    else if (initTheme === 'light') dayBtn.classList.add('active');
+    else nightBtn.classList.add('active');
 
     // --- Text Size Control ---
     function applyScale(value) {
@@ -343,7 +365,7 @@
 
     // --- Reset ---
     resetBtn.addEventListener('click', function () {
-      applyTheme('light'); // light is the platform default
+      applyTheme(DEFAULT_THEME);
       applyScale(1);
       applyFont('jetbrains');
       applyWeight(500);
@@ -454,6 +476,12 @@
           '<button class="sp-theme-btn" data-theme="night" aria-label="Night theme">' +
             '&#9790; Night' +
           '</button>' +
+          // Only rendered where the app registered one (grain-tickets).
+          (EXTRA_THEME
+            ? '<button class="sp-theme-btn" data-theme="extra" aria-label="' + EXTRA_LABEL + ' theme">' +
+                '&#9789; ' + EXTRA_LABEL +
+              '</button>'
+            : '') +
         '</div>' +
       '</div>' +
 
