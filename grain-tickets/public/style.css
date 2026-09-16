@@ -759,6 +759,48 @@ body.show-all-cols .col-secondary { display: table-cell; }
   color: var(--pill-manual-text);
 }
 
+/* Marketing sync pills */
+.status-pill.badge-mktsync-applied {
+  background: var(--pill-mktsync-applied-bg);
+  color: var(--pill-mktsync-applied-text);
+}
+
+.status-pill.badge-mktsync-unapplied {
+  background: var(--pill-mktsync-unapplied-bg);
+  color: var(--pill-mktsync-unapplied-text);
+}
+
+.status-pill.badge-mktsync-pending {
+  background: var(--pill-mktsync-pending-bg);
+  color: var(--pill-mktsync-pending-text);
+}
+
+.status-pill.badge-mktsync-no-buyer {
+  background: var(--pill-mktsync-no-buyer-bg);
+  color: var(--pill-mktsync-no-buyer-text);
+}
+
+.status-pill.badge-mktsync-skipped {
+  background: var(--pill-mktsync-skipped-bg);
+  color: var(--pill-mktsync-skipped-text);
+}
+
+.status-pill.badge-mktsync-error {
+  background: var(--pill-mktsync-error-bg);
+  color: var(--pill-mktsync-error-text);
+}
+
+.mktsync-contract {
+  display: block;
+  margin-top: 0.15em;
+  font-size: var(--size-xs);
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 14ch;
+}
+
 /* Batch bar */
 .batch-bar {
   display: flex;

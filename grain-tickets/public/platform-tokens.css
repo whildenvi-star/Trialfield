@@ -143,6 +143,21 @@ body.harvest {
   --pill-unreconciled-text: #64748b;
   --pill-manual-bg:         rgba(255, 149, 0, 0.15);
   --pill-manual-text:       #7a4500;
+
+  /* Marketing sync pill tokens — Phase 17 (skipped/error kept visually
+     distinct: different remediation paths, unknown-variant vs push failure) */
+  --pill-mktsync-applied-bg:    rgba(45, 90, 39, 0.12);
+  --pill-mktsync-applied-text:  #2d5a27;
+  --pill-mktsync-unapplied-bg:  rgba(100, 116, 139, 0.12);
+  --pill-mktsync-unapplied-text: #64748b;
+  --pill-mktsync-pending-bg:    rgba(184, 125, 10, 0.15);
+  --pill-mktsync-pending-text:  #b87d0a;
+  --pill-mktsync-no-buyer-bg:   rgba(100, 116, 139, 0.08);
+  --pill-mktsync-no-buyer-text: #94a3b8;
+  --pill-mktsync-skipped-bg:    rgba(217, 119, 6, 0.15);
+  --pill-mktsync-skipped-text:  #b45309;
+  --pill-mktsync-error-bg:      rgba(155, 28, 28, 0.12);
+  --pill-mktsync-error-text:    #9b1c1c;
 }
 
 /* Hide legacy theme toggles — settings panel is the single source */
