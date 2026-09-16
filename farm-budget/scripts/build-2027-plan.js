@@ -4,7 +4,7 @@
 // Builds data/data-2027.json — the 2027 plan — from the live 2026 data.
 //
 // Rotation (owner's rules, 2026-09-09):
-//   Conventional: canning + soybean fields -> Yellow Corn; corn -> RR Soybeans.
+//   Conventional: canning + soybean fields -> Yellow Corn; corn -> Enlist Soybeans.
 //   Organic: one step around corn -> soy -> wheat -> corn.
 //   Crops outside those rules CARRY FORWARD and are flagged in the report —
 //   perennials (Peppermint), small grains (Seed Rye, Kernza, Barley), ORG Peas.
@@ -28,13 +28,13 @@ const ROTATION = {
   'Peas': 'Yellow Corn',
   'Snap Beans': 'Yellow Corn',
   'Lima Beans': 'Yellow Corn',
-  'RR Soybeans': 'Yellow Corn',
+  'Enlist Soybeans': 'Yellow Corn',
   'High Oil Soybeans': 'Yellow Corn',
   'Non-GMO Seed Grade Beans': 'Yellow Corn',
   'Soybeans': 'Yellow Corn',
   // conventional: corn -> beans
-  'Yellow Corn': 'RR Soybeans',
-  'White corn': 'RR Soybeans',
+  'Yellow Corn': 'Enlist Soybeans',
+  'White corn': 'Enlist Soybeans',
   // organic wheel: corn -> soy -> wheat -> corn
   'ORG Blue Corn': 'ORG Soybeans',
   'ORG Seed Corn': 'ORG Soybeans',

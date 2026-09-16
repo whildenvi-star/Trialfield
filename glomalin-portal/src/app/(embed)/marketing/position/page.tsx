@@ -1,6 +1,6 @@
 // Marketing position widget — chrome-less embed for the MACRO dashboard.
 // Sales vs projected for the four primary crops (Shell Corn, Non-GMO Yellow
-// Corn, RR Soybeans, Food Beans — which pools High Oil Soybeans) plus
+// Corn, Enlist Soybeans, Food Beans — which pools High Oil Soybeans) plus
 // one-line quick info on the specialty crops. Owners additionally get a
 // WAP · COP · F-IT line per crop; office rows arrive with financial keys
 // stripped server-side, so that line simply never renders for them.
@@ -22,7 +22,7 @@ type VariantVolume = OfficeCommodityRollupRow['variants'][number] &
 const PRIMARY: Array<{ variants: string[]; label: string }> = [
   { variants: ['Shell Corn'], label: 'Shell Corn' },
   { variants: ['Non-GMO Yellow Corn'], label: 'Non-GMO Corn' },
-  { variants: ['Soybeans'], label: 'RR Soybeans' },
+  { variants: ['Soybeans'], label: 'Enlist Soybeans' },
   { variants: ['Non-GMO Food Beans', 'High Oil Soybeans'], label: 'Food Beans' },
 ]
 

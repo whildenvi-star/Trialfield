@@ -92,7 +92,7 @@ describe('buildEnterpriseRollup — pool math', () => {
 
 describe('buildEnterpriseRollup — budget join', () => {
   const budgetRows = [
-    { crop: 'RR Soybeans', acres: 533.2, avgYield: 62.5, projectedTotal: 33325, cop: 8.71 },
+    { crop: 'Enlist Soybeans', acres: 533.2, avgYield: 62.5, projectedTotal: 33325, cop: 8.71 },
     { crop: 'High Oil Soybeans', acres: 493.3, avgYield: 60, projectedTotal: 29598, cop: 9.1 },
     { crop: 'Soybeans', acres: 254.1, avgYield: 58, projectedTotal: 14738, cop: 9.4 },
   ]
@@ -110,10 +110,10 @@ describe('buildEnterpriseRollup — budget join', () => {
     // COP is projection-weighted across crop lines
     expect(row.copPerBu).toBeGreaterThan(8.7)
     expect(row.copPerBu).toBeLessThan(9.4)
-    // the marketing variant "Soybeans" (RR) maps to budget crop "RR Soybeans"
+    // the marketing variant "Soybeans" (Enlist E3) maps to budget crop "Enlist Soybeans"
     const rr = row.variants.find((v) => v.variantName === 'Soybeans')!
     expect(rr.acres).toBeCloseTo(533.2, 1)
-    expect(rr.budgetCropNames).toEqual(['RR Soybeans'])
+    expect(rr.budgetCropNames).toEqual(['Enlist Soybeans'])
   })
 
   it('budget crops with no contracts still produce commodity + variant rows', () => {
@@ -143,7 +143,7 @@ describe('buildEnterpriseRollup — budget join', () => {
 })
 
 describe('buildEnterpriseRollup — blended price at today CBOT', () => {
-  const budgetRows = [{ crop: 'RR Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
+  const budgetRows = [{ crop: 'Enlist Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
 
   it('values the unpriced remainder of the projection at today futures', () => {
     const [row] = buildEnterpriseRollup(baseInput({
@@ -172,7 +172,7 @@ describe('buildEnterpriseRollup — blended price at today CBOT', () => {
 })
 
 describe('buildEnterpriseRollup — per-variant F-IT', () => {
-  const budgetRows = [{ crop: 'RR Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
+  const budgetRows = [{ crop: 'Enlist Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
 
   it('gives the variant its own blend, matching the commodity row when there is one variant', () => {
     const [row] = buildEnterpriseRollup(baseInput({
@@ -364,7 +364,7 @@ describe('buildEnterpriseRollup — tier wall (futures vs tracking)', () => {
 })
 
 describe('buildEnterpriseRollup — F-IT projected basis on the remainder', () => {
-  const budgetRows = [{ crop: 'RR Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
+  const budgetRows = [{ crop: 'Enlist Soybeans', acres: 1000, avgYield: 60, projectedTotal: 60000, cop: 9 }]
   const variantsWithBasis: RollupVariantMeta[] = [
     { id: 'v-rr', name: 'Soybeans', cropYear: 2026, projectedBasis: -0.5, commodity: { name: 'Soybeans', symbol: 'S' } },
   ]

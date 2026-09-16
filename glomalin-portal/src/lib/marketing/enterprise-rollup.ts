@@ -11,7 +11,7 @@
 //     so premium-carrying sales enter the pool at their futures-equivalent.
 //
 // Rollup rows are commodity × crop year, with variant sub-rows keyed by the
-// farm-budget crop line (the true enterprise grain: "RR Soybeans" vs
+// farm-budget crop line (the true enterprise grain: "Enlist Soybeans" vs
 // "High Oil Soybeans" vs "Soybeans" stay distinct there).
 
 import { computePosition, isPricedContract } from './position'
@@ -49,7 +49,7 @@ export const ENTERPRISE_CROSSWALK: CrosswalkEntry[] = [
   { variantName: 'Organic Yellow Corn', budgetCrops: ['ORG Yellow Corn'], ticketCrops: ['Organic Yellow Corn'], premiumDefault: 0, tier: 'tracking' },
   { variantName: 'Seed Corn', budgetCrops: ['ORG Seed Corn'], ticketCrops: [], premiumDefault: 0, tier: 'tracking' }, // PER_ACRE — bushel math excluded anyway
   // Soybeans
-  { variantName: 'Soybeans', budgetCrops: ['RR Soybeans'], ticketCrops: ['RR Soybeans', 'Enlist Soybeans'], premiumDefault: -0.75, tier: 'futures' },
+  { variantName: 'Soybeans', budgetCrops: ['Enlist Soybeans'], ticketCrops: ['Enlist Soybeans', 'RR Soybeans'], premiumDefault: -0.75, tier: 'futures' },
   { variantName: 'Non-GMO Food Beans', budgetCrops: ['Soybeans'], ticketCrops: ['Food Beans', 'Pioneer 21A20 Food beans'], premiumDefault: 1.5, tier: 'futures' },
   { variantName: 'High Oil Soybeans', budgetCrops: ['High Oil Soybeans'], ticketCrops: ['High Oil Soybeans'], premiumDefault: 2.15, tier: 'futures' },
   // Gro Alliance SEED 26-403: $3.75/raw bu premium, priced off CBOT directly
