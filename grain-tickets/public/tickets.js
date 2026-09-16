@@ -843,7 +843,7 @@
     });
   }
 
-  var TOTAL_COLS = 16; // primary (7) + secondary (8) + actions = 16
+  var TOTAL_COLS = 17; // primary (7) + marketing sync (1) + secondary (8) + actions = 17
 
   // Sort headers
   document.querySelectorAll('#ticket-table th[data-sort]').forEach(function (th) {
@@ -950,6 +950,7 @@
         html += '<td class="net-bu-cell"><span style="color:var(--text-light);font-size:var(--size-xs)">pending</span></td>';
         html += '<td class="number">' + util.formatNum(b.moisture, 1) + '</td>';
         html += '<td>' + statusBadge + '</td>';
+        html += '<td><span style="color:var(--text-light);font-size:var(--size-xs)">pending</span></td>';
         html += '<td class="col-secondary">' + ticketLabel + '</td>';
         html += '<td class="col-secondary number">' + util.formatNum(b.netWeight, 0) + '</td>';
         html += '<td class="col-secondary number">' + util.formatNum(b.fm, 2) + '</td>';
@@ -1008,6 +1009,23 @@
         html += '<td class="net-bu-cell">' + util.formatNum(c.netBU, 2) + '</td>';
         html += '<td class="editable number" data-field="moisture">' + util.formatNum(t.moisture, 1) + '</td>';
         html += '<td><span class="status-pill badge badge-' + reconStatus + '">' + reconLabel + '</span></td>';
+
+        var ms = t._marketingSync || { status: 'no-buyer' };
+        var msLabels = {
+          'no-buyer': 'Not synced (no buyer)',
+          pending:    'Pending sync',
+          applied:    'Applied' + (ms.appliedBushels != null ? ' (' + util.formatNum(ms.appliedBushels, 1) + ' bu)' : ''),
+          unapplied:  'Synced, unapplied',
+          skipped:    'Skipped: unknown crop',
+          error:      'Sync failed'
+        };
+        var msLabel = msLabels[ms.status] || 'Unknown';
+        html += '<td><span class="status-pill badge badge-mktsync-' + ms.status + '" title="' +
+          escapeHtml(ms.detail || '') + '">' + escapeHtml(msLabel) + '</span>';
+        if (ms.contractLabel) {
+          html += '<div class="mktsync-contract">' + escapeHtml(ms.contractLabel) + '</div>';
+        }
+        html += '</td>';
 
         // Secondary columns
         html += '<td class="col-secondary editable" data-field="ticketNo">' + escapeHtml(t.ticketNo || '') +
