@@ -12,6 +12,12 @@ const Anthropic = require('@anthropic-ai/sdk');
 const prisma = require('./lib/db');
 const cropSync = require('./lib/crop-sync');
 const { expectedDeductions } = require('./lib/discount-schedules');
+const {
+  classifyPushOutcome,
+  classifyLocalOutcome,
+  buildMarketingSyncView,
+  persistMarketingSyncResult
+} = require('./lib/marketing-sync.js');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -663,9 +669,14 @@ async function clearPushSkip(ticketId) {
 }
 
 async function pushDeliveryToMarketing(ticket, action) {
+  // Ticket row is already gone by the time a 'delete' push runs (DELETE/batch-delete
+  // routes call prisma.ticket.delete before invoking this function) — never attempt
+  // to write a status onto a row that no longer exists.
+  const canPersist = action !== 'delete';
   const token = process.env.ECOSYSTEM_TOKEN || process.env.EMBED_TOKEN;
   if (!token) {
     console.warn('pushDeliveryToMarketing: no ECOSYSTEM_TOKEN/EMBED_TOKEN — skipping');
+    if (canPersist) await persistMarketingSyncResult(prisma, ticket.id, classifyLocalOutcome('no-token'));
     return;
   }
   const certUrl = process.env.CERT_SERVICE_URL || 'http://localhost:3004';
@@ -681,6 +692,7 @@ async function pushDeliveryToMarketing(ticket, action) {
       const buyer = await prisma.buyer.findUnique({ where: { id: ticket.buyerId } });
       if (!buyer) {
         console.warn(`pushDeliveryToMarketing: local buyer ${ticket.buyerId} not found for ticket ${ticket.id}`);
+        if (canPersist) await persistMarketingSyncResult(prisma, ticket.id, classifyLocalOutcome('buyer-missing'));
         return;
       }
       const cropConfig = await buildCropConfigObject(ticket.cropYear);
@@ -688,6 +700,7 @@ async function pushDeliveryToMarketing(ticket, action) {
       const computed = Calc.computeTicket(json, cropConfig);
       if (!computed.netBU || computed.netBU <= 0) {
         console.warn(`pushDeliveryToMarketing: ticket ${ticket.id} computed netBU ${computed.netBU} — skipping`);
+        if (canPersist) await persistMarketingSyncResult(prisma, ticket.id, classifyLocalOutcome('zero-bushels'));
         return;
       }
       payload = {
@@ -721,16 +734,20 @@ async function pushDeliveryToMarketing(ticket, action) {
     if (!response.ok) {
       console.error(`Marketing push: ticket ${ticket.id} -> http-${response.status}`, result.error || '');
       if (payload.action !== 'delete') await recordPushSkip(ticket, `http-${response.status}: ${result.error || 'error'}`);
+      if (canPersist) await persistMarketingSyncResult(prisma, ticket.id, classifyPushOutcome({ ok: false, httpStatus: response.status, result }));
     } else if (result.status === 'skipped') {
       console.warn(`Marketing push: ticket ${ticket.id} -> skipped (${result.reason || 'unknown'}${result.cropName ? `: no variant "${result.cropName}" for ${result.cropYear}` : ''})`);
       if (payload.action !== 'delete') await recordPushSkip(ticket, result.reason || 'skipped');
+      if (canPersist) await persistMarketingSyncResult(prisma, ticket.id, classifyPushOutcome({ ok: true, result }));
     } else {
       console.log(`Marketing push: ticket ${ticket.id} -> ${result.status}${result.applyOutcome ? ` (${result.applyOutcome}, ${result.appliedBushels || 0} bu applied)` : ''}`);
       await clearPushSkip(ticket.id);
+      if (canPersist) await persistMarketingSyncResult(prisma, ticket.id, classifyPushOutcome({ ok: true, result }));
     }
   } catch (e) {
     console.error(`Marketing push: ticket ${ticket.id} failed:`, e.message);
     if (payload && payload.action !== 'delete') await recordPushSkip(ticket, `push-failed: ${e.message}`);
+    if (canPersist) await persistMarketingSyncResult(prisma, ticket.id, classifyPushOutcome({ error: e }));
   }
 }
 
