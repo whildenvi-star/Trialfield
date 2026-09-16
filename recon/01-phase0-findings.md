@@ -1,6 +1,13 @@
 # Phase 0 — data correctness: findings and proposed writes
 
-**Status: matcher fix DEPLOYED. No data store has been written. Everything below Step 1 is a proposal awaiting approval.**
+**Status: matcher fix DEPLOYED. Steps 2, 3 and 4 are DONE — 3 and 4 by a concurrent session while
+this ran. I have written nothing to any data store. Steps 5, 6 and 7 are open.**
+
+> **Read this first.** Production moved under this analysis. A second session — your other Claude —
+> created both bean enterprises and repointed Brad Inman's registry id at **17:25**, between my
+> 16:31 snapshot and this write-up. I re-pulled and re-verified everything; the sections below are
+> against production as of 17:30. The independent check in Step 6 confirms their work landed
+> correctly: the Carrol and Christopherson hits are gone from the sweep.
 
 Backup taken before anything: `/var/backups/farm-ops/pre-phase0-20260916-163037/` on the droplet
 (14 MB — all five JSON stores, `data-2027.json`, the documents tree as a tarball, and fresh
@@ -80,15 +87,39 @@ Three defects, all cosmetic-to-arithmetic, none structural:
 
 ---
 
-## Step 3 — Carrol and Delong Christopherson: NOT sorted out. Both still misplaced.
+## Step 3 — Carrol and Delong Christopherson: DONE at 17:25 by the other session
 
-The handoff says you had already sorted the soybean-bottom acres. Production says otherwise:
+At 16:31 neither bean enterprise existed and both post-bean invoices were still confirmed onto the
+corn rows. At 17:25 both were created and the rows moved — not copied, which is the part that
+mattered:
 
-- **`fld_009` Carrol** carries exactly one enterprise: `fld_0642` White corn, 149.8 / 137.1. No
-  soybean row under any spelling.
-- **`fld_013` Delong Christopherson** carries exactly one: `fld_1195` Yellow Corn, 59.8 / 47.7.
-  No soybean row.
-- Both post-bean invoices are still confirmed onto the **corn** enterprises.
+| | Carrol | Delong Christopherson |
+|---|---|---|
+| new row | `fld_mu4cuu70_jrww` | `fld_mu4cuu70_s2wy` |
+| crop | Enlist Soybeans | Enlist Soybeans |
+| plantedAcres | **16.5** | **25.4** |
+| seed | P23Z82E (new to the book) | 16Z25E |
+| rows moved | 7 (8004409, $699.51) | 7 (8004410, $547.05) |
+| corn row | White corn, inputs 28 → 21, planted 137.1 → **135.6** | Yellow Corn, inputs 30 → 23, planted 47.7 → **47.1** |
+
+So the acreage questions I was going to ask you are answered: 16.5 at Carrol and 25.4 at
+Christopherson, your official figures, which deliberately push both parcels past their `acres`
+value. Noted — FSA planted acres and parcel acres never agree and should not be "reconciled".
+
+**Two fields did not come along with the rows.** On all 14 moved rows:
+
+- `invoiceAcres` still carries the **corn** enterprise's footprint — 137.1 on Carrol's seven rows,
+  47.7 on Christopherson's. The passes were billed on 15 and 17 acres.
+- `invoiceQtyTotal` still carries the **acreage** rather than the product quantity: every line on
+  8004409 says 15 and every line on 8004410 says 17. The book says 4.25 gal Enlist One, 4.25 gal
+  Interline, 1.06 gal Volunteer, 2.55 gal crop oil, 34 lb AMS.
+
+Left alone, every per-acre figure on both bean enterprises is wrong by the ratio of those two
+acreages, and the quantities cannot be checked against the label rates that proved the 17 acres in
+the first place. This is the one piece of Step 3 still outstanding.
+
+<details>
+<summary>The rows as they were before the move, for the record</summary>
 
 ### 8004409 on Carrol's White corn — 7 rows, $699.51
 
@@ -114,35 +145,22 @@ The handoff says you had already sorted the soybean-bottom acres. Production say
 | 19 | Enlist | 17 | Gal | $75.51 | 47.7 |
 | 20 | Volunteer (2x2.5 Gal) | 17 | Gal | $61.13 | 47.7 |
 
-Two things to notice on both: **`invoiceQtyTotal` holds the acreage, not the product quantity**
-(every line says 15, or 17), and `invoiceAcres` holds the corn enterprise's acreage rather than
-the sprayed 15 / 17. Whoever confirmed these took the corn row's footprint. The stored $547.05 on
-Christopherson is also short of the $792.48 the recon doc quoted, because the per-line costs are
-mixed rate-and-extended.
+The stored $547.05 on Christopherson is short of the $792.48 the earlier recon quoted, because the
+per-line costs are a mix of rates and extendeds.
 
-### Proposed writes (need approval, and need one number from you)
+</details>
 
-1. Create `Carrol / Enlist Soybeans` on `fld_009`. Seed: the recon evidence says an E3 program
-   (Enlist One + Interline), which `1063554` "2026 Enlist Treatment" backs up. Acres: 149.8 − 136.4
-   corn = **13.4**; DeLong sprayed 15. **Which number do you want?**
-2. Create `Delong Christopherson / Enlist Soybeans` on `fld_013`. **I still need the acreage.** The
-   tank mix on 8004410 was built to exactly 17.0 ac (six products, six clean label rates); your
-   records reportedly say 25.4, which appears nowhere in the data. 17 is proven, 25.4 is not.
-3. Move the 7 + 7 rows onto the new enterprises — move, not copy — and correct `invoiceAcres` to
-   15 and 17 and `invoiceQtyTotal` to the book quantities (4.25 gal Enlist One, 4.25 gal Interline,
-   1.06 gal Volunteer, 2.55 gal crop oil, 34 lb AMS on 8004410).
-4. The corn enterprises' chemical cost/ac falls by $699.51 and $547.05 respectively.
-
-There is also an open agronomic question the recon raised and nothing has answered: Resicore Rev
-went on 145 ac at Carrol on 4/23 but only 136.4 ended as corn, so ~8.6 ac of mesotrione/clopyralid
-ground may have gone to beans. That belongs in the enterprise record whichever way it went.
+Still unanswered, and it is agronomic rather than arithmetic: Resicore Rev went on 145 ac at Carrol
+on 4/23 but only 136.4 ended as corn, so roughly 8.6 ac of mesotrione/clopyralid ground may have
+gone to beans. Both carry soybean rotational restrictions measured in months. That belongs in the
+enterprise record whichever way it went.
 
 ---
 
-## Step 4 — `fld_027`: the split already exists. One pointer is wrong.
+## Step 4 — `fld_027`: no split was needed. Done in `data.json`, still open in `data-2027.json`.
 
-The handoff asks how to split the registry id and reassign 35 rows. **No split is needed.** The
-registry, the portal and organic-cert all already treat these as two separate fields:
+The handoff asks how to split the registry id and reassign 35 rows. **No split was needed**, and no
+rows moved. The registry, the portal and organic-cert already treated these as two separate fields:
 
 | store | Inman | Brad Inman's |
 |---|---|---|
@@ -159,14 +177,15 @@ unfixed.
 (8002671, 8003351, 1061994) and 19 on `fld_1836` (8002672, 8003145, 8003466, 1061996). The
 registry pointer is the only thing pointing at the wrong ground.
 
-### Proposed write
+### What was done, and what is left
 
-One field on one row, in two files:
+`data.json` now reads `fld_1462.registryFieldId: "fld_028"` — done at 17:25. Verified: one `fld_027`
+reference and one `fld_028` reference where there used to be two and none.
 
-```
-farm-budget/data/data.json       fields[25].registryFieldId: "fld_027" → "fld_028"
-farm-budget/data/data-2027.json  same row (the 2027 plan carries the same two references)
-```
+**`data-2027.json` was not touched: it still carries two `fld_027` references and no `fld_028`.**
+The 2027 plan has the same two rows and the same mis-link, so next year's plan still points Brad
+Inman's at Inman's ground. One field, one file — it needs the same edit, and it is droplet-only
+(rsync-guarded), so it has to be done there.
 
 Nothing else in any store references `fld_027`: `fsa-acres`, `seed-inventory` and `meristem-malt`
 have zero references, and grain-tickets keys farms by name, not registry id.
@@ -243,13 +262,16 @@ not a pass. Inference is what put a bean pass on a corn row in the first place.
 950 input rows, 573 invoiced, 339 crop-relevant after skipping neutral lines (water, AMS, crop oil,
 application, fertiliser, tonnage tax, seed treatment).
 
-**`wrong-crop` — 8 invoiced rows, $3,582.78**
+**`wrong-crop` — 2 invoiced rows, $2,874.36.** Run against the 16:31 snapshot it found 8 rows worth
+$3,582.78; run again after the 17:25 writes, the Carrol and Christopherson hits are gone. That is
+the check independently confirming the other session's fix, having been written before it happened
+and knowing nothing about it.
 
 | enterprise | invoice | rows | $ | verdict |
 |---|---|---|---|---|
-| Carrol / White corn | 8004409 | Interline, Enlist, Volunteer | $447.25 | real — the Step 3 bean pass. Volunteer is clethodim; it kills corn |
-| Delong Christopherson / Yellow Corn | 8004410 | Interline, Enlist, Volunteer | $261.17 | real — the Step 3 bean pass |
-| Townline / Hybrid Seed Rye | 8004732 | Durango DMA, Interline | $2,874.36 | **new, and it is a labelling defect, not a misplacement** |
+| ~~Carrol / White corn~~ | 8004409 | Interline, Enlist, Volunteer | $447.25 | **cleared at 17:25.** Volunteer is clethodim — it kills corn |
+| ~~Delong Christopherson / Yellow Corn~~ | 8004410 | Interline, Enlist, Volunteer | $261.17 | **cleared at 17:25** |
+| Townline / Hybrid Seed Rye | 8004732 | Durango DMA, Interline | $2,874.36 | **open, and it is a labelling defect, not a misplacement** |
 
 Townline is worth a look: 8004732 *is* Townline's "Post Harvest Burndown" and it *is* on the right
 enterprise, but all six rows are stored with `operationGroup: "Post-emerge"`. A post-harvest
@@ -263,16 +285,17 @@ ground, and no in-crop trait-dependent chemistry is on a food-bean enterprise. T
 DF 214 programs run on Forsyte, Zidua, Volunteer and Cobra, all of which are conventional-safe.
 That is a clean result and worth stating plainly.
 
-**`unknown-trait` — 20 invoiced rows, $19,926.21.** Every one is Enlist One or glyphosate on an
-enterprise named "Enlist Soybeans" — Airport, Brad Inman's, Torkelson East, suiter, Daun, Inman,
-Bakke. They are almost certainly fine; they flag because **0 of 20 soybean enterprises record a
-seed trait**. Setting the trait clears all 20.
+**`unknown-trait` — 24 invoiced rows, $20,519.29** (20 / $19,926.21 before the two new bean
+enterprises arrived). Every one is Enlist One or glyphosate on an enterprise named "Enlist
+Soybeans" — Airport, Brad Inman's, Torkelson East, suiter, Daun, Inman, Bakke, and now Carrol and
+Christopherson. They are almost certainly fine; they flag because **0 of 22 soybean enterprises
+record a seed trait**. Setting the trait clears all 24.
 
 ### The trait table you need to fill
 
 | enterprise | crop | seed | proposed trait |
 |---|---|---|---|
-| Airport, Brad Inman's, Torkelson East, suiter, Daun, Inman, Bakke, Wes's dbl-crop | Enlist Soybeans | 16Z25E / P26Z86E | `ENLIST_E3` |
+| Airport, Brad Inman's, Torkelson East, suiter, Daun, Inman, Bakke, Wes's dbl-crop, **Carrol**, **Christopherson** | Enlist Soybeans | 16Z25E / P26Z86E / P23Z82E | `ENLIST_E3` |
 | OMNI BIG SOUTH, Simpsons, Kopp | ORG Soybeans | VIKING 2155 | `ORGANIC` |
 | Goat pasture | ORG Natto Beans | PS162 | `ORGANIC` |
 | Hoff | Non-GMO Seed Grade Beans | SG1499H | `CONVENTIONAL` |
@@ -338,23 +361,27 @@ Changed: `grain-tickets/public/farms.js`, `public/style.css` (one class), `publi
 
 ## What I need from you
 
-**Numbers**
+**One number**
 
-1. Carrol bean enterprise acres: **13.4** (149.8 − 136.4 corn) or **15** (what DeLong sprayed)?
-2. Christopherson bean enterprise acres: **17** (proven by the tank mix) or **25.4** (your records,
-   unverifiable here)?
-3. DF 262 and DF 214 seed trait — `CONVENTIONAL`, or something else?
+1. DF 262 and DF 214 seed trait — `CONVENTIONAL`, or something else? It decides whether glyphosate
+   or glufosinate may ever be confirmed on seven enterprises (Delong-Meyer, Klug Davis, Lake,
+   Murray, Twist Farm, Wes's, Gessert). Nothing wrong is on them today.
 
 **Approvals, each independent**
 
-4. Step 3: create the two soybean enterprises and move 14 rows ($1,246.56) off the corn rows.
-5. Step 4: repoint `fld_1462.registryFieldId` to `fld_028`, in `data.json` and `data-2027.json`.
-6. Step 5: Wes's acreage corrections; remove 8003075 from the barley row; add 8002350, 8004257,
-   8004735. And a decision on 1063019 (soil sampling) and the three small-grain blend invoices.
-7. Step 6: write the rule table and `seedTrait` into the store, then wire the check into
+2. **Step 3 leftovers:** correct `invoiceAcres` (137.1 → 15, 47.7 → 17) and `invoiceQtyTotal`
+   (acreage → book quantities) on the 14 moved rows.
+3. **Step 4 leftover:** the same `fld_027` → `fld_028` edit in `data-2027.json` on the droplet.
+4. **Step 5:** Wes's acreage corrections; remove 8003075 from the barley row ($1,576.62 of
+   Buchanon's fungicide, double-counted); add 8002350 ($2,208.89), 8004257 ($1,021.99), 8004735
+   ($839.53). Plus a decision on 1063019 (soil sampling) and the three small-grain blend invoices.
+5. **Step 6:** write the rule table and `seedTrait` into the store, then wire the check into
    `match.js` so mismatches reach the review queue.
-8. Step 7: deploy the grain-tickets change.
-9. Optional: the backfill that recomputes stored document proposals so the review queue reflects
+6. **Step 6 side finding:** Townline 8004732 — regroup the six rows from "Post-emerge" to a burndown
+   group, fix row 23's quantity (16.17 → 16.710 gal), and add the missing DeLco Hammer Down line
+   ($131.65).
+7. **Step 7:** deploy the grain-tickets change (committed, not deployed).
+8. Optional: the backfill that recomputes stored document proposals so the review queue reflects
    the new matcher.
 
 **Also unfixed, from the earlier recon, and none of it blocking**
