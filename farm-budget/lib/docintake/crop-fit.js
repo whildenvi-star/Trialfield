@@ -209,6 +209,36 @@ function isBurndownContext(row, invoice) {
     /burndown|pre plant|preplant/.test(c);
 }
 
+// The third way a non-selective herbicide is legal over a crop that has no
+// trait for it: the crop is never touched. A hooded sprayer bands between the
+// rows under a shield, and so does a directed or lay-by rig. W. Hughes runs a
+// "Hooded Redball" for exactly this on the conventional food beans — PowerMax
+// and Liberty on DF 262 are not mistakes, they are banded under the hood.
+//
+// Read in order of how explicit it is: a method recorded on the row, the note,
+// the applicator machinery the enterprise carries, then the application-service
+// line's own name ("Application - Hooded").
+const SHIELDED = /hood|shield|direct|band|layby|lay by|between the row|inter row|interrow/;
+
+function isShieldedApplication(row, field, invoice) {
+  if (row && row.applicationMethod && SHIELDED.test(normalize(row.applicationMethod))) return true;
+  if (row && SHIELDED.test(normalize(row.statusNote))) return true;
+  if (row && /application/.test(normalize(row.productName)) && SHIELDED.test(normalize(row.productName))) return true;
+  if (invoice && SHIELDED.test(normalize(invoice.comments))) return true;
+  const machinery = (field && field.machinery) || [];
+  for (let i = 0; i < machinery.length; i++) {
+    if (SHIELDED.test(normalize(machinery[i].implementName))) return true;
+  }
+  return false;
+}
+
+// Would this product be legal here ONLY under a shield? Used to tell a real
+// trait violation apart from a pass whose method simply was not written down.
+function shieldWouldExplain(rule) {
+  return rule.id === 'rule_glyphosate' || rule.id === 'rule_glufosinate' ||
+    rule.id === 'rule_24d_ester' || rule.id === 'rule_24d_choline';
+}
+
 function rulesFor(store) {
   const t = store && store.productCropRules;
   return (Array.isArray(t) && t.length) ? t : RULE_SEED;
@@ -255,9 +285,11 @@ function checkRow(store, field, row, invoice) {
   }
 
   const burndown = isBurndownContext(row, invoice);
+  const shielded = isShieldedApplication(row, field, invoice);
 
   if (family && (rule.families || []).indexOf(family) < 0) {
     if (burndown && rule.burndownOk) return { verdict: 'ok' };
+    if (shielded && shieldWouldExplain(rule)) return { verdict: 'ok' };
     return {
       verdict: 'wrong-crop', rule: rule.id,
       reason: name + ' (' + rule.ai + ') is not labelled on ' + crop + '. ' + rule.note
@@ -268,6 +300,7 @@ function checkRow(store, field, row, invoice) {
   // check against.
   if (family === 'soybean' && rule.traits) {
     if (burndown && rule.burndownOk) return { verdict: 'ok' };
+    if (shielded && shieldWouldExplain(rule)) return { verdict: 'ok' };
     if (trait === TRAIT_UNKNOWN) {
       return {
         verdict: 'unknown-trait', rule: rule.id,
@@ -276,6 +309,17 @@ function checkRow(store, field, row, invoice) {
       };
     }
     if (rule.traits.indexOf(trait) < 0) {
+      // A shield would make this legal, and the pass does not say how it was
+      // applied. That is a missing record, not a wrong pass — and calling it a
+      // violation would train the operator to dismiss the queue.
+      if (shieldWouldExplain(rule)) {
+        return {
+          verdict: 'unrecorded-method', rule: rule.id,
+          reason: name + ' (' + rule.ai + ') over ' + trait + ' beans is legal banded under a hood ' +
+            'or directed between the rows, and nothing on this pass says how it was applied. ' +
+            'Record the applicator — the Hooded Redball is in the implement list — and this resolves itself.'
+        };
+      }
       return {
         verdict: 'wrong-trait', rule: rule.id,
         reason: name + ' (' + rule.ai + ') needs ' + rule.traits.join(' or ') + ' beans; ' +

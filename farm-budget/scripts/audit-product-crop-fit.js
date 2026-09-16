@@ -114,7 +114,7 @@ const plannedHits = hits.filter(function (h) { return !h.invoiceNumber; });
 const byVerdict = {};
 invoicedHits.forEach(function (h) { (byVerdict[h.verdict] = byVerdict[h.verdict] || []).push(h); });
 
-const ORDER = ['wrong-crop', 'wrong-trait', 'organic', 'unknown-trait'];
+const ORDER = ['wrong-crop', 'wrong-trait', 'organic', 'unrecorded-method', 'unknown-trait'];
 ORDER.filter(function (v) { return byVerdict[v]; }).forEach(function (v) {
   const list = byVerdict[v];
   const dollars = list.reduce(function (s, h) { return s + h.cost; }, 0);
