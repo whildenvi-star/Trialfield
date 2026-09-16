@@ -232,8 +232,18 @@
           h += kvRow('&nbsp;&nbsp;· marketing', '<span title="' + esc(px.mktText) + '">' + esc(px.mktShort) + '</span>', 'fs-why');
         }
       }
+      // Read the COMPUTED aux total, not the field's legacy govPaymentsPerAcre —
+      // computeFieldBudget rebuilds this from auxPayments, so the stored property
+      // is stale (it still held the old $30/ac straw estimate on Buchanon).
+      // Not editable here for the same reason: an edit wrote the stale property,
+      // which changed this display but not the profit maths — worse than no edit.
+      // Aux lines are edited in the field editor, where they are itemised.
+      var auxLines = (f.auxPayments || []).map(function (a) {
+        return (a.label || 'payment') + ' ' + util.formatMoney(a.perAcre || 0);
+      }).join('  ·  ');
       h += kvRow('Income /AC', util.formatMoney(b.cropIncomePerAcre || 0)) +
-        kvRow('Gov Pmt /AC', editCell(cellN, 'fkey', 'govPaymentsPerAcre', util.formatMoney(f.govPaymentsPerAcre || 0)));
+        kvRow('Other Income /AC', '<span title="' + esc(auxLines || 'no aux payments') + '">' +
+          util.formatMoney(b.govPaymentsPerAcre || 0) + '</span>');
     }
     h += '</div>';
 

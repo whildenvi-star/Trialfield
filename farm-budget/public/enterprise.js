@@ -1254,7 +1254,8 @@
       { label: 'Price / Unit', key: 'pricePerUnit', src: 'budget', num: true, money: true },
       { label: 'Income / AC', key: 'cropIncomePerAcre', src: 'budget', num: true, money: true },
       { label: 'Income Total', key: 'cropIncomeTotal', src: 'budget', num: true, money: true },
-      { label: 'Gov Payments / AC', key: 'govPaymentsPerAcre', src: 'budget', num: true, money: true },
+      // Carries every aux payment line — CRP, DeLong GCS, STRAW and STRAW COST — not just gov programmes.
+      { label: 'Other Income / AC', key: 'govPaymentsPerAcre', src: 'budget', num: true, money: true },
       { type: 'header', label: 'PROFIT' },
       { label: 'Profit / AC', key: 'profitPerAcre', src: 'budget', num: true, money: true, highlight: true, profit: true },
       { label: 'Profit Farm (w/ Payments)', key: 'profitFarmWithPayments', src: 'budget', num: true, money: true, highlight: true, profit: true },
