@@ -9,18 +9,50 @@ import { CURRENT_CROP_YEAR } from '@/lib/config'
  * Creates a minimal CLU record with registry_field_id pre-wired so the FSA module
  * already has a placeholder row the user can fill in with real FSA numbers.
  *
- * Auth: EMBED_TOKEN query param (skipped in dev if EMBED_TOKEN not set).
+ * Auth: EMBED_TOKEN, supplied as an Authorization: Bearer header or (legacy)
+ * a ?token= query parameter. Fails CLOSED — if EMBED_TOKEN is not configured
+ * the route refuses every request rather than running unauthenticated.
+ *
  * Uses service role key to bypass RLS — this is a trusted server-to-server call.
  */
+
+/** Length-independent comparison, so a wrong token cannot be found byte by byte. */
+function tokensMatch(supplied: string, expected: string): boolean {
+  if (supplied.length !== expected.length) return false
+  let diff = 0
+  for (let i = 0; i < supplied.length; i++) {
+    diff |= supplied.charCodeAt(i) ^ expected.charCodeAt(i)
+  }
+  return diff === 0
+}
+
 export async function POST(request: Request) {
-  // Auth: check EMBED_TOKEN if configured
   const embedToken = process.env.EMBED_TOKEN
-  if (embedToken) {
-    const { searchParams } = new URL(request.url)
-    const token = searchParams.get('token')
-    if (token !== embedToken) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+
+  // Fail closed. Previously the whole check sat inside `if (embedToken)`, so a
+  // deploy with the variable missing or empty silently turned this into an
+  // unauthenticated, RLS-bypassing INSERT into clu_records.
+  if (!embedToken) {
+    console.error(
+      'webhook field-created: EMBED_TOKEN is not set — refusing request. ' +
+      'This endpoint writes with the service role key and must never run unauthenticated.'
+    )
+    return NextResponse.json(
+      { error: 'Server misconfigured: webhook authentication is not available' },
+      { status: 503 }
+    )
+  }
+
+  // Prefer the Authorization header; a token in the query string leaks into
+  // access logs, browser history and Referer headers. The query parameter is
+  // retained for the existing farm-registry caller and should be retired.
+  const authHeader = request.headers.get('authorization')
+  const suppliedToken = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : new URL(request.url).searchParams.get('token')
+
+  if (!suppliedToken || !tokensMatch(suppliedToken, embedToken)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   // Parse body
