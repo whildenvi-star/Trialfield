@@ -47,6 +47,17 @@
         var tickets = farmTicketMap[farmKey] || [];
         var byDest = {};
 
+        // Bushels per crop, kept separate from the start. A farm can deliver
+        // rye and barley in the same year and those bushels are not the same
+        // unit of anything — 56 lb of rye against 48 lb of barley — so the
+        // header can only total them crop by crop.
+        f.cropBU = {};
+        tickets.forEach(function (t) {
+          var crop = (t.crop || '').trim() || '(no crop)';
+          f.cropBU[crop] = (f.cropBU[crop] || 0) +
+            ((t._computed && t._computed.netBU) ? t._computed.netBU : 0);
+        });
+
         tickets.forEach(function (t) {
           var destKey = null;
           var destLabel = null;
@@ -165,23 +176,52 @@
     });
   }
 
+  // What one unit of this crop is called. The crop config carries no unit
+  // column, but its test weight says it outright: canning crops are configured
+  // at 2000 lb per unit because they sell by the ton, and hay at 1 because it
+  // sells by the pound. Labelling Gessert's 106 tons of peas "BU" would be the
+  // same mistake as adding them to the rye in the first place.
+  function cropUnit(crop) {
+    var cfg = (window.refData && window.refData.cropConfig) ? window.refData.cropConfig[crop] : null;
+    var tw = cfg ? Number(cfg.testWeight) : 0;
+    if (tw === 2000) return 'TON';
+    if (tw === 1) return 'LB';
+    return 'BU';
+  }
+
   function renderCards() {
     var grid = document.getElementById('farm-card-grid');
     var totalsStrip = document.getElementById('farm-totals-strip');
     if (!grid) return;
 
     var totalAcres = 0;
-    var totalBU = 0;
+    var cropTotals = {};
     filteredFarms.forEach(function (f) {
       totalAcres += (f.acres || 0);
-      totalBU += (f.totalBU || 0);
+      Object.keys(f.cropBU || {}).forEach(function (crop) {
+        cropTotals[crop] = (cropTotals[crop] || 0) + f.cropBU[crop];
+      });
     });
 
     if (totalsStrip) {
+      // One bushel figure per crop, never a sum across them. A single "Total BU"
+      // here used to add rye to barley to peas, which is a number with no
+      // meaning: the crops have different test weights, different contracts and
+      // different prices. Dollars pool across crops; bushels never do.
+      var crops = Object.keys(cropTotals).sort(function (a, b) {
+        return cropTotals[b] - cropTotals[a];
+      });
+      var cropHtml = crops.length
+        ? crops.map(function (crop) {
+            return '<span class="farm-crop-total">' + crop + ' <strong>' +
+              util.formatNum(cropTotals[crop], 0) + ' ' + cropUnit(crop) + '</strong></span>';
+          }).join(' &nbsp; ')
+        : '<span class="farm-crop-total">nothing delivered</span>';
+
       totalsStrip.innerHTML =
         '<strong>' + filteredFarms.length + '</strong> farms &nbsp;|&nbsp; ' +
         '<strong>' + util.formatNum(totalAcres, 1) + '</strong> acres &nbsp;|&nbsp; ' +
-        'Total: <strong>' + util.formatNum(totalBU, 2) + ' BU</strong>';
+        cropHtml;
     }
 
     if (filteredFarms.length === 0) {
@@ -222,10 +262,21 @@
         html += '</div>';
       }
 
+      // Same rule as the header: a farm that delivered two crops gets two
+      // bushel figures. Omni is the live case — organic wheat and organic seed
+      // wheat — and one "Total BU" stat there is a sum of two different things.
+      var cardCrops = Object.keys(f.cropBU || {});
       html += '<div class="farm-card-stats">';
       html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.acres, 1) + '</span><span class="farm-stat-label">Acres</span></div>';
-      html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.totalBU, 0) + '</span><span class="farm-stat-label">Total BU</span></div>';
-      html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.yieldPerAcre, 1) + '</span><span class="farm-stat-label">BU/AC</span></div>';
+      if (cardCrops.length > 1) {
+        cardCrops.sort(function (a, b) { return f.cropBU[b] - f.cropBU[a]; }).forEach(function (crop) {
+          html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.cropBU[crop], 0) +
+            '</span><span class="farm-stat-label">' + crop + ' ' + cropUnit(crop) + '</span></div>';
+        });
+      } else {
+        html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.totalBU, 0) + '</span><span class="farm-stat-label">Total BU</span></div>';
+        html += '<div class="farm-stat"><span class="farm-stat-value">' + util.formatNum(f.yieldPerAcre, 1) + '</span><span class="farm-stat-label">BU/AC</span></div>';
+      }
       html += '</div>';
 
       if (destHtml) {

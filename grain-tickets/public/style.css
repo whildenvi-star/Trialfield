@@ -932,6 +932,14 @@ td.number {
 
 .farm-totals-strip strong { color: var(--primary); }
 
+/* One chip per crop in the Farms header. Each carries its own bushel figure —
+   the strip deliberately has no combined total, because bushels of rye and
+   bushels of barley are not the same quantity. */
+.farm-crop-total {
+  display: inline-block;
+  white-space: nowrap;
+}
+
 .farm-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
