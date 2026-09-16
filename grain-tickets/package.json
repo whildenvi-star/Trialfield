@@ -8,7 +8,8 @@
     "import": "node import.js",
     "db:migrate": "npx prisma migrate dev",
     "db:studio": "npx prisma studio --port 5556",
-    "db:generate": "npx prisma generate"
+    "db:generate": "npx prisma generate",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.75.0",
