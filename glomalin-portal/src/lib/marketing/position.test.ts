@@ -196,3 +196,55 @@ describe("computePosition — projected basis placeholder", () => {
     expect(result.avgPriceCents).toBe(450)
   })
 })
+
+describe('take-all contracts', () => {
+  const takeAll = {
+    instrument: 'PRICED',
+    contractedBushels: 0,      // zeroed by design — no fixed quantity
+    buyerTakesAll: true,
+    finalCashPrice: 9.8378,
+  }
+
+  it('contributes nothing before anything is delivered', () => {
+    const p = computePosition([{ ...takeAll, appliedBushels: 0 }])
+    expect(p.contractedBu).toBe(0)
+    expect(p.pricedBu).toBe(0)
+    expect(p.avgPriceCents).toBe(0)
+  })
+
+  it('counts delivered bushels once applied — the Albert Lea barley case', () => {
+    const p = computePosition([{ ...takeAll, appliedBushels: 4709.99 }])
+    expect(p.contractedBu).toBeCloseTo(4709.99, 2)
+    expect(p.pricedBu).toBeCloseTo(4709.99, 2)
+    expect(p.avgPriceCents).toBe(984) // 9.8378 -> 984c
+  })
+
+  it('treats a missing appliedBushels as nothing delivered, not as contracted', () => {
+    const p = computePosition([{ ...takeAll, contractedBushels: 5000 }])
+    expect(p.contractedBu).toBe(0)
+  })
+
+  it('leaves ordinary contracts on contractedBushels', () => {
+    const p = computePosition([
+      { instrument: 'PRICED', contractedBushels: 1000, appliedBushels: 250, finalCashPrice: 10 },
+    ])
+    expect(p.contractedBu).toBe(1000)
+    expect(p.pricedBu).toBe(1000)
+  })
+
+  it('weights WAP by delivered bushels alongside a fixed contract', () => {
+    const p = computePosition([
+      { instrument: 'PRICED', contractedBushels: 1000, finalCashPrice: 10 },
+      { ...takeAll, appliedBushels: 1000, finalCashPrice: 12 },
+    ])
+    expect(p.contractedBu).toBe(2000)
+    expect(p.avgPriceCents).toBe(1100)
+  })
+
+  it('still excludes PER_UNIT take-all — rye is paid per unit, not per bushel', () => {
+    const p = computePosition([
+      { ...takeAll, paymentBasis: 'PER_UNIT', appliedBushels: 33370.02 },
+    ])
+    expect(p.contractedBu).toBe(0)
+  })
+})

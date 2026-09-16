@@ -34,6 +34,10 @@ export interface PositionSummary {
 export interface GrainContractForPosition {
   instrument: string
   contractedBushels: number
+  /** buyer takes all production — no fixed quantity, so contractedBushels is 0 */
+  buyerTakesAll?: boolean
+  /** bushels applied from deliveries; the real quantity for a take-all contract */
+  appliedBushels?: number
   paymentBasis?: string | null
   finalCashPrice?: number | null   // $/bu if known
   futuresPrice?: number | null     // $/bu
@@ -50,6 +54,20 @@ export interface PositionOptions {
    * actuals arrive. Contracts whose variant has no placeholder fall back to 0.
    */
   projectedBasisByVariantId?: Map<string, number>
+}
+
+/**
+ * Bushels this contract puts into the position.
+ *
+ * Take-all contracts carry no fixed quantity, so contractedBushels is 0 by
+ * design — there is genuinely nothing sold until the crop comes off. Once
+ * deliveries are applied the quantity IS known, and weighting by 0 would hide a
+ * delivered, settled contract entirely (Albert Lea barley: 4,710 bu, $46,336).
+ * So a take-all contract counts its applied bushels. Before harvest that is 0
+ * and nothing changes; every other contract keeps using contractedBushels.
+ */
+export function positionBushels(c: GrainContractForPosition): number {
+  return c.buyerTakesAll ? (c.appliedBushels ?? 0) : c.contractedBushels
 }
 
 /**
@@ -77,10 +95,11 @@ export function computePosition(
   let wapDenominator = 0
 
   for (const c of contracts) {
-    contractedBu += c.contractedBushels
+    const bu = positionBushels(c)
+    contractedBu += bu
 
     if (isPricedContract(c)) {
-      pricedBu += c.contractedBushels
+      pricedBu += bu
 
       // Determine effective price
       let effectivePrice: number | null = null
@@ -99,8 +118,8 @@ export function computePosition(
         // Prices are stored in $/bu; convert to integer cents at this boundary.
         // Rounding per-contract prevents floating-point drift from accumulating
         // across many contracts before the final WAP round.
-        wapNumerator += Math.round(effectivePrice * 100) * c.contractedBushels
-        wapDenominator += c.contractedBushels
+        wapNumerator += Math.round(effectivePrice * 100) * bu
+        wapDenominator += bu
       }
     }
   }
