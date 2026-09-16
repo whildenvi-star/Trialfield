@@ -946,7 +946,13 @@ app.put('/api/fields/:id', async (req, res) => {
     'name', 'enterpriseId', 'systemCode', 'crop', 'cropType',
     'acres', 'plantedAcres', 'rentPerAcre', 'inputs', 'seed', 'seeds', 'machinery',
     'yieldPerAcre', 'yieldUnit', 'yieldMode', 'projectedYieldPerAcre', 'cropInsurancePerAcre',
-    'insuranceIncomePerAcre', 'govPaymentLabel', 'govPaymentsPerAcre',
+    // govPaymentLabel / govPaymentsPerAcre are deliberately NOT updatable:
+    // computeFieldBudget rebuilds govPaymentsPerAcre from auxPayments and ignores
+    // whatever is stored, so accepting writes here only let stale copies drift
+    // (Airport ended up $80 against an aux line of $70). The spreadsheet importer
+    // still writes them and the boot migration converts them to auxPayments —
+    // that ingest path is intact; this only closes the API back door.
+    'insuranceIncomePerAcre',
     'auxPayments', 'tariffsPerAcre', 'geometry', 'harvestMoisture', 'buyerId', 'templateId', 'machineryProgramId',
     'registryFieldName', 'splitGroupId', 'registryFieldId',
     'tillage', 'notes', 'dblPartnerFieldId', 'rentBasis'
