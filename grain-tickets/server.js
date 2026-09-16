@@ -397,7 +397,8 @@ function dbTicketToJson(dbTicket) {
     grainBinId: dbTicket.grainBinId || null,
     destination: dbTicket.destination || null,
     cropYear: dbTicket.cropYear,
-    _reconciliation: reconciliation
+    _reconciliation: reconciliation,
+    _marketingSync: buildMarketingSyncView(dbTicket)
   };
 }
 
