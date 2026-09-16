@@ -2982,6 +2982,51 @@ app.get('/api/documents', (req, res) => {
   res.json({ documents: docStore.list(parseInt(req.query.limit, 10) || 50) });
 });
 
+// The review queue: every invoice line the matcher refused to place because the
+// parcel carries more than one crop enterprise. Read-only — these are lines
+// that have NOT been written, gathered across every scan on file so they can be
+// worked through in one place instead of only being seen by whoever happens to
+// reopen the right document.
+app.get('/api/documents/review-queue', (req, res) => {
+  const out = [];
+  docStore.list(500).forEach((summary) => {
+    const rec = docStore.get(summary.id);
+    if (!rec) return;
+    (rec.proposals || []).forEach((p, index) => {
+      if (!p.ambiguousEnterprise) return;
+      out.push({
+        documentId: rec.id,
+        filename: rec.filename,
+        uploadedAt: rec.uploadedAt,
+        invoiceIndex: index,
+        invoiceNumber: p.invoiceNumber,
+        invoiceDate: p.invoiceDate,
+        vendor: p.vendor,
+        comments: p.comments,
+        acres: p.acres,
+        reason: p.enterpriseReason,
+        candidates: p.fieldCandidates || [],
+        lines: (p.rows || [])
+          .filter((r) => r.status === docMatch.STATUS.AMBIGUOUS)
+          .map((r) => ({
+            lineIndex: r.lineIndex,
+            description: r.description,
+            productName: r.productName,
+            invoiceQty: r.invoiceQty,
+            invoiceUnit: r.invoiceUnit,
+            lineTotal: r.lineTotal
+          }))
+      });
+    });
+  });
+  out.sort((a, b) => String(b.invoiceDate || '').localeCompare(String(a.invoiceDate || '')));
+  res.json({
+    queued: out.length,
+    lines: out.reduce((n, q) => n + q.lines.length, 0),
+    invoices: out
+  });
+});
+
 app.get('/api/documents/:id', (req, res) => {
   const rec = docStore.get(req.params.id);
   if (!rec) return res.status(404).json({ error: 'Not found' });
@@ -3042,7 +3087,7 @@ app.post('/api/documents', async (req, res) => {
   }
 
   const proposals = extracted.invoices.map(function (inv) {
-    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products });
+    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products, programs: store.programs });
   });
 
   const docKind = extracted.contracts.length && !extracted.invoices.length ? 'contract'
@@ -3063,6 +3108,33 @@ app.post('/api/documents', async (req, res) => {
   }));
 
   res.json(Object.assign({}, record, { reused: reused }));
+});
+
+// Re-match one invoice against an enterprise the operator picked. Pure
+// recompute — writes nothing — and it is how an ambiguous-enterprise line
+// leaves the review queue: the chosen enterprise's planned rows, rates and
+// double-entry guards all get applied to the proposal before anything is
+// ticked. Also fixes the older weakness that changing the field by hand left
+// the row pointing at the previous field's planned lines.
+// Body: { index, fieldId }
+app.post('/api/documents/:id/repropose', (req, res) => {
+  const rec = docStore.get(req.params.id);
+  if (!rec) return res.status(404).json({ error: 'Not found' });
+
+  const invoices = (rec.extracted && rec.extracted.invoices) || [];
+  const index = parseInt(req.body && req.body.index, 10) || 0;
+  if (!invoices[index]) return res.status(400).json({ error: 'No invoice at index ' + index });
+
+  const fieldId = (req.body && req.body.fieldId) || null;
+  if (fieldId && !(store.fields || []).some((f) => f.id === fieldId)) {
+    return res.status(400).json({ error: 'Unknown field ' + fieldId });
+  }
+
+  const proposal = docMatch.proposeInvoice(invoices[index], {
+    fields: store.fields, products: store.products, programs: store.programs,
+    forceFieldId: fieldId
+  });
+  res.json({ ok: true, index: index, proposal: proposal });
 });
 
 // Apply approved invoice rows. Body: { confirmedBy, invoices: [{ invoiceNumber,
@@ -3097,7 +3169,7 @@ app.post('/api/documents/:id/apply', async (req, res) => {
   // next upload of this same scan would produce — applied rows now read
   // "already on file", which is how a double-apply is prevented visibly.
   const proposals = ((rec.extracted && rec.extracted.invoices) || []).map(function (inv) {
-    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products });
+    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products, programs: store.programs });
   });
 
   docStore.upsert({

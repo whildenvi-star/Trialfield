@@ -34,7 +34,8 @@
     'new-line': 'Adds line',
     'unknown-product': 'No product',
     'already-applied': 'Already on file',
-    'conflict': 'Conflict'
+    'conflict': 'Conflict',
+    'ambiguous-enterprise': 'Which crop?'
   };
 
   var LEGEND = [
@@ -56,6 +57,7 @@
     'ready': 'go', 'new': 'go',
     'new-line': 'add',
     'unknown-product': 'stop', 'conflict': 'stop', 'differs': 'stop', 'blocked': 'stop',
+    'ambiguous-enterprise': 'stop',
     'already-applied': 'done', 'in-sync': 'done', 'not checked': 'done',
     // We already hold this contract, split into amendments — nothing to write,
     // and creating would duplicate it. Grey, with the pieces listed.
@@ -113,7 +115,12 @@
         ', invoice says ' + money(p.subTotal) + ' — something was mis-read</span>');
     }
     if (p.confidence === 'low') flags.push('<span class="di-flag di-flag-warn">Low-confidence scan</span>');
-    if (!p.fieldId) flags.push('<span class="di-flag di-flag-bad">Field not matched</span>');
+    if (p.ambiguousEnterprise) {
+      flags.push('<span class="di-flag di-flag-bad">Which crop? ' + esc(p.enterpriseReason || '') +
+        '</span>');
+    } else if (!p.fieldId) {
+      flags.push('<span class="di-flag di-flag-bad">Field not matched</span>');
+    }
     if ((p.alsoOnFields || []).length) {
       flags.push('<span class="di-flag di-flag-warn">Invoice ' + esc(p.invoiceNumber || '') +
         ' is already on ' + esc(p.alsoOnFields.join(', ')) +
@@ -125,7 +132,9 @@
       (p.fieldCandidates || []).map(function (c) {
         return '<option value="' + esc(c.id) + '"' + (c.id === p.fieldId ? ' selected' : '') + '>' +
           esc(c.label) + (c.crop ? ' · ' + esc(c.crop) : '') +
-          ' (' + Math.round(c.score * 100) + '% · ' + esc(c.why) + ')</option>';
+          ' (' + Math.round(c.score * 100) + '% · ' + esc(c.why) +
+          (c.plansBilled ? ' · plans ' + esc(c.plansBilled.slice(0, 2).join(', ')) : '') +
+          ')</option>';
       }).join('') +
       '<option value="__all">— show all fields —</option>' +
       '</select>';
@@ -166,7 +175,13 @@
       '</tr></thead>';
 
     var body = (p.rows || []).map(function (r) {
-      var applicable = r.status === 'ready' || r.status === 'new-line';
+      // An ambiguous line becomes applicable the moment the operator names the
+      // enterprise — picking one re-matches the invoice server-side, so by the
+      // time p.fieldId is set the row has been rebuilt against that crop and
+      // carries a real status. Until then p.fieldId is null and every tick here
+      // stays disabled, which is the guard.
+      var applicable = r.status === 'ready' || r.status === 'new-line' ||
+        r.status === 'ambiguous-enterprise';
       var tick = '<input type="checkbox" class="di-row-tick" data-pi="' + pi + '" data-ri="' + r.lineIndex + '"' +
         (applicable && p.fieldId ? ' checked' : ' disabled') + '>';
 
@@ -389,11 +404,26 @@
         var pi = parseInt(sel.getAttribute('data-pi'), 10);
         var p = state.doc.proposals[pi];
         if (sel.value === '__all') { expandFieldList(sel, p); return; }
-        p.fieldId = sel.value || null;
-        var known = (p.fieldCandidates || []).find(function (c) { return c.id === p.fieldId; });
-        var full = fields().find(function (x) { return x.id === p.fieldId; });
-        p.fieldName = full ? full.name : (known ? known.label : null);
-        render();
+        var chosen = sel.value || null;
+        if (!chosen) {
+          p.fieldId = null;
+          render();
+          return;
+        }
+        // Re-match against the chosen enterprise rather than just relabelling.
+        // Swapping the id alone left every row pointing at the previous field's
+        // planned lines, so a hand-picked field always added lines instead of
+        // confirming the ones already planned on it.
+        sel.disabled = true;
+        api.post('/api/documents/' + state.doc.id + '/repropose', { index: pi, fieldId: chosen })
+          .then(function (r) {
+            state.doc.proposals[pi] = r.proposal;
+            render();
+          })
+          .catch(function (e) {
+            sel.disabled = false;
+            util.showToast(e.message || 'Could not re-match that field', 5000, 'error');
+          });
       });
     });
 

@@ -159,6 +159,18 @@ function cropMentioned(signal, crop) {
   return hit === ct.length;
 }
 
+// Crop words belong to a family, not a spelling. The page writes "Pre Beans"
+// for a pass on Soybeans and "Post Food Beans" for one on food beans; a strict
+// token test calls "beans" distinct from "soybeans" and then confidently hands
+// a soybean pass to the Snap Beans row sharing that parcel. Treating one word
+// as the other's family when either ends with the other keeps beans with
+// soybeans, and still keeps beans apart from corn.
+function sameCropFamily(a, b) {
+  if (a === b) return true;
+  if (a.length < 4 || b.length < 4) return false;
+  return a.endsWith(b) || b.endsWith(a);
+}
+
 function matchFields(fields, invoice) {
   const label = (invoice.fieldLabel || '') + ' ' + (invoice.farmLabel || '');
   const query = dedupeTokens(label);
@@ -198,6 +210,224 @@ function matchProducts(products, description) {
   return rank(products, function (p) { return p.name; }, description, 0.34);
 }
 
+// ── enterprise resolution ───────────────────────────────────────
+// A parcel is the piece of ground. Several budget rows can share it — one row
+// per crop enterprise — and those rows carry the SAME name and the SAME acreage
+// (all four Wes's rows say 143 ac), so name and acres together cannot separate
+// them. Whichever row happened to sort first used to win, silently. That is how
+// invoices 8004409 and 8004410 — both post-bean passes — ended up confirmed on
+// corn rows at Carrol and Delong Christopherson.
+//
+// registryFieldId is the parcel's canonical id; fall back to the name for rows
+// that predate it. Note the two disagree in useful ways: fld_042 carries "Omni",
+// "OMNI BIG SOUTH" and "Omni GRASSY KNOLL", which the name test would treat as
+// three parcels and the registry id correctly treats as one.
+function parcelKey(field) {
+  if (!field) return null;
+  return field.registryFieldId ? 'reg:' + field.registryFieldId : 'name:' + normalize(field.name);
+}
+
+function enterprisesOnParcel(fields, field) {
+  const key = parcelKey(field);
+  if (!key) return field ? [field] : [];
+  return fields.filter(function (f) { return parcelKey(f) === key; });
+}
+
+// What this enterprise plans to put on, as a set of core product names.
+//
+// Two sources, because neither alone covers the book. The field's own input
+// lines are the working answer — applying a program flattens its rows onto the
+// field, so a planned enterprise already carries its products. The linked
+// program is consulted as well so an enterprise whose lines have not been built
+// out yet can still be recognised by the program it was planned from. Only 12
+// of 61 fields carry a templateId, so the input lines do most of the work.
+function plannedProductNames(field, programs) {
+  const names = Object.create(null);
+  (field.inputs || []).forEach(function (i) {
+    if (i.productName) names[coreName(i.productName)] = true;
+  });
+  if (field.templateId) {
+    const prog = (programs || []).find(function (p) { return p.id === field.templateId; });
+    if (prog) {
+      (prog.inputs || []).forEach(function (i) {
+        if (i.productName) names[coreName(i.productName)] = true;
+      });
+    }
+  }
+  return names;
+}
+
+// Decide which enterprise on a shared parcel an invoice belongs to.
+//
+// The rule is that a multi-enterprise parcel is never resolved on name and
+// acres alone. Two signals are allowed to decide it, in order of how much they
+// can be trusted, and if neither does the line goes to the review queue rather
+// than being guessed at:
+//
+//   1. the crop named in the Comments line ("Post Snap Beans With Basagran")
+//   2. which enterprise's program plans the products being billed
+//
+// Both must select exactly one enterprise. Two enterprises that each plan
+// Roundup is not a resolution, it is a coin toss, and a coin toss is what this
+// function exists to refuse.
+function resolveEnterprise(fields, invoice, cands, lineProducts, programs) {
+  const best = cands.length ? cands[0] : null;
+  if (!best || best.score < 0.6) {
+    return { field: null, ambiguous: false, contenders: [], reason: null };
+  }
+
+  const siblings = enterprisesOnParcel(fields, best.item);
+  if (siblings.length <= 1) {
+    return { field: best.item, ambiguous: false, contenders: [], reason: null };
+  }
+
+  // Score every enterprise on the parcel, not just the ones the name matcher
+  // happened to surface — "Gessert west 111" and "Gessert" are one parcel, and
+  // the review grid has to offer both.
+  const byId = {};
+  cands.forEach(function (c) { byId[c.item.id] = c; });
+  const contenders = siblings.map(function (f) {
+    const c = byId[f.id];
+    return {
+      item: f,
+      score: c ? c.score : 0,
+      why: c ? c.why : 'same parcel (' + (f.registryFieldId || f.name) + ')',
+      acres: (f.plantedAcres > 0 ? f.plantedAcres : f.acres) || 0,
+      crop: f.crop || null
+    };
+  });
+
+  const signal = cropSignal(invoice);
+
+  // Between siblings the useful test is not "does the page spell this crop
+  // out in full" — it never does; the comment says "Post Rye", not "Post
+  // Hybrid Seed Rye". What separates them is the word only one of them owns.
+  // Tokens shared by two contenders (both soybean rows on Wes's) carry no
+  // information and are dropped, which is what keeps this from resolving a
+  // parcel it cannot actually tell apart.
+  const tokensOf = contenders.map(function (c) {
+    return normalize(c.item.crop || '').split(' ').filter(function (t) { return t.length >= 3; });
+  });
+  const shared = Object.create(null);
+  tokensOf.forEach(function (ts, i) {
+    ts.forEach(function (t) {
+      if (tokensOf.some(function (other, j) {
+        return j !== i && other.some(function (u) { return sameCropFamily(t, u); });
+      })) shared[t] = true;
+    });
+  });
+  const signalTokens = signal.split(' ').filter(Boolean);
+  const named = [];
+  contenders.forEach(function (c, i) {
+    const distinctive = tokensOf[i].filter(function (t) { return !shared[t]; });
+    const hit = distinctive.filter(function (t) {
+      return signalTokens.some(function (u) { return tokenSim(t, u) >= 0.85 || sameCropFamily(t, u); });
+    });
+    if (hit.length) named.push({ c: c, word: hit[0] });
+  });
+  if (named.length === 1) {
+    return {
+      field: named[0].c.item,
+      ambiguous: false,
+      contenders: contenders,
+      reason: 'the invoice says "' + named[0].word + '", which on this parcel only ' +
+        named[0].c.item.crop + ' answers to'
+    };
+  }
+
+  // Whole-crop-name match, kept as a second pass: it can still separate two
+  // contenders that share every distinctive word but differ in full name.
+  const namedCrop = contenders.filter(function (c) { return cropMentioned(signal, c.item.crop); });
+  if (namedCrop.length === 1) {
+    return {
+      field: namedCrop[0].item,
+      ambiguous: false,
+      contenders: contenders,
+      reason: 'the invoice names ' + namedCrop[0].item.crop
+    };
+  }
+
+  const wanted = [];
+  const seenProd = Object.create(null);
+  lineProducts.forEach(function (p) {
+    if (!p) return;
+    const k = coreName(p.name);
+    if (seenProd[k]) return;
+    seenProd[k] = true;
+    wanted.push({ key: k, name: p.name });
+  });
+
+  if (wanted.length) {
+    const planning = [];
+    contenders.forEach(function (c) {
+      const planned = plannedProductNames(c.item, programs);
+      const hits = wanted.filter(function (w) { return planned[w.key]; });
+      c.programHits = hits.length;
+      c.programMatched = hits.map(function (w) { return w.name; });
+      if (hits.length) planning.push(c);
+    });
+    if (planning.length === 1) {
+      return {
+        field: planning[0].item,
+        ambiguous: false,
+        contenders: contenders,
+        reason: planning[0].item.crop + ' is the only enterprise on this parcel that plans ' +
+          planning[0].programMatched.slice(0, 3).join(', ')
+      };
+    }
+  }
+
+  // Acres, last, and only when they are decisive rather than a tiebreaker.
+  // Rows that genuinely share ground carry identical acreage — all four Wes's
+  // rows say 143, both phillhower east rows say 135.2 — so acres can never
+  // separate those. But fld_027 carries "Brad Inman's" at 47.8 and "Inman" at
+  // 154.8: different parcels that share a registry id by mistake, and an
+  // invoice for 47 acres plainly is not the 154.8 one. Requiring one close
+  // match and every rival far off keeps this from firing on true siblings.
+  // Both acreages are tried: a row carries a planted figure and a parcel
+  // figure, and DeLong bills against whichever the sprayer recorded. Inman's
+  // planted 146.9 against an invoice for 154.82 is 5% out and proves nothing,
+  // but its parcel acreage of 154.8 is the same number.
+  const invAcres = Number(invoice.acres);
+  if (invAcres > 0) {
+    const drift = contenders.map(function (c) {
+      const opts = [c.item.plantedAcres, c.item.acres]
+        .map(Number).filter(function (a) { return a > 0; });
+      if (!opts.length) return { c: c, d: Infinity, a: null };
+      let best = Infinity, bestA = null;
+      opts.forEach(function (a) {
+        const dd = Math.abs(a - invAcres) / invAcres;
+        if (dd < best) { best = dd; bestA = a; }
+      });
+      return { c: c, d: best, a: bestA };
+    });
+    const near = drift.filter(function (x) { return x.d <= 0.02; });
+    const far = drift.filter(function (x) { return x.d > 0.1; });
+    if (near.length === 1 && far.length === contenders.length - 1) {
+      return {
+        field: near[0].c.item,
+        ambiguous: false,
+        contenders: contenders,
+        reason: 'the only enterprise on this parcel whose acreage matches the invoice (' +
+          near[0].a + ' vs ' + invAcres + ')'
+      };
+    }
+  }
+
+  const crops = contenders.map(function (c) { return c.item.crop || '(no crop)'; });
+  return {
+    field: null,
+    ambiguous: true,
+    contenders: contenders,
+    reason: contenders.length + ' enterprises share ' + (best.item.name) + ' — ' +
+      crops.join(', ') + '. The comments do not name one crop and ' +
+      (wanted.length
+        ? 'the billed products do not sit on a single enterprise’s program'
+        : 'no product on this invoice was recognised') +
+      ', so this needs you to say which.'
+  };
+}
+
 // ── invoice → proposal ──────────────────────────────────────────
 // One row per invoice line. `status` drives the review grid:
 //   ready          — a planned input row is waiting; confirming it is the write
@@ -205,18 +435,53 @@ function matchProducts(products, description) {
 //   unknown-product— the description matches nothing in the product list
 //   already-applied— this exact invoice is already on that row (idempotent re-run)
 //   conflict       — the row carries a DIFFERENT invoice number
+//   ambiguous-enterprise
+//                  — the parcel carries more than one crop enterprise and
+//                    nothing on the page says which. Goes to the review queue;
+//                    no pass is created until the operator picks.
 const READY = 'ready';
 const NEW_LINE = 'new-line';
 const UNKNOWN_PRODUCT = 'unknown-product';
 const ALREADY = 'already-applied';
 const CONFLICT = 'conflict';
+const AMBIGUOUS = 'ambiguous-enterprise';
 
 function proposeInvoice(invoice, refs) {
   const fields = refs.fields || [];
   const products = refs.products || [];
 
+  const programs = refs.programs || [];
+
+  // Products are matched first, because which enterprise this invoice belongs
+  // to is partly answered by what it bills — an enterprise is recognised by the
+  // program it plans.
+  const lineMatches = (invoice.lines || []).map(function (line) {
+    const prodCands = matchProducts(products, line.description);
+    return {
+      line: line,
+      prodCands: prodCands,
+      product: prodCands.length && prodCands[0].score >= 0.6 ? prodCands[0].item : null
+    };
+  });
+
   const fieldCands = matchFields(fields, invoice);
-  const field = fieldCands.length && fieldCands[0].score >= 0.6 ? fieldCands[0].item : null;
+
+  // The operator picking an enterprise by hand is the resolution the review
+  // queue is waiting for, so it overrides the matcher outright. Re-running the
+  // whole proposal against their choice — rather than just swapping the id —
+  // is what lets the planned-row matching, the rate disambiguation and the
+  // double-entry guards below apply to the enterprise actually chosen.
+  const forced = refs.forceFieldId
+    ? fields.find(function (f) { return f.id === refs.forceFieldId; }) || null
+    : null;
+  const resolved = forced
+    ? { field: forced, ambiguous: false, contenders: [], reason: 'chosen by the operator' }
+    : resolveEnterprise(
+        fields, invoice, fieldCands,
+        lineMatches.map(function (m) { return m.product; }),
+        programs
+      );
+  const field = resolved.field;
   const acres = invoice.acres != null
     ? Number(invoice.acres)
     : (field ? ((field.plantedAcres > 0 ? field.plantedAcres : field.acres) || 0) : 0);
@@ -242,9 +507,10 @@ function proposeInvoice(invoice, refs) {
   // silently overwrites the other.
   const claimed = {};
 
-  const rows = (invoice.lines || []).map(function (line, i) {
-    const prodCands = matchProducts(products, line.description);
-    const product = prodCands.length && prodCands[0].score >= 0.6 ? prodCands[0].item : null;
+  const rows = lineMatches.map(function (m, i) {
+    const line = m.line;
+    const prodCands = m.prodCands;
+    const product = m.product;
 
     const row = {
       lineIndex: i,
@@ -266,6 +532,15 @@ function proposeInvoice(invoice, refs) {
       note: null
     };
 
+    // The enterprise question comes before the product question. An invoice we
+    // cannot place on one enterprise cannot write anything, whatever it bills,
+    // and saying so is more useful than reporting a product miss on a line that
+    // was never going to be applied.
+    if (resolved.ambiguous) {
+      row.status = AMBIGUOUS;
+      row.note = resolved.reason;
+      return row;
+    }
     if (!product) {
       row.note = 'No product in the reference list matches this description.';
       return row;
@@ -408,7 +683,13 @@ function proposeInvoice(invoice, refs) {
     confidence: invoice.confidence || 'medium',
     fieldId: field ? field.id : null,
     fieldName: field ? field.name : null,
-    fieldCandidates: fieldCands.map(toCand('name')),
+    fieldCrop: field ? (field.crop || null) : null,
+    // When the parcel carries several enterprises the candidate list becomes
+    // the enterprise list — every crop on that ground, whether or not the name
+    // matcher surfaced it — because that is the choice being asked for.
+    fieldCandidates: (resolved.contenders.length ? resolved.contenders : fieldCands).map(toCand('name')),
+    ambiguousEnterprise: !!resolved.ambiguous,
+    enterpriseReason: resolved.reason || null,
     alsoOnFields: elsewhere,
     totalsOk: totalsOk,
     lineSum: Calc.round2(lineSum),
@@ -424,7 +705,11 @@ function toCand(labelKey) {
       score: c.score,
       why: c.why,
       acres: c.acres != null ? c.acres : undefined,
-      crop: c.crop != null ? c.crop : undefined
+      crop: c.crop != null ? c.crop : undefined,
+      // Which of the billed products this enterprise actually plans — the
+      // evidence behind the choice, shown so the operator can check it rather
+      // than take the ranking on trust.
+      plansBilled: c.programMatched && c.programMatched.length ? c.programMatched : undefined
     };
   };
 }
@@ -436,5 +721,12 @@ module.exports = {
   matchFields: matchFields,
   matchProducts: matchProducts,
   proposeInvoice: proposeInvoice,
-  STATUS: { READY: READY, NEW_LINE: NEW_LINE, UNKNOWN_PRODUCT: UNKNOWN_PRODUCT, ALREADY: ALREADY, CONFLICT: CONFLICT }
+  parcelKey: parcelKey,
+  enterprisesOnParcel: enterprisesOnParcel,
+  plannedProductNames: plannedProductNames,
+  resolveEnterprise: resolveEnterprise,
+  STATUS: {
+    READY: READY, NEW_LINE: NEW_LINE, UNKNOWN_PRODUCT: UNKNOWN_PRODUCT,
+    ALREADY: ALREADY, CONFLICT: CONFLICT, AMBIGUOUS: AMBIGUOUS
+  }
 };
