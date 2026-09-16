@@ -297,7 +297,14 @@ function resolveEnterprise(fields, invoice, cands, lineProducts, programs) {
     };
   });
 
-  const signal = cropSignal(invoice);
+  // A removal-replacement invoice names the crop that came OFF, not the crop
+  // the pass is for: "VRA Removal Beans Fall 25" is potash replacing what last
+  // year's beans took out, spread on ground that grows corn next season. The
+  // crop word points backwards, so on a parcel that now carries both a corn and
+  // a bean enterprise it would confidently pick the wrong one. Withhold the
+  // crop signal entirely and let the program or acreage decide, or let it queue.
+  const backwardLooking = /removal/i.test(String(invoice.comments || ''));
+  const signal = backwardLooking ? '' : cropSignal(invoice);
 
   // Between siblings the useful test is not "does the page spell this crop
   // out in full" — it never does; the comment says "Post Rye", not "Post
