@@ -29,6 +29,12 @@ model Ticket {
   grainBinId      Int?     // FK to GrainBin — null unless destination is a bin
   grainBin        GrainBin? @relation(fields: [grainBinId], references: [id], onDelete: SetNull)
   splitGroupId    String?  // Links legs of one physical load split across farms — same ticketNo per leg
+  marketingSyncStatus     String?    // Phase 17 — last organic-cert push outcome: 'applied' | 'unapplied' | 'skipped' | 'error' (never 'no-buyer'/'pending' — those are derived at read time, never persisted)
+  marketingSyncedAt       DateTime?  // Phase 17 — timestamp of the last marketing push attempt (success or failure)
+  marketingSyncDetail     String?    // Phase 17 — human-readable reason, max 300 chars, token-scrubbed (see lib/marketing-sync.js scrubDetail)
+  marketingContractId     String?    // Phase 17 — organic-cert GrainContract cuid held as a bare string, no Prisma relation: grain-tickets has no GrainContract table and organic-cert owns that record's lifecycle
+  marketingContractLabel  String?    // Phase 17 — display text only ("Customer — Variant Year"); must never contain pricing
+  marketingAppliedBushels Float?     // Phase 17 — bushels organic-cert applied to the named contract on the last push
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -41,6 +47,7 @@ model Ticket {
   @@index([registryCropId])   // Cross-module crop aggregation (Phase 50+)
   @@index([buyerId])          // Buyer filter queries (Phase 11)
   @@index([grainBinId])       // Grain bin filter queries (Phase 11)
+  @@index([marketingSyncStatus]) // Phase 17 — filtering the ticket list by sync problem state
 }
 
 model Farm {
