@@ -1789,7 +1789,9 @@
       total += ap.perAcre || 0;
       html += '<tr>' +
         '<td><input type="text" value="' + util.escHtml(ap.label || '') + '" data-idx="' + idx + '" data-field="label" class="ed-aux-field" style="width:200px" placeholder="e.g. CRP Payment"></td>' +
-        '<td><input type="number" value="' + (ap.perAcre || '') + '" data-idx="' + idx + '" data-field="perAcre" class="ed-aux-field" step="0.01" min="0" style="width:80px"></td>' +
+        // No min: aux lines carry costs as well as payments — the straw module writes
+        // STRAW COST as a negative $/ac, and min="0" made that a browser-invalid field.
+        '<td><input type="number" value="' + (ap.perAcre || '') + '" data-idx="' + idx + '" data-field="perAcre" class="ed-aux-field" step="0.01" style="width:80px"></td>' +
         '<td><button class="btn-danger ed-remove-aux" data-idx="' + idx + '">X</button></td>' +
         '</tr>';
     });
