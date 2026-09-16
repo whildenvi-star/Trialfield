@@ -226,6 +226,15 @@ export function normalizeGeoJsonCollection(
 
 export const ADAPTER_FIELDVIEW = 'climate-fieldview'
 
+/** FieldView OAuth2 token endpoint — used for the initial code exchange and for refresh. */
+export const FIELDVIEW_TOKEN_URL = 'https://api.climate.com/api/oauth/token'
+
+/** Refresh this far ahead of expiry, so a token cannot lapse mid-import. */
+const REFRESH_MARGIN_MS = 5 * 60 * 1000
+
+/** FieldView's documented access-token lifetime, used only if expires_in is absent. */
+const DEFAULT_EXPIRES_IN_S = 4 * 60 * 60
+
 export interface FieldViewTokens {
   access_token:  string
   refresh_token: string
@@ -238,6 +247,75 @@ export function isFieldViewConfigured(): boolean {
     process.env.FIELDVIEW_CLIENT_SECRET &&
     process.env.FIELDVIEW_API_KEY
   )
+}
+
+/**
+ * True when the access token has expired, or is close enough to expiring that an
+ * import starting now could outlive it. Access tokens are ~4h (migration 023).
+ *
+ * A missing or unparseable expires_at counts as "needs refresh" — one wasted
+ * refresh call is cheaper than firing a whole import with a dead token.
+ */
+export function fieldViewTokenNeedsRefresh(
+  tokens: Pick<FieldViewTokens, 'expires_at'>,
+  now: number = Date.now()
+): boolean {
+  if (!tokens.expires_at) return true
+  const expiresAt = new Date(tokens.expires_at).getTime()
+  if (Number.isNaN(expiresAt)) return true
+  return expiresAt - REFRESH_MARGIN_MS <= now
+}
+
+/**
+ * Exchange a refresh token for a fresh access token.
+ *
+ * This existed as stored data but never as code: the OAuth callback wrote
+ * refresh_token into fieldview_tokens and nothing ever read it, so every
+ * connection went dead at the ~4h mark and stayed dead until a human re-ran the
+ * whole consent flow.
+ *
+ * Providers may or may not rotate the refresh token on use. If a new one comes
+ * back we return it; otherwise the existing one is carried forward, because
+ * dropping it would break the next refresh.
+ */
+export async function refreshFieldViewTokens(
+  refreshToken: string
+): Promise<FieldViewTokens> {
+  const res = await fetch(FIELDVIEW_TOKEN_URL, {
+    method:  'POST',
+    signal:  AbortSignal.timeout(15000),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body:    new URLSearchParams({
+      grant_type:    'refresh_token',
+      refresh_token: refreshToken,
+      client_id:     process.env.FIELDVIEW_CLIENT_ID ?? '',
+      client_secret: process.env.FIELDVIEW_CLIENT_SECRET ?? '',
+    }).toString(),
+  })
+
+  if (!res.ok) {
+    // 400/401 here usually means the refresh token is itself dead or revoked, and
+    // the user has to reconnect. Callers distinguish that from a transient failure.
+    throw new Error(`FieldView token refresh failed (${res.status})`)
+  }
+
+  const data = await res.json() as {
+    access_token?:  string
+    refresh_token?: string
+    expires_in?:    number
+  }
+
+  if (!data.access_token) {
+    throw new Error('FieldView token refresh returned no access_token')
+  }
+
+  return {
+    access_token:  data.access_token,
+    refresh_token: data.refresh_token ?? refreshToken,
+    expires_at:    new Date(
+      Date.now() + (data.expires_in ?? DEFAULT_EXPIRES_IN_S) * 1000
+    ).toISOString(),
+  }
 }
 
 export function createFieldViewAdapter(tokens: FieldViewTokens): CoverageAdapter {

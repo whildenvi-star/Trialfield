@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-
-const FIELDVIEW_TOKEN_URL = 'https://api.climate.com/api/oauth/token'
+import { FIELDVIEW_TOKEN_URL } from '@/lib/fsa/adapters/fieldview'
 const RETURN_PATH = '/app/compliance?tab=acreage'
 
 // GET /api/fsa/fieldview/callback

@@ -5,9 +5,12 @@ import {
   FieldOpsAdapter,
   createFieldViewAdapter,
   isFieldViewConfigured,
+  fieldViewTokenNeedsRefresh,
+  refreshFieldViewTokens,
   normalizeGeoJsonCollection,
   type NormalizedCoverageEvent,
   type GeoJSONFeatureCollection,
+  type FieldViewTokens,
 } from '@/lib/fsa/adapters/fieldview'
 
 // POST /api/fsa/coverage-import
@@ -88,8 +91,9 @@ export async function POST(request: Request) {
       )
     }
 
-    const adapter = createFieldViewAdapter(tokenRow)
-    if (!adapter.isConfigured()) {
+    // Credentials must be present before attempting a refresh — the refresh grant
+    // needs the same client id and secret.
+    if (!isFieldViewConfigured()) {
       return NextResponse.json(
         {
           error:  'FieldView credentials not configured on server',
@@ -98,6 +102,45 @@ export async function POST(request: Request) {
         { status: 422 }
       )
     }
+
+    // Access tokens last ~4h. Refresh ahead of expiry rather than letting the
+    // import fail with a 401 that the user could only clear by reconnecting.
+    let activeTokens: FieldViewTokens = tokenRow
+    if (fieldViewTokenNeedsRefresh(tokenRow)) {
+      try {
+        activeTokens = await refreshFieldViewTokens(tokenRow.refresh_token)
+      } catch {
+        return NextResponse.json(
+          {
+            error:  'FieldView session expired',
+            detail: 'Reconnect your FieldView account from the Acreage tab.',
+          },
+          { status: 422 }
+        )
+      }
+
+      // Persist so the next import reuses it. RLS on fieldview_tokens allows a
+      // user to write their own row, so the caller's client is sufficient.
+      const { error: persistErr } = await supabase
+        .from('fieldview_tokens')
+        .update({
+          access_token:  activeTokens.access_token,
+          refresh_token: activeTokens.refresh_token,
+          expires_at:    activeTokens.expires_at,
+        })
+        .eq('user_id', guard.user.id)
+
+      if (persistErr) {
+        // The import can still proceed on the in-memory token; only the saving
+        // failed. Say so rather than letting the next run refresh again silently.
+        warnings.push(
+          `FieldView token was refreshed but could not be saved (${persistErr.message}). ` +
+          'This import will work; the next one will refresh again.'
+        )
+      }
+    }
+
+    const adapter = createFieldViewAdapter(activeTokens)
 
     try {
       events = await adapter.fetchEvents(cropYear)
