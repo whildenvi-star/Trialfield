@@ -221,3 +221,92 @@ Those are newly *visible*, not newly broken.
   matches. If those are real DeLong paper they are **missing from the export**, which bears on the
   $451k still unattached.
 - **6 genuine date outliers** (3 off by a year, 3 with a year of `0025`).
+
+---
+
+# SECOND PASS — 2026-09-17
+
+## First, a correction to the first pass
+
+**Two of the 18 invoice-number fixes were wrong, and are reverted.** The way they were wrong is the
+useful part. `8003206` (Noss, Sid) resolved to `8003207` because the farm name matched fuzzily —
+"Noss, Sid" against the book's "Jeff Noss", which share the word that carries — the date was the
+same, and all five products appeared on both invoices. Every soft signal agreed. **8003207 is Jeff's
+34 acres and those rows are 98.92.** Airport was the same shape: `1061814` is a *one-acre* invoice
+and the row carries 235.32.
+
+The resolver now requires acreage agreement within 15%. It is the one signal that does not care how
+alike two farm names look, and in both cases it is what says no. With it in place both decline, and
+`8003206` reads as what it is — a real invoice missing from DeLong's export.
+
+While reverting I mis-targeted the Airport rows by filtering on invoice number and acreage rather
+than by input id, and briefly scrambled three rows. Restored from the pre-correction backup by id.
+**Lesson applied everywhere after: address rows by input id, never by a matching rule.**
+
+## The gates
+
+Nothing in this pass is applied on the say-so of the thing being corrected:
+
+| class | gate |
+|---|---|
+| invoice number | acreage within 15% of the header, on top of farm, date and every product |
+| cost | the fix must make that invoice's rows sum to the invoice's **subtotal**; if they already sum correctly the fix is *wrong* |
+| quantity | only on a row whose cost already agrees and whose acres are within 15% |
+| a missing line | adding it must close the invoice to the cent, or nothing is added |
+
+The subtotal gate earned its place immediately: on `1062812` and `8002974` the stored rows **already**
+summed correctly and the proposed "fix" would have broken them.
+
+## What landed
+
+- **37 cost and quantity corrections** behind those gates, 7 skipped with reasons.
+- **The Wes `8002274` rows**, still carrying the old 143-acre parcel figure against a pass billed on 34.
+- **Two invoices whose fields were shifted one position.** On Airport `1061814` the Triple Super row
+  held the dollar amount in the quantity, the tonnage in the acres, nothing in the cost, and the
+  wrong invoice number; the Potash row had taken the Triple Super tonnage. On Brads `8003351`
+  Interline carried Enlist's cost and Water carried Interline's, while the Volunteer line sat under
+  the stray number `Delong`. Both now sum **exactly** to their subtotals.
+- **7 billed lines that were never entered**, added where doing so closed the invoice to the cent:
+  four **Sparrow** lines and three tonnage-tax lines. DeLong's post-corn program bills Armezon *and*
+  Sparrow; only Armezon was ever entered.
+
+## Where it stands
+
+| | before today | now |
+|---|---|---|
+| invoices reconciling **exactly** to their subtotal | 82 of 126 | **115 of 126** |
+| recorded invoice cost | $523,817.48 | **$545,523.99** |
+| invoice rows | 585 | 592 |
+| rate-as-total costs | 19 | **0** |
+| resolvable invoice numbers | 18 | **0** |
+| acreage typos | 2 | **0** |
+| crop/trait flags on invoiced rows | 0 | **0** |
+
+## The 11 invoices that still do not close
+
+Each has something beyond a keying slip, and none is mechanical:
+
+| invoice | field | gap | reading |
+|---|---|---|---|
+| 1062226 | Phillhower West | +$10,560.20 | a Triple Super line never entered |
+| 8001931 | Airport | +$7,177.43 | rows exist but carry no cost at all |
+| 1061998 | Schultz | +$3,676.27 | |
+| 8003156 | Carrol | +$2,448.30 | Sparrow + Meth Oil; adding them overshoots |
+| 8003207 | Noss, Jeff | +$601.72 | Sparrow; adding it overshoots by $8.50 |
+| 1061712 | Buchanon | **−$478.64** | stored MORE than the invoice |
+| 8003209 | Buchanon | +$227.40 | Sparrow; overshoots by $22.80 |
+| 8004516 | Phillhower West | +$5.57 | a 32% N line the ranking cannot pair |
+| 8003267 | Larson | +$82.40 | |
+| 8002973, 8002281 | | −$2.04, −$1.83 | stored slightly over |
+
+## Still open
+
+- **4 strays that are real invoices missing from DeLong's export**: `8003206` (Noss Sid, 5 rows,
+  98.92 ac), `1061365` (Airport, 4 rows), `1061856` (Noss Torkelson West, 2 rows), `1061348`
+  (Philhower East, 2 rows). Worth asking DeLong for these.
+- `2712` is **Tulls manure** — a hauler, not DeLong. Correct as it stands.
+- **15 rows the ranking cannot pair to a line** — mostly aliases (`Application - Vrt` against the
+  book's "App VRT -Single product", `NIS` against "Surfactant", `32% Nitrogen` against "32% FOB
+  DeLong-Terminal"). An audit-quality gap, not a data defect.
+- **6 genuine date outliers** — 3 off by exactly a year, 3 with a year of `0025`.
+- The five planned herbicide lines with no hooded pass booked.
