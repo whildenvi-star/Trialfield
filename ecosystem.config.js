@@ -58,6 +58,15 @@ module.exports = {
         NODE_ENV: 'production',
         PORT: 3004,
         HOSTNAME: '0.0.0.0',
+        // Prisma reads this at runtime. Do NOT rely on Next loading
+        // organic-cert/.env for it — a rebuild on 2026-09-16 left the server
+        // process without DATABASE_URL and every database-backed page
+        // returned 500 ("credentials for glomalinguild are not valid"), while
+        // /fields still rendered because it fetches client-side. Stating it
+        // here makes the app's single hard dependency survive a plain restart.
+        // Safe to commit: no password — pg_hba grants this role trust on
+        // 127.0.0.1 only. Anything secret still belongs in organic-cert/.env.
+        DATABASE_URL: 'postgresql://glomalinguild@127.0.0.1:5432/glomalin?schema=public',
       },
       instances: 1,
       autorestart: true,
