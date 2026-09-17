@@ -446,3 +446,62 @@ Changed: `grain-tickets/public/farms.js`, `public/style.css` (one class), `publi
   $544,907.61. Unattached: **$451,002.33**, of which $396,053.52 is non-pass fertiliser, seed and
   service invoices — including the $32,330 of small-grain urea/AMS above and `1062228`
   ("Extra Sent here used at Carrols ????", $8,025.40). 26 unattached invoices are pass candidates.
+
+---
+
+# APPLIED — 2026-09-16
+
+All approved changes are in production and verified. Backups:
+`/var/backups/farm-ops/pre-phase0-writes-20260916-235545/` (plus `data.json.pre-croprules-*` and
+`data.json.pre-invtypo-*`). The farm-budget processes were stopped around every data write, because
+the server holds `data.json` in memory and would have overwritten the edit on its next save.
+
+| step | what landed |
+|---|---|
+| 1 | matcher fix + repropose endpoint deployed; review queue 200 |
+| 2 | Daun — was already correct, nothing to do |
+| 3 | bean enterprises created by the other session; **the 14 moved rows' acres and quantities corrected from the book** |
+| 4 | `fld_1462` → `fld_028` in `data.json` (other session) and **`data-2027.json`** |
+| 5 | **Wes**: acres, double-crop acres, fungicide swap, two unattached passes, invoice-number typo |
+| 6 | **crop/trait check enforced in `match.js`**; 10 rules seeded into `store.productCropRules`; 22 `seedTrait` values written |
+| 7 | **grain-tickets per-crop header deployed** |
+
+**Numbers that moved**
+
+- 97 corrections + 1 typo. Input rows 950 → 962, invoiced rows 573 → 585.
+- Christopherson beans **$547.05 → $792.48** — the Enlist line had stored the per-gallon rate as
+  the line total. Carrol beans $699.51, unchanged and correct.
+- Wes's barley **$2,652.93 → $4,124.73**: −$1,576.62 (Buchanon's fungicide, which was counted
+  twice) +$2,208.89 (Wes's own) +$839.53 (burndown).
+- Wes's double crop **$0 → $1,021.99**, and it now carries 39 planted acres instead of 0.
+- Every corrected bean rate landed back on its label: Enlist One 2 pt/ac, Interline 32 oz/ac,
+  Volunteer 8 oz/ac, AMS 2 lb/ac. That is the arithmetic that proved the 17 acres in the first place.
+- **Invoiced rows flagged by the sweep: 28 → 0.** 22 of 22 soybean enterprises carry a trait.
+
+**Enforcement, verified against production before it shipped**
+
+| test | result |
+|---|---|
+| bean pass forced onto Carrol's corn row | `crop-mismatch` on Enlist One and Interline |
+| same invoice on the bean row | passes the crop check |
+| glyphosate on Klug Davis (books a Hooded Redball pass) | `ready` |
+| same glyphosate on Twist Farm (books none) | `crop-mismatch`, "record the applicator" |
+
+**Still open, and not part of this round**
+
+1. **Five enterprises plan a non-selective herbicide with no hooded pass booked** — Murray, Twist
+   Farm, Wes's High Oil, Gessert Snap Beans, Philhower East Snap Beans. Either the pass is missing
+   or the herbicide line is. Planned rows only; nothing billed.
+2. **Brad Inman's plans ester 2,4-D with no operation group**, so it cannot be read as the burndown
+   it presumably is. 291 of 377 planned rows carry no group — `apply.js` never sets one.
+3. **Rate-as-total costs.** Wes's Huskie is stored at $218.53, the per-gallon rate; the book's
+   extended is $666.52. Part of the known 38-row set, untouched here.
+4. **25 more invoice-number typos** beyond the one fixed (`980044183`, `802788`, `800593`, `802974`,
+   `7032812`, `1762812`, `8001856qz`, and the rest).
+5. **$451,002.33 of the DeLong book is still unattached**, $396,053.52 of it non-pass fertiliser and
+   service invoices — including $32,330 of small-grain urea/AMS spanning four farms, which needs an
+   allocation rule, and 1063019 soil sampling.
+6. **`Kopp / ORG Soybeans` books a Hooded Redball pass** — worth confirming what goes through it on
+   certified ground.
+7. **"High Oil Soybeans" is the wrong crop name** for conventional DF 262 food beans. Renaming
+   touches marketing crop-sync, so it is a decision, not a cleanup.
