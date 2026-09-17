@@ -72,11 +72,24 @@ const money = n => (n == null ? '—' : '$' + Number(n).toFixed(2));
 // same ground, near the same date, and carries EVERY product the stray's rows
 // name. That is evidence rather than arithmetic: it resolved 18 of 23, eleven
 // of them same-day, and it correctly declines on Tulls manure.
+// ACREAGE IS THE GATE, and leaving it out produced two wrong answers.
+//
+// "Noss, Sid" fuzzy-matches the book's "Jeff Noss" — they share the word that
+// matters — and on 05/29 both farms got a Post Corn pass carrying the same five
+// products. Every soft signal agreed, and the answer was still wrong: 8003207
+// is Jeff's 34 acres and the stray's rows are 98.92. Same with Airport, where
+// 1061814 is a ONE-acre invoice and the stray carries 235.32.
+//
+// So the acreage has to agree too. It is the one signal that does not care how
+// alike two farm names look or how similar two programs are, and in both cases
+// it is what says no.
 function contentTarget(strayRows, fieldName) {
   const prods = strayRows.map(r => r.productName).filter(Boolean);
   if (!prods.length) return null;
   const date = strayRows.map(r => r.invoiceDate).filter(Boolean)[0];
   const t = date ? new Date(date).getTime() : null;
+  const storedAcres = strayRows.map(r => Number(r.invoiceAcres))
+    .filter(a => a > 0).sort((a, b) => a - b)[0] || null;   // smallest: the least likely to be a 10x slip
 
   const scored = invoices.filter(v => {
     // same ground, by the same fuzzy naming the matcher uses
@@ -91,8 +104,12 @@ function contentTarget(strayRows, fieldName) {
       const m = String(v.invoice_date).match(/(\d+)\/(\d+)\/(\d+)/);
       if (m) days = Math.abs(new Date(m[3] + '-' + m[1] + '-' + m[2]).getTime() - t) / 86400000;
     }
-    return { invoice: v, hit: hit, days: days };
-  }).filter(x => x.hit === prods.length && x.days <= 45)
+    // acres: within 15%, or the stray does not belong to this invoice
+    const hdr = parseFloat(v.header_acres);
+    let acresOk = true;
+    if (storedAcres != null && hdr > 0) acresOk = Math.abs(storedAcres - hdr) / hdr <= 0.15;
+    return { invoice: v, hit: hit, days: days, acresOk: acresOk };
+  }).filter(x => x.hit === prods.length && x.days <= 45 && x.acresOk)
     .sort((a, b) => a.days - b.days);
 
   if (!scored.length) return null;
