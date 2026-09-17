@@ -328,3 +328,60 @@ nothing depends on it, but they would read better as `SimpSouthSeed26` and `Simp
 is what the unlinked copies call them. A rename, whenever you like — not a blocker.
 
 The exact rehearsed script is `recon/06-geo-migration.sql`.
+
+---
+
+# APPLIED — 2026-09-17
+
+Committed. Batch `f1ce5699-aa0a-4298-abbc-626707aab5ec`. Backup immediately before:
+`/var/backups/farm-ops/geo-pre-cleanup-20260917-190609/`. Exact scripts:
+`recon/06-geo-migration-applied.sql` and `recon/06-geo-attr-merge.sql`.
+
+| management_zones | layer | rows | acres |
+|---|---|---|---|
+| **LIVE** | production | **51** | 4,121.6 |
+| **LIVE** | irrigation | **9** | 1,308.1 |
+| retired `misfiled-boundary` | | 41 | 2,927.6 |
+| retired `duplicate` | | 26 | 1,718.7 |
+| retired `sliver` | | 8 | 0.0 |
+
+**135 rows still 135** — nothing deleted. 0 invalid geometries. 0 orphaned attribute rows.
+`field_boundaries` 51 live + 2 retired as junk. Portal serving normally.
+
+## The rehearsal earned its keep twice
+
+**First failure** — the unique index keyed on `name`: `fld_050` carries two genuinely different seed
+blocks both called `Simpsons – SEED26 2026`. A zone's identity is its shape, not its label. Fixed by
+keying on `geom_key`.
+
+**Second failure** — linking the seed blocks collided with an already-linked zone of *identical
+geometry*. `SimpSouthSeed26` and `Simpsons – SEED26 1 2026` are the same polygon under two names,
+one linked and one not. Which showed the ordering was wrong: **dedupe has to run after linking, and
+has to use the same key as the constraint.** Keyed on name it could never have seen this — the two
+rows have different names. Reordered to: repair → misfiled → layer + link → dedupe by shape →
+slivers → junk.
+
+That second fix changed the counts: 26 duplicates rather than 22, because linking brought four more
+pairs into view.
+
+## And one thing the rehearsal did not catch
+
+The reorder meant three retired duplicates carried a real crop where the surviving twin's row was
+blank — `Omni – PEAS26 2026` (field peas), `Simpsons – SEED26 1 2026` and `Simpsons – SEED26 2026`
+(corn). The rehearsal had reported 0 such rows, so the guarantee I gave — "nothing of substance is
+orphaned" — was briefly untrue in production, for about two minutes.
+
+Your original rule covered it: *keep the row `zone_year_attributes` references and re-point before
+archiving.* Each live twin already had its own blank 2026 row, so this was a **merge onto the live
+row** rather than a re-point, which would have left two rows on one zone. Crop-carrying rows on live
+zones: **7 → 10**, which is all of them. The three retired copies stay as the audit trail of where
+the value came from.
+
+## Left over
+
+- **8 live zones still unlinked** — Buchanon, Cuff, East, Gessert, Klug-Davis, Murray, OM1SHOP,
+  Simpsons. Untouched, awaiting your read.
+- **The survivors have the worse names.** "Keep the older" kept the raw shapefile labels and retired
+  the tidy ones: `Peas26` survives and `Omni – PEAS26 2026` is retired; `SimpSouthSeed26` survives
+  and `Simpsons – SEED26 1 2026` is retired. Worth a rename pass, cosmetic only.
+- `field_boundary_history` still holds its 4 rows and is now redundant; removing it is a separate call.
