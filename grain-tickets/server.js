@@ -1266,6 +1266,7 @@ app.get('/api/settlement-prices', async (req, res) => {
 // Returns per-buyer per-crop aggregated revenue: delivered bushels, avg price, deductions, net payment.
 // Joins contract prices from portal grain_contracts for variance calculation.
 // Optional query params: ?cropYear=2026 (defaults to current harvest year using same Jan-May logic as getCropYear)
+let warnedPortalFetch = false;
 app.get('/api/settlement-summary', async (req, res) => {
   try {
     // Determine default crop year: Jan-May = prior harvest year
@@ -1365,8 +1366,20 @@ app.get('/api/settlement-summary', async (req, res) => {
         contractsAvailable = true;
       }
     } catch (fetchErr) {
-      // Portal unreachable — proceed with no contract data
-      console.warn(`GET /api/settlement-summary: portal fetch failed — ${fetchErr.message}`);
+      // Portal unreachable — proceed with no contract data.
+      // Logged ONCE per process, not per request: this endpoint has never had a
+      // working contract source. PORTAL_API_URL points at glomalin-portal, which
+      // has no /api/marketing route at all — it answers 307 -> /login, fetch
+      // follows it, and the login HTML fails JSON.parse. The real marketing API
+      // is organic-cert :3004, but its contracts route wants a Supabase session
+      // rather than the ecosystem token. Deferred deliberately on 2026-09-16:
+      // production has 0 settlement lines, so the column this feeds is empty.
+      // Keep the warning (it is the only signal the integration is missing),
+      // just stop it repeating on every request.
+      if (!warnedPortalFetch) {
+        warnedPortalFetch = true;
+        console.warn(`GET /api/settlement-summary: portal contract fetch is not wired — ${fetchErr.message} (logged once per process)`);
+      }
     }
 
     // Join contract prices to summary rows
