@@ -205,8 +205,16 @@ function isNeutral(name) {
 function isBurndownContext(row, invoice) {
   const g = normalize(row && (row.operationGroup || row.category));
   const c = normalize(invoice && (invoice.comments || invoice.fieldLabel));
-  return /burndown|pre plant|preplant|pre emerge|preemerge|ppi|^pre$/.test(g) ||
-    /burndown|pre plant|preplant/.test(c);
+  if (/burndown|pre plant|preplant|pre emerge|preemerge|ppi|^pre$/.test(g)) return true;
+  // DeLong's own wording. The comment line names the pass, and a pre-plant one
+  // always LEADS with it — "Pre Beans" (17 invoices), "Pre Verdict Outlook"
+  // (13), "Pre Resicore" (6), "PPI Peas". Matching only the words "burndown" or
+  // "pre-plant" missed every one of them, and would have queued Bakke's
+  // perfectly legal ester 2,4-D burndown on a "Pre Beans" invoice.
+  //
+  // Anchored at the start on purpose: "Post Beans" must not match, because that
+  // is precisely the pass that landed on Carrol's and Christopherson's corn.
+  return /^(pre|ppi)\b/.test(c) || /burndown|pre plant|preplant/.test(c);
 }
 
 // The third way a non-selective herbicide is legal over a crop that has no
