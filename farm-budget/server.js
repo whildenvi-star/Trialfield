@@ -2999,7 +2999,10 @@ app.get('/api/documents/review-queue', (req, res) => {
     const rec = docStore.get(summary.id);
     if (!rec) return;
     (rec.proposals || []).forEach((p, index) => {
-      if (!p.ambiguousEnterprise) return;
+      // Two reasons a line waits here: the parcel carries several enterprises
+      // and nothing said which, or the product does not belong on the crop or
+      // seed trait of the one it landed on. Both mean nothing was written.
+      if (!p.ambiguousEnterprise && !p.cropMismatch) return;
       out.push({
         documentId: rec.id,
         filename: rec.filename,
@@ -3011,16 +3014,25 @@ app.get('/api/documents/review-queue', (req, res) => {
         comments: p.comments,
         acres: p.acres,
         reason: p.enterpriseReason,
+        fieldId: p.fieldId,
+        fieldName: p.fieldName,
+        fieldCrop: p.fieldCrop,
+        kind: p.ambiguousEnterprise ? 'ambiguous-enterprise' : 'crop-mismatch',
         candidates: p.fieldCandidates || [],
         lines: (p.rows || [])
-          .filter((r) => r.status === docMatch.STATUS.AMBIGUOUS)
+          .filter((r) => r.status === docMatch.STATUS.AMBIGUOUS ||
+                         r.status === docMatch.STATUS.CROP_MISMATCH)
           .map((r) => ({
             lineIndex: r.lineIndex,
             description: r.description,
             productName: r.productName,
             invoiceQty: r.invoiceQty,
             invoiceUnit: r.invoiceUnit,
-            lineTotal: r.lineTotal
+            lineTotal: r.lineTotal,
+            status: r.status,
+            // the rule that refused it, and in its own words
+            note: r.note,
+            cropFit: r.cropFit || null
           }))
       });
     });
@@ -3093,7 +3105,7 @@ app.post('/api/documents', async (req, res) => {
   }
 
   const proposals = extracted.invoices.map(function (inv) {
-    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products, programs: store.programs });
+    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products, programs: store.programs, productCropRules: store.productCropRules });
   });
 
   const docKind = extracted.contracts.length && !extracted.invoices.length ? 'contract'
@@ -3138,6 +3150,7 @@ app.post('/api/documents/:id/repropose', (req, res) => {
 
   const proposal = docMatch.proposeInvoice(invoices[index], {
     fields: store.fields, products: store.products, programs: store.programs,
+    productCropRules: store.productCropRules,
     forceFieldId: fieldId
   });
   res.json({ ok: true, index: index, proposal: proposal });
@@ -3175,7 +3188,7 @@ app.post('/api/documents/:id/apply', async (req, res) => {
   // next upload of this same scan would produce — applied rows now read
   // "already on file", which is how a double-apply is prevented visibly.
   const proposals = ((rec.extracted && rec.extracted.invoices) || []).map(function (inv) {
-    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products, programs: store.programs });
+    return docMatch.proposeInvoice(inv, { fields: store.fields, products: store.products, programs: store.programs, productCropRules: store.productCropRules });
   });
 
   docStore.upsert({

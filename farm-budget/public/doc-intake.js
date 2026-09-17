@@ -35,7 +35,8 @@
     'unknown-product': 'No product',
     'already-applied': 'Already on file',
     'conflict': 'Conflict',
-    'ambiguous-enterprise': 'Which crop?'
+    'ambiguous-enterprise': 'Which crop?',
+    'crop-mismatch': 'Wrong crop?'
   };
 
   var LEGEND = [
@@ -57,7 +58,7 @@
     'ready': 'go', 'new': 'go',
     'new-line': 'add',
     'unknown-product': 'stop', 'conflict': 'stop', 'differs': 'stop', 'blocked': 'stop',
-    'ambiguous-enterprise': 'stop',
+    'ambiguous-enterprise': 'stop', 'crop-mismatch': 'stop',
     'already-applied': 'done', 'in-sync': 'done', 'not checked': 'done',
     // We already hold this contract, split into amendments — nothing to write,
     // and creating would duplicate it. Grey, with the pieces listed.

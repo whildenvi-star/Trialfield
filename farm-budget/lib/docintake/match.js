@@ -8,6 +8,7 @@
 // status and a ranked candidate list so the review grid can show its work.
 
 const Calc = require('../../public/calc.js');
+const cropFit = require('./crop-fit.js');
 
 // ── text normalising ────────────────────────────────────────────
 // Invoice text and our product list disagree in predictable ways:
@@ -452,6 +453,10 @@ const UNKNOWN_PRODUCT = 'unknown-product';
 const ALREADY = 'already-applied';
 const CONFLICT = 'conflict';
 const AMBIGUOUS = 'ambiguous-enterprise';
+//   crop-mismatch  — the product does not belong on this enterprise's crop or
+//                    seed trait. Goes to the review queue with the rule that
+//                    refused it; no pass is written until the operator says so.
+const CROP_MISMATCH = 'crop-mismatch';
 
 function proposeInvoice(invoice, refs) {
   const fields = refs.fields || [];
@@ -555,6 +560,26 @@ function proposeInvoice(invoice, refs) {
     if (!field) {
       row.status = NEW_LINE;
       row.note = 'Field not matched — pick one above before applying.';
+      return row;
+    }
+
+    // Does this product belong on this crop at all?
+    //
+    // The enterprise guard above only fires where a parcel carries several
+    // enterprises. Every dollar of confirmed misplacement found so far was on a
+    // parcel carrying exactly one — Carrol and Delong Christopherson each had
+    // only a corn row, so a post-bean pass landed on corn with nothing to
+    // disagree with. This asks the other question, and it asks it everywhere.
+    const fit = cropFit.checkRow(
+      { productCropRules: refs.productCropRules },
+      field,
+      { productName: product.name, operationGroup: null, statusNote: invoice.comments },
+      invoice
+    );
+    if (fit.verdict !== 'ok') {
+      row.status = CROP_MISMATCH;
+      row.note = fit.reason;
+      row.cropFit = { verdict: fit.verdict, rule: fit.rule };
       return row;
     }
 
@@ -697,6 +722,9 @@ function proposeInvoice(invoice, refs) {
     fieldCandidates: (resolved.contenders.length ? resolved.contenders : fieldCands).map(toCand('name')),
     ambiguousEnterprise: !!resolved.ambiguous,
     enterpriseReason: resolved.reason || null,
+    // Any line the crop/trait rules refused. Carried on the proposal so the
+    // review queue can gather these the same way it gathers ambiguous ones.
+    cropMismatch: rows.some(function (r) { return r.status === CROP_MISMATCH; }),
     alsoOnFields: elsewhere,
     totalsOk: totalsOk,
     lineSum: Calc.round2(lineSum),
@@ -734,6 +762,7 @@ module.exports = {
   resolveEnterprise: resolveEnterprise,
   STATUS: {
     READY: READY, NEW_LINE: NEW_LINE, UNKNOWN_PRODUCT: UNKNOWN_PRODUCT,
-    ALREADY: ALREADY, CONFLICT: CONFLICT, AMBIGUOUS: AMBIGUOUS
+    ALREADY: ALREADY, CONFLICT: CONFLICT, AMBIGUOUS: AMBIGUOUS,
+    CROP_MISMATCH: CROP_MISMATCH
   }
 };
