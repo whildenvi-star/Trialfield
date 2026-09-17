@@ -21,6 +21,9 @@
   tabs.forEach(function (btn) {
     btn.addEventListener('click', function () {
       var target = btn.getAttribute('data-tab');
+      // The Admin entry is a real link to another page, not a tab — it wears
+      // .tab-btn for styling but carries no data-tab. Let the browser navigate.
+      if (!target) return;
       location.hash = target;
       activateTab(target);
     });
