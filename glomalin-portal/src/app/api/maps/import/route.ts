@@ -4,6 +4,40 @@ import { createClient as createServiceClient } from '@supabase/supabase-js'
 import shp from 'shpjs'
 import { fetchRegistryService } from '@/app/api/mobile/_lib/proxy'
 
+// ── DISABLED 2026-09-17 ─────────────────────────────────────────────
+// This route replaces the WHOLE table on every upload:
+//
+//     .from('field_boundaries').delete().neq('id', '00000000-…')
+//
+// then inserts only the features it matched. That is fine for the one-off
+// whole-farm load it was written for (all 51 boundaries arrived in a single
+// burst on 2026-06-15), and wrong for the farm-by-farm imports we actually
+// want: uploading one farm's zip would delete every other farm's boundary,
+// with no version to restore from. field_boundary_history only records rows
+// replaced through the per-field editor, not rows removed here.
+//
+// It stays disabled until the versioned flow replaces it — farm-scoped,
+// .prj required, diff and validation before any write, effective from a
+// chosen crop year, and a field missing from the file left alone rather than
+// deleted. Scoped in recon/04-shape-import-scope.md.
+//
+// Nothing else is affected. Per-field edits (PUT /api/maps/boundaries/[id])
+// soft-delete via is_deleted and write field_boundary_history, and
+// GET /api/fsa/export-shapefile is untouched.
+//
+// The implementation below is left intact on purpose: the parsing, the
+// registry name/alias matching and the centroid maths are all reusable by
+// the replacement. Only the delete-then-insert tail has to go.
+const IMPORT_DISABLED = true
+
+const IMPORT_DISABLED_MESSAGE =
+  'Shapefile import is disabled. This endpoint replaced every field boundary on ' +
+  'the farm each time it ran, so importing one farm’s shapes would have deleted ' +
+  'the others — with no saved version to restore from. Editing a single field’s ' +
+  'boundary and exporting shapefiles both still work. A farm-by-farm import that ' +
+  'keeps each version by crop year, and never removes a field that is simply ' +
+  'absent from the file, is what will replace it.'
+
 interface RegistryField {
   id: string
   name: string
@@ -67,6 +101,21 @@ function computeCentroid(
  * Returns summary: { matched, updated, replaced, previousBoundariesCleared, unmatched, noGeometry, farmCenter }
  */
 export async function POST(request: Request) {
+  // Refused before anything is read, parsed or written — see IMPORT_DISABLED above.
+  if (IMPORT_DISABLED) {
+    return NextResponse.json(
+      {
+        error: IMPORT_DISABLED_MESSAGE,
+        disabledSince: '2026-09-17',
+        stillAvailable: [
+          'PUT /api/maps/boundaries/[id] — edit one field’s boundary',
+          'GET /api/fsa/export-shapefile — export',
+        ],
+      },
+      { status: 503 }
+    )
+  }
+
   // --- Auth check ---
   const supabase = await createClient()
   const {
