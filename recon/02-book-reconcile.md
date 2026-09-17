@@ -1,6 +1,7 @@
 # Every invoice row against the DeLong book
 
-**Read-only. Nothing has been written. This is a proposal.**
+**The proposal below was approved and APPLIED on 2026-09-17 — see the last section for what landed
+and what changed in the writing. The figures in the body are as they stood before the write.**
 
 `farm-budget/scripts/audit-invoice-book-reconcile.js --recon ~/delong-recon-bundle`
 
@@ -154,3 +155,69 @@ paperwork already in hand.
 
 What I would **not** do without you: the 77 acreage drifts (not defects), the cent-level rounding,
 and the five strays that may be other vendors — or may be invoices missing from DeLong's export.
+
+---
+
+# APPLIED — 2026-09-17
+
+46 corrections written to production. Backup: `/var/backups/farm-ops/data.json.pre-bookfix-20260917-141126`.
+farm-budget stopped around the write, as before.
+
+The apply step consumes the audit's **own JSON output** and addresses rows by input id, not by
+index — so what was written is what was reviewed, and a row the operator moved in the meantime is
+skipped rather than mis-targeted.
+
+| class | before | after |
+|---|---|---|
+| invoice numbers resolvable on content | 18 | **0** |
+| cost stored as the unit price | 19 | **0** |
+| acreage off by a factor of ten | 2 | **0** |
+| quantity off by a factor of ten | 2 | **0** |
+| Noss Sid's Resicore | $669.50 | **$4,517.21** |
+
+**Recorded invoice cost: $523,817.48 → $533,302.13, up $9,484.65** across 585 rows, none added or
+removed. Where it landed:
+
+| enterprise | |
+|---|---|
+| Noss, Sid / Yellow Corn | **+$4,802.43** |
+| Phillhower West / Peppermint | **+$2,840.26** |
+| Klug Davis / High Oil Soybeans | +$1,201.05 |
+| Wes's / High Oil Soybeans | +$418.76 |
+| suiter, Jehovah, Daun, Twist Farm, Lake | +$410.68 between them |
+| Fox-Lemans / Yellow Corn | −$239.76 |
+| Wes's / Yellow Corn | −$48.77 |
+
+Two go down, because the quantity was under one unit and the rate exceeded the line.
+
+The crop/trait sweep still reads **0 invoiced rows flagged** afterwards.
+
+## Two things I changed my mind about mid-write
+
+**Invoice dates are not wrong, and I nearly overwrote 18 of them.** Correcting a number, it seemed
+natural to take the book's date too. Checking first: **161 rows sit one to six days BEFORE their
+invoice date** — 79 of them exactly one day. That is not drift, it is the stored date being the
+**application** date, with DeLong billing a few days after the sprayer runs. Overwriting it would
+have traded the date the pass happened for the date it was billed. The apply step now changes the
+number only.
+
+The genuine date outliers are a separate, small class: 3 rows exactly 365 days out (a year typed
+wrong) and 3 rows around `0025-09-11`. Six rows, not 161.
+
+**Fixing the numbers uncovered more than the report predicted.** Once `8022883` became `8002283`,
+its Jehovah rows could be compared against the book for the first time — which is why the
+rate-as-total class grew from 17 to 19 and the net from $4,639.90 to $5,636.94 between the report
+and the write. The same effect lifted the untouched classes: cost gaps 24 → 29, quantity 32 → 37.
+Those are newly *visible*, not newly broken.
+
+## Still open
+
+- **29 cost gaps** and **37 quantity disagreements** that are not the unit price and not a slipped
+  decimal — mostly transposed digits (`4.6` for `4.06`, `17.5` for `17.05`). Each needs a glance;
+  none is mechanical.
+- **15 rows with no matching line** on their invoice.
+- **5 strays that do not resolve**: `2712` (Tulls manure — a hauler, not DeLong), `Delong` (a vendor
+  name in the number field), and `1061348`, `1061365`, `1061856` — three fall invoices no book entry
+  matches. If those are real DeLong paper they are **missing from the export**, which bears on the
+  $451k still unattached.
+- **6 genuine date outliers** (3 off by a year, 3 with a year of `0025`).

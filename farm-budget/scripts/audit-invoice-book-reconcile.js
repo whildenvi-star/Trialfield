@@ -61,22 +61,83 @@ lines.forEach(l => (bookLines[l.invoice_no] = bookLines[l.invoice_no] || []).pus
 const num = v => { const n = parseFloat(String(v).replace(/[^0-9.\-]/g, '')); return isFinite(n) ? n : null; };
 const money = n => (n == null ? '—' : '$' + Number(n).toFixed(2));
 
-// Which real invoice number is this stored one a typo of? Only answers when
-// exactly one candidate fits, so an ambiguous stray stays unresolved rather
-// than being "corrected" to a guess.
-function typoTarget(stored) {
-  if (bookInv[stored]) return null;
-  const hits = Object.keys(bookInv).filter(real => {
-    if (stored.length > real.length && stored.indexOf(real) >= 0) return true;  // 10061713 -> 1061713
-    for (let i = 0; i < real.length; i++) {
-      if (real.slice(0, i) + real.slice(i + 1) === stored) return true;         // 8004593 -> 800593
+// Which real invoice is this stored number a typo of?
+//
+// NOT by edit distance. A number missing from the book is not automatically a
+// typo — other vendors exist, and "2712" is a manure hauler's. Edit distance
+// answers for only 8 of 23 strays and has no way to tell a keying slip from a
+// different supplier's invoice.
+//
+// Content answers both. A stray resolves only when ONE book invoice is for the
+// same ground, near the same date, and carries EVERY product the stray's rows
+// name. That is evidence rather than arithmetic: it resolved 18 of 23, eleven
+// of them same-day, and it correctly declines on Tulls manure.
+function contentTarget(strayRows, fieldName) {
+  const prods = strayRows.map(r => r.productName).filter(Boolean);
+  if (!prods.length) return null;
+  const date = strayRows.map(r => r.invoiceDate).filter(Boolean)[0];
+  const t = date ? new Date(date).getTime() : null;
+
+  const scored = invoices.filter(v => {
+    // same ground, by the same fuzzy naming the matcher uses
+    return match.matchProducts([{ name: v.field_name || '' }], fieldName).length > 0;
+  }).map(v => {
+    const ls = bookLines[v.invoice_no] || [];
+    const hit = prods.filter(p => ls.some(l =>
+      match.coreName(l.description) === match.coreName(p) ||
+      match.matchProducts([{ name: l.description }], p).length > 0)).length;
+    let days = 9999;
+    if (t != null && v.invoice_date) {
+      const m = String(v.invoice_date).match(/(\d+)\/(\d+)\/(\d+)/);
+      if (m) days = Math.abs(new Date(m[3] + '-' + m[1] + '-' + m[2]).getTime() - t) / 86400000;
     }
-    return false;
-  });
-  return hits.length === 1 ? hits[0] : null;
+    return { invoice: v, hit: hit, days: days };
+  }).filter(x => x.hit === prods.length && x.days <= 45)
+    .sort((a, b) => a.days - b.days);
+
+  if (!scored.length) return null;
+  return {
+    invoiceNo: scored[0].invoice.invoice_no,
+    invoiceDate: scored[0].invoice.invoice_date,
+    comments: scored[0].invoice.comments,
+    days: Math.round(scored[0].days),
+    products: prods.length,
+    rivals: scored.length - 1
+  };
 }
 
 const typos = [], rates = [], qtys = [], acres = [], unmatched = [];
+
+// Group the strays first: a stray resolves on the products of ALL its rows
+// together, not one row at a time — 8003206 carries five rows and it is the
+// five together that identify 8003207.
+const strays = {};
+(data.fields || []).forEach((f, fi) => {
+  (f.inputs || []).forEach((r, ri) => {
+    if (!r.invoiceNumber) return;
+    const stored = String(r.invoiceNumber);
+    if (bookInv[stored]) return;
+    const k = stored + '|' + f.id;
+    (strays[k] = strays[k] || { stored, field: f, fieldIndex: fi, rows: [] }).rows.push(r);
+  });
+});
+const resolved = {};
+Object.keys(strays).forEach(k => {
+  const g = strays[k];
+  const t = contentTarget(g.rows, g.field.name);
+  resolved[k] = t;
+  typos.push({
+    stored: g.stored, fieldIndex: g.fieldIndex, fieldId: g.field.id, fieldName: g.field.name,
+    crop: g.field.crop, rows: g.rows.length,
+    inputIds: g.rows.map(r => r.id),
+    productNames: g.rows.map(r => r.productName),
+    storedDate: g.rows.map(r => r.invoiceDate).filter(Boolean)[0] || null,
+    target: t ? t.invoiceNo : null,
+    targetDate: t ? t.invoiceDate : null,
+    targetComments: t ? t.comments : null,
+    dayGap: t ? t.days : null
+  });
+});
 
 (data.fields || []).forEach((f, fi) => {
   (f.inputs || []).forEach((r, ri) => {
@@ -84,12 +145,8 @@ const typos = [], rates = [], qtys = [], acres = [], unmatched = [];
     const stored = String(r.invoiceNumber);
     const where = { fieldIndex: fi, fieldId: f.id, fieldName: f.name, crop: f.crop, rowIndex: ri, inputId: r.id, productName: r.productName };
 
-    if (!bookInv[stored]) {
-      const target = typoTarget(stored);
-      typos.push(Object.assign({ stored, target, cost: num(r.invoiceCostTotal) }, where));
-      if (!target) return;
-    }
-    const invNo = bookInv[stored] ? stored : typoTarget(stored);
+    const res = resolved[stored + '|' + f.id];
+    const invNo = bookInv[stored] ? stored : (res ? res.invoiceNo : null);
     if (!invNo) return;
 
     // header acres
@@ -146,11 +203,14 @@ console.log('  book: ' + invoices.length + ' invoices, ' + lines.length + ' line
 const rateOnly = rates.filter(r => r.kind === 'rate-as-total');
 const differs = rates.filter(r => r.kind !== 'rate-as-total');
 
-console.log('── invoice numbers not in the book — ' + typos.length + ' rows ──────────');
-typos.forEach(t => console.log('  ' + String(t.stored).padEnd(12) + String(t.fieldName).slice(0, 22).padEnd(24) +
-  String(t.productName).slice(0, 30).padEnd(32) + (t.target ? '-> ' + t.target : '** no single candidate **')));
-console.log('  ' + typos.filter(t => t.target).length + ' resolve to exactly one book invoice, ' +
-  typos.filter(t => !t.target).length + ' do not.\n');
+console.log('── invoice numbers not in the book — ' + typos.length + ' strays, ' +
+  typos.reduce((n, t) => n + t.rows, 0) + ' rows ──────────');
+typos.forEach(t => console.log('  ' + String(t.stored).padEnd(12) + String(t.fieldName).slice(0, 20).padEnd(22) +
+  (t.rows + ' row' + (t.rows > 1 ? 's' : '')).padEnd(7) + String(t.storedDate || '').padEnd(12) +
+  (t.target ? '-> ' + t.target + '  ' + String(t.targetDate).padEnd(11) + '(' + t.dayGap + 'd)  "' +
+    String(t.targetComments).slice(0, 26) + '"'
+            : '** no book invoice carries all its products **')));
+console.log('  ' + typos.filter(t => t.target).length + ' of ' + typos.length + ' resolve on content.\n');
 
 console.log('── cost stored as the UNIT PRICE — ' + rateOnly.length + ' rows, ' +
   money(rateOnly.reduce((s, r) => s + r.gap, 0)) + ' understated ──────────');
@@ -199,6 +259,6 @@ console.log('\n── row has no matching line on its invoice — ' + unmatched.
 unmatched.forEach(u => console.log('  ' + String(u.invoice).padEnd(10) + String(u.fieldName).slice(0, 20).padEnd(22) +
   String(u.productName).slice(0, 34)));
 
-console.log('\nTotals: ' + typos.length + ' bad invoice numbers, ' + rateOnly.length + ' rate-as-total (' +
+console.log('\nTotals: ' + typos.filter(t => t.target).length + ' resolvable invoice numbers, ' + rateOnly.length + ' rate-as-total (' +
   money(rateOnly.reduce((s, r) => s + r.gap, 0)) + ' missing), ' + differs.length + ' other cost gaps, ' +
   qtys.length + ' quantity gaps, ' + acreScale.length + ' acreage typos, ' + unmatched.length + ' unmatched.');
