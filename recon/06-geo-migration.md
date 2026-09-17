@@ -1,6 +1,7 @@
 # Geometry migration — archive + versioning in one change
 
-Read-only draft, 2026-09-17. **No writes. The SQL below has not been run.**
+Read-only draft, 2026-09-17. **No writes. The migration has been REHEARSED against production
+inside a transaction and rolled back — see "Rehearsal" at the end. The database is unchanged.**
 
 Backup in place: `~/FarmOpsBackups/geo-pre-import-lock-20260917/`.
 
@@ -139,6 +140,9 @@ create table if not exists public.farm_import_prefs (
 
 -- ── management_zones ──
 alter table public.management_zones
+  -- a zone's identity is its SHAPE, not its name (see the rehearsal)
+  add column if not exists geom_key text
+    generated always as (md5(st_astext(st_snaptogrid(geometry, 0.000001)))) stored,
   add column if not exists layer               text not null default 'production',
   add column if not exists needs_geometry      boolean not null default false,
   add column if not exists effective_crop_year integer,
@@ -197,11 +201,13 @@ create unique index field_boundaries_one_live_uq
   on public.field_boundaries (registry_field_id, effective_crop_year)
   where retired_at is null;
 
--- one live zone per field, layer, name and effective year.
--- needs_geometry rows are excluded — that is what keeps
+-- one live zone per field, layer, effective year and SHAPE.
+-- Keyed on geometry, not name — see the rehearsal: fld_050 carries two
+-- genuinely different seed blocks both called "Simpsons – SEED26 2026".
+-- needs_geometry rows are excluded, which is what keeps
 -- Omni – BLUECORN26 1 2026 live without a polygon.
 create unique index management_zones_one_live_uq
-  on public.management_zones (registry_field_id, layer, name, effective_crop_year)
+  on public.management_zones (registry_field_id, layer, effective_crop_year, geom_key)
   where retired_at is null and needs_geometry = false;
 ```
 
@@ -254,3 +260,71 @@ would violate it, which is the point of creating it last.
 fields with no polygon in *either* store. 168 acres of active ground currently invisible to any
 overlay, acreage check or map. They are the natural first run of the new importer, and a good test:
 both are `new` in the diff, neither can be a false `missing`.
+
+
+---
+
+## Rehearsal — run against production, rolled back
+
+The whole thing was executed inside `BEGIN … ROLLBACK` against the live Supabase database:
+the additive migration, the cleanup, and the unique indexes. Postgres DDL is transactional, so this
+is a real test rather than a paper one. Afterwards: 135 zones, 25 still invalid, 0 new columns, no
+`import_batches` table, 53 boundaries, 0 unique indexes — **unchanged**.
+
+**It failed the first time, and that is why it was worth doing.**
+
+```
+ERROR: could not create unique index "management_zones_one_live_uq"
+DETAIL: Key (registry_field_id, layer, name, effective_crop_year)=
+        (fld_050, production, Simpsons – SEED26 2026, 2026) is duplicated.
+```
+
+Of the 23 same-name groups, **22 are the geometry-identical double-import and one is not**:
+`fld_050` carries two genuinely different seed blocks, **6.05 ac and 42.23 ac**, both named
+`Simpsons – SEED26 2026`. Those are almost certainly the linked twins of the unlinked
+`SimpTrianSeed26` (6.0 ac) and `SimpSouthSeed26` (45.9 ac).
+
+So the index was wrong, not the data. **A zone's identity is its shape, not its name** — two real
+zones may share a label, and forbidding that would have forced a rename to satisfy a constraint that
+was asking the wrong question. The unique key is now a fingerprint of the snapped geometry
+(`geom_key`), which catches the actual defect — the same polygon entered twice — and leaves the
+naming alone.
+
+The dry-run counting could not have found this: it counted how many rows would be retired, and the
+answer was right. What it could not see was whether what remained would satisfy the constraint.
+
+### Second rehearsal — clean
+
+```
+UPDATE 25   validity repaired
+UPDATE 1    needs-geometry keeper
+UPDATE 41   misfiled-boundary
+UPDATE 22   duplicate
+UPDATE  9   sliver
+UPDATE  9   layer = irrigation
+UPDATE  2   Schultz junk
+CREATE INDEX  (both)          ← the cleanup holds
+```
+
+| table | state | rows |
+|---|---|---|
+| management_zones | LIVE production | 54 |
+| | LIVE irrigation | 9 |
+| | retired misfiled-boundary | 41 |
+| | retired duplicate | 22 |
+| | retired sliver | 9 |
+| field_boundaries | LIVE | 51 |
+| | retired junk | 2 |
+| zone_year_attributes | on a live zone | 30 (10 with a crop) |
+| | on a retired zone | 44 (**0** with a crop) |
+
+Invalid geometries remaining: **0**. The keeper is live, `needs_geometry = true`, excluded from the
+index. Matches the projected end state exactly.
+
+### One thing left over
+
+`fld_050` still has two live zones sharing the name `Simpsons – SEED26 2026`. That is legal now and
+nothing depends on it, but they would read better as `SimpSouthSeed26` and `SimpTrianSeed26`, which
+is what the unlinked copies call them. A rename, whenever you like — not a blocker.
+
+The exact rehearsed script is `recon/06-geo-migration.sql`.
